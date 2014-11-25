@@ -1,0 +1,6 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =4
+let g:netrw_dirhist_1='/Users/etienne/Documents/seacon-app/app/assets/javascripts/apps/dossiers'
+let g:netrw_dirhist_2='/Users/etienne/Documents/seacon-app/app/assets/javascripts/apps/dossiers/views'
+let g:netrw_dirhist_3='/Users/etienne/Documents/seacon-app/config/locales'
+let g:netrw_dirhist_4='/Users/etienne/Documents/seacon-app/app/assets/javascripts/apps/dossiers/templates'
