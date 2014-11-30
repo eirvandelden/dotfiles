@@ -35,7 +35,11 @@ endif
 
 noremap! <expr> <SID>transposition getcmdpos()>strlen(getcmdline())?"\<Left>":getcmdpos()>1?'':"\<Right>"
 noremap! <expr> <SID>transpose "\<BS>\<Right>".matchstr(getcmdline()[0 : getcmdpos()-2], '.$')
-cmap   <script> <C-T> <SID>transposition<SID>transpose
+" cmap   <script> <C-T> <SID>transposition<SID>transpose
+inoremap <C-t> <esc>xpi
+" Contral K support
+inoremap <expr> <C-K> (col('.')>=strlen(getline('.'))?"<Delete>":"<C-O>D")
+
 
 if exists('g:rsi_no_meta')
   finish
