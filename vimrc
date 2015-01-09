@@ -19,6 +19,9 @@ set smarttab
 " always uses spaces instead of tab characters
 set expandtab
 
+" Enable folding based on syntax
+set foldmethod=syntax
+
 " always show line numbers
 set number
 
