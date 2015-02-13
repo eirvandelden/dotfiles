@@ -21,6 +21,10 @@ set expandtab
 
 " Enable folding based on syntax
 set foldmethod=syntax
+autocmd BufNewFile,BufReadPost *.coffee setl foldmethod=indent nofoldenable
+
+" unfold all files on load
+au BufRead * normal zR
 
 " always show line numbers
 set number
