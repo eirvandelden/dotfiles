@@ -1,5 +1,8 @@
 execute pathogen#infect()
 
+"" Handle attention warning after a crash about the swp file
+set shortmess+=A
+
 """""""" Vim
 "syntax on
 filetype plugin indent on
@@ -73,3 +76,6 @@ set runtimepath^=~/.vim/bundle/ctrlp.vim
 "python del powerline_setup
 source /usr/local/lib/python2.7/site-packages/powerline/bindings/vim/plugin/powerline.vim
 set laststatus=2
+inoremap { {}<Esc>i
+inoremap ' ''<Esc>i
+inoremap " ""<Esc>i
