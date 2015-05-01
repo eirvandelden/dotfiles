@@ -7,9 +7,15 @@ set shortmess+=A
 "syntax on
 filetype plugin indent on
 
-"enabled solarized colours (light)
-syntax enable
-set background=dark
+"enabled solarized colours
+"set colorscheme based on time
+let hour = strftime("%H")
+if 8 <= hour && hour < 17
+  set background=light
+else
+  set background=dark
+endif
+
 colorscheme solarized
 
 " size of hard tabstop
