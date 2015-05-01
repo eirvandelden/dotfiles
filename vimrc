@@ -82,6 +82,9 @@ set runtimepath^=~/.vim/bundle/ctrlp.vim
 "python del powerline_setup
 source /usr/local/lib/python2.7/site-packages/powerline/bindings/vim/plugin/powerline.vim
 set laststatus=2
+
+"""""" Set up automatic adding of closing parenthesis
+inoremap ( ()<Esc>i
 inoremap { {}<Esc>i
 inoremap ' ''<Esc>i
 inoremap " ""<Esc>i
