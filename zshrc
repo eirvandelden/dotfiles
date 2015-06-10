@@ -22,15 +22,6 @@ export PATH="/usr/local/bin:$PATH"
 
 #eval "$(rbenv init -)"
 
-# Powerline
-#. /usr/local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
-#
-#POWERLINE_DETECT_SSH="true"
-#POWERLINE_GIT_CLEAN="✔"
-#POWERLINE_GIT_DIRTY="✘"
-#POWERLINE_GIT_ADDED="%F{green}✚%F{black}"
-#POWERLINE_GIT_MODIFIED="%F{blue}✹%F{black}"
-#POWERLINE_GIT_DELETED="%F{red}✖%F{black}"
 
 ###aliasses
   #git
