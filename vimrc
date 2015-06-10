@@ -40,6 +40,10 @@ set number
 
 " always show 80 column
 set colorcolumn=80
+" set the column at the cursor
+au WinLeave * set nocursorline nocursorcolumn
+au WinEnter * set cursorline cursorcolumn
+set cursorline cursorcolumn
 
 " show trailing whitespace: using a . as space
 set list
