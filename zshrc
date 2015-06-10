@@ -4,7 +4,7 @@
 HISTFILE=~/.histfile
 HISTSIZE=1000
 SAVEHIST=1000
-setopt autocd notify
+#setopt autocd notify
 bindkey -e
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
@@ -101,22 +101,26 @@ fi
 
 
 # autocompletion
-autoload -U compinit
-compinit
+# autoload -U compinit
+# compinit
 
-zstyle ':completion:*' menu select
-zstyle ':completion:*' special-dirs true
+#zstyle ':completion:*' menu select
+#zstyle ':completion:*' special-dirs true
 
-setopt completealiases
+#setopt completealiases
 
-### ASML
-export DYLD_LIBRARY_PATH=/opt/oracle/instantclient_11_2:$DYLD_LIBRARY_PATH
-export ORACLE_HOME=/opt/oracle/instantclient_11_2
-export NSLANG="AMERICAN_AMERICA.UTF8"
-export PATH=/opt/oracle/instantclient_11_2:$PATH
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-export NLS_LANG=AMERICAN_AMERICA.UTF8
+# fish like autocompletion from plugin
+# Load zsh-syntax-highlighting.
+source ~/Documents/dotfiles/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Load zsh-autosuggestions.
+source ~/Documents/dotfiles/zsh/zsh-autosuggestions/autosuggestions.zsh
+
+# Enable autosuggestions automatically.
+zle-line-init() {
+    zle autosuggest-start
+}
+zle -N zle-line-init
 
 #support Visual Studio Code
 code () {
@@ -130,5 +134,4 @@ code () {
 }
 
 
-PERL_MB_OPT="--install_base \"/Users/etienne/perl5\""; export PERL_MB_OPT;
-PERL_MM_OPT="INSTALL_BASE=/Users/etienne/perl5"; export PERL_MM_OPT;
+
