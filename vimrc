@@ -86,5 +86,6 @@ set laststatus=2
 """""" Set up automatic adding of closing parenthesis
 inoremap ( ()<Esc>i
 inoremap { {}<Esc>i
+inoremap [ []<Esc>i
 inoremap ' ''<Esc>i
 inoremap " ""<Esc>i
