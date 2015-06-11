@@ -1,0 +1,8 @@
+// Place your key bindings in this file to overwrite the defaults
+[
+  { "key": "escape", "command": "editor.action.triggerSuggest", "when": "editorTextFocus" },
+  { "key": "tab", "command": "acceptSelectedSuggestion", "when": "editorTextFocus && suggestWidgetVisible"},
+  { "key": "ctrl+space", "when": "editorTextFocus" },
+  { "key": "cmd+-", "command": "workbench.action.splitEditor"},
+  { "key": "cmd+=", "command": "" }
+]
