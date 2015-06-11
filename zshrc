@@ -35,6 +35,7 @@ alias gci='git commit'
 alias gco='git checkout'
 alias gad='git add'
 alias gdf='git diff'
+alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
   #rails environment
 alias -g RED='RAILS_ENV=development'
