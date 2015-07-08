@@ -9,12 +9,12 @@ filetype plugin indent on
 
 "enabled solarized colours
 "set colorscheme based on time
-let hour = strftime("%H")
-if 8 <= hour && hour < 17
+"let hour = strftime("%H")
+"if 8 <= hour && hour < 17
   set background=light
-else
-  set background=dark
-endif
+"else
+"  set background=dark
+"endif
 
 colorscheme solarized
 
@@ -49,9 +49,6 @@ set cursorline cursorcolumn
 set list
 set listchars=trail:.
 
-" set Source Code Pro as default font
-set guifont=Source\ Code\ Pro\ for\ Powerline:h11
-
 "always show tab bar
 set showtabline=2
 
@@ -79,13 +76,6 @@ let g:SuperTabDefaultCompletionType = "<c-n>"
 
 """""""" CtrlP
 set runtimepath^=~/.vim/bundle/ctrlp.vim
-
-"""""""" Powerline
-"python from powerline.vim import setup as powerline_setup
-"python powerline_setup()
-"python del powerline_setup
-source /usr/local/lib/python2.7/site-packages/powerline/bindings/vim/plugin/powerline.vim
-set laststatus=2
 
 """""" Set up automatic adding of closing parenthesis
 inoremap ( ()<Esc>i
