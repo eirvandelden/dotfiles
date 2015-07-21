@@ -5,7 +5,7 @@
   "editor.renderWhitespace": true,   //show dots for whitespace
   "editor.wrappingColumn": 0,        //wrap to width of window
   "editor.fontSize": 12,
-  "editor.fontFamily": "Source Code Pro for Powerline",
+  "editor.fontFamily": "Source Code Pro",
   "editor.autoClosingBrackets": true,
   "editor.formatOnType": true,
   "editor.quickSuggestions": true,
