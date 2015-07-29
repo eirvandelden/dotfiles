@@ -4,5 +4,6 @@
   { "key": "tab", "command": "acceptSelectedSuggestion", "when": "editorTextFocus && suggestWidgetVisible"},
   { "key": "ctrl+space", "when": "editorTextFocus" },
   { "key": "cmd+-", "command": "workbench.action.splitEditor"},
-  { "key": "cmd+=", "command": "" }
+  { "key": "cmd+=", "command": "" },
+  { "key": "ctrl+p", "command": "workbench.action.gotoLine" }
 ]
