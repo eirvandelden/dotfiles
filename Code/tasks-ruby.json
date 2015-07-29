@@ -1,0 +1,75 @@
+// Available variables which can be used inside of strings.
+// ${workspaceRoot}: the root folder of the team
+// ${file}: the current opened file
+// ${fileBasename}: the current opened file's basename
+// ${fileDirname}: the current opened file's dirname
+// ${fileExtname}: the current opened file's extension
+// ${cwd}: the current working directory of the spawned process
+{
+  "version": "1.1.0",
+  "command": "bundle",
+  "args": ["exec"],
+  "tasks": [
+    {
+      "suppressTaskName": true,
+      "taskName": "rspec",
+      "args": [ "rspec", "${file}" ],
+      "isTestCommand": true
+    },
+    {
+      "suppressTaskName": true,
+      "taskName": "cucumber",
+      "args": [ "cucumber", "${file}" ]
+      // "isTestCommand": true
+    },
+    {
+      "suppressTaskName": true,
+      "taskName": "ci",
+      "args": [
+        "rake", "ci", "RAILS_ENV=test", "CUCUMBER_FORMAT=progress", "SPEC_OPTS='--format progress'"
+      ]
+    },
+    {
+      "suppressTaskName": true,
+      "taskName": "foreman start",
+      "args": [ "foreman", "start"],
+      "isBuildCommand": true
+    },
+    {
+      "suppressTaskName": true,
+      "taskName": "rubocop",
+      "args": [ "rubocop", "${file}" ],
+      "showOutput": "silent",
+      "problemMatcher": {
+        "owner": "ruby",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+        }
+      }
+    },
+    {
+      "suppressTaskName": true,
+      "taskName": "rubocop global",
+      "args": [ "rubocop", "${workspaceRoot}" ],
+      "showOutput": "silent",
+      "problemMatcher": {
+        "owner": "ruby",
+        "fileLocation": ["relative", "${workspaceRoot}"],
+        "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+        }
+      }
+    }
+  ]
+}
