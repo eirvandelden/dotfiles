@@ -21,13 +21,6 @@ fi
 
 export PATH="/usr/local/bin:$PATH"
 
-#if [ -f $(brew --prefix)/etc/bash_completion ]; then
-#  source $(brew --prefix)/etc/bash_completion
-#fi
-
-#eval "$(rbenv init -)"
-
-
 ###aliasses
   #git
 alias gst='git status'
@@ -57,8 +50,11 @@ export PATH=/Users/etienne/Library/Android/sdk/tools:$PATH
 export PATH=/Users/etienne/Library/Android/sdk/platform-tools:$PATH
 
 
-#plugins
+## plugins
+#zsh notify for terminal thingies
 source /Users/etienne/Documents/zsh-notify/notify.plugin.zsh
+
+# rbenv
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
