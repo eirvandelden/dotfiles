@@ -6,21 +6,21 @@
 // ${fileExtname}: the current opened file's extension
 // ${cwd}: the current working directory of the spawned process
 {
-  "version": "1.1.0",
+  "version": "0.1.0",
   "command": "bundle",
   "args": ["exec"],
   "tasks": [
     {
-      "suppressTaskName": true,
       "taskName": "rspec",
       "args": [ "rspec", "${file}" ],
-      "isTestCommand": true
+      "suppressTaskName": true
+      ,"isTestCommand": true
     },
     {
-      "suppressTaskName": true,
       "taskName": "cucumber",
-      "args": [ "cucumber", "${file}" ]
-      // "isTestCommand": true
+      "args": [ "cucumber", "${file}" ],
+      "suppressTaskName": true
+      // ,"isTestCommand": true
     },
     {
       "suppressTaskName": true,
