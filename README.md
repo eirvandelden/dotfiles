@@ -1,7 +1,7 @@
 dotfiles
 ========
 
-My personal configuration for applications using dotfiles. Managed using homesick!
+My personal configuration for applications using dotfiles. Managed using [homesick](https://github.com/technicalpickles/homesick)!
 
 # Configurations
 
