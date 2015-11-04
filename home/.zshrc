@@ -52,7 +52,7 @@ export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
 
 ## plugins
 #zsh notify for terminal thingies
-source /Users/Shared/zsh-notify/notify.plugin.zsh
+source $HOME/.zsh-notify/notify.plugin.zsh
 
 
 # Tell the terminal about the working directory whenever it changes.
