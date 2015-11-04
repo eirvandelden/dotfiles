@@ -104,10 +104,10 @@ fi
 
 # fish like autocompletion from plugin
 # Load zsh-syntax-highlighting.
-source ~/Documents/dotfiles/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Load zsh-autosuggestions.
-source ~/Documents/dotfiles/zsh/zsh-autosuggestions/autosuggestions.zsh
+source $HOME/.zsh-autosuggestions/autosuggestions.zsh
 
 # Enable autosuggestions automatically.
 zle-line-init() {
