@@ -54,10 +54,6 @@ export PATH=/Users/etienne/Library/Android/sdk/platform-tools:$PATH
 #zsh notify for terminal thingies
 source /Users/etienne/Documents/zsh-notify/notify.plugin.zsh
 
-# rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-
 
 # Tell the terminal about the working directory whenever it changes.
 if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
@@ -121,3 +117,12 @@ zle -N zle-line-init
 
 #support Visual Studio Code
 code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* }
+
+#zsh
+unalias run-help
+autoload run-help
+HELPDIR=/usr/local/share/zsh/help
+
+# rbenv
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
