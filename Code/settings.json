@@ -4,7 +4,7 @@
   "editor.insertSpaces": true,
   "editor.renderWhitespace": true,   //show dots for whitespace
   "editor.wrappingColumn": 0,        //wrap to width of window
-  "editor.fontSize": 12,
+  "editor.fontSize": 11,
   "editor.fontFamily": "Source Code Pro",
   "editor.autoClosingBrackets": true,
   "editor.formatOnType": true,
