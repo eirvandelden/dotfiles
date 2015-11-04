@@ -7,6 +7,7 @@
 [apply]
   whitespace = nowarn
 [color]
+  ui = true
   branch = auto
   diff = auto
   status = auto
@@ -19,3 +20,5 @@
   token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
 [push]
   default = simple
+[credential]
+  helper = osxkeychain
