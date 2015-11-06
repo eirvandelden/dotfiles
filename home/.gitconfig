@@ -8,13 +8,16 @@
   whitespace = nowarn
 [color]
   ui = true
+  status = true
   branch = auto
   diff = auto
-  status = auto
 [core]
   excludesfile = ~/.gitignore_global
+  editor = nano
 [merge]
   ff = true
+# Set OS X Filemerge as mergetool
+  tool = opendiff
 [github]
   user = eirvandelden
   token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
@@ -22,3 +25,10 @@
   default = simple
 [credential]
   helper = osxkeychain
+# ASML Specific  
+[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_users.git"]
+  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_users.git
+[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_releases.git"]
+  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_releases.git
+[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/rack-mini-profiler.git"]
+  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/rack-mini-profiler.git
