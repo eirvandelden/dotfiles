@@ -38,3 +38,7 @@ Thumbs.db
 
 # VIM
 *.swp
+
+# Visual Studio Code
+.vscode/*
+.settings/*
