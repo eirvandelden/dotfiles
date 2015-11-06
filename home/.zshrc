@@ -8,7 +8,7 @@ SAVEHIST=1000
 bindkey -e
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
-zstyle :compinstall filename '/Users/etienne/.zshrc'
+zstyle :compinstall filename "${ZDOTDIR:-$HOME}/.zshrc"
 
 autoload -Uz compinit
 compinit
@@ -46,13 +46,13 @@ alias be='bundle exec'
 export JAVA_HOME=$(/usr/libexec/java_home)
 
 ### add Android SDK
-export PATH=/Users/etienne/Library/Android/sdk/tools:$PATH
-export PATH=/Users/etienne/Library/Android/sdk/platform-tools:$PATH
+export PATH=$HOME/Library/Android/sdk/tools:$PATH
+export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
 
 
 ## plugins
 #zsh notify for terminal thingies
-source /Users/etienne/Documents/zsh-notify/notify.plugin.zsh
+source $HOME/.zsh-notify/notify.plugin.zsh
 
 
 # Tell the terminal about the working directory whenever it changes.
@@ -104,10 +104,10 @@ fi
 
 # fish like autocompletion from plugin
 # Load zsh-syntax-highlighting.
-source ~/Documents/dotfiles/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Load zsh-autosuggestions.
-source ~/Documents/dotfiles/zsh/zsh-autosuggestions/autosuggestions.zsh
+source $HOME/.zsh-autosuggestions/autosuggestions.zsh
 
 # Enable autosuggestions automatically.
 zle-line-init() {
