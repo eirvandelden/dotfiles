@@ -25,7 +25,9 @@
   default = simple
 [credential]
   helper = osxkeychain
-# ASML Specific  
+[commit]
+  template = ~/.gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
+# ASML Specific
 [url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_users.git"]
   insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_users.git
 [url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_releases.git"]
