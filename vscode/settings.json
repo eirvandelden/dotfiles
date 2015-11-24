@@ -1,16 +1,27 @@
 // Place your settings in this file to overwrite the default settings
 {
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.renderWhitespace": true,   //show dots for whitespace
-  "editor.wrappingColumn": 0,        //wrap to width of window
-  "editor.fontSize": 11,
-  "editor.fontFamily": "Source Code Pro",
-  "editor.autoClosingBrackets": true,
-  "editor.formatOnType": true,
-  "editor.quickSuggestions": true,
-  "editor.quickSuggestionsDelay": 1,
-  "files.trimTrailingWhitespace": true,
-  "javascript.suggest.alwaysAllWords": true,
-  "javascript.suggest.useCodeSnippetsOnMethodSuggest": true
+    "editor": {
+        "insertSpaces": true,
+        "tabsize": 2,                                   // as per Ruby style Guide :)
+
+        "renderWhitespace": true,                       // shows dots for spaces
+
+        "wrappingColumn": 0,                            // wrap on window
+        "fontSize": 12,
+        "fontFamily": "Source Code Pro",
+
+        "autoClosingBrackets": true,                    // include formatting improvements
+        "formatOnType": true,
+        "quickSuggestions": true,
+        "quickSuggestionsDelay": 1
+    },
+    "files": {
+        "trimTrailingWhitespace": true
+    },
+    "javascript": {
+        "suggest": {                                    // improve Javascript suggestions
+            "alwaysAllWords": true,
+            "useCodeSnippetsOnMethodSuggest": true
+        }
+    }
 }
