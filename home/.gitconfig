@@ -36,3 +36,5 @@
   insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/rack-mini-profiler.git
 [url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-logging.git"]
   insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-logging.git
+[url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-baseline.git"]
+  insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-baseline.git
