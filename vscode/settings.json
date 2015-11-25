@@ -23,5 +23,13 @@
             "alwaysAllWords": true,
             "useCodeSnippetsOnMethodSuggest": true
         }
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/vendor": true,
+        "**/.git": true,
+        "**/coverage": true,
+        "**/tmp": true
     }
 }
