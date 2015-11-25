@@ -38,3 +38,5 @@
   insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-logging.git
 [url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-baseline.git"]
   insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-baseline.git
+[url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-configuration.git"]
+  insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-configuration.git
