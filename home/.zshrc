@@ -42,6 +42,7 @@ alias rs='rails server'
 
   #others
 alias be='bundle exec'
+alias bi='bundle install'
 
 ###fix maven with correct Java Home
 export JAVA_HOME=$(/usr/libexec/java_home)
