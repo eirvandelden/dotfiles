@@ -28,7 +28,7 @@ alias gci='git commit'
 alias gco='git checkout'
 alias gad='git add'
 alias gdf='git diff'
-alias gpush='git push && afplay /Users/Shared/push-it/clip.wav'
+alias gpush='git push && afplay ~/.audioclips/push-it.wav'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
   #rails environment
