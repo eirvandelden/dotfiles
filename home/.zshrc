@@ -53,6 +53,9 @@ export PATH=$HOME/Library/Android/sdk/tools:$PATH
 export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
 
 
+### Add PostgreSQL
+export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
+
 ## plugins
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
