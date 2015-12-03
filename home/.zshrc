@@ -56,6 +56,10 @@ export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
 ### Add PostgreSQL
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
 
+### Add Go Path
+export GOPATH="$HOME/Documents/go"
+export PATH="$GOPATH/bin:$PATH"
+
 ## plugins
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
