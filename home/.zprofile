@@ -72,3 +72,9 @@ if [[ ! -d "$TMPDIR" ]]; then
 fi
 
 TMPPREFIX="${TMPDIR%/}/zsh"
+
+#
+# Switch to a different default folder
+#
+
+cd ~/Documents
