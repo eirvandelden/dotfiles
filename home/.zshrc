@@ -60,6 +60,9 @@ export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
 export GOPATH="$HOME/Documents/go"
 export PATH="$GOPATH/bin:$PATH"
 
+### Set home to Documents folder
+export HOME=~/Documents
+
 ## plugins
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
