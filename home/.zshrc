@@ -14,12 +14,9 @@ autoload -Uz compinit
 compinit
 # End of lines added by compinstall
 
-### Set home to Documents folder for easier terminal navigation
-export HOME=~/Documents
-
 # Source Prezto.
-if [[ -s "${ZDOTDIR:-$HOME}/../.zprezto/init.zsh" ]]; then
-  source "${ZDOTDIR:-$HOME}/../.zprezto/init.zsh"
+if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
+  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
 export PATH="/usr/local/bin:$PATH"
@@ -60,12 +57,15 @@ export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
 
 ### Add Go Path
-export GOPATH="$HOME/go"
+export GOPATH="$HOME/Documents/go"
 export PATH="$GOPATH/bin:$PATH"
+
+### Set home to Documents folder
+export HOME=~/Documents
 
 ## plugins
 #zsh notify for terminal thingies
-source $HOME/../.zsh-notify/notify.plugin.zsh
+source $HOME/.zsh-notify/notify.plugin.zsh
 
 
 # Tell the terminal about the working directory whenever it changes.
@@ -117,10 +117,10 @@ fi
 
 # fish like autocompletion from plugin
 # Load zsh-syntax-highlighting.
-source $HOME/../.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Load zsh-autosuggestions.
-source $HOME/../.zsh-autosuggestions/autosuggestions.zsh
+source $HOME/.zsh-autosuggestions/autosuggestions.zsh
 
 # Enable autosuggestions automatically.
 zle-line-init() {
@@ -137,5 +137,5 @@ autoload run-help
 HELPDIR=/usr/local/share/zsh/help
 
 # rbenv
-export PATH="$HOME/../.rbenv/bin:$PATH"
+export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
