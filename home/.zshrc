@@ -64,6 +64,8 @@ export PATH="$GOPATH/bin:$PATH"
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
 
+# Set the name of an Sound for zsh-notify
+export SYS_NOTIFIER_SOUND="Glass"
 
 # Tell the terminal about the working directory whenever it changes.
 if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
