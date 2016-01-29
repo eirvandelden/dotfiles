@@ -1,10 +1,39 @@
 // Place your key bindings in this file to overwrite the defaults
 [
-  { "key": "ctrl+t", "command": "" },
-  { "key": "escape", "command": "editor.action.triggerSuggest", "when": "editorTextFocus" },
-  { "key": "tab", "command": "acceptSelectedSuggestion", "when": "editorTextFocus && suggestWidgetVisible"},
-  { "key": "ctrl+space", "when": "editorTextFocus" },
-  { "key": "cmd+-", "command": "workbench.action.splitEditor"},
-  { "key": "cmd+=", "command": "" },
-  { "key": "ctrl+p", "command": "workbench.action.gotoLine" }
+    {
+        "key": "ctrl+t",
+        "command": "deleteLeft",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "escape",
+        "command": "editor.action.triggerSuggest",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "tab",
+        "command": "acceptSelectedSuggestion",
+        "when": "editorTextFocus && suggestWidgetVisible"
+    },
+    {
+        "key": "ctrl+space",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "cmd+-",
+        "command": "workbench.action.splitEditor"
+    },
+    {
+        "key": "cmd+=",
+        "command": ""
+    },
+    {
+        "key": "ctrl+p",
+        "command": "workbench.action.gotoLine"
+    },
+    {
+        "key": "cmd+[",
+        "command": "editor.action.commentLine",
+        "when": "editorTextFocus"
+    }
 ]
