@@ -60,12 +60,13 @@ export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
 export GOPATH="$HOME/Documents/go"
 export PATH="$GOPATH/bin:$PATH"
 
-## plugins
+### zsh-plugins
+##zsh-notify
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
-
 # Set the name of an Sound for zsh-notify
-export SYS_NOTIFIER_SOUND="Glass"
+export SYS_NOTIFIER_SOUND="Work-Complete"
+export NOTIFY_COMMAND_COMPLETE_TIMEOUT=2
 
 # Tell the terminal about the working directory whenever it changes.
 if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
