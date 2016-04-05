@@ -15,3 +15,10 @@ This dotfile repository contains dotfile configuration for the following tools:
 # Installation
 
     ln -s <source> ~/.<target>
+
+
+Install yourself:
+ * zprezto
+ * zsh-notify
+ * zsh-syntax-heghlighting
+ * solarized
