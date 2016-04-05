@@ -120,7 +120,7 @@ fi
 source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Load zsh-autosuggestions.
-source $HOME/.zsh-autosuggestions/autosuggestions.zsh
+source $HOME/.zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Enable autosuggestions automatically.
 zle-line-init() {
