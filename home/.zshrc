@@ -128,14 +128,14 @@ zle-line-init() {
 }
 zle -N zle-line-init
 
-#support Visual Studio Code
-code () { VSCODE_CWD="$PWD" open -n -b "com.microsoft.VSCode" --args $* }
-
 #zsh
 unalias run-help
 autoload run-help
 HELPDIR=/usr/local/share/zsh/help
 
 # rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
+# export PATH="$HOME/.rbenv/bin:$PATH"
+# eval "$(rbenv init -)"
+
+source /usr/local/share/chruby/chruby.sh
+source /usr/local/share/chruby/auto.sh
