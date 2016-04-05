@@ -21,6 +21,3 @@ export PATH=/opt/oracle/instantclient_11_2:$PATH
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export NLS_LANG=AMERICAN_AMERICA.UTF8
-
-# Accept autosuggestions using tab & right arrow
-AUTOSUGGESTION_ACCEPT_RIGHT_ARROW=1
