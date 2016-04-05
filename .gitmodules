@@ -4,9 +4,3 @@
 [submodule "zsh/zsh-syntax-highlighting"]
 	path = zsh/zsh-syntax-highlighting
 	url = https://github.com/jimmijj/zsh-syntax-highlighting.git
-[submodule "home/.zprezto"]
-	path = home/.zprezto
-	url = https://github.com/sorin-ionescu/prezto.git
-[submodule "home/.zsh-notify"]
-	path = home/.zsh-notify
-	url = https://github.com/marzocchi/zsh-notify.git
