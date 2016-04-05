@@ -1,23 +1,24 @@
 // Place your settings in this file to overwrite the default settings
 {
-    "editor.tabSize": 2,
     "editor": {
-        "insertSpaces": true,
         "tabsize": 2,                                   // as per Ruby style Guide :)
-
         "renderWhitespace": true,                       // shows dots for spaces
 
         "wrappingColumn": 0,                            // wrap on window
         "fontSize": 12,
-        "fontFamily": "Source Code Pro",
+        "fontFamily": "Hasklig",
+        "fontLigatures": true,
 
-        "autoClosingBrackets": true,                    // include formatting improvements
         "formatOnType": true,
-        "quickSuggestions": true,
-        "quickSuggestionsDelay": 1
+        "quickSuggestionsDelay": 0
+    },
+    "diffEditor": {
+      "renderSideBySide": false,
+      "ignoreTrimWhitespace": false
     },
     "files": {
-        "trimTrailingWhitespace": true
+        "trimTrailingWhitespace": true,
+        "autoSave": "onFocusChange"
     },
     "javascript": {
         "suggest": {                                    // improve Javascript suggestions
@@ -33,5 +34,6 @@
         "**/coverage": true,
         "**/tmp": true
     },
-   "ruby.rubocop.executePath": "/Users/etienne/.rbenv/shims/"
+   "ruby.rubocop.executePath": "/Users/etienne/.rbenv/shims/",
+   "travis.username": "eirvandelden"
 }
