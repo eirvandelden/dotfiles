@@ -16,20 +16,9 @@
         "when": "editorTextFocus && suggestWidgetVisible"
     },
     {
-        "key": "ctrl+space",
+        "key": "cmd+w",
+        "command": "workbench.action.closeActiveEditor",
         "when": "editorTextFocus"
-    },
-    {
-        "key": "cmd+-",
-        "command": "workbench.action.splitEditor"
-    },
-    {
-        "key": "cmd+=",
-        "command": ""
-    },
-    {
-        "key": "ctrl+p",
-        "command": "workbench.action.gotoLine"
     },
     {
         "key": "cmd+[",
