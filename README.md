@@ -25,3 +25,11 @@ This dotfile repository contains dotfile configuration for the following tools:
  * [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
    * Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
  * [solarized](http://ethanschoonover.com/solarized)
+
+## Brew install
+ * `brew install nvm`
+ * `brew install the_silver_searcher`
+
+## Node
+* `nvm ls-remote`
+* `nvm install <LATEST>`
