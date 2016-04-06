@@ -4,7 +4,7 @@
 HISTFILE=~/.histfile
 HISTSIZE=1000
 SAVEHIST=1000
-#setopt autocd notify
+# setopt autocd notify
 bindkey -e
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
@@ -44,17 +44,10 @@ alias rs='rails server'
   #others
 alias be='bundle exec'
 alias bi='bundle install'
-
-###fix maven with correct Java Home
-export JAVA_HOME=$(/usr/libexec/java_home)
-
-### add Android SDK
-export PATH=$HOME/Library/Android/sdk/tools:$PATH
-export PATH=$HOME/Library/Android/sdk/platform-tools:$PATH
-
+alias ls='ls -laG'
 
 ### Add PostgreSQL
-export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/9.4/bin
+export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
 
 ### Add Go Path
 export GOPATH="$HOME/Documents/go"
@@ -106,18 +99,6 @@ if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
 fi
 
 
-# autocompletion
-# autoload -U compinit
-# compinit
-
-#zstyle ':completion:*' menu select
-#zstyle ':completion:*' special-dirs true
-
-#setopt completealiases
-
-# fish like autocompletion from plugin
-# Load zsh-syntax-highlighting.
-source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Load zsh-autosuggestions.
 source $HOME/.zsh-autosuggestions/zsh-autosuggestions.zsh
@@ -129,13 +110,9 @@ zle-line-init() {
 zle -N zle-line-init
 
 #zsh
-unalias run-help
 autoload run-help
 HELPDIR=/usr/local/share/zsh/help
 
-# rbenv
-# export PATH="$HOME/.rbenv/bin:$PATH"
-# eval "$(rbenv init -)"
-
+# chruby
 source /usr/local/share/chruby/chruby.sh
 source /usr/local/share/chruby/auto.sh
