@@ -116,3 +116,10 @@ HELPDIR=/usr/local/share/zsh/help
 # chruby
 source /usr/local/share/chruby/chruby.sh
 source /usr/local/share/chruby/auto.sh
+
+# NVM
+export NVM_DIR="$HOME/.nvm"
+. "$(brew --prefix nvm)/nvm.sh"
+
+# fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
+source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
