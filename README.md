@@ -25,6 +25,7 @@ This dotfile repository contains dotfile configuration for the following tools:
  * [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
    * Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
  * [solarized](http://ethanschoonover.com/solarized)
+ * **terminal notifier** `brew install terminal-notifier`
 
 ## Brew install
  * `brew install nvm`
@@ -33,3 +34,9 @@ This dotfile repository contains dotfile configuration for the following tools:
 ## Node
 * `nvm ls-remote`
 * `nvm install <LATEST>`
+
+# Sensible OS X defaults
+
+When setting up a new Mac, you may want to set some sensible OS X defaults:
+
+    ./.osx
