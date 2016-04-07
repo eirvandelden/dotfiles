@@ -121,7 +121,7 @@ source /usr/local/share/chruby/auto.sh
 export NVM_DIR="$HOME/.nvm"
 . "$(brew --prefix nvm)/nvm.sh"
 
-# fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
-source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# export PATH="bin:$PATH"
 
-export PATH="bin:$PATH"
+# fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
+# source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
