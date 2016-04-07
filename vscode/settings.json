@@ -1,39 +1,38 @@
 // Place your settings in this file to overwrite the default settings
 {
-    "editor": {
-        "tabsize": 2,                                   // as per Ruby style Guide :)
-        "renderWhitespace": true,                       // shows dots for spaces
-
-        "wrappingColumn": 0,                            // wrap on window
-        "fontSize": 12,
-        "fontFamily": "Hasklig",
-        "fontLigatures": true,
-
-        "formatOnType": true,
-        "quickSuggestionsDelay": 0
-    },
-    "diffEditor": {
-      "renderSideBySide": false,
-      "ignoreTrimWhitespace": false
-    },
-    "files": {
-        "trimTrailingWhitespace": true,
-        "autoSave": "onFocusChange"
-    },
-    "javascript": {
-        "suggest": {                                    // improve Javascript suggestions
-            "alwaysAllWords": true,
-            "useCodeSnippetsOnMethodSuggest": true
-        }
-    },
-    "search.exclude": {
-        "**/node_modules": true,
-        "**/bower_components": true,
-        "**/vendor": true,
-        "**/.git": true,
-        "**/coverage": true,
-        "**/tmp": true
-    },
-   "ruby.rubocop.executePath": "/Users/etienne/.rbenv/shims/",
-   "travis.username": "eirvandelden"
+  "editor": {
+    "tabsize": 2, // as per Ruby style Guide :)
+    "renderWhitespace": true, // shows dots for spaces
+    "wrappingColumn": 0, // wrap on window
+    "fontSize": 12,
+    "fontFamily": "Hasklig",
+    "fontLigatures": true,
+    "formatOnType": true,
+    "quickSuggestionsDelay": 0
+  },
+  "diffEditor": {
+    "renderSideBySide": false,
+    "ignoreTrimWhitespace": false
+  },
+  "files": {
+    "trimTrailingWhitespace": true,
+    "autoSave": "onFocusChange"
+  },
+  "javascript": {
+    "suggest": { // improve Javascript suggestions
+      "alwaysAllWords": true,
+      "useCodeSnippetsOnMethodSuggest": true
+    }
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/vendor": true,
+    "**/.git": true,
+    "**/coverage": true,
+    "**/tmp": true
+  },
+  "ruby.rubocop.executePath": "/Users/etienne/.rbenv/shims/",
+  "travis.username": "eirvandelden",
+  "editor.tabSize": 2
 }
