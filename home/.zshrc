@@ -123,3 +123,5 @@ export NVM_DIR="$HOME/.nvm"
 
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+export PATH="bin:$PATH"
