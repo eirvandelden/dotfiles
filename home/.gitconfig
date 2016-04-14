@@ -27,6 +27,10 @@
   helper = osxkeychain
 [commit]
   template = ~/.gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
+[filter "lfs"]
+  required = true
+  clean = git-lfs clean %f
+  smudge = git-lfs smudge %f
 # ASML Specific
 [url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_users.git"]
   insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_users.git
@@ -40,3 +44,5 @@
   insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-baseline.git
 [url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-configuration.git"]
   insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-configuration.git
+[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_cwbd.git"]
+  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_cwbd.git
