@@ -4,10 +4,11 @@
     "tabsize": 2, // as per Ruby style Guide :)
     "renderWhitespace": true, // shows dots for spaces
     "wrappingColumn": 0, // wrap on window
-    "fontSize": 12,
+    "fontSize": 13,
     "fontFamily": "Hasklig",
     "fontLigatures": true,
     "formatOnType": true,
+    "quickSuggestions": true,
     "quickSuggestionsDelay": 0
   },
   "diffEditor": {
@@ -32,7 +33,13 @@
     "**/coverage": true,
     "**/tmp": true
   },
-  "ruby.rubocop.executePath": "/Users/etienne/.rbenv/shims/",
   "travis.username": "eirvandelden",
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "ruby.lint": {
+    "rubocop": {
+      "lint": true,
+      "rails": true
+    },
+    "ruby": true
+  }
 }
