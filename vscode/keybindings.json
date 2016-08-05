@@ -24,5 +24,9 @@
         "key": "cmd+[",
         "command": "editor.action.commentLine",
         "when": "editorTextFocus"
+    },{
+        "key": "alt+z",
+        "command": "-editor.action.toggleWordWrap",
+        "when": "editorTextFocus"
     }
 ]
