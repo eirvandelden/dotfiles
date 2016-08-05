@@ -50,7 +50,7 @@ alias ls='ls -laG'
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
 
 ### Add Go Path
-export GOPATH="$HOME/Documents/go"
+export GOPATH="$HOME/Code/go"
 export PATH="$GOPATH/bin:$PATH"
 
 ### zsh-plugins
@@ -122,3 +122,6 @@ export PATH="bin:$PATH"
 
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+#Support the theFuck plugin
+eval "$(thefuck --alias)"
