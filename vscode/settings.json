@@ -3,7 +3,7 @@
   "editor": {
     "tabsize": 2, // as per Ruby style Guide :)
     "renderWhitespace": true, // shows dots for spaces
-    "wrappingColumn": 0, // wrap on window
+    "wordWrap": "on", // wrap on window
     "rulers": [120],
     "fontSize": 13,
     "fontFamily": "Hasklig",
