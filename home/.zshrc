@@ -111,8 +111,11 @@ autoload run-help
 HELPDIR=/usr/local/share/zsh/help
 
 # chruby
-source /usr/local/share/chruby/chruby.sh
-source /usr/local/share/chruby/auto.sh
+# source /usr/local/share/chruby/chruby.sh
+# source /usr/local/share/chruby/auto.sh
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
 
 # NVM
 export NVM_DIR="$HOME/.nvm"
