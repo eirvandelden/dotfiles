@@ -116,7 +116,7 @@ source /usr/local/share/chruby/auto.sh
 
 # NVM
 export NVM_DIR="$HOME/.nvm"
-. "$(brew --prefix nvm)/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
 export PATH="bin:$PATH"
 
