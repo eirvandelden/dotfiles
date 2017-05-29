@@ -31,18 +31,3 @@
   required = true
   clean = git-lfs clean %f
   smudge = git-lfs smudge %f
-# ASML Specific
-[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_users.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_users.git
-[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_releases.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_releases.git
-[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/rack-mini-profiler.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/rack-mini-profiler.git
-[url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-logging.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-logging.git
-[url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-baseline.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-baseline.git
-[url "http://evandeld@boa-srm.asml.com:7990/scm/seieuv/euv-configuration.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/seieuv/euv-configuration.git
-[url "http://evandeld@boa-srm.asml.com:7990/scm/lpt/asml_cwbd.git"]
-  insteadOf = ssh://git@boa-srm.asml.com:7999/lpt/asml_cwbd.git
