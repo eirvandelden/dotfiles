@@ -1,6 +1,6 @@
 [user]
   name = Etienne van Delden
-  email = etienne@lico.nl
+  email = eirvandelden@me.com
 [alias]
   co = checkout
   ci = commit
@@ -28,6 +28,7 @@
 [commit]
   template = ~/.gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
 [filter "lfs"]
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
   required = true
-  clean = git-lfs clean %f
-  smudge = git-lfs smudge %f
