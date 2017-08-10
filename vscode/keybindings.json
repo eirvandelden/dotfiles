@@ -8,7 +8,7 @@
     {
         "key": "escape",
         "command": "editor.action.triggerSuggest",
-        "when": "editorTextFocus"
+        "when": "editorTextFocus && !editorHasMultipleSelections"
     },
     {
         "key": "tab",
@@ -56,11 +56,30 @@
     },
     {
         "key": "cmd+shift+t",
-        "command": "workbench.action.terminal.new"
+        "command": "workbench.action.terminal.new",
+        "when": "terminalFocus"
     },
     {
         "key": "cmd+w",
         "command": "workbench.action.terminal.kill",
         "when": "terminalFocus"
+    },
+    {
+        "key": "alt+cmd+g",
+        "command": "workbench.view.git"
+    },
+    {
+        "key": "cmd+enter",
+        "command": "git.stageSelectedRanges"
+    },
+    {
+        "key": "escape",
+        "command": "removeSecondaryCursors",
+        "when": "editorHasMultipleSelections && editorTextFocus"
+    },
+    {
+        "key": "shift+cmd+t",
+        "command": "workbench.action.tasks.test",
+        "when": "editorTextFocus"
     }
 ]
