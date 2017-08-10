@@ -1,6 +1,6 @@
 // Place your settings in this file to overwrite the default settings
 {
-  "workbench.colorTheme": "Solarized Dark",
+  "workbench.colorTheme": "Solarized Light",
   "workbench.iconTheme": "vs-seti",
   "terminal.integrated.fontFamily": "Hasklig",
   "terminal.integrated.fontSize": 13,
@@ -41,9 +41,6 @@
     },
     "ruby": true
   },
-
-  "gitlens.blame.annotation.activeLine": "off",
-  "gitlens.blame.annotation.highlight": "none",
   "terminal.integrated.commandsToSkipShell": [
     "editor.action.toggleTabFocusMode",
     "workbench.action.debug.continue",
@@ -87,5 +84,22 @@
     "workbench.action.terminal.scrollUpPage",
     "workbench.action.terminal.toggleTerminal",
     "workbench.action.toggleMaximizedPanel"
-  ]
+  ],
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  "window.nativeTabs": true,
+  "window.zoomLevel": 0,
+  "gitlab-mr.accessTokens": {
+    "https://gitlab.lico.nl":"ELzYsq4hJdEZSt9xuneA"
+  },
+  "gitlab-mr.removeSourceBranch": true,
+  "gitlab-mr.autoOpenMr": true,
+  "gitlens.blame.line.enabled": false,
+  "editor.minimap.enabled": false,
+  "editor.renderIndentGuides": false,
+  "editor.multiCursorModifier": "alt",
+  "editor.autoIndent": true,
+  "nightswitch.dayTheme": "Solarized Light",
+  "nightswitch.nightTheme": "Solarized Dark",
+  "nightswitch.location": "(51.4455274,5.6125657)",
+  "nightswitch.sunset": "18:00"
 }
