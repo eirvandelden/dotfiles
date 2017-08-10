@@ -22,6 +22,9 @@ fi
 export PATH="/usr/local/bin:$PATH"
 
 ###aliasses
+alias lup='licommander project up'
+alias ldo='licommander project down'
+
   #git
 alias gst='git status'
 alias gci='git commit'
@@ -29,7 +32,7 @@ alias gco='git checkout'
 alias gad='git add'
 alias gdf='git diff'
 alias gpush='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
-alias gpull='git pull && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
+alias gpull='git pull --rebase --autostash && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
   #rails environment
@@ -57,10 +60,11 @@ export PATH="$GOPATH/bin:$PATH"
 ##zsh-notify
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
-export NOTIFY_COMMAND_COMPLETE_TIMEOUT=2
 zstyle ':notify:*' notifier /usr/local/bin/terminal-notifier
+zstyle ':notify:*' error-title "failed"
 zstyle ':notify:*' error-sound "default"
 zstyle ':notify:*' success-sound "wc3-work-complete"
+# export NOTIFY_COMMAND_COMPLETE_TIMEOUT=2
 
 # Tell the terminal about the working directory whenever it changes.
 if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
@@ -99,8 +103,6 @@ if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
     update_terminal_cwd
 fi
 
-
-
 # Load zsh-autosuggestions.
 source $HOME/.zsh-autosuggestions/zsh-autosuggestions.zsh
 
@@ -115,17 +117,19 @@ HELPDIR=/usr/local/share/zsh/help
 # source /usr/local/share/chruby/chruby.sh
 # source /usr/local/share/chruby/auto.sh
 
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
-
 # NVM
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-export PATH="bin:$PATH"
 
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 #Support the theFuck plugin
 eval "$(thefuck --alias)"
+export PATH="/usr/local/opt/qt@5.5/bin:$PATH"
+
+# test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
