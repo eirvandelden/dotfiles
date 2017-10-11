@@ -5,21 +5,19 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
 fi
 
 ###rbenv
-eval "$(rbenv init -)"
+# eval "$(rbenv init -)"
 
-###fix maven with correct Java Home
-export JAVA_HOME=$(/usr/libexec/java_home)
+# chruby
+if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
+  source /usr/local/opt/chruby/share/chruby/chruby.sh
+  source /usr/local/opt/chruby/share/chruby/auto.sh
+  chruby $(cat ~/.ruby-version)
+fi
 
 ###git completion
 if [ -f `brew --prefix`/etc/bash_completion ]; then
     . `brew --prefix`/etc/bash_completion
 fi
-
-###Powerline
-powerline-daemon -q
-POWERLINE_BASH_CONTINUATION=1
-POWERLINE_BASH_SELECT=1
-. /usr/local/lib/python2.7/site-packages/powerline/bindings/bash/powerline.sh
 
 ###aliasses
   #git
@@ -31,5 +29,3 @@ alias gad='git add'
   #others
 alias be='bundle exec'
 
-# rvm
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
