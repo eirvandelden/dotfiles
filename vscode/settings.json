@@ -86,7 +86,7 @@
     "workbench.action.toggleMaximizedPanel"
   ],
   "workbench.editor.enablePreviewFromQuickOpen": false,
-  "window.nativeTabs": true,
+  "window.nativeTabs": false,
   "window.zoomLevel": 0,
   "gitlab-mr.accessTokens": {
     "https://gitlab.lico.nl":"ELzYsq4hJdEZSt9xuneA"
@@ -101,5 +101,6 @@
   "nightswitch.dayTheme": "Solarized Light",
   "nightswitch.nightTheme": "Solarized Dark",
   "nightswitch.location": "(51.4455274,5.6125657)",
-  "nightswitch.sunset": "18:00"
+  "nightswitch.sunset": "18:00",
+  "workbench.fontAliasing": "default"
 }
