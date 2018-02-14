@@ -55,7 +55,7 @@
         "when": "terminalFocus"
     },
     {
-        "key": "cmd+shift+t",
+        "key": "shift+cmd+t",
         "command": "workbench.action.terminal.new",
         "when": "terminalFocus"
     },
@@ -85,5 +85,47 @@
     {
         "key": "shift+cmd+i",
         "command": "quicktask.showTasks"
+    },
+    {
+        "command": "workbench.action.zoomIn"
+    },
+    {
+        "command": "workbench.action.zoomOut"
+    },
+    {
+        "key": "ctrl+shift+e",
+        "command": "workbench.view.explorer"
+    },
+    {
+        "key": "shift+cmd+e",
+        "command": "-workbench.view.explorer"
+    },
+    {
+        "key": "ctrl+shift+d",
+        "command": "workbench.view.debug"
+    },
+    {
+        "key": "shift+cmd+d",
+        "command": "-workbench.view.debug"
+    },
+    {
+        "key": "ctrl+shift+`",
+        "command": "-workbench.action.terminal.new"
+    },
+    {
+        "key": "ctrl+shift+`",
+        "command": "workbench.action.togglePanel"
+    },
+    {
+        "key": "cmd+j",
+        "command": "-workbench.action.togglePanel"
+    },
+    {
+        "key": "ctrl+shift+b",
+        "command": "workbench.action.toggleSidebarVisibility"
+    },
+    {
+        "key": "cmd+b",
+        "command": "-workbench.action.toggleSidebarVisibility"
     }
 ]
