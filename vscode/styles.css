@@ -1,0 +1,16 @@
+/* Set italics (.mtki), keywords(.mtk8, .mtk10), attributes (.mtk1), comments (.mtk3) and strings (.mtk12, .mtk13) to another font */
+/* Solarized Light */
+.mtki, .mtk1, .mtk3, .mtk8, .mtk12 {
+  font-family: 'Hasklig';
+  font-size: 1em;
+  font-style: italic;
+  font-weight: light;
+}
+
+/* Solarized Dark */
+.mtki, .mtk1, .mtk10, .mtk13 {
+  font-family: 'Hasklig';
+  font-size: 1em;
+  font-style: italic;
+  font-weight: light;
+}

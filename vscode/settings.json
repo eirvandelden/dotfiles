@@ -1,6 +1,6 @@
 // Place your settings in this file to overwrite the default settings
 {
-  "workbench.colorTheme": "Solarized Light",
+  "workbench.colorTheme": "Solarized Dark",
   "workbench.iconTheme": "vs-seti",
   "terminal.integrated.fontFamily": "Hasklig",
   "terminal.integrated.fontSize": 13,
@@ -16,6 +16,7 @@
   "editor.fontFamily": "Hasklig",
   "editor.fontLigatures": true,
   "editor.formatOnType": true,
+  "editor.formatOnSave": true,
   "editor.quickSuggestions": true,
   "editor.quickSuggestionsDelay": 0,
   "diffEditor.renderSideBySide": false,
@@ -23,6 +24,7 @@
   "files.trimTrailingWhitespace": true,
   "files.autoSave": "onFocusChange",
   "typescript.useCodeSnippetsOnMethodSuggest": true, // improve Javascript suggestions
+  "javascript.implicitProjectConfig.checkJs": true,
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
@@ -102,5 +104,60 @@
   "nightswitch.nightTheme": "Solarized Dark",
   "nightswitch.location": "(51.4455274,5.6125657)",
   "nightswitch.sunset": "18:00",
-  "workbench.fontAliasing": "default"
+  "workbench.fontAliasing": "default",
+  "workbench.panel.location": "right",
+  "explorer.openEditors.visible": 0,
+  "workbench.activityBar.visible": false,
+  "editor.renderControlCharacters": true,
+  "explorer.decorations.badges": false,
+  "sync.gist": "64f02251fe97d2b012983412c869b6e2",
+  "sync.lastUpload": "2017-12-19T12:46:06.912Z",
+  "sync.autoDownload": false,
+  "sync.autoUpload": false,
+  "sync.lastDownload": "",
+  "sync.forceDownload": false,
+  "sync.anonymousGist": false,
+  "sync.host": "",
+  "sync.pathPrefix": "",
+  "sync.quietSync": false,
+  "sync.askGistName": false,
+  "terminal.integrated.scrollback": 20000,
+  "vscode_custom_css.imports": [
+    "file:////Users/eirvandelden/.homesick/repos/dotfiles/vscode/styles.css"
+  ],
+  "git.autofetch": true,
+  "gitlens.advanced.messages": {
+    "suppressCommitHasNoPreviousCommitWarning": false,
+    "suppressCommitNotFoundWarning": false,
+    "suppressFileNotUnderSourceControlWarning": false,
+    "suppressGitVersionWarning": false,
+    "suppressLineUncommittedWarning": false,
+    "suppressNoRepositoryWarning": false,
+    "suppressResultsExplorerNotice": true,
+    "suppressUpdateNotice": true,
+    "suppressWelcomeNotice": false
+  },
+  "gitlens.codeLens.recentChange.command": "gitlens.showQuickCommitDetails",
+  "gitlens.codeLens.authors.enabled": false,
+  "gitlens.codeLens.scopes": [
+    "blocks",
+    "containers"
+  ],
+  "gitlens.blame.heatmap.location": "left",
+  "gitlens.blame.heatmap.enabled": false,
+  "gitlens.blame.avatars": false,
+  "gitlens.blame.highlight.locations": [
+    "overview",
+    "line"
+  ],
+  "gitlens.codeLens.enabled": false,
+  "gitlens.hovers.enabled": false,
+  "gitlens.recentChanges.highlight.locations": [
+    "overview",
+    "gutter",
+    "line"
+  ],
+  "gitlens.gitExplorer.enabled": false,
+  "gitlens.currentLine.enabled": false,
+  "gitlens.hovers.currentLine.over": "line"
 }
