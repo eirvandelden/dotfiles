@@ -42,3 +42,7 @@ Thumbs.db
 # Visual Studio Code
 .vscode/*
 .settings/*
+
+# Ruby
+bin/*
+

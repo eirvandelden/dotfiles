@@ -1,0 +1,10 @@
+bundler
+debase ~> 0.2
+fastri
+foreman
+homesick
+rcodetools
+rubocop
+rubocop-rspec
+ruby-debug-ide ~> 0.6
+terminal-notifier ~> 1.7.2

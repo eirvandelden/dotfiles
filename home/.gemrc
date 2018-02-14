@@ -6,3 +6,6 @@
 :update_sources: true
 :verbose: true
 gem: --no-document --env-shebang
+gem: --no-document
+gem: --no-rdoc --no-ri
+

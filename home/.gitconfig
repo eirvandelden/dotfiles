@@ -4,6 +4,7 @@
 [alias]
   co = checkout
   ci = commit
+	hist = log --graph --date-order --date=short --pretty=format:'%C(auto)%h%d %C(reset)%s %C(bold blue)%ce %C(reset)%C(green)%cr (%cd)'
 [apply]
   whitespace = nowarn
 [color]
