@@ -159,5 +159,7 @@
   ],
   "gitlens.gitExplorer.enabled": false,
   "gitlens.currentLine.enabled": false,
-  "gitlens.hovers.currentLine.over": "line"
+  "gitlens.hovers.currentLine.over": "line",
+  "gitlens.hovers.currentLine.enabled": false,
+  "workbench.quickOpen.closeOnFocusLost": false
 }
