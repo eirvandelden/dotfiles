@@ -25,18 +25,18 @@ zstyle ':prezto:*:*' color 'yes'
 # The order matters.
 zstyle ':prezto:load' pmodule \
   'environment' \
-  'terminal' \
+  'directory' \
   'editor' \
   'history' \
-  'directory' \
   'spectrum' \
-  'utility' \
   'ssh' \
   'completion' \
-  'homebrew' \
-  'osx' \
   'git' \
+  'rails' \
+  'ruby' \
+  'history-substring-search' \
   'syntax-highlighting' \
+  'autosuggestions' \
   'prompt'
 
 #
@@ -47,7 +47,7 @@ zstyle ':prezto:load' pmodule \
 zstyle ':prezto:module:editor' key-bindings 'emacs'
 
 # Auto convert .... to ../..
-zstyle ':prezto:module:editor' dot-expansion 'no'
+zstyle ':prezto:module:editor' dot-expansion 'yes'
 
 #
 # Git
@@ -97,6 +97,8 @@ zstyle ':prezto:module:prompt' theme 'pure'
 #
 
 # Auto switch the Ruby version on directory change.
+# zstyle ':prezto:module:ruby:chruby' auto-switch 'yes'
+zstyle ':prezto:module:ruby:info:version' format 'version:%v'
 
 #
 # Screen
@@ -129,7 +131,7 @@ zstyle ':prezto:module:syntax-highlighting' highlighters \
   'root'
 #
 # Set syntax highlighting styles.
-#zstyle ':prezto:module:syntax-highlighting' styles \
+# zstyle ':prezto:module:syntax-highlighting' styles \
 #  'builtin' 'bg=blue' \
 #  'command' 'bg=blue' \
 #  'function' 'bg=blue'
@@ -139,7 +141,7 @@ zstyle ':prezto:module:syntax-highlighting' highlighters \
 #
 
 # Auto set the tab and window titles.
-# zstyle ':prezto:module:terminal' auto-title 'yes'
+zstyle ':prezto:module:terminal' auto-title 'yes'
 
 # Set the window title format.
 # zstyle ':prezto:module:terminal:window-title' format '%n@%m: %s'
@@ -161,3 +163,12 @@ zstyle ':prezto:module:syntax-highlighting' highlighters \
 zstyle ':prezto:module:tmux:iterm' integrate 'yes'
 #
 
+#
+# History substring search
+#
+zstyle ':prezto:module:history-substring-search' color 'yes'
+
+#
+# autosuggestions
+#
+zstyle ':prezto:module:autosuggestions' color 'yes'

@@ -26,11 +26,11 @@ alias lup='licommander project up'
 alias ldo='licommander project down'
 
   #git
-alias gst='git status'
-alias gci='git commit'
-alias gco='git checkout'
-alias gad='git add'
-alias gdf='git diff'
+alias gst='echo "Use zprezto git plugin (gws / gwS)"'
+alias gci='echo "Use zprezto git plugin (gc)"'
+# alias gco='git checkout' #handle by zprezto git plugin with exact same command
+alias gad='echo "Use zprezto git plugin (gia)"'
+alias gdf='echo "Use zprezto git plugin (gwsd)"'
 alias gpush='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
 alias gpull='git pull --rebase --autostash && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
@@ -41,19 +41,19 @@ alias -g REP='RAILS_ENV=production'
 alias -g RET='RAILS_ENV=test'
 
   #rails
-alias rc='rails console'
-alias rs='rails server'
+alias rc='echo "Use rails zprezto plugin (rorc)"'
+alias rs='echo "Use rails zprezto plugin (rors)"'
 
   #others
-alias be='bundle exec'
-alias bi='bundle install'
+alias be='echo "Use zprezto ruby plugin (rbbe)"'
+alias bi='echo "Use zprezto git plugin (rbbi)"'
 alias ls='ls -laG'
 
 ### Add PostgreSQL
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
 
 ### Add Go Path
-export GOPATH="$HOME/Code/go"
+export GOPATH="$HOME/code/go"
 export PATH="$GOPATH/bin:$PATH"
 
 ### zsh-plugins
@@ -126,6 +126,16 @@ export PATH="/usr/local/opt/qt@5.5/bin:$PATH"
 export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
 
 # chruby
+# if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
+  # source /usr/local/opt/chruby/share/chruby/chruby.sh
+  # source /usr/local/opt/chruby/share/chruby/auto.sh
+  # RUBIES+=( /usr/local/Cellar/ruby@1.9/*)
+  # chruby $(cat ~/.ruby-version)
+# fi
+# Allows installation of default rubies
+# from https://github.com/jpickwell/chruby-default-gems
+# source /usr/local/share/chruby-default-gems.sh
+
 # Don't show RVM_PROJECT_PATH in terminal
 unsetopt AUTO_NAME_DIRS
 
