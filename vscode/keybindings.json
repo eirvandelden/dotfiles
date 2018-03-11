@@ -113,7 +113,7 @@
         "command": "-workbench.action.terminal.new"
     },
     {
-        "key": "ctrl+shift+`",
+        "key": "ctrl+shift+p",
         "command": "workbench.action.togglePanel"
     },
     {
