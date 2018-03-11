@@ -7,4 +7,5 @@ rcodetools
 rubocop
 rubocop-rspec
 ruby-debug-ide ~> 0.6
+solargraph
 terminal-notifier ~> 1.7.2
