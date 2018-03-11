@@ -31,9 +31,6 @@ zstyle ':prezto:load' pmodule \
   'spectrum' \
   'ssh' \
   'completion' \
-  'git' \
-  'rails' \
-  'ruby' \
   'history-substring-search' \
   'syntax-highlighting' \
   'autosuggestions' \

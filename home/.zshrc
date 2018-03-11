@@ -26,13 +26,20 @@ alias lup='licommander project up'
 alias ldo='licommander project down'
 
   #git
-alias gst='echo "Use zprezto git plugin (gws / gwS)"'
-alias gci='echo "Use zprezto git plugin (gc)"'
-# alias gco='git checkout' #handle by zprezto git plugin with exact same command
-alias gad='echo "Use zprezto git plugin (gia)"'
-alias gdf='echo "Use zprezto git plugin (gwsd)"'
-alias gpush='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
-alias gpull='git pull --rebase --autostash && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
+alias g='git'
+alias gs='git stash'
+alias gsp='git stash pop'
+alias gst='git status'
+alias gci='git commit'
+alias gco='git checkout'
+alias gad='git add'
+alias gdf='git diff'
+alias gbr='git branch'
+alias gbra='git branch -a'
+alias gps='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
+alias gpl='git pull --rebase --autostash && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
+alias gcp='git cherry-pick'
+alias grb='git rebase'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
   #rails environment
@@ -41,12 +48,18 @@ alias -g REP='RAILS_ENV=production'
 alias -g RET='RAILS_ENV=test'
 
   #rails
-alias rc='echo "Use rails zprezto plugin (rorc)"'
-alias rs='echo "Use rails zprezto plugin (rors)"'
+alias rc='bundle exec rails c'
+alias rs='bundle exec rails s'
+alias rors='bundle exec rails s'
+alias rorc='bundle exec rails c'
+alias rordbm='bundle exec rake db:migrate'
+alias rordbr='bundle exec rake db:rollback'
+alias rorg='bunlde exec rails g'
+alias rails='bundle exec rails'
 
   #others
-alias be='echo "Use zprezto ruby plugin (rbbe)"'
-alias bi='echo "Use zprezto git plugin (rbbi)"'
+alias be='bundle exec'
+alias bi='bundle install'
 alias ls='ls -laG'
 
 ### Add PostgreSQL
@@ -144,3 +157,20 @@ export PATH="/usr/local/opt/libxslt/bin:$PATH"
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
+
+
+function docker_mysql {
+  containers=($(docker ps --format '{{.Names}}'))
+  select container in $containers; do
+    docker exec -it $container sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"'
+    break
+  done
+}
+function docker_bash {
+  containers=($(docker ps --format '{{.Names}}'))
+  select container in $containers; do
+    docker exec -it $container bash
+    break
+  done
+}
+
