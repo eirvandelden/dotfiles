@@ -91,7 +91,7 @@
   "window.nativeTabs": false,
   "window.zoomLevel": 0,
   "gitlab-mr.accessTokens": {
-    "https://gitlab.lico.nl":"ELzYsq4hJdEZSt9xuneA"
+    "https://gitlab.lico.nl": "ELzYsq4hJdEZSt9xuneA"
   },
   "gitlab-mr.removeSourceBranch": true,
   "gitlab-mr.autoOpenMr": true,
@@ -106,12 +106,15 @@
   "nightswitch.sunset": "18:00",
   "workbench.fontAliasing": "default",
   "workbench.panel.location": "right",
+  "workbench.colorCustomizations": {
+    "editorActiveLineNumber.foreground": "#FFFFFF"
+  },
   "explorer.openEditors.visible": 0,
   "workbench.activityBar.visible": false,
   "editor.renderControlCharacters": true,
   "explorer.decorations.badges": false,
   "sync.gist": "64f02251fe97d2b012983412c869b6e2",
-  "sync.lastUpload": "2017-12-19T12:46:06.912Z",
+  "sync.lastUpload": "2018-03-05T11:12:43.855Z",
   "sync.autoDownload": false,
   "sync.autoUpload": false,
   "sync.lastDownload": "",
@@ -161,5 +164,8 @@
   "gitlens.currentLine.enabled": false,
   "gitlens.hovers.currentLine.over": "line",
   "gitlens.hovers.currentLine.enabled": false,
-  "workbench.quickOpen.closeOnFocusLost": false
+  "workbench.quickOpen.closeOnFocusLost": false,
+  "sync.removeExtensions": true,
+  "sync.syncExtensions": true,
+  "gitlens.keymap": "alternate"
 }
