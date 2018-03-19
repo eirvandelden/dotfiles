@@ -50,12 +50,15 @@ alias -g RET='RAILS_ENV=test'
   #rails
 alias rc='bundle exec rails c'
 alias rs='bundle exec rails s'
-alias rors='bundle exec rails s'
-alias rorc='bundle exec rails c'
-alias rordbm='bundle exec rake db:migrate'
-alias rordbr='bundle exec rake db:rollback'
-alias rorg='bunlde exec rails g'
+alias rsdbm='bundle exec rake db:migrate'
+alias rsdbr='bundle exec rake db:rollback'
+alias rsg='bundle exec rails g'
+
+# alias standard commands to bundle exec
+alias cap='bundle exec cap'
+alias erd='bundle exec rake erd && open erd.pdf'
 alias rails='bundle exec rails'
+alias rake='bundle exec rake'
 
   #others
 alias be='bundle exec'
