@@ -64,6 +64,8 @@ alias rake='bundle exec rake'
 alias be='bundle exec'
 alias bi='bundle install'
 alias ls='ls -laG'
+alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
+alias cat="echo Use 'bat' for cat with syntax highlighting"
 
 ### Add PostgreSQL
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
