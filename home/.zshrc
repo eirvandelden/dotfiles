@@ -163,6 +163,18 @@ export PATH="/usr/local/opt/libxslt/bin:$PATH"
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
 
+# tty support for gpg
+export GPG_TTY=$(tty)
+
+# Setup GPG pin-entry with user-agent
+if test -f ~/.gnupg/.gpg-agent-info -a -n "$(pgrep gpg-agent)"; then
+  source ~/.gnupg/.gpg-agent-info
+  export GPG_AGENT_INFO
+  GPG_TTY=$(tty)
+  export GPG_TTY
+else
+  eval $(gpg-agent --daemon --write-env-file ~/.gnupg/.gpg-agent-info)
+fi
 
 function docker_mysql {
   containers=($(docker ps --format '{{.Names}}'))
