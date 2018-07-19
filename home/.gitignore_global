@@ -44,5 +44,5 @@ Thumbs.db
 .settings/*
 
 # Ruby
-bin/*
+# bin/*  #don't do it Etienne, you *will* forget to add the bin folder for new Rails projects and prevent others from running it.
 
