@@ -1,7 +1,7 @@
 // Place your settings in this file to overwrite the default settings
 {
   "workbench.colorTheme": "Solarized Dark",
-  "workbench.iconTheme": "vs-seti",
+  "workbench.iconTheme": "simple-icons",
   "terminal.integrated.fontFamily": "Hasklig",
   "terminal.integrated.fontSize": 13,
   "terminal.integrated.cursorBlinking": true,
@@ -114,7 +114,7 @@
   "editor.renderControlCharacters": true,
   "explorer.decorations.badges": false,
   "sync.gist": "64f02251fe97d2b012983412c869b6e2",
-  "sync.lastUpload": "2018-03-05T11:12:43.855Z",
+  "sync.lastUpload": "2018-05-07T09:59:41.706Z",
   "sync.autoDownload": false,
   "sync.autoUpload": false,
   "sync.lastDownload": "",
@@ -137,6 +137,7 @@
     "suppressLineUncommittedWarning": false,
     "suppressNoRepositoryWarning": false,
     "suppressResultsExplorerNotice": true,
+    "suppressShowKeyBindingsNotice": true,
     "suppressUpdateNotice": true,
     "suppressWelcomeNotice": false
   },
@@ -146,26 +147,32 @@
     "blocks",
     "containers"
   ],
-  "gitlens.blame.heatmap.location": "left",
-  "gitlens.blame.heatmap.enabled": false,
-  "gitlens.blame.avatars": false,
   "gitlens.blame.highlight.locations": [
-    "overview",
-    "line"
+    "line",
+    "overview"
   ],
-  "gitlens.codeLens.enabled": false,
   "gitlens.hovers.enabled": false,
   "gitlens.recentChanges.highlight.locations": [
     "overview",
-    "gutter",
     "line"
   ],
-  "gitlens.gitExplorer.enabled": false,
-  "gitlens.currentLine.enabled": false,
   "gitlens.hovers.currentLine.over": "line",
   "gitlens.hovers.currentLine.enabled": false,
   "workbench.quickOpen.closeOnFocusLost": false,
   "sync.removeExtensions": true,
   "sync.syncExtensions": true,
-  "gitlens.keymap": "alternate"
+  "gitlens.keymap": "none",
+  "gitlens.gitExplorer.enabled": false,
+  "gitlens.resultsExplorer.files.layout": "tree",
+  "gitlens.codeLens.enabled": false,
+  "gitlens.currentLine.enabled": false,
+  "gitlens.blame.heatmap.enabled": false,
+  "gitlens.blame.avatars": false,
+  "workbench.panel.defaultLocation": "right",
+  "terminal.external.osxExec": "iTerm.app",
+  "workbench.statusBar.visible": true,
+  "vscode_custom_css.statusbar": false,
+  "editor.detectIndentation": false,
+  "gitlens.historyExplorer.enabled": true,
+  "terminal.integrated.rendererType": "canvas"
 }
