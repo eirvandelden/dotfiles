@@ -1,131 +1,146 @@
 // Place your key bindings in this file to overwrite the defaults
 [
-    {
-        "key": "ctrl+t",
-        "command": "deleteLeft",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "escape",
-        "command": "editor.action.triggerSuggest",
-        "when": "editorTextFocus && !editorHasMultipleSelections"
-    },
-    {
-        "key": "tab",
-        "command": "acceptSelectedSuggestion",
-        "when": "editorTextFocus && suggestWidgetVisible"
-    },
-    {
-        "key": "cmd+w",
-        "command": "workbench.action.closeActiveEditor",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "cmd+[",
-        "command": "editor.action.commentLine",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "alt+z",
-        "command": "-editor.action.toggleWordWrap",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "ctrl+`",
-        "command": "workbench.action.terminal.focus",
-        "when": "!terminalFocus"
-    },
-    {
-        "key": "ctrl+`",
-        "command": "workbench.action.focusActiveEditorGroup",
-        "when": "terminalFocus"
-    },
-    {
-        "key": "shift+cmd+enter",
-        "command": "workbench.action.toggleMaximizedPanel"
-    },
-    {
-        "key": "shift+cmd+[",
-        "command": "workbench.action.terminal.focusPrevious",
-        "when": "terminalFocus"
-    },
-    {
-        "key": "shift+cmd+]",
-        "command": "workbench.action.terminal.focusNext",
-        "when": "terminalFocus"
-    },
-    {
-        "key": "shift+cmd+t",
-        "command": "workbench.action.terminal.new",
-        "when": "terminalFocus"
-    },
-    {
-        "key": "cmd+w",
-        "command": "workbench.action.terminal.kill",
-        "when": "terminalFocus"
-    },
-    {
-        "key": "alt+cmd+g",
-        "command": "workbench.view.git"
-    },
-    {
-        "key": "cmd+enter",
-        "command": "git.stageSelectedRanges"
-    },
-    {
-        "key": "escape",
-        "command": "removeSecondaryCursors",
-        "when": "editorHasMultipleSelections && editorTextFocus"
-    },
-    {
-        "key": "shift+cmd+t",
-        "command": "workbench.action.tasks.test",
-        "when": "editorTextFocus"
-    },
-    {
-        "key": "shift+cmd+i",
-        "command": "quicktask.showTasks"
-    },
-    {
-        "command": "workbench.action.zoomIn"
-    },
-    {
-        "command": "workbench.action.zoomOut"
-    },
-    {
-        "key": "ctrl+shift+e",
-        "command": "workbench.view.explorer"
-    },
-    {
-        "key": "shift+cmd+e",
-        "command": "-workbench.view.explorer"
-    },
-    {
-        "key": "ctrl+shift+d",
-        "command": "workbench.view.debug"
-    },
-    {
-        "key": "shift+cmd+d",
-        "command": "-workbench.view.debug"
-    },
-    {
-        "key": "ctrl+shift+`",
-        "command": "-workbench.action.terminal.new"
-    },
-    {
-        "key": "ctrl+shift+p",
-        "command": "workbench.action.togglePanel"
-    },
-    {
-        "key": "cmd+j",
-        "command": "-workbench.action.togglePanel"
-    },
-    {
-        "key": "ctrl+shift+b",
-        "command": "workbench.action.toggleSidebarVisibility"
-    },
-    {
-        "key": "cmd+b",
-        "command": "-workbench.action.toggleSidebarVisibility"
-    }
+  {
+    "key": "ctrl+t",
+    "command": "deleteLeft",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "escape",
+    "command": "editor.action.triggerSuggest",
+    "when": "editorTextFocus && !editorHasMultipleSelections"
+  },
+  {
+    "key": "tab",
+    "command": "acceptSelectedSuggestion",
+    "when": "editorTextFocus && suggestWidgetVisible"
+  },
+  {
+    "key": "cmd+w",
+    "command": "workbench.action.closeActiveEditor",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+[",
+    "command": "editor.action.commentLine",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "alt+z",
+    "command": "-editor.action.toggleWordWrap",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.terminal.focus",
+    "when": "!terminalFocus"
+  },
+  {
+    "key": "ctrl+`",
+    "command": "workbench.action.focusActiveEditorGroup",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "shift+cmd+enter",
+    "command": "workbench.action.toggleMaximizedPanel"
+  },
+  {
+    "key": "shift+cmd+[",
+    "command": "workbench.action.terminal.focusPrevious",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "shift+cmd+]",
+    "command": "workbench.action.terminal.focusNext",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "shift+cmd+t",
+    "command": "workbench.action.terminal.new",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "cmd+w",
+    "command": "workbench.action.terminal.kill",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "alt+cmd+g",
+    "command": "workbench.view.git"
+  },
+  {
+    "key": "cmd+enter",
+    "command": "git.stageSelectedRanges"
+  },
+  {
+    "key": "escape",
+    "command": "removeSecondaryCursors",
+    "when": "editorHasMultipleSelections && editorTextFocus"
+  },
+  {
+    "key": "shift+cmd+t",
+    "command": "workbench.action.tasks.test",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "shift+cmd+i",
+    "command": "quicktask.showTasks"
+  },
+  {
+    "command": "workbench.action.zoomIn"
+  },
+  {
+    "command": "workbench.action.zoomOut"
+  },
+  {
+    "key": "ctrl+shift+e",
+    "command": "workbench.view.explorer"
+  },
+  {
+    "key": "shift+cmd+e",
+    "command": "-workbench.view.explorer"
+  },
+  {
+    "key": "ctrl+shift+d",
+    "command": "workbench.view.debug"
+  },
+  {
+    "key": "shift+cmd+d",
+    "command": "-workbench.view.debug"
+  },
+  {
+    "key": "ctrl+shift+`",
+    "command": "-workbench.action.terminal.new"
+  },
+  {
+    "key": "ctrl+shift+p",
+    "command": "workbench.action.togglePanel"
+  },
+  {
+    "key": "cmd+j",
+    "command": "-workbench.action.togglePanel"
+  },
+  {
+    "key": "ctrl+shift+b",
+    "command": "workbench.action.toggleSidebarVisibility"
+  },
+  {
+    "key": "cmd+b",
+    "command": "-workbench.action.toggleSidebarVisibility"
+  },
+  {
+    "key": "ctrl+space",
+    "command": "-editor.action.triggerSuggest",
+    "when": "editorHasCompletionItemProvider && textInputFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+space",
+    "command": "-toggleSuggestionDetails",
+    "when": "suggestWidgetVisible && textInputFocus"
+  },
+  {
+    "key": "ctrl+alt+space",
+    "command": "-toggleSuggestionFocus",
+    "when": "suggestWidgetVisible && textInputFocus"
+  }
 ]
