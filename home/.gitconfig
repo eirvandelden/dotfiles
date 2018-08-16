@@ -1,11 +1,11 @@
 [user]
-  name = Etienne van Delden
   email = eirvandelden@me.com
 	signingkey = B90A190968BEBA4F
+  name = Etienne van Delden-de la Haije
 [alias]
   co = checkout
   ci = commit
-	hist = log --graph --date-order --date=short --pretty=format:'%C(auto)%h%d %C(reset)%s %C(bold blue)%ce %C(reset)%C(green)%cr (%cd)'
+  hist = log --graph --date-order --date=short --pretty=format:'%C(auto)%h%d %C(reset)%s %C(bold blue)%ce %C(reset)%C(green)%cr (%cd)'
 [apply]
   whitespace = nowarn
 [color]
@@ -29,11 +29,11 @@
   helper = osxkeychain
 [commit]
   template = ~/.gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
-	gpgsign = true
+  gpgsign = true
 [filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
+  clean = git-lfs clean -- %f
+  smudge = git-lfs smudge -- %f
+  process = git-lfs filter-process
+  required = true
 [gpg]
-	program = /usr/local/bin/gpg
+  program = /usr/local/bin/gpg
