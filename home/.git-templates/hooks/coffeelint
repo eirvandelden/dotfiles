@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+git diff --cached --name-status --diff-filter=ACM \
+  | awk '/\.coffee$/ { print $2 }' \
+  | xargs $(npm bin)/coffeelint
