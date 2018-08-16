@@ -33,7 +33,7 @@ alias gst='git status'
 alias gci='git commit'
 alias gco='git checkout'
 alias gad='git add'
-alias gdf='git diff'
+alias gdf='git diff -w' # Don't show whitespace changes, those are always good
 alias gbr='git branch'
 alias gbra='git branch -a'
 alias gps='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
@@ -65,7 +65,6 @@ alias be='bundle exec'
 alias bi='bundle install'
 alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
-alias cat="echo Use 'bat' for cat with syntax highlighting"
 
 ### Add PostgreSQL
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
