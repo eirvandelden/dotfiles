@@ -37,10 +37,6 @@
     "features/step_definitions/**/*.rb"
   ],
   "ruby.lint": {
-    "rubocop": {
-      "lint": true,
-      "rails": true
-    },
     "ruby": true
   },
   "terminal.integrated.commandsToSkipShell": [
@@ -174,5 +170,14 @@
   "vscode_custom_css.statusbar": false,
   "editor.detectIndentation": false,
   "gitlens.historyExplorer.enabled": true,
-  "terminal.integrated.rendererType": "canvas"
+  "terminal.integrated.rendererType": "canvas",
+  "solargraph.formatting": true,
+  "solargraph.autoformat": true,
+  "workbench.editor.openSideBySideDirection": "down",
+  "breadcrumbs.enabled": true,
+  "ruby.codeCompletion": "rcodetools",
+  "ruby.intellisense": "rubyLocate",
+  "ruby.useBundler": true,
+  "ruby.format": "rubocop",
+  "ruby.useLanguageServer": true
 }
