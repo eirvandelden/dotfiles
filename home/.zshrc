@@ -50,9 +50,9 @@ alias -g RET='RAILS_ENV=test'
   #rails
 alias rc='bundle exec rails c'
 alias rs='bundle exec rails s'
-alias rsdbm='bundle exec rake db:migrate'
-alias rsdbr='bundle exec rake db:rollback'
-alias rsg='bundle exec rails g'
+alias rdbm='bundle exec rake db:migrate'
+alias rdbr='bundle exec rake db:rollback'
+alias rg='bundle exec rails g'
 
 # alias standard commands to bundle exec
 alias cap='bundle exec cap'
@@ -65,6 +65,8 @@ alias be='bundle exec'
 alias bi='bundle install'
 alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
+alias clr="clear && printf '\e[3J'"
+# alias clear="echo Use "
 
 ### Add PostgreSQL
 export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
