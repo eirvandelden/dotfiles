@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 git diff --cached --name-status --diff-filter=ACM \
   | awk '/\.scss$/ { print $2 }' \
-  | xargs bundle exec scss-lint
+  | xargs /Users/eirvandelden/.rvm/gems/ruby-2.5.1/bin/scss-lint
