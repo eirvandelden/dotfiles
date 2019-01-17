@@ -61,6 +61,9 @@ alias rails='bundle exec rails'
 alias rake='bundle exec rake'
 
   #others
+alias os='overmind s'
+alias oc='overmind connect'
+alias ow='overmind connect web'
 alias be='bundle exec'
 alias bi='bundle install'
 alias ls='ls -laG'
@@ -195,3 +198,7 @@ function docker_bash {
   done
 }
 
+# open gitlab links via terminal
+function gitlab {
+  open "https://gitlab.lico.nl/${(j:/:)@}"
+}

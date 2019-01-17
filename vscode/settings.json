@@ -84,7 +84,7 @@
     "workbench.action.toggleMaximizedPanel"
   ],
   "workbench.editor.enablePreviewFromQuickOpen": false,
-  "window.nativeTabs": false,
+  "window.nativeTabs": true,
   "window.zoomLevel": 0,
   "gitlab-mr.accessTokens": {
     "https://gitlab.lico.nl": "ELzYsq4hJdEZSt9xuneA"
@@ -175,9 +175,19 @@
   "solargraph.autoformat": true,
   "workbench.editor.openSideBySideDirection": "down",
   "breadcrumbs.enabled": true,
-  "ruby.codeCompletion": "rcodetools",
+  "ruby.codeCompletion": false,
   "ruby.intellisense": "rubyLocate",
   "ruby.useBundler": true,
-  "ruby.format": "rubocop",
-  "ruby.useLanguageServer": true
+  "ruby.format": false,
+  "ruby.useLanguageServer": true,
+  "solargraph.commandPath": "/Users/eirvandelden/.rvm/gems/ruby-2.5.1/bin/solargraph",
+  "workbench.editor.swipeToNavigate": true,
+  "ruby.rubocop.executePath": "/Users/eirvandelden/.rvm/gems/ruby-2.5.1/bin/",
+  "ruby.rubocop.onSave": true,
+  "explorer.confirmDelete": false,
+  "gitlens.views.repositories.enabled": false,
+  "gitlens.views.fileHistory.enabled": true,
+  "gitlens.views.lineHistory.enabled": true,
+  "gitlens.views.compare.files.layout": "tree",
+  "gitlens.views.search.files.layout": "tree"
 }
