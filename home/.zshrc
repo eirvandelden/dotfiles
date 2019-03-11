@@ -10,6 +10,11 @@ bindkey -e
 # The following lines were added by compinstall
 zstyle :compinstall filename "${ZDOTDIR:-$HOME}/.zshrc"
 
+#MANUAL: brew completions
+if type brew &>/dev/null; then
+  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+fi
+
 autoload -Uz compinit
 compinit
 # End of lines added by compinstall
@@ -18,8 +23,8 @@ compinit
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
-
-export PATH="/usr/local/bin:$PATH"
+export PATH="/bin:/usr/local/bin:/usr/bin:$PATH"
+# export PATH="/usr/local/bin:$PATH"
 
 ###aliasses
 alias lup='licommander project up'
@@ -52,7 +57,7 @@ alias rc='bundle exec rails c'
 alias rs='bundle exec rails s'
 alias rdbm='bundle exec rake db:migrate'
 alias rdbr='bundle exec rake db:rollback'
-alias rg='bundle exec rails g'
+alias rsg='bundle exec rails g'
 
 # alias standard commands to bundle exec
 alias cap='bundle exec cap'
@@ -70,13 +75,17 @@ alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
 alias clr="clear && printf '\e[3J'"
 # alias clear="echo Use "
+alias ag="Echo Use 'rg', which is ripgrep"
+
+# VS Code
+export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
 ### Add PostgreSQL
-export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
+# export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
 
 ### Add Go Path
-export GOPATH="$HOME/code/go"
-export PATH="$GOPATH/bin:$PATH"
+# export GOPATH="$HOME/code/go"
+# export PATH="$GOPATH/bin:$PATH"
 
 ### zsh-plugins
 ##zsh-notify
@@ -144,8 +153,8 @@ export NVM_DIR="$HOME/.nvm"
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # brew QT & imagemagick6
-export PATH="/usr/local/opt/qt@5.5/bin:$PATH"
-export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
+# export PATH="/usr/local/opt/qt@5.5/bin:$PATH"
+# export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
 
 # chruby
 # if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
@@ -162,13 +171,13 @@ export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
 unsetopt AUTO_NAME_DIRS
 
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-export PATH="/usr/local/opt/libxslt/bin:$PATH"
+# export PATH="/usr/local/opt/libxslt/bin:$PATH"
 
 # Add remote tools
-export PATH="$PATH:/Users/eirvandelden/code/rconsole/bin"
+# export PATH="$PATH:/Users/eirvandelden/code/rconsole/bin"
 
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
+# export PATH="$PATH:$HOME/.rvm/bin"
 
 # tty support for gpg
 export GPG_TTY=$(tty)
@@ -198,7 +207,25 @@ function docker_bash {
   done
 }
 
+## LICO
+
 # open gitlab links via terminal
 function gitlab {
   open "https://gitlab.lico.nl/${(j:/:)@}"
 }
+
+# ISMS
+export PATH="$PATH:/Users/eirvandelden/code/isms-notify"
+
+#remote tools
+export PATH="$PATH:/Users/eirvandelden/code/remote-console-tools/bin"
+
+source /usr/local/opt/chruby/share/chruby/chruby.sh
+source /usr/local/opt/chruby/share/chruby/auto.sh
+
+#chruby using rvm folders
+RUBIES+=(~/.rvm/rubies/*)
+
+chruby ruby-2.6.0
+export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
+

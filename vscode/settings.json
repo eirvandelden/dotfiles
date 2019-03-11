@@ -138,7 +138,6 @@
     "suppressWelcomeNotice": false
   },
   "gitlens.codeLens.recentChange.command": "gitlens.showQuickCommitDetails",
-  "gitlens.codeLens.authors.enabled": false,
   "gitlens.codeLens.scopes": [
     "blocks",
     "containers"
@@ -147,22 +146,17 @@
     "line",
     "overview"
   ],
-  "gitlens.hovers.enabled": false,
   "gitlens.recentChanges.highlight.locations": [
     "overview",
     "line"
   ],
   "gitlens.hovers.currentLine.over": "line",
-  "gitlens.hovers.currentLine.enabled": false,
   "workbench.quickOpen.closeOnFocusLost": false,
   "sync.removeExtensions": true,
   "sync.syncExtensions": true,
   "gitlens.keymap": "none",
   "gitlens.gitExplorer.enabled": false,
   "gitlens.resultsExplorer.files.layout": "tree",
-  "gitlens.codeLens.enabled": false,
-  "gitlens.currentLine.enabled": false,
-  "gitlens.blame.heatmap.enabled": false,
   "gitlens.blame.avatars": false,
   "workbench.panel.defaultLocation": "right",
   "terminal.external.osxExec": "iTerm.app",
@@ -185,9 +179,21 @@
   "ruby.rubocop.executePath": "/Users/eirvandelden/.rvm/gems/ruby-2.5.1/bin/",
   "ruby.rubocop.onSave": true,
   "explorer.confirmDelete": false,
-  "gitlens.views.repositories.enabled": false,
-  "gitlens.views.fileHistory.enabled": true,
-  "gitlens.views.lineHistory.enabled": true,
+  "gitlens.views.fileHistory.enabled": false,
+  "gitlens.views.lineHistory.enabled": false,
   "gitlens.views.compare.files.layout": "tree",
-  "gitlens.views.search.files.layout": "tree"
+  "gitlens.views.search.files.layout": "tree",
+  "explorer.confirmDragAndDrop": false,
+  "git.autoStash": true,
+  "git.enableCommitSigning": true,
+  "gitlens.blame.heatmap.enabled": false,
+  "gitlens.blame.highlight.enabled": false,
+  "gitlens.hovers.enabled": false,
+  "gitlens.codeLens.enabled": false,
+  "gitlens.heatmap.toggleMode": "window",
+  "gitlens.recentChanges.toggleMode": "window",
+  "gitlens.currentLine.enabled": false,
+  "gitlens.views.repositories.enabled": false,
+  "gitlens.views.search.enabled": false,
+  "gitlens.views.compare.enabled": false
 }
