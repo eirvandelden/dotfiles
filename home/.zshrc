@@ -90,10 +90,10 @@ export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/b
 ### Prompt
 # Setup spaceship-Prompt
 # https://denysdovhan.com/spaceship-prompt/docs/Options.html#exit-code-exit_code
-SPACESHIP_CHAR_SYMBOL = 🚀
-SPACESHIP_CHAR_SYMBOL_SECONDARY = ➜
-SPACESHIP_BATTERY_THRESHOLD = 40
-SPACESHIP_BATTERY_PREFIX = 🔋
+$SPACESHIP_CHAR_SYMBOL = 🚀
+$SPACESHIP_CHAR_SYMBOL_SECONDARY = ➜
+$SPACESHIP_BATTERY_THRESHOLD = 40
+$SPACESHIP_BATTERY_PREFIX = 🔋
 
 ### zsh-plugins
 ##zsh-notify
