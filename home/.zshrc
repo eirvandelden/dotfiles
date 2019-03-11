@@ -87,6 +87,14 @@ export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/b
 # export GOPATH="$HOME/code/go"
 # export PATH="$GOPATH/bin:$PATH"
 
+### Prompt
+# Setup spaceship-Prompt
+# https://denysdovhan.com/spaceship-prompt/docs/Options.html#exit-code-exit_code
+SPACESHIP_CHAR_SYMBOL = 🚀
+SPACESHIP_CHAR_SYMBOL_SECONDARY = ➜
+SPACESHIP_BATTERY_THRESHOLD = 40
+SPACESHIP_BATTERY_PREFIX = 🔋
+
 ### zsh-plugins
 ##zsh-notify
 #zsh notify for terminal thingies
