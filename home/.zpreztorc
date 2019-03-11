@@ -172,3 +172,11 @@ zstyle ':prezto:module:history-substring-search' color 'yes'
 # autosuggestions
 #
 zstyle ':prezto:module:autosuggestions' color 'yes'
+
+### Prompt
+# Setup spaceship-Prompt
+# https://denysdovhan.com/spaceship-prompt/docs/Options.html#exit-code-exit_code
+SPACESHIP_CHAR_SYMBOL='🚀 '
+SPACESHIP_CHAR_SYMBOL_SECONDARY=➜
+SPACESHIP_BATTERY_THRESHOLD=40
+SPACESHIP_BATTERY_PREFIX=🔋
