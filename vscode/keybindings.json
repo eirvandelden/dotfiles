@@ -55,7 +55,7 @@
     "when": "terminalFocus"
   },
   {
-    "key": "shift+cmd+t",
+    "key": "cmd+t",
     "command": "workbench.action.terminal.new",
     "when": "terminalFocus"
   },
@@ -93,7 +93,7 @@
     "command": "workbench.action.zoomOut"
   },
   {
-    "key": "ctrl+shift+e",
+    "key": "shift+alt+e",
     "command": "workbench.view.explorer"
   },
   {
@@ -113,7 +113,7 @@
     "command": "-workbench.action.terminal.new"
   },
   {
-    "key": "ctrl+shift+p",
+    "key": "shift+alt+p",
     "command": "workbench.action.togglePanel"
   },
   {
@@ -121,7 +121,7 @@
     "command": "-workbench.action.togglePanel"
   },
   {
-    "key": "ctrl+shift+b",
+    "key": "shift+alt+b",
     "command": "workbench.action.toggleSidebarVisibility"
   },
   {
@@ -142,5 +142,52 @@
     "key": "ctrl+alt+space",
     "command": "-toggleSuggestionFocus",
     "when": "suggestWidgetVisible && textInputFocus"
+  },
+  {
+    "key": "shift+alt+f",
+    "command": "-editor.action.formatDocument",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "shift+alt+f",
+    "command": "-filesExplorer.findInFolder",
+    "when": "explorerResourceIsFolder && explorerViewletVisible && filesExplorerFocus && !inputFocus && resourceScheme == 'file'"
+  },
+  {
+    "key": "shift+alt+f",
+    "command": "workbench.action.findInFiles"
+  },
+  {
+    "key": "shift+cmd+f",
+    "command": "-workbench.action.findInFiles"
+  },
+  {
+    "key": "shift+alt+g",
+    "command": "workbench.view.scm"
+  },
+  {
+    "key": "ctrl+shift+g",
+    "command": "-workbench.view.scm"
+  },
+  {
+    "key": "shift+alt+d",
+    "command": "-extension.downloadSettings"
+  },
+  {
+    "key": "shift+alt+l",
+    "command": "workbench.view.extension.gitlab-workflow"
+  },
+  {
+    "key": "shift+alt+x",
+    "command": "workbench.view.extensions"
+  },
+  {
+    "key": "shift+cmd+x",
+    "command": "-workbench.view.extensions"
+  },
+  {
+    "key": "shift+alt+b",
+    "command": "-gitlens.toggleCodeLens",
+    "when": "editorTextFocus && gitlens:canToggleCodeLens && gitlens:enabled && config.gitlens.keymap == 'alternate'"
   }
 ]

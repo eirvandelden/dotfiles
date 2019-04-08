@@ -14,7 +14,6 @@
   ],
   "editor.fontSize": 13,
   "editor.fontFamily": "Hasklig",
-  "editor.fontLigatures": true,
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
   "editor.quickSuggestions": true,
@@ -23,7 +22,6 @@
   "diffEditor.ignoreTrimWhitespace": false,
   "files.trimTrailingWhitespace": true,
   "files.autoSave": "onFocusChange",
-  "typescript.useCodeSnippetsOnMethodSuggest": true, // improve Javascript suggestions
   "javascript.implicitProjectConfig.checkJs": true,
   "search.exclude": {
     "**/node_modules": true,
@@ -86,27 +84,18 @@
   "workbench.editor.enablePreviewFromQuickOpen": false,
   "window.nativeTabs": true,
   "window.zoomLevel": 0,
-  "gitlab-mr.accessTokens": {
-    "https://gitlab.lico.nl": "ELzYsq4hJdEZSt9xuneA"
-  },
-  "gitlab-mr.removeSourceBranch": true,
-  "gitlab-mr.autoOpenMr": true,
-  "gitlens.blame.line.enabled": false,
+  "gitlab.instanceUrl": "https://gitlab.lico.nl",
+  "gitlab.enableExperimentalFeatures": true,
   "editor.minimap.enabled": false,
   "editor.renderIndentGuides": false,
   "editor.multiCursorModifier": "alt",
   "editor.autoIndent": true,
-  "nightswitch.dayTheme": "Solarized Light",
-  "nightswitch.nightTheme": "Solarized Dark",
-  "nightswitch.location": "(51.4455274,5.6125657)",
-  "nightswitch.sunset": "18:00",
   "workbench.fontAliasing": "default",
-  "workbench.panel.location": "right",
   "workbench.colorCustomizations": {
-    "editorActiveLineNumber.foreground": "#FFFFFF"
+    "editorActiveLineNumber.activeForeground": "#FFFFFF"
   },
   "explorer.openEditors.visible": 0,
-  "workbench.activityBar.visible": false,
+  "workbench.activityBar.visible": true,
   "editor.renderControlCharacters": true,
   "explorer.decorations.badges": false,
   "sync.gist": "64f02251fe97d2b012983412c869b6e2",
@@ -121,9 +110,6 @@
   "sync.quietSync": false,
   "sync.askGistName": false,
   "terminal.integrated.scrollback": 20000,
-  "vscode_custom_css.imports": [
-    "file:////Users/eirvandelden/.homesick/repos/dotfiles/vscode/styles.css"
-  ],
   "git.autofetch": true,
   "gitlens.advanced.messages": {
     "suppressCommitHasNoPreviousCommitWarning": false,
@@ -155,29 +141,30 @@
   "sync.removeExtensions": true,
   "sync.syncExtensions": true,
   "gitlens.keymap": "none",
-  "gitlens.gitExplorer.enabled": false,
-  "gitlens.resultsExplorer.files.layout": "tree",
   "gitlens.blame.avatars": false,
   "workbench.panel.defaultLocation": "right",
   "terminal.external.osxExec": "iTerm.app",
   "workbench.statusBar.visible": true,
-  "vscode_custom_css.statusbar": false,
   "editor.detectIndentation": false,
-  "gitlens.historyExplorer.enabled": true,
   "terminal.integrated.rendererType": "canvas",
-  "solargraph.formatting": true,
-  "solargraph.autoformat": true,
   "workbench.editor.openSideBySideDirection": "down",
   "breadcrumbs.enabled": true,
   "ruby.codeCompletion": false,
   "ruby.intellisense": "rubyLocate",
   "ruby.useBundler": true,
-  "ruby.format": false,
   "ruby.useLanguageServer": true,
-  "solargraph.commandPath": "/Users/eirvandelden/.rvm/gems/ruby-2.5.1/bin/solargraph",
+  "ruby.lint": {
+    "rubocop": {
+      "rails": true,
+      "useBundler": true
+    }
+  },
+  "[ruby]": {
+    "editor.formatOnSave": false
+  },
+  "ruby.format": "rubocop",
+  "editor.formatOnSaveTimeout": 1500,
   "workbench.editor.swipeToNavigate": true,
-  "ruby.rubocop.executePath": "/Users/eirvandelden/.rvm/gems/ruby-2.5.1/bin/",
-  "ruby.rubocop.onSave": true,
   "explorer.confirmDelete": false,
   "gitlens.views.fileHistory.enabled": false,
   "gitlens.views.lineHistory.enabled": false,
@@ -195,5 +182,7 @@
   "gitlens.currentLine.enabled": false,
   "gitlens.views.repositories.enabled": false,
   "gitlens.views.search.enabled": false,
-  "gitlens.views.compare.enabled": false
+  "gitlens.views.compare.enabled": false,
+  "git.confirmSync": false,
+  "editor.fontLigatures": true
 }
