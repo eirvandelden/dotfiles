@@ -1,0 +1,18 @@
+#start
+/assign @etienne
+/label ~Development
+
+#stop
+/unassign
+/unlabel ~Development
+
+#done
+/unlabel ~Development
+/label ~Review
+
+
+# merged
+/unlabel ~Review
+/unlabel ~Development
+/label ~Testing
+/unassign
