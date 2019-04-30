@@ -2,4 +2,7 @@ bundler
 terminal-notifier
 homesick
 rubocop
+rubocop-rspec
+overmind
 scss_lint
+terminal-notifier

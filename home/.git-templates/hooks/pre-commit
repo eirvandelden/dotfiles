@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
+~/.git-templates/hooks/audit
 ~/.git-templates/hooks/rubocop
 ~/.git-templates/hooks/coffeelint
 ~/.git-templates/hooks/scss-lint
