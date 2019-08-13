@@ -53,23 +53,24 @@ alias -g REP='RAILS_ENV=production'
 alias -g RET='RAILS_ENV=test'
 
   #rails
-alias rc='bundle exec rails c'
-alias rs='bundle exec rails s'
-alias rdbm='bundle exec rake db:migrate'
-alias rdbr='bundle exec rake db:rollback'
-alias rsg='bundle exec rails g'
+alias rc='rails c'
+alias rs='rails s'
+alias rdbm='rake db:migrate'
+alias rdbr='rake db:rollback'
+alias rsg='rails g'
 
 # alias standard commands to bundle exec
-alias cap='bundle exec cap'
-alias erd='bundle exec rake erd && open erd.pdf'
-alias rails='bundle exec rails'
-alias rake='bundle exec rake'
+# alias cap='bundle exec cap'
+alias erd='rake erd && open erd.pdf'
+# alias rails='bundle exec rails'
+# alias rake='bundle exec rake'
+# alias guard='bundle exec guard'
 
   #others
 alias os='overmind s'
 alias oc='overmind connect'
 alias ow='overmind connect web'
-alias be='bundle exec'
+alias be="echo Use a .git/safe directory instead for binstubs"
 alias bi='bundle install'
 alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
@@ -225,6 +226,12 @@ source /usr/local/opt/chruby/share/chruby/auto.sh
 
 #chruby using rvm folders
 RUBIES+=(~/.rvm/rubies/*)
+
+# prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
+export PATH=".git/safe/../../bin:$PATH"
+
+# qt5.5
+export PATH="/Applications/Qt5.5.0/5.5/clang_64/bin:$PATH"
 
 chruby ruby-2.6.0
 export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
