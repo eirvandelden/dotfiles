@@ -155,9 +155,6 @@ HELPDIR=/usr/local/share/zsh/help
   # RUBIES+=( /usr/local/Cellar/ruby@1.9/*)
   # chruby $(cat ~/.ruby-version)
 # fi
-# Allows installation of default rubies
-# from https://github.com/jpickwell/chruby-default-gems
-# source /usr/local/share/chruby-default-gems.sh
 
 # Don't show RVM_PROJECT_PATH in terminal
 unsetopt AUTO_NAME_DIRS

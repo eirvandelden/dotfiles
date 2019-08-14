@@ -1,8 +1,9 @@
 bundler
-terminal-notifier
+debase
 homesick
+overmind
 rubocop
 rubocop-rspec
-overmind
+ruby-debug-ide
 scss_lint
 terminal-notifier
