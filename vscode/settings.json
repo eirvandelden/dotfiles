@@ -18,7 +18,6 @@
   "editor.formatOnSave": true,
   "editor.quickSuggestions": true,
   "editor.quickSuggestionsDelay": 0,
-  "diffEditor.renderSideBySide": false,
   "diffEditor.ignoreTrimWhitespace": false,
   "files.trimTrailingWhitespace": true,
   "files.autoSave": "onFocusChange",
@@ -34,9 +33,6 @@
   "cucumberautocomplete.steps": [
     "features/step_definitions/**/*.rb"
   ],
-  "ruby.lint": {
-    "ruby": true
-  },
   "terminal.integrated.commandsToSkipShell": [
     "editor.action.toggleTabFocusMode",
     "workbench.action.debug.continue",
@@ -147,7 +143,6 @@
   "workbench.statusBar.visible": true,
   "editor.detectIndentation": false,
   "terminal.integrated.rendererType": "canvas",
-  "workbench.editor.openSideBySideDirection": "down",
   "breadcrumbs.enabled": true,
   "ruby.codeCompletion": false,
   "ruby.intellisense": "rubyLocate",
@@ -184,5 +179,14 @@
   "gitlens.views.search.enabled": false,
   "gitlens.views.compare.enabled": false,
   "git.confirmSync": false,
-  "editor.fontLigatures": true
+  "editor.fontLigatures": true,
+  "jira-plugin.baseUrl": "https://officebooking.atlassian.net",
+  "jira-plugin.username": "etienne@lico.nl",
+  "ruby.lintDebounceTime": 1000,
+  "terminal.integrated.shell.osx": "/bin/zsh",
+  "git.allowForcePush": true,
+  "git.alwaysSignOff": true,
+  "git.confirmForcePush": true,
+  "git.inputValidation": "off",
+  "workbench.editor.openSideBySideDirection": "down"
 }

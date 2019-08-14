@@ -55,7 +55,7 @@
     "when": "terminalFocus"
   },
   {
-    "key": "cmd+t",
+    "key": "shift+cmd+t",
     "command": "workbench.action.terminal.new",
     "when": "terminalFocus"
   },
@@ -63,10 +63,6 @@
     "key": "cmd+w",
     "command": "workbench.action.terminal.kill",
     "when": "terminalFocus"
-  },
-  {
-    "key": "alt+cmd+g",
-    "command": "workbench.view.git"
   },
   {
     "key": "cmd+enter",
@@ -189,5 +185,13 @@
     "key": "shift+alt+b",
     "command": "-gitlens.toggleCodeLens",
     "when": "editorTextFocus && gitlens:canToggleCodeLens && gitlens:enabled && config.gitlens.keymap == 'alternate'"
+  },
+  {
+    "key": "shift+cmd+t",
+    "command": "-workbench.action.reopenClosedEditor"
+  },
+  {
+    "key": "shift+cmd+t",
+    "command": "-workbench.action.reopenClosedEditor"
   }
 ]
