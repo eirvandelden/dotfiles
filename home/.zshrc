@@ -10,11 +10,6 @@ bindkey -e
 # The following lines were added by compinstall
 zstyle :compinstall filename "${ZDOTDIR:-$HOME}/.zshrc"
 
-#MANUAL: brew completions
-if type brew &>/dev/null; then
-  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
-fi
-
 autoload -Uz compinit
 compinit
 # End of lines added by compinstall
@@ -146,10 +141,6 @@ autoload run-help
 HELPDIR=/usr/local/share/zsh/help
 
 
-# NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
@@ -180,8 +171,6 @@ unsetopt AUTO_NAME_DIRS
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 # export PATH="$PATH:$HOME/.rvm/bin"
 
-# tty support for gpg
-export GPG_TTY=$(tty)
 
 # Setup GPG pin-entry with user-agent
 if test -f ~/.gnupg/.gpg-agent-info -a -n "$(pgrep gpg-agent)"; then
@@ -227,12 +216,11 @@ source /usr/local/opt/chruby/share/chruby/auto.sh
 #chruby using rvm folders
 RUBIES+=(~/.rvm/rubies/*)
 
-# prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
-export PATH=".git/safe/../../bin:$PATH"
-
 # qt5.5
 export PATH="/Applications/Qt5.5.0/5.5/clang_64/bin:$PATH"
 
 chruby ruby-2.6.0
 export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 
+# prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
+export PATH=".git/safe/../../bin:$PATH"
