@@ -13,7 +13,7 @@
     120
   ],
   "editor.fontSize": 13,
-  "editor.fontFamily": "Hasklig",
+  "editor.fontFamily": "Fira Code iScript",
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
   "editor.quickSuggestions": true,
@@ -188,5 +188,6 @@
   "git.alwaysSignOff": true,
   "git.confirmForcePush": true,
   "git.inputValidation": "off",
-  "workbench.editor.openSideBySideDirection": "down"
+  "workbench.editor.openSideBySideDirection": "down",
+  "editor.cursorSurroundingLines": 10
 }
