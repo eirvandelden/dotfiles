@@ -20,10 +20,6 @@ export GPG_TTY=$(tty)
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-#enable chruby-default-gems
-DEFAULT_GEMFILE='~/.default-ruby-gems'
-source /usr/local/share/chruby-default-gems.sh
-
 # Remove the need for bundle exec ... or ./bin/...
 # by adding ./bin to path if the current project is trusted
 function set_local_bin_path() {

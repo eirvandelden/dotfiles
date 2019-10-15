@@ -171,10 +171,8 @@
   "gitlens.blame.heatmap.enabled": false,
   "gitlens.blame.highlight.enabled": false,
   "gitlens.hovers.enabled": false,
-  "gitlens.codeLens.enabled": false,
   "gitlens.heatmap.toggleMode": "window",
   "gitlens.recentChanges.toggleMode": "window",
-  "gitlens.currentLine.enabled": false,
   "gitlens.views.repositories.enabled": false,
   "gitlens.views.search.enabled": false,
   "gitlens.views.compare.enabled": false,
@@ -189,5 +187,7 @@
   "git.confirmForcePush": true,
   "git.inputValidation": "off",
   "workbench.editor.openSideBySideDirection": "down",
-  "editor.cursorSurroundingLines": 10
+  "editor.cursorSurroundingLines": 5,
+  "gitlens.currentLine.enabled": false,
+  "gitlens.codeLens.enabled": false
 }

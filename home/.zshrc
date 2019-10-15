@@ -209,14 +209,14 @@ export PATH="$PATH:/Users/eirvandelden/code/remote-console-tools/bin"
 
 source /usr/local/opt/chruby/share/chruby/chruby.sh
 source /usr/local/opt/chruby/share/chruby/auto.sh
-
-#chruby using rvm folders
-RUBIES+=(~/.rvm/rubies/*)
+chruby ruby-2.6.4
+#enable chruby-default-gems
+DEFAULT_GEMFILE='~/.default-ruby-gems'
+source /usr/local/share/chruby-default-gems.sh
 
 # qt5.5
 export PATH="/Applications/Qt5.5.0/5.5/clang_64/bin:$PATH"
 
-chruby ruby-2.6.0
 export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
