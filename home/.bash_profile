@@ -43,9 +43,9 @@ alias grb='git rebase'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
   #rails environment
-alias -g RED='RAILS_ENV=development'
-alias -g REP='RAILS_ENV=production'
-alias -g RET='RAILS_ENV=test'
+alias RED='RAILS_ENV=development'
+alias REP='RAILS_ENV=production'
+alias RET='RAILS_ENV=test'
 
   #rails
 alias rc='rails c'
