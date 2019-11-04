@@ -72,6 +72,7 @@ alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
 alias clr="clear && printf '\e[3J'"
 # alias clear="echo Use "
 alias ag="Echo Use 'rg', which is ripgrep"
+alias audit="bundle audit update; bundle audit check"
 
 # VS Code
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
