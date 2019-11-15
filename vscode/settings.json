@@ -189,5 +189,6 @@
   "workbench.editor.openSideBySideDirection": "down",
   "editor.cursorSurroundingLines": 5,
   "gitlens.currentLine.enabled": false,
-  "gitlens.codeLens.enabled": false
+  "gitlens.codeLens.enabled": false,
+  "git.ignoreLegacyWarning": true
 }
