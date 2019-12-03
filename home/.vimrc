@@ -11,12 +11,12 @@ filetype plugin indent on
 "set colorscheme based on time
 "let hour = strftime("%H")
 "if 8 <= hour && hour < 17
-  set background=light
+"  set background=light
 "else
 "  set background=dark
 "endif
 
-colorscheme solarized
+"colorscheme solarized
 
 " size of hard tabstop
 set tabstop=2
@@ -39,11 +39,12 @@ au BufRead * normal zR
 set number
 
 " always show 80 column
-set colorcolumn=80
+set colorcolumn=120
 " set the column at the cursor
 au WinLeave * set nocursorline nocursorcolumn
 au WinEnter * set cursorline cursorcolumn
-set cursorline cursorcolumn
+" set a column at the cursor
+" set cursorline cursorcolumn
 
 " show trailing whitespace: using a . as space
 set list
@@ -63,12 +64,12 @@ au BufRead,BufNewFile *.md set filetype=markdown
 
 """""""" Vim-Airline
 " use powerline fonts
-let g:airline_powerline_fonts = 1
+" let g:airline_powerline_fonts = 1
 
 " always show powerline
-let g:airline#extensions#tabline#enabled = 1
+" let g:airline#extensions#tabline#enabled = 1
 " always show powerline
-set laststatus=2
+" set laststatus=2
 
 """""""" Supertab
 " scroll supertab completion list from top to bottom
