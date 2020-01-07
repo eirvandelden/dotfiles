@@ -50,11 +50,6 @@
     "when": "terminalFocus"
   },
   {
-    "key": "shift+cmd+t",
-    "command": "workbench.action.terminal.new",
-    "when": "terminalFocus"
-  },
-  {
     "key": "cmd+w",
     "command": "workbench.action.terminal.kill",
     "when": "terminalFocus"
@@ -98,10 +93,6 @@
   {
     "key": "shift+cmd+d",
     "command": "-workbench.view.debug"
-  },
-  {
-    "key": "ctrl+shift+`",
-    "command": "-workbench.action.terminal.new"
   },
   {
     "key": "shift+alt+p",

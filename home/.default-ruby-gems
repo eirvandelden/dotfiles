@@ -1,7 +1,7 @@
 bundler
 debase
 homesick
-overmind
+puma-dev
 rubocop
 rubocop-rspec
 ruby-debug-ide

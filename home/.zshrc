@@ -22,9 +22,6 @@ export PATH="/bin:/usr/local/bin:/usr/bin:$PATH"
 # export PATH="/usr/local/bin:$PATH"
 
 ###aliasses
-alias lup='licommander project up'
-alias ldo='licommander project down'
-
   #git
 alias g='git'
 alias gs='git stash'
@@ -73,6 +70,8 @@ alias clr="clear && printf '\e[3J'"
 # alias clear="echo Use "
 alias ag="Echo Use 'rg', which is ripgrep"
 alias audit="bundle audit update; bundle audit check"
+alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
+alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 
 # VS Code
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
@@ -195,19 +194,7 @@ function docker_bash {
   done
 }
 
-## LICO
-
-# open gitlab links via terminal
-function gitlab {
-  open "https://gitlab.lico.nl/${(j:/:)@}"
-}
-
-# ISMS
-export PATH="$PATH:/Users/eirvandelden/code/isms-notify"
-
-#remote tools
-export PATH="$PATH:/Users/eirvandelden/code/remote-console-tools/bin"
-
+# chruby
 source /usr/local/opt/chruby/share/chruby/chruby.sh
 source /usr/local/opt/chruby/share/chruby/auto.sh
 chruby ruby-2.6.4
@@ -215,10 +202,10 @@ chruby ruby-2.6.4
 DEFAULT_GEMFILE='~/.default-ruby-gems'
 source /usr/local/share/chruby-default-gems.sh
 
-# qt5.5
-export PATH="/Applications/Qt5.5.0/5.5/clang_64/bin:$PATH"
-
-export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
+# NVM_DIR
+export NVM_DIR="$HOME/.nvm"
+  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+  [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
 export PATH=".git/safe/../../bin:$PATH"
