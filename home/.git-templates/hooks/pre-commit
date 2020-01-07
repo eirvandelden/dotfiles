@@ -4,4 +4,3 @@ set -e
 ~/.git-templates/hooks/rubocop
 ~/.git-templates/hooks/coffeelint
 ~/.git-templates/hooks/scss-lint
-~/.git-templates/hooks/audit
