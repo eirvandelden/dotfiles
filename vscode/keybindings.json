@@ -179,5 +179,15 @@
   {
     "key": "shift+cmd+t",
     "command": "-workbench.action.reopenClosedEditor"
+  },
+  {
+    "key": "cmd+enter",
+    "command": "git.commit",
+    "when": "workbench.view.scm"
+  },
+  {
+    "key": "shift+cmd+t",
+    "command": "workbench.action.terminal.new",
+    "when": "terminalFocus"
   }
 ]
