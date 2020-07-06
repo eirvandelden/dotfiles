@@ -37,6 +37,9 @@ alias gps='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
 alias gpl='git pull --rebase --autostash && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
 alias gcp='git cherry-pick'
 alias grb='git rebase'
+alias grbc='git rebase --continue'
+alias grbs='git rebase --skip'
+alias grba='git rebase --abort'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
 
   #rails environment
