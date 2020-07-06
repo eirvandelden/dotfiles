@@ -50,6 +50,7 @@ alias -g RET='RAILS_ENV=test'
   #rails
 alias rc='rails c'
 alias rs='rails s'
+alias rrs='puma-dev -stop'
 alias rdbm='rake db:migrate'
 alias rdbr='rake db:rollback'
 alias rsg='rails g'
