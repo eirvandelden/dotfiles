@@ -80,6 +80,11 @@ alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 # VS Code
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
+# open github links via terminal
+ function gh {
+   open "https://github.com/eet-nu/${(j:/:)@}"
+ }
+
 ### Add PostgreSQL
 # export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
 
