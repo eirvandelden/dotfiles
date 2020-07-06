@@ -206,7 +206,7 @@ function docker_bash {
 # chruby
 source /usr/local/opt/chruby/share/chruby/chruby.sh
 source /usr/local/opt/chruby/share/chruby/auto.sh
-chruby ruby-2.6.4
+chruby ruby-2.7.0
 #enable chruby-default-gems
 DEFAULT_GEMFILE='~/.default-ruby-gems'
 source /usr/local/share/chruby-default-gems.sh
