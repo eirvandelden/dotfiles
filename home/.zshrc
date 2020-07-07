@@ -149,7 +149,6 @@ zle -N zle-line-init
 autoload run-help
 HELPDIR=/usr/local/share/zsh/help
 
-
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 

@@ -73,5 +73,25 @@ fi
 
 TMPPREFIX="${TMPDIR%/}/zsh"
 
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-# export PATH="$PATH:$HOME/.rvm/bin"
+
+# iterm2 auto profile switching based on macos Dark Mode
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    sith() {
+        val=$(defaults read -g AppleInterfaceStyle 2>/dev/null)
+        if [[ $val == "Dark" ]]; then
+            i
+        fi
+    }
+
+    i() {
+        if [[ $ITERM_PROFILE == "Light" ]]; then
+            echo -ne "\033]50;SetProfile=Dark\a"
+            export ITERM_PROFILE="Dark"
+        else
+            echo -ne "\033]50;SetProfile=Light\a"
+            export ITERM_PROFILE="Light"
+        fi
+    }
+
+    sith
+fi

@@ -8,6 +8,8 @@ set shortmess+=A
 filetype plugin indent on
 
 "enabled solarized colours
+colorscheme solarized
+
 "set colorscheme based on time
 "let hour = strftime("%H")
 "if 8 <= hour && hour < 17
@@ -16,7 +18,14 @@ filetype plugin indent on
 "  set background=dark
 "endif
 
-"colorscheme solarized
+"set colorscheme based on iterm profile
+let iterm_profile = $ITERM_PROFILE
+
+if iterm_profile == "Dark"
+  set background=dark
+else
+  set background=light        " Set solarized background color
+endif
 
 " size of hard tabstop
 set tabstop=2
