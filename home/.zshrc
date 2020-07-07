@@ -19,7 +19,10 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 export PATH="/bin:/usr/local/bin:/usr/bin:$PATH"
-# export PATH="/usr/local/bin:$PATH"
+
+# fixes ruby processes crashing due to using fork() on macos
+# stolen from: https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/
+# export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 ###aliasses
   #git
@@ -152,30 +155,10 @@ HELPDIR=/usr/local/share/zsh/help
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-# brew QT & imagemagick6
-# export PATH="/usr/local/opt/qt@5.5/bin:$PATH"
-# export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
-
-# chruby
-# if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
-  # source /usr/local/opt/chruby/share/chruby/chruby.sh
-  # source /usr/local/opt/chruby/share/chruby/auto.sh
-  # RUBIES+=( /usr/local/Cellar/ruby@1.9/*)
-  # chruby $(cat ~/.ruby-version)
-# fi
-
-# Don't show RVM_PROJECT_PATH in terminal
-unsetopt AUTO_NAME_DIRS
-
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-# export PATH="/usr/local/opt/libxslt/bin:$PATH"
-
-# Add remote tools
-# export PATH="$PATH:/Users/eirvandelden/code/rconsole/bin"
-
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-# export PATH="$PATH:$HOME/.rvm/bin"
-
+# NVM_DIR
+export NVM_DIR="$HOME/.nvm"
+  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
+  [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # Setup GPG pin-entry with user-agent
 if test -f ~/.gnupg/.gpg-agent-info -a -n "$(pgrep gpg-agent)"; then
@@ -203,17 +186,21 @@ function docker_bash {
 }
 
 # chruby
-source /usr/local/opt/chruby/share/chruby/chruby.sh
-source /usr/local/opt/chruby/share/chruby/auto.sh
-chruby ruby-2.7.0
-#enable chruby-default-gems
-DEFAULT_GEMFILE='~/.default-ruby-gems'
-source /usr/local/share/chruby-default-gems.sh
+if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
+  source /usr/local/opt/chruby/share/chruby/chruby.sh
+  source /usr/local/opt/chruby/share/chruby/auto.sh
+  chruby $(cat ~/.ruby-version)
 
-# NVM_DIR
-export NVM_DIR="$HOME/.nvm"
-  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+  #enable chruby-default-gems
+  DEFAULT_GEMFILE='~/.default-ruby-gems'
+  source /usr/local/share/chruby-default-gems.sh
+fi
+
+# homebrew github token
+# export HOMEBREW_GITHUB_API_TOKEN=dd03b4d0025f18c4763db84e29fc3e4010cca475
 
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
 export PATH=".git/safe/../../bin:$PATH"
+
+# heroku autocomplete setup
+HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;

@@ -47,7 +47,7 @@ au BufRead * normal zR
 " always show line numbers
 set number
 
-" always show 80 column
+" always show 120 column
 set colorcolumn=120
 " set the column at the cursor
 au WinLeave * set nocursorline nocursorcolumn
