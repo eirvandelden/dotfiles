@@ -169,7 +169,6 @@
   "workbench.editor.openSideBySideDirection": "down",
   "editor.cursorSurroundingLines": 5,
   "git.ignoreLegacyWarning": true,
-  "githubNotificationsBell.oauthToken": "63cfc18ae6e9f6e9b75c7655fb7d8bbd0008f4e1",
   "travis.pro": true,
   "trailing-spaces.deleteModifiedLinesOnly": true,
   "trailing-spaces.backgroundColor": "",
