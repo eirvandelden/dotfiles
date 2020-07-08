@@ -80,6 +80,9 @@ alias audit="bundle audit update; bundle audit check"
 alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 
+# enable #thefuck as doh
+eval $(thefuck --alias doh)
+
 # VS Code
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 

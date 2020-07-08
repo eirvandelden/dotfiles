@@ -29,13 +29,21 @@ zstyle ':prezto:load' pmodule \
   'editor' \
   'history' \
   'spectrum' \
-  'ssh' \
   'completion' \
-  'history-substring-search' \
   'syntax-highlighting' \
+  'history-substring-search' \
   'autosuggestions' \
   'contrib-prompt' \
-  'prompt'
+  'prompt' \
+  'alias-tips' \
+  'clipboard' \
+  'thefuck'
+
+## from prezto-contrib: https://github.com/belak/prezto-contrib#usage
+# `contrib-prompt contains the spaceship prompt`
+# `alias-tips` shows the alias of a command if available
+# `clipboard` integrates system clipboard by using pbcopy
+# `thefuck` fixes typos
 
 #
 # Editor

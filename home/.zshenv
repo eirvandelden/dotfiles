@@ -38,3 +38,6 @@ if [[ -n "$ZSH_VERSION" ]]; then
     preexec_functions+=("add_trusted_local_bin_to_path")
   fi
 fi
+
+### Configure thefuck
+export THEFUCK_REQUIRE_CONFIRMATION='false'
