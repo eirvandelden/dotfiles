@@ -18,7 +18,17 @@ compinit
 if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
-export PATH="/bin:/usr/local/bin:/usr/bin:$PATH"
+
+# chruby
+if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
+  source /usr/local/opt/chruby/share/chruby/chruby.sh
+  source /usr/local/opt/chruby/share/chruby/auto.sh
+  chruby $(cat ~/.ruby-version)
+
+  #enable chruby-default-gems
+  DEFAULT_GEMFILE='~/.default-ruby-gems'
+  source /usr/local/share/chruby-default-gems.sh
+fi
 
 # fixes ruby processes crashing due to using fork() on macos
 # stolen from: https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/
@@ -178,22 +188,15 @@ function docker_bash {
   done
 }
 
-# chruby
-if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
-  source /usr/local/opt/chruby/share/chruby/chruby.sh
-  source /usr/local/opt/chruby/share/chruby/auto.sh
-  chruby $(cat ~/.ruby-version)
-
-  #enable chruby-default-gems
-  DEFAULT_GEMFILE='~/.default-ruby-gems'
-  source /usr/local/share/chruby-default-gems.sh
-fi
-
 # homebrew github token
 # export HOMEBREW_GITHUB_API_TOKEN=dd03b4d0025f18c4763db84e29fc3e4010cca475
 
+# https://reinteractive.com/posts/266-no-more-bundle-exec-using-the-new-rubygems_gemdeps-environment-variable
+# export RUBYGEMS_GEMDEPS=-
+
+# export PATH="/usr/local/bin:/usr/bin:$PATH"
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
-export PATH=".git/safe/../../bin:$PATH"
+# export PATH=".git/safe/../../bin:$PATH"
 
 # heroku autocomplete setup
 HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;

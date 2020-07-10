@@ -13,10 +13,14 @@ if [[ "$SHLVL" -eq 1 && ! -o LOGIN && -s "${ZDOTDIR:-$HOME}/.zprofile" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprofile"
 fi
 
+### Configure thefuck
+export THEFUCK_REQUIRE_CONFIRMATION='false'
+
 # NVM
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
+# source: https://dance.computer.dance/posts/2015/02/making-chruby-and-binstubs-play-nice.html
 # Remove the need for bundle exec ... or ./bin/...
 # by adding ./bin to path if the current project is trusted
 function set_local_bin_path() {
@@ -38,6 +42,3 @@ if [[ -n "$ZSH_VERSION" ]]; then
     preexec_functions+=("add_trusted_local_bin_to_path")
   fi
 fi
-
-### Configure thefuck
-export THEFUCK_REQUIRE_CONFIRMATION='false'
