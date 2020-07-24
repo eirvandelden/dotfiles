@@ -1,0 +1,24 @@
+# from https://github.com/testdouble/standard/blob/master/config/base.yml. I refuse to add a gem for a rubocop wrapper
+inherit_from: https://raw.githubusercontent.com/testdouble/standard/master/config/base.yml
+
+AllCops:
+  TargetRubyVersion: 2.7
+
+# Layout
+Layout/LineLength:
+  Max: 120
+
+# Metrics
+Metrics/AbcSize:
+  Max: 20
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*_spec.rb
+Metrics/MethodLength:
+  Max: 20
+
+# Style
+Style/Documentation:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Enabled: false
