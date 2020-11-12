@@ -3,6 +3,7 @@ debase
 homesick
 puma-dev
 rubocop
+rubocop-performance
 rubocop-rspec
 ruby-debug-ide
 scss_lint
