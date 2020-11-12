@@ -90,6 +90,7 @@ alias ag="Echo Use 'rg', which is ripgrep"
 alias audit="bundle audit update; bundle audit check"
 alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
+alias edge="/Applications/Microsoft\ Edge.app/Contents/MacOS/Microsoft\ Edge --remote-debugging-port=9222&"
 
 # enable #thefuck as doh
 eval $(thefuck --alias doh)
