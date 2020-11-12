@@ -1,2 +1,3 @@
 source /usr/local/share/chruby/chruby.sh
 chruby $(cat .ruby-version)
+export BYEBUGPORT=5000
