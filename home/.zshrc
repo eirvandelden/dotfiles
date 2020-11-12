@@ -27,7 +27,7 @@ if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
 
   #enable chruby-default-gems
   DEFAULT_GEMFILE='~/.default-ruby-gems'
-  source /usr/local/share/chruby-default-gems.sh
+  source ~/.chruby-default-gems/chruby-default-gems.sh
 fi
 
 # fixes ruby processes crashing due to using fork() on macos
@@ -199,4 +199,4 @@ function docker_bash {
 # export PATH=".git/safe/../../bin:$PATH"
 
 # heroku autocomplete setup
-HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;
+HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH
