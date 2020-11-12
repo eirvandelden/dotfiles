@@ -1,12 +1,33 @@
-# from https://github.com/testdouble/standard/blob/master/config/base.yml. I refuse to add a gem for a rubocop wrapper
-inherit_from: https://raw.githubusercontent.com/testdouble/standard/master/config/base.yml
+require:
+  - rubocop-rspec
+  - rubocop-performance
 
 AllCops:
   TargetRubyVersion: 2.7
+  Exclude:
+    - db/**/*schema.rb
+    - db/schema.rb
+    - bin/**/*
+    - node_modules/**/*
+  NewCops: enable ## Cops that need decisions are enabled by default
 
 # Layout
+Layout/ExtraSpacing:
+  Enabled: true
+  AllowForAlignment: true
+  AllowBeforeTrailingComments: false
+  ForceEqualSignAlignment: true
+Layout/EndAlignment:
+  Enabled: true
+  AutoCorrect: true
+  EnforcedStyleAlignWith: keyword
+  Severity: warning
 Layout/LineLength:
   Max: 120
+Layout/MultilineMethodCallIndentation:
+  Enabled: true
+  EnforcedStyle: aligned
+  IndentationWidth: ~
 
 # Metrics
 Metrics/AbcSize:
@@ -22,3 +43,10 @@ Style/Documentation:
   Enabled: false
 Style/FrozenStringLiteralComment:
   Enabled: false
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: double_quotes
+  ConsistentQuotesInMultiline: false
+
+
+
