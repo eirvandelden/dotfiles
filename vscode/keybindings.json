@@ -103,7 +103,7 @@
     "command": "-workbench.action.togglePanel"
   },
   {
-    "key": "shift+alt+b",
+    "key": "alt+cmd+b",
     "command": "workbench.action.toggleSidebarVisibility"
   },
   {
@@ -189,5 +189,15 @@
     "key": "shift+cmd+t",
     "command": "workbench.action.terminal.new",
     "when": "terminalFocus"
+  },
+  {
+    "key": "alt+backspace",
+    "command": "-workbench.action.terminal.sendSequence",
+    "when": "terminalFocus"
+  },
+  {
+    "key": "alt+backspace",
+    "command": "-deleteWordLeft",
+    "when": "textInputFocus && !editorReadonly"
   }
 ]

@@ -28,12 +28,17 @@ This dotfile repository contains dotfile configuration for the following tools:
  * **terminal notifier** `brew install terminal-notifier`
 
 ## Brew install
- * `brew install nvm`
+
  * `brew install the_silver_searcher`
 
-## Node
-* `nvm ls-remote`
-* `nvm install <LATEST>`
+## chnode
+
+    brew tap tkareine/chnode
+    brew install tkareine/chnode/chnode
+
+# node-build
+
+    brew install node-build
 
 # Sensible OS X defaults
 

@@ -30,6 +30,11 @@ if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
   source ~/.chruby-default-gems/chruby-default-gems.sh
 fi
 
+# chnode
+source /usr/local/opt/chnode/share/chnode/chnode.sh
+source /usr/local/opt/chnode/share/chnode/auto.sh
+precmd_functions+=(chnode_auto)  # if using Zsh
+
 # fixes ruby processes crashing due to using fork() on macos
 # stolen from: https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
@@ -91,9 +96,6 @@ alias audit="bundle audit update; bundle audit check"
 alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias edge="/Applications/Microsoft\ Edge.app/Contents/MacOS/Microsoft\ Edge --remote-debugging-port=9222&"
-
-# enable #thefuck as doh
-eval $(thefuck --alias doh)
 
 # VS Code
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
@@ -169,11 +171,6 @@ HELPDIR=/usr/local/share/zsh/help
 
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-# NVM_DIR
-export NVM_DIR="$HOME/.nvm"
-  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 function docker_mysql {
   containers=($(docker ps --format '{{.Names}}'))

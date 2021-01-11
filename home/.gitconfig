@@ -35,8 +35,13 @@
   helper = osxkeychain
 [commit]
   template = /Users/eirvandelden/.git-templates/gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
+	gpgsign = true
 [filter "lfs"]
   clean = git-lfs clean -- %f
   smudge = git-lfs smudge -- %f
   process = git-lfs filter-process
   required = true
+[init]
+	defaultBranch = main
+[gpg]
+	program = /usr/local/MacGPG2/bin/gpg
