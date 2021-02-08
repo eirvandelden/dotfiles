@@ -27,7 +27,7 @@ if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
 
   #enable chruby-default-gems
   DEFAULT_GEMFILE='~/.default-ruby-gems'
-  source ~/.chruby-default-gems/chruby-default-gems.sh
+   source /usr/local/opt/chruby-default-gems/share/chruby-default-gems.sh
 fi
 
 # chnode
@@ -52,8 +52,8 @@ alias gadd='git add'
 alias gdf='git diff -w' # Don't show whitespace changes, those are always good
 alias gbr='git branch'
 alias gbra='git branch -a'
-alias gps='git push && afplay --volume 0.25 ~/.audioclips/push-it.wav'
-alias gpl='git pull --rebase --autostash && afplay --volume 0.25 ~/.audioclips/come-here.mp3'
+alias gps='git push && afplay --volume 0.10 ~/.audioclips/push-it.wav'
+alias gpl='git pull --rebase --autostash && afplay --volume 0.10 ~/.audioclips/come-here.mp3'
 alias gcp='git cherry-pick'
 alias grb='git rebase'
 alias grbc='git rebase --continue'
