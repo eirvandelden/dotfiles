@@ -77,7 +77,6 @@
   ],
   "workbench.editor.enablePreviewFromQuickOpen": false,
   "window.nativeTabs": true,
-  "window.zoomLevel": 0,
   "editor.minimap.enabled": false,
   "editor.renderIndentGuides": false,
   "editor.multiCursorModifier": "alt",
@@ -127,7 +126,6 @@
   "sync.removeExtensions": true,
   "sync.syncExtensions": true,
   "gitlens.keymap": "none",
-  "workbench.panel.defaultLocation": "right",
   "terminal.external.osxExec": "iTerm.app",
   "workbench.statusBar.visible": true,
   "editor.detectIndentation": false,
@@ -171,7 +169,7 @@
   "trailing-spaces.showStatusBarMessage": false,
   "trailing-spaces.trimOnSave": true,
   "diffEditor.ignoreTrimWhitespace": false,
-  "workbench.sideBar.location": "left",
+  "workbench.sideBar.location": "right",
   "files.trimTrailingWhitespace": true,
   "window.autoDetectColorScheme": true,
   "workbench.preferredDarkColorTheme": "Solarized Dark",
@@ -201,6 +199,17 @@
   "githubNotificationsBell.oauthToken": "63cfc18ae6e9f6e9b75c7655fb7d8bbd0008f4e1",
   "editor.formatOnSaveMode": "modifications",
   "railsRoutes.rakeCommand": "bin/rake",
+  "editor.renameOnType": true,
+  "git.allowNoVerifyCommit": true,
+  "git.confirmNoVerifyCommit": false,
+  "emmet.includeLanguages": {
+    "erb": "html",
+    "html.erb": "html"
+  },
+  "ruby.rubocop.configFilePath": "/Users/eirvandelden/.rubocop.yml",
+  "solargraph.autoformat": true,
+  "ruby.format": false,
+  "debug.internalConsoleOptions": "openOnSessionStart",
   "editor.tokenColorCustomizations": {
     "textMateRules": [
       {
