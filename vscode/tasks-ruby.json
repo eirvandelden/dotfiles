@@ -7,33 +7,84 @@
 // ${cwd}: the current working directory of the spawned process
 {
   "version": "2.0.0",
-  "command": "bundle",
-  "args": [
-    "exec"
-  ],
   "tasks": [
     {
-      "label": "RSpec single file",
-      "type": "shell",
-      "command": [
-        "rspec",
-        "${file}"
+      "label": "Audit",
+      "group": "test",
+      "type":"shell",
+      "command":[
+        "if command -v bundle-audit > /dev/null; then; bundle exec bundle-audit update && bundle exec bundle-audit check; fi"
       ],
+      "presentation": {
+        "group": "precommit",
+        "showReuseMessage": false
+      }
+    },
+    {
+      "label": "Coffee-lint",
+      "group": "test",
+      "type": "shell",
+      "command":[
+        "git diff --cached --name-status --diff-filter=ACM | awk '/\\.coffee$/ { print $2 }' | xargs coffeelint"
+      ],
+      "presentation": {
+        "group": "precommit",
+        "showReuseMessage": false
+      }
+    },{
+      "label": "SCSS-lint",
+      "group": "test",
+      "type": "shell",
+      "command":[
+        "git diff --cached --name-status --diff-filter=ACM | awk '/\\.scss$/ { print $2 }' | xargs scss-lint"
+      ],
+      "presentation": {
+        "group": "precommit",
+        "showReuseMessage": false
+      }
+    },{
+      "label": "Rubocop",
+      "group": "test",
+      "type": "shell",
+      "command":[
+        // "git diff --cached --name-status --diff-filter=ACM | awk '/\\.rb$/ { print $2 }' | xargs rubocop -c .rubocop.yml"
+        "git status --porcelain | grep -E '^A|^M' | grep '.rb' | awk '{print $2}' | xargs rubocop -c .rubocop.yml"
+      ],
+      "presentation": {
+        "group": "precommit",
+        "showReuseMessage": false
+      }
+    },{
+      "label": "Pre-commit tasks",
       "group": {
         "kind": "test",
         "isDefault": true
       },
+      "dependsOn":[
+        "Audit",
+        "Coffee-lint",
+        "Rubocop"
+      ],
+      "dependsOrder": "sequence",
       "presentation": {
         "echo": true,
         "reveal": "always",
-        "focus": false,
         "panel": "shared",
         "showReuseMessage": true,
-        "clear": false
+        "clear": true,
+        "group": "precommit"
       }
     }
+
   ]
 }
+// Run all pre-commit tasks. Depends on:
+// audit task
+// coffee lint
+// scss lint
+// rubocop
+
+
 // foo
 // ,
 //     {
