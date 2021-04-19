@@ -16,11 +16,10 @@
 [[ -o INTERACTIVE && -t 2 ]] && {
 
 SAYINGS=(
-    "So long and thanks for all the fish.\n  -- Douglas Adams"
-    "Good morning! And in case I don't see ya, good afternoon, good evening and goodnight.\n  --Truman Burbank"
     "Only at the end do you realize the power of the Dark Side.\n --Darth Sidious"
     "I find your lack of faith disturbing.\n --Darth Vader"
     "The circle is now complete.\n --Darth Vader"
+    "Fatality.\n --Shang Tsung"
 )
 
 # Print a randomly-chosen message:
