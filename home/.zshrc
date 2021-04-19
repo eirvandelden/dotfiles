@@ -199,3 +199,4 @@ function docker_bash {
 
 # heroku autocomplete setup
 HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH
+export HOMEBREW_NO_AUTO_UPDATE=1
