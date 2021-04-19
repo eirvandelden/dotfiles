@@ -13,7 +13,7 @@
     120
   ],
   "editor.fontSize": 13,
-  "editor.fontFamily": "Fira Code iScript",
+  "editor.fontFamily": "\"Fira Code Two iScript\", \"Fire Code iScript\", \"FiraCode-Retina\", \"Fira Code Retina\", \"Fira Code\", \"Consolas\", \"Courier New\", monospace",
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
   "editor.quickSuggestions": true,
@@ -201,5 +201,39 @@
   "githubNotificationsBell.oauthToken": "63cfc18ae6e9f6e9b75c7655fb7d8bbd0008f4e1",
   "editor.formatOnSaveMode": "modifications",
   "railsRoutes.rakeCommand": "bin/rake",
-  "editor.renameOnType": true
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": [
+          "comment",
+          "constant", //String, Number, Boolean…, this, super
+          "keyword", //import, export, return…
+          "markup.italic",
+          "meta.selector",
+          "storage.modifier", //static keyword
+          "storage.type",
+          "storage.type.class.js", //class keyword
+          "string.quoted",
+          "variable.language",
+        ],
+        "settings": {
+          "fontStyle": "italic",
+        }
+      },
+      {
+        "scope": [
+          //following will be excluded from italics (VSCode has some defaults for italics which aren't amazingT)
+          "invalid",
+          "keyword.operator",
+          "constant.numeric.css",
+          "keyword.other.unit.px.css",
+          "constant.numeric.decimal.js",
+          "constant.numeric.json"
+        ],
+        "settings": {
+          "fontStyle": ""
+        }
+      }
+    ]
+  }
 }
