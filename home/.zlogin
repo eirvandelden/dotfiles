@@ -26,7 +26,7 @@ WELCOMES=(
     "'I’m Luke Skywalker? I’m here to rescue you!' '…You’re who?' \n  --Princess Leia"
     "Power! UNLIMITED … POWER!⚡️ \n  --Darth Sidious"
     "Do. Or do not. There is no try.\n --Yoda"
-    "Good morning! And in case I don't see ya, good afternoon, good evening and goodnight.\n  --Truman Burbank"
+    "An army of squirrels, is still an army.\n --Squirrel Mob"
 )
 
 # Print a randomly-chosen message:
