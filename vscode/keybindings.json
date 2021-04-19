@@ -55,7 +55,7 @@
     "when": "terminalFocus"
   },
   {
-    "key": "cmd+enter",
+    "key": "cmd+g a",
     "command": "git.stageSelectedRanges"
   },
   {
@@ -73,13 +73,7 @@
     "command": "quicktask.showTasks"
   },
   {
-    "command": "workbench.action.zoomIn"
-  },
-  {
-    "command": "workbench.action.zoomOut"
-  },
-  {
-    "key": "shift+alt+e",
+    "key": "ctrl+shift+e",
     "command": "workbench.view.explorer"
   },
   {
@@ -144,7 +138,7 @@
     "command": "-workbench.action.findInFiles"
   },
   {
-    "key": "shift+alt+g",
+    "key": "ctrl+shift+s",
     "command": "workbench.view.scm"
   },
   {
@@ -181,11 +175,6 @@
     "command": "-workbench.action.reopenClosedEditor"
   },
   {
-    "key": "cmd+enter",
-    "command": "git.commit",
-    "when": "workbench.view.scm"
-  },
-  {
     "key": "shift+cmd+t",
     "command": "workbench.action.terminal.new",
     "when": "terminalFocus"
@@ -199,5 +188,75 @@
     "key": "alt+backspace",
     "command": "-deleteWordLeft",
     "when": "textInputFocus && !editorReadonly"
+  },
+  {
+    "key": "cmd+enter",
+    "command": "git.commitNoVerify",
+    "when": "sideBarFocus && activeViewlet == 'workbench.view.scm'"
+  },
+  {
+    "key": "alt+cmd+up",
+    "command": "-editor.action.insertCursorAbove",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+k cmd+c",
+    "command": "-editor.action.addCommentLine",
+    "when": "editorTextFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+s",
+    "command": "-issue.createIssueFromFile",
+    "when": "resourceScheme == 'newIssue' && config.files.autoSave != 'off'"
+  },
+  {
+    "key": "f4",
+    "command": "workbench.action.debug.continue",
+    "when": "inDebugMode"
+  },
+  {
+    "key": "f5",
+    "command": "-workbench.action.debug.continue",
+    "when": "inDebugMode"
+  },
+  {
+    "key": "f7",
+    "command": "workbench.action.debug.stepOver",
+    "when": "debugState == 'stopped'"
+  },
+  {
+    "key": "f10",
+    "command": "-workbench.action.debug.stepOver",
+    "when": "debugState == 'stopped'"
+  },
+  {
+    "key": "f8",
+    "command": "workbench.action.debug.stepInto",
+    "when": "debugState != 'inactive'"
+  },
+  {
+    "key": "f11",
+    "command": "-workbench.action.debug.stepInto",
+    "when": "debugState != 'inactive'"
+  },
+  {
+    "key": "shift+f8",
+    "command": "workbench.action.debug.stepOut",
+    "when": "debugState == 'stopped'"
+  },
+  {
+    "key": "shift+f11",
+    "command": "-workbench.action.debug.stepOut",
+    "when": "debugState == 'stopped'"
+  },
+  {
+    "key": "ctrl+shift+f",
+    "command": "workbench.view.search",
+    "when": "workbench.view.search.active"
+  },
+  {
+    "key": "shift+cmd+f",
+    "command": "-workbench.view.search",
+    "when": "workbench.view.search.active"
   }
 ]
