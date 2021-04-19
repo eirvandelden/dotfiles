@@ -38,3 +38,6 @@ if [[ -n "$ZSH_VERSION" ]]; then
     preexec_functions+=("add_trusted_local_bin_to_path")
   fi
 fi
+
+# Elasticsearch
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_231.jdk/Contents/Home
