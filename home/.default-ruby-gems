@@ -1,5 +1,6 @@
 bundler
 debase
+dead_end
 homesick
 puma-dev
 rubocop
