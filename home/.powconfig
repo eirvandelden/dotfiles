@@ -1,3 +1,9 @@
+# chruby: switch to defined ruby version
 source /usr/local/share/chruby/chruby.sh
 chruby $(cat .ruby-version)
+
+# byebug: start on a port
 export BYEBUGPORT=5000
+
+# bundler: if there is a private Gemfile, load those gems too
+[ -f Gemfile.private ] && export BUNDLE_GEMFILE=Gemfile.private
