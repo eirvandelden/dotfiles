@@ -29,7 +29,8 @@
     "**/tmp": true
   },
   "cucumberautocomplete.steps": [
-    "features/step_definitions/**/*.rb"
+    "features/step_definitions/**/*.rb",
+    "spec/acceptance/steps/**/*.rb"
   ],
   "terminal.integrated.commandsToSkipShell": [
     "editor.action.toggleTabFocusMode",
@@ -133,10 +134,7 @@
   "breadcrumbs.enabled": true,
   "ruby.useLanguageServer": true,
   "ruby.lint": {
-    "rubocop": {
-      "rails": true,
-      "useBundler": true
-    }
+    "rubocop": false
   },
   "[ruby]": {
     "editor.formatOnSave": false
@@ -244,5 +242,6 @@
         }
       }
     ]
-  }
+  },
+  "solargraph.formatting": true
 }
