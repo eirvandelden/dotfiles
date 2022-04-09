@@ -16,7 +16,7 @@
   diff = auto
 [core]
   excludesfile = ~/.gitignore_global
-  editor = code --wait
+  editor = nova open --wait
   hooksPath = /Users/eirvandelden/.git-templates/hooks
 [merge]
   ff = true
