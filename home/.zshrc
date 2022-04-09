@@ -27,7 +27,7 @@ if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
 
   #enable chruby-default-gems
   DEFAULT_GEMFILE='~/.default-ruby-gems'
-   source /usr/local/opt/chruby-default-gems/share/chruby-default-gems.sh
+  source ~/.chruby-default-gems/chruby-default-gems.sh
 fi
 
 # chnode
@@ -97,7 +97,7 @@ alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias edge="/Applications/Microsoft\ Edge.app/Contents/MacOS/Microsoft\ Edge --remote-debugging-port=9222&"
 
-# VS Code
+# add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
 # open github links via terminal
@@ -200,3 +200,5 @@ function docker_bash {
 # heroku autocomplete setup
 HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH
 export HOMEBREW_NO_AUTO_UPDATE=1
+
+export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"

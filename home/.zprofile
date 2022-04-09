@@ -17,7 +17,7 @@ fi
 # Editors
 #
 
-export EDITOR='code'
+[ -z "$EDITOR" ] && export EDITOR='nova'
 export VISUAL='nano'
 export PAGER='less'
 
