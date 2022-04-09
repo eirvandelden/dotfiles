@@ -2,8 +2,14 @@
 source /usr/local/share/chruby/chruby.sh
 chruby $(cat .ruby-version)
 
+# chnode: switch to defined node version
+source /usr/local/share/chnode/chnode.sh
+chnode $(cat .node-version)
+
 # byebug: start on a port
-export BYEBUGPORT=5000
+export BYEBUGPORT=4000
+# ruby debug
+export RUBY_DEBUG_PORT=4000
 
 # bundler: if there is a private Gemfile, load those gems too
 [ -f Gemfile.private ] && export BUNDLE_GEMFILE=Gemfile.private
