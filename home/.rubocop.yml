@@ -22,7 +22,7 @@ AllCops:
     - 'actionmailbox/test/dummy/**/*'
     - 'actionpack/lib/action_dispatch/journey/parser.rb'
     - 'actiontext/test/dummy/**/*'
-    - bin/**/*
+    - 'bin/**/*'
 
   NewCops: enable ## Cops that need decisions are enabled by default
 
@@ -165,6 +165,10 @@ Style/HashTransformValues:
   Enabled: true
 Style/MethodDefParentheses: # Defining a method with parameters needs parentheses.
   Enabled: true
+Style/NumericLiteralPrefix:
+  Enabled: false
+Style/NumericLiterals:
+  Enabled: false
 Style/ParenthesesAroundCondition:
   Enabled: true
 Style/RedundantBegin:
