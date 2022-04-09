@@ -42,6 +42,10 @@ Thumbs.db
 # Visual Studio Code
 .vscode/*
 .settings/*
+.solargraph-cache/*
+
+# Nova by Panic
+.nova/*
 
 ## Ruby
 # https://github.com/github/gitignore/blob/master/Ruby.gitignore
