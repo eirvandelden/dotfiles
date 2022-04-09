@@ -20,12 +20,11 @@
   hooksPath = /Users/eirvandelden/.git-templates/hooks
 [merge]
   ff = true
-# Set OS X Filemerge as mergetool
   # tool = opendiff
   tool = default-difftool
-  # Use VS Code as a diff tool
 [difftool "default-difftool"]
-  cmd = code --wait --diff $LOCAL $REMOTE
+  # Set OS X Filemerge as mergetool
+  cmd = /usr/bin/opendiff \"$LOCAL\" \"$REMOTE\" -merge \"$MERGED\" | cat
 [github]
   user = eirvandelden
   token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
