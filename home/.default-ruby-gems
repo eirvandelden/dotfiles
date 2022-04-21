@@ -1,11 +1,14 @@
 bundler
-debase
-dead_end
+debug
 homesick
 puma-dev
 rubocop
+rubocop-minitest
+rubocop-packaging
 rubocop-performance
+rubocop-rails
 rubocop-rspec
-ruby-debug-ide
 scss_lint
+solargraph
+solargraph-rails
 terminal-notifier
