@@ -44,4 +44,4 @@ This dotfile repository contains dotfile configuration for the following tools:
 
 When setting up a new Mac, you may want to set some sensible OS X defaults:
 
-    ./.osx
+    ./.macos

@@ -49,7 +49,7 @@ Thumbs.db
 
 ## Ruby
 # https://github.com/github/gitignore/blob/master/Ruby.gitignore
-# bin/*  #don't do it Etienne, you *will* forget to add the bin folder for new Rails projects and prevent others from running it.
+# bin/*  # don't do it Etienne, you *will* forget to add the bin folder for new Rails projects and prevent others from running it.
 
 *.gem
 *.rbc
@@ -62,9 +62,6 @@ Thumbs.db
 /test/tmp/
 /test/version_tmp/
 /tmp/
-
-# Used by dotenv library to load environment variables.
-# .env
 
 # Ignore Byebug command history file.
 .byebug_history
