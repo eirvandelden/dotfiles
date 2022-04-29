@@ -2,6 +2,7 @@
   email = etienne@vandelden.family
   signingkey = B90A190968BEBA4F
   name = Etienne van Delden-de la Haije
+	singingkey = 68BEBA4F
 [alias]
   co = checkout
   ci = commit

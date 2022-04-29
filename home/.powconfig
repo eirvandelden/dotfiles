@@ -10,6 +10,3 @@ chnode $(cat .node-version)
 export BYEBUGPORT=4000
 # ruby debug
 export RUBY_DEBUG_PORT=4000
-
-# bundler: if there is a private Gemfile, load those gems too
-[ -f Gemfile.private ] && export BUNDLE_GEMFILE=Gemfile.private
