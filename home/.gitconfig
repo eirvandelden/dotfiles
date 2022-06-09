@@ -24,10 +24,6 @@
   excludesfile = ~/.gitignore_global
   editor = nova open --wait
   hooksPath = /Users/eirvandelden/.git-templates/hooks
-[merge]
-  ff = true
-  # tool = opendiff
-  tool = default-difftool
 [difftool "default-difftool"]
   # Set OS X Filemerge as mergetool
   cmd = /usr/bin/opendiff \"$LOCAL\" \"$REMOTE\" -merge \"$MERGED\" | cat
@@ -38,7 +34,18 @@
   required = true
 [init]
 	defaultBranch = main
+[merge]
+  ff = true
+  # tool = opendiff
+  tool = default-difftool
+[github]
+  user = eirvandelden
+  token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
 [gpg]
-	program = /usr/local/MacGPG2/bin/gpg
+	program = /opt/homebrew/bin/gpg
 [pull]
 	rebase = true
+[push]
+  default = simple
+[rebase]
+	autoStash = true
