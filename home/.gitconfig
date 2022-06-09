@@ -2,7 +2,7 @@
   email = etienne@vandelden.family
   signingkey = B90A190968BEBA4F
   name = Etienne van Delden-de la Haije
-	singingkey = 68BEBA4F
+	signingkey = B1B4DB30
 [alias]
   co = checkout
   ci = commit
@@ -10,11 +10,16 @@
   trust = "!mkdir -p .git/safe" # Mark a repo as trusted
 [apply]
   whitespace = nowarn
+[credential]
+  helper = osxkeychain
 [color]
   ui = true
   status = true
   branch = auto
   diff = auto
+[commit]
+  template = /Users/eirvandelden/.git-templates/gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
+  gpgsign = true
 [core]
   excludesfile = ~/.gitignore_global
   editor = nova open --wait
@@ -26,16 +31,6 @@
 [difftool "default-difftool"]
   # Set OS X Filemerge as mergetool
   cmd = /usr/bin/opendiff \"$LOCAL\" \"$REMOTE\" -merge \"$MERGED\" | cat
-[github]
-  user = eirvandelden
-  token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
-[push]
-  default = simple
-[credential]
-  helper = osxkeychain
-[commit]
-  template = /Users/eirvandelden/.git-templates/gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
-	gpgsign = true
 [filter "lfs"]
   clean = git-lfs clean -- %f
   smudge = git-lfs smudge -- %f

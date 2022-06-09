@@ -185,6 +185,16 @@ function docker_bash {
   done
 }
 
+# My git sign key uses a passphrase. We can use 1password cli to get the password and preset it as the default passphrase for my key.
+function gpg_cache() {
+  gpg-connect-agent /bye &> /dev/null # Make sure gpg is setup
+  eval $(op signin --account vandelden.1password.com) # Sign in to 1password
+  # gi6nnyk7x3iua2xp6jy7crtqm4 is the id for the "GPG passphrase item"
+  # 4C8E003F23514693C30B18DB7E0194E652E6FF5D is the Keygrip for my GPG Key
+  op item get gi6nnyk7x3iua2xp6jy7crtqm4 --fields password | /opt/homebrew/opt/gpg2/libexec/gpg-preset-passphrase --preset 4C8E003F23514693C30B18DB7E0194E652E6FF5D
+}
+gpg_cache # Actually call cache function
+
 # homebrew github token
 # export HOMEBREW_GITHUB_API_TOKEN=dd03b4d0025f18c4763db84e29fc3e4010cca475
 
