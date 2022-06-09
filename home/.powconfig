@@ -1,9 +1,9 @@
 # chruby: switch to defined ruby version
-source /usr/local/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
 chruby $(cat .ruby-version)
 
 # chnode: switch to defined node version
-source /usr/local/share/chnode/chnode.sh
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
 chnode $(cat .node-version)
 
 # byebug: start on a port

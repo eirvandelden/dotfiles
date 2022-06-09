@@ -1,3 +1,5 @@
+# https://github.com/bronson/chruby-default-gems
+
 bundler
 debug
 homesick

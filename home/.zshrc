@@ -20,19 +20,17 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
 fi
 
 # chruby
-if [[ -e /usr/local/opt/chruby/share/chruby ]]; then
-  source /usr/local/opt/chruby/share/chruby/chruby.sh
-  source /usr/local/opt/chruby/share/chruby/auto.sh
-  chruby $(cat ~/.ruby-version)
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
 
-  #enable chruby-default-gems
-  DEFAULT_GEMFILE='~/.default-ruby-gems'
-  source ~/.chruby-default-gems/chruby-default-gems.sh
-fi
+# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
+# DEFAULT_GEMFILE='~/.default-ruby-gems'
+# source ~/.chruby-default-gems/chruby-default-gems.sh
 
 # chnode
-source /usr/local/opt/chnode/share/chnode/chnode.sh
-source /usr/local/opt/chnode/share/chnode/auto.sh
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
+source /opt/homebrew/opt/chnode/share/chnode/auto.sh
 precmd_functions+=(chnode_auto)  # if using Zsh
 
 # fixes ruby processes crashing due to using fork() on macos
@@ -116,7 +114,7 @@ export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/b
 ##zsh-notify
 #zsh notify for terminal thingies
 source $HOME/.zsh-notify/notify.plugin.zsh
-zstyle ':notify:*' notifier /usr/local/bin/terminal-notifier
+zstyle ':notify:*' notifier /opt/homebrew/bin/terminal-notifier
 zstyle ':notify:*' error-title "failed"
 zstyle ':notify:*' error-sound "default"
 zstyle ':notify:*' success-sound "wc3-work-complete"
@@ -160,7 +158,7 @@ if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
 fi
 
 # Load zsh-autosuggestions.
-source $HOME/.zsh-autosuggestions/zsh-autosuggestions.zsh
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Enable autosuggestions automatically.
 zle -N zle-line-init
