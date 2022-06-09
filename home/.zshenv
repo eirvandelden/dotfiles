@@ -39,5 +39,5 @@ if [[ -n "$ZSH_VERSION" ]]; then
   fi
 fi
 
-# Elasticsearch
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_231.jdk/Contents/Home
+# Node-build
+export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/node-build"
