@@ -7,6 +7,6 @@ source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
 chnode $(cat .node-version)
 
 # byebug: start on a port
-export BYEBUGPORT=4000
+# export BYEBUGPORT=4000
 # ruby debug
-export RUBY_DEBUG_PORT=4000
+# export RUBY_DEBUG_PORT=4000
