@@ -44,6 +44,7 @@ alias grbc='git rebase --continue'
 alias grbs='git rebase --skip'
 alias grba='git rebase --abort'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d'
+alias s='gpg_cache' # s for sign
 
   #rails environment
 alias -g RED='RAILS_ENV=development'
@@ -179,7 +180,7 @@ function gpg_cache() {
   # 4C8E003F23514693C30B18DB7E0194E652E6FF5D is the Keygrip for my GPG Key
   op item get gi6nnyk7x3iua2xp6jy7crtqm4 --fields password | /opt/homebrew/opt/gpg2/libexec/gpg-preset-passphrase --preset 4C8E003F23514693C30B18DB7E0194E652E6FF5D
 }
-gpg_cache # Actually call cache function
+# gpg_cache # Actually call cache function
 
 # homebrew github token
 # export HOMEBREW_GITHUB_API_TOKEN=dd03b4d0025f18c4763db84e29fc3e4010cca475
