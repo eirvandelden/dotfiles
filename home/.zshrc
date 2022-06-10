@@ -19,20 +19,6 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-# chruby
-source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-chruby $(cat ~/.ruby-version)
-
-# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
-# DEFAULT_GEMFILE='~/.default-ruby-gems'
-# source ~/.chruby-default-gems/chruby-default-gems.sh
-
-# chnode
-source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
-source /opt/homebrew/opt/chnode/share/chnode/auto.sh
-precmd_functions+=(chnode_auto)  # if using Zsh
-
 # fixes ruby processes crashing due to using fork() on macos
 # stolen from: https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/
 # export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
@@ -204,9 +190,3 @@ gpg_cache # Actually call cache function
 # export PATH="/usr/local/bin:/usr/bin:$PATH"
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
 # export PATH=".git/safe/../../bin:$PATH"
-
-# heroku autocomplete setup
-HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH
-export HOMEBREW_NO_AUTO_UPDATE=1
-
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"

@@ -74,6 +74,26 @@ fi
 TMPPREFIX="${TMPDIR%/}/zsh"
 
 
+#
+# chruby
+#
+
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
+
+# chruby-default-gems
+# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
+# DEFAULT_GEMFILE='~/.default-ruby-gems'
+# source ~/.chruby-default-gems/chruby-default-gems.sh
+
+#
+# chnode
+#
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
+source /opt/homebrew/opt/chnode/share/chnode/auto.sh
+precmd_functions+=(chnode_auto)  # if using Zsh
+
 # iterm2 auto profile switching based on macos Dark Mode
 if [[ "$(uname -s)" == "Darwin" ]]; then
     sith() {
@@ -95,3 +115,11 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 
     sith
 fi
+
+# heroku autocomplete setup
+HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH
+export HOMEBREW_NO_AUTO_UPDATE=1
+
+export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
