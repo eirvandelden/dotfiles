@@ -176,9 +176,9 @@ function docker_bash {
 function gpg_cache() {
   gpg-connect-agent /bye &> /dev/null # Make sure gpg is setup
   eval $(op signin --account vandelden.1password.com) # Sign in to 1password
-  # gi6nnyk7x3iua2xp6jy7crtqm4 is the id for the "GPG passphrase item"
+  # yzimv5fpj2fckwxu3kcsffxf2e is the id for the "GPG passphrase item"
   # 4C8E003F23514693C30B18DB7E0194E652E6FF5D is the Keygrip for my GPG Key
-  op item get gi6nnyk7x3iua2xp6jy7crtqm4 --fields password | /opt/homebrew/opt/gpg2/libexec/gpg-preset-passphrase --preset 4C8E003F23514693C30B18DB7E0194E652E6FF5D
+  op item get yzimv5fpj2fckwxu3kcsffxf2e --fields password | /opt/homebrew/opt/gpg2/libexec/gpg-preset-passphrase --preset 4C8E003F23514693C30B18DB7E0194E652E6FF5D
 }
 # gpg_cache # Actually call cache function
 
