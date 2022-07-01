@@ -1,0 +1,8 @@
+def cp(string)
+  `echo "#{string}" | pbcopy`
+  puts "copied in clipboard"
+end
+
+def me
+  User.find_by email: %w(etienne@vandelden.family etienne@fouriq.nl)
+end
