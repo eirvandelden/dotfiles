@@ -21,7 +21,7 @@
   template = /Users/eirvandelden/.git-templates/gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
   gpgsign = true
 [core]
-  excludesfile = ~/.gitignore_global
+	excludesfile = /Users/eirvandelden/.gitignore_global
   editor = nova open --wait
   hooksPath = /Users/eirvandelden/.git-templates/hooks
 [difftool "default-difftool"]
