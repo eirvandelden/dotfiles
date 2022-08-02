@@ -182,6 +182,27 @@ function gpg_cache() {
 }
 # gpg_cache # Actually call cache function
 
+#
+# chruby
+#
+
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
+
+# chruby-default-gems
+# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
+# DEFAULT_GEMFILE='~/.default-ruby-gems'
+# source ~/.chruby-default-gems/chruby-default-gems.sh
+
+#
+# chnode
+#
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
+source /opt/homebrew/opt/chnode/share/chnode/auto.sh
+precmd_functions+=(chnode_auto)  # if using Zsh
+
+
 # homebrew github token
 # export HOMEBREW_GITHUB_API_TOKEN=dd03b4d0025f18c4763db84e29fc3e4010cca475
 

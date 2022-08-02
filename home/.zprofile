@@ -73,7 +73,6 @@ fi
 
 TMPPREFIX="${TMPDIR%/}/zsh"
 
-
 #
 # chruby
 #
