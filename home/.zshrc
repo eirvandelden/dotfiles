@@ -80,7 +80,7 @@ alias ag="Echo Use 'rg', which is ripgrep"
 alias audit="bundle audit update; bundle audit check"
 alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
-alias edge="/Applications/Microsoft\ Edge.app/Contents/MacOS/Microsoft\ Edge --remote-debugging-port=9222&"
+alias myip="curl http://ipecho.net/plain; echo"
 
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
