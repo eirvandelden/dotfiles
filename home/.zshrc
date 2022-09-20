@@ -52,11 +52,11 @@ alias -g REP='RAILS_ENV=production'
 alias -g RET='RAILS_ENV=test'
 
   #rails
-alias rc='rails c'
-alias rs='rails s'
+alias rc='rails console'
+alias rs='rails server'
 alias rrs='puma-dev -stop'
-alias rdbm='rake db:migrate'
-alias rdbr='rake db:rollback'
+alias rdbm='rails db:migrate'
+alias rdbr='rails db:rollback'
 alias rsg='rails g'
 
 # alias standard commands to bundle exec
@@ -71,7 +71,7 @@ alias os='overmind s'
 alias oc='overmind connect'
 alias ow='overmind connect web'
 alias be="echo Use a .git/safe directory instead for binstubs"
-alias bi='bundle install'
+alias bi='bundle install; bin/rails app:update:bin'
 alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
 alias clr="clear && printf '\e[3J'"
