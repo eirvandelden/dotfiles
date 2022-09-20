@@ -18,3 +18,4 @@ source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
 source /opt/homebrew/opt/chnode/share/chnode/auto.sh
 PROMPT_COMMAND=chnode_auto       # if using Bash
 # precmd_functions+=(chnode_auto)  # if using Zsh
+chnode $(cat ~/.node-version)
