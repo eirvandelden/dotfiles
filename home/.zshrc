@@ -1,9 +1,13 @@
 #
 # Lines configured by zsh-newuser-install
 #
-HISTFILE=~/.histfile
-HISTSIZE=1000
-SAVEHIST=1000
+HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
+HISTSIZE=2000
+SAVEHIST=$HISTSIZE
+
+# Write history file after each command so 2 shells share the same history
+setopt SHARE_HISTORY HIST_IGNORE_DUPS
+
 # setopt autocd notify
 bindkey -e
 # End of lines configured by zsh-newuser-install
@@ -81,6 +85,7 @@ alias audit="bundle audit update; bundle audit check"
 alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias myip="curl http://ipecho.net/plain; echo"
+alias history="history 1"
 
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
