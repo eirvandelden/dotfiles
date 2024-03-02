@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-if command -v rubocop > /dev/null; then
-  echo "Running rubocop on staged Ruby files"
+if command -v erblint > /dev/null; then
+  echo "Running ERB Lint on staged ERB files"
   git status --porcelain \
   | grep -E '^A|^M' \
   | grep -E '\.rb' \
   | awk '{print $2}' \
-  | xargs -r rubocop -c .rubocop.yml
+  | xargs -r erblint
 fi
 
 # copied over during git init

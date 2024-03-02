@@ -41,3 +41,7 @@ fi
 
 # Node-build
 export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/node-build"
+
+# Ruby YJIT support
+export RUBYOPT=’--enable-yjit’
+export RUBY_YJIT_ENABLE=1

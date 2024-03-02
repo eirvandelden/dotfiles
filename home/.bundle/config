@@ -1,3 +1,8 @@
 ---
 BUNDLE_JOBS: "9"
-BUNDLE_BIN: bin
+BUNDLE_GEM__TEST: "rspec"
+BUNDLE_GEM__CI: "github"
+BUNDLE_GEM__MIT: "false"
+BUNDLE_GEM__COC: "false"
+BUNDLE_GEM__CHANGELOG: "true"
+BUNDLE_GEM__LINTER: "rubocop"

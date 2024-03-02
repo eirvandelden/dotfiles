@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
-git diff --cached --name-status --diff-filter=ACM \
-  | awk '/\.scss$/ { print $2 }' \
-  | xargs scss-lint
+if command -v scss-lint > /dev/null; then
+  echo "Running scss-lint on staged CSS files"
+  git status --porcelain \
+  | grep -E '^A|^M' \
+  | grep -E '\.scss|\.css' \
+  | awk '{print $2}' \
+  | xargs -r scss-lint
+fi

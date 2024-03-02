@@ -48,7 +48,7 @@ alias grbc='git rebase --continue'
 alias grbs='git rebase --skip'
 alias grba='git rebase --abort'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d | git remote prune origin'
-alias s='gpg_cache' # s for sign
+# alias s='gpg_cache' # s for sign
 
   #rails environment
 alias -g RED='RAILS_ENV=development'
@@ -71,11 +71,11 @@ alias erd='rake erd && open erd.pdf'
 # alias guard='bundle exec guard'
 
   #others
-alias os='overmind s'
-alias oc='overmind connect'
-alias ow='overmind connect web'
+# alias os='overmind s'
+# alias oc='overmind connect'
+# alias ow='overmind connect web'
 alias be="echo Use a .git/safe directory instead for binstubs"
-alias bi='bundle install; bin/rails app:update:bin'
+alias bi='MAKE="make --jobs $(sysctl -n hw.ncpu)" bundle install && bin/rails app:update:bin; solargraph'
 alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
 alias clr="clear && printf '\e[3J'"
@@ -86,6 +86,8 @@ alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
+
+alias dlog="tail -f log/development.log | spin" # pass dev log to tailspin
 
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
@@ -178,14 +180,18 @@ function docker_bash {
 }
 
 # My git sign key uses a passphrase. We can use 1password cli to get the password and preset it as the default passphrase for my key.
-function gpg_cache() {
-  gpg-connect-agent /bye &> /dev/null # Make sure gpg is setup
-  eval $(op signin --account vandelden.1password.com) # Sign in to 1password
+#function gpg_cache() {
+#  gpg-connect-agent /bye &> /dev/null # Make sure gpg is setup
+#  eval $(op signin --account vandelden.1password.com) # Sign in to 1password
   # yzimv5fpj2fckwxu3kcsffxf2e is the id for the "GPG passphrase item"
   # 4C8E003F23514693C30B18DB7E0194E652E6FF5D is the Keygrip for my GPG Key
-  op item get yzimv5fpj2fckwxu3kcsffxf2e --fields password | /opt/homebrew/opt/gpg2/libexec/gpg-preset-passphrase --preset 4C8E003F23514693C30B18DB7E0194E652E6FF5D
-}
+#  op item get yzimv5fpj2fckwxu3kcsffxf2e --fields password | /opt/homebrew/opt/gpg2/libexec/gpg-preset-passphrase --preset 4C8E003F23514693C30B18DB7E0194E652E6FF5D
+#}
 # gpg_cache # Actually call cache function
+
+# Sign commits with GPG
+export GPG_TTY=$(tty)
+gpgconf --launch gpg-agent
 
 #
 # chruby
@@ -217,3 +223,7 @@ precmd_functions+=(chnode_auto)  # if using Zsh
 # export PATH="/usr/local/bin:/usr/bin:$PATH"
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
 # export PATH=".git/safe/../../bin:$PATH"
+
+# https://gist.github.com/zanetagebka/3b9b42c92ce5926fd5aada6b3a9535a5
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+export DISABLE_SPRING=true

@@ -17,7 +17,7 @@ fi
 # Editors
 #
 
-[ -z "$EDITOR" ] && export EDITOR='nova'
+[ -z "$EDITOR" ] && export EDITOR='nova -w'
 export VISUAL='nano'
 export PAGER='less'
 
@@ -32,6 +32,12 @@ fi
 #
 # Paths
 #
+
+# Default path to open
+export START="/Users/eirvandelden/Developer"
+if [[ $PWD == $HOME ]]; then
+    cd $START
+fi
 
 # Ensure path arrays do not contain duplicates.
 typeset -gU cdpath fpath mailpath path
@@ -114,10 +120,6 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 
     sith
 fi
-
-# heroku autocomplete setup
-HEROKU_AC_ZSH_SETUP_PATH=/Users/eirvandelden/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH
-export HOMEBREW_NO_AUTO_UPDATE=1
 
 # export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
 

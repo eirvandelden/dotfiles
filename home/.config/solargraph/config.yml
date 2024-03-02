@@ -1,0 +1,14 @@
+include:
+  - app/**/*.rb
+  - lib/**/*.rb
+  - spec/**/*.rb
+reporters:
+  - rubocop
+plugins:
+  - solargraph-rails
+formatter:
+  rubocop:
+    cops: safe
+    except: []
+    only: []
+    extra_args: []

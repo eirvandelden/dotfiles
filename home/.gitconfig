@@ -1,8 +1,8 @@
 [user]
+  name = Etienne van Delden de la Haije
   email = etienne@vandelden.family
   signingkey = B90A190968BEBA4F
-  name = Etienne van Delden-de la Haije
-	signingkey = B1B4DB30
+  signingkey = B1B4DB30
 [alias]
   co = checkout
   ci = commit
@@ -19,12 +19,12 @@
   diff = auto
 [commit]
   template = /Users/eirvandelden/.git-templates/gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
-  gpgsign = true
+  gpgSign = true
 [core]
-	excludesfile = /Users/eirvandelden/.gitignore_global
+  excludesfile = /Users/eirvandelden/.gitignore_global
   editor = nova open --wait
   hooksPath = /Users/eirvandelden/.git-templates/hooks
-	pager = less -+X
+  pager = less -+X
 [difftool "default-difftool"]
   # Set OS X Filemerge as mergetool
   cmd = /usr/bin/opendiff \"$LOCAL\" \"$REMOTE\" -merge \"$MERGED\" | cat
@@ -34,7 +34,7 @@
   process = git-lfs filter-process
   required = true
 [init]
-	defaultBranch = main
+  defaultBranch = main
 [merge]
   ff = true
   # tool = opendiff
@@ -43,11 +43,13 @@
   user = eirvandelden
   token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
 [gpg]
-	program = /opt/homebrew/bin/gpg
+  program = /opt/homebrew/bin/gpg
 [pull]
-	rebase = true
+  rebase = true
 [push]
   default = simple
-	autoSetupRemote = true
+  autoSetupRemote = true
 [rebase]
-	autoStash = true
+  autoStash = true
+[tag]
+  gpgSign = true

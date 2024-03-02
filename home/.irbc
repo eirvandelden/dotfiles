@@ -1,8 +1,21 @@
+# source: https://pawelurbanek.com/rails-console-aliases
+# After a while you can use my gem to analyze a local IRB sessions history:
+# ```
+# gem install lazyme
+# lazyme ~/.irb-history
+# ```
+require 'irb/ext/save-history'
+
+IRB.conf[:SAVE_HISTORY] = 10000
+IRB.conf[:HISTORY_FILE] = "#{ENV['HOME']}/.irb-history"
+IRB.conf[:RUBY_YJIT_ENABLE] = 1
+
+# Custom alias
 def cp(string)
   `echo "#{string}" | pbcopy`
   puts "copied in clipboard"
 end
 
 def me
-  User.find_by email: %w(etienne@vandelden.family etienne@fouriq.nl)
+  @me ||= User.find_by(email: `git config user.email`.strip)
 end
