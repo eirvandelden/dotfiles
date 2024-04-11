@@ -34,7 +34,7 @@ fi
 #
 
 # Default path to open
-export START="/Users/eirvandelden/Developer"
+export START="/Users/etienne.vandelden/Developer"
 if [[ $PWD == $HOME ]]; then
     cd $START
 fi

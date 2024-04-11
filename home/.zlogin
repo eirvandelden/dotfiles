@@ -12,7 +12,7 @@
   if [[ -s "$zcompdump" && (! -s "${zcompdump}.zwc" || "$zcompdump" -nt "${zcompdump}.zwc") ]]; then
     zcompile "$zcompdump"
   fi
-} &!
+}
 
 # Print a random, hopefully interesting, adage.
 # Execute code only if STDERR is bound to a TTY.
