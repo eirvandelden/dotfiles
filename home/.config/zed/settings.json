@@ -16,7 +16,7 @@
   "hard_tabs": false,
   "tab_size": 2,
   "show_wrap_guides": true,
-  "preferred_line_length": 100,
+  "preferred_line_length": 120,
   "soft_wrap": "editor_width",
   "autosave": "on_focus_change",
   "journal": {
