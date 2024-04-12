@@ -87,7 +87,7 @@ alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
 
-alias dlog="tail -f log/development.log | spin" # pass dev log to tailspin
+alias dlog="tail -f log/development.log | tspin" # pass dev log to tailspin
 
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
