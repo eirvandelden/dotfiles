@@ -1,6 +1,6 @@
 [user]
-  name = Etienne van Delden de la Haije
-  email = etienne@vandelden.family
+	name = Etienne van Delden de la Haije
+	email = etienne@vandelden.family
   signingkey = /Users/etienne.vandelden/.ssh/id_ed25519.pub
 [alias]
   co = checkout
@@ -17,12 +17,12 @@
   branch = auto
   diff = auto
 [commit]
-  template = /Users/etienne.vandelden/.git-templates/gitmessage # Use a default commit template from https://robots.thoughtbot.com/better-commit-messages-with-a-gitmessage-template
+	template = ~/.git-templates/gitmessage
   gpgsign = true
 [core]
-  excludesfile = /Users/etienne.vandelden/.gitignore_global
+	excludesfile = ~/.gitignore_global
   editor = nova open --wait
-  hooksPath = /Users/etienne.vandelden/.git-templates/hooks
+  hooksPath = ~/.git-templates/hooks
   pager = less -+X
 [difftool "default-difftool"]
   # Set OS X Filemerge as mergetool

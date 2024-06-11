@@ -5,6 +5,7 @@
 source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
 source /opt/homebrew/opt/chruby/share/chruby/auto.sh
 chruby $(cat ~/.ruby-version)
+source ~/.chruby-default-gems/chruby-default-gems.sh
 
 # chruby-default-gems
 # enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems

@@ -1,4 +1,4 @@
-# https://github.com/bronson/chruby-default-gems
+# https://github.com/jpickwell/chruby-default-gems
 
 bundler
 debug

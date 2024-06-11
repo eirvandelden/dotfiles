@@ -86,6 +86,7 @@ alias hosts="sudo vim /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
+alias celastic="docker run --rm --name elasticsearch -p 9200:9200 -p 9300:9300 -e 'discovery.type=single-node' -e 'xpack.security.enabled=false' elasticsearch:7.17.6"
 
 alias dlog="tail -f log/development.log | tspin" # pass dev log to tailspin
 
