@@ -1,4 +1,5 @@
 require:
+  - rubocop-capybara
   - rubocop-minitest
   - rubocop-packaging
   - rubocop-performance
@@ -6,16 +7,20 @@ require:
   - rubocop-rspec
 
 AllCops:
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.2
   # RuboCop has a bunch of cops enabled by default. This setting tells RuboCop
   # to ignore them, so only the ones explicitly set in this file are enabled.
   DisabledByDefault: true
   SuggestExtensions: true
 
   Exclude:
+    - '**/app/assets/**/*'
     - '**/db/**/*schema.rb'
     - '**/db/schema.rb'
+    - '**/log/**/*'
     - '**/node_modules/**/*'
+    - '**/public/**/*'
+    - '**/storage/**/*'
     - '**/templates/**/*'
     - '**/tmp/**/*'
     - '**/vendor/**/*'
