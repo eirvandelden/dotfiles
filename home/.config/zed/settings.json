@@ -8,7 +8,11 @@
 // from the command palette or from `Zed` application menu.
 {
   "base_keymap": "VSCode",
-  "theme": "Solarized Light",
+  "theme": {
+    "mode": "system",
+    "light": "Solarized Light",
+    "dark": "Solarized Dark"
+  },
   "ui_font_size": 16,
   "buffer_font_size": 16,
   "buffer_font_family": "MonoLisa",
@@ -19,6 +23,8 @@
   "preferred_line_length": 120,
   "soft_wrap": "editor_width",
   "autosave": "on_focus_change",
+  "relative_line_numbers": false,
+  "vim_mode": false,
   "journal": {
     "hour_format": "hour24"
   },
@@ -29,6 +35,7 @@
     "diagnostics": false,
     "metrics": false
   },
+  "assistant": { "enabled": false, "version": "2" },
   "project_panel": {
     "dock": "right",
     "indent_size": 14
