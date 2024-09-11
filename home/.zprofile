@@ -17,7 +17,7 @@ fi
 # Editors
 #
 
-[ -z "$EDITOR" ] && export EDITOR='nova -w'
+[ -z "$EDITOR" ] && export EDITOR='code -w'
 export VISUAL='nano'
 export PAGER='less'
 
@@ -34,7 +34,8 @@ fi
 #
 
 # Default path to open
-export START="~/Developer"
+# export START="~/Developer"
+export START="/Users/etienne.vandelden/Developer"
 if [[ $PWD == $HOME ]]; then
     cd $START
 fi

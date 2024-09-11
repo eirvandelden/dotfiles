@@ -1,25 +1,23 @@
 // Place your settings in this file to overwrite the default settings
 {
-  "workbench.iconTheme": "simple-icons",
-  "terminal.integrated.fontFamily": "Hasklig",
-  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.fontFamily": "MonoLisa",
+  "terminal.integrated.fontSize": 14,
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.cursorStyle": "line",
   "editor.tabSize": 2, // as per Ruby style Guide :)
   "editor.renderWhitespace": "boundary", // shows dots for spaces
   "editor.wordWrap": "on", // wrap on window
-  "editor.rulers": [
-    80,
-    120
-  ],
-  "editor.fontSize": 13,
-  "editor.fontFamily": "\"Fira Code Two iScript\", \"Fire Code iScript\", \"FiraCode-Retina\", \"Fira Code Retina\", \"Fira Code\", \"Consolas\", \"Courier New\", monospace",
+  "editor.fontSize": 14,
+  "editor.fontFamily": "MonoLisa",
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
-  "editor.quickSuggestions": true,
+  "editor.quickSuggestions": {
+    "comments": "on",
+    "strings": "on",
+    "other": "on"
+  },
   "editor.quickSuggestionsDelay": 0,
   "files.autoSave": "onFocusChange",
-  "javascript.implicitProjectConfig.checkJs": true,
   "search.exclude": {
     "**/node_modules": true,
     "**/bower_components": true,
@@ -28,10 +26,6 @@
     "**/coverage": true,
     "**/tmp": true
   },
-  "cucumberautocomplete.steps": [
-    "features/step_definitions/**/*.rb",
-    "spec/acceptance/steps/**/*.rb"
-  ],
   "terminal.integrated.commandsToSkipShell": [
     "editor.action.toggleTabFocusMode",
     "workbench.action.debug.continue",
@@ -79,86 +73,38 @@
   "workbench.editor.enablePreviewFromQuickOpen": false,
   "window.nativeTabs": true,
   "editor.minimap.enabled": false,
-  "editor.renderIndentGuides": false,
   "editor.multiCursorModifier": "alt",
-  "editor.autoIndent": true,
+  "editor.autoIndent": "full",
   "workbench.fontAliasing": "default",
   "workbench.colorCustomizations": {
     "editorActiveLineNumber.activeForeground": "#FFFFFF"
   },
   "explorer.openEditors.visible": 0,
-  "workbench.activityBar.visible": true,
   "editor.renderControlCharacters": true,
   "explorer.decorations.badges": false,
-  "sync.gist": "64f02251fe97d2b012983412c869b6e2",
-  "sync.autoDownload": false,
-  "sync.autoUpload": false,
-  "sync.forceDownload": false,
-  "sync.quietSync": false,
   "terminal.integrated.scrollback": 20000,
   "git.autofetch": true,
-  "gitlens.advanced.messages": {
-    "suppressCommitHasNoPreviousCommitWarning": false,
-    "suppressCommitNotFoundWarning": false,
-    "suppressFileNotUnderSourceControlWarning": false,
-    "suppressGitVersionWarning": false,
-    "suppressLineUncommittedWarning": false,
-    "suppressNoRepositoryWarning": false,
-    "suppressResultsExplorerNotice": true,
-    "suppressShowKeyBindingsNotice": true,
-    "suppressUpdateNotice": true,
-    "suppressWelcomeNotice": false
-  },
-  "gitlens.codeLens.recentChange.command": "gitlens.showQuickCommitDetails",
-  "gitlens.codeLens.scopes": [
-    "blocks",
-    "containers"
-  ],
-  "gitlens.blame.highlight.locations": [
-    "overview",
-    "line"
-  ],
-  "gitlens.recentChanges.highlight.locations": [
-    "overview",
-    "line"
-  ],
-  "gitlens.hovers.currentLine.over": "line",
   "workbench.quickOpen.closeOnFocusLost": false,
-  "sync.removeExtensions": true,
-  "sync.syncExtensions": true,
-  "gitlens.keymap": "none",
   "terminal.external.osxExec": "iTerm.app",
   "workbench.statusBar.visible": true,
   "editor.detectIndentation": false,
-  "terminal.integrated.rendererType": "canvas",
   "breadcrumbs.enabled": true,
-  "ruby.useLanguageServer": true,
-  "ruby.lint": {
-    "rubocop": false
-  },
   "[ruby]": {
-    "editor.formatOnSave": false
+    "editor.formatOnSave": true
   },
   "explorer.confirmDelete": false,
-  "gitlens.views.compare.files.layout": "tree",
-  "gitlens.views.search.files.layout": "tree",
   "explorer.confirmDragAndDrop": false,
   "git.autoStash": true,
   "git.enableCommitSigning": true,
-  "gitlens.heatmap.toggleMode": "window",
-  "gitlens.recentChanges.toggleMode": "window",
   "git.confirmSync": false,
   "editor.fontLigatures": true,
-  "ruby.lintDebounceTime": 1000,
-  "terminal.integrated.shell.osx": "/bin/zsh",
   "git.allowForcePush": true,
   "git.alwaysSignOff": true,
   "git.confirmForcePush": true,
-  "git.inputValidation": "off",
+  "git.inputValidation": true,
   "workbench.editor.openSideBySideDirection": "right",
   "editor.cursorSurroundingLines": 5,
   "git.ignoreLegacyWarning": true,
-  "travis.pro": true,
   "trailing-spaces.deleteModifiedLinesOnly": true,
   "trailing-spaces.backgroundColor": "",
   "trailing-spaces.borderColor": "",
@@ -170,43 +116,21 @@
   "workbench.sideBar.location": "right",
   "files.trimTrailingWhitespace": true,
   "window.autoDetectColorScheme": true,
-  "workbench.preferredDarkColorTheme": "Solarized Dark",
-  "workbench.colorTheme": "Solarized Light",
-  "workbench.preferredLightColorTheme": "Solarized Light",
-  "html.format.endWithNewline": true,
+  "workbench.preferredDarkColorTheme": "Selene Selenized Dark",
+  "workbench.colorTheme": "Selene Selenized Light",
+  "workbench.preferredLightColorTheme": "Selene Selenized Light",
   "html.format.indentInnerHtml": true,
-  "solargraph.commandPath": "~/.gem/ruby/3.3.0/bin/solargraph",
+  "solargraph.commandPath": "",
   "solargraph.diagnostics": true,
-  "ruby.interpreter.commandPath": "~/.rubies/ruby-3.3.0/bin/ruby",
-  "gitlens.codeLens.includeSingleLineSymbols": true,
-  "gitlens.currentLine.scrollable": false,
-  "gitlens.statusBar.dateFormat": "${agoOrDate}",
-  "gitlens.codeLens.enabled": false,
-  "gitlens.hovers.enabled": false,
-  "gitlens.views.repositories.enabled": false,
-  "gitlens.views.fileHistory.enabled": false,
-  "gitlens.views.lineHistory.enabled": false,
-  "gitlens.views.search.enabled": false,
-  "gitlens.views.compare.enabled": false,
-  "gitlens.blame.toggleMode": "window",
-  "gitlens.blame.avatars": false,
-  "gitlens.blame.highlight.enabled": false,
-  "gitlens.defaultDateFormat": "Do MMMM YY, hh:mm",
-  "gitlens.defaultDateShortFormat": "D MMMM, 'YY",
-  "gitlens.currentLine.enabled": false,
-  "githubNotificationsBell.oauthToken": "63cfc18ae6e9f6e9b75c7655fb7d8bbd0008f4e1",
-  "editor.formatOnSaveMode": "modifications",
-  "railsRoutes.rakeCommand": "bin/rake",
-  "editor.renameOnType": true,
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "editor.linkedEditing": true,
   "git.allowNoVerifyCommit": true,
   "git.confirmNoVerifyCommit": false,
   "emmet.includeLanguages": {
     "erb": "html",
     "html.erb": "html"
   },
-  "ruby.rubocop.configFilePath": "/Users/etienne.vandelden/.rubocop.yml",
   "solargraph.autoformat": true,
-  "ruby.format": false,
   "debug.internalConsoleOptions": "openOnSessionStart",
   "editor.tokenColorCustomizations": {
     "textMateRules": [
@@ -221,10 +145,10 @@
           "storage.type",
           "storage.type.class.js", //class keyword
           "string.quoted",
-          "variable.language",
+          "variable.language"
         ],
         "settings": {
-          "fontStyle": "italic",
+          "fontStyle": "italic"
         }
       },
       {
@@ -243,5 +167,14 @@
       }
     ]
   },
-  "solargraph.formatting": true
+  "solargraph.formatting": true,
+  "files.associations": {
+    ".env*": "dotenv"
+  },
+  "editor.guides.indentation": false,
+  "editor.defaultFormatter": "castwide.solargraph",
+  "rdbg.rubyVersionManager": "chruby",
+  "dotenv.enableAutocloaking": false,
+  "rubyLsp.linters": [],
+  "chat.editor.fontSize": 14
 }

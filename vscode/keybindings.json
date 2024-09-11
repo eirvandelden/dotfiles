@@ -268,5 +268,15 @@
     "key": "f3",
     "command": "-editor.action.nextMatchFindAction",
     "when": "editorFocus"
+  },
+  {
+    "key": "shift+alt+3",
+    "command": "extension.generateYard",
+    "when": "editorTextFocus && !editorReadonly && editorLangId == 'ruby'"
+  },
+  {
+    "key": "alt+cmd+enter",
+    "command": "-extension.generateYard",
+    "when": "editorTextFocus && !editorReadonly && editorLangId == 'ruby'"
   }
 ]

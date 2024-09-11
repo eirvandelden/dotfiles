@@ -45,3 +45,25 @@ export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/no
 # Ruby YJIT support
 export RUBYOPT=’--enable-yjit’
 export RUBY_YJIT_ENABLE=1
+
+## Copied here for Nova
+#
+# chruby
+#
+
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
+source ~/.chruby-default-gems/chruby-default-gems.sh
+
+# chruby-default-gems
+# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
+# DEFAULT_GEMFILE='~/.default-ruby-gems'
+# source ~/.chruby-default-gems/chruby-default-gems.sh
+
+#
+# chnode
+#
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
+source /opt/homebrew/opt/chnode/share/chnode/auto.sh
+precmd_functions+=(chnode_auto)  # if using Zsh

@@ -20,3 +20,7 @@ source /opt/homebrew/opt/chnode/share/chnode/auto.sh
 PROMPT_COMMAND=chnode_auto       # if using Bash
 # precmd_functions+=(chnode_auto)  # if using Zsh
 chnode $(cat ~/.node-version)
+
+### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
+export PATH="/Users/etienne.vandelden/.rd/bin:$PATH"
+### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
