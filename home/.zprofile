@@ -17,7 +17,7 @@ fi
 # Editors
 #
 
-[ -z "$EDITOR" ] && export EDITOR='code -w'
+[ -z "$EDITOR" ] && export EDITOR='zed -w'
 export VISUAL='nano'
 export PAGER='less'
 
