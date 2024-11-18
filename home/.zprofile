@@ -17,7 +17,7 @@ fi
 # Editors
 #
 
-[ -z "$EDITOR" ] && export EDITOR='zed -w'
+[ -z "$EDITOR" ] && export EDITOR='code -w'
 export VISUAL='nano'
 export PAGER='less'
 
@@ -58,7 +58,7 @@ path=(
 # Less
 #
 
-# Set the default Less options.
+# Set the default Less options
 # Mouse-wheel scrolling has been disabled by -X (disable screen clearing).
 # Remove -X and -F (exit if the content fits on one screen) to enable it.
 export LESS='-F -g -i -M -R -S -w -X -z-4'
@@ -79,49 +79,6 @@ if [[ ! -d "$TMPDIR" ]]; then
 fi
 
 TMPPREFIX="${TMPDIR%/}/zsh"
-
-#
-# chruby
-#
-
-source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-chruby $(cat ~/.ruby-version)
-source ~/.chruby-default-gems/chruby-default-gems.sh
-
-# chruby-default-gems
-# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
-# DEFAULT_GEMFILE='~/.default-ruby-gems'
-# source ~/.chruby-default-gems/chruby-default-gems.sh
-
-#
-# chnode
-#
-source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
-source /opt/homebrew/opt/chnode/share/chnode/auto.sh
-precmd_functions+=(chnode_auto)  # if using Zsh
-
-# iterm2 auto profile switching based on macos Dark Mode
-if [[ "$(uname -s)" == "Darwin" ]]; then
-    sith() {
-        val=$(defaults read -g AppleInterfaceStyle 2>/dev/null)
-        if [[ $val == "Dark" ]]; then
-            i
-        fi
-    }
-
-    i() {
-        if [[ $ITERM_PROFILE == "Light" ]]; then
-            echo -ne "\033]50;SetProfile=Dark\a"
-            export ITERM_PROFILE="Dark"
-        else
-            echo -ne "\033]50;SetProfile=Light\a"
-            export ITERM_PROFILE="Light"
-        fi
-    }
-
-    sith
-fi
 
 # export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
 

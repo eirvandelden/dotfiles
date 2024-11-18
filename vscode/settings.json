@@ -122,7 +122,7 @@
   "html.format.indentInnerHtml": true,
   "solargraph.commandPath": "",
   "solargraph.diagnostics": true,
-  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "editor.formatOnSaveMode": "file",
   "editor.linkedEditing": true,
   "git.allowNoVerifyCommit": true,
   "git.confirmNoVerifyCommit": false,

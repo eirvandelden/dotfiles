@@ -1,4 +1,8 @@
 #
+# Executes commands when in an interactive session.
+#
+
+#
 # Lines configured by zsh-newuser-install
 #
 HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
@@ -23,9 +27,112 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
-# fixes ruby processes crashing due to using fork() on macos
-# stolen from: https://blog.phusion.nl/2017/10/13/why-ruby-app-servers-break-on-macos-high-sierra-and-what-can-be-done-about-it/
-# export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+### zsh-plugins
+##zsh-notify
+#zsh notify for terminal thingies
+source $HOME/.zsh-notify/notify.plugin.zsh
+zstyle ':notify:*' notifier /opt/homebrew/bin/terminal-notifier
+zstyle ':notify:*' error-title "failed"
+zstyle ':notify:*' error-sound "default"
+zstyle ':notify:*' success-sound "wc3-work-complete"
+# export NOTIFY_COMMAND_COMPLETE_TIMEOUT=2
+
+#MANUAL: brew completions
+if type brew &>/dev/null; then
+  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+fi
+
+# Load zsh-autosuggestions.
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Enable autosuggestions automatically.
+zle -N zle-line-init
+
+#zsh
+autoload run-help
+HELPDIR=/usr/local/share/zsh/help
+
+# fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
+# source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+
+# source: https://dance.computer.dance/posts/2015/02/making-chruby-and-binstubs-play-nice.html
+# Remove the need for bundle exec ... or ./bin/...
+# by adding ./bin to path if the current project is trusted
+function set_local_bin_path() {
+  # Replace any existing local bin paths with our new one
+  export PATH="${1:-""}`echo "$PATH"|sed -e 's,[^:]*\.git/[^:]*bin:,,g'`"
+}
+
+function add_trusted_local_bin_to_path() {
+  if [[ -d "$PWD/.git/safe" ]]; then
+    # We're in a trusted project directory so update our local bin path
+    set_local_bin_path "$PWD/.git/safe/../../bin:"
+  fi
+}
+
+# Tell the terminal about the working directory whenever it changes.
+if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
+  update_terminal_cwd() {
+    # Identify the directory using a "file:" scheme URL, including
+    # the host name to disambiguate local vs. remote paths.
+
+    # Percent-encode the pathname.
+    local URL_PATH=''
+    {
+      # Use LANG=C to process text byte-by-byte.
+      local i ch hexch LANG=C
+      for ((i = 1; i <= ${#PWD}; ++i)); do
+        ch="$PWD[i]"
+        if [[ "$ch" =~ [/._~A-Za-z0-9-] ]]; then
+          URL_PATH+="$ch"
+        else
+          hexch=$(printf "%02X" "'$ch")
+          URL_PATH+="%$hexch"
+        fi
+      done
+    }
+
+    local PWD_URL="file://$HOST$URL_PATH"
+    #echo "$PWD_URL"        # testing
+    printf '\e]7;%s\a' "$PWD_URL"
+  }
+
+  # Register the function so it is called whenever the working
+  # directory changes.
+  autoload add-zsh-hook
+  add-zsh-hook chpwd update_terminal_cwd
+
+  # Tell the terminal about the initial directory.
+  update_terminal_cwd
+fi
+
+# iterm2 auto profile switching based on macos Dark Mode
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    sith() {
+        val=$(defaults read -g AppleInterfaceStyle 2>/dev/null)
+        if [[ $val == "Dark" ]]; then
+            i
+        fi
+    }
+
+    i() {
+        if [[ $ITERM_PROFILE == "Light" ]]; then
+            echo -ne "\033]50;SetProfile=Dark\a"
+            export ITERM_PROFILE="Dark"
+        else
+            echo -ne "\033]50;SetProfile=Light\a"
+            export ITERM_PROFILE="Light"
+        fi
+    }
+
+    sith
+fi
+
+# open github links via terminal
+ function gh {
+   open "https://github.com/eet-nu/${(j:/:)@}"
+ }
 
 ###aliasses
   #git
@@ -93,10 +200,6 @@ alias dlog="tail -f log/development.log | tspin" # pass dev log to tailspin
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
-# open github links via terminal
- function gh {
-   open "https://github.com/eet-nu/${(j:/:)@}"
- }
 
 ### Add PostgreSQL
 # export PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin
@@ -105,65 +208,6 @@ export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/b
 # export GOPATH="$HOME/code/go"
 # export PATH="$GOPATH/bin:$PATH"
 
-### zsh-plugins
-##zsh-notify
-#zsh notify for terminal thingies
-source $HOME/.zsh-notify/notify.plugin.zsh
-zstyle ':notify:*' notifier /opt/homebrew/bin/terminal-notifier
-zstyle ':notify:*' error-title "failed"
-zstyle ':notify:*' error-sound "default"
-zstyle ':notify:*' success-sound "wc3-work-complete"
-# export NOTIFY_COMMAND_COMPLETE_TIMEOUT=2
-
-# Tell the terminal about the working directory whenever it changes.
-if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
-
-    update_terminal_cwd() {
-        # Identify the directory using a "file:" scheme URL, including
-        # the host name to disambiguate local vs. remote paths.
-
-        # Percent-encode the pathname.
-        local URL_PATH=''
-        {
-            # Use LANG=C to process text byte-by-byte.
-            local i ch hexch LANG=C
-            for ((i = 1; i <= ${#PWD}; ++i)); do
-                ch="$PWD[i]"
-                if [[ "$ch" =~ [/._~A-Za-z0-9-] ]]; then
-                    URL_PATH+="$ch"
-                else
-                    hexch=$(printf "%02X" "'$ch")
-                    URL_PATH+="%$hexch"
-                fi
-            done
-        }
-
-        local PWD_URL="file://$HOST$URL_PATH"
-        #echo "$PWD_URL"        # testing
-        printf '\e]7;%s\a' "$PWD_URL"
-    }
-
-    # Register the function so it is called whenever the working
-    # directory changes.
-    autoload add-zsh-hook
-    add-zsh-hook chpwd update_terminal_cwd
-
-    # Tell the terminal about the initial directory.
-    update_terminal_cwd
-fi
-
-# Load zsh-autosuggestions.
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-# Enable autosuggestions automatically.
-zle -N zle-line-init
-
-#zsh
-autoload run-help
-HELPDIR=/usr/local/share/zsh/help
-
-# fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
-# source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 function docker_mysql {
   containers=($(docker ps --format '{{.Names}}'))
@@ -180,26 +224,6 @@ function docker_bash {
   done
 }
 
-#
-# chruby
-#
-
-source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-chruby $(cat ~/.ruby-version)
-source ~/.chruby-default-gems/chruby-default-gems.sh
-
-# chruby-default-gems
-# enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
-# DEFAULT_GEMFILE='~/.default-ruby-gems'
-# source ~/.chruby-default-gems/chruby-default-gems.sh
-
-#
-# chnode
-#
-source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
-source /opt/homebrew/opt/chnode/share/chnode/auto.sh
-precmd_functions+=(chnode_auto)  # if using Zsh
 
 # My git sign key uses a passphrase. We can use 1password cli to get the password and preset it as the default passphrase for my key.
 #function gpg_cache() {
@@ -232,3 +256,11 @@ export DISABLE_SPRING=true
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="/Users/etienne.vandelden/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
+
+# Make sure add_trusted_local_bin_to_path runs after chruby so we
+# prepend the default chruby gem paths
+if [[ -n "$ZSH_VERSION" ]]; then
+  if [[ ! "$preexec_functions" == *add_trusted_local_bin_to_path* ]]; then
+    preexec_functions+=("add_trusted_local_bin_to_path")
+  fi
+fi
