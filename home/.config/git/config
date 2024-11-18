@@ -21,7 +21,7 @@
   gpgsign = true
 [core]
 	excludesfile = ~/.gitignore_global
-  editor = zed -w
+  editor = code -w
   hooksPath = ~/.git-templates/hooks
   pager = less -+X
 [difftool "default-difftool"]

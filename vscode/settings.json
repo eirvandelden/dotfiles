@@ -137,13 +137,13 @@
       {
         "scope": [
           "comment",
-          "constant", //String, Number, Boolean…, this, super
-          "keyword", //import, export, return…
+          "constant",
+          "keyword",
           "markup.italic",
           "meta.selector",
-          "storage.modifier", //static keyword
+          "storage.modifier",
           "storage.type",
-          "storage.type.class.js", //class keyword
+          "storage.type.class.js",
           "string.quoted",
           "variable.language"
         ],
@@ -153,7 +153,6 @@
       },
       {
         "scope": [
-          //following will be excluded from italics (VSCode has some defaults for italics which aren't amazingT)
           "invalid",
           "keyword.operator",
           "constant.numeric.css",
@@ -176,5 +175,16 @@
   "rdbg.rubyVersionManager": "chruby",
   "dotenv.enableAutocloaking": false,
   "rubyLsp.linters": [],
-  "chat.editor.fontSize": 14
+  "chat.editor.fontSize": 14,
+  "githubPullRequests.pullBranch": "never",
+  "zenMode.hideLineNumbers": false,
+  "search.showLineNumbers": true,
+  "terminal.integrated.gpuAcceleration": "on",
+  "terminal.integrated.enableImages": true,
+  "vim.smartRelativeLine": true,
+  "vim.leader": "  ",
+  "vim.hlsearch": true,
+  "vim.useSystemClipboard": true,
+  "supermaven.allowGitignore": true,
+  "editor.lineNumbers": "relative"
 }

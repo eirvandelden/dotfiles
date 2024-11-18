@@ -23,8 +23,8 @@
   "preferred_line_length": 120,
   "soft_wrap": "editor_width",
   "autosave": "on_focus_change",
-  "relative_line_numbers": false,
-  "vim_mode": false,
+  "relative_line_numbers": true,
+  "vim_mode": true,
   "journal": {
     "hour_format": "hour24"
   },
@@ -35,7 +35,10 @@
     "diagnostics": false,
     "metrics": false
   },
-  "assistant": { "enabled": false, "version": "2" },
+  "assistant": {
+    "enabled": false,
+    "version": "2"
+  },
   "project_panel": {
     "dock": "right",
     "indent_size": 14
@@ -51,5 +54,8 @@
         "formatting": true
       }
     }
+  },
+  "features": {
+    "inline_completion_provider": "supermaven"
   }
 }
