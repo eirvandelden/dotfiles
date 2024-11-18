@@ -55,6 +55,12 @@ HELPDIR=/usr/local/share/zsh/help
 # fish like autocompletion from zsh-syntax-highlighting (Needed at end of zshrc)
 # source $HOME/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
+# RUBY
+## Ruby install configuration
+## Always install with yjit and jemalloc (brew installed)
+export RUBY_CONFIGURE_OPTS="--enable-yjit --with-jemalloc --disable-install-doc"
+export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
+export LDFLAGS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib"
 
 # source: https://dance.computer.dance/posts/2015/02/making-chruby-and-binstubs-play-nice.html
 # Remove the need for bundle exec ... or ./bin/...
@@ -70,7 +76,18 @@ function add_trusted_local_bin_to_path() {
     set_local_bin_path "$PWD/.git/safe/../../bin:"
   fi
 }
+# Make sure add_trusted_local_bin_to_path runs after chruby so we
+# prepend the default chruby gem paths
+if [[ -n "$ZSH_VERSION" ]]; then
+  if [[ ! "$preexec_functions" == *add_trusted_local_bin_to_path* ]]; then
+    preexec_functions+=("add_trusted_local_bin_to_path")
+  fi
+fi
 
+# https://reinteractive.com/posts/266-no-more-bundle-exec-using-the-new-rubygems_gemdeps-environment-variable
+# export RUBYGEMS_GEMDEPS=-
+
+# Terminal notifier
 # Tell the terminal about the working directory whenever it changes.
 if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && [[ -z "$INSIDE_EMACS" ]]; then
   update_terminal_cwd() {
@@ -242,8 +259,7 @@ function docker_bash {
 # homebrew github token
 # export HOMEBREW_GITHUB_API_TOKEN=dd03b4d0025f18c4763db84e29fc3e4010cca475
 
-# https://reinteractive.com/posts/266-no-more-bundle-exec-using-the-new-rubygems_gemdeps-environment-variable
-# export RUBYGEMS_GEMDEPS=-
+
 
 # export PATH="/usr/local/bin:/usr/bin:$PATH"
 # prepend .bin/ in path to use binstubs over bundle exec https://thoughtbot.com/blog/git-safe
@@ -256,11 +272,3 @@ export DISABLE_SPRING=true
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="/Users/etienne.vandelden/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
-
-# Make sure add_trusted_local_bin_to_path runs after chruby so we
-# prepend the default chruby gem paths
-if [[ -n "$ZSH_VERSION" ]]; then
-  if [[ ! "$preexec_functions" == *add_trusted_local_bin_to_path* ]]; then
-    preexec_functions+=("add_trusted_local_bin_to_path")
-  fi
-fi
