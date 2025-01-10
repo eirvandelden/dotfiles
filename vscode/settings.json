@@ -120,7 +120,7 @@
   "workbench.colorTheme": "Selene Selenized Light",
   "workbench.preferredLightColorTheme": "Selene Selenized Light",
   "html.format.indentInnerHtml": true,
-  "solargraph.commandPath": "",
+  "solargraph.commandPath": "/Users/etienne.vandelden/.gem/ruby/3.3.6/bin/solargraph",
   "solargraph.diagnostics": true,
   "editor.formatOnSaveMode": "file",
   "editor.linkedEditing": true,
@@ -168,7 +168,13 @@
   },
   "solargraph.formatting": true,
   "files.associations": {
-    ".env*": "dotenv"
+    ".env*": "dotenv",
+    "*.erb": "html",
+    "*.html.erb": "erb"
+  },
+  "[erb]": {
+    "editor.defaultFormatter": "aliariff.vscode-erb-beautify",
+    "editor.formatOnSave": true
   },
   "editor.guides.indentation": false,
   "editor.defaultFormatter": "castwide.solargraph",
@@ -186,5 +192,10 @@
   "vim.hlsearch": true,
   "vim.useSystemClipboard": true,
   "supermaven.allowGitignore": true,
-  "editor.lineNumbers": "relative"
+  "editor.lineNumbers": "relative",
+  "rubyLsp.formatter": "rubocop",
+  "rubyLsp.rubyExecutablePath": "/Users/etienne.vandelden/.gem/ruby/3.3.6/bin/ruby-lsp",
+  "rubyLsp.rubyVersionManager": {
+    "identifier": "chruby"
+  }
 }

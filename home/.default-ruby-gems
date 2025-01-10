@@ -10,6 +10,8 @@ rubocop-packaging
 rubocop-performance
 rubocop-rails
 rubocop-rspec
+ruby-lsp
+ruby-lsp-rails
 scss_lint
 solargraph
 solargraph-rails

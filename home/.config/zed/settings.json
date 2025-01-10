@@ -7,10 +7,16 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "outline_panel": {
+    "dock": "right"
+  },
+  "collaboration_panel": {
+    "dock": "right"
+  },
   "base_keymap": "VSCode",
   "theme": {
     "mode": "system",
-    "light": "Solarized Light",
+    "light": "Selenized Light",
     "dark": "Solarized Dark"
   },
   "ui_font_size": 16,
@@ -23,6 +29,8 @@
   "preferred_line_length": 120,
   "soft_wrap": "editor_width",
   "autosave": "on_focus_change",
+  "format_on_save": "on",
+  "ensure_final_newline_on_save": true,
   "relative_line_numbers": true,
   "vim_mode": true,
   "journal": {
@@ -36,7 +44,11 @@
     "metrics": false
   },
   "assistant": {
-    "enabled": false,
+    "default_model": {
+      "provider": "copilot_chat",
+      "model": "gpt-4o"
+    },
+    "enabled": true,
     "version": "2"
   },
   "project_panel": {
@@ -44,6 +56,7 @@
     "indent_size": 14
   },
   "terminal": {
+    "dock": "bottom",
     "font_family": "MonoLisa",
     "font_size": 16
   },
@@ -51,11 +64,33 @@
     "solargraph": {
       "initialization_options": {
         "diagnostics": true,
-        "formatting": true
+        "formatting": false
+      },
+      "binary": {
+        "path": "/Users/etienne.vandelden/.gem/ruby/3.3.6/bin/solargraph",
+        "arguments": ["stdio"]
       }
     }
   },
   "features": {
-    "inline_completion_provider": "supermaven"
+    "inline_completion_provider": "copilot"
+  },
+  "languages": {
+    "CSS": {
+      "tab_size": 2,
+      "format_on_save": "on"
+    },
+    "Ruby": {
+      "tab_size": 2,
+      "enable_language_server": true,
+      "language_servers": ["ruby-lsp", "solargraph"],
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "/Users/etienne.vandelden/.gem/ruby/3.3.6/bin/rubocop",
+          "arguments": ["--fail-level", "error", "--auto-correct", "--stdin", "{buffer_path}", "--stderr", "--server"]
+        }
+      }
+    }
   }
 }

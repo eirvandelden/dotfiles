@@ -17,7 +17,7 @@ fi
 # Editors
 #
 
-[ -z "$EDITOR" ] && export EDITOR='code -w'
+[ -z "$EDITOR" ] && export EDITOR='zed -w'
 export VISUAL='nano'
 export PAGER='less'
 
@@ -81,5 +81,13 @@ fi
 TMPPREFIX="${TMPDIR%/}/zsh"
 
 # export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+
+#
+# chruby
+#
+
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
 
 eval "$(/opt/homebrew/bin/brew shellenv)"

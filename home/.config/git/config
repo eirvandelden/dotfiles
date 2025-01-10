@@ -21,7 +21,7 @@
   gpgsign = true
 [core]
 	excludesfile = ~/.gitignore_global
-  editor = code -w
+  editor = zed -w
   hooksPath = ~/.git-templates/hooks
   pager = less -+X
 [difftool "default-difftool"]
@@ -63,3 +63,5 @@
   autoStash = true
 [tag]
   gpgSign = true
+[includeIf "hasconfig:remote.*.url:git@github.com:nedap/**"]
+  path = ~/.config/git/work

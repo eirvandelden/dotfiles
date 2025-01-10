@@ -57,10 +57,21 @@ HELPDIR=/usr/local/share/zsh/help
 
 # RUBY
 ## Ruby install configuration
-## Always install with yjit and jemalloc (brew installed)
+## Always install with yjit and jemalloc
+## Don't forget to run `brew install jemalloc` and `brew install rust`
 export RUBY_CONFIGURE_OPTS="--enable-yjit --with-jemalloc --disable-install-doc"
 export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include"
 export LDFLAGS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib"
+# Always make ruby scripts debugable
+# export RUBY_DEBUG_OPEN=true
+
+#
+# chruby
+#
+
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
 
 # source: https://dance.computer.dance/posts/2015/02/making-chruby-and-binstubs-play-nice.html
 # Remove the need for bundle exec ... or ./bin/...
@@ -215,7 +226,7 @@ alias celastic="docker run --rm --name elasticsearch -p 9200:9200 -p 9300:9300 -
 alias dlog="tail -f log/development.log | tspin" # pass dev log to tailspin
 
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
-export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+# export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 
 
 ### Add PostgreSQL

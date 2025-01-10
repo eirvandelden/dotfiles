@@ -23,14 +23,6 @@ source /opt/homebrew/opt/chruby/share/chruby/auto.sh
 chruby $(cat ~/.ruby-version)
 source ~/.chruby-default-gems/chruby-default-gems.sh
 
-# Use YJIT by default but don't clobber the existing +RUBYOPT+
-# if one is already set.
-if [[ -z "$RUBYOPT" ]]; then
-    export RUBYOPT="--yjit"
-else
-    export RUBYOPT="$RUBYOPT --yjit"
-fi
-
 # chruby-default-gems
 # enable chruby-default-gems: # https://github.com/bronson/chruby-default-gems
 # DEFAULT_GEMFILE='~/.default-ruby-gems'
