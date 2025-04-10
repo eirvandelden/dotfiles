@@ -8,10 +8,21 @@
 // from the command palette or from `Zed` application menu.
 {
   "outline_panel": {
+    "button": false,
     "dock": "right"
   },
+  "notification_panel": {
+    "button": false
+  },
   "collaboration_panel": {
+    "button": false,
     "dock": "right"
+  },
+  "gutter": {
+    "code_actions": false,
+    "folds": false,
+    "line_numbers": true,
+    "runnables": false
   },
   "base_keymap": "VSCode",
   "theme": {
@@ -19,8 +30,8 @@
     "light": "Selenized Light",
     "dark": "Solarized Dark"
   },
-  "ui_font_size": 16,
-  "buffer_font_size": 16,
+  "ui_font_size": 15,
+  "buffer_font_size": 15.0,
   "buffer_font_family": "MonoLisa",
   "show_whitespaces": "all",
   "hard_tabs": false,
@@ -37,7 +48,7 @@
     "hour_format": "hour24"
   },
   "git": {
-    "git_gutter": "tracked_files"
+    "git_gutter": "hide"
   },
   "telemetry": {
     "diagnostics": false,
@@ -53,12 +64,21 @@
   },
   "project_panel": {
     "dock": "right",
-    "indent_size": 14
+    "entry_spacing": "standard",
+    "indent_size": 15
+  },
+  "scrollbar": {
+    "axes": {
+      "horizontal": false
+    }
+  },
+  "tab_bar": {
+    "show_nav_history_buttons": false
   },
   "terminal": {
     "dock": "bottom",
     "font_family": "MonoLisa",
-    "font_size": 16
+    "font_size": 14
   },
   "lsp": {
     "solargraph": {
