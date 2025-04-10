@@ -59,7 +59,7 @@
   rebase = true
 [push]
   default = simple
-  autoSetupRemote = true
+	autoSetupRemote = true
 [rebase]
   autoStash = true
 [tag]
