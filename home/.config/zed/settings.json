@@ -87,7 +87,7 @@
         "formatting": false
       },
       "binary": {
-        "path": "/Users/etienne.vandelden/.gem/ruby/3.3.6/bin/solargraph",
+        "path": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/solargraph",
         "arguments": ["stdio"]
       }
     }
@@ -107,7 +107,7 @@
       "format_on_save": "on",
       "formatter": {
         "external": {
-          "command": "/Users/etienne.vandelden/.gem/ruby/3.3.6/bin/rubocop",
+          "command": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/rubocop",
           "arguments": ["--fail-level", "error", "--auto-correct", "--stdin", "{buffer_path}", "--stderr", "--server"]
         }
       }
