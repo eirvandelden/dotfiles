@@ -7,6 +7,7 @@
   ci = commit
   hist = log --graph --date-order --date=short --pretty=format:'%C(auto)%h%d %C(reset)%s %C(bold blue)%ce %C(reset)%C(green)%cr (%cd)'
   trust = "!mkdir -p .git/safe" # Mark a repo as trusted
+  undo = reset --soft HEAD^
 [apply]
   whitespace = nowarn
 [credential]
