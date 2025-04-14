@@ -2,6 +2,7 @@ include:
   - app/**/*.rb
   - lib/**/*.rb
   - spec/**/*.rb
+  - test/**/*.rb
 reporters:
   - rubocop
 plugins:
