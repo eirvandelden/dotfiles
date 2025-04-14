@@ -1,0 +1,137 @@
+{
+  "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
+  "name": "Selenized (Rails)",
+  "author": "Etienne van Delden de la Haije",
+  "themes": [
+    {
+      "name": "Selenized Light",
+      "appearance": "light",
+      "style": {
+        "background": "#fbf3db",
+        "element.background": "#fbf3db",
+        "editor.background": "#fbf3db",
+        "editor.gutter.background": "#fbf3db",
+        "panel.background": "#f2f1ef",
+        "surface.background": "#f2f1ef",
+        "elevated_surface.background": "#ece3cc",
+        "title_bar.background": "#ececec",
+        "tab_bar.background": "#f2f0ef",
+        "toolbar.background": "#fbf3db",
+        "tab.inactive_background": "#f2f1ef",
+        "tab.active_background": "#fbf3db",
+
+        "text": "#3a4d53",
+        "text.accent": "#0072d4",
+        "text.disabled": "#909995",
+        "text.muted": "#53676d",
+        "text.placeholder": "#909995",
+
+        "terminal.ansi.black": "#53676d",
+        "terminal.ansi.blue": "#0072d4",
+        "terminal.ansi.bright_black": "#3a4d53",
+        "terminal.ansi.bright_blue": "#006dce",
+        "terminal.ansi.bright_red": "#cc1729",
+        "terminal.ansi.bright_cyan": "#00978a",
+        "terminal.ansi.bright_green": "#428b00",
+        "terminal.ansi.bright_magenta": "#c44392",
+        "terminal.ansi.bright_white": "",
+        "terminal.ansi.bright_yellow": "#a78300",
+        "terminal.ansi.cyan": "#009c8f",
+        "terminal.ansi.dim_black": "#909995",
+        "terminal.ansi.green": "#489100",
+        "terminal.ansi.magenta": "#ca4898",
+        "terminal.ansi.red": "#d2212d",
+        "terminal.ansi.white": "",
+        "terminal.ansi.yellow": "#ad8900",
+        "terminal.background": "#fbf3db",
+        "terminal.bright_foreground": "#ece3cc",
+        "terminal.dim_foreground": "#d5cdb6",
+        "terminal.foreground": "#53676d",
+
+        "error": "#cc1729",
+        "error.background": "#d5cdb6",
+        "hint": "#ad8900",
+        "hint.background": "#d5cdb6",
+        "info": "#0072d4",
+        "info.background": "#d5cdb6",
+        "success": "#489100",
+        "success.background": "#d5cdb6",
+        "unreachable": "#d2212d",
+        "unreachable.background": "#d5cdb6",
+        "warning": "#c25d1e",
+        "warning.background": "#d5cdb6",
+
+        "conflict": "#c25d1e",
+        "created": "#428b00",
+        "deleted": "#d2212d",
+        "ignorede": "#909995",
+        "modified": "#a78300",
+
+        "editor.document_highlight.bracket_background": "#d5cdb6",
+        "editor.foreground": "#3a4d53",
+
+        "syntax": {
+          "attribute": {
+            "color": "#489100"
+          },
+          "comment": {
+            "color": "#909995",
+            "font_style": "italic"
+          },
+          "constant": {
+            "font_weight": 400
+          },
+          "enum": {
+            "color": "#489100"
+          },
+          "function": {
+            "color": "#0072d4"
+          },
+          "function.method": {
+            "color": "#006dce"
+          },
+          "keyword": {
+            "color": "#909995",
+            "font_style": "italic",
+            "font_weight": 700
+          },
+          "property": {
+            "color": "#489100"
+          },
+          "punctuation.bracket": {
+            "color": "#909995",
+            "font_style": "normal",
+            "font_weight": 100
+          },
+          "punctuation.delimeter": {
+            "color": "#909995",
+            "font_style": "normal",
+            "font_weight": 100
+          },
+          "punctuation.special": {
+            "color": "#489100"
+          },
+          "string.regex": {
+            "color": "#d2212d"
+          },
+          "text.literal": {
+            "color": "#53676d"
+          },
+          "type": {
+            "color": "#c25d1e"
+          },
+          "type.builtin": {
+            "color": "#a9430f",
+            "font_style": "italic"
+          },
+          "variable": {
+            "color": "#489100"
+          },
+          "variable.special": {
+            "color": "#428b00"
+          }
+        }
+      }
+    }
+  ]
+}
