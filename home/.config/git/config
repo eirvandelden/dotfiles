@@ -18,12 +18,12 @@
   branch = auto
   diff = auto
 [commit]
-	template = ~/.git-templates/gitmessage
+	template = ~/.config/git/templates/gitmessage
   gpgsign = true
 [core]
-	excludesfile = ~/.gitignore_global
-  editor = zed -w
-  hooksPath = ~/.git-templates/hooks
+	excludesfile = ~/.config/git/ignore.global
+  editor = nova -w
+  hooksPath = ~/.config/git/hooks
   pager = less -+X
 [difftool "default-difftool"]
   # Set OS X Filemerge as mergetool
