@@ -91,3 +91,6 @@ source /opt/homebrew/opt/chruby/share/chruby/auto.sh
 chruby $(cat ~/.ruby-version)
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# Created by `pipx` on 2025-01-17 21:19:20
+export PATH="$PATH:/Users/etienne.vandelden/.local/bin"

@@ -286,3 +286,6 @@ export DISABLE_SPRING=true
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="/Users/etienne.vandelden/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
+
+# Created by `pipx` on 2025-01-17 21:19:20
+export PATH="$PATH:/Users/etienne.vandelden/.local/bin"
