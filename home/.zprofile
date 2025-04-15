@@ -90,6 +90,13 @@ source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
 source /opt/homebrew/opt/chruby/share/chruby/auto.sh
 chruby $(cat ~/.ruby-version)
 
+#
+# chnode
+#
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
+source /opt/homebrew/opt/chnode/share/chnode/auto.sh
+precmd_functions+=(chnode_auto)  # if using Zsh
+
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Created by `pipx` on 2025-01-17 21:19:20
