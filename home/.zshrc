@@ -204,6 +204,7 @@ alias erd='rake erd && open erd.pdf'
 # alias rails='bundle exec rails'
 # alias rake='bundle exec rake'
 # alias guard='bundle exec guard'
+alias defaultgems="gem install bundler; bundle install --gemfile=~/.config/chruby/Gemfile.default"
 
   #others
 # alias os='overmind s'
