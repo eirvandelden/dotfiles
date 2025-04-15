@@ -226,8 +226,11 @@ alias celastic="docker run --rm --name elasticsearch -p 9200:9200 -p 9300:9300 -
 
 alias dlog="tail -f log/development.log | tspin" # pass dev log to tailspin
 alias caddyedit="nova -w $(brew --prefix)/etc/Caddyfile"
+alias caddyfmt=" caddy fmt --overwrite $(brew --prefix)/etc/Caddyfile"
 alias caddylog="tail -f $(brew --prefix)/var/log/caddy.log"
 alias caddyrestart="brew services restart caddy"
+alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
+alias caddyvalidate="caddy validate --config $(brew --prefix)/etc/Caddyfile"
 
 # add `code` alias to open VS Code from the terminal while I'm one foot in VSCode world
 # export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
