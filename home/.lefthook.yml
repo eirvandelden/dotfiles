@@ -1,0 +1,120 @@
+pre-commit:
+  parallel: true
+  commands:
+    csslint:
+      tags: sass css linter
+      glob: "*.{css,scss}"
+      run: yarn csslint {staged_files}
+    erb_lint:
+      tags: erb style
+      glob: "*.{erb}"
+      run: erb_lint {staged_files}
+    eslint:
+      tags: javascript linter
+      glob: "*.{js,ts,jsx,tsx}"
+      run: yarn eslint {staged_files}
+    rubocop:
+      tags: ruby linter
+      glob: "*.{rb}"
+      exclude: "application.rb|routes.rb|schema.rb"
+      run: rubocop -a {staged_files} --parallel
+      stage_fixed: true
+    ruby-syntax:
+      tags:
+        - ruby
+        - syntax
+      glob: "*.rb"
+      run: ruby -c "{staged_files}"
+      fail_text: Hey there, it looks like your Ruby syntax is incorrect. Take a break if you're tired!
+    no-fixme:
+      tags: fixme
+      run: |
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings FIXME "{staged_files}"
+      fail_text: Your staged files include a FIXME. See above for details.
+    no-nocommit:
+      tags: nocommit
+      run: |
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings NOCOMMIT "{staged_files}"
+      fail_text: Your staged files include a NOCOMMIT. See above for details.
+
+pre-push:
+  parallel: true
+  commands:
+    # Do not push without security checking
+    brakeman:
+      tags:
+        - ruby
+        - rails
+        - security
+      run: bundle exec brakeman --quiet --no-pager --no-progress --no-summary
+      fail_text: |
+        Fix vulnerabilities if you can.
+        If you're in a hurry to push, use the `--no-verify` git flag.
+        If brakeman is presenting false positives or needs further configuration, look into adding options to a configuration file — see https://brakemanscanner.org/docs/options/
+    bundle-audit:
+      tags:
+        - ruby
+        - security
+        - bundle-audit
+      run: bin/bundler-audit --config config/bundler-audit.yml --update
+      fail_text: |
+        Upgrade vulnerable dependencies if you can.
+        If you're in a hurry to push, use the `--no-verify` git flag.
+        If you need to 🚩 ignore dependencies in the longer-term 🚩 see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
+    csslint:
+      tags: linter
+      glob: "*.{css,scss}"
+      run: yarn csslint {push_files}
+    erb_lint:
+      tags: linter
+      glob: "*.erb"
+      run: bundle exec erb_lint {push_files}
+    eslint:
+      tags: linter
+      glob: "*.{js,ts,jsx,tsx}"
+      run: yarn eslint {push_files}
+    rubocop:
+      tags: linter
+      glob: "*.rb"
+      run: bundle exec rubocop --force-exclusion {push_files}
+    no-fixme:
+      tags: fixme
+      run: |
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings FIXME "{staged_files}"
+      fail_text: Your staged files include a FIXME. See above for details.
+    no-nocommit:
+      tags: nocommit
+      run: |
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings NOCOMMIT "{staged_files}"
+      fail_text: Your staged files include a NOCOMMIT. See above for details.
+
+# Run installs and migrations after pull
+post-merge:
+  parallel: true
+  files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
+  only:
+    - ref: 'main'
+  skip:
+    - rebase
+  commands:
+    migrations:
+      run: lefthook run migrations
+      env:
+        LEFTHOOK_QUIET: execution_info,meta,skips,summary
+    client-dependencies:
+      glob: "{yarn.lock,package.json}"
+      run: yarn install
+
+# custom migrations command for running rails migrations
+migrations:
+  piped: true
+  files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
+  commands:
+    bundle:
+      priority: 1
+      glob: "Gemfile*"
+      run: bundle install
+    migrate:
+      priority: 2
+      glob: "db/migrations/*"
+      run: bundle exec rails db:migrate
