@@ -46,6 +46,7 @@ pre-push:
         - ruby
         - rails
         - security
+      glob: "Gemfile"
       run: bundle exec brakeman --quiet --no-pager --no-progress --no-summary
       fail_text: |
         Fix vulnerabilities if you can.
@@ -56,6 +57,7 @@ pre-push:
         - ruby
         - security
         - bundle-audit
+      glob: "Gemfile"
       run: bin/bundler-audit --config config/bundler-audit.yml --update
       fail_text: |
         Upgrade vulnerable dependencies if you can.
