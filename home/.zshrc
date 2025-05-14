@@ -42,9 +42,6 @@ if type brew &>/dev/null; then
   FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
 fi
 
-# Load zsh-autosuggestions.
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
 # Enable autosuggestions automatically.
 zle -N zle-line-init
 
@@ -65,35 +62,7 @@ export LDFLAGS="-L$HOMEBREW_PREFIX/opt/jemalloc/lib"
 # Always make ruby scripts debugable
 # export RUBY_DEBUG_OPEN=true
 
-#
-# chruby
-#
 
-source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-chruby $(cat ~/.ruby-version)
-
-# source: https://dance.computer.dance/posts/2015/02/making-chruby-and-binstubs-play-nice.html
-# Remove the need for bundle exec ... or ./bin/...
-# by adding ./bin to path if the current project is trusted
-function set_local_bin_path() {
-  # Replace any existing local bin paths with our new one
-  export PATH="${1:-""}`echo "$PATH"|sed -e 's,[^:]*\.git/[^:]*bin:,,g'`"
-}
-
-function add_trusted_local_bin_to_path() {
-  if [[ -d "$PWD/.git/safe" ]]; then
-    # We're in a trusted project directory so update our local bin path
-    set_local_bin_path "$PWD/.git/safe/../../bin:"
-  fi
-}
-# Make sure add_trusted_local_bin_to_path runs after chruby so we
-# prepend the default chruby gem paths
-if [[ -n "$ZSH_VERSION" ]]; then
-  if [[ ! "$preexec_functions" == *add_trusted_local_bin_to_path* ]]; then
-    preexec_functions+=("add_trusted_local_bin_to_path")
-  fi
-fi
 
 # https://reinteractive.com/posts/266-no-more-bundle-exec-using-the-new-rubygems_gemdeps-environment-variable
 # export RUBYGEMS_GEMDEPS=-
@@ -158,9 +127,15 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 fi
 
 # open github links via terminal
- function gh {
-   open "https://github.com/eet-nu/${(j:/:)@}"
- }
+# ghw stands for github-work
+function ghw {
+   open "https://github.com/nedap/${(j:/:)@}"
+}
+
+# ghp stands for github-personal
+function ghp() {
+  open "https://github.com/eirvandelden/${(j:/:)@}"
+}
 
 ###aliasses
   #git
@@ -183,6 +158,7 @@ alias grbc='git rebase --continue'
 alias grbs='git rebase --skip'
 alias grba='git rebase --abort'
 alias gclean='git branch --merged | grep -v "\*" | xargs -n 1 git branch -d | git remote prune origin'
+alias gitforce='git push --force-with-lease'
 # alias s='gpg_cache' # s for sign
 
   #rails environment
@@ -259,6 +235,38 @@ function docker_bash {
   done
 }
 
+#
+# chruby
+#
+
+source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+source /opt/homebrew/opt/chruby/share/chruby/auto.sh
+chruby $(cat ~/.ruby-version)
+
+# source: https://dance.computer.dance/posts/2015/02/making-chruby-and-binstubs-play-nice.html
+# Remove the need for bundle exec ... or ./bin/...
+# by adding ./bin to path if the current project is trusted
+function set_local_bin_path() {
+  # Replace any existing local bin paths with our new one
+  export PATH="${1:-""}`echo "$PATH"|sed -e 's,[^:]*\.git/[^:]*bin:,,g'`"
+}
+
+function add_trusted_local_bin_to_path() {
+  if [[ -d "$PWD/.git/safe" ]]; then
+    # We're in a trusted project directory so update our local bin path
+    set_local_bin_path "$PWD/.git/safe/../../bin:"
+  fi
+}
+# Make sure add_trusted_local_bin_to_path runs after chruby so we
+# prepend the default chruby gem paths
+if [[ -n "$ZSH_VERSION" ]]; then
+  if [[ ! "$preexec_functions" == *add_trusted_local_bin_to_path* ]]; then
+    preexec_functions+=("add_trusted_local_bin_to_path")
+  fi
+fi
+
+# Load zsh-autosuggestions.
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # My git sign key uses a passphrase. We can use 1password cli to get the password and preset it as the default passphrase for my key.
 #function gpg_cache() {

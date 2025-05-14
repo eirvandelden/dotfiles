@@ -86,7 +86,7 @@
   "git.autofetch": true,
   "workbench.quickOpen.closeOnFocusLost": false,
   "terminal.external.osxExec": "iTerm.app",
-  "workbench.statusBar.visible": true,
+  "workbench.statusBar.visible": false,
   "editor.detectIndentation": false,
   "breadcrumbs.enabled": true,
   "[ruby]": {
@@ -116,11 +116,11 @@
   "workbench.sideBar.location": "right",
   "files.trimTrailingWhitespace": true,
   "window.autoDetectColorScheme": true,
-  "workbench.preferredDarkColorTheme": "Selene Selenized Dark",
+  "workbench.preferredDarkColorTheme": "Solarized Dark",
   "workbench.colorTheme": "Selene Selenized Light",
   "workbench.preferredLightColorTheme": "Selene Selenized Light",
   "html.format.indentInnerHtml": true,
-  "solargraph.commandPath": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/solargraph",
+  "solargraph.commandPath": "/Users/etienne.vandelden/.gem/ruby/3.4.3/bin/solargraph",
   "solargraph.diagnostics": true,
   "editor.formatOnSaveMode": "file",
   "editor.linkedEditing": true,
@@ -133,6 +133,26 @@
   "solargraph.autoformat": true,
   "debug.internalConsoleOptions": "openOnSessionStart",
   "editor.tokenColorCustomizations": {
+    "[*Light*]": {
+      "textMateRules": [
+        {
+          "scope": "ref.matchtext",
+          "settings": {
+            "foreground": "#000"
+          }
+        }
+      ]
+    },
+    "[*Dark*]": {
+      "textMateRules": [
+        {
+          "scope": "ref.matchtext",
+          "settings": {
+            "foreground": "#fff"
+          }
+        }
+      ]
+    },
     "textMateRules": [
       {
         "scope": [
@@ -197,5 +217,7 @@
   "rubyLsp.rubyExecutablePath": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/ruby-lsp",
   "rubyLsp.rubyVersionManager": {
     "identifier": "chruby"
-  }
+  },
+  "window.commandCenter": false,
+  "workbench.layoutControl.enabled": false
 }
