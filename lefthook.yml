@@ -40,11 +40,12 @@ pre-commit:
         ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings NOCOMMIT "{staged_files}"
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
-commit-msg:
-  parallel: true
-  commands:
-    spell-check:
-      run: cspell --no-summary {1}
+# TODO: fix loading of extra words
+# commit-msg:
+#   parallel: true
+#   commands:
+#     spell-check:
+#       run: cspell --no-summary {1}
 
 pre-push:
   parallel: true
