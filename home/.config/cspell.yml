@@ -1,0 +1,34 @@
+# cspell.yml
+$schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
+version: "0.2"
+dictionaryDefinitions:
+  - name: project-dictionary
+    path: ./project-dictionary.txt
+    addWords: true
+dictionaries:
+  - bash
+  - css
+  - en_us
+  - en-gb
+  - fonts
+  - html
+  - html-symbol-entities
+  - node
+  - networkingTerms
+  - project-dictionary
+  - ruby
+  - softwareTerms
+  - typescript
+ignorePaths:
+  - config/credentials.yml.enc
+  - coverage/**
+  - db/*.sqlite3
+  - Gemfile
+  - Gemfile.lock
+  - log/**
+  - node_modules/**
+  - package.json
+  - package-lock.json
+  - project-dictionary.txt
+  - storage/**
+  - tmp/**
