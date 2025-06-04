@@ -57,7 +57,7 @@ pre-push:
         - rails
         - security
       glob: "Gemfile"
-      run: bundle exec brakeman --quiet --no-pager --no-progress --no-summary
+      run: brakeman --quiet --no-pager --no-progress --no-summary
       fail_text: |
         Fix vulnerabilities if you can.
         If you're in a hurry to push, use the `--no-verify` git flag.
@@ -80,7 +80,7 @@ pre-push:
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: bundle exec erb_lint {push_files}
+      run: erb_lint {push_files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
@@ -88,7 +88,7 @@ pre-push:
     rubocop:
       tags: linter
       glob: "*.rb"
-      run: bundle exec rubocop --force-exclusion {push_files}
+      run: rubocop --force-exclusion {push_files}
     no-fixme:
       tags: fixme
       run: |
@@ -129,4 +129,4 @@ migrations:
     migrate:
       priority: 2
       glob: "db/migrations/*"
-      run: bundle exec rails db:migrate
+      run: rails db:migrate
