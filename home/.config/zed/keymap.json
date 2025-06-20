@@ -9,7 +9,6 @@
   {
     "bindings": {
       // "j k": ["workspace::SendKeystrokes", "escape"]
-      "cmd+shift+`": "workspace::OpenTerminal"
     }
   },
 

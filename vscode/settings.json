@@ -1,13 +1,13 @@
 // Place your settings in this file to overwrite the default settings
 {
   "terminal.integrated.fontFamily": "MonoLisa",
-  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.fontSize": 15,
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.cursorStyle": "line",
   "editor.tabSize": 2, // as per Ruby style Guide :)
   "editor.renderWhitespace": "boundary", // shows dots for spaces
   "editor.wordWrap": "on", // wrap on window
-  "editor.fontSize": 14,
+  "editor.fontSize": 15,
   "editor.fontFamily": "MonoLisa",
   "editor.formatOnType": true,
   "editor.formatOnSave": true,
@@ -75,7 +75,6 @@
   "editor.minimap.enabled": false,
   "editor.multiCursorModifier": "alt",
   "editor.autoIndent": "full",
-  "workbench.fontAliasing": "default",
   "workbench.colorCustomizations": {
     "editorActiveLineNumber.activeForeground": "#FFFFFF"
   },
@@ -201,7 +200,7 @@
   "rdbg.rubyVersionManager": "chruby",
   "dotenv.enableAutocloaking": false,
   "rubyLsp.linters": [],
-  "chat.editor.fontSize": 14,
+  "chat.editor.fontSize": 15,
   "githubPullRequests.pullBranch": "never",
   "zenMode.hideLineNumbers": false,
   "search.showLineNumbers": true,
@@ -219,5 +218,14 @@
     "identifier": "chruby"
   },
   "window.commandCenter": false,
-  "workbench.layoutControl.enabled": false
+  "workbench.layoutControl.enabled": false,
+  "editor.codeLensFontFamily": "MonoLisa",
+  "editor.inlayHints.fontFamily": "MonoLisa",
+  "debug.console.fontFamily": "MonoLisa",
+  "debug.console.fontSize": 15,
+  "scm.inputFontFamily": "editor",
+  "terminal.integrated.fontLigatures.enabled": true,
+  "markdown.preview.fontFamily": "MonoLisa, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif",
+  "scm.inputFontSize": 14,
+  "markdown.preview.fontSize": 15
 }
