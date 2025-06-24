@@ -1,0 +1,16 @@
+## HOME Configuration
+Host 192.168.1.*
+  PubkeyAuthentication no
+  PasswordAuthentication yes
+  IdentityFile ~/.config/ssh/id_ed25519
+
+#### GITHUB CONFIGURATION ####
+Host github.com
+  User git
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+  IdentitiesOnly yes
+
+# Include work-specific configuration
+Include ~/.config/ssh/config.work
+# include 1password managed keys
+Include ~/.ssh/1Password/config

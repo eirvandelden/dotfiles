@@ -1,0 +1,119 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run the `open default settings` command
+// from the command palette or from `Zed` application menu.
+{
+  "git_panel": {
+    "dock": "right"
+  },
+  "outline_panel": {
+    "button": false,
+    "dock": "right"
+  },
+  "notification_panel": {
+    "button": false
+  },
+  "collaboration_panel": {
+    "button": false,
+    "dock": "right"
+  },
+  "gutter": {
+    "code_actions": false,
+    "folds": false,
+    "line_numbers": true,
+    "runnables": false
+  },
+  "base_keymap": "VSCode",
+  "theme": {
+    "mode": "system",
+    "light": "Selenized Light",
+    "dark": "Solarized Dark"
+  },
+  "ui_font_size": 15,
+  "buffer_font_size": 15.0,
+  "buffer_font_family": "MonoLisa",
+  "show_whitespaces": "all",
+  "hard_tabs": false,
+  "tab_size": 2,
+  "show_wrap_guides": true,
+  "preferred_line_length": 120,
+  "soft_wrap": "editor_width",
+  "autosave": "on_focus_change",
+  "format_on_save": "on",
+  "ensure_final_newline_on_save": true,
+  "relative_line_numbers": true,
+  "vim_mode": true,
+  "journal": {
+    "hour_format": "hour24"
+  },
+  "git": {
+    "git_gutter": "hide"
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "assistant": {
+    "default_model": {
+      "provider": "copilot_chat",
+      "model": "gpt-4o"
+    },
+    "enabled": true,
+    "version": "2"
+  },
+  "project_panel": {
+    "dock": "right",
+    "entry_spacing": "standard",
+    "indent_size": 15
+  },
+  "scrollbar": {
+    "axes": {
+      "horizontal": false
+    }
+  },
+  "tab_bar": {
+    "show_nav_history_buttons": false
+  },
+  "terminal": {
+    "dock": "bottom",
+    "font_family": "MonoLisa",
+    "font_size": 14
+  },
+  "lsp": {
+    "solargraph": {
+      "initialization_options": {
+        "diagnostics": true,
+        "formatting": false
+      },
+      "binary": {
+        "path": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/solargraph",
+        "arguments": ["stdio"]
+      }
+    }
+  },
+  "features": {
+    "inline_completion_provider": "copilot"
+  },
+  "languages": {
+    "CSS": {
+      "tab_size": 2,
+      "format_on_save": "on"
+    },
+    "Ruby": {
+      "tab_size": 2,
+      "enable_language_server": true,
+      "language_servers": ["ruby-lsp", "solargraph"],
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/rubocop",
+          "arguments": ["--fail-level", "error", "--auto-correct", "--stdin", "{buffer_path}", "--stderr", "--server"]
+        }
+      }
+    }
+  }
+}
