@@ -58,8 +58,9 @@
     "metrics": false
   },
   "agent": {
+    "play_sound_when_agent_done": true,
     "default_model": {
-      "provider": "copilot_chat",
+      "provider": "openai",
       "model": "gpt-4o"
     },
     "enabled": true,

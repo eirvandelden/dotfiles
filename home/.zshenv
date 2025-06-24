@@ -3,4 +3,6 @@
 export ZDOTDIR="$HOME/.config/zsh"
 
 # Failsafe: ensure main config is loaded in interactive shells
+
+source "$ZDOTDIR/zshenv"
 [[ -o interactive ]] && source "$HOME/.zshrc"

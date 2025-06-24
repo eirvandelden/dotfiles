@@ -7,3 +7,5 @@ BUNDLE_GEM__COC: "false"
 BUNDLE_GEM__CHANGELOG: "true"
 BUNDLE_GEM__LINTER: "rubocop"
 BUNDLE_AUTO_INSTALL: "true"
+BUNDLE_BUILD__MYSQL2: "--with-ldflags=-L/opt/homebrew/opt/zstd/lib"
+
