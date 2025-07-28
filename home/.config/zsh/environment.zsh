@@ -9,6 +9,14 @@ export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export DISABLE_SPRING=true
 export PATH="$PATH:/Users/etienne.vandelden/.rd/bin:/Users/etienne.vandelden/.local/bin"
 
+## SQLite3
+# For compilers to find sqlite you may need to set:
+export LDFLAGS="-L/opt/homebrew/opt/sqlite/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/sqlite/include"
+
+# For pkg-config to find sqlite you may need to set:
+export PKG_CONFIG_PATH="/opt/homebrew/opt/sqlite/lib/pkgconfig"
+
 # configure ssh config file
 export SSH_CONFIG_FILE="$HOME/.config/ssh/config"
 
