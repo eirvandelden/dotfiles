@@ -1,5 +1,3 @@
-# ~/.config/zsh/zshrc
-
 # History, input
 HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 HISTSIZE=2000

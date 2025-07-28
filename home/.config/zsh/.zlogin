@@ -1,5 +1,3 @@
-# ~/.config/zsh/login.zsh
-
 # Show a themed welcome quote on interactive terminals
 [[ -o INTERACTIVE && -t 2 ]] || return
 

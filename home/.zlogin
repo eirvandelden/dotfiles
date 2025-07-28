@@ -1,4 +1,3 @@
-# ~/.zlogin
-
-# Load modular login logic (e.g. welcome quotes, comp dump)
-# [[ -f "$HOME/.config/zsh/login.zsh" ]] && source "$HOME/.config/zsh/login.zsh"
+# Point Zsh to ~/.config/zsh folder
+export ZDOTDIR="$HOME/.config/zsh"
+source "$ZDOTDIR/.zlogin"

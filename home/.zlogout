@@ -1,4 +1,3 @@
-# ~/.zlogout
-
-# Load modular logout logic (e.g. random quote with emoji)
-[[ -f "$HOME/.config/zsh/logout.zsh" ]] && source "$HOME/.config/zsh/logout.zsh"
+# Point Zsh to ~/.config/zsh folder
+export ZDOTDIR="$HOME/.config/zsh"
+source "$ZDOTDIR/.zlogout"
