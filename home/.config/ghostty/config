@@ -1,0 +1,7 @@
+font-family = "MonoLisa"
+font-size = 15
+
+theme = dark:"iTerm2 Solarized Dark",light:"iTerm2 Solarized Light"
+
+clipboard-read = allow
+clipboard-write = allow
