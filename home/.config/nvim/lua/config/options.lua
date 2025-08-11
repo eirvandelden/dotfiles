@@ -19,6 +19,8 @@ opt.guicursor = {
   "i-ci-ve-r-cr-sm:ver20-blinkwait300-blinkon200-blinkoff150",
 }
 
+opt.clipboard = "unnamedplus"
+
 -- RUBY
 vim.g.lazyvim_ruby_lsp = "solargraph"
 vim.g.lazyvim_ruby_formatter = "rubocop"
