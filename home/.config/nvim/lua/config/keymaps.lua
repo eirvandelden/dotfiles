@@ -3,3 +3,5 @@
 -- Add any additional keymaps here
 -- Show notifications history
 vim.keymap.set("n", "<leader>un", "<cmd>Telescope notify<cr>", { desc = "Notification history" })
+-- remap ctrl+s to save
+vim.keymap.set({ "n", "i", "v" }, "<C-s>", "<cmd>w<CR>", { desc = "Save file" })
