@@ -5,7 +5,7 @@ cursor-style = bar
 cursor-style-blink = true
 cursor-opacity = 0.85
 cursor-color = #0000FF
-shell-integration-features = cursor
+shell-integration-features = cursor, sudo, title
 
 custom-shader = shaders/cursor-smear.glsl
 custom-shader = shaders/cursor-blaze.glsl
@@ -16,6 +16,19 @@ font-size = 15
 theme = dark:"iTerm2 Solarized Dark",light:"iTerm2 Solarized Light"
 
 adjust-cursor-thickness = 1
+
+# Keybindings
+macos-option-as-alt = true
+
+## save like macos
+keybind = cmd+s=text:\x13
+keybind = cmd+c=text:\x03
+## send option+arrow keys
+# Move backward by word
+keybind = alt+left=text:\x1bb
+
+# Move forward by word
+keybind = option+right=text:\x1bf
 
 # Customize the macOS app icon.
 #
