@@ -26,12 +26,13 @@ export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agen
 ## Add plugins
 source /Users/etienne.vandelden/.config/op/plugins.sh
 
-# chruby setup
+# Ruby
+## chruby setup
 source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
 source /opt/homebrew/opt/chruby/share/chruby/auto.sh
 chruby $(cat ~/.ruby-version 2>/dev/null)
 
-# Add trusted ./bin for safe projects
+## Add trusted ./bin for safe projects
 function set_local_bin_path() {
   export PATH="${1:-""}`echo "$PATH"|sed -e 's,[^:]*\.git/[^:]*bin:,,g'`"
 }
@@ -46,7 +47,8 @@ if [[ -n "$ZSH_VERSION" && "$preexec_functions" != *add_trusted_local_bin_to_pat
   preexec_functions+=("add_trusted_local_bin_to_path")
 fi
 
-# chnode setup
+# Javascript
+## chnode setup
 source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
 source /opt/homebrew/opt/chnode/share/chnode/auto.sh
 precmd_functions+=(chnode_auto)
