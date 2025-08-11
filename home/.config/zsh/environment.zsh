@@ -20,8 +20,11 @@ export PKG_CONFIG_PATH="/opt/homebrew/opt/sqlite/lib/pkgconfig"
 # configure ssh config file
 export SSH_CONFIG_FILE="$HOME/.config/ssh/config"
 
+# 1Password
 # configure 1password ssh-agent to access configured keys
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+## Add plugins
+source /Users/etienne.vandelden/.config/op/plugins.sh
 
 # chruby setup
 source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
@@ -47,6 +50,9 @@ fi
 source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
 source /opt/homebrew/opt/chnode/share/chnode/auto.sh
 precmd_functions+=(chnode_auto)
+
+# Add utilities from brew
+export PATH="/opt/homebrew/opt/curl/bin:$PATH"
 
 # Homebrew environment
 eval "$(/opt/homebrew/bin/brew shellenv)"
