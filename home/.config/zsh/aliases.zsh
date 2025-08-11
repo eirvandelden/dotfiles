@@ -57,7 +57,7 @@ alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
 
 # Caddy
-alias caddyedit="nova -w $(brew --prefix)/etc/Caddyfile"
+alias caddyedit="e -w $(brew --prefix)/etc/Caddyfile"
 alias caddyfmt="caddy fmt --overwrite $(brew --prefix)/etc/Caddyfile"
 alias caddylog="tail -f $(brew --prefix)/var/log/caddy.log"
 alias caddyrestart="brew services restart caddy"
