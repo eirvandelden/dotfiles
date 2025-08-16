@@ -227,5 +227,6 @@
   "terminal.integrated.fontLigatures.enabled": true,
   "markdown.preview.fontFamily": "MonoLisa, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif",
   "scm.inputFontSize": 14,
-  "markdown.preview.fontSize": 15
+  "markdown.preview.fontSize": 15,
+  "github.copilot.nextEditSuggestions.enabled": true
 }
