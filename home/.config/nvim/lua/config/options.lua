@@ -21,6 +21,10 @@ opt.guicursor = {
 
 opt.clipboard = "unnamedplus"
 
+-- set leader to ;
+vim.g.mapleader = ";"
+vim.g.maplocalleader = ";"
+
 -- RUBY
 vim.g.lazyvim_ruby_lsp = "solargraph"
 vim.g.lazyvim_ruby_formatter = "rubocop"
