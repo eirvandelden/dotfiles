@@ -1,0 +1,39 @@
+return {
+  --   "hrsh7th/nvim-cmp",
+  --   dependencies = { "L3MON4D3/LuaSnip" },
+  --   opts = function(_, opts)
+  --     local cmp = require("cmp")
+  --     local luasnip = require("luasnip")
+  --
+  --     -- never auto-preselect; avoids accidental confirms
+  --     opts.preselect = cmp.PreselectMode.None
+  --
+  --     -- only change Tab / S-Tab / Enter
+  --     opts.mapping = vim.tbl_extend("force", opts.mapping or {}, {
+  --       ["<Tab>"] = cmp.mapping(function(fallback)
+  --         if cmp.visible() then
+  --           cmp.confirm({ select = true }) -- confirm completion
+  --         elseif luasnip.expand_or_jumpable() then
+  --           luasnip.expand_or_jump() -- expand or jump in snippet
+  --         else
+  --           fallback() -- insert a literal Tab / indent
+  --         end
+  --       end, { "i", "s" }),
+  --
+  --       ["<S-Tab>"] = cmp.mapping(function(fallback)
+  --         if cmp.visible() then
+  --           cmp.select_prev_item()
+  --         elseif luasnip.jumpable(-1) then
+  --           luasnip.jump(-1) -- jump backward in snippet
+  --         else
+  --           fallback()
+  --         end
+  --       end, { "i", "s" }),
+  --
+  --       -- Enter should NOT accept a completion
+  --       ["<CR>"] = cmp.mapping(function(fallback)
+  --         fallback() -- just newline/normal behavior
+  --       end, { "i", "s" }),
+  --     })
+  --   end,
+}
