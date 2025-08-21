@@ -1,46 +1,47 @@
-dotfiles
+# dotfiles
+
 ========
 
 My personal configuration for applications using dotfiles. Managed using [homesick](https://github.com/technicalpickles/homesick)!
 
-# Configurations
+## Configurations
 
 This dotfile repository contains dotfile configuration for the following tools:
 
-* vim
-* bash
+* neovim
+* zsh
 * Git: Global gitignore
 
+## Installation
 
-# Installation
+To install these dotfiles using [homesick](https://github.com/technicalpickles/homesick):
 
-    ln -s <source> ~/.<target>
-
+    gem install homesick
+    homesick clone <your-github-username>/dotfiles
+    homesick symlink dotfiles
 
 ## Install yourself
- * [zprezto](https://github.com/sorin-ionescu/prezto)
-    * Running `git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"` should suffice
- * [zsh-notify](https://github.com/eirvandelden/zsh-notify)
-   * Running `git clone https://github.com/eirvandelden/zsh-notify ~/.zsh-notify/`
- * [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
-   * Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
- * [solarized](http://ethanschoonover.com/solarized)
- * **terminal notifier** `brew install terminal-notifier`
+
+* [zsh-notify](https://github.com/eirvandelden/zsh-notify)
+  * Running `git clone https://github.com/eirvandelden/zsh-notify ~/.zsh-notify/`
+* [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
+  * Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
+* **terminal notifier** `brew install terminal-notifier`
 
 ## Brew install
 
- * `brew install the_silver_searcher`
+* `brew install the_silver_searcher`
 
 ## chnode
 
     brew tap tkareine/chnode
     brew install tkareine/chnode/chnode
 
-# node-build
+## node-build
 
     brew install node-build
 
-# Sensible OS X defaults
+## Sensible OS X defaults
 
 When setting up a new Mac, you may want to set some sensible OS X defaults:
 
