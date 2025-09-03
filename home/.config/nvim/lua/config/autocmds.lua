@@ -23,3 +23,12 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.b.autoformat = false
   end,
 })
+
+-- Write buffer when losing focus
+vim.api.nvim_create_autocmd({ "BufLeave", "FocusLost" }, {
+  callback = function()
+    if vim.bo.modifiable and not vim.bo.readonly and vim.fn.expand("%") ~= "" then
+      vim.cmd("silent! write")
+    end
+  end,
+})
