@@ -25,6 +25,8 @@ vim.keymap.set("c", "<M-f>", "<C-Right>", { desc = "Move right one word (cmd)" }
 
 vim.keymap.set("n", "<M-f>", "w", { desc = "Move forward one word" })
 vim.keymap.set("n", "<M-b>", "b", { desc = "Move backward one word" })
+-- exit terminal mode with Escape
+vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "Terminal: exit to Normal", silent = true })
 
 -- file picker like vscode
 -- vim.keymap.set({ "n", "i", "c" }, "<C-p>", require("lazyvim.util").telescope("files"), { desc = "Find files" })
