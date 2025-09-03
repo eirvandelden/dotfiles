@@ -65,5 +65,4 @@ alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
 alias caddyvalidate="caddy validate --config $(brew --prefix)/etc/Caddyfile"
 
 # Editors
-#alias e="NVIM_LISTEN_ADDRESS=$HOME/.cache/nvim.sock nvim"
-alias e="nvim"
+alias e="nvim $@"
