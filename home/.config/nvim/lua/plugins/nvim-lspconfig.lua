@@ -1,7 +1,9 @@
 return {
   "neovim/nvim-lspconfig",
+  dependencies = { "saghen/blink.cmp" },
   opts = {
     servers = {
+      lua_ls = {},
       solargraph = {
         enabled = lsp == "solargraph",
       },
@@ -12,5 +14,9 @@ return {
         enabled = formatter == "rubocop" and lsp ~= "solargraph",
       },
     },
+    config = function()
+      local capabilities = require("blink.cmp").get_lsp_capabilities()
+      require("lspconfig").setup({ capabilities = capabilities })
+    end,
   },
 }
