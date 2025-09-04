@@ -4,7 +4,7 @@ clipboard-write = allow
 cursor-style = bar
 cursor-style-blink = true
 cursor-opacity = 0.85
-cursor-color = #0000FF
+cursor-color = #c25d1e
 shell-integration-features = cursor, sudo, title
 
 custom-shader = shaders/cursor-smear.glsl
