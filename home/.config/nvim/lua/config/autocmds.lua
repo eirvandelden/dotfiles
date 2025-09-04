@@ -32,3 +32,25 @@ vim.api.nvim_create_autocmd({ "BufLeave", "FocusLost" }, {
     end
   end,
 })
+
+-- When starting with a directory (e.g. `nvim .`), open mini.files or a blank buffer
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    if vim.fn.argc() == 1 then
+      local arg = vim.fn.argv()[1]
+      if arg and vim.fn.isdirectory(arg) == 1 then
+        -- Change into the target directory
+        pcall(vim.fn.chdir, arg)
+        -- Open mini.files or a blank buffer based on toggle
+        if vim.g.start_with_mini_files then
+          pcall(function()
+            require("mini.files").open(arg, true)
+          end)
+        else
+          -- Ensure a clean, empty buffer
+          vim.cmd("enew")
+        end
+      end
+    end
+  end,
+})
