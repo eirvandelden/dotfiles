@@ -27,4 +27,17 @@ vim.g.maplocalleader = ";"
 
 -- RUBY
 vim.g.lazyvim_ruby_lsp = "solargraph"
+
+-- Ensure visible window separators between splits (including Avante sidebar)
+opt.fillchars:append({
+  vert = "│",
+  vertleft = "│",
+  vertright = "│",
+  verthoriz = "┼",
+})
+-- Make the split separator stand out; link to FloatBorder or set explicit colors
+pcall(function()
+  vim.api.nvim_set_hl(0, "WinSeparator", { link = "FloatBorder" })
+end)
+
 vim.g.lazyvim_ruby_formatter = "rubocop"
