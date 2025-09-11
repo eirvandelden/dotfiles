@@ -35,8 +35,16 @@ return {
 
     -- (Default) Only show the documentation popup when manually triggered
     completion = {
-      documentation = { auto_show = true },
-      menu = { border = "rounded" },
+      documentation = {
+        auto_show = true,
+        window = {
+          border = "rounded",
+        },
+      },
+      menu = {
+        border = "rounded",
+        draw = { gap = 2 },
+      },
       list = {
         selection = {
           preselect = function(ctx)
