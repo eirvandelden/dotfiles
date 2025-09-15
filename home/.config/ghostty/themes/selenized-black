@@ -1,0 +1,25 @@
+# Custom Ghostty Theme: Selenized Black
+
+palette = 0=#ed4a46
+palette = 1=#70b433
+palette = 2=#dbb32d
+palette = 3=#368aeb
+palette = 4=#eb6eb7
+palette = 5=#3fc5b7
+palette = 6=#e67f43
+palette = 7=#a580e2
+palette = 8=#ff5e56
+palette = 9=#83c746
+palette = 10=#efc541
+palette = 11=#4f9cfe
+palette = 12=#ff81ca
+palette = 13=#56d8c9
+palette = 14=#fa9153
+palette = 15=#b891f5
+background = #181818
+foreground = #b9b9b9
+cursor-color = #e67f43
+cursor-text = #c6d0f5
+selection-background = #252525
+selection-foreground = #dedede
+

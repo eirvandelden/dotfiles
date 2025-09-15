@@ -13,7 +13,7 @@ custom-shader = shaders/cursor-blaze.glsl
 font-family = "MonoLisa"
 font-size = 15
 
-theme = dark:"iTerm2 Solarized Dark",light:"iTerm2 Solarized Light"
+theme = dark:"selenized-black",light:"Selenized Light"
 
 adjust-cursor-thickness = 1
 
