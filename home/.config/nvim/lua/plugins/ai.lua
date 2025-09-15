@@ -13,7 +13,7 @@ return {
   opts = {
     -- add any opts here
     -- this file can contain specific instructions for your project
-    -- instructions_file = "avante.md",
+    instructions_file = "agents.md",
     providers = {
       openai = {
         api_key_name = "cmd:op read op://private/OpenAI/api_key --no-newline",
