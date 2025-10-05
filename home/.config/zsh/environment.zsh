@@ -9,9 +9,6 @@ export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export DISABLE_SPRING=true
 export PATH="$PATH:/Users/etienne.vandelden/.rd/bin:/Users/etienne.vandelden/.local/bin"
 
-# Set Curl to trust local Caddy certificates
-export CURL_CA_BUNDLE="/opt/homebrew/var/lib/caddy/pki/authorities/local/root.crt"
-
 ## SQLite3
 # For compilers to find sqlite you may need to set:
 export LDFLAGS="-L/opt/homebrew/opt/sqlite/lib"
