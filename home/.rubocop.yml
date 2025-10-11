@@ -33,30 +33,18 @@ AllCops:
     - 'bin/**/*'
 
   NewCops: enable ## Cops that need decisions are enabled by default
-
-# Metrics
+# Default Cops
 Metrics/BlockLength:
   Exclude:
     - spec/**/*_spec.rb
 
-# Extensions
-## Minitest
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: never
+
+# Cops from Extensions
 Minitest/UnreachableAssertion:
   Enabled: true
 
-## Rails
-Rails/AssertNot: # Prefer assert_not over assert !
-  Include:
-    - '**/test/**/*'
-Rails/RefuteMethods: # Prefer assert_not_x over refute_x
-  Include:
-    - '**/test/**/*'
-Rails/IndexBy:
-  Enabled: true
-Rails/IndexWith:
-  Enabled: true
-
-## Performance
 Performance/BindCall:
   Enabled: true
 Performance/DeletePrefix:
@@ -82,5 +70,16 @@ Performance/StartWith:
 Performance/StringReplacement:
   Enabled: true
 Performance/UnfreezeString:
+  Enabled: true
+
+Rails/AssertNot: # Prefer assert_not over assert !
+  Include:
+    - '**/test/**/*'
+Rails/RefuteMethods: # Prefer assert_not_x over refute_x
+  Include:
+    - '**/test/**/*'
+Rails/IndexBy:
+  Enabled: true
+Rails/IndexWith:
   Enabled: true
 
