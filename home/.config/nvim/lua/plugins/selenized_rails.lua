@@ -13,7 +13,7 @@ return {
       if vim.o.background == "light" then
         vim.g.selenized_light_variant = "light"
       else
-        vim.g.selenized_dark_variant = "black"
+        vim.g.selenized_dark_variant = "dark"
       end
     end,
   },
