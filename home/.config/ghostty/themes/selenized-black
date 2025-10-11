@@ -16,7 +16,9 @@ palette = 12=#ff81ca
 palette = 13=#56d8c9
 palette = 14=#fa9153
 palette = 15=#b891f5
-background = #181818
+# Original value (from selenzide black) 181818
+# Changed to a darker shade of blue instead of brown
+background = #02171d
 foreground = #b9b9b9
 cursor-color = #e67f43
 cursor-text = #c6d0f5
