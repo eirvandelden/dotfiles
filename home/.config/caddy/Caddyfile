@@ -22,4 +22,4 @@ writebook.localhost, writebook.test {
 
 # Private, machine-local includes (NOT in git)
 # Uses env var expansion so it’s portable
-import {$HOME}/.config/caddy/*.caddy
+import /Users/etienne.vandelden/.config/caddy/*.caddy
