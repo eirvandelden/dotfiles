@@ -7,6 +7,11 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
+  "agent_buffer_font_size": 15.0,
+  "ui_font_family": ".ZedSans",
+  "edit_predictions": {
+    "disabled_globs": []
+  },
   "git_panel": {
     "dock": "right"
   },
@@ -34,7 +39,7 @@
     "dark": "Solarized Dark"
   },
   "ui_font_size": 15,
-  "buffer_font_size": 15.0,
+  "buffer_font_size": 16.0,
   "buffer_font_family": "MonoLisa",
   "show_whitespaces": "all",
   "hard_tabs": false,
@@ -58,13 +63,15 @@
     "metrics": false
   },
   "agent": {
+    "default_profile": "ask",
+    "button": true,
+    "always_allow_tool_actions": true,
     "play_sound_when_agent_done": true,
     "default_model": {
       "provider": "openai",
-      "model": "gpt-4o"
+      "model": "gpt-5"
     },
-    "enabled": true,
-    "version": "2"
+    "enabled": true
   },
   "project_panel": {
     "dock": "right",
@@ -97,7 +104,7 @@
     }
   },
   "features": {
-    "edit_prediction_provider": "copilot"
+    "edit_prediction_provider": "zed"
   },
   "languages": {
     "CSS": {
