@@ -25,6 +25,21 @@ return {
         },
       },
     },
+    windows = {
+      width = 40,
+      input = {
+        height = 20,
+      },
+      sidebar_header = {
+        align = "right",
+      },
+      edit = {
+        border = "rounded",
+      },
+      ask = {
+        border = "rounded",
+      },
+    },
   },
   dependencies = {
     "nvim-lua/plenary.nvim",
