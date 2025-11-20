@@ -113,18 +113,7 @@
       "formatter": {
         "external": {
           "command": "rubocop",
-          "arguments": [
-            "-A",
-            "--stdin",
-            "{buffer_path}",
-            "--fail-level",
-            "error",
-            "--auto-correct",
-            "--stdin",
-            "{buffer_path}",
-            "--stderr",
-            "--server"
-          ]
+          "arguments": ["--fail-level", "error", "--autocorrect", "--stdin", "{buffer_path}", "--stderr", "--server"]
         }
       }
     },
@@ -147,9 +136,8 @@
 
     // ERB formatting notes (see comments below)
     "ERB": {
-      "format_on_save": "off"
-      // "formatter": { "external": { "command": "herb", "arguments": ["format", "--stdin-filename", "{buffer_path}"] } }
-      // "formatter": { "external": { "command": "erb_format", "arguments": [] } }
+      "format_on_save": "on",
+      "formatter": { "external": { "command": "herb", "arguments": ["format", "--stdin-filename", "{buffer_path}"] } }
     }
   },
 
