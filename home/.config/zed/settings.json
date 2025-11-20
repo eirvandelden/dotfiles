@@ -166,6 +166,15 @@
   "tab_size": 2,
   "show_wrap_guides": true,
   "preferred_line_length": 120,
+  "lsp_highlight_debounce": 25,
+  "hover_popover_delay": 100,
+  "auto_signature_help": true,
+  "show_signature_help_after_edits": true,
+  "inlay_hints": {
+    "enabled": true,
+    "edit_debounce_ms": 50,
+    "scroll_debounce_ms": 25
+  },
 
   // Base keymap still influences non-Vim contexts (palette, lists, etc.)
   "base_keymap": "VSCode",
@@ -178,7 +187,8 @@
   "diagnostics": {
     "include_warnings": true,
     "inline": {
-      "enabled": true
+      "enabled": true,
+      "update_debounce_ms": 75
     }
   },
 
