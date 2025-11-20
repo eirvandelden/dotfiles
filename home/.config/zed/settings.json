@@ -22,13 +22,15 @@
   "buffer_font_family": "MonoLisa",
   // UI font (applies to panels, inputs, chat panel)
   "ui_font_family": "MonoLisa",
-  "ui_font_size": 16,
+  "ui_font_size": 15,
   // Font size override keys available:
   // - "ui_font_size" (UI panels and inputs)
   // - "buffer_font_size" (editor buffers)
+  "buffer_font_size": 15,
   // - "terminal": { "font_size": <int> }
   // - "agent_font_size" (agent panel UI)
   // - "agent_buffer_font_size" (agent panel code blocks)
+  "agent_buffer_font_size": 15,
 
   // Windows and Panels
   "resize_all_panels_in_dock": ["left", "right"],
