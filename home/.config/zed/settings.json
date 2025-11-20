@@ -69,6 +69,10 @@
   //
   // Chat / Agent
   "agent": {
+    "default_model": {
+      "provider": "openai",
+      "model": "gpt-5"
+    },
     "inline_assistant_model": {
       "provider": "openai",
       "model": "gpt-5"
