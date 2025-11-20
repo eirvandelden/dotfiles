@@ -1,35 +1,6 @@
-// Zed keymap
-//
-// For information on binding keys, see the Zed
-// documentation: https://zed.dev/docs/key-bindings
-//
-// To see the default key bindings run `zed: open default keymap`
-// from the command palette.
 [
   {
-    "context": "Editor && vim_mode == normal && mode == full",
-    "bindings": {
-      "; space": "file_finder::Toggle",
-      "; e": "project_panel::ToggleFocus",
-      "; s g": "pane::DeploySearch",
-      "; a a": "agent::Chat",
-      "; a e": "assistant::InlineAssist",
-      "; g g": "git_panel::ToggleFocus",
-      "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
-      "; t f": [
-        "task::Spawn",
-        { "task_name": "RSpec: current file at cursor" }
-      ],
-      "; t m": [
-        "task::Spawn",
-        { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }
-      ],
-      "; r r": "task::Rerun",
-      "; r c": ["task::Spawn", { "task_name": "Run Caren" }]
-    }
-  },
-  {
-    "context": "Editor",
+    "context": "Editor || TextInput",
     "bindings": {
       "ctrl-a": ["workspace::SendKeystrokes", "home"],
       "ctrl-e": ["workspace::SendKeystrokes", "end"],
@@ -37,21 +8,7 @@
     }
   },
   {
-    "context": "TextInput",
-    "bindings": {
-      "ctrl-a": ["workspace::SendKeystrokes", "home"],
-      "ctrl-e": ["workspace::SendKeystrokes", "end"],
-      "ctrl-k": ["workspace::SendKeystrokes", "shift-end backspace"],
-      "; space": "file_finder::Toggle",
-      "; e": "project_panel::ToggleFocus",
-      "; s g": "pane::DeploySearch",
-      "; a a": "agent::Chat",
-      "; a e": "assistant::InlineAssist",
-      "; g g": "git_panel::ToggleFocus"
-    }
-  },
-  {
-    "context": "(ProjectPanel || GitPanel || OutlinePanel || CollaborationPanel || DebugPanel) && not_editing",
+    "context": "TextInput || ((ProjectPanel || GitPanel || OutlinePanel || CollaborationPanel || DebugPanel || TerminalPanel) && not_editing)",
     "bindings": {
       "; space": "file_finder::Toggle",
       "; e": "project_panel::ToggleFocus",
@@ -60,14 +17,9 @@
       "; a e": "assistant::InlineAssist",
       "; g g": "git_panel::ToggleFocus",
       "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
-      "; t f": [
-        "task::Spawn",
-        { "task_name": "RSpec: current file at cursor" }
-      ],
-      "; t m": [
-        "task::Spawn",
-        { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }
-      ],
+      "; t t": "terminal_panel::ToggleFocus",
+      "; t f": ["task::Spawn", { "task_name": "RSpec: current file at cursor" }],
+      "; t m": ["task::Spawn", { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }],
       "; r r": "task::Rerun",
       "; r c": ["task::Spawn", { "task_name": "Run Caren" }]
     }
