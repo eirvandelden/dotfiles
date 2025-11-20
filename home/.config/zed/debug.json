@@ -1,0 +1,58 @@
+[
+  {
+    "label": "Ruby: Debug current file",
+    "adapter": "rdbg",
+    "request": "launch",
+    "script": "$ZED_FILE",
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "RSpec: Debug current file at cursor",
+    "adapter": "rdbg",
+    "request": "launch",
+    "command": "bundle",
+    "args": ["exec", "rspec", "\"$ZED_RELATIVE_FILE:$ZED_ROW\""],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "RSpec: Debug all specs",
+    "adapter": "rdbg",
+    "request": "launch",
+    "command": "bundle",
+    "args": ["exec", "rspec"],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "Minitest (Rails): Debug current file by name",
+    "adapter": "rdbg",
+    "request": "launch",
+    "command": "bin/rails",
+    "args": [
+      "test",
+      "$ZED_RELATIVE_FILE",
+      "-n",
+      "\"$ZED_CUSTOM_RUBY_TEST_NAME\""
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  },
+  {
+    "label": "Rails: Debug server",
+    "adapter": "rdbg",
+    "request": "launch",
+    "command": "./bin/rails",
+    "args": ["server"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "env": {
+      "RUBY_DEBUG_OPEN": "true"
+    }
+  },
+  {
+    "label": "Attach to rdbg on localhost:12345",
+    "adapter": "rdbg",
+    "request": "attach",
+    "tcp_connection": {
+      "host": "127.0.0.1",
+      "port": 12345
+    }
+  }
+]

@@ -7,121 +7,195 @@
 // custom settings, run the `open default settings` command
 // from the command palette or from `Zed` application menu.
 {
-  "agent_buffer_font_size": 15.0,
-  "ui_font_family": ".ZedSans",
-  "edit_predictions": {
-    "disabled_globs": []
+  //
+  // Theming
+  //
+  "theme": {
+    "mode": "system",
+    "dark": "Solarized Dark",
+    "light": "Selenized Light"
   },
+  // Vim mode ON
+  "vim_mode": true,
+  "relative_line_numbers": "enabled",
+  // Fonts and fontsizes
+  "buffer_font_family": "MonoLisa",
+  // UI font (applies to panels, inputs, chat panel)
+  "ui_font_family": "MonoLisa",
+  "ui_font_size": 16,
+  // Font size override keys available:
+  // - "ui_font_size" (UI panels and inputs)
+  // - "buffer_font_size" (editor buffers)
+  // - "terminal": { "font_size": <int> }
+  // - "agent_font_size" (agent panel UI)
+  // - "agent_buffer_font_size" (agent panel code blocks)
+
+  // Windows and Panels
+  "resize_all_panels_in_dock": ["left", "right"],
   "git_panel": {
-    "dock": "right"
+    "dock": "right",
+    "default_width": 450
   },
   "outline_panel": {
     "button": false,
-    "dock": "right"
+    "default_width": 450
   },
   "notification_panel": {
     "button": false
   },
-  "collaboration_panel": {
-    "button": false,
-    "dock": "right"
-  },
-  "gutter": {
-    "code_actions": false,
-    "folds": false,
-    "line_numbers": true,
-    "runnables": false
-  },
-  "base_keymap": "VSCode",
-  "theme": {
-    "mode": "system",
-    "light": "Selenized Light",
-    "dark": "Solarized Dark"
-  },
-  "ui_font_size": 15,
-  "buffer_font_size": 16.0,
-  "buffer_font_family": "MonoLisa",
-  "show_whitespaces": "all",
-  "hard_tabs": false,
-  "tab_size": 2,
-  "show_wrap_guides": true,
-  "preferred_line_length": 120,
-  "soft_wrap": "editor_width",
-  "autosave": "on_focus_change",
-  "format_on_save": "on",
-  "ensure_final_newline_on_save": true,
-  "relative_line_numbers": true,
-  "vim_mode": true,
-  "journal": {
-    "hour_format": "hour24"
-  },
-  "git": {
-    "git_gutter": "hide"
-  },
-  "telemetry": {
-    "diagnostics": false,
-    "metrics": false
-  },
-  "agent": {
-    "default_profile": "ask",
-    "button": true,
-    "always_allow_tool_actions": true,
-    "play_sound_when_agent_done": true,
-    "default_model": {
-      "provider": "openai",
-      "model": "gpt-5"
-    },
-    "enabled": true
-  },
+
   "project_panel": {
     "dock": "right",
-    "entry_spacing": "standard",
-    "indent_size": 15
+    "default_width": 450
+  },
+
+  "collaboration_panel": {
+    "default_width": 450,
+    "button": false,
+    "dock": "right"
   },
   "scrollbar": {
     "axes": {
       "horizontal": false
     }
   },
-  "tab_bar": {
-    "show_nav_history_buttons": false
+
+  "gutter": {},
+
+  //
+  // AI chatting and suggestions
+  //
+  // Chat / Agent
+  "agent": {
+    "inline_assistant_model": {
+      "provider": "openai",
+      "model": "gpt-5"
+    },
+    "always_allow_tool_actions": true,
+    "model_parameters": [],
+    "notify_when_agent_waiting": "primary_screen",
+    "play_sound_when_agent_done": true
   },
-  "terminal": {
-    "dock": "bottom",
-    "font_family": "MonoLisa",
-    "font_size": 14
-  },
-  "lsp": {
-    "solargraph": {
-      "initialization_options": {
-        "diagnostics": true,
-        "formatting": false
-      },
-      "binary": {
-        "path": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/solargraph",
-        "arguments": ["stdio"]
-      }
-    }
-  },
+
+  // Predictions
   "features": {
-    "edit_prediction_provider": "zed"
+    "edit_prediction_provider": "copilot"
   },
+  "show_edit_predictions": true,
+
+  //
+  // Languages
+  //
+  // LSP
+  "enable_language_server": true,
+
+  // Make *.lua.erb be ERB so Lua tools won't try to format it
+  "file_types": {
+    "ERB": ["*.erb", "*.html.erb", "*.lua.erb"]
+  },
+
+  // Per-language formatters to match your Conform.nvim setup
   "languages": {
     "CSS": {
       "tab_size": 2,
       "format_on_save": "on"
     },
     "Ruby": {
-      "tab_size": 2,
       "enable_language_server": true,
-      "language_servers": ["ruby-lsp", "solargraph"],
+      "language_servers": ["solargraph"],
       "format_on_save": "on",
       "formatter": {
         "external": {
-          "command": "./bin/rubocop",
-          "arguments": ["--fail-level", "error", "--auto-correct", "--stdin", "{buffer_path}", "--stderr", "--server"]
+          "command": "rubocop",
+          "arguments": [
+            "-A",
+            "--stdin",
+            "{buffer_path}",
+            "--fail-level",
+            "error",
+            "--auto-correct",
+            "--stdin",
+            "{buffer_path}",
+            "--stderr",
+            "--server"
+          ]
         }
       }
+    },
+    "Lua": {
+      "formatter": {
+        "external": {
+          "command": "stylua",
+          "arguments": ["-"]
+        }
+      }
+    },
+    "Shell Script": {
+      "formatter": {
+        "external": {
+          "command": "shfmt",
+          "arguments": ["-filename", "{buffer_path}"]
+        }
+      }
+    },
+
+    // ERB formatting notes (see comments below)
+    "ERB": {
+      "format_on_save": "off"
+      // "formatter": { "external": { "command": "herb", "arguments": ["format", "--stdin-filename", "{buffer_path}"] } }
+      // "formatter": { "external": { "command": "erb_format", "arguments": [] } }
     }
+  },
+
+  "lsp": {
+    "solargraph": {
+      "settings": {
+        // Ensure solargraph is on PATH (Bundler or gem install).
+        "initialization_options": {
+          "diagnostics": true,
+          "formatting": false
+        }
+        // , "binary": { "path": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/solargraph", "arguments": ["stdio"] }
+      }
+    }
+  },
+
+  //
+  // Editing & layout
+  //
+  "autosave": "on_focus_change",
+  "ensure_final_newline_on_save": true,
+  "format_on_save": "on",
+  "hard_tabs": false,
+  "show_whitespaces": "boundary",
+  "soft_wrap": "editor_width",
+  "tab_size": 2,
+  "show_wrap_guides": true,
+  "preferred_line_length": 120,
+
+  // Base keymap still influences non-Vim contexts (palette, lists, etc.)
+  "base_keymap": "VSCode",
+
+  // Cursor (Zed can’t vary by mode; a bar works well in Vim normal/insert)
+  "cursor_blink": true,
+  "cursor_shape": "bar",
+
+  // Diagnostics (closest analogue to virtual_lines)
+  "diagnostics": {
+    "include_warnings": true,
+    "inline": {
+      "enabled": true
+    }
+  },
+
+  // Terminal
+  "terminal": {
+    "option_as_meta": true,
+    "font_family": "MonoLisa"
+  },
+
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
   }
 }

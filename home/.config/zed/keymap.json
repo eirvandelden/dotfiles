@@ -7,21 +7,69 @@
 // from the command palette.
 [
   {
+    "context": "Editor && vim_mode == normal && mode == full",
     "bindings": {
-      // "j k": ["workspace::SendKeystrokes", "escape"]
-    }
-  },
-
-  {
-    "context": "Workspace",
-    "bindings": {
-      // "shift shift": "file_finder::Toggle"
+      "; space": "file_finder::Toggle",
+      "; e": "project_panel::ToggleFocus",
+      "; s g": "pane::DeploySearch",
+      "; a a": "agent::Chat",
+      "; a e": "assistant::InlineAssist",
+      "; g g": "git_panel::ToggleFocus",
+      "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
+      "; t f": [
+        "task::Spawn",
+        { "task_name": "RSpec: current file at cursor" }
+      ],
+      "; t m": [
+        "task::Spawn",
+        { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }
+      ],
+      "; r r": "task::Rerun",
+      "; r c": ["task::Spawn", { "task_name": "Run Caren" }]
     }
   },
   {
     "context": "Editor",
     "bindings": {
-      // "j k": ["workspace::SendKeystrokes", "escape"]
+      "ctrl-a": ["workspace::SendKeystrokes", "home"],
+      "ctrl-e": ["workspace::SendKeystrokes", "end"],
+      "ctrl-k": ["workspace::SendKeystrokes", "shift-end backspace"]
+    }
+  },
+  {
+    "context": "TextInput",
+    "bindings": {
+      "ctrl-a": ["workspace::SendKeystrokes", "home"],
+      "ctrl-e": ["workspace::SendKeystrokes", "end"],
+      "ctrl-k": ["workspace::SendKeystrokes", "shift-end backspace"],
+      "; space": "file_finder::Toggle",
+      "; e": "project_panel::ToggleFocus",
+      "; s g": "pane::DeploySearch",
+      "; a a": "agent::Chat",
+      "; a e": "assistant::InlineAssist",
+      "; g g": "git_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "(ProjectPanel || GitPanel || OutlinePanel || CollaborationPanel || DebugPanel) && not_editing",
+    "bindings": {
+      "; space": "file_finder::Toggle",
+      "; e": "project_panel::ToggleFocus",
+      "; s g": "pane::DeploySearch",
+      "; a a": "agent::Chat",
+      "; a e": "assistant::InlineAssist",
+      "; g g": "git_panel::ToggleFocus",
+      "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
+      "; t f": [
+        "task::Spawn",
+        { "task_name": "RSpec: current file at cursor" }
+      ],
+      "; t m": [
+        "task::Spawn",
+        { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }
+      ],
+      "; r r": "task::Rerun",
+      "; r c": ["task::Spawn", { "task_name": "Run Caren" }]
     }
   }
 ]

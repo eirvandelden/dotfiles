@@ -12,7 +12,7 @@
   },
   {
     "label": "Run Caren",
-    "command": "rails dartsass:clobber; rails dartsass:build; bin/dev",
+    "command": "bin/dev",
     //"args": [],
     // Env overrides for the command, will be appended to the terminal's environment from the settings.
     // "env": { "foo": "bar" },
@@ -69,5 +69,17 @@
     "command": "bin/rails",
     "args": ["test:all"],
     "tags": ["ruby-test"]
+  },
+  {
+    "label": "RSpec: current file at cursor",
+    "command": "bundle",
+    "args": ["exec", "rspec", "\"$ZED_RELATIVE_FILE:$ZED_ROW\""],
+    "tags": ["ruby-test", "rspec"]
+  },
+  {
+    "label": "RSpec: all",
+    "command": "bundle",
+    "args": ["exec", "rspec"],
+    "tags": ["ruby-test", "rspec"]
   }
 ]
