@@ -1,7 +1,7 @@
 # ~/.config/zsh/aliases.zsh
 
 # Git
-alias g='git'
+alias g='lazygit'
 alias gs='git stash'
 alias gsp='git stash pop'
 alias gst='git status'
