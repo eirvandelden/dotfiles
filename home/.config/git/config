@@ -22,7 +22,7 @@
   gpgsign = true
 [core]
 	excludesfile = ~/.config/git/ignore.global
-  editor = nvim
+  editor = zed
   hooksPath = ~/.config/git/hooks
   pager = less -+X
 [difftool "default-difftool"]
