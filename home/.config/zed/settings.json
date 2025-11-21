@@ -12,27 +12,36 @@
   //
   "theme": {
     "mode": "system",
-    "dark": "Solarized Dark",
-    "light": "Selenized Light"
+    "dark": "Selenized (Rails) Black",
+    "light": "Selenized (Rails) Light"
   },
+  "icon_theme": "Bearded Icon Theme",
+  "base_keymap": null, // Base keymap still influences non-Vim contexts (palette, lists, etc.)
   // Vim mode ON
   "vim_mode": true,
   "relative_line_numbers": "enabled",
+  //
   // Fonts and fontsizes
+  //
+  // Editor fonts
   "buffer_font_family": "MonoLisa",
+  "buffer_font_size": 15,
   // UI font (applies to panels, inputs, chat panel)
-  "ui_font_family": "MonoLisa",
+  "ui_font_family": ".SystemUIFont",
   "ui_font_size": 15,
   // Font size override keys available:
   // - "ui_font_size" (UI panels and inputs)
   // - "buffer_font_size" (editor buffers)
-  "buffer_font_size": 15,
   // - "terminal": { "font_size": <int> }
   // - "agent_font_size" (agent panel UI)
   // - "agent_buffer_font_size" (agent panel code blocks)
   "agent_buffer_font_size": 15,
+  "buffer_line_height": { "custom": 1.5 },
+  "buffer_font_features": { "calt": true }, // enable ligatures
 
   // Windows and Panels
+  "tabs": { "file_icons": true },
+  "toolbar": { "breadcrumbs": false, "quick_actions": false },
   "resize_all_panels_in_dock": ["left", "right"],
   "git_panel": {
     "dock": "right",
@@ -47,8 +56,9 @@
   },
 
   "project_panel": {
+    "default_width": 450,
     "dock": "right",
-    "default_width": 450
+    "entry_spacing": "standard"
   },
 
   "collaboration_panel": {
@@ -88,6 +98,7 @@
     "edit_prediction_provider": "copilot"
   },
   "show_edit_predictions": true,
+  "inline_code_actions": true,
 
   //
   // Languages
@@ -175,9 +186,6 @@
     "edit_debounce_ms": 50,
     "scroll_debounce_ms": 25
   },
-
-  // Base keymap still influences non-Vim contexts (palette, lists, etc.)
-  "base_keymap": "VSCode",
 
   // Cursor (Zed can’t vary by mode; a bar works well in Vim normal/insert)
   "cursor_blink": true,
