@@ -3,6 +3,24 @@
 // Example:
 [
   {
+    "label": "LazyGit",
+    "command": "lazygit -p $ZED_WORKTREE_ROOT",
+    "hide": "on_success",
+    "shell": {
+      "program": "sh"
+    }
+  },
+  {
+    "label": "LazyGit - file log",
+    "command": "lazygit",
+    "args": ["-f", "\"$ZED_RELATIVE_FILE\""],
+    "hide": "on_success",
+    "shell": {
+      "program": "sh"
+    }
+  },
+
+  {
     "label": "Start Caren ElasticSearch",
     "command": "celastic",
     "use_new_terminal": false,
