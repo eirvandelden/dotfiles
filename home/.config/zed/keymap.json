@@ -1,14 +1,7 @@
 [
   {
-    "context": "Editor || TextInput",
-    "bindings": {
-      "ctrl-a": ["workspace::SendKeystrokes", "home"],
-      "ctrl-e": ["workspace::SendKeystrokes", "end"],
-      "ctrl-k": ["workspace::SendKeystrokes", "shift-end backspace"]
-    }
-  },
-  {
-    "context": "TextInput || ((ProjectPanel || GitPanel || OutlinePanel || CollaborationPanel || DebugPanel || TerminalPanel) && not_editing)",
+    "context": "vim_mode == normal && !menu",
+    "_comment": "Replacement for s/S: map g s to cl (substitute char) and g S to cc (substitute line) so you can keep s for movement (h t n s).",
     "bindings": {
       "; space": "file_finder::Toggle",
       "; e": "project_panel::ToggleFocus",
@@ -19,11 +12,51 @@
       "space g f": ["task::Spawn", { "task_name": "LazyGit - file log", "reveal_target": "center" }],
       "; g d": "git::Diff",
       "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
-      "; t t": "terminal_panel::ToggleFocus",
       "; t f": ["task::Spawn", { "task_name": "RSpec: current file at cursor" }],
       "; t m": ["task::Spawn", { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }],
       "; r r": "task::Rerun",
-      "; r c": ["task::Spawn", { "task_name": "Run Caren" }]
+      "; r c": ["task::Spawn", { "task_name": "Run Caren" }],
+      "; t t": "terminal_panel::ToggleFocus",
+      "t": ["workspace::SendKeystrokes", "j"],
+      "n": ["workspace::SendKeystrokes", "k"],
+      "s": ["workspace::SendKeystrokes", "l"],
+      "f": ["workspace::SendKeystrokes", "/ enter"],
+      "shift-f": ["workspace::SendKeystrokes", "? enter"],
+
+      "g s": ["workspace::SendKeystrokes", "c l"],
+      "g shift-s": ["workspace::SendKeystrokes", "c c"]
+    }
+  },
+  {
+    "context": "vim_mode == visual && !menu",
+    "bindings": {
+      "t": ["workspace::SendKeystrokes", "j"],
+      "n": ["workspace::SendKeystrokes", "k"],
+      "s": ["workspace::SendKeystrokes", "l"],
+      "f": ["workspace::SendKeystrokes", "/ enter"],
+      "shift-f": ["workspace::SendKeystrokes", "? enter"]
+    }
+  },
+  {
+    "context": "(Editor || TextInput) && !menu",
+    "bindings": {
+      "ctrl-a": ["workspace::SendKeystrokes", "home"],
+      "ctrl-e": ["workspace::SendKeystrokes", "end"],
+      "ctrl-k": ["workspace::SendKeystrokes", "shift-end backspace"]
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-p": null,
+      "cmd-shift-p": null
+    }
+  },
+  {
+    "context": "menu",
+    "bindings": {
+      "ctrl-y": ["workspace::SendKeystrokes", "enter"],
+      "ctrl-e": ["workspace::SendKeystrokes", "escape"]
     }
   }
 ]
