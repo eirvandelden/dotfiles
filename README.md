@@ -1,45 +1,41 @@
-dotfiles
+# dotfiles
+
 ========
 
 My personal configuration for applications using dotfiles. Managed using [homesick](https://github.com/technicalpickles/homesick)!
 
-## Configurations
+## 🤖Installation
 
-This dotfile repository contains dotfile configuration for the following tools:
+    mkdir -p ~/Developer
+    cd ~/Developer
+    git clone git@github.com:eirvandelden/dotfiles.git
+    cd dotfiles
+    ./install.sh
 
-* vim
-* bash
-* Git: Global gitignore
+## 🔁Syncing brew packages
 
-## Installation
+To dump your currently installed brew packages to a Brewfile:
 
-    ln -s <source> ~/.<target>
+    brew bundle dump --file ~/Developer/dotfiles/brew/Brewfile --force
 
-## Install yourself
+To install packages from the Brewfile:
 
-* [zprezto](https://github.com/sorin-ionescu/prezto)
-  * Running `git clone --recursive https://github.com/sorin-ionescu/prezto.git "${ZDOTDIR:-$HOME}/.zprezto"` should suffice
-* [zsh-notify](https://github.com/eirvandelden/zsh-notify)
-  * Running `git clone https://github.com/eirvandelden/zsh-notify ~/.zsh-notify/`
-* [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
-  * Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
-* [solarized](http://ethanschoonover.com/solarized)
-* **terminal notifier** `brew install terminal-notifier`
+    ./install.sh
 
-## Brew install
+Or manually run:
 
-* `brew install the_silver_searcher`
+    brew bundle install --file ~/Developer/dotfiles/brew/Brewfile
 
-## chnode
+## 😔Manual installation
 
-    brew tap tkareine/chnode
-    brew install tkareine/chnode/chnode
+- [zsh-notify](https://github.com/eirvandelden/zsh-notify)
+  - Running `git clone https://github.com/eirvandelden/zsh-notify ~/.zsh-notify/`
+- [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
+  - Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
+- [solarized](http://ethanschoonover.com/solarized)
+- **terminal notifier** `brew install terminal-notifier`
 
-## node-build
-
-    brew install node-build
-
-## puma-dev
+### puma-dev
 
 Configure puma-dev with:
 
@@ -48,7 +44,7 @@ sudo puma-dev -setup
 puma-dev -install -d test:localhost:WORK.test:WORK.localhost -install-port 9280 -install-https-port 928
 ```
 
-## Sensible OS X defaults
+### Sensible OS X defaults
 
 When setting up a new Mac, you may want to set some sensible OS X defaults:
 
