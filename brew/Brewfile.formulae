@@ -1,0 +1,24 @@
+# Brewfile.formulae
+#
+# This Brewfile is intended to contain ONLY Homebrew formulae managed by this repo.
+# It is used by install scripts to install CLI tools and libraries in a portable way
+# across macOS and Linux (Linuxbrew).
+#
+# Notes:
+# - Keep taps in this file only if they are required for formulae below.
+# - Put GUI apps in `dotfiles/brewfiles/Brewfile.casks`.
+# - Put VS Code extensions in `dotfiles/brewfiles/Brewfile.vscode`.
+# - Put Flatpak refs in `dotfiles/brewfiles/Flatpakfile` (non-macOS only).
+#
+# Example:
+#   tap "hashicorp/tap"
+#   brew "git"
+#   brew "neovim"
+
+# Taps (optional)
+# tap "hashicorp/tap"
+
+# Formulae
+# brew "git"
+# brew "neovim"
+# brew "stow"

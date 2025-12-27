@@ -1,0 +1,17 @@
+# Brewfile.vscode
+#
+# This Brewfile is intended to contain ONLY VS Code extensions managed by this repo.
+#
+# Notes:
+# - These entries are supported by Homebrew Bundle with the `vscode` directive.
+# - Keep CLI tools and libraries in `dotfiles/brewfiles/Brewfile.formulae`.
+# - Keep macOS GUI apps in `dotfiles/brewfiles/Brewfile.casks`.
+# - Keep Flatpak refs in `dotfiles/brewfiles/Flatpakfile` (non-macOS only).
+#
+# Example:
+#   vscode "github.copilot"
+#   vscode "shopify.ruby-lsp"
+#
+# VS Code extensions
+# vscode "github.copilot"
+# vscode "shopify.ruby-lsp"

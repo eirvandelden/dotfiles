@@ -1,0 +1,19 @@
+# Brewfile.casks
+#
+# This Brewfile is intended to contain ONLY Homebrew casks (generally macOS GUI apps)
+# managed by this repo.
+#
+# Usage intent:
+# - Install only on macOS (Linuxbrew typically does not support casks in the same way).
+# - Keep CLI tools and libraries in `dotfiles/brewfiles/Brewfile.formulae`.
+# - Keep VS Code extensions in `dotfiles/brewfiles/Brewfile.vscode`.
+# - Keep Flatpak refs in `dotfiles/brewfiles/Flatpakfile` (non-macOS only).
+#
+# Example:
+#   cask "1password"
+#   cask "zed"
+#
+# Casks
+# cask "1password"
+# cask "1password-cli"
+# cask "zed"
