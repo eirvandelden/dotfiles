@@ -1,7 +1,23 @@
-#!
-# source: https://github.com/typecraft-dev/crucible
+#!/usr/bin/env bash
+# Entrypoint for Etienne's dotfiles installer.
+#
+# Supported OS targets:
+# - macOS
+# - SteamOS (Arch-based)
+# - Debian-based Linux (Debian/Ubuntu/etc.)
+#
+# Design:
+# - Keep OS-specific logic in install/lib/*.sh
+# - Keep install steps in install/steps/*.sh
+# - Prefer Homebrew everywhere; fall back to native package managers only when
+#   Homebrew cannot install a given package.
 
-# Print logo
+set -euo pipefail
+
+###############################################################################
+# UI
+###############################################################################
+
 print_logo() {
   cat << "EOF"
 Etienne's dev setup
@@ -11,111 +27,107 @@ EOF
 clear
 print_logo
 
-# Exit on any error
-set -e
+###############################################################################
+# Resolve repo root + load libs
+###############################################################################
 
-# Source utility functions
-source install/utils.sh
+DOTFILES_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_ROOT
 
-# Source the package list
-if [ ! -f "packages.conf" ]; then
-  echo "Error: packages.conf not found!"
-  exit 1
+# Load generic utilities first (logging, abort, OS detection, brew helpers, policy helpers).
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/lib/generic.sh"
+
+# Then load OS-specific libraries (they assume generic.sh was sourced).
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/lib/macos.sh"
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/lib/steamos.sh"
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/lib/debian.sh"
+
+# Load steps
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/steps/packages.sh"
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/steps/runtimes.sh"
+# shellcheck disable=SC1091
+source "${DOTFILES_ROOT}/install/steps/config.sh"
+
+###############################################################################
+# Load configuration
+###############################################################################
+
+PACKAGES_CONF="${PACKAGES_CONF:-${DOTFILES_ROOT}/packages.conf}"
+STOW_CONF="${STOW_CONF:-${DOTFILES_ROOT}/stow.conf}"
+
+[[ -f "$PACKAGES_CONF" ]] || abort "packages.conf not found: ${PACKAGES_CONF}"
+# shellcheck disable=SC1090
+source "$PACKAGES_CONF"
+
+# stow.conf is optional; config step can also auto-discover packages
+if [[ -f "$STOW_CONF" ]]; then
+  # shellcheck disable=SC1090
+  source "$STOW_CONF"
 fi
 
-source packages.conf
+###############################################################################
+# OS detection + updates + prereqs
+###############################################################################
 
 determine_os
-# Update the system first
-if [[ "$(OS)" == "Unknown"]]; then
-  abort "Installation is only supported on macOS and Linux."
-elif [[ "$(OS)" == "SteamOS" ]]; then
-  update_steamos
-  update_steamos_packages
-elif [[ "$(OS)" == "macOS" ]]; then
-  update_macos
-fi
 
-# Prerequisites
-if [[ "$(OS)" == "SteamOS"]]; then
-  echo "Ensuring base-devel is installed…"
-  echo "Temporarily disabling steamos-readonly to install packages…"
-  sudo steamos-readonly disable
-  echo "Initializing pacman keyring with arch and holo…"
-  sudo pacman-key --init
-  sudo pacman-key --populate archlinux
-  sudo pacman-key --populate holo
-  echo "Installing base-devel and other prerequisites…"
-  sudo pacman -S --needed base-devel procps-ng curl file git
-  echo "Re-enabling steamos-readonly…"
-  sudo steamos-readonly enable
-elif [[ "$(OS)" == "macOS" ]]; then
-  echo "Ensuring Xcode Command Line Tools are installed…"
-  xcode-select --install || echo "Xcode Command Line Tools already installed."
-fi
+log "Detected OS: ${OS:-Unknown}${OS_PRETTY:+ (${OS_PRETTY})}"
 
-echo "Installing Homebrew…"
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+case "${OS:-Unknown}" in
+  macOS)
+    update_macos
+    ensure_macos_prereqs
+    ;;
+  SteamOS)
+    update_steamos
+    update_steamos_packages
+    ensure_steamos_prereqs
+    ;;
+  Debian)
+    update_debian
+    ensure_debian_prereqs
+    ;;
+  *)
+    abort "Unsupported OS: ${OS:-Unknown}"
+    ;;
+esac
 
+###############################################################################
+# Homebrew (system-agnostic manager)
+###############################################################################
+# Per project policy, brew is the default package manager everywhere.
+# Brew itself should be installed previously (or you can extend generic.sh to bootstrap it),
+# but we always need to make it available in this shell.
+setup_brew_shellenv
 
-# Install packages by category
-echo "Installing system utilities…"
-install_packages "${SYSTEM_UTILS[@]}"
+###############################################################################
+# Package installation
+###############################################################################
+# Package installation is driven by generated files in brewfiles/ (overwritten by save.sh).
+# This supports:
+# - formulae everywhere
+# - casks only on macOS
+# - flatpaks only on non-macOS (when available)
+install_all_packages_from_files
 
-echo "Installing development tools…"
-install_packages "${DEV_TOOLS[@]}"
+###############################################################################
+# Runtimes
+###############################################################################
+# Ruby/Node versions are controlled by:
+# - ruby/.ruby-version
+# - node/.node-version
+install_all_runtimes
 
-# echo "Installing system maintenance tools…"
-# install_packages "${MAINTENANCE[@]}"
+###############################################################################
+# Config restore (stow)
+###############################################################################
+# Uses stow.conf if present (CONFIG_PACKAGES array), otherwise auto-discovers.
+restore_all_configs
 
-# echo "Installing desktop environment…"
-# install_packages "${DESKTOP[@]}"
-
-echo "Installing desktop environment…"
-install_packages "${OFFICE[@]}"
-
-# echo "Installing media packages…"
-# install_packages "${MEDIA[@]}"
-
-# echo "Installing fonts…"
-# install_packages "${FONTS[@]}"
-
-echo "Installing packages that needs OS specific installs…"
-for package in "${OS_SPECIFIC[@]}"; do
-  install_os_specific "$package"
-done
-
-echo "Installing default ruby version…"
-install_ruby
-
-echo "Installing default ruby gems…"
-install_ruby_gems "${RUBY_GEMS[@]}"
-
-echo "Installing default node version…"
-install_node
-
-echo "Installing default npm packages…"
-install_npm_packages "${NPM_PACKAGES[@]}"
-
-echo "Installing ssh keys…"
-# TODO: fully move to using 1password CLI for SSH key management
-# TODO: add steps for manual installation of ssh keys
-echo "Not implemented yet."
-
-
-# # Enable services
-# echo "Configuring services…"
-# for service in "${SERVICES[@]}"; do
-#   if ! systemctl is-enabled "$service" &> /dev/null; then
-#     echo "Enabling $service…"
-#     sudo systemctl enable "$service"
-#   else
-#     echo "$service is already enabled"
-#   fi
-# done
-
-# # Some programs just run better as flatpaks. Like discord/spotify
-# echo "Installing flatpaks (like discord and spotify)"
-# . install-flatpaks.sh
-
-echo "Setup complete! You may want to reboot your system."
+log "Setup complete! You may want to reboot your system."
