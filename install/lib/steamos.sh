@@ -57,7 +57,12 @@ with_steamos_readonly_disabled() {
 update_steamos() {
   log "Updating SteamOS system…"
   if need_cmd steamos-update; then
-    sudo steamos-update
+    # steamos-update commonly prints "No update available" and may return a non-zero
+    # exit code in that case. Under `set -e`, that would abort the installer.
+    # Treat it as non-fatal so we can continue installing packages.
+    if ! sudo steamos-update; then
+      warn "steamos-update returned a non-zero exit code (often benign, e.g. 'No update available'); continuing."
+    fi
   else
     warn "steamos-update not found; skipping OS update."
   fi
