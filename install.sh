@@ -1,133 +1,167 @@
 #!/usr/bin/env bash
-# Entrypoint for Etienne's dotfiles installer.
+# install.sh
 #
-# Supported OS targets:
+# Cross-platform dotfiles installer (idempotent).
+#
+# Supported OS:
 # - macOS
-# - SteamOS (Arch-based)
-# - Debian-based Linux (Debian/Ubuntu/etc.)
+# - SteamOS (Arch)
+# - Debian-based Linux
 #
-# Design:
-# - Keep OS-specific logic in install/lib/*.sh
-# - Keep install steps in install/steps/*.sh
-# - Prefer Homebrew everywhere; fall back to native package managers only when
-#   Homebrew cannot install a given package.
+# Strategy (see agents.md):
+# - Prefer Homebrew on all platforms.
+# - Use native managers only for explicitly configured lists:
+#   - SteamOS/Arch: yay (AUR)
+#   - Debian: apt/apt-get
+#   - Linux: flatpak (FLATPAK)
+# - Safe to run repeatedly.
 
 set -euo pipefail
 
-###############################################################################
-# UI
-###############################################################################
-
 print_logo() {
-  cat << "EOF"
-Etienne's dev setup
+  local os="${OS:-Detecting…}"
+  local host user shell_name repo
+  host="$(hostname 2>/dev/null || true)"
+  user="${USER:-}"
+  shell_name="${SHELL:-}"
+  repo="$(pwd 2>/dev/null || true)"
+
+  cat <<EOF
+=========================================
+    E T I E N N E ' S   D O T F I L E S
+=========================================
+ Target OS : ${os}
+ Host      : ${host}
+ User      : ${user}
+ Shell     : ${shell_name}
+ Repo      : ${repo}
+
+ Manager   : brew-first
+ Fallbacks : yay (arch) | apt (debian) | flatpak (linux)
+
+ Press Ctrl+C to abort at any time.
+-----------------------------------------
 EOF
 }
 
-clear
-print_logo
+main() {
+  clear
+  print_logo
 
-###############################################################################
-# Resolve repo root + load libs
-###############################################################################
+  # Ensure we run relative to repo root, regardless of invocation location.
+  local root
+  root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  cd "$root"
 
-DOTFILES_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export DOTFILES_ROOT
+  # Load installer utilities
+  # shellcheck disable=SC1091
+  source install/utils.sh
 
-# Load generic utilities first (logging, abort, OS detection, brew helpers, policy helpers).
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/lib/generic.sh"
+  # Load configuration (source of truth)
+  local packages_conf="packages.conf"
+  [[ -f "$packages_conf" ]] || die "packages.conf not found at: ${root}/${packages_conf}"
+  # shellcheck disable=SC1091
+  source "$packages_conf"
 
-# Then load OS-specific libraries (they assume generic.sh was sourced).
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/lib/macos.sh"
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/lib/steamos.sh"
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/lib/debian.sh"
+  # Detect OS
+  determine_os
+  log "Detected OS: ${OS:-Unknown}${OS_PRETTY:+ (${OS_PRETTY})}"
 
-# Load steps
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/steps/packages.sh"
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/steps/runtimes.sh"
-# shellcheck disable=SC1091
-source "${DOTFILES_ROOT}/install/steps/config.sh"
+  # Re-render splash with detected OS for a nicer UX
+  clear
+  print_logo
 
-###############################################################################
-# Load configuration
-###############################################################################
+  # Prerequisites (OS dependent)
+  ensure_prereqs
 
-PACKAGES_CONF="${PACKAGES_CONF:-${DOTFILES_ROOT}/packages.conf}"
-STOW_CONF="${STOW_CONF:-${DOTFILES_ROOT}/stow.conf}"
+  # Homebrew (install if missing + ensure brew available in this shell)
+  install_homebrew_if_missing
+  require_cmd brew
 
-[[ -f "$PACKAGES_CONF" ]] || abort "packages.conf not found: ${PACKAGES_CONF}"
-# shellcheck disable=SC1090
-source "$PACKAGES_CONF"
+  # Packages
+  log "Installing Homebrew packages (all systems)…"
+  if declare -p BREW >/dev/null 2>&1; then
+    install_brew_packages "${BREW[@]}"
+  else
+    warn "BREW not defined in packages.conf; skipping."
+  fi
 
-# stow.conf is optional; config step can also auto-discover packages
-if [[ -f "$STOW_CONF" ]]; then
-  # shellcheck disable=SC1090
-  source "$STOW_CONF"
-fi
+  if [[ "${OS:-Unknown}" == "macOS" ]]; then
+    log "Installing Homebrew packages (macOS)…"
+    if declare -p BREW_MACOS >/dev/null 2>&1; then
+      install_brew_packages "${BREW_MACOS[@]}"
+    else
+      warn "BREW_MACOS not defined in packages.conf; skipping."
+    fi
+  else
+    log "Installing Homebrew packages (Linux)…"
+    if declare -p BREW_LINUX >/dev/null 2>&1; then
+      install_brew_packages "${BREW_LINUX[@]}"
+    else
+      warn "BREW_LINUX not defined in packages.conf; skipping."
+    fi
+  fi
 
-###############################################################################
-# OS detection + updates + prereqs
-###############################################################################
+  if [[ "${OS:-Unknown}" == "SteamOS" ]]; then
+    log "Installing AUR packages (SteamOS/Arch)…"
+    if declare -p AUR >/dev/null 2>&1; then
+      install_aur_packages "${AUR[@]}"
+    else
+      warn "AUR not defined in packages.conf; skipping."
+    fi
+  fi
 
-determine_os
+  if [[ "${OS:-Unknown}" == "Debian" ]]; then
+    log "Installing APT packages (Debian-based)…"
+    if declare -p APT >/dev/null 2>&1; then
+      install_apt_packages "${APT[@]}"
+    else
+      warn "APT not defined in packages.conf; skipping."
+    fi
+  fi
 
-log "Detected OS: ${OS:-Unknown}${OS_PRETTY:+ (${OS_PRETTY})}"
+  if [[ "${OS:-Unknown}" != "macOS" ]]; then
+    log "Installing Flatpak packages (Linux)…"
+    if declare -p FLATPAK >/dev/null 2>&1; then
+      install_flatpak_packages "${FLATPAK[@]}"
+    else
+      warn "FLATPAK not defined in packages.conf; skipping."
+    fi
+  fi
 
-case "${OS:-Unknown}" in
-  macOS)
-    update_macos
-    ensure_macos_prereqs
-    ;;
-  SteamOS)
-    update_steamos
-    update_steamos_packages
-    ensure_steamos_prereqs
-    ;;
-  Debian)
-    update_debian
-    ensure_debian_prereqs
-    ;;
-  *)
-    abort "Unsupported OS: ${OS:-Unknown}"
-    ;;
-esac
+  # Runtimes (versions are controlled by repo files)
+  log "Installing Ruby runtime (from ruby/.ruby-version)…"
+  install_ruby_runtime "ruby/.ruby-version"
 
-###############################################################################
-# Homebrew (system-agnostic manager)
-###############################################################################
-# Per project policy, brew is the default package manager everywhere.
-# Brew itself should be installed previously (or you can extend generic.sh to bootstrap it),
-# but we always need to make it available in this shell.
-setup_brew_shellenv
+  log "Installing Node runtime (from node/.node-version)…"
+  install_node_runtime "node/.node-version"
 
-###############################################################################
-# Package installation
-###############################################################################
-# Package installation is driven by generated files in brewfiles/ (overwritten by save.sh).
-# This supports:
-# - formulae everywhere
-# - casks only on macOS
-# - flatpaks only on non-macOS (when available)
-install_all_packages_from_files
+  # Language packages
+  log "Installing Ruby gems…"
+  if declare -p RUBY_GEMS >/dev/null 2>&1; then
+    install_ruby_gems "${RUBY_GEMS[@]}"
+  else
+    warn "RUBY_GEMS not defined in packages.conf; skipping."
+  fi
 
-###############################################################################
-# Runtimes
-###############################################################################
-# Ruby/Node versions are controlled by:
-# - ruby/.ruby-version
-# - node/.node-version
-install_all_runtimes
+  log "Installing global npm packages…"
+  if declare -p NPM_PACKAGES >/dev/null 2>&1; then
+    install_npm_packages "${NPM_PACKAGES[@]}"
+  else
+    warn "NPM_PACKAGES not defined in packages.conf; skipping."
+  fi
 
-###############################################################################
-# Config restore (stow)
-###############################################################################
-# Uses stow.conf if present (CONFIG_PACKAGES array), otherwise auto-discovers.
-restore_all_configs
+  # Config (stow)
+  log "Configuring dotfiles via stow…"
+  if declare -p STOW >/dev/null 2>&1; then
+    # Stow root is the repo root (no more ./home prefix).
+    # Each stow package in STOW must be a directory at: <repo>/<APP>
+    stow_configure "${root}" "${STOW[@]}"
+  else
+    warn "STOW not defined in packages.conf; skipping stow step."
+  fi
 
-log "Setup complete! You may want to reboot your system."
+  log "Setup complete! You may want to restart your shell (or reboot)."
+}
+
+main "$@"
