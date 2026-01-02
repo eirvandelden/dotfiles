@@ -14,8 +14,8 @@ pre-commit:
       glob: "*.{js,ts,jsx,tsx}"
       run: yarn eslint {staged_files}
     spelling:
-      glob: '*.{js,rb,md}'
-      run: cspell {staged_files}
+      glob: "*.{js,rb,md}"
+      run: cspell --config ~/Developer/dotfiles/home/.config/cspell/cspell.yml {staged_files}
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"
@@ -105,7 +105,7 @@ post-merge:
   parallel: true
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
   only:
-    - ref: 'main'
+    - ref: "main"
   skip:
     - rebase
   commands:

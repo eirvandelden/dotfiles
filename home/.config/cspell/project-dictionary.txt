@@ -19,3 +19,12 @@ Finalize
 Etienne
 Delden
 Comeau
+curlable
+pacman
+flathub
+Brewfiles
+jemalloc
+ZJIT
+pkgs
+showmanual
+discordapp

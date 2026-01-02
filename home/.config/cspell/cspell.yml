@@ -1,10 +1,23 @@
-# cspell.yml
+# cspell.yml (repo root)
+#
+# Purpose:
+# - Ensure CSpell (invoked by lefthook) uses the repo's `project-dictionary.txt`
+#   when checking files from the repository root.
+#
+# Notes:
+# - lefthook runs `cspell {staged_files}` from the repo root, so the dictionary
+#   path must resolve relative to this file.
+# - This config mirrors the user config at `home/.config/cspell.yml`, but is
+#   placed at the repo root to be automatically discovered by CSpell.
+
 $schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
 version: "0.2"
+
 dictionaryDefinitions:
   - name: project-dictionary
     path: ./project-dictionary.txt
     addWords: true
+
 dictionaries:
   - bash
   - css
@@ -19,6 +32,7 @@ dictionaries:
   - ruby
   - softwareTerms
   - typescript
+
 ignorePaths:
   - config/credentials.yml.enc
   - coverage/**
