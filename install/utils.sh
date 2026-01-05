@@ -418,7 +418,7 @@ install_flatpak_packages() {
 }
 
 ###############################################################################
-# Runtime installs (Ruby + Node)
+# Runtime installs (Ruby via rv + Node)
 ###############################################################################
 
 read_version_file() {
@@ -430,38 +430,44 @@ read_version_file() {
   printf '%s' "$version"
 }
 
-ruby_prefix_for() {
+rv_is_ruby_installed() {
+  # Usage: rv_is_ruby_installed <version>
+  #
+  # rv outputs rows like:
+  #   ruby-3.4.8          [installed] /.../bin/ruby
+  #   ruby-3.2.9          [available]
+  # and may prefix the active version with '*'.
+  #
+  # We consider a version installed if there's a line whose first column matches
+  # either:
+  # - ruby-<version>
+  # - <version>
+  # and that line contains "[installed]".
   local version="$1"
-  printf '%s' "${HOME}/.rubies/ruby-${version}"
-}
+  local v_escaped
+  v_escaped="$(printf '%s' "$version" | sed 's/[.[\*^$()+?{|\\]/\\&/g')"
 
-ruby_is_installed() {
-  local version="$1"
-  local prefix="$2"
-  [[ -x "${prefix}/bin/ruby" ]] || return 1
-  "${prefix}/bin/ruby" -v 2>/dev/null | grep -q "ruby ${version}\b"
+  rv ruby list 2>/dev/null | tr -d '\r' | grep -Eq "^[[:space:]]*\*?[[:space:]]*(ruby-)?${v_escaped}[[:space:]]+\\[installed\\]([[:space:]]|$)"
 }
 
 install_ruby_runtime() {
   local version_file="${1:-ruby/.ruby-version}"
-  require_cmd ruby-install
+  require_cmd rv
 
-  local version prefix
+  local version
   version="$(read_version_file "$version_file")"
-  prefix="$(ruby_prefix_for "$version")"
+  # Accept both "3.x.y" and "ruby-3.x.y" formats.
+  version="${version#ruby-}"
 
-  if ruby_is_installed "$version" "$prefix"; then
-    log "ruby: already installed: ${version} (${prefix})"
+  if rv_is_ruby_installed "$version"; then
+    log "ruby: already installed via rv: ${version}"
     return 0
   fi
 
-  log "ruby: installing ${version} with jemalloc + YJIT (prefix: ${prefix})"
-  ruby-install ruby "$version" -- \
-    --prefix="$prefix" \
-    --with-jemalloc \
-    --enable-yjit
+  log "ruby: installing via rv: ${version}"
+  rv ruby install "$version"
 
-  log "ruby: installed: ${version} (${prefix})"
+  log "ruby: installed via rv: ${version}"
 }
 
 node_prefix_for() {
