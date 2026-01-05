@@ -20,11 +20,14 @@ set -euo pipefail
 
 print_logo() {
   local os="${OS:-Detecting…}"
-  local host user shell_name repo
+  local host user shell_name repo ruby_ver node_ver
   host="$(hostname 2>/dev/null || true)"
   user="${USER:-}"
   shell_name="${SHELL:-}"
   repo="$(pwd 2>/dev/null || true)"
+
+  ruby_ver="$(cat ruby/.ruby-version 2>/dev/null || echo "unknown")"
+  node_ver="$(cat node/.node-version 2>/dev/null || echo "unknown")"
 
   cat <<EOF
 =========================================
@@ -35,6 +38,9 @@ print_logo() {
  User      : ${user}
  Shell     : ${shell_name}
  Repo      : ${repo}
+
+ Ruby      : ${ruby_ver}
+ Node      : ${node_ver}
 
  Manager   : brew-first
  Fallbacks : yay (arch) | apt (debian) | flatpak (linux)
@@ -80,53 +86,29 @@ main() {
 
   # Packages
   log "Installing Homebrew packages (all systems)…"
-  if declare -p BREW >/dev/null 2>&1; then
-    install_brew_packages "${BREW[@]}"
-  else
-    warn "BREW not defined in packages.conf; skipping."
-  fi
+  install_brew_packages "${BREW[@]}"
 
   if [[ "${OS:-Unknown}" == "macOS" ]]; then
     log "Installing Homebrew packages (macOS)…"
-    if declare -p BREW_MACOS >/dev/null 2>&1; then
-      install_brew_packages "${BREW_MACOS[@]}"
-    else
-      warn "BREW_MACOS not defined in packages.conf; skipping."
-    fi
+    install_brew_packages "${BREW_MACOS[@]}"
   else
     log "Installing Homebrew packages (Linux)…"
-    if declare -p BREW_LINUX >/dev/null 2>&1; then
-      install_brew_packages "${BREW_LINUX[@]}"
-    else
-      warn "BREW_LINUX not defined in packages.conf; skipping."
-    fi
+    install_brew_packages "${BREW_LINUX[@]}"
   fi
 
   if [[ "${OS:-Unknown}" == "SteamOS" ]]; then
     log "Installing AUR packages (SteamOS/Arch)…"
-    if declare -p AUR >/dev/null 2>&1; then
-      install_aur_packages "${AUR[@]}"
-    else
-      warn "AUR not defined in packages.conf; skipping."
-    fi
+    install_aur_packages "${AUR[@]}"
   fi
 
   if [[ "${OS:-Unknown}" == "Debian" ]]; then
     log "Installing APT packages (Debian-based)…"
-    if declare -p APT >/dev/null 2>&1; then
-      install_apt_packages "${APT[@]}"
-    else
-      warn "APT not defined in packages.conf; skipping."
-    fi
+    install_apt_packages "${APT[@]}"
   fi
 
   if [[ "${OS:-Unknown}" != "macOS" ]]; then
     log "Installing Flatpak packages (Linux)…"
-    if declare -p FLATPAK >/dev/null 2>&1; then
-      install_flatpak_packages "${FLATPAK[@]}"
-    else
-      warn "FLATPAK not defined in packages.conf; skipping."
-    fi
+    install_flatpak_packages "${FLATPAK[@]}"
   fi
 
   # Runtimes (versions are controlled by repo files)
@@ -138,28 +120,16 @@ main() {
 
   # Language packages
   log "Installing Ruby gems…"
-  if declare -p RUBY_GEMS >/dev/null 2>&1; then
-    install_ruby_gems "${RUBY_GEMS[@]}"
-  else
-    warn "RUBY_GEMS not defined in packages.conf; skipping."
-  fi
+  install_ruby_gems "${RUBY_GEMS[@]}"
 
   log "Installing global npm packages…"
-  if declare -p NPM_PACKAGES >/dev/null 2>&1; then
-    install_npm_packages "${NPM_PACKAGES[@]}"
-  else
-    warn "NPM_PACKAGES not defined in packages.conf; skipping."
-  fi
+  install_npm_packages "${NPM_PACKAGES[@]}"
 
   # Config (stow)
   log "Configuring dotfiles via stow…"
-  if declare -p STOW >/dev/null 2>&1; then
-    # Stow root is the repo root (no more ./home prefix).
-    # Each stow package in STOW must be a directory at: <repo>/<APP>
-    stow_configure "${root}" "${STOW[@]}"
-  else
-    warn "STOW not defined in packages.conf; skipping stow step."
-  fi
+  # Stow directory is the repo root (where the stow packages live).
+  # Target directory is handled inside stow_configure (it uses $HOME).
+  stow_configure "${root}" "${STOW[@]}"
 
   log "Setup complete! You may want to restart your shell (or reboot)."
 }
