@@ -1,9 +1,0 @@
-# Caren2 configuration
-Include ~/.config/ssh/config.caren2
-
-# # My default configuration
-# Include ~/.config/ssh/config.personal
-# Include ~/.config/ssh/config.work
-
-# 1password managed keys
-Include ~/.ssh/1Password/config

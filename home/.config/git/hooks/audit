@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-if command -v bundle-audit > /dev/null; then
-  echo "Running bundle-audit in current directory"
-  bundle exec bundle-audit update && bundle exec bundle-audit check
-fi

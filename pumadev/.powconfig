@@ -1,0 +1,11 @@
+# chruby: switch to defined ruby version
+# TODO: migrate to rv
+#source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
+#chruby $(cat .ruby-version)
+
+# chnode: switch to defined node version
+source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
+chnode $(cat .node-version)
+
+# ruby debug
+export RUBY_DEBUG_OPEN=true

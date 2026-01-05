@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-echo "Running pre-commit hooks:"
-~/.config/git/hooks/rubocop
-~/.config/git/hooks/coffeelint
-~/.config/git/hooks/scss-lint

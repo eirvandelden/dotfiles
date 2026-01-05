@@ -1,0 +1,97 @@
+[
+  {
+    "context": "vim_mode == normal && !menu", // "Replacement for s/S: map g s to cl (substitute char) and g S to cc (substitute line) so you can keep s for movement (h t n s)."
+    "bindings": {
+      "; space": "file_finder::Toggle",
+      "; e": "project_panel::ToggleFocus",
+      "; s g": "pane::DeploySearch",
+      "; a a": "agent::Chat",
+      "; a e": "assistant::InlineAssist",
+      "; g g": ["task::Spawn", { "task_name": "LazyGit", "reveal_target": "center" }],
+      "space g f": ["task::Spawn", { "task_name": "LazyGit - file log", "reveal_target": "center" }],
+      "; g d": "git::Diff",
+      "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
+      "; t f": ["task::Spawn", { "task_name": "RSpec: current file at cursor" }],
+      "; t m": ["task::Spawn", { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }],
+      "; r r": "task::Rerun",
+      "; r c": ["task::Spawn", { "task_name": "Run Caren" }],
+      "; t t": "terminal_panel::ToggleFocus",
+      "t": ["workspace::SendKeystrokes", "j"],
+      "n": ["workspace::SendKeystrokes", "k"],
+      "s": ["workspace::SendKeystrokes", "l"],
+      "f": ["workspace::SendKeystrokes", "/ enter"],
+      "shift-f": ["workspace::SendKeystrokes", "? enter"],
+
+      "g s": ["workspace::SendKeystrokes", "c l"],
+      "g shift-s": ["workspace::SendKeystrokes", "c c"]
+    }
+  },
+  {
+    "context": "!Editor && !TextInput && !menu",
+    "bindings": {
+      "; space": "file_finder::Toggle",
+      "; e": "project_panel::ToggleFocus",
+      "; s g": "pane::DeploySearch",
+      "; a a": "agent::Chat",
+      "; a e": "assistant::InlineAssist",
+      "; g g": ["task::Spawn", { "task_name": "LazyGit", "reveal_target": "center" }],
+      "; g d": "git::Diff",
+      "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
+      "; t f": ["task::Spawn", { "task_name": "RSpec: current file at cursor" }],
+      "; t m": ["task::Spawn", { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }],
+      "; r r": "task::Rerun",
+      "; r c": ["task::Spawn", { "task_name": "Run Caren" }],
+      "; t t": "terminal_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "ProjectPanel && not_editing && !menu",
+    "bindings": {
+      "; space": "file_finder::Toggle",
+      "; e": "project_panel::ToggleFocus",
+      "; s g": "pane::DeploySearch",
+      "; a a": "agent::Chat",
+      "; a e": "assistant::InlineAssist",
+      "; g g": ["task::Spawn", { "task_name": "LazyGit", "reveal_target": "center" }],
+      "; g d": "git::Diff",
+      "; t a": ["task::Spawn", { "task_name": "Run all tests" }],
+      "; t f": ["task::Spawn", { "task_name": "RSpec: current file at cursor" }],
+      "; t m": ["task::Spawn", { "task_name": "test $ZED_RELATIVE_FILE:$ZED_ROW" }],
+      "; r r": "task::Rerun",
+      "; r c": ["task::Spawn", { "task_name": "Run Caren" }],
+      "; t t": "terminal_panel::ToggleFocus"
+    }
+  },
+  {
+    "context": "vim_mode == visual && !menu",
+    "bindings": {
+      "t": ["workspace::SendKeystrokes", "j"],
+      "n": ["workspace::SendKeystrokes", "k"],
+      "s": ["workspace::SendKeystrokes", "l"],
+      "f": ["workspace::SendKeystrokes", "/ enter"],
+      "shift-f": ["workspace::SendKeystrokes", "? enter"]
+    }
+  },
+  {
+    "context": "(Editor || TextInput) && !menu",
+    "bindings": {
+      "ctrl-a": ["workspace::SendKeystrokes", "home"],
+      "ctrl-e": ["workspace::SendKeystrokes", "end"],
+      "ctrl-k": ["workspace::SendKeystrokes", "shift-end backspace"]
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "cmd-p": null,
+      "cmd-shift-p": null
+    }
+  },
+  {
+    "context": "menu",
+    "bindings": {
+      "ctrl-y": ["workspace::SendKeystrokes", "enter"],
+      "ctrl-e": ["workspace::SendKeystrokes", "escape"]
+    }
+  }
+]
