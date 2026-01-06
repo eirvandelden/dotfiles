@@ -1,20 +1,28 @@
 # cspell.yml (repo root)
 #
 # Purpose:
-# - Ensure CSpell (invoked by lefthook) uses the repo's `project-dictionary.txt`
-#   when checking files from the repository root.
+# - Repo-root config so `cspell` auto-discovery works when run from this repo.
+# - Keeps your global/user dictionary (names, recurring terms) separate from
+#   this repo’s project-specific vocabulary.
 #
-# Notes:
-# - lefthook runs `cspell {staged_files}` from the repo root, so the dictionary
-#   path must resolve relative to this file.
-# - This config mirrors the user config at `home/.config/cspell.yml`, but is
-#   placed at the repo root to be automatically discovered by CSpell.
+# Conventions:
+# - User dictionary (stowed): ~/.config/cspell/user-dictionary.txt
+# - Repo-local dictionary (committed here): ./project-dictionary.txt
+#
+# For repo-specific words, prefer a repo-local `cspell.yml` + `project-dictionary.txt`
+# committed in that repository.
 
 $schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
 version: "0.2"
 
 dictionaryDefinitions:
-  - name: project-dictionary
+  # Your personal/global dictionary (shared across repos)
+  - name: user-dictionary
+    path: ~/.config/cspell/user-dictionary.txt
+    addWords: true
+
+  # Dotfiles repo-specific dictionary (SteamOS/Hyprland/etc.)
+  - name: dotfiles-project-dictionary
     path: ./project-dictionary.txt
     addWords: true
 
@@ -28,10 +36,11 @@ dictionaries:
   - html-symbol-entities
   - node
   - networkingTerms
-  - project-dictionary
   - ruby
   - softwareTerms
   - typescript
+  - user-dictionary
+  - dotfiles-project-dictionary
 
 ignorePaths:
   - config/credentials.yml.enc
@@ -43,6 +52,8 @@ ignorePaths:
   - node_modules/**
   - package.json
   - package-lock.json
-  - project-dictionary.txt
   - storage/**
   - tmp/**
+  # Do not spellcheck dictionary files.
+  - project-dictionary.txt
+  - user-dictionary.txt
