@@ -15,7 +15,7 @@ pre-commit:
       run: yarn eslint {staged_files}
     spelling:
       glob: "*.{js,rb,md}"
-      run: cspell --config ~/Developer/dotfiles/home/.config/cspell/cspell.yml {staged_files}
+      run: cspell --config ~/.config/cspell/cspell.yml {staged_files}
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"

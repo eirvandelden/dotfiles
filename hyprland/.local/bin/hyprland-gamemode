@@ -1,0 +1,154 @@
+#!/usr/bin/env sh
+# hyprland-gamemode
+#
+# SteamOS / Steam Deck Gaming Mode launcher:
+# - Normalizes PATH and session env (Steam Game Mode can be very minimal)
+# - Mitigates Steam overlay preload env that can break compositors
+# - Runs Hyprland nested fullscreen under gamescope (Wayland)
+# - Logs stdout/stderr to a persistent log file for debugging
+#
+# Usage:
+#   hyprland-gamemode              # normal
+#   hyprland-gamemode --debug      # extra diagnostics (printed + logged)
+#
+# Add to Steam (Non-Steam Game) pointing at this script.
+
+set -eu
+
+DEBUG=0
+if [ "${1:-}" = "--debug" ] || [ "${1:-}" = "-d" ]; then
+  DEBUG=1
+  shift || true
+fi
+
+# Persistent log location (user-writable)
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
+LOG_DIR="${STATE_DIR}/hyprland-gamemode"
+LOG_FILE="${LOG_DIR}/hyprland-gamemode.log"
+
+mkdir -p "$LOG_DIR"
+
+# Tee all output to the log. This helps when launched from Game Mode.
+# shellcheck disable=SC2094
+exec >>"$LOG_FILE" 2>&1
+
+timestamp() { date "+%Y-%m-%d %H:%M:%S%z" 2>/dev/null || true; }
+log() { printf '%s %s\n' "$(timestamp)" "$*"; }
+
+log "============================================================"
+log "hyprland-gamemode: starting"
+log "argv: $0 ${*:-}"
+log "user: ${USER:-unknown}  home: ${HOME:-unknown}"
+log "pwd:  $(pwd 2>/dev/null || echo unknown)"
+
+# --- Environment hardening ----------------------------------------------------
+
+# Steam may inject overlay preloads. These can break nested compositors.
+# Unset broadly; we prefer correctness over overlay in this session.
+unset LD_PRELOAD || true
+unset LD_LIBRARY_PATH || true
+
+# Common Steam runtime flags that can interfere; keep it conservative.
+unset STEAM_COMPAT_CLIENT_INSTALL_PATH || true
+unset STEAM_COMPAT_DATA_PATH || true
+unset STEAM_COMPAT_TOOL_PATHS || true
+unset STEAM_RUNTIME || true
+unset STEAM_RUNTIME_HEAVY || true
+
+# Ensure we can find user scripts and standard binaries.
+# (Game Mode often launches with a minimal PATH.)
+USER_BIN="${HOME}/.local/bin"
+BREW_BIN_1="/home/linuxbrew/.linuxbrew/bin"
+BREW_BIN_2="${HOME}/.linuxbrew/bin"
+
+PATH="${USER_BIN}:${BREW_BIN_1}:${BREW_BIN_2}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH
+
+# Set session hints for Wayland apps and portals.
+export XDG_CURRENT_DESKTOP="Hyprland"
+export XDG_SESSION_DESKTOP="Hyprland"
+export XDG_SESSION_TYPE="wayland"
+export MOZ_ENABLE_WAYLAND="1"
+export QT_QPA_PLATFORM="wayland"
+export SDL_VIDEODRIVER="wayland"
+
+# Some apps behave better with a runtime dir; Steam usually has this set,
+# but ensure it exists if present.
+if [ -n "${XDG_RUNTIME_DIR:-}" ] && [ ! -d "${XDG_RUNTIME_DIR}" ]; then
+  # Don't try to create it if it's something like /run/user/1000 without perms.
+  log "note: XDG_RUNTIME_DIR is set but does not exist: ${XDG_RUNTIME_DIR}"
+fi
+
+# Force zsh as shell for interactive terminals if possible (Ghostty will honor SHELL).
+if command -v zsh >/dev/null 2>&1; then
+  export SHELL="$(command -v zsh)"
+fi
+
+# --- Helpers ------------------------------------------------------------------
+
+need_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+which_cmd() {
+  # "command -v" is POSIX; wrap for logging convenience.
+  command -v "$1" 2>/dev/null || true
+}
+
+dump_debug() {
+  log "--- debug: environment ---"
+  log "PATH=$PATH"
+  log "SHELL=${SHELL:-}"
+  log "XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-}"
+  log "XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}"
+  log "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}"
+  log "WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}"
+  log "DISPLAY=${DISPLAY:-}"
+  log "LD_PRELOAD=${LD_PRELOAD:-<unset>}"
+  log "LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-<unset>}"
+  log "--- debug: binaries ---"
+  log "gamescope: $(which_cmd gamescope)"
+  log "Hyprland:  $(which_cmd Hyprland)"
+  log "ghostty:   $(which_cmd ghostty)"
+  log "nvim:      $(which_cmd nvim)"
+  log "flatpak:   $(which_cmd flatpak)"
+}
+
+# --- Validate dependencies -----------------------------------------------------
+
+if ! need_cmd gamescope; then
+  log "error: gamescope not found on PATH"
+  log "hint: install gamescope via SteamOS packages (pacman/yay) and re-run."
+  exit 127
+fi
+
+if ! need_cmd Hyprland; then
+  log "error: Hyprland not found on PATH"
+  log "hint: install hyprland via SteamOS packages (pacman/yay) and re-run."
+  exit 127
+fi
+
+# Debug output on demand
+if [ "$DEBUG" -eq 1 ]; then
+  dump_debug
+fi
+
+# Prefer a dedicated Hyprland config if you decide to create one later.
+# For now we use the default stowed config at ~/.config/hypr/hyprland.conf.
+HYPR_CMD="Hyprland"
+
+# --- Launch -------------------------------------------------------------------
+#
+# gamescope flags:
+# -f                  : fullscreen
+# --expose-wayland    : expose Wayland socket to nested client (Hyprland)
+# -W/-H and -w/-h     : output and render resolution (keep stable at 1280x800)
+#
+# Notes:
+# - If you later dock to an external display, you may want to make these dynamic.
+# - Keep it stable for the Deck LCD first.
+GAMESCOPE_ARGS="-f --expose-wayland -W 1280 -H 800 -w 1280 -h 800"
+
+log "launch: gamescope $GAMESCOPE_ARGS -- $HYPR_CMD"
+log "logfile: $LOG_FILE"
+
+# Execute nested session
+exec gamescope $GAMESCOPE_ARGS -- $HYPR_CMD

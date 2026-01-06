@@ -1,0 +1,208 @@
+#!/usr/bin/env sh
+# steamdeck-dev-starter
+#
+# Optional SteamOS/Steam Deck "dev starter" for Hyprland:
+# - Opens Ghostty
+# - Starts Zed in a chosen project directory
+#
+# Designed to work when launched from Gaming Mode (minimal PATH/env).
+#
+# Usage:
+#   steamdeck-dev-starter
+#   steamdeck-dev-starter <project>
+#   steamdeck-dev-starter --pick
+#   steamdeck-dev-starter --print-dir
+#   steamdeck-dev-starter --help
+#
+# Project resolution order:
+#  1) explicit argument <project>
+#  2) --pick (simple picker; uses wofi/tofi if available, else numeric prompt)
+#  3) default: ~/Developer
+#
+# It assumes your repos live under:
+#   ~/Developer
+#
+# Notes:
+# - If you want this bound in Hyprland, point the binding to:
+#     ~/.local/bin/steamdeck-dev-starter
+# - Ghostty typically honors $SHELL; the gamemode wrapper already sets it to zsh.
+
+set -eu
+
+# Harden PATH for Gaming Mode contexts
+USER_BIN="${HOME}/.local/bin"
+BREW_BIN_1="/home/linuxbrew/.linuxbrew/bin"
+BREW_BIN_2="${HOME}/.linuxbrew/bin"
+PATH="${USER_BIN}:${BREW_BIN_1}:${BREW_BIN_2}:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH
+
+DEFAULT_ROOT="${HOME}/Developer"
+
+need_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+usage() {
+  cat <<'EOF'
+steamdeck-dev-starter - open Ghostty + Neovim in a project directory
+
+Usage:
+  steamdeck-dev-starter                 Open nvim in ~/Developer
+  steamdeck-dev-starter <project>       Open nvim in ~/Developer/<project> (or absolute path)
+  steamdeck-dev-starter --pick          Pick a directory under ~/Developer (best-effort UI)
+  steamdeck-dev-starter --print-dir     Print the resolved directory and exit
+  steamdeck-dev-starter --help          Show this help
+
+Examples:
+  steamdeck-dev-starter dotfiles
+  steamdeck-dev-starter ~/Developer/myapp
+EOF
+}
+
+is_abs_path() {
+  case "$1" in
+    /*) return 0 ;;
+    *)  return 1 ;;
+  esac
+}
+
+# Best-effort: list candidate project directories under ~/Developer.
+# Heuristic:
+# - include directories that look like git repos (have .git) AND also include top-level dirs
+#   even if not git repos (you might use non-git folders).
+list_projects() {
+  root="$1"
+  [ -d "$root" ] || return 0
+
+  # Prefer "find" if present; SteamOS has it, but keep it POSIX-ish.
+  if need_cmd find; then
+    # Depth 2 catches ~/Developer/<org>/<repo> too.
+    # We filter out hidden dirs except ".git" check.
+    find "$root" -mindepth 1 -maxdepth 2 -type d 2>/dev/null \
+      | while IFS= read -r d; do
+          base="$(basename "$d")"
+          case "$base" in
+            .*) continue ;;
+          esac
+          # Keep if git repo or immediate child of root
+          if [ -d "$d/.git" ] || [ "$(dirname "$d")" = "$root" ]; then
+            printf '%s\n' "$d"
+          fi
+        done \
+      | sort -u
+    return 0
+  fi
+
+  # Fallback: just list immediate children
+  (cd "$root" 2>/dev/null && ls -1d ./* 2>/dev/null | sed 's|^\./||' | while IFS= read -r x; do
+    [ -d "${root}/${x}" ] && printf '%s\n' "${root}/${x}"
+  done) || true
+}
+
+pick_project_dir() {
+  root="$1"
+  projects="$(list_projects "$root" || true)"
+  [ -n "$projects" ] || return 1
+
+  # UI pickers if present (Wayland launchers)
+  if need_cmd wofi; then
+    # wofi expects newline list; return selected line
+    picked="$(printf '%s\n' "$projects" | wofi --show dmenu -p "Project" 2>/dev/null || true)"
+    [ -n "$picked" ] || return 1
+    printf '%s' "$picked"
+    return 0
+  fi
+
+  if need_cmd tofi; then
+    picked="$(printf '%s\n' "$projects" | tofi --prompt-text "Project: " 2>/dev/null || true)"
+    [ -n "$picked" ] || return 1
+    printf '%s' "$picked"
+    return 0
+  fi
+
+  # Terminal fallback: numeric selection
+  i=0
+  printf '%s\n' "$projects" | while IFS= read -r p; do
+    i=$((i + 1))
+    printf '%d) %s\n' "$i" "$p"
+  done
+
+  printf 'Select project [1-%d]: ' "$i" >&2
+  read -r sel || return 1
+
+  case "$sel" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+
+  # Extract Nth line
+  picked="$(printf '%s\n' "$projects" | awk "NR==$sel{print;exit}" 2>/dev/null || true)"
+  [ -n "$picked" ] || return 1
+  printf '%s' "$picked"
+}
+
+resolve_dir() {
+  arg="${1:-}"
+
+  if [ -z "$arg" ]; then
+    printf '%s' "$DEFAULT_ROOT"
+    return 0
+  fi
+
+  if [ "$arg" = "--pick" ]; then
+    picked="$(pick_project_dir "$DEFAULT_ROOT" || true)"
+    [ -n "$picked" ] || return 1
+    printf '%s' "$picked"
+    return 0
+  fi
+
+  if is_abs_path "$arg"; then
+    printf '%s' "$arg"
+    return 0
+  fi
+
+  printf '%s/%s' "$DEFAULT_ROOT" "$arg"
+}
+
+main() {
+  if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    usage
+    exit 0
+  fi
+
+  if [ "${1:-}" = "--print-dir" ]; then
+    shift || true
+    dir="$(resolve_dir "${1:-}" || true)"
+    [ -n "$dir" ] || exit 1
+    printf '%s\n' "$dir"
+    exit 0
+  fi
+
+  # Accept:
+  # - no args
+  # - <project>
+  # - --pick
+  dir="$(resolve_dir "${1:-}" || true)"
+  if [ -z "${dir:-}" ]; then
+    printf '%s\n' "error: could not resolve project directory" >&2
+    exit 1
+  fi
+
+  if [ ! -d "$dir" ]; then
+    printf '%s\n' "error: directory does not exist: $dir" >&2
+    exit 1
+  fi
+
+  if ! need_cmd ghostty; then
+    printf '%s\n' "error: ghostty not found on PATH" >&2
+    exit 127
+  fi
+
+  if ! need_cmd zed; then
+    printf '%s\n' "error: zed not found on PATH" >&2
+    exit 127
+  fi
+
+  # Launch Ghostty and start Zed in the target directory.
+  # (Zed is a GUI app; starting it from Ghostty keeps the workflow consistent.)
+  exec ghostty -e sh -lc "cd \"${dir}\" && exec zed ."
+}
+
+main "$@"

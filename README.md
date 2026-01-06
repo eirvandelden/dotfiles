@@ -2,6 +2,85 @@
 
 My personal dotfiles and a cross-platform installer to bootstrap my dev environment.
 
+## SteamOS (Steam Deck) — Game Mode Hyprland session
+
+This repo includes a nested Hyprland “dev session” intended to be launched from **Steam Gaming Mode** as a **Non-Steam Game**. It runs:
+
+- `gamescope` fullscreen (nested)
+- `Hyprland` inside gamescope (with XWayland for compatibility)
+- Hotkeys for:
+  - Ghostty (terminal)
+  - Zed (editor)
+  - Microsoft Edge (Flatpak)
+
+### Install
+
+From Desktop Mode (recommended):
+
+- Run the normal installer:
+
+  ./install.sh
+
+This will (on SteamOS):
+
+- install Hyprland + Wayland utilities via the `AUR` list in `packages.conf`
+- install Microsoft Edge via Flatpak (`com.microsoft.Edge`)
+- stow the Hyprland config + launcher scripts into your home directory
+
+### Add to Steam (Non-Steam Game)
+
+1. Desktop Mode → open Steam
+2. `Games` → `Add a Non-Steam Game to My Library…`
+3. Browse to:
+
+   `~/.local/bin/hyprland-gamemode`
+
+4. After adding, open the shortcut’s **Properties**:
+   - **Start In**: set to `/home/deck` (or your `$HOME`)
+   - (Optional) rename it to something like: `Hyprland (Dev)`
+
+Now switch back to Gaming Mode and launch it like any other game.
+
+### Keybindings (Hyprland)
+
+Primary modifier is **Alt** (to avoid relying on the Super key).
+
+- `Alt + Enter` → Ghostty
+- `Alt + E` → Dev starter (Ghostty + Zed in `~/Developer`)
+- `Alt + Shift + E` → Neovim (in Ghostty)
+- `Alt + B` → Microsoft Edge (Flatpak)
+- `Alt + Space` → App launcher (`wofi` / `tofi`, if installed)
+- `Alt + Q` → Close window
+
+### Debugging
+
+The launcher logs all stdout/stderr to:
+
+- `~/.local/state/hyprland-gamemode/hyprland-gamemode.log`
+
+If the session fails to start from Gaming Mode, check that log first.
+
+You can also run from Desktop Mode terminal for easier iteration:
+
+- `~/.local/bin/hyprland-gamemode --debug`
+
+### Notes (Omarchy-aligned config layout)
+
+Hyprland is configured using an **Omarchy-style split config**, where the main file sources smaller files:
+
+- Entry point: `~/.config/hypr/hyprland.conf`
+- Sourced files:
+  - `~/.config/hypr/monitors.conf`
+  - `~/.config/hypr/input.conf`
+  - `~/.config/hypr/bindings.conf`
+  - `~/.config/hypr/looknfeel.conf`
+  - `~/.config/hypr/autostart.conf`
+
+Other notes:
+
+- The launcher intentionally unsets `LD_PRELOAD` / related env to avoid Steam overlay injection breaking compositor startup.
+- Dev starter script lives at `~/.local/bin/steamdeck-dev-starter` (optional helper; can be run manually too).
+
 ## 🤖Installation
 
 ### Option A: Curlable bootstrap (recommended)
