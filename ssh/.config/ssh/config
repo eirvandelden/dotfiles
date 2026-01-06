@@ -3,3 +3,4 @@
 # Include ~/.config/ssh/config.work
 
 # 1password managed keys
+Include ~/.ssh/1Password/config

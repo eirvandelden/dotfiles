@@ -46,5 +46,5 @@ export GPG_TTY=$(tty)
 # Node-build definitions path
 export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/node-build"
 
-# --- ensure squirrel prompt wins ---
-source "$ZDOTDIR/prompt.zsh"
+# Prompt is intentionally loaded from `.zshrc` only to avoid double-loading.
+# (Both `.zshenv` and `.zshrc` can be sourced during startup depending on shell type.)

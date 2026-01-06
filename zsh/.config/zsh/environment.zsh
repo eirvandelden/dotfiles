@@ -44,8 +44,16 @@ export SSH_CONFIG_FILE="$HOME/.config/ssh/config"
 # 1Password
 # configure 1password ssh-agent to access configured keys
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
-## Add plugins
-source /Users/etienne.vandelden/.config/op/plugins.sh
+
+# Add plugins (idempotent; prevents duplicate approval prompts when init files get sourced twice)
+if [[ -z "${__OP_PLUGINS_LOADED:-}" ]]; then
+  __OP_PLUGINS_LOADED=1
+  export __OP_PLUGINS_LOADED
+
+  if [[ -f "$HOME/.config/op/plugins.sh" ]]; then
+    source "$HOME/.config/op/plugins.sh"
+  fi
+fi
 
 # Ruby
 ## chruby setup
