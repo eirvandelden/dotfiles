@@ -62,5 +62,8 @@ alias caddyrestart="brew services restart caddy"
 alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
 alias caddyvalidate="caddy validate --config $(brew --prefix)/etc/Caddyfile"
 
+# Secrets
+alias unlock='secrets'
+
 # Editors
 alias e="zed $@"
