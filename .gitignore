@@ -1,7 +1,27 @@
-# Ignore any work related zsh configuration
-/**/*/*.work.zsh
-home/.config/zsh/.zcompdump
-home/.config/zsh/.zsh_history
-home/.config/zsh/.zsh_sessions/*
-home/.config/zed/prompts/*
-home/.config/ssh/*.work
+# SSH files
+/**/*/known_hosts
+
+# Don't save history and session files
+/**/*/.config/zsh/.zcompdump
+/**/*/.config/zsh/.zsh_history
+/**/*/.config/zsh/.zsh_sessions/*
+/**/*/.config/zed/prompts/*
+
+# Vim swap and backup files
+/**/*/.vim/swap/*
+/**/*/.vim/backup/*
+/**/*/*.un~
+/**/*/*.spl
+/**/*/*.swp
+/**/*/*.swo
+
+# Ignore any work related files
+/**/*/work.*
+/**/*/*.work
+/**/*/*.work.*
+/**/*/work_*
+
+# Ignore ssh keys & other keys
+/**/*/id_*
+/**/*/id_*.pub
+/**/*/*.key
