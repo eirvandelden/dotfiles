@@ -155,3 +155,17 @@ yarn-debug.log*
 # Ignore uploaded files in development
 /storage/*
 !/storage/.keep
+
+# Vim swap and backup files
+/**/*/.vim/swap/*
+/**/*/.vim/backup/*
+/**/*/*.un~
+/**/*/*.spl
+/**/*/*.swp
+/**/*/*.swo
+
+# Ignore any work related files
+/**/*/work.*
+/**/*/*.work
+/**/*/*.work.*
+/**/*/work_*
