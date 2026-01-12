@@ -63,7 +63,7 @@ alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
 alias caddyvalidate="caddy validate --config $(brew --prefix)/etc/Caddyfile"
 
 # Secrets
-alias unlock='secrets'
+alias unlock='eval "$(secrets)"'
 
 # Editors
 alias e="zed $@"
