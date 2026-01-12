@@ -1,6 +1,6 @@
 # # My default configuration
-# Include ~/.config/ssh/config.personal
-# Include ~/.config/ssh/config.work
+# Include ~/.config/ssh/personal.config
+# Include ~/.config/ssh/work.config
 
 # 1password managed keys
 Include ~/.ssh/1Password/config
