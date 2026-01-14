@@ -73,66 +73,66 @@
 
         "syntax": {
           "attribute": {
-            "color": "#489100"
+            "color": "#489100",
           },
           "comment": {
             "color": "#909995",
-            "font_style": "italic"
+            "font_style": "italic",
           },
           "constant": {
-            "font_weight": 400
+            "font_weight": 400,
           },
           "enum": {
-            "color": "#489100"
+            "color": "#489100",
           },
           "function": {
-            "color": "#0072d4"
+            "color": "#0072d4",
           },
           "function.method": {
-            "color": "#006dce"
+            "color": "#006dce",
           },
           "keyword": {
             "color": "#909995",
             "font_style": "italic",
-            "font_weight": 700
+            "font_weight": 700,
           },
           "property": {
-            "color": "#489100"
+            "color": "#489100",
           },
           "punctuation.bracket": {
             "color": "#909995",
             "font_style": "normal",
-            "font_weight": 100
+            "font_weight": 100,
           },
           "punctuation.delimeter": {
             "color": "#909995",
             "font_style": "normal",
-            "font_weight": 100
+            "font_weight": 100,
           },
           "punctuation.special": {
-            "color": "#489100"
+            "color": "#489100",
           },
           "string.regex": {
-            "color": "#d2212d"
+            "color": "#d2212d",
           },
           "text.literal": {
-            "color": "#53676d"
+            "color": "#53676d",
           },
           "type": {
-            "color": "#c25d1e"
+            "color": "#c25d1e",
           },
           "type.builtin": {
             "color": "#a9430f",
-            "font_style": "italic"
+            "font_style": "italic",
           },
           "variable": {
-            "color": "#489100"
+            "color": "#489100",
           },
           "variable.special": {
-            "color": "#428b00"
-          }
-        }
-      }
+            "color": "#428b00",
+          },
+        },
+      },
     },
     {
       "name": "Selenized (Rails) Black",
@@ -204,66 +204,66 @@
 
         "syntax": {
           "attribute": {
-            "color": "#70b433"
+            "color": "#70b433",
           },
           "comment": {
             "color": "#777777",
-            "font_style": "italic"
+            "font_style": "italic",
           },
           "constant": {
-            "font_weight": 400
+            "font_weight": 400,
           },
           "enum": {
-            "color": "#70b433"
+            "color": "#70b433",
           },
           "function": {
-            "color": "#368aeb"
+            "color": "#368aeb",
           },
           "function.method": {
-            "color": "#4f9cfe"
+            "color": "#4f9cfe",
           },
           "keyword": {
             "color": "#efc541",
             "font_style": "italic",
-            "font_weight": 700
+            "font_weight": 700,
           },
           "property": {
-            "color": "#70b433"
+            "color": "#70b433",
           },
           "punctuation.bracket": {
             "color": "#777777",
             "font_style": "normal",
-            "font_weight": 100
+            "font_weight": 100,
           },
           "punctuation.delimeter": {
             "color": "#777777",
             "font_style": "normal",
-            "font_weight": 100
+            "font_weight": 100,
           },
           "punctuation.special": {
-            "color": "#70b433"
+            "color": "#70b433",
           },
           "string.regex": {
-            "color": "#ed4a46"
+            "color": "#ed4a46",
           },
           "text.literal": {
-            "color": "#b9b9b9"
+            "color": "#b9b9b9",
           },
           "type": {
-            "color": "#e67f43"
+            "color": "#e67f43",
           },
           "type.builtin": {
             "color": "#e67f43",
-            "font_style": "italic"
+            "font_style": "italic",
           },
           "variable": {
-            "color": "#70b433"
+            "color": "#70b433",
           },
           "variable.special": {
-            "color": "#83c746"
-          }
-        }
-      }
-    }
-  ]
+            "color": "#83c746",
+          },
+        },
+      },
+    },
+  ],
 }
