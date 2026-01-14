@@ -14,10 +14,61 @@ instructions.
 
 ### 1.1 Principles
 
-- Use Domain Driven Design and SOLID.
+- Use Domain Driven Design, Rails convention/CRUD modeling, and SOLID principles.
+- Apply “everything is CRUD”:
+  - Prefer modeling behavior as resources over adding custom actions.
+  - Avoid non-RESTful controller actions beyond the standard seven actions.
+  - State transitions should usually be modeled as nested resources (e.g. `resource :closure` for close/reopen with POST/DELETE).
+  - See also: 7.1 “Everything is CRUD (modeling discipline)” and 12.17 “Apply everything is CRUD”.
+- Personal projects:
+  - Prefer the Solid trifecta by default (Solid Queue, Solid Cache, Solid Cable) rather than introducing Redis/Sidekiq/etc.
+  - See also: 12.17 (Solid Queue/Solid Cache defaults).
+- Prefer incremental refactoring over rewrites:
+  - Make small steps, keep tests green, and use feature flags for risky migrations and behavior changes.
 - Prefer intention revealing names.
 - Short names are fine in hot paths.
 - Longer names are fine in less used code.
+- Default to rich domain models:
+  - Business logic lives in models, not in separate service classes.
+  - Do not introduce service objects as a pattern. If something feels like it needs orchestration, first try:
+    - A model method
+    - A concern (horizontal behaviour)
+    - A state record (see 7.1)
+    - A PORO that supports a model (for presentation-ish helpers), not a business-logic service
+- Use concerns for composition:
+  - Prefer horizontal behaviour concerns over inheritance.
+  - It is acceptable for a model to include many concerns, as long as each concern has one clear responsibility.
+
+Example (avoid service objects, prefer rich models):
+
+```ruby
+# ❌ Don't: service object for domain behaviour
+class CloseCardService
+  def initialize(card, user)
+    @card = card
+    @user = user
+  end
+
+  def call
+    ActiveRecord::Base.transaction do
+      closure = @card.create_closure!(user: @user)
+      @card.track_event("card_closed", user: @user)
+      NotifyRecipientsJob.perform_later(@card)
+    end
+  end
+end
+
+# ✅ Do: rich model method
+class Card < ApplicationRecord
+  include Closeable
+
+  def close(user: Current.user)
+    create_closure!(user: user)
+    track_event "card_closed", user: user
+    notify_recipients_later
+  end
+end
+```
 
 ### 1.2 Layout and Formatting
 
@@ -56,6 +107,18 @@ instructions.
 
 - Use server side rendering with Hotwire (Turbo and Stimulus).
 - Do not build single page applications.
+- Prefer Turbo Frames for:
+  - Lazy loading expensive content (e.g. comments panels, statistics).
+  - Modal flows (render forms into a `turbo_frame_tag "modal"`).
+  - Inline editing (frame-wrapped partials).
+- Prefer Turbo Stream broadcasts from models for real-time updates:
+  - Use `after_create_commit`, `after_update_commit`, and `after_destroy_commit` to broadcast.
+  - Keep controllers thin; let models broadcast updates to the relevant streams.
+- Prefer morphing for complex updates:
+  - Use `turbo_stream.morph` when you want to preserve focus/scroll and avoid janky replacements.
+  - Consider global defaults via meta tags:
+    - `turbo-refresh-method: morph`
+    - `turbo-refresh-scroll: preserve`
 
 ### 2.2 JavaScript stack
 
@@ -73,6 +136,12 @@ instructions.
 - Use progressive enhancement:
   - JavaScript is expected and should improve the experience.
   - Core flows should still work without JavaScript when possible.
+- Stimulus usage rules:
+  - Stimulus is for “sprinkles”, not frameworks.
+  - Controllers must be small and single-purpose (ideally under ~50 LOC).
+  - Prefer configuration via Stimulus values/classes/targets over hardcoding.
+  - Prefer Turbo over `fetch` for most interactions. If using `fetch`, include CSRF tokens and keep it focused on UI affordances (not business logic).
+  - Always clean up event listeners/timeouts/observers in `disconnect()`.
 
 ### 2.4 Accessibility
 
@@ -131,6 +200,9 @@ instructions.
 
 - Think in behaviour driven terms, even when using Minitest.
 - Focus on observable behaviour and outcomes.
+- Write lots of integration tests (both personal and work):
+  - Prefer request/integration/system tests for core flows.
+  - For APIs, test real HTTP requests, JSON parsing, status codes, and auth behavior.
 
 ### 5.3 Data setup
 
@@ -173,6 +245,66 @@ instructions.
 - Use database constraints for hard rules.
 - Mirror those constraints with Rails validations.
 - Use concerns to share behaviour and reduce model size.
+- Rich models by default:
+  - Put domain behavior (commands and predicates) on the model that owns the state.
+  - Prefer explicit verbs for actions (`publish`, `archive`, `close`) and predicates for queries (`closed?`, `assigned_to?`).
+- Horizontal behaviour concerns:
+  - Use concerns to encapsulate reusable cross-cutting behaviours.
+  - Examples of horizontal concerns: `Closeable`, `Watchable`, `Assignable`, `Eventable`, `Broadcastable`.
+- State as records (prefer this over booleans where it clarifies behavior):
+  - Represent state transitions as associated records (e.g. `Closure`) instead of boolean columns like `closed: true`.
+  - Use `where.missing(:association)` / joins-based scopes for “open/closed” style querying.
+- Use `Current` for request context:
+  - Use `Current.user` / `Current.account` for request-scoped defaults and model methods that need the acting user/account.
+- Async vs sync side effects naming:
+  - Use `_later` for job-enqueued versions and `_now` for synchronous versions (`notify_recipients_later` vs `notify_recipients_now`).
+- Everything is CRUD (modeling discipline):
+  - Prefer expressing “actions” as resources (state records, join models, etc.) and exposing them via REST routes.
+  - Avoid inventing custom controller actions for state transitions; model them as nested resources and use POST/DELETE/PATCH appropriately.
+  - Cross-reference: 1.1 “Apply everything is CRUD” and 10.2 “API design” (REST-only, respond_to).
+
+Example (state as records and horizontal behaviour):
+
+```ruby
+class Closure < ApplicationRecord
+  belongs_to :card, touch: true
+  belongs_to :user, optional: true
+
+  validates :card, uniqueness: true
+end
+
+class Card < ApplicationRecord
+  include Closeable
+
+  has_one :closure, dependent: :destroy
+
+  scope :open, -> { where.missing(:closure) }
+  scope :closed, -> { joins(:closure) }
+
+  def close(user: Current.user)
+    create_closure!(user: user)
+    track_event "card_closed", user: user
+  end
+
+  def closed?
+    closure.present?
+  end
+end
+```
+
+Example (`_later` / `_now` convention):
+
+```ruby
+def notify_recipients_later
+  NotifyRecipientsJob.perform_later(self)
+end
+
+def notify_recipients_now
+  recipients.each do |recipient|
+    Notification.create!(recipient: recipient, notifiable: self)
+  end
+end
+```
 
 ## 8. Documentation and Security Tooling
 
@@ -229,9 +361,81 @@ instructions.
 
 ### 10.2 API design
 
-- Use RESTful controllers.
-- Avoid GraphQL by default.
+- Use REST-only controllers and routes.
+- Never use GraphQL.
+- Prefer same controllers for HTML and JSON:
+  - Use `respond_to` blocks.
+  - Do not create separate “API controllers” when `respond_to` works.
+- Use Jbuilder templates for JSON responses:
+  - Do not inline JSON in controllers.
+  - Do not introduce serializer frameworks by default.
+- Authentication defaults:
+  - Web: session-based authentication.
+  - API: token-based authentication (Bearer token). Do not rely on sessions for API auth.
+- Use proper HTTP status codes (`201`, `204`, `404`, `422`, etc.).
+- Pagination:
+  - When returning paginated collections as JSON, include pagination headers:
+    - `X-Total-Count`, `X-Total-Pages`, `X-Page`, `X-Per-Page`
+  - Prefer simple page-based pagination by default; consider cursor pagination only when needed.
+- API versioning:
+  - Version APIs when making breaking changes.
+  - Prefer URL-based versioning (`/api/v1/...`) when versioning is needed.
 - Prefer clear and well documented endpoints over clever abstractions.
+
+Example (`respond_to` + Jbuilder):
+
+```ruby
+class BoardsController < ApplicationController
+  def index
+    @boards = Current.account.boards.includes(:creator)
+
+    respond_to do |format|
+      format.html
+      format.json # renders index.json.jbuilder
+    end
+  end
+end
+```
+
+Example (Jbuilder view):
+
+```ruby
+# app/views/boards/index.json.jbuilder
+json.array! @boards do |board|
+  json.id board.id
+  json.name board.name
+  json.url board_url(board, format: :json)
+end
+```
+
+Example (Bearer token API auth concept):
+
+```ruby
+module ApiAuthenticatable
+  extend ActiveSupport::Concern
+
+  included do
+    before_action :authenticate_from_token, if: :api_request?
+  end
+
+  private
+
+  def api_request?
+    request.format.json?
+  end
+
+  def authenticate_from_token
+    header = request.headers["Authorization"]
+    token = header&.match(/Bearer (.+)/)&.captures&.first
+    api_token = ApiToken.find_by(token: token)
+
+    return render(json: { error: "Unauthorized" }, status: :unauthorized) unless api_token
+
+    Current.user = api_token.user
+    Current.account = api_token.account
+  end
+end
+```
 
 ### 10.3 Internationalisation
 
@@ -246,7 +450,9 @@ These areas are intentionally left open and should be decided per project.
 - Front end performance budget:
   - Decide LCP, bundle size and Lighthouse targets.
 - Authentication:
-  - Choose between Devise sessions, JWT or external providers such as Auth0.
+  - Web: session-based authentication (implementation may vary).
+  - API: Bearer token authentication (no sessions).
+  - External providers (Auth0, etc.) only when required.
 - Continuous integration and delivery:
   - Choose between GitHub Actions, GitLab CI and other options.
 - Front end documentation:
@@ -274,20 +480,48 @@ should follow these rules.
 7. Default testing choices:
    - Personal projects use Minitest and fixtures.
    - Work projects use RSpec and FactoryBot.
+   - In both, write lots of integration/request/system tests for core flows (including Turbo Stream and JSON endpoints where applicable).
 8. Prefer REST controllers and ERB partials for views.
+   8.5. API rules:
+   - REST-only and never GraphQL.
+   - Prefer the same controllers for HTML and JSON via `respond_to`.
+   - Use Jbuilder for JSON views (no inline JSON in controllers).
+   - Use token auth (Bearer) for API requests; sessions for web requests.
+   - Add pagination headers for JSON collection endpoints when paginating.
+   - Version the API when introducing breaking changes (prefer `/api/v1/...`).
 9. Consider accessibility and WCAG in suggestions.
 10. Avoid npm unless Etienne explicitly asks for it.
 11. Mention Propshaft for assets and Kamal for personal deployments when
     relevant.
-12. Ask for clarification when the playbook does not define something.
-13. Always document classes and methods with YARD or similar comments.
-14. Follow layout rules:
+12. Always lint the output you write (code or text files).
+13. Always run tests after creating or changing code, and fix failing tests before finishing.
+14. Ask for clarification when the playbook does not define something.
+15. Always document classes and methods with YARD or similar comments.
+16. Follow layout rules:
     - Try to keep lines under 120 characters.
     - Keep classes under roughly 100 lines.
     - Group related private methods below a clear `private` section.
-15. Follow naming rules:
+17. Follow naming rules:
     - Avoid abbreviations unless they are universal and obvious.
-16. Apply Ruby method semantics:
+18. Apply Ruby method semantics:
     - Methods should have one clear purpose.
     - Methods that end in `!` are unsafe and usually mutate state.
     - Methods that end in `?` return booleans only and never change state.
+19. Architecture defaults:
+    - Default to rich models and concerns for domain logic.
+    - Do not introduce service objects.
+    - Apply “everything is CRUD”: model state changes as resources; avoid custom controller actions.
+    - Use `Current` (`Current.user`, `Current.account`) for request context when relevant.
+    - Keep multi-tenancy scoping explicit; avoid `default_scope` for tenant filtering; always scope queries through the current tenant/account.
+    - Prefer Turbo Frames for lazy loading, modals, and inline editing.
+    - Prefer Turbo Streams for create/update/destroy and real-time updates; broadcast from models when appropriate.
+    - Prefer morphing for complex updates to preserve focus and scroll.
+    - Prefer HTTP caching (`fresh_when` / ETags) for index/show where applicable.
+    - Prefer `touch: true` + fragment/Russian doll caching for cache invalidation.
+    - Personal projects: prefer Solid Cache (database-backed).
+    - Personal projects: prefer Solid Cable (database-backed).
+    - Keep jobs thin: jobs orchestrate, models do the work.
+    - Use `_later` / `_now` naming for async vs sync operations.
+    - Use `deliver_later` for emails and slow work; avoid slow work in the request cycle.
+    - Personal projects: prefer Solid Queue (database-backed).
+    - Reset `Current` in jobs when you set it.
