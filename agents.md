@@ -1,244 +1,535 @@
-# agents.md
+# Etienne van Delden – Personal and Work Rails Playbook
+
+Snapshot: latest revision including method design and naming rules and AI
+instructions.
+
+## 0. How to Read This Playbook
+
+- Personal: applies to personal projects.
+- Work: applies to professional and Nedap projects.
+- Both: applies to all projects.
+- If an item differs per scope, both are listed.
+
+## 1. Core Philosophy
+
+### 1.1 Principles
+
+- Use Domain Driven Design, Rails convention/CRUD modeling, and SOLID principles.
+- Apply “everything is CRUD”:
+  - Prefer modeling behavior as resources over adding custom actions.
+  - Avoid non-RESTful controller actions beyond the standard seven actions.
+  - State transitions should usually be modeled as nested resources (e.g.
+    `resource :closure` for close/reopen with POST/DELETE).
+  - See also: 7.1 “Everything is CRUD (modeling discipline)” and 12.17 “Apply
+    everything is CRUD”.
+- Personal projects:
+  - Prefer the Solid trifecta by default (Solid Queue, Solid Cache, Solid
+    Cable) rather than introducing Redis/Sidekiq/etc.
+  - See also: 12.17 (Solid Queue/Solid Cache defaults).
+- Prefer incremental refactoring over rewrites:
+  - Make small steps, keep tests green, and use feature flags for risky migrations and behavior changes.
+- Prefer intention revealing names.
+- Short names are fine in hot paths.
+- Longer names are fine in less used code.
+- Default to rich domain models:
+  - Business logic lives in models, not in separate service classes.
+  - Do not introduce service objects as a pattern. If something feels like it
+    needs orchestration, first try:
+    - A model method
+    - A concern (horizontal behaviour)
+    - A state record (see 7.1)
+    - A PORO that supports a model (for presentation-ish helpers), not a
+      business-logic service
+- Use concerns for composition:
+  - Prefer horizontal behaviour concerns over inheritance.
+  - It is acceptable for a model to include many concerns, as long as each concern has one clear responsibility.
+
+Example (avoid service objects, prefer rich models):
+
+```ruby
+# ❌ Don't: service object for domain behaviour
+class CloseCardService
+  def initialize(card, user)
+    @card = card
+    @user = user
+  end
+
+  def call
+    ActiveRecord::Base.transaction do
+      closure = @card.create_closure!(user: @user)
+      @card.track_event("card_closed", user: @user)
+      NotifyRecipientsJob.perform_later(@card)
+    end
+  end
+end
+
+# ✅ Do: rich model method
+class Card < ApplicationRecord
+  include Closeable
+
+  def close(user: Current.user)
+    create_closure!(user: user)
+    track_event "card_closed", user: user
+    notify_recipients_later
+  end
+end
+```
+
+### 1.2 Layout and Formatting
+
+- Target a maximum line length of 120 characters.
+- Keep classes under roughly 100 lines.
+- Use blank lines between methods.
+- Group related private methods together.
+- Use explicit `private` and `protected` sections.
+- Avoid abbreviations unless they are universal (for example `id`, `url`,
+  `api`).
+
+## 1.3 Method Design and Naming (Ruby)
+
+### Single responsibility
+
+- Each method should do exactly one thing.
+- The name of the method should reflect that single purpose.
+- If a method starts to do more than one job, extract helper methods.
+
+### Bang methods (`!`)
+
+- Methods that end in `!` are considered unsafe.
+- Unsafe means they mutate the receiver or behave more dangerously than a
+  corresponding safe variant.
+- There should normally be a safe variant without `!` when a `!` method exists.
 
-This repository contains Etienne van Delden’s dotfiles and a cross-platform installer that bootstraps a development environment in an **idempotent** way.
+### Predicate methods (`?`)
 
-**Idempotent** means: you can run `./install.sh` repeatedly; it should only make changes when something is missing or not configured according to this repo.
+- Methods that end in `?` must always return a boolean value.
+- Predicate methods must never change state or have side effects.
+- They should be pure queries about an object.
 
----
+## 2. Rendering and Front End
 
-## Audience
+### 2.1 Rendering model
 
-This document is for AI agents (and humans) making changes in this repository. It explains:
+- Use server side rendering with Hotwire (Turbo and Stimulus).
+- Do not build single page applications.
+- Prefer Turbo Frames for:
+  - Lazy loading expensive content (e.g. comments panels, statistics).
+  - Modal flows (render forms into a `turbo_frame_tag "modal"`).
+  - Inline editing (frame-wrapped partials).
+- Prefer Turbo Stream broadcasts from models for real-time updates:
+  - Use `after_create_commit`, `after_update_commit`, and `after_destroy_commit` to broadcast.
+  - Keep controllers thin; let models broadcast updates to the relevant streams.
+- Prefer morphing for complex updates:
+  - Use `turbo_stream.morph` when you want to preserve focus/scroll and avoid
+    janky replacements.
+  - Consider global defaults via meta tags:
+    - `turbo-refresh-method: morph`
+    - `turbo-refresh-scroll: preserve`
 
-- the purpose of the repo,
-- the install strategy,
-- the source-of-truth configuration structure,
-- conventions and guardrails to keep the installer reliable.
+### 2.2 JavaScript stack
 
----
+- Use `importmap-rails`.
+- Do not use bundlers such as Webpack, esbuild, Vite or similar tools.
+- Prefer native JavaScript modules.
+- Stimulus controllers live in a flat folder unless there is a clear need
+  for namespacing.
 
-## Supported platforms
+### 2.3 Components and behaviour
 
-The installer is expected to run on:
+- On the server side use ERB partials, not component frameworks.
+- On the client side prefer native HTML and a small amount of JavaScript.
+- Use custom elements only when they remove real duplication.
+- Use progressive enhancement:
+  - JavaScript is expected and should improve the experience.
+  - Core flows should still work without JavaScript when possible.
+- Stimulus usage rules:
+  - Stimulus is for “sprinkles”, not frameworks.
+  - Controllers must be small and single-purpose (ideally under ~50 LOC).
+  - Prefer configuration via Stimulus values/classes/targets over hardcoding.
+  - Prefer Turbo over `fetch` for most interactions. If using `fetch`, include
+    CSRF tokens and keep it focused on UI affordances (not business logic).
+  - Always clean up event listeners/timeouts/observers in `disconnect()`.
 
-- **macOS**
-- **SteamOS** (Arch-based Linux)
-- **Debian-based Linux** (Debian, Ubuntu, etc.)
+### 2.4 Accessibility
 
----
+- Aim for good contrast, keyboard navigation and semantic HTML.
+- Use browser tools to simulate colour blindness and to check contrast.
+- Prefer simple and predictable interactions over flashy ones.
 
-## Bootstrap script (curlable entrypoint)
+## 3. CSS
 
-This repo includes a minimal POSIX `sh` bootstrap script: `bootstrap.sh`.
+### 3.1 Processing and architecture
 
-Purpose:
+- Use plain CSS files.
+- Do not use Sass or PostCSS.
+- Follow a SMACSS style structure for CSS organisation.
 
-- Clone or update this repo into the default location: `~/Developer/dotfiles`
-- Run the installer: `~/Developer/dotfiles/install.sh`
+### 3.2 Base stack
 
-How to run:
+- Start with a modern `normalize.css` (for example from Josh W Comeau).
+- Layer `mvp.css` for sensible defaults.
+- Add project specific CSS on top.
+
+## 4. Assets and Deployment
+
+### 4.1 Asset pipeline
 
-    curl -fsSL https://raw.githubusercontent.com/eirvandelden/dotfiles/main/bootstrap.sh | sh
+- Use Propshaft for assets.
+- Serve assets directly from Rails.
+- Do not use a CDN by default.
+
+### 4.2 Third party assets
+
+- Avoid npm in new projects.
+- Prefer CDN delivered scripts and styles.
+- If a build step is unavoidable, do a one off build outside the project and
+  commit the generated file to the repository.
 
-Optional overrides (advanced):
+### 4.3 Deployment
 
-- `TARGET_DIR` (default: `~/Developer/dotfiles`)
-- `REPO_URL` (default: `https://github.com/eirvandelden/dotfiles.git`)
-- `BRANCH` (default: `main`)
+- Personal projects:
+  - Deploy with Kamal and Docker.
+- Work projects:
+  - Depends on the team.
+  - Historically Capistrano on bare metal.
+- Target Debian based Linux servers.
 
-Example:
+## 5. Testing
 
-    TARGET_DIR="$HOME/Developer/dotfiles" \
-    REPO_URL="https://github.com/eirvandelden/dotfiles.git" \
-    BRANCH="main" \
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/eirvandelden/dotfiles/main/bootstrap.sh)"
+### 5.1 Framework choice
 
-Notes:
+- Personal projects:
+  - Use Minitest and aim for idiomatic Ruby tests.
+- Work projects:
+  - Use RSpec and follow advice from betterspecs.org.
 
-- The bootstrap script intentionally stays minimal and requires `git`.
-- OS detection, prerequisites, and all configuration logic live in `install.sh`.
+### 5.2 Style
 
----
+- Think in behaviour driven terms, even when using Minitest.
+- Focus on observable behaviour and outcomes.
+- Write lots of integration tests (both personal and work):
+  - Prefer request/integration/system tests for core flows.
+  - For APIs, test real HTTP requests, JSON parsing, status codes, and auth behavior.
 
-## Core strategy (keep it simple)
+### 5.3 Data setup
+
+- Personal projects:
+  - Prefer Rails fixtures.
+- Work projects:
+  - Comfortable using FactoryBot.
 
-### Package managers
+### 5.4 Front end tests
 
-- **Homebrew is the default, system-agnostic package manager on all OSes.**
-- If a package is not available in Homebrew, fall back to:
-  - **SteamOS/Arch:** `yay` (AUR), and `pacman` as a prerequisite
-  - **Debian-based:** `apt` / `apt-get`
-- On Linux, support **Flatpak** as an additional package manager for GUI apps:
-  - **Linux (SteamOS + Debian):** `flatpak` (user installs, default remote `flathub`)
+- Use `@hotwired/stimulus-testing` for Stimulus controllers.
+- Run JavaScript tests with Jest in a separate repository or folder.
+- Use Capybara system tests for Hotwire flows.
 
-No generated Brewfiles are used as source of truth. The configuration is defined in `packages.conf`.
+## 6. Error Handling and Observability
 
-### Source of truth
+### 6.1 Error handling
 
-`packages.conf` is the only manually maintained file that defines what should be installed.
+- Raise errors freely when something goes wrong.
+- Rescue at higher layers so users do not see raw exceptions.
+- Return user friendly error pages.
 
-It must remain valid Bash because the installer sources it.
+### 6.2 Error tracking
 
----
+- Personal projects:
+  - Prefer a simple, self hosted error tracker when needed.
+- Work projects:
+  - Use Datadog as the default.
 
-## `packages.conf` required sections
+### 6.3 Performance monitoring
 
-`packages.conf` defines arrays. Each array has a strict meaning:
+- Use Rack Mini Profiler in development.
+- Aim for render times under roughly 100 milliseconds.
+- Treat anything over 250 milliseconds as a candidate for optimisation.
 
-### Homebrew (preferred)
+## 7. Data and Persistence
 
-- `BREW`
-  - Packages installed via `brew` on **all** supported OSes.
-  - Items must be installable via: `brew install <name>`
+### 7.1 Integrity and modelling
 
-- `BREW_MACOS`
-  - Packages installed via `brew` on **macOS only**.
-  - Items must be installable via: `brew install <name>` or `brew install --cask <name>`
-  - Use this for macOS GUI apps and macOS-only tools.
+- Use database constraints for hard rules.
+- Mirror those constraints with Rails validations.
+- Use concerns to share behaviour and reduce model size.
+- Rich models by default:
+  - Put domain behavior (commands and predicates) on the model that owns the state.
+  - Prefer explicit verbs for actions (`publish`, `archive`, `close`) and
+    predicates for queries (`closed?`, `assigned_to?`).
+- Horizontal behaviour concerns:
+  - Use concerns to encapsulate reusable cross-cutting behaviours.
+  - Examples of horizontal concerns: `Closeable`, `Watchable`, `Assignable`, `Eventable`, `Broadcastable`.
+- State as records (prefer this over booleans where it clarifies behavior):
+  - Represent state transitions as associated records (e.g. `Closure`) instead of boolean columns like `closed: true`.
+  - Use `where.missing(:association)` / joins-based scopes for “open/closed” style querying.
+- Use `Current` for request context:
+  - Use `Current.user` / `Current.account` for request-scoped defaults and model methods that need the acting user/account.
+- Async vs sync side effects naming:
+  - Use `_later` for job-enqueued versions and `_now` for synchronous versions (`notify_recipients_later` vs `notify_recipients_now`).
+- Everything is CRUD (modeling discipline):
+  - Prefer expressing “actions” as resources (state records, join models, etc.) and exposing them via REST routes.
+  - Avoid inventing custom controller actions for state transitions; model them as nested resources and use POST/DELETE/PATCH appropriately.
+  - Cross-reference: 1.1 “Apply everything is CRUD” and 10.2 “API design” (REST-only, respond_to).
 
-- `BREW_LINUX`
-  - Packages installed via `brew` on **Linux only** (SteamOS + Debian-based).
-  - Items must be installable via: `brew install <name>`
+Example (state as records and horizontal behaviour):
 
-### Native fallbacks (only when not in brew)
+```ruby
+class Closure < ApplicationRecord
+  belongs_to :card, touch: true
+  belongs_to :user, optional: true
 
-- `AUR`
-  - Packages installed via `yay` on **SteamOS/Arch only**.
-  - Items must be installable via: `yay -S <name>`
-  - Use only when the package cannot be installed via brew (or brew name mismatch makes it impractical).
-
-- `APT`
-  - Packages installed via `apt` on **Debian-based only**.
-  - Items must be installable via: `apt-get install <name>` (or `apt install <name>`)
-  - Use only when the package cannot be installed via brew.
-
-### Flatpak (Linux)
+  validates :card, uniqueness: true
+end
 
-- `FLATPAK`
-  - Flatpak app IDs to install on **Linux only** (SteamOS + Debian-based).
-  - Items should be app IDs, e.g. `com.discordapp.Discord`.
-  - Installer should:
-    - ensure the `flathub` remote exists for the current user
-    - install with `flatpak install --user --noninteractive --or-update`
+class Card < ApplicationRecord
+  include Closeable
 
-### Runtimes and language tooling
+  has_one :closure, dependent: :destroy
 
-- `RUBY_GEMS`
-  - Ruby gems installed after Ruby is installed.
-  - Installed via `gem install`.
+  scope :open, -> { where.missing(:closure) }
+  scope :closed, -> { joins(:closure) }
 
-- `NPM_PACKAGES`
-  - Global npm packages installed after Node is installed.
-  - Installed via `npm install -g`.
+  def close(user: Current.user)
+    create_closure!(user: user)
+    track_event "card_closed", user: user
+  end
 
-### Dotfiles configuration
+  def closed?
+    closure.present?
+  end
+end
+```
 
-- `STOW`
-  - List of “stow apps” (stow packages) to configure.
-  - For each entry `APP`, installer will run: `stow APP`
-  - `APP` must correspond to a directory at the repository root (for example: `./APP`).
+Example (`_later` / `_now` convention):
 
----
+```ruby
+def notify_recipients_later
+  NotifyRecipientsJob.perform_later(self)
+end
 
-## Install flow (`install.sh`)
+def notify_recipients_now
+  recipients.each do |recipient|
+    Notification.create!(recipient: recipient, notifiable: self)
+  end
+end
+```
 
-`install.sh` should implement this sequence:
+## 8. Documentation and Security Tooling
+
+### 8.1 Documentation
 
-1. **Print a boot screen** (clear + logo/header).
-2. **Detect OS** (macOS / SteamOS / Debian).
-3. **Install prerequisites** (OS-dependent):
-   - macOS: Xcode Command Line Tools (or verify present)
-   - SteamOS: keyring/base tooling; handle readonly filesystem safely
-   - Debian: `apt update`, install minimum build tools (curl, git, etc.)
-4. **Install Homebrew** (if missing) and load brew environment into the current shell session.
-5. **Install packages** in this order:
-   1. `BREW`
-   2. `BREW_MACOS` (macOS only)
-   3. `BREW_LINUX` (Linux only)
-   4. `AUR` (SteamOS/Arch only)
-   5. `APT` (Debian only)
-   6. `FLATPAK` (Linux only)
-6. **Install runtimes**:
-   - Ruby version from `ruby/.ruby-version`
-   - Node version from `node/.node-version`
-7. **Install language packages**:
-   - `RUBY_GEMS`
-   - `NPM_PACKAGES` (global)
-8. **Configure dotfiles**:
-   - run `stow` for each app in `STOW`
+- Write YARD comments for Ruby code.
+- Use YARD style comments for other languages where it fits.
+- Let Solargraph use these comments for better editor support.
+- Keep READMEs up to date with setup and deployment instructions.
 
----
+### 8.2 Security tooling
 
-## Runtime versions (Ruby + Node)
+- Run Bundler Audit regularly and before pushes.
+- Run Brakeman regularly and before pushes.
+- Always use strong parameters in controllers.
 
-Versions are defined by files in this repo:
+## 9. Tooling and Editor Setup
 
-- Ruby: `ruby/.ruby-version`
-- Node: `node/.node-version`
+### 9.1 Editors
 
-### Ruby requirements
+- Primary editor is Nova on macOS.
+- Secondary editors are Zed and VS Code.
+- Use VS Code mainly when debugging with RDBG.
 
-- Install using `ruby-install`.
-- Build preferences:
-  - **jemalloc support**
-  - **YJIT enabled** (ZJIT is experimental; only enable if explicitly requested and supported by the toolchain/version)
-- Must be idempotent:
-  - if requested Ruby version is already installed, skip.
+### 9.2 Language servers
 
-### Node requirements
+- Use Solargraph as the default Ruby language server.
+- Experiment with Ruby LSP but do not assume it is always available.
 
-- Install using `node-build`.
-- Must be idempotent:
-  - if requested Node version is already installed, skip.
+### 9.3 Ruby management
 
----
+- Use `chruby` with `ruby-install`.
+- Do not use RVM or rbenv in new setups.
 
-## Idempotency rules (non-negotiable)
+### 9.4 Linters and formatters
 
-When changing installer behavior, keep these rules:
+- Use RuboCop for Ruby.
+- Use `scss-lint` for SCSS when it appears in legacy code.
+- Use Herb and cspell where they add value.
 
-- **Check before install**:
-  - brew: `brew list --formula` / `brew list --cask` or `brew list <name>`
-  - yay: `yay -Qi <name>` (or `pacman -Qi` for repo pkgs)
-  - apt: `dpkg -s <name>`
-  - flatpak: `flatpak info --user <app-id>`
-- **Avoid “always do X” steps** that cause churn on every run.
-- **Fail fast with clear errors** when configuration is wrong:
-  - missing `packages.conf`
-  - missing stow package directory listed in `STOW`
-  - missing required tools for runtime steps (e.g., `ruby-install`, `node-build`) if you expect them to be present
+### 9.5 Git hooks and continuous integration
 
----
+- Run Bundler Audit before pushing.
+- Run Brakeman before pushing.
+- Expect continuous integration to run the full test suite.
 
-## SteamOS specifics
+## 10. Application UX and API
 
-SteamOS can be immutable/readonly in places. If native installs are needed:
+### 10.1 Forms and validation
 
-- toggle readonly safely (disable, perform install, re-enable)
-- use traps/cleanup where appropriate so the system isn’t left writable on error
-- be careful with `set -euo pipefail`: treat known-benign non-zero exits explicitly
+- Use HTML5 validation attributes where useful.
+- Always validate on the server as the source of truth.
+- Show clear error messages next to fields.
 
----
-
-## Engineering guidelines for agents
-
-- Keep the code **boring and readable**.
-- Prefer small functions with single responsibility.
-- Logging:
-  - print what you’re doing,
-  - print what you skipped (already installed),
-  - print when you fall back (brew → yay/apt/flatpak).
-- Don’t introduce new generated artifacts as source of truth.
-  - `packages.conf` is the source of truth.
-
----
-
-## When requirements are unclear
-
-Ask for clarification rather than inventing behavior, especially for:
-
-- where runtimes should be installed (prefixes/shims),
-- whether to bootstrap `yay`,
-- how strictly to treat failures from OS update tools,
-- flatpak install scope (`--user` vs system),
-- stow root directory conventions.
+### 10.2 API design
+
+- Use REST-only controllers and routes.
+- Never use GraphQL.
+- Prefer same controllers for HTML and JSON:
+  - Use `respond_to` blocks.
+  - Do not create separate “API controllers” when `respond_to` works.
+- Use Jbuilder templates for JSON responses:
+  - Do not inline JSON in controllers.
+  - Do not introduce serializer frameworks by default.
+- Authentication defaults:
+  - Web: session-based authentication.
+  - API: token-based authentication (Bearer token). Do not rely on sessions for API auth.
+- Use proper HTTP status codes (`201`, `204`, `404`, `422`, etc.).
+- Pagination:
+  - When returning paginated collections as JSON, include pagination headers:
+    - `X-Total-Count`, `X-Total-Pages`, `X-Page`, `X-Per-Page`
+  - Prefer simple page-based pagination by default; consider cursor pagination only when needed.
+- API versioning:
+  - Version APIs when making breaking changes.
+  - Prefer URL-based versioning (`/api/v1/...`) when versioning is needed.
+- Prefer clear and well documented endpoints over clever abstractions.
+
+Example (`respond_to` + Jbuilder):
+
+```ruby
+class BoardsController < ApplicationController
+  def index
+    @boards = Current.account.boards.includes(:creator)
+
+    respond_to do |format|
+      format.html
+      format.json # renders index.json.jbuilder
+    end
+  end
+end
+```
+
+Example (Jbuilder view):
+
+```ruby
+# app/views/boards/index.json.jbuilder
+json.array! @boards do |board|
+  json.id board.id
+  json.name board.name
+  json.url board_url(board, format: :json)
+end
+```
+
+Example (Bearer token API auth concept):
+
+```ruby
+module ApiAuthenticatable
+  extend ActiveSupport::Concern
+
+  included do
+    before_action :authenticate_from_token, if: :api_request?
+  end
+
+  private
+
+  def api_request?
+    request.format.json?
+  end
+
+  def authenticate_from_token
+    header = request.headers["Authorization"]
+    token = header&.match(/Bearer (.+)/)&.captures&.first
+    api_token = ApiToken.find_by(token: token)
+
+    return render(json: { error: "Unauthorized" }, status: :unauthorized) unless api_token
+
+    Current.user = api_token.user
+    Current.account = api_token.account
+  end
+end
+```
+
+### 10.3 Internationalisation
+
+- Use Rails i18n YAML files.
+- Do not hardcode strings in templates or Ruby code.
+- Default to English text when another language is not specified.
+
+## 11. Open Questions
+
+These areas are intentionally left open and should be decided per project.
+
+- Front end performance budget:
+  - Decide LCP, bundle size and Lighthouse targets.
+- Authentication:
+  - Web: session-based authentication (implementation may vary).
+  - API: Bearer token authentication (no sessions).
+  - External providers (Auth0, etc.) only when required.
+- Continuous integration and delivery:
+  - Choose between GitHub Actions, GitLab CI and other options.
+- Front end documentation:
+  - Decide whether to use Storybook, zeroheight or rely on code and tests.
+- Onboarding:
+  - Identify common blockers that prevent a new developer from opening a pull
+    request within about one hour.
+- Linting stack:
+  - Finalise a modern HTML, CSS and JavaScript linting setup that works
+    without bundlers.
+- Architecture direction:
+  - Decide whether projects remain monoliths or might extract services later.
+
+## 12. Instructions to AI Models
+
+When an AI model generates code or suggestions for Etienne van Delden, it
+should follow these rules.
+
+1. Always consult this playbook before assuming defaults.
+2. Respect the scope for personal, work or both.
+3. Do not suggest React, Vue, Tailwind, SPA patterns or bundlers.
+4. Assume Hotwire with server side rendering and `importmap-rails`.
+5. Use SMACSS, normalize CSS, MVP.css and plain CSS.
+6. Use native ES modules and Stimulus for JavaScript.
+7. Default testing choices:
+   - Personal projects use Minitest and fixtures.
+   - Work projects use RSpec and FactoryBot.
+   - In both, write lots of integration/request/system tests for core flows (including Turbo Stream and JSON endpoints where applicable).
+8. Prefer REST controllers and ERB partials for views.
+   8.5. API rules:
+   - REST-only and never GraphQL.
+   - Prefer the same controllers for HTML and JSON via `respond_to`.
+   - Use Jbuilder for JSON views (no inline JSON in controllers).
+   - Use token auth (Bearer) for API requests; sessions for web requests.
+   - Add pagination headers for JSON collection endpoints when paginating.
+   - Version the API when introducing breaking changes (prefer `/api/v1/...`).
+9. Consider accessibility and WCAG in suggestions.
+10. Avoid npm unless Etienne explicitly asks for it.
+11. Mention Propshaft for assets and Kamal for personal deployments when
+    relevant.
+12. Always lint the output you write (code or text files).
+13. Always run tests after creating or changing code, and fix failing tests before finishing.
+14. Ask for clarification when the playbook does not define something.
+15. Always document classes and methods with YARD or similar comments.
+16. Follow layout rules:
+    - Try to keep lines under 120 characters.
+    - Keep classes under roughly 100 lines.
+    - Group related private methods below a clear `private` section.
+17. Follow naming rules:
+    - Avoid abbreviations unless they are universal and obvious.
+18. Apply Ruby method semantics:
+    - Methods should have one clear purpose.
+    - Methods that end in `!` are unsafe and usually mutate state.
+    - Methods that end in `?` return booleans only and never change state.
+19. Architecture defaults:
+    - Default to rich models and concerns for domain logic.
+    - Do not introduce service objects.
+    - Apply “everything is CRUD”: model state changes as resources; avoid custom controller actions.
+    - Use `Current` (`Current.user`, `Current.account`) for request context when relevant.
+    - Keep multi-tenancy scoping explicit; avoid `default_scope` for tenant filtering; always scope queries through the current tenant/account.
+    - Prefer Turbo Frames for lazy loading, modals, and inline editing.
+    - Prefer Turbo Streams for create/update/destroy and real-time updates; broadcast from models when appropriate.
+    - Prefer morphing for complex updates to preserve focus and scroll.
+    - Prefer HTTP caching (`fresh_when` / ETags) for index/show where applicable.
+    - Prefer `touch: true` + fragment/Russian doll caching for cache invalidation.
+    - Personal projects: prefer Solid Cache (database-backed).
+    - Personal projects: prefer Solid Cable (database-backed).
+    - Keep jobs thin: jobs orchestrate, models do the work.
+    - Use `_later` / `_now` naming for async vs sync operations.
+    - Use `deliver_later` for emails and slow work; avoid slow work in the request cycle.
+    - Personal projects: prefer Solid Queue (database-backed).
+    - Reset `Current` in jobs when you set it.
