@@ -32,12 +32,12 @@ pre-commit:
     no-fixme:
       tags: fixme
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings FIXME "{staged_files}"
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings FIXME "{staged_files}"
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings NOCOMMIT "{staged_files}"
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings NOCOMMIT "{staged_files}"
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
 # TODO: fix loading of extra words
@@ -92,12 +92,12 @@ pre-push:
     no-fixme:
       tags: fixme
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings FIXME "{staged_files}"
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings FIXME "{push_files}"
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --context=3 --fixed-strings NOCOMMIT "{staged_files}"
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings NOCOMMIT "{push_files}"
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
 # Run installs and migrations after pull
