@@ -56,6 +56,7 @@
   },
 
   "project_panel": {
+    "sort_mode": "mixed",
     "default_width": 450,
     "dock": "right",
     "entry_spacing": "standard",
