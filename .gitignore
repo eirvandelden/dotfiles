@@ -1,3 +1,7 @@
+# macOS filesystem metadata
+.DS_Store
+**/.DS_Store
+
 # SSH files
 /**/*/known_hosts
 
