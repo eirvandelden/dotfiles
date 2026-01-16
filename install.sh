@@ -15,6 +15,16 @@
 #   - Debian: apt/apt-get
 #   - Linux: flatpak (FLATPAK)
 # - Safe to run repeatedly.
+#
+# This installer is intentionally kept simple. Each major step is implemented
+# as a runnable task script in `install/tasks/`, so you can:
+# - run the full install via this script
+# - run individual steps manually while debugging (SteamOS/Debian, etc.)
+#
+# Manual OS updates:
+# - OS updates are intentionally NOT run automatically by `install.sh`.
+# - To update your OS manually, run:
+#     ./install/tasks/10_update_os.sh
 
 set -euo pipefail
 
@@ -50,6 +60,19 @@ print_logo() {
 EOF
 }
 
+run_task() {
+  local task="$1"
+  local root="$2"
+  local path="${root}/install/tasks/${task}"
+
+  [[ -x "$path" ]] || {
+    printf 'error: task is missing or not executable: %s\n' "$path" >&2
+    exit 1
+  }
+
+  "$path"
+}
+
 main() {
   clear
   print_logo
@@ -59,77 +82,38 @@ main() {
   root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   cd "$root"
 
-  # Load installer utilities
-  # shellcheck disable=SC1091
-  source install/utils.sh
+  # Detect OS early (for nicer splash output). This is informational only;
+  # the task scripts do their own OS detection.
+  if [[ -f "${root}/install/utils.sh" ]]; then
+    # shellcheck disable=SC1091
+    source "${root}/install/utils.sh"
+    determine_os || true
+  fi
 
-  # Load configuration (source of truth)
-  local packages_conf="packages.conf"
-  [[ -f "$packages_conf" ]] || die "packages.conf not found at: ${root}/${packages_conf}"
-  # shellcheck disable=SC1091
-  source "$packages_conf"
-
-  # Detect OS
-  determine_os
   log "Detected OS: ${OS:-Unknown}${OS_PRETTY:+ (${OS_PRETTY})}"
 
   # Re-render splash with detected OS for a nicer UX
   clear
   print_logo
 
-  # Prerequisites (OS dependent)
-  ensure_prereqs
-
-  # Homebrew (install if missing + ensure brew available in this shell)
-  install_homebrew_if_missing
-  require_cmd brew
-
-  # Packages
-  log "Installing Homebrew packages (all systems)…"
-  install_brew_packages "${BREW[@]}"
-
-  if [[ "${OS:-Unknown}" == "macOS" ]]; then
-    log "Installing Homebrew packages (macOS)…"
-    install_brew_packages "${BREW_MACOS[@]}"
-  else
-    log "Installing Homebrew packages (Linux)…"
-    install_brew_packages "${BREW_LINUX[@]}"
-  fi
-
-  if [[ "${OS:-Unknown}" == "SteamOS" ]]; then
-    log "Installing AUR packages (SteamOS/Arch)…"
-    install_aur_packages "${AUR[@]}"
-  fi
-
-  if [[ "${OS:-Unknown}" == "Debian" ]]; then
-    log "Installing APT packages (Debian-based)…"
-    install_apt_packages "${APT[@]}"
-  fi
-
-  if [[ "${OS:-Unknown}" != "macOS" ]]; then
-    log "Installing Flatpak packages (Linux)…"
-    install_flatpak_packages "${FLATPAK[@]}"
-  fi
-
-  # Runtimes (versions are controlled by repo files)
-  log "Installing Ruby runtime (from ruby/.ruby-version)…"
-  install_ruby_runtime "ruby/.ruby-version"
-
-  log "Installing Node runtime (from node/.node-version)…"
-  install_node_runtime "node/.node-version"
-
-  # Language packages
-  log "Installing Ruby gems…"
-  install_ruby_gems "${RUBY_GEMS[@]}"
-
-  log "Installing global npm packages…"
-  install_npm_packages "${NPM_PACKAGES[@]}"
-
-  # Config (stow)
-  log "Configuring dotfiles via stow…"
-  # Stow directory is the repo root (where the stow packages live).
-  # Target directory is handled inside stow_configure (it uses $HOME).
-  stow_configure "${root}" "${STOW[@]}"
+  # Steps (each also runnable manually):
+  #
+  # NOTE (manual step): OS updates are intentionally NOT run by this installer.
+  # If you want to update your OS now, run this in a separate command:
+  #
+  #   ./install/tasks/10_update_os.sh
+  #
+  log "Manual step (not run automatically): update OS with: ./install/tasks/10_update_os.sh"
+  run_task "15_ensure_prereqs.sh" "$root"
+  run_task "20_install_brew_packages.sh" "$root"
+  run_task "21_install_aur_packages.sh" "$root"
+  run_task "22_install_apt_packages.sh" "$root"
+  run_task "23_install_flatpak_packages.sh" "$root"
+  run_task "30_install_default_ruby.sh" "$root"
+  run_task "31_install_default_node.sh" "$root"
+  run_task "40_install_default_ruby_gems.sh" "$root"
+  run_task "41_install_default_npm_packages.sh" "$root"
+  run_task "50_stow_all.sh" "$root"
 
   log "Setup complete! You may want to restart your shell (or reboot)."
 }
