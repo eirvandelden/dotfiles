@@ -1,0 +1,51 @@
+# Global ignore list for GNU Stow.
+#
+# This prevents Stow from trying to link common OS/tooling junk files that can
+# accidentally end up inside stow packages (and can cause conflicts at $HOME).
+#
+# Stow treats entries here as regular expressions (one per line).
+#
+# What the "aggressive" bits might ignore (intentionally):
+# - zsh history/session files (you said you don't need to sync these)
+# - zsh completion dumps (.zcompdump*)
+# - vim/neovim swap/backup/session artifacts
+#
+# This should not ignore "real config" you likely want to stow, such as:
+# - .zshrc / .config/zsh/*
+# - init.lua, lua/ configs, plugin lockfiles, etc.
+
+# macOS Finder metadata
+(^|/)\.DS_Store$
+
+# macOS volume/system metadata
+(^|/)\.AppleDouble$
+(^|/)\.LSOverride$
+(^|/)\.Spotlight-V100$
+(^|/)\.Trashes$
+(^|/)\.Trash$
+(^|/)\.fseventsd$
+(^|/)\.TemporaryItems$
+
+# Windows metadata
+(^|/)Thumbs\.db$
+(^|/)Desktop\.ini$
+
+# zsh runtime artifacts (do not stow)
+(^|/)\.zcompdump($|\..*)
+(^|/)\.zsh_history$
+(^|/)\.zsh_sessions(/|$)
+(^|/).*\.zwc$
+
+# vim/neovim runtime artifacts (do not stow)
+(^|/).*\.sw[pon]$
+(^|/).*\.swn$
+(^|/).*\.(un~)$
+(^|/)(Session\.vim|Sessionx\.vim)$
+
+# Common editor/backup files
+(^|/).*\~$
+(^|/)\.bak$
+(^|/)\.tmp$
+
+# Archive artifacts (occasionally created by GUI tools)
+(^|/).__MACOSX$
