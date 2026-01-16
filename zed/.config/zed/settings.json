@@ -10,6 +10,10 @@
   //
   // Theming
   //
+  "which_key": {
+    "delay_ms": null,
+    "enabled": true
+  },
   "theme": {
     "mode": "system",
     "dark": "Selenized (Rails) Black",
@@ -81,6 +85,20 @@
   //
   // Chat / Agent
   "agent": {
+    "favorite_models": [
+      {
+        "provider": "openai",
+        "model": "gpt-5.2"
+      },
+      {
+        "provider": "copilot_chat",
+        "model": "claude-opus-4.5"
+      },
+      {
+        "provider": "copilot_chat",
+        "model": "claude-sonnet-4.5"
+      }
+    ],
     "default_profile": "write",
     "default_model": {
       "provider": "openai",
