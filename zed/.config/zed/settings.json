@@ -147,10 +147,22 @@
       "format_on_save": "on",
       "formatter": {
         "external": {
-          "command": "rubocop",
-          "arguments": ["--fail-level", "error", "--autocorrect", "--stdin", "{buffer_path}", "--stderr", "--server"]
-        }
-      }
+          "command": "rv",
+          "arguments": [
+            "ruby",
+            "run",
+            "--",
+            "rubocop",
+            "--fail-level",
+            "error",
+            "--autocorrect",
+            "--stdin",
+            "{buffer_path}",
+            "--stderr",
+            "--server",
+          ],
+        },
+      },
     },
     "Lua": {
       "formatter": {
@@ -172,21 +184,29 @@
     // ERB formatting notes (see comments below)
     "ERB": {
       "format_on_save": "on",
-      "formatter": { "external": { "command": "herb", "arguments": ["format", "--stdin-filename", "{buffer_path}"] } }
-    }
+      "formatter": {
+        "external": {
+          "command": "rv",
+          "arguments": ["ruby", "run", "--", "herb", "format", "--stdin-filename", "{buffer_path}"],
+        },
+      },
+    },
   },
 
   "lsp": {
     "solargraph": {
+      "binary": {
+        "path": "rv",
+        "arguments": ["ruby", "run", "--", "solargraph", "stdio"],
+      },
       "settings": {
         // Ensure solargraph is on PATH (Bundler or gem install).
         "initialization_options": {
           "diagnostics": true,
-          "formatting": false
-        }
-        // , "binary": { "path": "/Users/etienne.vandelden/.gem/ruby/3.3.8/bin/solargraph", "arguments": ["stdio"] }
-      }
-    }
+          "formatting": false,
+        },
+      },
+    },
   },
 
   //
