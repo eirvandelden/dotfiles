@@ -147,20 +147,8 @@
       "format_on_save": "on",
       "formatter": {
         "external": {
-          "command": "rv",
-          "arguments": [
-            "ruby",
-            "run",
-            "--",
-            "rubocop",
-            "--fail-level",
-            "error",
-            "--autocorrect",
-            "--stdin",
-            "{buffer_path}",
-            "--stderr",
-            "--server",
-          ],
+          "command": "rubocop",
+          "arguments": ["--fail-level", "error", "--autocorrect", "--stdin", "{buffer_path}", "--stderr", "--server"],
         },
       },
     },
@@ -186,8 +174,8 @@
       "format_on_save": "on",
       "formatter": {
         "external": {
-          "command": "rv",
-          "arguments": ["ruby", "run", "--", "herb", "format", "--stdin-filename", "{buffer_path}"],
+          "command": "herb",
+          "arguments": ["format", "--stdin-filename", "{buffer_path}"],
         },
       },
     },
@@ -196,8 +184,8 @@
   "lsp": {
     "solargraph": {
       "binary": {
-        "path": "rv",
-        "arguments": ["ruby", "run", "--", "solargraph", "stdio"],
+        "path": "solargraph",
+        "arguments": ["stdio"],
       },
       "settings": {
         // Ensure solargraph is on PATH (Bundler or gem install).

@@ -46,5 +46,12 @@ export GPG_TTY=$(tty)
 # Node-build definitions path
 export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/node-build"
 
+# rv (Ruby version manager) initialization
+# This must be in .zshenv (not just .zshrc) so non-interactive shells (like those
+# used by editors/IDEs) can properly resolve Ruby versions and gem executables.
+if [[ -x /opt/homebrew/bin/rv ]]; then
+  eval "$(/opt/homebrew/bin/rv shell init zsh)"
+fi
+
 # Prompt is intentionally loaded from `.zshrc` only to avoid double-loading.
 # (Both `.zshenv` and `.zshrc` can be sourced during startup depending on shell type.)
