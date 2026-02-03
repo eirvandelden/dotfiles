@@ -74,9 +74,11 @@ pre-push:
         If you're in a hurry to push, use the `--no-verify` git flag.
         If you need to 🚩 ignore dependencies in the longer-term 🚩 see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     csslint:
-      tags: linter
-      glob: "*.{css,scss}"
-      run: yarn csslint {push_files}
+      run: yarn stylelint {push_files}
+      tags:
+        - linter
+      glob:
+        - "*.{css,scss}"
     erb_lint:
       tags: linter
       glob: "*.erb"
