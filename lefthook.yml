@@ -2,9 +2,9 @@ pre-commit:
   parallel: true
   commands:
     csslint:
-      tags: sass css linter
+      tags: css linter
       glob: "*.{css,scss}"
-      run: yarn csslint {staged_files}
+      run: yarn stylelint {push_files}
     erb_lint:
       tags: erb style
       glob: "*.{erb}"
@@ -75,8 +75,7 @@ pre-push:
         If you need to 🚩 ignore dependencies in the longer-term 🚩 see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     csslint:
       run: yarn stylelint {push_files}
-      tags:
-        - linter
+      tags: css linter
       glob:
         - "*.{css,scss}"
     erb_lint:
