@@ -37,6 +37,12 @@ main() {
   install_homebrew_if_missing
   require_cmd brew
 
+  # Tap any required taps first
+  if (( ${#BREW_TAPS[@]} > 0 )); then
+    log "brew: adding taps…"
+    install_brew_taps "${BREW_TAPS[@]}"
+  fi
+
   log "brew: installing packages (all systems)…"
   install_brew_packages "${BREW[@]}"
 

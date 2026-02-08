@@ -225,6 +225,19 @@ brew_is_cask_installed() {
   brew list --cask -1 "$1" &>/dev/null
 }
 
+brew_tap_one() {
+  # Usage: brew_tap_one <tap>
+  # Taps a Homebrew tap if not already tapped.
+  local tap="$1"
+
+  if brew tap | grep -qx "$tap"; then
+    return 0
+  fi
+
+  log "brew: tapping: $tap"
+  brew tap "$tap"
+}
+
 brew_install_one() {
   # Best-effort: try as formula first, then as cask on macOS only.
   local name="$1"
@@ -247,6 +260,18 @@ brew_install_one() {
   fi
 
   return 1
+}
+
+install_brew_taps() {
+  # Usage: install_brew_taps "${BREW_TAPS[@]}"
+  require_cmd brew
+
+  local taps=("$@")
+  local tap
+  for tap in "${taps[@]}"; do
+    [[ -z "$tap" ]] && continue
+    brew_tap_one "$tap"
+  done
 }
 
 install_brew_packages() {
