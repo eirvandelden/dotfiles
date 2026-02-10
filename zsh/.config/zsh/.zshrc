@@ -36,3 +36,6 @@ fi
 
 # --- ensure squirrel prompt wins ---
 source "$ZDOTDIR/prompt.zsh"
+
+# Change to Developer directory on shell startup
+cd ~/Developer 2>/dev/null || true
