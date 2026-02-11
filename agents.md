@@ -33,13 +33,12 @@ instructions.
 - Longer names are fine in less used code.
 - Default to rich domain models:
   - Business logic lives in models, not in separate service classes.
-  - Do not introduce service objects as a pattern. If something feels like it
-    needs orchestration, first try:
-    - A model method
-    - A concern (horizontal behaviour)
-    - A state record (see 7.1)
-    - A PORO that supports a model (for presentation-ish helpers), not a
-      business-logic service
+  - NEVER use service objects. Service objects are NOT the correct pattern in any situation. If something feels like it needs orchestration, use these patterns instead (in order of preference):
+    - A model method (always try this first)
+    - A concern (for horizontal behaviour shared across models)
+    - A state record (see 7.1 for modeling state transitions as resources)
+    - An ActiveJob worker running inline (when cross-model orchestration is genuinely needed)
+    - A PORO only for presentation/view helpers, never for business logic
 - Use concerns for composition:
   - Prefer horizontal behaviour concerns over inheritance.
   - It is acceptable for a model to include many concerns, as long as each concern has one clear responsibility.
@@ -73,7 +72,34 @@ class Card < ApplicationRecord
     notify_recipients_later
   end
 end
+
+# ✅ For complex cross-model orchestration, use an ActiveJob running inline
+class ProcessOrderJob < ApplicationJob
+  def perform(order)
+    order.process_payment
+    order.allocate_inventory
+    order.notify_customer
+  end
+end
+
+# In controller or model:
+ProcessOrderJob.perform_now(order)
 ```
+
+### 1.1.1 Why Never Service Objects?
+
+Service objects extract business logic away from domain models, leading to:
+- Anemic domain models (data bags without behavior)
+- Scattered business logic that's hard to find and maintain
+- Violation of single responsibility (the model should own its behavior)
+- Unnecessary indirection and ceremony
+
+If you think you need a service object:
+1. First, add the method to the relevant domain model
+2. If it's shared behavior, extract a concern
+3. If it's a state transition, model it as a resource
+4. If it genuinely orchestrates multiple models, use an ActiveJob running inline
+5. Never reach for a service object - they are not part of this architecture
 
 ### 1.2 Layout and Formatting
 
@@ -517,8 +543,10 @@ should follow these rules.
     - Methods that end in `?` return booleans only and never change state.
 19. Architecture defaults:
     - Default to rich models and concerns for domain logic.
-    - Do not introduce service objects.
-    - Apply “everything is CRUD”: model state changes as resources; avoid custom controller actions.
+    - NEVER use service objects under any circumstances. They are always wrong.
+    - Always prefer domain models with methods and concerns.
+    - If domain models are insufficient, use ActiveJob workers running inline for orchestration.
+    - Apply "everything is CRUD": model state changes as resources; avoid custom controller actions.
     - Use `Current` (`Current.user`, `Current.account`) for request context when relevant.
     - Keep multi-tenancy scoping explicit; avoid `default_scope` for tenant filtering; always scope queries through the current tenant/account.
     - Prefer Turbo Frames for lazy loading, modals, and inline editing.
