@@ -236,6 +236,9 @@ If you think you need a service object:
 - Write lots of integration tests (both personal and work):
   - Prefer request/integration/system tests for core flows.
   - For APIs, test real HTTP requests, JSON parsing, status codes, and auth behavior.
+- Test-driven development:
+  - All generated code must be driven from tests.
+  - If no test exists for the code you are about to write, create the test first.
 
 ### 5.3 Data setup
 
@@ -348,6 +351,21 @@ end
 - Use YARD style comments for other languages where it fits.
 - Let Solargraph use these comments for better editor support.
 - Keep READMEs up to date with setup and deployment instructions.
+- Keep documentation concise and direct:
+  - Speak directly about the thing being documented (e.g., "Represents a card in a board").
+  - Never use verbose patterns like "Domain model for Card".
+- For Rails controller actions, use custom YARD tags to document routing:
+  - `@action` for the HTTP method (GET, POST, PATCH, DELETE, etc.).
+  - `@route` for the URL path.
+  - Example:
+    ```ruby
+    # Creates a new board for the current account.
+    # @action POST
+    # @route /boards
+    def create
+      # ...
+    end
+    ```
 
 ### 8.2 Security tooling
 
@@ -378,6 +396,8 @@ end
 - Use RuboCop for Ruby.
 - Use `scss-lint` for SCSS when it appears in legacy code.
 - Use Herb and cspell where they add value.
+- Never add linter disable comments (e.g., `rubocop:disable`, `eslint-disable`).
+- If a file already contains linter disable comments, you do not need to refactor the file to remove them.
 
 ### 9.5 Git hooks and continuous integration
 
@@ -528,9 +548,19 @@ should follow these rules.
 11. Mention Propshaft for assets and Kamal for personal deployments when
     relevant.
 12. Always lint the output you write (code or text files).
-13. Always run tests after creating or changing code, and fix failing tests before finishing.
+    - Run linters on all generated code before finishing.
+    - Fix all linting issues before considering the task complete.
+    - NEVER add linter disable comments (e.g., `rubocop:disable`, `eslint-disable`).
+    - If a file already contains linter disable comments, you do not need to remove them.
+13. Test-driven development and testing:
+    - All generated code must be driven from tests.
+    - If no test exists for the code you are about to write, create the test first.
+    - Always run tests after creating or changing code, and fix failing tests before finishing.
 14. Ask for clarification when the playbook does not define something.
 15. Always document classes and methods with YARD or similar comments.
+    - Keep documentation concise and direct.
+    - Speak directly about the thing (e.g., "Represents a card") not "Domain model for Card".
+    - For Rails controller actions: use `@action` (HTTP method) and `@route` (URL path) custom tags.
 16. Follow layout rules:
     - Try to keep lines under 120 characters.
     - Keep classes under roughly 100 lines.
