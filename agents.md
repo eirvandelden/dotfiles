@@ -182,6 +182,24 @@ If you think you need a service object:
 - Use browser tools to simulate colour blindness and to check contrast.
 - Prefer simple and predictable interactions over flashy ones.
 
+### 2.5 HTML structure
+
+- Prefer semantic HTML elements over divs.
+- Use divs only when no semantic element fits the content or purpose.
+- Common semantic elements:
+  - `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`, `<footer>` for page structure.
+  - `<figure>`, `<figcaption>` for images with captions.
+  - `<details>`, `<summary>` for collapsible content.
+  - `<time>`, `<address>`, `<mark>` for specific content types.
+- Personal projects:
+  - Prefer classless HTML where possible.
+  - Let CSS determine appearance through element and attribute selectors.
+  - Add classes only when semantic targeting is insufficient.
+  - This works naturally with MVP.css (see section 3.2).
+- Work projects:
+  - Use classes when team conventions or design systems require them.
+  - Still prefer semantic elements as the foundation.
+
 ## 3. CSS
 
 ### 3.1 Processing and architecture
@@ -493,8 +511,12 @@ end
 
 ### 10.3 Internationalisation
 
-- Use Rails i18n YAML files.
-- Do not hardcode strings in templates or Ruby code.
+- NEVER hardcode strings in views, templates, or Ruby code that display text to users.
+- ALL user-facing text must go through a translation framework.
+- Personal projects:
+  - Use Rails i18n with YAML files.
+- Work projects:
+  - Use gettext.
 - Default to English text when another language is not specified.
 
 ## 11. Open Questions
@@ -549,6 +571,15 @@ should follow these rules.
    - Add pagination headers for JSON collection endpoints when paginating.
    - Version the API when introducing breaking changes (prefer `/api/v1/...`).
 10. Consider accessibility and WCAG in suggestions.
+10.5. HTML structure:
+   - Prefer semantic HTML elements over divs.
+   - Personal projects: prefer classless HTML; add classes only when semantic selectors are insufficient.
+   - Work projects: follow team conventions but still use semantic elements as the foundation.
+10.6. Internationalization:
+   - NEVER hardcode user-facing strings in views, templates, or Ruby code.
+   - Personal projects: use Rails i18n (YAML files).
+   - Work projects: use gettext.
+   - All text displayed to users must go through the translation framework.
 11. Avoid npm unless Etienne explicitly asks for it.
 12. Mention Propshaft for assets and Kamal for personal deployments when
     relevant.
