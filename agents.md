@@ -627,3 +627,8 @@ should follow these rules.
     - Use `deliver_later` for emails and slow work; avoid slow work in the request cycle.
     - Personal projects: prefer Solid Queue (database-backed).
     - Reset `Current` in jobs when you set it.
+21. Pull request workflow:
+    - When creating a PR, always target the personal fork when available (prefer personal fork over upstream).
+    - If ambiguity exists about the target repository, ask Etienne before proceeding.
+    - When choosing between `origin` and `upstream` branches, default to `origin` unless explicitly told otherwise.
+    - Never create PRs to the original/upstream project without explicit instruction from Etienne.
