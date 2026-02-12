@@ -62,7 +62,8 @@ fi
 # chruby $(cat ~/.ruby-version 2>/dev/null)
 
 ## rv setup
-eval "$(/opt/homebrew/bin/rv shell init zsh)"
+# NOTE: rv shell init is in .zshenv so it works for non-interactive shells.
+# We only load completions here for interactive shells.
 eval "$(/opt/homebrew/bin/rv shell completions zsh)"
 
 ## Add trusted ./bin for safe projects
@@ -91,4 +92,6 @@ export PATH="/opt/homebrew/opt/curl/bin:$PATH"
 
 # Homebrew environment
 # NOTE: Keep this near the end so brew-managed tools are available.
+# This may run twice (once in .zshenv, once here) but that's harmless.
+# The second run ensures any updates to Homebrew paths are picked up.
 eval "$(/opt/homebrew/bin/brew shellenv)"
