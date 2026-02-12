@@ -46,6 +46,17 @@ export GPG_TTY=$(tty)
 # Node-build definitions path
 export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/node-build"
 
+# Ensure Homebrew is in PATH before initializing version managers
+# This is critical for non-interactive shells (used by editors/IDEs) to properly
+# resolve Ruby versions and gem executables.
+if [[ -z "${HOMEBREW_PREFIX:-}" ]]; then
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
 # rv (Ruby version manager) initialization
 # This must be in .zshenv (not just .zshrc) so non-interactive shells (like those
 # used by editors/IDEs) can properly resolve Ruby versions and gem executables.
