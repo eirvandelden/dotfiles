@@ -37,5 +37,8 @@ fi
 # --- ensure squirrel prompt wins ---
 source "$ZDOTDIR/prompt.zsh"
 
-# Change to Developer directory on shell startup
-cd ~/Developer 2>/dev/null || true
+# Change to Developer directory only if starting from home
+# This respects directories passed by parent processes (like Conductor)
+if [[ "$PWD" == "$HOME" || "$PWD" == "/" ]]; then
+  cd ~/Developer 2>/dev/null || true
+fi
