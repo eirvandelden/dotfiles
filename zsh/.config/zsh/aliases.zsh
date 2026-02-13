@@ -55,12 +55,12 @@ alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
 
 # Caddy
-alias caddyedit="zed $(brew --prefix)/etc/Caddyfile"
-alias caddyfmt="caddy fmt --overwrite $(brew --prefix)/etc/Caddyfile"
-alias caddylog="tail -f $(brew --prefix)/var/log/caddy.log"
+alias caddyedit="zed $HOMEBREW_PREFIX/etc/Caddyfile"
+alias caddyfmt="caddy fmt --overwrite $HOMEBREW_PREFIX/etc/Caddyfile"
+alias caddylog="tail -f $HOMEBREW_PREFIX/var/log/caddy.log"
 alias caddyrestart="brew services restart caddy"
 alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
-alias caddyvalidate="caddy validate --config $(brew --prefix)/etc/Caddyfile"
+alias caddyvalidate="caddy validate --config $HOMEBREW_PREFIX/etc/Caddyfile"
 
 # Secrets
 alias unlock='eval "$(secrets)"'

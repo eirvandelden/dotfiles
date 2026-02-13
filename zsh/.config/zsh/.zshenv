@@ -57,6 +57,9 @@ if [[ -z "${HOMEBREW_PREFIX:-}" ]]; then
   fi
 fi
 
+# SSL certificate configuration (depends on brew being in PATH)
+export SSL_CERT_FILE="$HOMEBREW_PREFIX/etc/openssl@3/cert.pem"
+
 # rv (Ruby version manager) initialization
 # This must be in .zshenv (not just .zshrc) so non-interactive shells (like those
 # used by editors/IDEs) can properly resolve Ruby versions and gem executables.
