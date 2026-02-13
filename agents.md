@@ -406,8 +406,9 @@ end
 
 ### 9.3 Ruby management
 
-- Use `chruby` with `ruby-install`.
-- Do not use RVM or rbenv in new setups.
+- Use `rv` (from spinel-coop/rv) as the Ruby version manager.
+- Installing, switching, or running commands with a specific Ruby version can be done via `rv`.
+- Do not use RVM, rbenv, or chruby in new setups.
 
 ### 9.4 Linters and formatters
 
