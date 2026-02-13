@@ -1,5 +1,7 @@
 #!/usr/bin/env rv run ruby
 
+require 'open3'
+require 'shellwords'
 require_relative 'common'
 require_relative 'config'
 
@@ -79,14 +81,19 @@ module WorktreeTools
       target_dir = @config.stow_target
 
       action = operation == :delete ? '--delete' : '--restow'
-      command = "stow #{action} --dir='#{source_dir}' --target='#{target_dir}' '#{package}'"
 
       log "  #{operation == :delete ? 'Removing' : 'Installing'} package: #{package}"
 
-      output = `#{command} 2>&1`
-      exit_code = $?.exitstatus
+      # Use array form to avoid shell injection
+      output, status = Open3.capture2e(
+        'stow',
+        action,
+        "--dir=#{source_dir}",
+        "--target=#{target_dir}",
+        package
+      )
 
-      if exit_code != 0
+      if status.exitstatus != 0
         raise StowError, "Failed to #{operation} package '#{package}': #{output}"
       end
 

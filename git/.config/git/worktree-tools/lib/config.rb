@@ -86,7 +86,7 @@ module WorktreeTools
     end
 
     def load_yaml(file_path)
-      YAML.load_file(file_path)
+      YAML.safe_load_file(file_path)
     rescue => e
       warn "Failed to load config file #{file_path}: #{e.message}"
       {}
@@ -137,7 +137,9 @@ module WorktreeTools
       # Feature worktree: <worktree-name>.<project>
       # Conductor workspace: <workspace-name>.<project>
 
-      project_name = @detector.project_info[:name]
+      # Get the actual project name from the git root
+      repo_root = @detector.project_info[:root]
+      project_name = repo_root ? repo_root.basename.to_s : @detector.project_info[:name]
 
       if in_conductor?
         workspace_name = conductor_workspace_name
@@ -147,6 +149,7 @@ module WorktreeTools
       if @detector.project_info[:is_main_worktree]
         project_name
       else
+        # Use the worktree directory name
         worktree_name = @detector.project_info[:name]
         "#{worktree_name}.#{project_name}"
       end
