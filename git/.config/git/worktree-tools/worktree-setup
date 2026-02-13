@@ -1,0 +1,89 @@
+#!/usr/bin/env rv run ruby
+# frozen_string_literal: true
+
+# Add lib directory to load path
+$LOAD_PATH.unshift(File.expand_path('lib', __dir__))
+
+require 'common'
+require 'detect'
+require 'config'
+require 'symlinker'
+require 'puma_dev'
+
+module WorktreeTools
+  class Setup
+    include Helpers
+
+    def initialize(path = '.')
+      @path = File.expand_path(path)
+    end
+
+    def run!
+      log "Worktree setup for: #{@path}"
+      log ""
+
+      # Detect project type
+      log "Detecting project type..."
+      detector = ProjectDetector.new(@path).detect!
+      log "  Type: #{detector.project_type}"
+      log "  Name: #{detector.project_info[:name]}"
+      log "  Main worktree: #{detector.project_info[:is_main_worktree]}"
+
+      if detector.conductor_info
+        log "  Conductor workspace: #{detector.conductor_info[:workspace_name]}"
+        log "  Conductor port: #{detector.conductor_info[:port]}"
+      end
+
+      log ""
+
+      # Load configuration
+      log "Loading configuration..."
+      config = WorktreeConfig.new(@path, detector).load!
+      log "  Project: #{config.project_name} (#{config.project_type})"
+      log "  Stow enabled: #{config.stow_enabled?}"
+      log "  Puma-dev enabled: #{config.puma_dev_enabled?}"
+      log ""
+
+      # Setup symlinks via Stow
+      if config.stow_enabled?
+        symlinker = Symlinker.new(config)
+        symlinker.setup!
+        log ""
+      end
+
+      # Setup puma-dev
+      if config.puma_dev_enabled?
+        puma_dev = PumaDev.new(config, @path)
+        puma_dev.setup!
+        log ""
+      end
+
+      log "Worktree setup complete!"
+      log ""
+
+    rescue Error => e
+      error e.message
+
+      case e
+      when ConfigError
+        exit EXIT_CONFIG_ERROR
+      when StowError
+        exit EXIT_STOW_ERROR
+      when DetectionError
+        exit EXIT_DETECTION_ERROR
+      else
+        exit EXIT_ERROR
+      end
+    rescue StandardError => e
+      error "Unexpected error: #{e.message}"
+      error e.backtrace.join("\n") if ENV['DEBUG']
+      exit EXIT_ERROR
+    end
+  end
+end
+
+# Run if called directly
+if __FILE__ == $0
+  path = ARGV[0] || Dir.pwd
+  WorktreeTools::Setup.new(path).run!
+end

@@ -1,0 +1,5 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "setup": "./bin/conductor-setup",
+  "server": "./script/server"
+}

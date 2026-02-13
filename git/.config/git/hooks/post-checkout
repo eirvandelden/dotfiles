@@ -1,0 +1,113 @@
+#!/bin/sh
+
+if [ "$LEFTHOOK_VERBOSE" = "1" -o "$LEFTHOOK_VERBOSE" = "true" ]; then
+  set -x
+fi
+
+# Git post-checkout hook arguments
+old_sha="$1"
+new_sha="$2"
+branch_checkout="$3"
+
+# Worktree automation: runs BEFORE lefthook delegation
+# This ensures symlinks are in place before any lefthook commands run
+
+# Detect new worktree creation
+# When a new worktree is created, old_sha is all zeros
+if [ "$old_sha" = "0000000000000000000000000000000000000000" ]; then
+  echo "New worktree detected, running worktree-setup..."
+
+  # Find worktree-setup script
+  # Try to find it relative to git config directory
+  git_dir="$(git rev-parse --git-common-dir)"
+  worktree_setup="$git_dir/worktree-tools/worktree-setup"
+
+  # Fallback: try XDG config directory
+  if [ ! -x "$worktree_setup" ]; then
+    worktree_setup="${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-setup"
+  fi
+
+  # Fallback: try HOME config directory
+  if [ ! -x "$worktree_setup" ]; then
+    worktree_setup="$HOME/.config/git/worktree-tools/worktree-setup"
+  fi
+
+  if [ -x "$worktree_setup" ]; then
+    echo "Running: $worktree_setup"
+    "$worktree_setup" || {
+      echo "warning: worktree-setup failed with exit code $?" >&2
+      # Continue despite failure - don't block the checkout
+    }
+  else
+    echo "worktree-setup not found at $worktree_setup, skipping" >&2
+  fi
+
+  echo ""
+fi
+
+# Lefthook delegation
+if [ "$LEFTHOOK" = "0" ]; then
+  exit 0
+fi
+
+call_lefthook()
+{
+  if test -n "$LEFTHOOK_BIN"
+  then
+    "$LEFTHOOK_BIN" "$@"
+  elif lefthook -h >/dev/null 2>&1
+  then
+    lefthook "$@"
+  elif /Users/etienne.vandelden/.local/share/rv/gems/ruby/4.0.0/gems/lefthook-2.0.13/libexec/lefthook-darwin-arm64/lefthook -h >/dev/null 2>&1
+  then
+    /Users/etienne.vandelden/.local/share/rv/gems/ruby/4.0.0/gems/lefthook-2.0.13/libexec/lefthook-darwin-arm64/lefthook "$@"
+  else
+    dir="$(git rev-parse --show-toplevel)"
+    osArch=$(uname | tr '[:upper:]' '[:lower:]')
+    cpuArch=$(uname -m | sed 's/aarch64/arm64/;s/x86_64/x64/')
+    if test -f "$dir/node_modules/lefthook-${osArch}-${cpuArch}/bin/lefthook"
+    then
+      "$dir/node_modules/lefthook-${osArch}-${cpuArch}/bin/lefthook" "$@"
+    elif test -f "$dir/node_modules/@evilmartians/lefthook/bin/lefthook-${osArch}-${cpuArch}/lefthook"
+    then
+      "$dir/node_modules/@evilmartians/lefthook/bin/lefthook-${osArch}-${cpuArch}/lefthook" "$@"
+    elif test -f "$dir/node_modules/@evilmartians/lefthook-installer/bin/lefthook"
+    then
+      "$dir/node_modules/@evilmartians/lefthook-installer/bin/lefthook" "$@"
+    elif test -f "$dir/node_modules/lefthook/bin/index.js"
+    then
+      "$dir/node_modules/lefthook/bin/index.js" "$@"
+    elif go tool lefthook -h >/dev/null 2>&1
+    then
+      go tool lefthook "$@"
+    elif bundle exec lefthook -h >/dev/null 2>&1
+    then
+      bundle exec lefthook "$@"
+    elif yarn lefthook -h >/dev/null 2>&1
+    then
+      yarn lefthook "$@"
+    elif pnpm lefthook -h >/dev/null 2>&1
+    then
+      pnpm lefthook "$@"
+    elif swift package lefthook >/dev/null 2>&1
+    then
+      swift package --build-path .build/lefthook --disable-sandbox lefthook "$@"
+    elif command -v mint >/dev/null 2>&1
+    then
+      mint run csjones/lefthook-plugin "$@"
+    elif uv run lefthook -h >/dev/null 2>&1
+    then
+      uv run lefthook "$@"
+    elif mise exec -- lefthook -h >/dev/null 2>&1
+    then
+      mise exec -- lefthook "$@"
+    elif devbox run lefthook -h >/dev/null 2>&1
+    then
+      devbox run lefthook "$@"
+    else
+      echo "Can't find lefthook in PATH"
+    fi
+  fi
+}
+
+call_lefthook run "post-checkout" "$@"
