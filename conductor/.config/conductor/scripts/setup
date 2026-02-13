@@ -32,6 +32,8 @@ if [ "$RAILS_PROJECT" = true ]; then
   echo "=== Rails Project Setup ==="
 
   # Load secrets from 1Password (if unlock command exists)
+  # SECURITY NOTE: This uses eval on command output. Only run this if you trust
+  # the unlock/secrets commands to not execute malicious code.
   if command -v unlock >/dev/null 2>&1; then
     echo "Loading secrets from 1Password..."
     eval "$(unlock)" || {

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'find'
 require_relative 'common'
 
 module WorktreeTools

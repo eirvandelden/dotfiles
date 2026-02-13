@@ -1,7 +1,6 @@
 #!/usr/bin/env rv run ruby
 
 require 'open3'
-require 'shellwords'
 require 'find'
 require_relative 'common'
 require_relative 'config'

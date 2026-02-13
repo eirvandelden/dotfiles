@@ -25,6 +25,11 @@ module WorktreeTools
       puts message
     end
 
+    def debug(message)
+      return unless ENV['DEBUG']
+      $stderr.puts "debug: #{message}"
+    end
+
     def warn(message)
       $stderr.puts "warning: #{message}"
     end

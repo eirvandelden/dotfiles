@@ -46,8 +46,9 @@ module WorktreeTools
     private
 
     def list_worktrees
-      output = `git worktree list --porcelain 2>/dev/null`
-      return [] if $?.exitstatus != 0
+      # Use array form to avoid shell injection
+      output, status = Open3.capture2('git', 'worktree', 'list', '--porcelain', err: '/dev/null')
+      return [] if status.exitstatus != 0
 
       worktrees = []
       current = {}
