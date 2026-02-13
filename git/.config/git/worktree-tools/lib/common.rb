@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require 'pathname'
+require 'open3'
 
 module WorktreeTools
   # Exit codes
@@ -39,9 +40,10 @@ module WorktreeTools
 
     # Git helpers
     def git_root(path = '.')
-      result = `git -C "#{path}" rev-parse --show-toplevel 2>/dev/null`.strip
-      return nil if $?.exitstatus != 0 || result.empty?
-      Pathname.new(result)
+      # Use array form to avoid shell injection
+      output, status = Open3.capture2('git', '-C', path.to_s, 'rev-parse', '--show-toplevel', err: '/dev/null')
+      return nil if status.exitstatus != 0 || output.strip.empty?
+      Pathname.new(output.strip)
     end
 
     def worktree_name(path = '.')
@@ -89,7 +91,9 @@ module WorktreeTools
 
     # Command detection
     def command_exists?(command)
-      system("command -v #{command} > /dev/null 2>&1")
+      # Use array form to avoid shell injection
+      _output, status = Open3.capture2('command', '-v', command.to_s, err: '/dev/null', out: '/dev/null')
+      status.success?
     end
 
     def require_command(command, error_message = nil)

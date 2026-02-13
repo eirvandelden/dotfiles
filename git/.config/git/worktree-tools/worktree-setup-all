@@ -4,6 +4,7 @@
 # Add lib directory to load path
 $LOAD_PATH.unshift(File.expand_path('lib', __dir__))
 
+require 'open3'
 require 'common'
 
 module WorktreeTools
@@ -76,15 +77,15 @@ module WorktreeTools
       log "Setting up: #{path} (#{branch})"
 
       worktree_setup = File.expand_path('worktree-setup', __dir__)
-      output = `#{worktree_setup} "#{path}" 2>&1`
-      exit_code = $?.exitstatus
+      # Use array form to avoid shell injection
+      output, status = Open3.capture2e(worktree_setup, path)
 
-      if exit_code == 0
+      if status.exitstatus == 0
         @successes << path
         log "  ✓ Success"
       else
         @failures << { path: path, output: output }
-        error "  ✗ Failed (exit code: #{exit_code})"
+        error "  ✗ Failed (exit code: #{status.exitstatus})"
         error "  #{output}" unless output.empty?
       end
 
