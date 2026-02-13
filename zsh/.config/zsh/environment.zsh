@@ -91,7 +91,6 @@ precmd_functions+=(chnode_auto)
 export PATH="/opt/homebrew/opt/curl/bin:$PATH"
 
 # Homebrew environment
-# NOTE: Keep this near the end so brew-managed tools are available.
-# This may run twice (once in .zshenv, once here) but that's harmless.
-# The second run ensures any updates to Homebrew paths are picked up.
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# NOTE: brew shellenv is initialized in .zshenv before rv shell init.
+# Do NOT run it again here as it prepends Homebrew paths to PATH,
+# which would override rv's Ruby paths and break Ruby version management.
