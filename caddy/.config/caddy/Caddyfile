@@ -14,8 +14,8 @@ fizzy.localhost,
 journal.localhost, journal.test,
 sticker.localhost, sticker.test,
 writebook.localhost, writebook.test {
-  # Use Caddy for self-signed certs in development.
-  # Proxy our HTTPS requests to the local HTTP server.
+	# Use Caddy for self-signed certs in development.
+	# Proxy our HTTPS requests to the local HTTP server.
 	tls internal # Use Caddy's internal CA for local development
 	reverse_proxy http://127.0.0.1:9280 {
 		header_up Host {host}

@@ -21,7 +21,7 @@ macos-option-as-alt = true
 
 ## save like macos
 keybind = cmd+s=text:\x13
-keybind = cmd+c=text:\x03
+# keybind = cmd+c=text:\x03
 ## send option+arrow keys
 # Move backward by word
 keybind = alt+left=text:\x1bb
@@ -87,5 +87,3 @@ background-blur = true
 # on. A value outside of the range 0.15 to 1 will be clamped to the nearest
 # valid value.
 unfocused-split-opacity = 0.7
-
-

@@ -1,6 +1,7 @@
 [user]
 	name = Etienne van Delden de la Haije
 	email = etienne@vandelden.family
+  signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH+VU1lBs/Q9q+irnjGr2fXWs5J3FQc6ajw1MLUnEde
 [alias]
   co = checkout
   ci = commit
@@ -60,3 +61,5 @@
   autoStash = true
 [tag]
   gpgSign = true
+[includeIf "hasconfig:remote.*.url:git@github.com:nedap/**"]
+  path = ~/.config/git/work.config

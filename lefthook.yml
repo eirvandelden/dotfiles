@@ -74,31 +74,71 @@ pre-push:
         If you're in a hurry to push, use the `--no-verify` git flag.
         If you need to 🚩 ignore dependencies in the longer-term 🚩 see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     csslint:
-      run: yarn stylelint {push_files}
+      run: yarn stylelint {staged_files}
       tags: css linter
       glob:
         - "*.{css,scss}"
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: erb_lint {push_files}
+      run: erb_lint {staged_files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
-      run: yarn eslint {push_files}
+      run: yarn eslint {staged_files}
     rubocop:
       tags: linter
       glob: "*.rb"
-      run: rubocop --force-exclusion {push_files}
+      run: rubocop --force-exclusion {staged_files}
+    minitest:
+      tags:
+        - ruby
+        - tests
+        - minitest
+      glob: "app/**/*.rb"
+      run: |
+        for file in {staged_files}; do
+          rel_path="${file#app/}"
+          base_name="${rel_path%.rb}"
+          test_file="test/${base_name}_test.rb"
+
+          if [ -f "$test_file" ]; then
+            echo "Running minitest for $file..."
+            bin/rails test "$test_file" || exit 1
+          fi
+        done
+      fail_text: |
+        Minitest failed for changed Ruby files.
+        Fix the failing tests or use `--no-verify` to skip.
+    rspec:
+      tags:
+        - ruby
+        - tests
+        - rspec
+      glob: "app/**/*.rb"
+      run: |
+        for file in {staged_files}; do
+          rel_path="${file#app/}"
+          base_name="${rel_path%.rb}"
+          spec_file="spec/${base_name}_spec.rb"
+
+          if [ -f "$spec_file" ]; then
+            echo "Running rspec for $file..."
+            bin/rspec "$spec_file" || exit 1
+          fi
+        done
+      fail_text: |
+        RSpec failed for changed Ruby files.
+        Fix the failing tests or use `--no-verify` to skip.
     no-fixme:
       tags: fixme
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings FIXME "{push_files}"
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings FIXME "{staged_files}"
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings NOCOMMIT "{push_files}"
+        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings NOCOMMIT "{staged_files}"
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
 # Run installs and migrations after pull

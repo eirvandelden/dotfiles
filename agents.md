@@ -89,12 +89,14 @@ ProcessOrderJob.perform_now(order)
 ### 1.1.1 Why Never Service Objects?
 
 Service objects extract business logic away from domain models, leading to:
+
 - Anemic domain models (data bags without behavior)
 - Scattered business logic that's hard to find and maintain
 - Violation of single responsibility (the model should own its behavior)
 - Unnecessary indirection and ceremony
 
 If you think you need a service object:
+
 1. First, add the method to the relevant domain model
 2. If it's shared behavior, extract a concern
 3. If it's a state transition, model it as a resource
@@ -298,6 +300,10 @@ If you think you need a service object:
 
 - Use database constraints for hard rules.
 - Mirror those constraints with Rails validations.
+- Prefer database column defaults over application-level defaults:
+  - Use migrations to set defaults: `change_column_default :table, :column, from: nil, to: "value"`.
+  - This ensures consistency across all entry points (console, rake tasks, etc.).
+  - Application code (controllers, models) inherits the default automatically.
 - Use concerns to share behaviour and reduce model size.
 - Rich models by default:
   - Put domain behavior (commands and predicates) on the model that owns the state.
@@ -519,6 +525,31 @@ end
 - Work projects:
   - Use gettext.
 - Default to English text when another language is not specified.
+- Use the `rails-i18n` gem for default Rails framework translations (date/time formats, validation messages, helpers, etc.).
+- Use the `i18n-tasks` gem for translation management and testing in development/test groups.
+- Namespace translations logically:
+  - App-wide translations at root level (e.g., `app_name`, `navigation`).
+  - Model-specific translations under model names (e.g., `time_entries`, `projects`).
+  - Enum-like values in their own namespace (e.g., `entry_types`, `statuses`).
+- Avoid duplication in translation files:
+  - Don't repeat the same translations in multiple namespaces.
+  - Use a single source of truth for each translatable value.
+  - Reference shared translations where needed.
+- Set database column defaults for enum-like fields instead of controller/model defaults when possible.
+- Use translation keys for validation errors instead of hardcoded strings:
+
+  ```ruby
+  # ✅ Do
+  errors.add(:base, :active_entry_exists)
+
+  # ❌ Don't
+  errors.add(:base, "You already have an active time entry")
+  ```
+
+- Enable i18n fallbacks in application.rb:
+  ```ruby
+  config.i18n.fallbacks = true
+  ```
 
 ## 11. Open Questions
 
@@ -633,3 +664,11 @@ should follow these rules.
     - If ambiguity exists about the target repository, ask Etienne before proceeding.
     - When choosing between `origin` and `upstream` branches, default to `origin` unless explicitly told otherwise.
     - Never create PRs to the original/upstream project without explicit instruction from Etienne.
+21. Internationalization workflow:
+    - Use `rails-i18n` gem to avoid duplicating standard Rails translations.
+    - Avoid hardcoding any user-facing strings in views, models, or controllers.
+    - When adding new features, add translations for all supported locales simultaneously.
+    - Use semantic translation keys that reflect purpose, not content.
+    - Set database defaults for enum-like columns instead of controller/model defaults.
+    - Organize translations by namespace (app-wide, model-specific, shared enums).
+    - Use translation keys for model validation errors, not hardcoded strings.

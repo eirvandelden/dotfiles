@@ -10,6 +10,17 @@
   //
   // Theming
   //
+  "edit_predictions": {
+    "provider": "copilot"
+  },
+  "agent_servers": {
+    "claude": {
+      "favorite_models": [
+        "opus",
+        "haiku"
+      ]
+    }
+  },
   "which_key": {
     "delay_ms": null,
     "enabled": true,
@@ -115,9 +126,6 @@
   },
 
   // Predictions
-  "features": {
-    "edit_prediction_provider": "copilot",
-  },
   "show_edit_predictions": true,
   "inline_code_actions": true,
 
