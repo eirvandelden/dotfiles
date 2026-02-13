@@ -3,18 +3,6 @@
 export ZDOTDIR="$HOME/.config/zsh"
 export RUBY_CONFIGURE_OPTS="--enable-yjit --with-jemalloc --disable-install-doc"
 
-# Homebrew prefix (must be set before using it below)
-# Prefer HOMEBREW_PREFIX if already set; otherwise infer it from common locations.
-: "${HOMEBREW_PREFIX:=}"
-if [[ -z "${HOMEBREW_PREFIX}" ]]; then
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    HOMEBREW_PREFIX="$("/opt/homebrew/bin/brew" --prefix)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    HOMEBREW_PREFIX="$("/usr/local/bin/brew" --prefix)"
-  fi
-  export HOMEBREW_PREFIX
-fi
-
 # Native extensions (Ruby gems, etc.)
 # Append paths instead of overwriting so multiple deps can coexist.
 export CPPFLAGS="-I$HOMEBREW_PREFIX/opt/jemalloc/include ${CPPFLAGS:-}"
