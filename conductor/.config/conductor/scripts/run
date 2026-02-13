@@ -1,0 +1,59 @@
+#!/bin/bash
+# Development server launcher
+# Detects project type and starts the appropriate server
+
+set -e
+
+# Use CONDUCTOR_PORT if set, otherwise PORT env var, or default to 3000
+PORT="${CONDUCTOR_PORT:-${PORT:-3000}}"
+
+echo "Starting development server on port ${PORT}..."
+echo ""
+
+# Rails project
+if [ -f "config/application.rb" ] && [ -f "Gemfile" ]; then
+  echo "Detected Rails project"
+
+  # Prefer bin/dev (Rails 7+ convention)
+  if [ -x "bin/dev" ]; then
+    echo "Using bin/dev"
+    PORT="${PORT}" exec ./bin/dev
+  # Check for Procfile.dev
+  elif [ -f "Procfile.dev" ]; then
+    echo "Using Procfile.dev"
+    exec bundle exec foreman start -f Procfile.dev -p "${PORT}"
+  # Fallback to rails server
+  else
+    echo "Using rails server"
+    exec bundle exec rails server -p "${PORT}"
+  fi
+fi
+
+# Node project
+if [ -f "package.json" ]; then
+  echo "Detected Node project"
+
+  # Check for common dev scripts
+  if grep -q '"dev"' package.json; then
+    echo "Using npm run dev"
+    PORT="${PORT}" exec npm run dev
+  elif grep -q '"start:dev"' package.json; then
+    echo "Using npm run start:dev"
+    PORT="${PORT}" exec npm run start:dev
+  elif grep -q '"start"' package.json; then
+    echo "Using npm start"
+    PORT="${PORT}" exec npm start
+  else
+    echo "error: No dev script found in package.json" >&2
+    exit 1
+  fi
+fi
+
+# Generic project - try common server commands
+echo "Could not detect project type"
+echo ""
+echo "Please create a project-specific bin/run script or use one of:"
+echo "  - Rails: bin/rails server -p ${PORT}"
+echo "  - Node: npm start"
+echo "  - Other: your-server-command"
+exit 1

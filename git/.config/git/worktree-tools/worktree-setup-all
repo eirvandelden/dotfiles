@@ -1,0 +1,118 @@
+#!/usr/bin/env rv run ruby
+# frozen_string_literal: true
+
+# Add lib directory to load path
+$LOAD_PATH.unshift(File.expand_path('lib', __dir__))
+
+require 'open3'
+require 'common'
+
+module WorktreeTools
+  class SetupAll
+    include Helpers
+
+    def initialize
+      @successes = []
+      @failures = []
+    end
+
+    def run!
+      log "Setting up all worktrees..."
+      log ""
+
+      worktrees = list_worktrees
+
+      if worktrees.empty?
+        log "No worktrees found"
+        return
+      end
+
+      log "Found #{worktrees.size} worktree(s):"
+      worktrees.each do |wt|
+        log "  - #{wt[:path]} (#{wt[:branch]})"
+      end
+      log ""
+
+      worktrees.each do |wt|
+        setup_worktree(wt)
+      end
+
+      print_summary
+
+      # Exit with error if any failures
+      exit EXIT_ERROR unless @failures.empty?
+    end
+
+    private
+
+    def list_worktrees
+      # Use array form to avoid shell injection
+      output, status = Open3.capture2('git', 'worktree', 'list', '--porcelain', err: '/dev/null')
+      return [] if status.exitstatus != 0
+
+      worktrees = []
+      current = {}
+
+      output.lines.each do |line|
+        line = line.strip
+        next if line.empty?
+
+        if line.start_with?('worktree ')
+          worktrees << current unless current.empty?
+          current = { path: line.sub('worktree ', '') }
+        elsif line.start_with?('branch ')
+          current[:branch] = line.sub('branch ', '').sub('refs/heads/', '')
+        elsif line == 'bare'
+          current[:bare] = true
+        end
+      end
+
+      worktrees << current unless current.empty?
+      worktrees.reject { |wt| wt[:bare] }
+    end
+
+    def setup_worktree(worktree)
+      path = worktree[:path]
+      branch = worktree[:branch] || 'detached HEAD'
+
+      log "Setting up: #{path} (#{branch})"
+
+      worktree_setup = File.expand_path('worktree-setup', __dir__)
+      # Use array form to avoid shell injection
+      output, status = Open3.capture2e(worktree_setup, path)
+
+      if status.exitstatus == 0
+        @successes << path
+        log "  ✓ Success"
+      else
+        @failures << { path: path, output: output }
+        error "  ✗ Failed (exit code: #{status.exitstatus})"
+        error "  #{output}" unless output.empty?
+      end
+
+      log ""
+    end
+
+    def print_summary
+      log "=" * 60
+      log "Summary:"
+      log "  Successful: #{@successes.size}"
+      log "  Failed: #{@failures.size}"
+
+      unless @failures.empty?
+        log ""
+        log "Failed worktrees:"
+        @failures.each do |failure|
+          log "  - #{failure[:path]}"
+        end
+      end
+
+      log "=" * 60
+    end
+  end
+end
+
+# Run if called directly
+if __FILE__ == $0
+  WorktreeTools::SetupAll.new.run!
+end

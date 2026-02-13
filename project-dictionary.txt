@@ -27,6 +27,7 @@ betterspecs
 brew
 brewfile
 brewfiles
+conductor
 dbus
 edge
 flathub
@@ -45,6 +46,7 @@ hyprlock
 hyprpaper
 hyprsunset
 janky
+myproject
 keybind
 keybinds
 killactive
@@ -59,10 +61,15 @@ omarchy
 pacman
 pkgconfig
 polkit
+Procfile
+pumadev
+restow
 ripgrep
 showmanual
 slurp
+unstow
 steam
+symlinker
 steamdeck
 steamos
 stow
@@ -72,6 +79,8 @@ uwsm
 wayland
 wl-clipboard
 wofi
+worktree
+worktrees
 xdg
 xdg-desktop-portal
 xdg-desktop-portal-hyprland
