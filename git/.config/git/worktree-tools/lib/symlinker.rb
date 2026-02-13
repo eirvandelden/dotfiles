@@ -2,8 +2,10 @@
 
 require 'open3'
 require 'shellwords'
+require 'find'
 require_relative 'common'
 require_relative 'config'
+require_relative 'file_cleaner'
 
 module WorktreeTools
   class Symlinker
@@ -23,6 +25,9 @@ module WorktreeTools
 
       validate_stow!
       validate_packages!
+
+      # Clean conflicting files before stowing
+      clean_conflicting_files!
 
       log "Setting up symlinks via GNU Stow..."
       @config.stow_packages.each do |package|
@@ -48,6 +53,22 @@ module WorktreeTools
     end
 
     private
+
+    def clean_conflicting_files!
+      log "Cleaning conflicting files..."
+      cleaner = FileCleaner.new(
+        @config.stow_source_dir,
+        @config.stow_target,
+        @config.stow_packages
+      )
+      deleted_files = cleaner.clean!
+
+      if deleted_files.any?
+        log "  Cleaned #{deleted_files.size} conflicting file(s)"
+      else
+        debug "  No conflicting files found"
+      end
+    end
 
     def validate_stow!
       require_command(

@@ -172,18 +172,63 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
 
 ### Setup
 
-1. **Initialize a project for Conductor:**
+1. **Copy the scripts into your project:**
+
    ```bash
    cd ~/Developer/myproject
-   conductor-init myproject 3000
+
+   # Copy scripts from dotfiles
+   cp ~/.config/conductor/scripts/{setup,run,archive} bin/
+   chmod +x bin/{setup,run,archive}
    ```
 
-   This creates:
-   - `conductor.json` - Conductor configuration
-   - `bin/conductor-setup` - Setup script (calls `worktree-setup`)
-   - `script/server` - Universal server launcher
+2. **Create conductor.json:**
 
-2. **Create `.worktree.yml`** (optional but recommended):
+   ```json
+   {
+     "name": "myproject",
+     "setup": "./bin/setup",
+     "server": "./bin/run",
+     "archive": "./bin/archive"
+   }
+   ```
+
+   ```bash
+   cat > conductor.json <<'JSON'
+   {
+     "name": "myproject",
+     "setup": "./bin/setup",
+     "server": "./bin/run",
+     "archive": "./bin/archive"
+   }
+   JSON
+   ```
+
+**Note:** The scripts are static and reusable. After copying them to your project, you can customize them as needed.
+
+#### Next Steps
+
+1. **For Rails projects, configure database.yml:**
+
+   ```yaml
+   # config/database.yml
+   development:
+     <<: *default
+     database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
+   ```
+
+   This allows each workspace to have its own database. `bin/setup` automatically sets `DATABASE_NAME` to `projectname_workspacename_development`.
+
+2. **Setup shared files in .worktree-local:**
+   ```bash
+   # Copy Rails credentials key (needed by all worktrees)
+   cp config/master.key .worktree-local/rails/config/
+
+   # Edit shared environment variables
+   $EDITOR .worktree-local/rails/.env
+   ```
+
+3. **Create `.worktree.yml`** (optional but recommended):
    ```yaml
    project:
      name: myproject
@@ -197,24 +242,140 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
      enabled: true
    ```
 
-3. **Create workspace in Conductor:**
-   - Conductor will call `bin/conductor-setup`
+4. **Create workspace in Conductor:**
+   - Conductor will call `bin/setup`
    - `worktree-setup` will run automatically
+   - Database will be created with unique name
    - Workspace is ready for development!
 
 ### Environment Variables
 
 When running in Conductor, these variables are available:
 
-- `CONDUCTOR_ROOT_PATH` - Path to the main repository
+- `CONDUCTOR_ROOT_PATH` - Path to the main repository (one level above workspace)
 - `CONDUCTOR_WORKSPACE_PATH` - Path to the current workspace
 - `CONDUCTOR_WORKSPACE_NAME` - Name of the workspace
-- `CONDUCTOR_PORT` - Assigned port for this workspace
+- `CONDUCTOR_PORT` - First port in a range of 10 consecutive ports allocated to workspace
 
 The tooling automatically detects Conductor and adjusts behavior:
 - Uses `CONDUCTOR_ROOT_PATH/.worktree-local/` for shared files
 - Uses `CONDUCTOR_PORT` for server and puma-dev
 - Uses `CONDUCTOR_WORKSPACE_NAME` for puma-dev naming
+
+### Workspace Scripts
+
+The scripts you copy from `~/.config/conductor/scripts/` provide Conductor integration:
+
+#### `bin/setup`
+
+Called when creating a new workspace. This script:
+
+1. **Runs worktree-setup** - Sets up Stow symlinks and puma-dev
+2. **For Rails projects:**
+   - Loads secrets from 1Password (via `unlock` or `secrets` command)
+   - Configures workspace-specific database name
+   - Writes `DATABASE_NAME` to `.env.local`
+   - Runs `bundle install`
+   - Creates and migrates database with `rails db:prepare`
+
+**Personal projects** (non-Rails): Just runs `worktree-setup`
+
+**Work projects** (Rails with database): Adds full Rails setup with isolated database
+
+**Database naming pattern:**
+- Format: `projectname_workspacename_development`
+- Example: `myapp_feature-auth_development`
+- Ensures no conflicts between workspaces
+
+#### `bin/run`
+
+Starts the development server. Intelligently detects project type:
+
+**Rails projects:**
+1. Prefers `bin/dev` (Rails 7+ convention)
+2. Falls back to `Procfile.dev` with foreman
+3. Falls back to `bundle exec rails server`
+
+**Node projects:**
+1. Looks for `npm run dev`
+2. Falls back to `npm run start:dev`
+3. Falls back to `npm start`
+
+Always respects `CONDUCTOR_PORT` environment variable.
+
+#### `bin/archive`
+
+Called before removing a workspace. This script:
+
+- **For Rails projects:** Drops the workspace-specific database
+- **For other projects:** Does nothing (but required by Conductor)
+
+Safe error handling - won't fail if database doesn't exist.
+
+## Database Configuration (Rails Projects)
+
+### Problem
+
+When working with multiple worktrees, each needs its own database to avoid conflicts. If all worktrees share the same database name, migrations and data changes in one worktree affect all others.
+
+### Solution
+
+Use environment variables for database naming instead of hardcoding in `database.yml`:
+
+```yaml
+# config/database.yml
+development:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
+```
+
+### How It Works
+
+1. **`bin/setup` calculates a unique database name:**
+   ```bash
+   # Format: projectname_workspacename_development
+   # Example: myapp_feature-auth_development
+   DATABASE_NAME="myapp_feature-auth_development"
+   ```
+
+2. **Writes to `.env.local` (not tracked by git):**
+   ```bash
+   echo "DATABASE_NAME=${DATABASE_NAME}" > .env.local
+   ```
+
+3. **Rails loads `.env.local` automatically** (if using dotenv-rails gem)
+
+4. **Each workspace gets its own isolated database**
+
+### Shared vs Per-Worktree Configuration
+
+**Shared** (in `.worktree-local/rails/.env`):
+- `RAILS_ENV`
+- `REDIS_URL`
+- Other common settings
+
+**Per-worktree** (in `.env.local`):
+- `DATABASE_NAME` - unique per workspace
+- `PORT` - from `CONDUCTOR_PORT`
+- Workspace-specific overrides
+
+### Manual Worktree Setup
+
+If you're creating worktrees manually (not using Conductor):
+
+```bash
+git worktree add feature-auth
+cd feature-auth
+./bin/setup  # Creates database and configures everything
+```
+
+To remove:
+
+```bash
+./bin/archive  # Drops the database
+cd ..
+git worktree remove feature-auth
+```
 
 ## Puma-dev Integration
 
@@ -285,6 +446,57 @@ The tooling automatically detects Conductor and adjusts behavior:
 ```bash
 brew install stow
 ```
+
+### Database name conflicts
+
+**Problem:** Multiple worktrees trying to use the same database, or database operations affecting other worktrees.
+
+**Solution:**
+1. Configure `database.yml` to use `DATABASE_NAME` environment variable:
+   ```yaml
+   development:
+     database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
+   ```
+2. Run `./bin/setup` to configure the workspace-specific database
+3. Check `.env.local` to verify `DATABASE_NAME` is set correctly
+4. Each workspace should have a unique database name like `myapp_workspace-name_development`
+
+### Missing secrets or authentication
+
+**Problem:** `bin/setup` fails because JFrog tokens or other secrets aren't available.
+
+**Solution:**
+1. **For work projects:** Ensure `unlock` or `secrets` command is available
+   - This loads secrets from 1Password or other secret managers
+   - Contact your team if you don't have this set up
+2. **For personal projects:** Set secrets manually in `.worktree-local/rails/.env`
+3. **Skip secret loading:** Edit `bin/setup` to comment out the unlock/secrets section
+
+### Database already exists error
+
+**Problem:** Running `bin/setup` fails because database already exists from previous workspace.
+
+**Solution:**
+```bash
+# Drop the old database manually
+bundle exec rails db:drop
+
+# Or use the archive script
+./bin/archive
+
+# Then re-run setup
+./bin/setup
+```
+
+### Wrong database in Rails console
+
+**Problem:** `rails console` connects to main worktree's database instead of workspace-specific one.
+
+**Checklist:**
+1. Is `.env.local` present? `cat .env.local`
+2. Is `DATABASE_NAME` set? `echo $DATABASE_NAME`
+3. Is dotenv-rails in Gemfile? `grep dotenv-rails Gemfile`
+4. Try loading manually: `export DATABASE_NAME=myapp_workspace_development && rails console`
 
 ## Advanced Usage
 

@@ -1,0 +1,32 @@
+#!/bin/bash
+# Workspace archive script for Conductor
+# This script is called before removing a workspace to clean up resources
+
+set -e
+
+echo "=== Workspace Archive ==="
+echo ""
+
+# Check if this is a Rails project with database
+if [ -f "config/database.yml" ] && [ -f "Gemfile" ]; then
+  echo "Detected Rails project"
+
+  # Calculate database name (must match bin/setup logic)
+  WORKTREE_NAME="$(basename "$PWD")"
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  PROJECT_NAME="$(basename "$REPO_ROOT")"
+  DB_NAME="${PROJECT_NAME}_${WORKTREE_NAME}_development"
+
+  echo ""
+  echo "Dropping database: ${DB_NAME}"
+
+  # Try to drop the database, but don't fail if it doesn't exist
+  if bundle exec rails db:drop 2>/dev/null; then
+    echo "Database dropped successfully"
+  else
+    echo "warning: Could not drop database (it may not exist)" >&2
+  fi
+fi
+
+echo ""
+echo "=== Archive Complete ==="

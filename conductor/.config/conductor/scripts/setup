@@ -1,0 +1,101 @@
+#!/bin/bash
+# Workspace setup script for Conductor
+# This script is called when setting up a new workspace
+
+set -e
+
+echo "=== Workspace Setup ==="
+echo ""
+
+# Detect project type
+RAILS_PROJECT=false
+if [ -f "config/database.yml" ] && [ -f "Gemfile" ]; then
+  RAILS_PROJECT=true
+  echo "Detected Rails project"
+fi
+
+# Step 1: Run worktree-setup (Stow + puma-dev configuration)
+# This handles generic infrastructure from dotfiles
+echo ""
+echo "Running worktree-setup..."
+if command -v worktree-setup >/dev/null 2>&1; then
+  worktree-setup
+elif [ -x "${HOME}/.config/git/worktree-tools/worktree-setup" ]; then
+  "${HOME}/.config/git/worktree-tools/worktree-setup"
+else
+  echo "warning: worktree-setup not found, skipping generic setup" >&2
+fi
+
+# Step 2: Rails-specific setup
+if [ "$RAILS_PROJECT" = true ]; then
+  echo ""
+  echo "=== Rails Project Setup ==="
+
+  # Load secrets from 1Password (if unlock command exists)
+  if command -v unlock >/dev/null 2>&1; then
+    echo "Loading secrets from 1Password..."
+    eval "$(unlock)" || {
+      echo "warning: Failed to load secrets from 1Password" >&2
+      echo "Continuing anyway - you may need to set secrets manually" >&2
+    }
+  elif command -v secrets >/dev/null 2>&1; then
+    echo "Loading secrets..."
+    eval "$(secrets)" || {
+      echo "warning: Failed to load secrets" >&2
+      echo "Continuing anyway - you may need to set secrets manually" >&2
+    }
+  else
+    echo "Note: No 'unlock' or 'secrets' command found"
+    echo "If you need JFrog tokens or other secrets, set them up manually"
+  fi
+
+  # Configure workspace-specific database name
+  WORKTREE_NAME="$(basename "$PWD")"
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  PROJECT_NAME="$(basename "$REPO_ROOT")"
+  export DATABASE_NAME="${PROJECT_NAME}_${WORKTREE_NAME}_development"
+
+  echo ""
+  echo "Database configuration:"
+  echo "  DATABASE_NAME=${DATABASE_NAME}"
+
+  # Write to .env.local (not tracked by git)
+  echo "DATABASE_NAME=${DATABASE_NAME}" > .env.local
+  echo "  Wrote to .env.local"
+
+  # Install dependencies
+  echo ""
+  echo "Installing dependencies..."
+  if [ -f "Gemfile.lock" ]; then
+    bundle install --quiet
+  else
+    echo "No Gemfile.lock found, running bundle install for the first time..."
+    bundle install
+  fi
+
+  # Setup database
+  echo ""
+  echo "Setting up database..."
+  if bundle exec rails db:version >/dev/null 2>&1; then
+    echo "Database already exists: ${DATABASE_NAME}"
+  else
+    echo "Creating database: ${DATABASE_NAME}"
+    bundle exec rails db:prepare
+  fi
+fi
+
+echo ""
+echo "=== Setup Complete ==="
+echo ""
+
+# Show next steps
+if [ "$RAILS_PROJECT" = true ]; then
+  echo "Next steps:"
+  echo "  1. Start the server: ./bin/run"
+  if command -v puma-dev >/dev/null 2>&1; then
+    echo "  2. Or access via puma-dev: https://${WORKTREE_NAME}.${PROJECT_NAME}.localhost"
+  fi
+  echo ""
+  echo "Database: ${DATABASE_NAME}"
+  echo ""
+fi
