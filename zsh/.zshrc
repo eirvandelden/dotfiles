@@ -8,6 +8,6 @@ export ZDOTDIR="$HOME/.config/zsh"
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="/Users/etienne.vandelden/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
-export SSL_CERT_FILE="$(brew --prefix)/etc/openssl@3/cert.pem"
+export SSL_CERT_FILE="${HOMEBREW_PREFIX}/etc/openssl@3/cert.pem"
 eval "$(/opt/homebrew/bin/rv shell init zsh)"
 eval "$(/opt/homebrew/bin/rv shell completions zsh)"
