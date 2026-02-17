@@ -1,0 +1,91 @@
+#!/bin/bash
+# Workspace archive script for work repositories with slicing integration
+# This script cleans up workspace databases and configuration
+
+set -e
+
+echo "=== Work Workspace Archive ==="
+echo ""
+
+# Detect project name and workspace name
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PROJECT_DIR="$(dirname "$REPO_ROOT")"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
+WORKSPACE_RAW="$(basename "$PWD")"
+WORKSPACE_NAME="$(echo "$WORKSPACE_RAW" | tr '-' '_')"
+
+echo "Project: ${PROJECT_NAME}"
+echo "Workspace: ${WORKSPACE_NAME}"
+
+# Calculate database name
+PRIMARY_DB_NAME="${PROJECT_NAME}_${WORKSPACE_NAME}_development"
+echo "Primary database: ${PRIMARY_DB_NAME}"
+echo ""
+
+# Check if .env.local exists (for verification)
+if [ ! -f ".env.local" ]; then
+  echo "WARNING: .env.local not found. Workspace may not have been set up properly."
+  echo "Continuing with cleanup anyway..."
+  echo ""
+fi
+
+# Drop workspace-specific database
+echo "Dropping workspace database..."
+if mysql -h localhost -u root -e "DROP DATABASE IF EXISTS ${PRIMARY_DB_NAME}" 2>/dev/null; then
+  echo "✓ Dropped database: ${PRIMARY_DB_NAME}"
+else
+  echo "WARNING: Failed to drop database. It may not exist or MySQL may not be running."
+fi
+
+# Explicitly note that we're NOT dropping the shared caren2 database
+if [ "$PROJECT_NAME" = "caren" ]; then
+  echo "✓ Preserved shared replica database: caren_development"
+fi
+echo ""
+
+# Remove workspace-specific Caddy configuration
+CADDY_CONFIG_DIR="${HOME}/.config/caddy"
+CADDY_CONFIG_FILE="${CADDY_CONFIG_DIR}/${WORKSPACE_NAME}-${PROJECT_NAME}.caddy"
+
+echo "Removing Caddy configuration..."
+if [ -f "$CADDY_CONFIG_FILE" ]; then
+  rm "$CADDY_CONFIG_FILE"
+  echo "✓ Removed Caddy config: ${CADDY_CONFIG_FILE}"
+else
+  echo "WARNING: Caddy config not found: ${CADDY_CONFIG_FILE}"
+fi
+echo ""
+
+# Reload Caddy configuration
+echo "Reloading Caddy configuration..."
+if command -v caddy >/dev/null 2>&1; then
+  if caddy reload >/dev/null 2>&1; then
+    echo "✓ Caddy reloaded successfully"
+  else
+    echo "warning: Failed to reload Caddy" >&2
+    echo "You may need to reload Caddy manually: caddy reload" >&2
+  fi
+else
+  echo "warning: Caddy not found" >&2
+fi
+echo ""
+
+# Clean up .env.local
+echo "Cleaning up workspace configuration..."
+if [ -f ".env.local" ]; then
+  rm .env.local
+  echo "✓ Removed .env.local"
+else
+  echo "WARNING: .env.local not found"
+fi
+echo ""
+
+echo "=== Archive Complete ==="
+echo ""
+echo "Workspace resources cleaned up:"
+echo "  ✓ Database dropped: ${PRIMARY_DB_NAME}"
+echo "  ✓ Caddy configuration removed"
+echo "  ✓ Local environment configuration removed"
+echo ""
+echo "The workspace directory still exists and can be removed manually if needed."
+echo ""

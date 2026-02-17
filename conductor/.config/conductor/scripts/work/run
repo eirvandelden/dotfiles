@@ -1,0 +1,72 @@
+#!/bin/bash
+# Workspace run script for work repositories with slicing integration
+# This script starts the Rails server using bin/dev
+
+set -e
+
+# Detect project name and workspace name
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PROJECT_DIR="$(dirname "$REPO_ROOT")"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
+WORKSPACE_RAW="$(basename "$PWD")"
+
+# Check if .env.local exists
+if [ ! -f ".env.local" ]; then
+  echo "ERROR: .env.local not found"
+  echo "Run the setup script first: ../dotfiles/cancun/conductor/.config/conductor/scripts/work/setup"
+  exit 1
+fi
+
+# Source .env.local to load workspace environment
+set -a
+# shellcheck source=/dev/null
+source .env.local
+set +a
+
+# Verify RAILS_ENV is set to docker
+if [ "$RAILS_ENV" != "docker" ]; then
+  echo "ERROR: RAILS_ENV is not set to 'docker'"
+  echo "Expected: RAILS_ENV=docker"
+  echo "Actual: RAILS_ENV=${RAILS_ENV}"
+  exit 1
+fi
+
+# Verify CONDUCTOR_PORT is set
+if [ -z "$CONDUCTOR_PORT" ]; then
+  echo "ERROR: CONDUCTOR_PORT is not set"
+  echo "This script must be run from Conductor or with CONDUCTOR_PORT exported"
+  exit 1
+fi
+
+# Verify PORT is set to CONDUCTOR_PORT
+if [ "${PORT}" != "${CONDUCTOR_PORT}" ]; then
+  echo "WARNING: PORT in .env.local (${PORT}) doesn't match CONDUCTOR_PORT (${CONDUCTOR_PORT})"
+  echo "Using CONDUCTOR_PORT: ${CONDUCTOR_PORT}"
+  export PORT="${CONDUCTOR_PORT}"
+fi
+
+# Detect Rails project
+if [ ! -f "config/database.yml" ] || [ ! -f "Gemfile" ]; then
+  echo "ERROR: This script is designed for Rails projects"
+  exit 1
+fi
+
+# Display startup information
+echo "=== Starting Work Workspace ==="
+echo ""
+echo "Project: ${PROJECT_NAME}"
+echo "Workspace: ${WORKSPACE_RAW}"
+echo "Rails environment: ${RAILS_ENV}"
+echo "Port: ${PORT}"
+echo "URL: https://${WORKSPACE_RAW}.${PROJECT_NAME}.localhost"
+echo ""
+
+# Check if bin/dev exists
+if [ ! -f "bin/dev" ]; then
+  echo "ERROR: bin/dev not found"
+  echo "Starting Rails server directly..."
+  exec bundle exec rails server -p "${PORT}"
+else
+  # Start via bin/dev (Foreman with Rails, Sidekiq, CSS, Vite)
+  exec bin/dev
+fi
