@@ -672,3 +672,7 @@ should follow these rules.
     - Set database defaults for enum-like columns instead of controller/model defaults.
     - Organize translations by namespace (app-wide, model-specific, shared enums).
     - Use translation keys for model validation errors, not hardcoded strings.
+22. Branch protection:
+    - NEVER commit directly to the main or master branch.
+    - Always create a feature branch for changes.
+    - Use pull requests to merge changes into main or master.
