@@ -24,6 +24,8 @@ XWayland
 Zed
 archlinux
 betterspecs
+callsites
+thoughtbot
 brew
 brewfile
 brewfiles
