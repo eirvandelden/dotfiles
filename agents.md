@@ -1,9 +1,12 @@
 # Etienne van Delden – Personal and Work Rails Playbook
 
-Snapshot: latest revision including method design and naming rules and AI
-instructions.
+Snapshot: latest revision including Sandi Metz rules, OOP principles (Tell Don't Ask,
+Dependency Injection, Composition over Inheritance, Law of Demeter), and AI instructions.
 
 ## 0. How to Read This Playbook
+
+This document is the single source of truth for all code and suggestions — for humans and AI
+agents alike. Read and apply every section before producing output.
 
 - Personal: applies to personal projects.
 - Work: applies to professional and Nedap projects.
@@ -11,6 +14,17 @@ instructions.
 - If an item differs per scope, both are listed.
 
 ## 1. Core Philosophy
+
+### 1.0 Sources and Influences
+
+The practices in this playbook are shaped by:
+
+- **37signals** — Rails conventions, "everything is CRUD", opinionated defaults, and open-source
+  tools such as Hotwire, Turbo, Stimulus, Kamal, Solid Queue/Cache/Cable, and the ONCE products.
+- **thoughtbot** — Testing discipline, clean Ruby, and guides such as
+  [thoughtbot/guides](https://github.com/thoughtbot/guides).
+- **Sandi Metz** — Object-oriented design rules: small classes, short methods, limited parameters,
+  Tell Don't Ask, Dependency Injection, and the Law of Demeter.
 
 ### 1.1 Principles
 
@@ -20,12 +34,11 @@ instructions.
   - Avoid non-RESTful controller actions beyond the standard seven actions.
   - State transitions should usually be modeled as nested resources (e.g.
     `resource :closure` for close/reopen with POST/DELETE).
-  - See also: 7.1 “Everything is CRUD (modeling discipline)” and 12.17 “Apply
-    everything is CRUD”.
+  - See also: §7.1 “Everything is CRUD (modeling discipline)”.
 - Personal projects:
   - Prefer the Solid trifecta by default (Solid Queue, Solid Cache, Solid
     Cable) rather than introducing Redis/Sidekiq/etc.
-  - See also: 12.17 (Solid Queue/Solid Cache defaults).
+  - See also: §4.3 (Kamal deployment) and §7.1 (Solid Queue/Cache defaults).
 - Prefer incremental refactoring over rewrites:
   - Make small steps, keep tests green, and use feature flags for risky migrations and behavior changes.
 - Prefer intention revealing names.
@@ -107,6 +120,8 @@ If you think you need a service object:
 
 - Target a maximum line length of 120 characters.
 - Keep classes under roughly 100 lines.
+- Target methods to be 5 lines; keep them under 10 lines.
+- Pass no more than 4 parameters into a method. Hash options count as one parameter.
 - Use blank lines between methods.
 - Group related private methods together.
 - Use explicit `private` and `protected` sections.
@@ -133,6 +148,143 @@ If you think you need a service object:
 - Methods that end in `?` must always return a boolean value.
 - Predicate methods must never change state or have side effects.
 - They should be pure queries about an object.
+
+## 1.4 Tell, Don't Ask
+
+- Tell objects what to do rather than querying their state and then deciding what to do with it.
+- Decisions about an object's state should live inside that object.
+
+Example:
+
+```ruby
+# ❌ Don't: ask for state, then act on it from outside
+if card.closed?
+  card.reopen
+end
+
+# ✅ Do: tell the object what to do
+card.reopen
+
+# The object handles its own guard internally
+def reopen
+  return if open?
+  destroy_closure!
+end
+```
+
+## 1.5 Dependency Injection
+
+- Inject collaborators rather than hard-coding them inside `initialize`.
+- This makes objects easier to test and swap out.
+- Use keyword arguments with sensible defaults so callsites stay clean.
+
+Example:
+
+```ruby
+# ❌ Don't: hard-coded collaborator
+class Order < ApplicationRecord
+  def notify_customer
+    @mailer = OrderMailer
+    @mailer.confirmation(self).deliver_later
+  end
+end
+
+# ✅ Do: inject the collaborator, default to the real one
+class Order < ApplicationRecord
+  def notify_customer(mailer: OrderMailer)
+    mailer.confirmation(self).deliver_later
+  end
+end
+```
+
+## 1.6 Prefer Composition Over Inheritance
+
+- Prefer composing behaviour through concerns and delegation over deep inheritance hierarchies.
+- Inheritance is appropriate when there is a genuine, stable is-a relationship (e.g. a specialised
+  subclass that never changes what it is).
+- For shared, cross-cutting behaviour, use concerns.
+
+Example:
+
+```ruby
+# ✅ Inheritance is fine for a genuine is-a relationship
+class AdminUser < User
+  def admin? = true
+end
+
+# ✅ Prefer concerns for shared behaviour across unrelated models
+module Closeable
+  extend ActiveSupport::Concern
+
+  included do
+    has_one :closure, dependent: :destroy
+  end
+
+  def close = create_closure!(user: Current.user)
+  def closed? = closure.present?
+end
+
+class Card < ApplicationRecord
+  include Closeable
+end
+
+class Task < ApplicationRecord
+  include Closeable
+end
+```
+
+## 1.7 Law of Demeter
+
+- Only talk to your immediate neighbours. Avoid reaching through a chain of objects.
+- If you find yourself writing `a.b.c`, the middle object (`b`) should expose what you need
+  directly, either by delegating or wrapping.
+
+Example:
+
+```ruby
+# ❌ Don't: reach through the object graph
+user.account.subscription.plan.name
+
+# ✅ Do: delegate through the chain so callsites stay simple
+class User < ApplicationRecord
+  delegate :plan_name, to: :account
+end
+
+class Account < ApplicationRecord
+  delegate :plan_name, to: :subscription
+end
+
+class Subscription < ApplicationRecord
+  delegate :name, to: :plan, prefix: true
+end
+
+user.plan_name
+```
+
+## 1.8 Controller and View Object Rule
+
+- Controllers should instantiate only one object.
+- Views should only know about one instance variable and should only send messages to that object.
+- Let the model (or a presenter built on one model) provide everything the view needs.
+
+Example:
+
+```ruby
+# ❌ Don't: multiple objects exposed to the view
+def show
+  @board = Board.find(params[:id])
+  @members = @board.members
+  @recent_cards = @board.cards.recent.limit(5)
+end
+
+# ✅ Do: expose one object; view reaches through it
+def show
+  @board = Board.find(params[:id])
+end
+
+# In the view:
+# @board.members, @board.recent_cards — fine, they're on the same object
+```
 
 ## 2. Rendering and Front End
 
@@ -322,7 +474,7 @@ If you think you need a service object:
 - Everything is CRUD (modeling discipline):
   - Prefer expressing “actions” as resources (state records, join models, etc.) and exposing them via REST routes.
   - Avoid inventing custom controller actions for state transitions; model them as nested resources and use POST/DELETE/PATCH appropriately.
-  - Cross-reference: 1.1 “Apply everything is CRUD” and 10.2 “API design” (REST-only, respond_to).
+  - Cross-reference: 1.1 “Apply everything is CRUD” and 11.1 “API design” (REST-only, respond_to).
 
 Example (state as records and horizontal behaviour):
 
@@ -430,7 +582,7 @@ end
 - Run Brakeman before pushing.
 - Expect continuous integration to run the full test suite.
 
-## 10. Application UX and API
+## 10. Application UX
 
 ### 10.1 Forms and validation
 
@@ -438,13 +590,51 @@ end
 - Always validate on the server as the source of truth.
 - Show clear error messages next to fields.
 
-### 10.2 API design
+### 10.2 Internationalisation
+
+- NEVER hardcode a user-facing string anywhere — not in views, templates, models, controllers,
+  mailers, or jobs. Every string shown to a user must be a translation key.
+- Personal projects:
+  - Use Rails i18n with YAML files.
+- Work projects:
+  - Use gettext.
+- Personal projects always support Dutch (`nl`), English (`en`), and Italian (`it`).
+- Default to English text when another language is not specified.
+- Use the `rails-i18n` gem for default Rails framework translations (date/time formats, validation messages, helpers, etc.).
+- Use the `i18n-tasks` gem for translation management and testing in development/test groups.
+- Namespace translations logically:
+  - App-wide translations at root level (e.g., `app_name`, `navigation`).
+  - Model-specific translations under model names (e.g., `time_entries`, `projects`).
+  - Enum-like values in their own namespace (e.g., `entry_types`, `statuses`).
+- Avoid duplication in translation files:
+  - Don't repeat the same translations in multiple namespaces.
+  - Use a single source of truth for each translatable value.
+  - Reference shared translations where needed.
+- Set database column defaults for enum-like fields instead of controller/model defaults when possible.
+- This applies to validation errors too — pass a symbol key, never a string:
+
+  ```ruby
+  # ✅ Do
+  errors.add(:base, :active_entry_exists)
+
+  # ❌ Don't
+  errors.add(:base, "You already have an active time entry")
+  ```
+
+- Enable i18n fallbacks in application.rb:
+  ```ruby
+  config.i18n.fallbacks = true
+  ```
+
+## 11. API Design
+
+### 11.1 API design
 
 - Use REST-only controllers and routes.
 - Never use GraphQL.
 - Prefer same controllers for HTML and JSON:
   - Use `respond_to` blocks.
-  - Do not create separate “API controllers” when `respond_to` works.
+  - Do not create separate "API controllers" when `respond_to` works.
 - Use Jbuilder templates for JSON responses:
   - Do not inline JSON in controllers.
   - Do not introduce serializer frameworks by default.
@@ -516,42 +706,7 @@ module ApiAuthenticatable
 end
 ```
 
-### 10.3 Internationalisation
-
-- NEVER hardcode strings in views, templates, or Ruby code that display text to users.
-- ALL user-facing text must go through a translation framework.
-- Personal projects:
-  - Use Rails i18n with YAML files.
-- Work projects:
-  - Use gettext.
-- Default to English text when another language is not specified.
-- Use the `rails-i18n` gem for default Rails framework translations (date/time formats, validation messages, helpers, etc.).
-- Use the `i18n-tasks` gem for translation management and testing in development/test groups.
-- Namespace translations logically:
-  - App-wide translations at root level (e.g., `app_name`, `navigation`).
-  - Model-specific translations under model names (e.g., `time_entries`, `projects`).
-  - Enum-like values in their own namespace (e.g., `entry_types`, `statuses`).
-- Avoid duplication in translation files:
-  - Don't repeat the same translations in multiple namespaces.
-  - Use a single source of truth for each translatable value.
-  - Reference shared translations where needed.
-- Set database column defaults for enum-like fields instead of controller/model defaults when possible.
-- Use translation keys for validation errors instead of hardcoded strings:
-
-  ```ruby
-  # ✅ Do
-  errors.add(:base, :active_entry_exists)
-
-  # ❌ Don't
-  errors.add(:base, "You already have an active time entry")
-  ```
-
-- Enable i18n fallbacks in application.rb:
-  ```ruby
-  config.i18n.fallbacks = true
-  ```
-
-## 11. Open Questions
+## 12. Open Questions
 
 These areas are intentionally left open and should be decided per project.
 
@@ -574,105 +729,26 @@ These areas are intentionally left open and should be decided per project.
 - Architecture direction:
   - Decide whether projects remain monoliths or might extract services later.
 
-## 12. Instructions to AI Models
+## 13. AI Agent Workflow
 
-When an AI model generates code or suggestions for Etienne van Delden, it
-should follow these rules.
+The rules in sections 0–12 are the full ruleset. This section covers only behaviors specific to
+how an AI agent should operate when working in this codebase.
 
-1. Always consult this playbook before assuming defaults.
-2. Keep all output concise:
-   - Responses should be brief and to the point.
-   - Plans should be scannable but complete.
-   - Documentation should be direct (see section 8.1).
-   - Avoid unnecessary verbosity in all communication.
-3. Respect the scope for personal, work or both.
-4. Do not suggest React, Vue, Tailwind, SPA patterns or bundlers.
-5. Assume Hotwire with server side rendering and `importmap-rails`.
-6. Use SMACSS, normalize CSS, MVP.css and plain CSS.
-7. Use native ES modules and Stimulus for JavaScript.
-8. Default testing choices:
-   - Personal projects use Minitest and fixtures.
-   - Work projects use RSpec and FactoryBot.
-   - In both, write lots of integration/request/system tests for core flows (including Turbo Stream and JSON endpoints where applicable).
-9. Prefer REST controllers and ERB partials for views.
-   9.5. API rules:
-   - REST-only and never GraphQL.
-   - Prefer the same controllers for HTML and JSON via `respond_to`.
-   - Use Jbuilder for JSON views (no inline JSON in controllers).
-   - Use token auth (Bearer) for API requests; sessions for web requests.
-   - Add pagination headers for JSON collection endpoints when paginating.
-   - Version the API when introducing breaking changes (prefer `/api/v1/...`).
-10. Consider accessibility and WCAG in suggestions.
-10.5. HTML structure:
-   - Prefer semantic HTML elements over divs.
-   - Personal projects: prefer classless HTML; add classes only when semantic selectors are insufficient.
-   - Work projects: follow team conventions but still use semantic elements as the foundation.
-10.6. Internationalization:
-   - NEVER hardcode user-facing strings in views, templates, or Ruby code.
-   - Personal projects: use Rails i18n (YAML files).
-   - Work projects: use gettext.
-   - All text displayed to users must go through the translation framework.
-11. Avoid npm unless Etienne explicitly asks for it.
-12. Mention Propshaft for assets and Kamal for personal deployments when
-    relevant.
-13. Always lint the output you write (code or text files).
-    - Run linters on all generated code before finishing.
-    - Fix all linting issues before considering the task complete.
-    - NEVER add linter disable comments (e.g., `rubocop:disable`, `eslint-disable`).
-    - If a file already contains linter disable comments, you do not need to remove them.
-14. Test-driven development and testing:
-    - All generated code must be driven from tests.
-    - If no test exists for the code you are about to write, create the test first.
-    - Always run tests after creating or changing code, and fix failing tests before finishing.
-15. Ask for clarification when the playbook does not define something.
-16. Always document classes and methods with YARD or similar comments.
-    - Keep documentation concise and direct.
-    - Speak directly about the thing (e.g., "Represents a card") not "Domain model for Card".
-    - For Rails controller actions: use `@action` (HTTP method) and `@route` (URL path) custom tags.
-17. Follow layout rules:
-    - Try to keep lines under 120 characters.
-    - Keep classes under roughly 100 lines.
-    - Group related private methods below a clear `private` section.
-18. Follow naming rules:
-    - Avoid abbreviations unless they are universal and obvious.
-19. Apply Ruby method semantics:
-    - Methods should have one clear purpose.
-    - Methods that end in `!` are unsafe and usually mutate state.
-    - Methods that end in `?` return booleans only and never change state.
-20. Architecture defaults:
-    - Default to rich models and concerns for domain logic.
-    - NEVER use service objects under any circumstances. They are always wrong.
-    - Always prefer domain models with methods and concerns.
-    - If domain models are insufficient, use ActiveJob workers running inline for orchestration.
-    - Apply "everything is CRUD": model state changes as resources; avoid custom controller actions.
-    - Use `Current` (`Current.user`, `Current.account`) for request context when relevant.
-    - Keep multi-tenancy scoping explicit; avoid `default_scope` for tenant filtering; always scope queries through the current tenant/account.
-    - Prefer Turbo Frames for lazy loading, modals, and inline editing.
-    - Prefer Turbo Streams for create/update/destroy and real-time updates; broadcast from models when appropriate.
-    - Prefer morphing for complex updates to preserve focus and scroll.
-    - Prefer HTTP caching (`fresh_when` / ETags) for index/show where applicable.
-    - Prefer `touch: true` + fragment/Russian doll caching for cache invalidation.
-    - Personal projects: prefer Solid Cache (database-backed).
-    - Personal projects: prefer Solid Cable (database-backed).
-    - Keep jobs thin: jobs orchestrate, models do the work.
-    - Use `_later` / `_now` naming for async vs sync operations.
-    - Use `deliver_later` for emails and slow work; avoid slow work in the request cycle.
-    - Personal projects: prefer Solid Queue (database-backed).
-    - Reset `Current` in jobs when you set it.
-21. Pull request workflow:
-    - When creating a PR, always target the personal fork when available (prefer personal fork over upstream).
-    - If ambiguity exists about the target repository, ask Etienne before proceeding.
-    - When choosing between `origin` and `upstream` branches, default to `origin` unless explicitly told otherwise.
-    - Never create PRs to the original/upstream project without explicit instruction from Etienne.
-21. Internationalization workflow:
-    - Use `rails-i18n` gem to avoid duplicating standard Rails translations.
-    - Avoid hardcoding any user-facing strings in views, models, or controllers.
-    - When adding new features, add translations for all supported locales simultaneously.
-    - Use semantic translation keys that reflect purpose, not content.
-    - Set database defaults for enum-like columns instead of controller/model defaults.
-    - Organize translations by namespace (app-wide, model-specific, shared enums).
-    - Use translation keys for model validation errors, not hardcoded strings.
-22. Branch protection:
-    - NEVER commit directly to the main or master branch.
-    - Always create a feature branch for changes.
-    - Use pull requests to merge changes into main or master.
+1. Keep output concise:
+   - Responses brief and to the point; plans scannable but complete.
+   - Never add unsolicited verbosity, caveats, or filler text.
+2. Lint all generated code before finishing:
+   - Run linters on every file touched.
+   - Fix all issues before considering the task done.
+   - NEVER add linter disable comments.
+3. Test-driven development:
+   - Write the test first; never generate code without a corresponding test.
+   - Run tests after every change and fix failures before finishing.
+4. Ask for clarification when the playbook does not cover something.
+5. Pull request workflow:
+   - Always target `origin` (personal fork) over upstream.
+   - If the target repository is ambiguous, ask before proceeding.
+   - Never create PRs to an upstream project without explicit instruction.
+6. Branch protection:
+   - NEVER commit directly to `main` or `master`.
+   - Always create a feature branch; merge via pull request.
