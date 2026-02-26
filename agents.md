@@ -182,18 +182,17 @@ Example:
 
 ```ruby
 # ❌ Don't: hard-coded collaborator
-class NotificationSender
-  def initialize(user)
-    @mailer = UserMailer
-    @user = user
+class Order < ApplicationRecord
+  def notify_customer
+    @mailer = OrderMailer
+    @mailer.confirmation(self).deliver_later
   end
 end
 
 # ✅ Do: inject the collaborator, default to the real one
-class NotificationSender
-  def initialize(user, mailer: UserMailer)
-    @mailer = mailer
-    @user = user
+class Order < ApplicationRecord
+  def notify_customer(mailer: OrderMailer)
+    mailer.confirmation(self).deliver_later
   end
 end
 ```
