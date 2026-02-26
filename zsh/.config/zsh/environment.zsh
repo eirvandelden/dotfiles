@@ -1,6 +1,5 @@
 # ~/.config/zsh/environment.zsh
 
-export ZDOTDIR="$HOME/.config/zsh"
 export RUBY_CONFIGURE_OPTS="--enable-yjit --with-jemalloc --disable-install-doc"
 
 # Native extensions (Ruby gems, etc.)
@@ -16,7 +15,6 @@ export PKG_CONFIG_PATH="$OPENSSL_DIR/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
 
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export DISABLE_SPRING=true
-export PATH="$PATH:/Users/etienne.vandelden/.rd/bin:/Users/etienne.vandelden/.local/bin"
 
 ## SQLite3
 # For compilers to find sqlite you may need to set:
@@ -44,14 +42,7 @@ if [[ -z "${__OP_PLUGINS_LOADED:-}" ]]; then
 fi
 
 # Ruby
-## chruby setup
-# source /opt/homebrew/opt/chruby/share/chruby/chruby.sh
-# source /opt/homebrew/opt/chruby/share/chruby/auto.sh
-# chruby $(cat ~/.ruby-version 2>/dev/null)
-
-## rv setup
-# NOTE: rv shell init is in .zshenv so it works for non-interactive shells.
-# We only load completions here for interactive shells.
+## rv completions (interactive shells only; init is in paths.zsh)
 eval "$(/opt/homebrew/bin/rv shell completions zsh)"
 
 ## Add trusted ./bin for safe projects
@@ -75,10 +66,3 @@ source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
 source /opt/homebrew/opt/chnode/share/chnode/auto.sh
 precmd_functions+=(chnode_auto)
 
-# Add utilities from brew
-export PATH="/opt/homebrew/opt/curl/bin:$PATH"
-
-# Homebrew environment
-# NOTE: brew shellenv is initialized in .zshenv before rv shell init.
-# Do NOT run it again here as it prepends Homebrew paths to PATH,
-# which would override rv's Ruby paths and break Ruby version management.
