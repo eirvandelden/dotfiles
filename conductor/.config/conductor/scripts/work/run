@@ -13,23 +13,15 @@ WORKSPACE_RAW="$(basename "$PWD")"
 # Check if .env.local exists
 if [ ! -f ".env.local" ]; then
   echo "ERROR: .env.local not found"
-  echo "Run the setup script first: ../dotfiles/cancun/conductor/.config/conductor/scripts/work/setup"
+  echo "Run the setup script first: ~/Developer/dotfiles/conductor/.config/conductor/scripts/work/setup"
   exit 1
 fi
 
-# Source .env.local to load workspace environment
+# Source .env.local to load workspace-specific overrides (PORT, DB_MYSQL_DATABASE)
 set -a
 # shellcheck source=/dev/null
 source .env.local
 set +a
-
-# Verify RAILS_ENV is set to docker
-if [ "$RAILS_ENV" != "docker" ]; then
-  echo "ERROR: RAILS_ENV is not set to 'docker'"
-  echo "Expected: RAILS_ENV=docker"
-  echo "Actual: RAILS_ENV=${RAILS_ENV}"
-  exit 1
-fi
 
 # Verify CONDUCTOR_PORT is set
 if [ -z "$CONDUCTOR_PORT" ]; then
