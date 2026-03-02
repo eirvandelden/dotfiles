@@ -60,9 +60,13 @@ main() {
     # shellcheck disable=SC1090
     source "$work_conf"
 
-    if [[ "${OS:-Unknown}" == "macOS" ]] && (( ${#BREW_MACOS_WORK[@]} > 0 )); then
-      log "brew: installing work packages (macOS)…"
-      install_brew_packages "${BREW_MACOS_WORK[@]}"
+    if [[ "${OS:-Unknown}" == "macOS" ]]; then
+      if declare -p BREW_MACOS_WORK >/dev/null 2>&1 && (( ${#BREW_MACOS_WORK[@]} > 0 )); then
+        log "brew: installing work packages (macOS)…"
+        install_brew_packages "${BREW_MACOS_WORK[@]}"
+      else
+        log "brew: no work packages configured (BREW_MACOS_WORK is empty or undefined)."
+      fi
     fi
   else
     log "brew: dotfiles-work not found, skipping work packages."

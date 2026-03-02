@@ -46,12 +46,12 @@ main() {
     # shellcheck disable=SC1090
     source "$work_conf"
 
-    if (( ${#STOW_WORK[@]} > 0 )); then
+    if declare -p STOW_WORK >/dev/null 2>&1 && (( ${#STOW_WORK[@]} > 0 )); then
       log "stow: applying work packages…"
       stow_configure "${HOME}/Developer/dotfiles-work" "${STOW_WORK[@]}"
       log "stow: work packages applied."
     else
-      log "stow: no work packages configured (STOW_WORK is empty)."
+      log "stow: no work packages configured (STOW_WORK is empty or undefined)."
     fi
   else
     log "stow: dotfiles-work not found, skipping work packages."
