@@ -39,6 +39,23 @@ main() {
   stow_configure "$root" "${STOW[@]}"
 
   log "stow: all configured packages applied."
+
+  local work_conf="${HOME}/Developer/dotfiles-work/packages.conf"
+  if [[ -f "$work_conf" ]]; then
+    log "stow: loading work packages from ${work_conf}…"
+    # shellcheck disable=SC1090
+    source "$work_conf"
+
+    if (( ${#STOW_WORK[@]} > 0 )); then
+      log "stow: applying work packages…"
+      stow_configure "${HOME}/Developer/dotfiles-work" "${STOW_WORK[@]}"
+      log "stow: work packages applied."
+    else
+      log "stow: no work packages configured (STOW_WORK is empty)."
+    fi
+  else
+    log "stow: dotfiles-work not found, skipping work packages."
+  fi
 }
 
 main "$@"

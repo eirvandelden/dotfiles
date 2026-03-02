@@ -54,6 +54,20 @@ main() {
     install_brew_packages "${BREW_LINUX[@]}"
   fi
 
+  local work_conf="${HOME}/Developer/dotfiles-work/packages.conf"
+  if [[ -f "$work_conf" ]]; then
+    log "brew: loading work packages from ${work_conf}…"
+    # shellcheck disable=SC1090
+    source "$work_conf"
+
+    if [[ "${OS:-Unknown}" == "macOS" ]] && (( ${#BREW_MACOS_WORK[@]} > 0 )); then
+      log "brew: installing work packages (macOS)…"
+      install_brew_packages "${BREW_MACOS_WORK[@]}"
+    fi
+  else
+    log "brew: dotfiles-work not found, skipping work packages."
+  fi
+
   log "brew: package install complete."
 }
 
