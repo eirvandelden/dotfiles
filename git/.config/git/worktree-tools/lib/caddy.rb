@@ -30,8 +30,6 @@ module WorktreeTools
     end
 
     def remove!
-      return unless @config.caddy_enabled?
-
       hostname = build_hostname
       config_file = caddy_file_path(hostname)
 

@@ -11,12 +11,17 @@ require "caddy"
 
 module WorktreeTools
   class CaddyDevTest < Minitest::Test
+    CONDUCTOR_ENV_KEYS = %w[CONDUCTOR_ROOT_PATH CONDUCTOR_PORT CONDUCTOR_WORKSPACE_NAME CONDUCTOR_WORKSPACE_PATH].freeze
+
     def setup
       @tmpdir = Dir.mktmpdir
       @caddy_config_dir = File.join(@tmpdir, "caddy")
+      @saved_conductor_env = CONDUCTOR_ENV_KEYS.to_h { |key| [ key, ENV[key] ] }
+      CONDUCTOR_ENV_KEYS.each { |key| ENV.delete(key) }
     end
 
     def teardown
+      CONDUCTOR_ENV_KEYS.each { |key| ENV[key] = @saved_conductor_env[key] }
       FileUtils.rm_rf(@tmpdir)
     end
 
@@ -57,13 +62,10 @@ module WorktreeTools
       Dir.glob(File.join(@caddy_config_dir, "*.caddy"))
     end
 
-    def without_conductor
-      saved = %w[CONDUCTOR_ROOT_PATH CONDUCTOR_PORT CONDUCTOR_WORKSPACE_NAME CONDUCTOR_WORKSPACE_PATH].map do |k|
-        [ k, ENV.delete(k) ]
-      end
-      yield
-    ensure
-      saved.each { |k, v| ENV[k] = v if v }
+    def caddy_instance(config, path)
+      caddy = CaddyDev.new(config, path)
+      caddy.define_singleton_method(:reload_caddy) { }
+      caddy
     end
 
     # --- setup! ---
@@ -77,7 +79,7 @@ module WorktreeTools
       YAML
 
       config = load_config(repo)
-      CaddyDev.new(config, repo).setup!
+      caddy_instance(config, repo).setup!
 
       assert_equal 1, caddy_files.size
     end
@@ -90,10 +92,8 @@ module WorktreeTools
           config_dir: #{@caddy_config_dir}
       YAML
 
-      without_conductor do
-        config = load_config(repo)
-        CaddyDev.new(config, repo).setup!
-      end
+      config = load_config(repo)
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "myapp.localhost"
@@ -108,10 +108,8 @@ module WorktreeTools
           config_dir: #{@caddy_config_dir}
       YAML
 
-      without_conductor do
-        config = load_config(worktree)
-        CaddyDev.new(config, worktree).setup!
-      end
+      config = load_config(worktree)
+      caddy_instance(config, worktree).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "mobile.myapp.localhost"
@@ -126,10 +124,8 @@ module WorktreeTools
           config_dir: #{@caddy_config_dir}
       YAML
 
-      without_conductor do
-        config = load_config(repo)
-        CaddyDev.new(config, repo).setup!
-      end
+      config = load_config(repo)
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "myapp.localhost"
@@ -144,10 +140,8 @@ module WorktreeTools
           config_dir: #{@caddy_config_dir}
       YAML
 
-      without_conductor do
-        config = load_config(repo)
-        CaddyDev.new(config, repo).setup!
-      end
+      config = load_config(repo)
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, ".localhost"
@@ -162,10 +156,8 @@ module WorktreeTools
           config_dir: #{@caddy_config_dir}
       YAML
 
-      without_conductor do
-        config = load_config(repo)
-        CaddyDev.new(config, repo).setup!
-      end
+      config = load_config(repo)
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "myapp.test"
@@ -181,10 +173,8 @@ module WorktreeTools
           base: 4567
       YAML
 
-      without_conductor do
-        config = load_config(repo)
-        CaddyDev.new(config, repo).setup!
-      end
+      config = load_config(repo)
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "4567"
@@ -199,7 +189,7 @@ module WorktreeTools
       YAML
 
       config = load_config(repo)
-      CaddyDev.new(config, repo).setup!
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "tls internal"
@@ -216,7 +206,7 @@ module WorktreeTools
       YAML
 
       config = load_config(repo)
-      CaddyDev.new(config, repo).setup!
+      caddy_instance(config, repo).setup!
 
       content = File.read(caddy_files.first)
       assert_includes content, "tls /path/to/cert.pem /path/to/key.pem"
@@ -231,7 +221,7 @@ module WorktreeTools
       YAML
 
       config = load_config(repo)
-      CaddyDev.new(config, repo).setup!
+      caddy_instance(config, repo).setup!
 
       assert_empty caddy_files
     end
@@ -247,9 +237,33 @@ module WorktreeTools
       YAML
 
       config = load_config(repo)
-      caddy = CaddyDev.new(config, repo)
+      caddy = caddy_instance(config, repo)
       caddy.setup!
       caddy.remove!
+
+      assert_empty caddy_files
+    end
+
+    def test_remove_deletes_existing_file_when_caddy_now_disabled
+      repo = setup_git_repo("myapp")
+      worktree_yml(repo, <<~YAML)
+        caddy:
+          enabled: true
+          config_dir: #{@caddy_config_dir}
+      YAML
+
+      enabled_config = load_config(repo)
+      caddy_instance(enabled_config, repo).setup!
+      assert_equal 1, caddy_files.size
+
+      worktree_yml(repo, <<~YAML)
+        caddy:
+          enabled: false
+          config_dir: #{@caddy_config_dir}
+      YAML
+
+      disabled_config = load_config(repo)
+      caddy_instance(disabled_config, repo).remove!
 
       assert_empty caddy_files
     end
@@ -263,7 +277,7 @@ module WorktreeTools
       YAML
 
       config = load_config(repo)
-      caddy = CaddyDev.new(config, repo)
+      caddy = caddy_instance(config, repo)
 
       caddy.remove! # should not raise
     end

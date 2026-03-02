@@ -1,20 +1,25 @@
 #!/usr/bin/env ruby
-require 'minitest/autorun'
-require 'tmpdir'
-require 'fileutils'
+require "minitest/autorun"
+require "tmpdir"
+require "fileutils"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
-require 'common'
-require 'detect'
-require 'config'
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "common"
+require "detect"
+require "config"
 
 module WorktreeTools
   class ConfigFindConfigFileTest < Minitest::Test
+    CONDUCTOR_ENV_KEYS = %w[CONDUCTOR_ROOT_PATH CONDUCTOR_PORT CONDUCTOR_WORKSPACE_NAME CONDUCTOR_WORKSPACE_PATH].freeze
+
     def setup
       @tmpdir = Dir.mktmpdir
+      @saved_conductor_env = CONDUCTOR_ENV_KEYS.to_h { |key| [ key, ENV[key] ] }
+      CONDUCTOR_ENV_KEYS.each { |key| ENV.delete(key) }
     end
 
     def teardown
+      CONDUCTOR_ENV_KEYS.each { |key| ENV[key] = @saved_conductor_env[key] }
       FileUtils.rm_rf(@tmpdir)
     end
 
@@ -22,13 +27,13 @@ module WorktreeTools
     #   repo/          <- main repo (has .git/)
     #   repo/mobile/   <- linked worktree
     def setup_regular_repo_with_worktree
-      repo = File.join(@tmpdir, 'repo')
+      repo = File.join(@tmpdir, "repo")
       FileUtils.mkdir_p(repo)
-      system('git', '-C', repo, 'init', '-q')
-      system('git', '-C', repo, 'commit', '--allow-empty', '-m', 'init', '-q')
+      system("git", "-C", repo, "init", "-q")
+      system("git", "-C", repo, "commit", "--allow-empty", "-m", "init", "-q")
 
-      worktree = File.join(@tmpdir, 'mobile')
-      system('git', '-C', repo, 'worktree', 'add', '-q', worktree, '-b', 'mobile')
+      worktree = File.join(@tmpdir, "mobile")
+      system("git", "-C", repo, "worktree", "add", "-q", worktree, "-b", "mobile")
 
       [ repo, worktree ]
     end
@@ -37,37 +42,49 @@ module WorktreeTools
     #   caren/          <- bare repo (no .git subdir, is itself the git dir)
     #   caren/mobile/   <- linked worktree inside the bare repo dir
     def setup_bare_repo_with_worktree
-      bare = File.join(@tmpdir, 'caren')
+      bare = File.join(@tmpdir, "caren")
       FileUtils.mkdir_p(bare)
-      system('git', '-C', bare, 'init', '--bare', '-q')
+      system("git", "-C", bare, "init", "--bare", "-q")
 
       # Seed the bare repo with a commit via a temp clone
-      clone = File.join(@tmpdir, 'clone')
-      system('git', 'clone', '-q', bare, clone)
-      system('git', '-C', clone, 'commit', '--allow-empty', '-m', 'init', '-q')
-      system('git', '-C', clone, 'push', '-q', 'origin', 'main')
+      clone = File.join(@tmpdir, "clone")
+      system("git", "clone", "-q", bare, clone)
+      system("git", "-C", clone, "commit", "--allow-empty", "-m", "init", "-q")
+      system("git", "-C", clone, "push", "-q", "origin", "main")
       FileUtils.rm_rf(clone)
 
-      worktree = File.join(bare, 'mobile')
-      system('git', '-C', bare, 'worktree', 'add', '-q', worktree, 'main')
+      worktree = File.join(bare, "mobile")
+      system("git", "-C", bare, "worktree", "add", "-q", worktree, "main")
 
       [ bare, worktree ]
     end
 
     def rails_structure(path)
-      FileUtils.mkdir_p(File.join(path, 'config'))
-      FileUtils.touch(File.join(path, 'Gemfile'))
-      FileUtils.touch(File.join(path, 'config', 'application.rb'))
-      FileUtils.touch(File.join(path, 'config.ru'))
+      FileUtils.mkdir_p(File.join(path, "config"))
+      FileUtils.touch(File.join(path, "Gemfile"))
+      FileUtils.touch(File.join(path, "config", "application.rb"))
+      FileUtils.touch(File.join(path, "config.ru"))
     end
 
     def worktree_yml(path, content)
-      File.write(File.join(path, '.worktree.yml'), content)
+      File.write(File.join(path, ".worktree.yml"), content)
     end
 
     def load_config(worktree_path)
       detector = ProjectDetector.new(worktree_path).detect!
       WorktreeConfig.new(worktree_path, detector).load!
+    end
+
+    def with_conductor_env(overrides)
+      original = overrides.keys.to_h { |key| [ key, ENV[key] ] }
+      overrides.each { |key, value| ENV[key] = value }
+      yield
+    ensure
+      original.each { |key, value| ENV[key] = value }
+    end
+
+    def assert_not(value, message = nil)
+      assert_equal(false, !!value, message)
     end
 
     # --- Regular repo: config in worktree root ---
@@ -79,7 +96,7 @@ module WorktreeTools
 
       config = load_config(worktree)
 
-      refute config.puma_dev_enabled?, 'puma-dev should be disabled'
+      assert_not config.puma_dev_enabled?, "puma-dev should be disabled"
     end
 
     # --- Regular repo: config in repo root (main worktree) ---
@@ -91,7 +108,7 @@ module WorktreeTools
 
       config = load_config(worktree)
 
-      refute config.puma_dev_enabled?, 'puma-dev should be disabled when config is in the git repo root'
+      assert_not config.puma_dev_enabled?, "puma-dev should be disabled when config is in the git repo root"
     end
 
     # --- Bare repo: config in bare repo root ---
@@ -103,7 +120,7 @@ module WorktreeTools
 
       config = load_config(worktree)
 
-      refute config.puma_dev_enabled?, 'puma-dev should be disabled when config is in the bare repo root'
+      assert_not config.puma_dev_enabled?, "puma-dev should be disabled when config is in the bare repo root"
     end
 
     # --- No config file: falls back to defaults ---
@@ -114,7 +131,46 @@ module WorktreeTools
 
       config = load_config(worktree)
 
-      assert config.puma_dev_enabled?, 'puma-dev should be enabled by default for rails projects'
+      assert config.puma_dev_enabled?, "puma-dev should be enabled by default for rails projects"
+    end
+
+    def test_caddy_enabled_rejects_invalid_name
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        caddy:
+          enabled: true
+          name: "invalid name"
+      YAML
+
+      assert_raises(ConfigError) { load_config(worktree) }
+    end
+
+    def test_caddy_enabled_requires_tls_cert_and_key_together
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        caddy:
+          enabled: true
+          tls_cert: /tmp/cert.pem
+      YAML
+
+      assert_raises(ConfigError) { load_config(worktree) }
+    end
+
+    def test_invalid_conductor_port_falls_back_to_base_port
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "not-a-number",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(repo)
+        assert_equal 3000, config.calculated_port(repo)
+      end
     end
   end
 end

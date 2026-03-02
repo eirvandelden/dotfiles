@@ -1,8 +1,8 @@
 #!/usr/bin/env rv run ruby
 
-require 'fileutils'
-require 'pathname'
-require 'open3'
+require "fileutils"
+require "pathname"
+require "open3"
 
 module WorktreeTools
   # Exit codes
@@ -26,7 +26,7 @@ module WorktreeTools
     end
 
     def debug(message)
-      return unless ENV['DEBUG']
+      return unless ENV["DEBUG"]
       $stderr.puts "debug: #{message}"
     end
 
@@ -44,14 +44,14 @@ module WorktreeTools
     end
 
     # Git helpers
-    def git_root(path = '.')
+    def git_root(path = ".")
       # Use array form to avoid shell injection
-      output, status = Open3.capture2('git', '-C', path.to_s, 'rev-parse', '--show-toplevel', err: '/dev/null')
+      output, status = Open3.capture2("git", "-C", path.to_s, "rev-parse", "--show-toplevel", err: "/dev/null")
       return nil if status.exitstatus != 0 || output.strip.empty?
       Pathname.new(output.strip)
     end
 
-    def worktree_name(path = '.')
+    def worktree_name(path = ".")
       repo_root = git_root(path)
       return nil unless repo_root
 
@@ -59,7 +59,7 @@ module WorktreeTools
       current_path.basename.to_s
     end
 
-    def main_worktree?(path = '.')
+    def main_worktree?(path = ".")
       repo_root = git_root(path)
       return false unless repo_root
 
@@ -69,35 +69,40 @@ module WorktreeTools
 
     # Conductor detection
     def in_conductor?
-      !ENV['CONDUCTOR_ROOT_PATH'].nil? && !ENV['CONDUCTOR_ROOT_PATH'].empty?
+      !ENV["CONDUCTOR_ROOT_PATH"].nil? && !ENV["CONDUCTOR_ROOT_PATH"].empty?
     end
 
     def conductor_root
       return nil unless in_conductor?
-      Pathname.new(ENV['CONDUCTOR_ROOT_PATH'])
+      Pathname.new(ENV["CONDUCTOR_ROOT_PATH"])
     end
 
     def conductor_workspace_path
       return nil unless in_conductor?
-      path = ENV['CONDUCTOR_WORKSPACE_PATH']
+      path = ENV["CONDUCTOR_WORKSPACE_PATH"]
       path ? Pathname.new(path) : nil
     end
 
     def conductor_port
       return nil unless in_conductor?
-      port = ENV['CONDUCTOR_PORT']
-      port ? port.to_i : nil
+      raw_port = ENV["CONDUCTOR_PORT"]
+      return nil if raw_port.nil? || raw_port.empty?
+
+      port = Integer(raw_port, exception: false)
+      return nil unless port && port.positive? && port <= 65_535
+
+      port
     end
 
     def conductor_workspace_name
       return nil unless in_conductor?
-      ENV['CONDUCTOR_WORKSPACE_NAME']
+      ENV["CONDUCTOR_WORKSPACE_NAME"]
     end
 
     # Command detection
     def command_exists?(command)
       # Use array form to avoid shell injection
-      _output, status = Open3.capture2('command', '-v', command.to_s, err: '/dev/null', out: '/dev/null')
+      _output, status = Open3.capture2("command", "-v", command.to_s, err: "/dev/null", out: "/dev/null")
       status.success?
     end
 
@@ -113,7 +118,7 @@ module WorktreeTools
       return nil if path.nil?
 
       path_str = path.to_s
-      if path_str.start_with?('~')
+      if path_str.start_with?("~")
         File.expand_path(path_str)
       elsif Pathname.new(path_str).absolute?
         path_str

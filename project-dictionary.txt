@@ -26,6 +26,7 @@ archlinux
 autorun
 betterspecs
 caddyfile
+caren
 callsites
 thoughtbot
 brew
