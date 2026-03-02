@@ -28,8 +28,10 @@ module WorktreeTools
     def setup_git_repo(name = "repo")
       path = File.join(@tmpdir, name)
       FileUtils.mkdir_p(path)
-      system("git", "-C", path, "init", "-q")
-      system("git", "-C", path, "commit", "--allow-empty", "-m", "init", "-q")
+      run_command("git", "-C", path, "init", "-q")
+      run_command("git", "-C", path, "config", "user.name", "Test User")
+      run_command("git", "-C", path, "config", "user.email", "test@example.com")
+      run_command("git", "-C", path, "commit", "--allow-empty", "-m", "init", "-q")
       rails_structure(path)
       path
     end
@@ -37,7 +39,7 @@ module WorktreeTools
     def setup_repo_with_linked_worktree(repo_name: "repo", worktree_name: "mobile")
       repo = setup_git_repo(repo_name)
       worktree = File.join(@tmpdir, worktree_name)
-      system("git", "-C", repo, "worktree", "add", "-q", worktree, "-b", worktree_name)
+      run_command("git", "-C", repo, "worktree", "add", "-q", worktree, "-b", worktree_name)
       rails_structure(worktree)
       [ repo, worktree ]
     end
@@ -66,6 +68,10 @@ module WorktreeTools
       caddy = CaddyDev.new(config, path)
       caddy.define_singleton_method(:reload_caddy) { }
       caddy
+    end
+
+    def run_command(*args)
+      assert system(*args), "Command failed: #{args.join(' ')}"
     end
 
     # --- setup! ---
@@ -244,11 +250,13 @@ module WorktreeTools
       assert_empty caddy_files
     end
 
-    def test_remove_deletes_existing_file_when_caddy_now_disabled
+    def test_remove_deletes_all_files_generated_for_worktree
       repo = setup_git_repo("myapp")
       worktree_yml(repo, <<~YAML)
         caddy:
           enabled: true
+          name: alpha
+          tld: test
           config_dir: #{@caddy_config_dir}
       YAML
 
@@ -258,7 +266,20 @@ module WorktreeTools
 
       worktree_yml(repo, <<~YAML)
         caddy:
+          enabled: true
+          name: beta
+          tld: localhost
+          config_dir: #{@caddy_config_dir}
+      YAML
+
+      renamed_config = load_config(repo)
+      caddy_instance(renamed_config, repo).setup!
+      assert_equal 2, caddy_files.size
+
+      worktree_yml(repo, <<~YAML)
+        caddy:
           enabled: false
+          name: gamma
           config_dir: #{@caddy_config_dir}
       YAML
 

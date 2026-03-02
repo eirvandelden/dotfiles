@@ -60,11 +60,31 @@ module WorktreeTools
     end
 
     def main_worktree?(path = ".")
-      repo_root = git_root(path)
-      return false unless repo_root
+      git_dir = git_absolute_dir(path)
+      common_dir = git_common_dir(path)
+      return false unless git_dir && common_dir
 
-      current_path = Pathname.new(File.expand_path(path))
-      current_path.realpath == repo_root.realpath
+      git_dir.realpath == common_dir.realpath
+    end
+
+    def git_absolute_dir(path = ".")
+      output, status = Open3.capture2("git", "-C", path.to_s, "rev-parse", "--absolute-git-dir", err: "/dev/null")
+      return nil if status.exitstatus != 0 || output.strip.empty?
+
+      Pathname.new(output.strip)
+    end
+
+    def git_common_dir(path = ".")
+      output, status = Open3.capture2("git", "-C", path.to_s, "rev-parse", "--git-common-dir", err: "/dev/null")
+      return nil if status.exitstatus != 0 || output.strip.empty?
+
+      common_dir = Pathname.new(output.strip)
+      return common_dir.realpath if common_dir.absolute?
+
+      base_path = Pathname.new(File.expand_path(path))
+      base_path.join(common_dir).realpath
+    rescue StandardError
+      nil
     end
 
     # Conductor detection

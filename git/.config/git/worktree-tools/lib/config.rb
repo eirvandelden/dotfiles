@@ -9,17 +9,18 @@ module WorktreeTools
   class WorktreeConfig
     include Helpers
 
-    attr_reader :path, :detector, :config
+    attr_reader :path, :detector, :config, :config_file
 
     def initialize(path = ".", detector = nil)
       @path = Pathname.new(File.expand_path(path))
       @detector = detector || ProjectDetector.new(@path).detect!
       @config = {}
+      @config_file = nil
     end
 
     def load!
-      config_file = find_config_file
-      file_config = config_file ? load_yaml(config_file) : {}
+      @config_file = find_config_file
+      file_config = @config_file ? load_yaml(@config_file) : {}
 
       @config = merge_with_defaults(file_config)
       expand_paths!
@@ -75,10 +76,15 @@ module WorktreeTools
       @config.dig("port", "base") || 3000
     end
 
+    def manual_port
+      @config.dig("port", "manual")
+    end
+
     def calculated_port(path)
       path = Pathname.new(File.expand_path(path))
 
       return conductor_port if in_conductor? && conductor_port
+      return manual_port if manual_port && same_path?(path, @path)
       return base_port if main_worktree?(path)
 
       worktree_name_str = worktree_name(path) || "default"
@@ -137,12 +143,8 @@ module WorktreeTools
     end
 
     def find_git_repo_root
-      output, status = Open3.capture2("git", "-C", @path.to_s, "rev-parse", "--git-common-dir", err: "/dev/null")
-      return nil unless status.success?
-
-      common_dir = Pathname.new(output.strip)
-      common_dir = @path.join(common_dir) unless common_dir.absolute?
-      common_dir = common_dir.realpath
+      common_dir = git_common_dir(@path)
+      return nil unless common_dir
 
       # Regular repos: common dir ends with .git, its parent is the repo root
       # Bare repos: common dir is the repo root itself
@@ -201,7 +203,8 @@ module WorktreeTools
           "config_dir" => File.expand_path("~/.config/caddy")
         },
         "port" => {
-          "base" => 3000
+          "base" => 3000,
+          "manual" => nil
         }
       }
     end
@@ -289,6 +292,7 @@ module WorktreeTools
         end
       end
 
+      validate_port!
       validate_caddy!
     end
 
@@ -342,6 +346,56 @@ module WorktreeTools
       return if caddy_config_dir.is_a?(String) && !caddy_config_dir.empty?
 
       raise ConfigError, "Caddy config directory is required when caddy is enabled"
+    end
+
+    def validate_port!
+      validate_base_port!
+      validate_manual_port!
+    end
+
+    def validate_base_port!
+      normalized_base_port = Integer(base_port, exception: false)
+      return if valid_port_value?(normalized_base_port)
+
+      raise ConfigError, "Invalid base port: #{base_port.inspect} (must be an integer between 1 and 65535)"
+    ensure
+      @config["port"]["base"] = normalized_base_port if normalized_base_port
+    end
+
+    def validate_manual_port!
+      return if @config.dig("port", "manual").nil?
+
+      unless config_from_worktree_root?
+        raise ConfigError, "Manual port is only allowed in .worktree.yml inside the current worktree root"
+      end
+
+      normalized_manual_port = Integer(@config.dig("port", "manual"), exception: false)
+      if valid_port_value?(normalized_manual_port)
+        @config["port"]["manual"] = normalized_manual_port
+        return
+      end
+
+      raise ConfigError, "Invalid manual port: #{@config.dig('port', 'manual').inspect} (must be an integer between 1 and 65535)"
+    end
+
+    def valid_port_value?(port)
+      port.is_a?(Integer) && port.positive? && port <= 65_535
+    end
+
+    def config_from_worktree_root?
+      return false unless @config_file
+
+      same_path?(@config_file, @path.join(".worktree.yml"))
+    end
+
+    def same_path?(left, right)
+      left_path = Pathname.new(left).expand_path
+      right_path = Pathname.new(right).expand_path
+      return left_path.realpath == right_path.realpath if left_path.exist? && right_path.exist?
+
+      left_path == right_path
+    rescue StandardError
+      false
     end
   end
 end

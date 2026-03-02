@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require "digest"
 require "tmpdir"
 require "fileutils"
 
@@ -29,11 +30,13 @@ module WorktreeTools
     def setup_regular_repo_with_worktree
       repo = File.join(@tmpdir, "repo")
       FileUtils.mkdir_p(repo)
-      system("git", "-C", repo, "init", "-q")
-      system("git", "-C", repo, "commit", "--allow-empty", "-m", "init", "-q")
+      run_command("git", "-C", repo, "init", "-q")
+      run_command("git", "-C", repo, "config", "user.name", "Test User")
+      run_command("git", "-C", repo, "config", "user.email", "test@example.com")
+      run_command("git", "-C", repo, "commit", "--allow-empty", "-m", "init", "-q")
 
       worktree = File.join(@tmpdir, "mobile")
-      system("git", "-C", repo, "worktree", "add", "-q", worktree, "-b", "mobile")
+      run_command("git", "-C", repo, "worktree", "add", "-q", worktree, "-b", "mobile")
 
       [ repo, worktree ]
     end
@@ -44,17 +47,19 @@ module WorktreeTools
     def setup_bare_repo_with_worktree
       bare = File.join(@tmpdir, "caren")
       FileUtils.mkdir_p(bare)
-      system("git", "-C", bare, "init", "--bare", "-q")
+      run_command("git", "-C", bare, "init", "--bare", "-q")
 
       # Seed the bare repo with a commit via a temp clone
       clone = File.join(@tmpdir, "clone")
-      system("git", "clone", "-q", bare, clone)
-      system("git", "-C", clone, "commit", "--allow-empty", "-m", "init", "-q")
-      system("git", "-C", clone, "push", "-q", "origin", "main")
+      run_command("git", "clone", "-q", bare, clone)
+      run_command("git", "-C", clone, "config", "user.name", "Test User")
+      run_command("git", "-C", clone, "config", "user.email", "test@example.com")
+      run_command("git", "-C", clone, "commit", "--allow-empty", "-m", "init", "-q")
+      run_command("git", "-C", clone, "push", "-q", "origin", "main")
       FileUtils.rm_rf(clone)
 
       worktree = File.join(bare, "mobile")
-      system("git", "-C", bare, "worktree", "add", "-q", worktree, "main")
+      run_command("git", "-C", bare, "worktree", "add", "-q", worktree, "main")
 
       [ bare, worktree ]
     end
@@ -85,6 +90,10 @@ module WorktreeTools
 
     def assert_not(value, message = nil)
       assert_equal(false, !!value, message)
+    end
+
+    def run_command(*args)
+      assert system(*args), "Command failed: #{args.join(' ')}"
     end
 
     # --- Regular repo: config in worktree root ---
@@ -134,6 +143,17 @@ module WorktreeTools
       assert config.puma_dev_enabled?, "puma-dev should be enabled by default for rails projects"
     end
 
+    def test_linked_worktree_uses_hashed_port
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      config = load_config(worktree)
+      expected_port = 3000 + (Digest::SHA256.hexdigest("mobile").to_i(16) % 1000)
+
+      assert_equal 3000, config.calculated_port(repo)
+      assert_equal expected_port, config.calculated_port(worktree)
+    end
+
     def test_caddy_enabled_rejects_invalid_name
       repo, worktree = setup_regular_repo_with_worktree
       rails_structure(worktree)
@@ -171,6 +191,31 @@ module WorktreeTools
         config = load_config(repo)
         assert_equal 3000, config.calculated_port(repo)
       end
+    end
+
+    def test_manual_port_from_worktree_config_overrides_hashing
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        port:
+          manual: 4123
+      YAML
+
+      config = load_config(worktree)
+
+      assert_equal 4123, config.calculated_port(worktree)
+      assert_equal 3000, config.calculated_port(repo)
+    end
+
+    def test_manual_port_is_rejected_in_shared_repo_config
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(repo, <<~YAML)
+        port:
+          manual: 4123
+      YAML
+
+      assert_raises(ConfigError) { load_config(worktree) }
     end
   end
 end
