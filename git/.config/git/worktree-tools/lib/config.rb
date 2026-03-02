@@ -1,5 +1,6 @@
 #!/usr/bin/env rv run ruby
 
+require 'digest'
 require 'yaml'
 require_relative 'common'
 require_relative 'detect'
@@ -74,15 +75,80 @@ module WorktreeTools
       @config.dig('port', 'base') || 3000
     end
 
+    def calculated_port(path)
+      path = Pathname.new(File.expand_path(path))
+
+      return conductor_port if in_conductor? && conductor_port
+      return base_port if main_worktree?(path)
+
+      worktree_name_str = worktree_name(path) || 'default'
+      hash_value = Digest::SHA256.hexdigest(worktree_name_str).to_i(16)
+      base_port + (hash_value % 1000)
+    end
+
+    def caddy_enabled?
+      @config.dig('caddy', 'enabled') == true
+    end
+
+    def caddy_name
+      @config.dig('caddy', 'name')
+    end
+
+    def caddy_tld
+      @config.dig('caddy', 'tld') || 'localhost'
+    end
+
+    def caddy_project_name
+      root = find_git_repo_root
+      root ? root.basename.to_s : project_name
+    end
+
+    def caddy_tls_cert
+      @config.dig('caddy', 'tls_cert')
+    end
+
+    def caddy_tls_key
+      @config.dig('caddy', 'tls_key')
+    end
+
+    def caddy_config_dir
+      @config.dig('caddy', 'config_dir')
+    end
+
     private
 
     def find_config_file
-      # Look for .worktree.yml in repo root
+      # Look for .worktree.yml in the worktree root first
       repo_root = @detector.project_info[:root]
-      return nil unless repo_root
+      if repo_root
+        config_path = repo_root.join('.worktree.yml')
+        return config_path if config_path.exist?
+      end
 
-      config_path = repo_root.join('.worktree.yml')
-      config_path.exist? ? config_path : nil
+      # For bare-repo worktree setups, the config lives in the git repository
+      # root (the common dir parent), not inside the worktree directory itself
+      git_repo_root = find_git_repo_root
+      if git_repo_root && git_repo_root != repo_root
+        config_path = git_repo_root.join('.worktree.yml')
+        return config_path if config_path.exist?
+      end
+
+      nil
+    end
+
+    def find_git_repo_root
+      output, status = Open3.capture2('git', '-C', @path.to_s, 'rev-parse', '--git-common-dir', err: '/dev/null')
+      return nil unless status.success?
+
+      common_dir = Pathname.new(output.strip)
+      common_dir = @path.join(common_dir) unless common_dir.absolute?
+      common_dir = common_dir.realpath
+
+      # Regular repos: common dir ends with .git, its parent is the repo root
+      # Bare repos: common dir is the repo root itself
+      common_dir.basename.to_s == '.git' ? common_dir.dirname : common_dir
+    rescue StandardError
+      nil
     end
 
     def load_yaml(file_path)
@@ -126,6 +192,14 @@ module WorktreeTools
           'domain' => 'test',
           'dir' => File.expand_path('~/.puma-dev')
         },
+        'caddy' => {
+          'enabled' => false,
+          'name' => build_caddy_name,
+          'tld' => 'localhost',
+          'tls_cert' => nil,
+          'tls_key' => nil,
+          'config_dir' => File.expand_path('~/.config/caddy')
+        },
         'port' => {
           'base' => 3000
         }
@@ -155,6 +229,14 @@ module WorktreeTools
       end
     end
 
+    def build_caddy_name
+      if in_conductor?
+        conductor_workspace_name || @detector.project_info[:name]
+      else
+        @detector.project_info[:name]
+      end
+    end
+
     def expand_paths!
       # Expand stow source_dir
       if @config.dig('stow', 'source_dir')
@@ -169,6 +251,12 @@ module WorktreeTools
       # Expand puma_dev dir
       if @config.dig('puma_dev', 'dir')
         @config['puma_dev']['dir'] = expand_path(@config['puma_dev']['dir'])
+      end
+
+      # Expand caddy paths
+      %w[config_dir tls_cert tls_key].each do |key|
+        next unless @config.dig('caddy', key)
+        @config['caddy'][key] = expand_path(@config['caddy'][key])
       end
     end
 

@@ -9,6 +9,7 @@ require 'detect'
 require 'config'
 require 'symlinker'
 require 'puma_dev'
+require 'caddy'
 
 module WorktreeTools
   class Setup
@@ -55,6 +56,13 @@ module WorktreeTools
       if config.puma_dev_enabled?
         puma_dev = PumaDev.new(config, @path)
         puma_dev.setup!
+        log ""
+      end
+
+      # Setup Caddy
+      if config.caddy_enabled?
+        caddy = CaddyDev.new(config, @path)
+        caddy.setup!
         log ""
       end
 
