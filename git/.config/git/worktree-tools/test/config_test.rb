@@ -193,6 +193,25 @@ module WorktreeTools
       end
     end
 
+    def test_manual_port_from_worktree_config_overrides_conductor_port
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        port:
+          manual: 4123
+      YAML
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "5678",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert_equal 4123, config.calculated_port(worktree)
+      end
+    end
+
     def test_manual_port_from_worktree_config_overrides_hashing
       repo, worktree = setup_regular_repo_with_worktree
       rails_structure(worktree)

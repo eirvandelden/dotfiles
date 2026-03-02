@@ -83,8 +83,8 @@ module WorktreeTools
     def calculated_port(path)
       path = Pathname.new(File.expand_path(path))
 
-      return conductor_port if in_conductor? && conductor_port
       return manual_port if manual_port && same_path?(path, @path)
+      return conductor_port if in_conductor? && conductor_port
       return base_port if main_worktree?(path)
 
       worktree_name_str = worktree_name(path) || "default"
