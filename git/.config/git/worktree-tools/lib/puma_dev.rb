@@ -1,6 +1,5 @@
 #!/usr/bin/env rv run ruby
 
-require 'digest'
 require_relative 'common'
 require_relative 'config'
 
@@ -71,20 +70,7 @@ module WorktreeTools
     end
 
     def calculate_port
-      # Conductor takes precedence
-      return conductor_port if in_conductor? && conductor_port
-
-      # Main worktree uses base_port
-      if main_worktree?(@path)
-        return @config.base_port
-      end
-
-      # Feature worktrees use hash-based stable port offset
-      worktree_name_str = worktree_name(@path) || 'default'
-      hash_value = Digest::SHA256.hexdigest(worktree_name_str).to_i(16)
-      offset = hash_value % 1000
-
-      @config.base_port + offset
+      @config.calculated_port(@path)
     end
 
     def create_port_symlink(symlink_path, port)

@@ -1,6 +1,4 @@
 #!/usr/bin/env rv run ruby
-# frozen_string_literal: true
-
 # Add lib directory to load path
 $LOAD_PATH.unshift(File.expand_path('lib', __dir__))
 
@@ -9,6 +7,7 @@ require 'detect'
 require 'config'
 require 'symlinker'
 require 'puma_dev'
+require 'caddy'
 
 module WorktreeTools
   class Remove
@@ -34,6 +33,11 @@ module WorktreeTools
         puma_dev.remove!
         log ""
       end
+
+      # Remove Caddy config even when currently disabled in config.
+      caddy = CaddyDev.new(config, @path)
+      caddy.remove!
+      log ""
 
       # Remove symlinks via Stow
       if config.stow_enabled?
