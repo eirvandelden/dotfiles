@@ -1,12 +1,12 @@
 #!/usr/bin/env rv run ruby
-require_relative 'common'
-require_relative 'config'
+require_relative "common"
+require_relative "config"
 
 module WorktreeTools
   class CaddyDev
     include Helpers
 
-    def initialize(config, path = '.')
+    def initialize(config, path = ".")
       @config = config
       @path = Pathname.new(File.expand_path(path))
     end
@@ -46,7 +46,15 @@ module WorktreeTools
     private
 
     def build_hostname
-      "#{@config.caddy_name}.#{@config.caddy_project_name}.#{@config.caddy_tld}"
+      if main_hostname?
+        "#{@config.caddy_project_name}.#{@config.caddy_tld}"
+      else
+        "#{@config.caddy_name}.#{@config.caddy_project_name}.#{@config.caddy_tld}"
+      end
+    end
+
+    def main_hostname?
+      @config.caddy_name == @config.caddy_project_name || @config.caddy_name == "main"
     end
 
     def caddy_file_path(hostname)
@@ -73,21 +81,21 @@ module WorktreeTools
     end
 
     def reload_caddy
-      return unless command_exists?('caddy')
+      return unless command_exists?("caddy")
 
       caddyfile = find_caddyfile
       return unless caddyfile
 
-      _output, status = Open3.capture2('caddy', 'reload', '--config', caddyfile)
+      _output, status = Open3.capture2("caddy", "reload", "--config", caddyfile)
       warn "Failed to reload Caddy - you may need to reload manually" unless status.success?
     end
 
     def find_caddyfile
       [
-        File.expand_path('~/.config/caddy/Caddyfile'),
-        '/etc/caddy/Caddyfile',
-        '/usr/local/etc/caddy/Caddyfile',
-        '/opt/homebrew/etc/caddy/Caddyfile'
+        File.expand_path("~/.config/caddy/Caddyfile"),
+        "/etc/caddy/Caddyfile",
+        "/usr/local/etc/caddy/Caddyfile",
+        "/opt/homebrew/etc/caddy/Caddyfile"
       ].find { |f| File.exist?(f) }
     end
   end

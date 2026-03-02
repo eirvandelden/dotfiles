@@ -1,43 +1,51 @@
 #!/usr/bin/env ruby
-require 'minitest/autorun'
-require 'tmpdir'
-require 'fileutils'
+require "minitest/autorun"
+require "tmpdir"
+require "fileutils"
 
-$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
-require 'common'
-require 'detect'
-require 'config'
-require 'caddy'
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "common"
+require "detect"
+require "config"
+require "caddy"
 
 module WorktreeTools
   class CaddyDevTest < Minitest::Test
     def setup
       @tmpdir = Dir.mktmpdir
-      @caddy_config_dir = File.join(@tmpdir, 'caddy')
+      @caddy_config_dir = File.join(@tmpdir, "caddy")
     end
 
     def teardown
       FileUtils.rm_rf(@tmpdir)
     end
 
-    def setup_git_repo(name = 'repo')
+    def setup_git_repo(name = "repo")
       path = File.join(@tmpdir, name)
       FileUtils.mkdir_p(path)
-      system('git', '-C', path, 'init', '-q')
-      system('git', '-C', path, 'commit', '--allow-empty', '-m', 'init', '-q')
+      system("git", "-C", path, "init", "-q")
+      system("git", "-C", path, "commit", "--allow-empty", "-m", "init", "-q")
       rails_structure(path)
       path
     end
 
+    def setup_repo_with_linked_worktree(repo_name: "repo", worktree_name: "mobile")
+      repo = setup_git_repo(repo_name)
+      worktree = File.join(@tmpdir, worktree_name)
+      system("git", "-C", repo, "worktree", "add", "-q", worktree, "-b", worktree_name)
+      rails_structure(worktree)
+      [ repo, worktree ]
+    end
+
     def rails_structure(path)
-      FileUtils.mkdir_p(File.join(path, 'config'))
-      FileUtils.touch(File.join(path, 'Gemfile'))
-      FileUtils.touch(File.join(path, 'config', 'application.rb'))
-      FileUtils.touch(File.join(path, 'config.ru'))
+      FileUtils.mkdir_p(File.join(path, "config"))
+      FileUtils.touch(File.join(path, "Gemfile"))
+      FileUtils.touch(File.join(path, "config", "application.rb"))
+      FileUtils.touch(File.join(path, "config.ru"))
     end
 
     def worktree_yml(path, content)
-      File.write(File.join(path, '.worktree.yml'), content)
+      File.write(File.join(path, ".worktree.yml"), content)
     end
 
     def load_config(worktree_path)
@@ -46,7 +54,7 @@ module WorktreeTools
     end
 
     def caddy_files
-      Dir.glob(File.join(@caddy_config_dir, '*.caddy'))
+      Dir.glob(File.join(@caddy_config_dir, "*.caddy"))
     end
 
     def without_conductor
@@ -74,10 +82,8 @@ module WorktreeTools
       assert_equal 1, caddy_files.size
     end
 
-    def test_hostname_is_derived_from_worktree_and_project_name
-      # For a regular (non-bare) git repo, caddy_name and caddy_project_name
-      # are both the repo directory name, so hostname = <name>.<name>.<tld>
-      repo = setup_git_repo('myapp')
+    def test_main_worktree_hostname_uses_project_only
+      repo = setup_git_repo("myapp")
       worktree_yml(repo, <<~YAML)
         caddy:
           enabled: true
@@ -90,7 +96,44 @@ module WorktreeTools
       end
 
       content = File.read(caddy_files.first)
-      assert_includes content, 'myapp.myapp.localhost'
+      assert_includes content, "myapp.localhost"
+      assert_nil content.match(/myapp\.myapp\.localhost/)
+    end
+
+    def test_feature_worktree_hostname_uses_worktree_and_project
+      repo, worktree = setup_repo_with_linked_worktree(repo_name: "myapp", worktree_name: "mobile")
+      worktree_yml(repo, <<~YAML)
+        caddy:
+          enabled: true
+          config_dir: #{@caddy_config_dir}
+      YAML
+
+      without_conductor do
+        config = load_config(worktree)
+        CaddyDev.new(config, worktree).setup!
+      end
+
+      content = File.read(caddy_files.first)
+      assert_includes content, "mobile.myapp.localhost"
+    end
+
+    def test_main_named_worktree_can_use_project_hostname
+      repo = setup_git_repo("myapp")
+      worktree_yml(repo, <<~YAML)
+        caddy:
+          enabled: true
+          name: main
+          config_dir: #{@caddy_config_dir}
+      YAML
+
+      without_conductor do
+        config = load_config(repo)
+        CaddyDev.new(config, repo).setup!
+      end
+
+      content = File.read(caddy_files.first)
+      assert_includes content, "myapp.localhost"
+      assert_nil content.match(/main\.myapp\.localhost/)
     end
 
     def test_tld_defaults_to_localhost
@@ -107,11 +150,11 @@ module WorktreeTools
       end
 
       content = File.read(caddy_files.first)
-      assert_includes content, '.localhost'
+      assert_includes content, ".localhost"
     end
 
     def test_tld_can_be_overridden
-      repo = setup_git_repo('myapp')
+      repo = setup_git_repo("myapp")
       worktree_yml(repo, <<~YAML)
         caddy:
           enabled: true
@@ -125,7 +168,7 @@ module WorktreeTools
       end
 
       content = File.read(caddy_files.first)
-      assert_includes content, 'myapp.myapp.test'
+      assert_includes content, "myapp.test"
     end
 
     def test_setup_file_contains_port
@@ -144,7 +187,7 @@ module WorktreeTools
       end
 
       content = File.read(caddy_files.first)
-      assert_includes content, '4567'
+      assert_includes content, "4567"
     end
 
     def test_setup_uses_tls_internal_when_no_cert_configured
@@ -159,7 +202,7 @@ module WorktreeTools
       CaddyDev.new(config, repo).setup!
 
       content = File.read(caddy_files.first)
-      assert_includes content, 'tls internal'
+      assert_includes content, "tls internal"
     end
 
     def test_setup_uses_cert_files_when_configured
@@ -176,7 +219,7 @@ module WorktreeTools
       CaddyDev.new(config, repo).setup!
 
       content = File.read(caddy_files.first)
-      assert_includes content, 'tls /path/to/cert.pem /path/to/key.pem'
+      assert_includes content, "tls /path/to/cert.pem /path/to/key.pem"
     end
 
     def test_setup_skipped_when_disabled

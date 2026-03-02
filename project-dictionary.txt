@@ -23,7 +23,9 @@ XDG
 XWayland
 Zed
 archlinux
+autorun
 betterspecs
+caddyfile
 callsites
 thoughtbot
 brew
