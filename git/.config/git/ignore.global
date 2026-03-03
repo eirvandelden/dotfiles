@@ -136,6 +136,9 @@ bower.json
 # Ignore pow environment settings
 .powenv
 
+# Ignore puma-dev environment settings
+.pumadev
+
 # Ignore Byebug command history file.
 .byebug_history
 
