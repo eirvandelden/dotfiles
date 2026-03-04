@@ -628,7 +628,7 @@ end
 
 ### 10.3 UI Layout and Actions
 
-Based on Apple Human Interface Guidelines (OS X 2014 edition).
+Based on Apple Human Interface Guidelines (OS X 2014 edition). Button placement rules from [a guide on Mac OS X dialog button placement](https://www.tempel.org/DialogButtonPlacement).
 
 **Button placement and directionality**
 
