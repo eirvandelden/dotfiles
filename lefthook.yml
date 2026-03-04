@@ -1,10 +1,14 @@
 pre-commit:
   parallel: true
   commands:
-    csslint:
+    stylelint:
       tags: css linter
       glob: "*.{css,scss}"
-      run: yarn stylelint {push_files}
+      run: yarn stylelint {staged_files}
+    browserslist:
+      tags: css browserslist
+      glob: ".browserslistrc"
+      run: npx browserslist
     erb_lint:
       tags: erb style
       glob: "*.{erb}"
@@ -73,11 +77,15 @@ pre-push:
         Upgrade vulnerable dependencies if you can.
         If you're in a hurry to push, use the `--no-verify` git flag.
         If you need to 🚩 ignore dependencies in the longer-term 🚩 see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
-    csslint:
-      run: yarn stylelint {staged_files}
+    stylelint:
+      run: yarn stylelint {push_files}
       tags: css linter
       glob:
         - "*.{css,scss}"
+    browserslist:
+      tags: css browserslist
+      glob: ".browserslistrc"
+      run: npx browserslist
     erb_lint:
       tags: linter
       glob: "*.erb"
