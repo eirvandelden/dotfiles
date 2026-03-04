@@ -46,7 +46,9 @@ The practices in this playbook are shaped by:
 - Longer names are fine in less used code.
 - Default to rich domain models:
   - Business logic lives in models, not in separate service classes.
-  - NEVER use service objects. Service objects are NOT the correct pattern in any situation. If something feels like it needs orchestration, use these patterns instead (in order of preference):
+  - NEVER use service objects. Service objects are NOT the correct pattern in any situation.
+    If something feels like it needs orchestration, use these patterns instead
+    (in order of preference):
     - A model method (always try this first)
     - A concern (for horizontal behaviour shared across models)
     - A state record (see 7.1 for modeling state transitions as resources)
@@ -468,12 +470,15 @@ end
   - Represent state transitions as associated records (e.g. `Closure`) instead of boolean columns like `closed: true`.
   - Use `where.missing(:association)` / joins-based scopes for “open/closed” style querying.
 - Use `Current` for request context:
-  - Use `Current.user` / `Current.account` for request-scoped defaults and model methods that need the acting user/account.
+  - Use `Current.user` / `Current.account` for request-scoped defaults and
+    model methods that need the acting user/account.
 - Async vs sync side effects naming:
-  - Use `_later` for job-enqueued versions and `_now` for synchronous versions (`notify_recipients_later` vs `notify_recipients_now`).
+  - Use `_later` for job-enqueued versions and `_now` for synchronous versions
+    (`notify_recipients_later` vs `notify_recipients_now`).
 - Everything is CRUD (modeling discipline):
   - Prefer expressing “actions” as resources (state records, join models, etc.) and exposing them via REST routes.
-  - Avoid inventing custom controller actions for state transitions; model them as nested resources and use POST/DELETE/PATCH appropriately.
+  - Avoid inventing custom controller actions for state transitions; model them
+    as nested resources and use POST/DELETE/PATCH appropriately.
   - Cross-reference: 1.1 “Apply everything is CRUD” and 11.1 “API design” (REST-only, respond_to).
 
 Example (state as records and horizontal behaviour):
@@ -600,7 +605,8 @@ end
   - Use gettext.
 - Personal projects always support Dutch (`nl`), English (`en`), and Italian (`it`).
 - Default to English text when another language is not specified.
-- Use the `rails-i18n` gem for default Rails framework translations (date/time formats, validation messages, helpers, etc.).
+- Use the `rails-i18n` gem for default Rails framework translations
+  (date/time formats, validation messages, helpers, etc.).
 - Use the `i18n-tasks` gem for translation management and testing in development/test groups.
 - Namespace translations logically:
   - App-wide translations at root level (e.g., `app_name`, `navigation`).
@@ -625,6 +631,80 @@ end
   ```ruby
   config.i18n.fallbacks = true
   ```
+
+### 10.3 UI Layout and Actions
+
+Based on Apple's macOS dialog guidance and the referenced dialog placement guide:
+[Correct button placement in confirmation dialogs on Mac OS X](https://www.tempel.org/DialogButtonPlacement).
+
+Rule precedence (highest to lowest):
+
+- Safety rules override layout preferences.
+- Dialog placement rules override generic page-level conventions.
+- Control semantics (`<a>` vs `<button>`) follow whether the action navigates.
+
+These rules apply to user-facing action patterns across the UI, including
+modal dialogs, sheets, and page-level action groups:
+
+- The rightmost button continues the action the user invoked.
+- The button immediately to its left is `Cancel` and aborts the action.
+- If a third dismissal button exists, place it left of `Cancel`.
+- Pressing `Esc` must always trigger `Cancel`.
+- Pressing `Return` must trigger the safest operation for the context:
+  - If the action is destructive and there is no undo, default to `Cancel`.
+  - Otherwise, default to the preferred continuation action.
+- Label buttons with verbs (`Delete`, `Send`, `Proceed`, `Save`).
+- Avoid `OK`, `Yes`, and `No` labels in confirmation dialogs.
+- Back/Cancel control type:
+  - Use `<a>` when Cancel/Back navigates to another page or URL.
+  - Use `<button type="button">` when Cancel dismisses or resets in-place UI.
+
+**Color semantics**
+
+- Destructive actions (delete, remove, destroy) are red.
+- Mutating actions (change, update, edit state) are orange.
+- Primary constructive actions (save, publish, confirm) use the default
+  primary style (primary color/filled).
+
+**Forgiveness and reversibility**
+
+Prefer reversible actions and design safety nets (undo, revert) where possible.
+Before an irreversible destructive action, require explicit confirmation.
+Never silently destroy data.
+
+**Default / primary action styling**
+
+The primary constructive action (rightmost button) is styled as a
+filled/prominent button (blue by convention).
+It is activated by the Return key, so it must always be the safest forward
+action for that context.
+Never make a destructive action the default.
+
+**Confirmation dialogs for destructive actions**
+
+Use a modal confirmation when an action is irreversible.
+Name the confirm button with the action verb (`Delete`, not `OK`).
+Describe what will happen (for example: `Delete this board? This cannot be undone.`).
+Avoid vague prompts such as `Are you sure?`.
+In destructive confirmations, `Cancel` is the default Return-key action.
+
+**Progressive disclosure**
+
+Show only the controls needed for the current task.
+Reveal advanced options, secondary actions, and edge-case settings on demand.
+
+**Minimize modes**
+
+Prefer inline editing for single-field changes.
+When using the Rails show/edit split, keep the edit view visually close to the
+show view so users feel they are in the same place.
+Always provide a clear Cancel path back to show.
+Avoid nesting modes inside other modes.
+
+**Immediate feedback**
+
+Every user action should produce immediate visible feedback.
+Never leave users uncertain about whether an action succeeded.
 
 ## 11. API Design
 
