@@ -626,6 +626,54 @@ end
   config.i18n.fallbacks = true
   ```
 
+### 10.3 UI Layout and Actions
+
+Based on Apple Human Interface Guidelines (OS X 2014 edition).
+
+**Button placement and directionality**
+
+- Actions that propel the user forward (save, submit, confirm, navigate to another object) are on the **right**. Safe actions are grouped on the right.
+- Actions that stop a flow or take the user back (cancel, back) are on the **left**. Unsafe/destructive actions are grouped on the left.
+- The rightmost button initiates the primary action; the button immediately to its left is Cancel.
+- The Return key performs the safest operation — it may abort or continue depending on context (for destructive actions without undo, Return should trigger Cancel, not the destructive action).
+- Delete is always a `<button>`, never a link.
+- Back/Cancel is always an `<a>` link, never a button.
+- When Delete and Cancel/Back are grouped together, they are both on the left, in this order: Cancel/Back first, Delete second. Delete sits in the "off" position, requiring more deliberate effort to select.
+
+**Color semantics**
+
+- Destructive actions (delete, remove, destroy) are red.
+- Mutating actions (change, update, edit state) are orange.
+- Primary constructive actions (save, publish, confirm) use the default primary style (blue/filled).
+
+**Forgiveness and reversibility**
+
+Prefer reversible actions; design safety nets (undo, revert where applicable). Before an irreversible destructive action, require explicit confirmation. Never silently destroy data.
+
+**Action-verb button labels**
+
+Buttons always use action verbs: _Delete_, _Save_, _Publish_, _Archive_. Never use _OK_, _Yes_, or _No_. Cancel is always called "Cancel".
+
+**Default / primary action styling**
+
+The primary constructive action (rightmost button) is styled as a filled/prominent button (blue by convention). It is activated by the Return key — so it must always be the safest forward action. Never make a destructive action the default.
+
+**Confirmation dialogs for destructive actions**
+
+Use a modal confirmation only when an action is irreversible. Name the confirm button with the action verb: _Delete_, not _OK_. Describe what will happen: "Delete this board? This cannot be undone." Never ask "Are you sure?" — it adds no information. In a destructive confirmation, Cancel is the default (Return key) button, not the destructive one.
+
+**Progressive disclosure**
+
+Show only the controls needed for the current task. Reveal advanced options, secondary actions, or edge-case settings on demand — behind a disclosure widget, a secondary pane, or a subsequent step.
+
+**Minimize modes**
+
+Prefer inline editing for individual field changes. When the Rails show/edit split is used (the default), keep the edit view visually close to the show view — the user should feel they are in the same place. Always provide a Cancel link back to show. Never nest modes within a mode (e.g. an "edit section" inside an edit page).
+
+**Immediate feedback**
+
+Every user action produces immediate visible feedback. Never leave users uncertain about whether an action succeeded.
+
 ## 11. API Design
 
 ### 11.1 API design
