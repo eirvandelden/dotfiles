@@ -126,7 +126,7 @@
   },
 
   // Predictions
-  "show_edit_predictions": true,
+  "show_edit_predictions": false,
   "inline_code_actions": true,
 
   //
