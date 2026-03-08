@@ -406,6 +406,10 @@ end
 ### 5.2 Style
 
 - Think in behaviour driven terms, even when using Minitest.
+- Group related tests using nested classes instead of comment headers:
+  - Use inner classes (`class WhenClosed < ActiveSupport::TestCase`) to create
+    context groupings, mirroring RSpec's `context` blocks.
+  - Never use comment headers (e.g. `# === given X ===`) to group tests.
 - Focus on observable behaviour and outcomes.
 - Write lots of integration tests (both personal and work):
   - Prefer request/integration/system tests for core flows.
