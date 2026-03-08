@@ -21,11 +21,11 @@ if [ -f "config/application.rb" ] && [ -f "Gemfile" ]; then
   # Check for Procfile.dev
   elif [ -f "Procfile.dev" ]; then
     echo "Using Procfile.dev"
-    exec bundle exec foreman start -f Procfile.dev -p "${PORT}"
+    exec foreman start -f Procfile.dev -p "${PORT}"
   # Fallback to rails server
   else
     echo "Using rails server"
-    exec bundle exec rails server -p "${PORT}"
+    exec rails server -p "${PORT}"
   fi
 fi
 

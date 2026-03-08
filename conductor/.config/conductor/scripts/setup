@@ -69,20 +69,20 @@ if [ "$RAILS_PROJECT" = true ]; then
   echo ""
   echo "Installing dependencies..."
   if [ -f "Gemfile.lock" ]; then
-    bundle install --quiet
+    rv ci
   else
     echo "No Gemfile.lock found, running bundle install for the first time..."
-    bundle install
+    rv ci
   fi
 
   # Setup database
   echo ""
   echo "Setting up database..."
-  if bundle exec rails db:version >/dev/null 2>&1; then
+  if rails db:version >/dev/null 2>&1; then
     echo "Database already exists: ${DATABASE_NAME}"
   else
     echo "Creating database: ${DATABASE_NAME}"
-    bundle exec rails db:prepare
+    rails db:prepare
   fi
 fi
 

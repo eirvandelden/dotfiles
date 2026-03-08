@@ -174,7 +174,7 @@ migrations:
     bundle:
       priority: 1
       glob: "Gemfile*"
-      run: bundle install
+      run: rv ci
     migrate:
       priority: 2
       glob: "db/migrations/*"
