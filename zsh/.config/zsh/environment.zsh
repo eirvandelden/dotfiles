@@ -45,6 +45,20 @@ fi
 ## rv completions (interactive shells only; init is in paths.zsh)
 eval "$(/opt/homebrew/bin/rv shell completions zsh)"
 
+## Add trusted ./bin for safe projects
+function set_local_bin_path() {
+  export PATH="${1:-""}`echo "$PATH"|sed -e 's,[^:]*\.git/[^:]*bin:,,g'`"
+}
+
+function add_trusted_local_bin_to_path() {
+  if [[ -d "$PWD/.git/safe" ]]; then
+    set_local_bin_path "$PWD/.git/safe/../../bin:"
+  fi
+}
+
+if [[ -n "$ZSH_VERSION" && "$preexec_functions" != *add_trusted_local_bin_to_path* ]]; then
+  preexec_functions+=("add_trusted_local_bin_to_path")
+fi
 
 # Javascript
 ## chnode setup

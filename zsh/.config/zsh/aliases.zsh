@@ -40,8 +40,10 @@ alias dlog="tail -f log/development.log | tspin"
 
 # Ruby
 
+## Bundler
 alias bi='MAKE="make --jobs $(sysctl -n hw.ncpu)" rv ci; solargraph'
-alias audit="bundler-audit update; bundler-audit check"
+alias be="echo Use a .git/safe directory instead for binstubs"
+alias audit="bundle audit update; bundle audit check"
 
 alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
