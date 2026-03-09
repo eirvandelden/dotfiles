@@ -166,7 +166,7 @@ module WorktreeTools
     end
 
     def build_defaults
-      repo_root = @detector.project_info[:root]
+      repo_root = find_git_repo_root || @detector.project_info[:root]
 
       # Default source dir based on environment
       default_source_dir = if in_conductor?
@@ -241,25 +241,27 @@ module WorktreeTools
     end
 
     def expand_paths!
+      base_dir = @config_file ? @config_file.dirname : @path
+
       # Expand stow source_dir
       if @config.dig("stow", "source_dir")
-        @config["stow"]["source_dir"] = expand_path(@config["stow"]["source_dir"], @path)
+        @config["stow"]["source_dir"] = expand_path(@config["stow"]["source_dir"], base_dir)
       end
 
       # Expand stow target
       if @config.dig("stow", "target")
-        @config["stow"]["target"] = expand_path(@config["stow"]["target"], @path)
+        @config["stow"]["target"] = expand_path(@config["stow"]["target"], base_dir)
       end
 
       # Expand puma_dev dir
       if @config.dig("puma_dev", "dir")
-        @config["puma_dev"]["dir"] = expand_path(@config["puma_dev"]["dir"])
+        @config["puma_dev"]["dir"] = expand_path(@config["puma_dev"]["dir"], base_dir)
       end
 
       # Expand caddy paths
       %w[config_dir tls_cert tls_key].each do |key|
         next unless @config.dig("caddy", key)
-        @config["caddy"][key] = expand_path(@config["caddy"][key])
+        @config["caddy"][key] = expand_path(@config["caddy"][key], base_dir)
       end
     end
 

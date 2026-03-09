@@ -4,6 +4,36 @@
 
 set -e
 
+workspace_name() {
+  if [ -n "${CONDUCTOR_WORKSPACE_NAME:-}" ]; then
+    printf '%s\n' "${CONDUCTOR_WORKSPACE_NAME}"
+  else
+    basename "$PWD"
+  fi
+}
+
+workspace_database_name() {
+  local worktree_name repo_root project_name
+  worktree_name="$(workspace_name)"
+  repo_root="$(git rev-parse --show-toplevel)"
+  project_name="$(basename "${repo_root}")"
+  printf '%s\n' "${project_name}_${worktree_name}_development"
+}
+
+upsert_env_local() {
+  local key value tmp_file
+  key="$1"
+  value="$2"
+  tmp_file="$(mktemp)"
+
+  if [ -f ".env.local" ]; then
+    grep -v "^${key}=" .env.local > "${tmp_file}" || true
+  fi
+
+  printf '%s=%s\n' "${key}" "${value}" >> "${tmp_file}"
+  mv "${tmp_file}" .env.local
+}
+
 echo "=== Workspace Setup ==="
 echo ""
 
@@ -52,17 +82,18 @@ if [ "$RAILS_PROJECT" = true ]; then
   fi
 
   # Configure workspace-specific database name
-  WORKTREE_NAME="$(basename "$PWD")"
+  WORKTREE_NAME="$(workspace_name)"
   REPO_ROOT="$(git rev-parse --show-toplevel)"
   PROJECT_NAME="$(basename "$REPO_ROOT")"
-  export DATABASE_NAME="${PROJECT_NAME}_${WORKTREE_NAME}_development"
+  DATABASE_NAME="$(workspace_database_name)"
+  export DATABASE_NAME
 
   echo ""
   echo "Database configuration:"
   echo "  DATABASE_NAME=${DATABASE_NAME}"
 
   # Write to .env.local (not tracked by git)
-  echo "DATABASE_NAME=${DATABASE_NAME}" > .env.local
+  upsert_env_local "DATABASE_NAME" "${DATABASE_NAME}"
   echo "  Wrote to .env.local"
 
   # Install dependencies
