@@ -25,4 +25,8 @@ export SSL_CERT_FILE="$HOMEBREW_PREFIX/etc/openssl@3/cert.pem"
 # would end up ahead of Ruby and break version management.
 if [[ -x "${HOMEBREW_PREFIX:-/opt/homebrew}/bin/rv" ]]; then
   eval "$("${HOMEBREW_PREFIX:-/opt/homebrew}/bin/rv" shell init zsh)"
+  # rv's built-in init uses `preexec` which doesn't fire in non-interactive
+  # shells (editors, AI agents, CI). Adding `chpwd` ensures rv re-evaluates
+  # .ruby-version whenever the working directory changes.
+  add-zsh-hook chpwd _rv_autoload_hook
 fi
