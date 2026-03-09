@@ -174,7 +174,7 @@ migrations:
     bundle:
       priority: 1
       glob: "Gemfile*"
-      run: rv ci
+      run: if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi
     migrate:
       priority: 2
       glob: "db/migrations/*"

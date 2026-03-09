@@ -41,7 +41,18 @@ alias dlog="tail -f log/development.log | tspin"
 # Ruby
 
 ## Bundler
-alias bi='MAKE="make --jobs $(sysctl -n hw.ncpu)" rv ci && bin/rails app:update:bin; solargraph'
+bi() {
+  local make_jobs
+  make_jobs="make --jobs $(sysctl -n hw.ncpu)"
+
+  if [ -f "Gemfile.lock" ]; then
+    MAKE="$make_jobs" rv ci
+  else
+    MAKE="$make_jobs" bundle install
+  fi && bin/rails app:update:bin
+
+  solargraph
+}
 alias be="echo Use a .git/safe directory instead for binstubs"
 alias audit="bundle audit update; bundle audit check"
 
