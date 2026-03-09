@@ -143,6 +143,41 @@ module WorktreeTools
       assert config.puma_dev_enabled?, "puma-dev should be enabled by default for rails projects"
     end
 
+    def test_default_stow_source_dir_uses_git_repo_root_for_linked_worktree
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      config = load_config(worktree)
+
+      assert_equal File.realpath(repo).then { |path| File.join(path, ".worktree-local") }, config.stow_source_dir
+    end
+
+    def test_repo_root_source_dir_override_is_resolved_from_repo_root
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(repo, <<~YAML)
+        stow:
+          source_dir: .worktree-local
+      YAML
+
+      config = load_config(worktree)
+
+      assert_equal File.realpath(repo).then { |path| File.join(path, ".worktree-local") }, config.stow_source_dir
+    end
+
+    def test_worktree_source_dir_override_is_resolved_from_worktree_root
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        stow:
+          source_dir: .worktree-local
+      YAML
+
+      config = load_config(worktree)
+
+      assert_equal File.realpath(worktree).then { |path| File.join(path, ".worktree-local") }, config.stow_source_dir
+    end
+
     def test_linked_worktree_uses_hashed_port
       repo, worktree = setup_regular_repo_with_worktree
       rails_structure(worktree)

@@ -4,6 +4,40 @@
 
 set -e
 
+load_env_local() {
+  if [ -f ".env.local" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . ./.env.local
+    set +a
+  fi
+}
+
+workspace_name() {
+  if [ -n "${CONDUCTOR_WORKSPACE_NAME:-}" ]; then
+    printf '%s\n' "${CONDUCTOR_WORKSPACE_NAME}"
+  else
+    basename "$PWD"
+  fi
+}
+
+workspace_database_name() {
+  local worktree_name repo_root project_name
+  worktree_name="$(workspace_name)"
+  repo_root="$(git rev-parse --show-toplevel)"
+  project_name="$(basename "${repo_root}")"
+  printf '%s\n' "${project_name}_${worktree_name}_development"
+}
+
+load_database_name() {
+  load_env_local
+
+  if [ -z "${DATABASE_NAME:-}" ]; then
+    DATABASE_NAME="$(workspace_database_name)"
+    export DATABASE_NAME
+  fi
+}
+
 echo "=== Workspace Archive ==="
 echo ""
 
@@ -11,14 +45,10 @@ echo ""
 if [ -f "config/database.yml" ] && [ -f "Gemfile" ]; then
   echo "Detected Rails project"
 
-  # Calculate database name (must match bin/setup logic)
-  WORKTREE_NAME="$(basename "$PWD")"
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
-  PROJECT_NAME="$(basename "$REPO_ROOT")"
-  DB_NAME="${PROJECT_NAME}_${WORKTREE_NAME}_development"
+  load_database_name
 
   echo ""
-  echo "Dropping database: ${DB_NAME}"
+  echo "Dropping database: ${DATABASE_NAME}"
 
   # Try to drop the database, but don't fail if it doesn't exist
   if bundle exec rails db:drop 2>/dev/null; then
