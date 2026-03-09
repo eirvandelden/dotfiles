@@ -33,6 +33,18 @@ pre-commit:
       glob: "*.rb"
       run: ruby -c "{staged_files}"
       fail_text: Hey there, it looks like your Ruby syntax is incorrect. Take a break if you're tired!
+    shellcheck:
+      tags: shell linter
+      glob: "*.{sh,bash}"
+      run: shellcheck -x -S warning {staged_files}
+    shellcheck-zsh:
+      tags: shell linter
+      glob: "*.zsh"
+      run: shellcheck -x -S warning -s bash {staged_files}
+    yamllint:
+      tags: yaml linter
+      glob: "*.{yml,yaml}"
+      run: yamllint {staged_files}
     no-fixme:
       tags: fixme
       run: |
@@ -138,6 +150,18 @@ pre-push:
       fail_text: |
         RSpec failed for changed Ruby files.
         Fix the failing tests or use `--no-verify` to skip.
+    shellcheck:
+      tags: shell linter
+      glob: "*.{sh,bash}"
+      run: shellcheck -x -S warning {push_files}
+    shellcheck-zsh:
+      tags: shell linter
+      glob: "*.zsh"
+      run: shellcheck -x -S warning -s bash {push_files}
+    yamllint:
+      tags: yaml linter
+      glob: "*.{yml,yaml}"
+      run: yamllint {push_files}
     no-fixme:
       tags: fixme
       run: |
