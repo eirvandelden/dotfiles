@@ -41,7 +41,7 @@ alias dlog="tail -f log/development.log | tspin"
 # Ruby
 
 ## Bundler
-alias bi='MAKE="make --jobs $(sysctl -n hw.ncpu)" rv ci; solargraph'
+alias bi='MAKE="make --jobs $(sysctl -n hw.ncpu)" rv ci && bin/rails app:update:bin; solargraph'
 alias be="echo Use a .git/safe directory instead for binstubs"
 alias audit="bundle audit update; bundle audit check"
 
