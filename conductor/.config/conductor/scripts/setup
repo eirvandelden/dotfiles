@@ -69,7 +69,7 @@ if [ "$RAILS_PROJECT" = true ]; then
   echo ""
   echo "Installing dependencies..."
   if [ -f "Gemfile.lock" ]; then
-    bundle install --quiet
+    rv ci
   else
     echo "No Gemfile.lock found, running bundle install for the first time..."
     bundle install

@@ -93,4 +93,5 @@ xwayland
 yay
 zed
 zeroheight
+ZDOTDIR
 zsh
