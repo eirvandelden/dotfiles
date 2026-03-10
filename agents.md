@@ -591,6 +591,64 @@ end
 - Run Brakeman before pushing.
 - Expect continuous integration to run the full test suite.
 
+### 9.6 System environment and dotfiles
+
+All configuration is managed through a dotfiles repository at `~/Developer/dotfiles`,
+symlinked into `~/` and `~/.config/` using GNU Stow. This is true on every machine.
+Work-specific configuration lives in a separate private repository at `~/Developer/dotfiles-work`.
+
+**Shell and terminal**
+
+- Default shell: zsh.
+- Default terminal: Ghostty.
+- Shell config lives in `~/.config/zsh/` (`.zshrc`, `paths.zsh`, `environment.zsh`,
+  `aliases.zsh`, `prompt.zsh`, and modular `functions/` loaders).
+- Work-specific overlays are supported (e.g. `aliases.work.zsh`, `environment.work.zsh`).
+
+**Package management**
+
+- Primary package manager: Homebrew (`brew`).
+- All packages are declared in `packages.conf` inside the dotfiles repository.
+- Fallbacks exist for Linux: `yay` (Arch/AUR), `apt` (Debian), `flatpak` (GUI apps).
+
+**Ruby**
+
+- Version manager: `rv` (spinel-coop/rv). No other Ruby version manager is used.
+- Default Ruby version is declared in `ruby/.ruby-version` (currently 4.0.1).
+- Ruby is built with YJIT and jemalloc enabled.
+- If there is a Ruby version mismatch, use `rv ruby run -- COMMAND` to run a command in the
+  correct Ruby context rather than attempting to install or switch versions.
+- Global gems (bundler, rubocop, kamal, solargraph, etc.) are installed by the dotfiles
+  installer (`40_install_default_ruby_gems.sh`).
+
+**Node**
+
+- Version manager: `chnode` (via tkareine/chnode tap).
+- Default Node version is declared in `node/.node-version`.
+
+**Git and signing**
+
+- SSH signing via 1Password (ed25519 key, `gpg.format = ssh`).
+- Git hooks are managed by Lefthook (pre-commit, pre-push, commit-msg, post-merge).
+- Trusted binstubs via the `.git/safe` convention.
+
+**Stow packages**
+
+Each top-level directory in the dotfiles repo is a Stow package. Key packages include:
+`zsh`, `git`, `ghostty`, `ruby`, `bundler`, `node`, `neovim`, `zed`, `lefthook`, `rubocop`,
+`solargraph`, `1password`, `ssh`, `secrets`, `lazygit`, `pumadev`, `caddy`, `claude`.
+
+**Cross-platform**
+
+The dotfiles support macOS, SteamOS/Arch, and Debian-based Linux. Platform-specific packages
+are separated in `packages.conf` (`BREW_MACOS`, `BREW_LINUX`, `AUR`, `APT`, `FLATPAK`).
+
+**Install and bootstrap**
+
+- `bootstrap.sh` is a curlable POSIX script that clones the repo and runs the installer.
+- `install.sh` orchestrates numbered scripts (`00_common.sh` through `50_stow_all.sh`)
+  covering OS updates, prerequisites, packages, runtimes, gems, npm packages, and stow.
+
 ## 10. Application UX
 
 ### 10.1 Forms and validation
@@ -836,3 +894,55 @@ how an AI agent should operate when working in this codebase.
 6. Branch protection:
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
+7. Hands off system tooling:
+   - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other
+     system-level tools without explicit instruction.
+   - The Ruby version manager is `rv` (see §9.3). Do not assume or use any other version manager
+     (mise, asdf, rbenv, rvm, chruby, etc.).
+   - Do not run commands that modify the system environment (e.g. `brew uninstall`, `rm` on
+     toolchain paths, `mise use`, `asdf install`, etc.) unless the user explicitly asks for it.
+   - If a Ruby version or tool appears to be missing or broken, report the problem and ask
+     for instructions. Do not attempt to fix it autonomously.
+   - This rule extends to all language runtimes, package managers, and system dependencies —
+     not just Ruby.
+8. Database safety:
+   - NEVER run destructive database commands (`db:drop`, `db:reset`, `db:schema:load`,
+     `db:migrate:down` on unknown migrations) without explicit instruction.
+   - NEVER write migrations that drop tables or remove columns without explicit instruction.
+   - NEVER run `db:migrate` against a production database.
+   - Prefer `db:migrate:status` to check migration state before running migrations.
+9. Secrets and credentials:
+   - NEVER read, print, log, or output the contents of `.env`, `.env.*`,
+     `credentials.yml.enc`, `master.key`, or any file likely containing secrets.
+   - NEVER commit files containing secrets. If creating `.env` files, use placeholder values.
+   - NEVER hardcode secrets, API keys, tokens, or passwords in source code.
+     Use `Rails.application.credentials` or environment variables.
+   - If a secret is accidentally printed in output, warn immediately to rotate it.
+10. Dependency management:
+    - NEVER add or remove gems, npm packages, or other dependencies without asking for approval
+      first. The request must explain why the dependency is needed and what it does.
+    - NEVER run `bundle update` (all gems) without explicit instruction. Prefer
+      `bundle update <specific-gem>`.
+11. Symlinks and dotfiles:
+    - NEVER overwrite, delete, or modify symlinks directly. When editing dotfiles, always edit
+      the source file in `~/Developer/dotfiles/<package>/`, never the symlinked target in `~/`
+      or `~/.config/`.
+    - NEVER run `stow` or `stow -R` without explicit instruction.
+    - NEVER create new stow packages (top-level directories in the dotfiles repo) without
+      explicit instruction.
+12. Deployment and infrastructure:
+    - NEVER run deploy commands (`kamal deploy`, `kamal app exec`, `cap deploy`, etc.)
+      without explicit approval.
+    - NEVER modify deployment configuration (`deploy.yml`, `deploy.rb`, `Dockerfile`,
+      `docker-compose.yml`, `.github/workflows/`, `.gitlab-ci.yml`) without explicit approval.
+    - Treat `config/environments/production.rb` as a high-risk file. Always ask before
+      modifying it.
+13. Error recovery:
+    - If a change breaks tests, fix what you introduced rather than modifying the test to pass.
+    - NEVER delete or skip failing tests to make a suite pass.
+    - If stuck after 3 failed attempts at the same problem, stop and explain the situation
+      rather than continuing to make speculative changes.
+14. Project scope awareness:
+    - Before starting work, identify whether this is a personal or work project. The rules
+      differ (Minitest vs. RSpec, fixtures vs. FactoryBot, i18n vs. gettext, etc.).
+    - NEVER copy code, configuration, or credentials between personal and work projects.

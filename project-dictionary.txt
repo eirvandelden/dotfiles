@@ -95,3 +95,6 @@ zed
 zeroheight
 ZDOTDIR
 zsh
+binstubs
+chnode
+tkareine
