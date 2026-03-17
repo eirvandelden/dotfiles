@@ -172,3 +172,7 @@ yarn-debug.log*
 /**/*/*.work
 /**/*/*.work.*
 /**/*/work_*
+
+# Superpowers (Claude plugin)
+.superpowers/
+docs/superpowers/
