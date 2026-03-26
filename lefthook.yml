@@ -162,6 +162,27 @@ pre-push:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {push_files}
+    verify-ruby-version:
+      tags: shell-defaults
+      run: |
+        expected=$(cat ~/.ruby-version)
+        actual=$(ruby --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [ "$actual" != "$expected" ]; then
+          echo "Ruby version mismatch: expected $expected, got ${actual:-not found}"
+          exit 1
+        fi
+      fail_text: |
+        Ruby version does not match ~/.ruby-version. Check rv configuration in paths.zsh.
+        Use --no-verify to skip if you're in the middle of fixing this.
+    verify-ruby-path:
+      tags: shell-defaults
+      run: |
+        ruby_path=$(which ruby 2>/dev/null)
+        case "$ruby_path" in
+          /usr/bin/*) echo "ruby resolves to system binary: $ruby_path"; exit 1 ;;
+        esac
+      fail_text: |
+        ruby resolves to a system binary. Check rv PATH setup in paths.zsh.
     no-fixme:
       tags: fixme
       run: |
