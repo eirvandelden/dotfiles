@@ -177,12 +177,15 @@ pre-push:
     verify-ruby-path:
       tags: shell-defaults
       run: |
+        expected=$(cat ~/.ruby-version)
+        expected_path="$HOME/.local/share/rv/rubies/ruby-$expected/bin/ruby"
         ruby_path=$(which ruby 2>/dev/null)
-        case "$ruby_path" in
-          /usr/bin/*) echo "ruby resolves to system binary: $ruby_path"; exit 1 ;;
-        esac
+        if [ "$ruby_path" != "$expected_path" ]; then
+          echo "ruby resolves outside rv-managed path: expected $expected_path, got ${ruby_path:-not found}"
+          exit 1
+        fi
       fail_text: |
-        ruby resolves to a system binary. Check rv PATH setup in paths.zsh.
+        ruby does not resolve to the expected rv-managed binary. Check rv PATH setup in paths.zsh.
     verify-node-version:
       tags: shell-defaults
       run: |
@@ -198,12 +201,15 @@ pre-push:
     verify-node-path:
       tags: shell-defaults
       run: |
+        expected=$(cat ~/.node-version)
+        expected_path="$HOME/.nodes/node-$expected/bin/node"
         node_path=$(which node 2>/dev/null)
-        case "$node_path" in
-          /usr/bin/*) echo "node resolves to system binary: $node_path"; exit 1 ;;
-        esac
+        if [ "$node_path" != "$expected_path" ]; then
+          echo "node resolves outside chnode-managed path: expected $expected_path, got ${node_path:-not found}"
+          exit 1
+        fi
       fail_text: |
-        node resolves to a system binary. Check chnode PATH setup.
+        node does not resolve to the expected chnode-managed binary. Check chnode PATH setup.
     no-fixme:
       tags: fixme
       run: |

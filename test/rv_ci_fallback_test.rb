@@ -55,6 +55,42 @@ class RvCiFallbackTest < Minitest::Test
     assert_nil(/bundle install/.match(command_log))
   end
 
+  def test_verify_ruby_path_accepts_rv_managed_ruby
+    write_version_file(".ruby-version", "4.0.2")
+    ruby_path = write_managed_executable(".local/share/rv/rubies/ruby-4.0.2/bin/ruby")
+
+    run_shell(pre_push_command("verify-ruby-path"), chdir: @tmpdir, env: path_env_for(ruby_path))
+  end
+
+  def test_verify_ruby_path_rejects_non_rv_ruby
+    write_version_file(".ruby-version", "4.0.2")
+    ruby_path = write_executable("ruby", "#!/bin/sh\nexit 0\n")
+
+    error = assert_raises(Minitest::Assertion) do
+      run_shell(pre_push_command("verify-ruby-path"), chdir: @tmpdir, env: path_env_for(ruby_path))
+    end
+
+    assert_match(/ruby resolves outside rv-managed path/, error.message)
+  end
+
+  def test_verify_node_path_accepts_chnode_managed_node
+    write_version_file(".node-version", "22.21.1")
+    node_path = write_managed_executable(".nodes/node-22.21.1/bin/node")
+
+    run_shell(pre_push_command("verify-node-path"), chdir: @tmpdir, env: path_env_for(node_path))
+  end
+
+  def test_verify_node_path_rejects_non_chnode_node
+    write_version_file(".node-version", "22.21.1")
+    node_path = write_executable("node", "#!/bin/sh\nexit 0\n")
+
+    error = assert_raises(Minitest::Assertion) do
+      run_shell(pre_push_command("verify-node-path"), chdir: @tmpdir, env: path_env_for(node_path))
+    end
+
+    assert_match(/node resolves outside chnode-managed path/, error.message)
+  end
+
   private
 
   def ruby_workspace(name, lockfile: false)
@@ -88,6 +124,19 @@ class RvCiFallbackTest < Minitest::Test
     path = File.join(@bin_dir, name)
     File.write(path, body)
     FileUtils.chmod("+x", path)
+    path
+  end
+
+  def write_managed_executable(relative_path)
+    path = File.join(@tmpdir, relative_path)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, "#!/bin/sh\nexit 0\n")
+    FileUtils.chmod("+x", path)
+    path
+  end
+
+  def write_version_file(name, version)
+    File.write(File.join(@tmpdir, name), "#{version}\n")
   end
 
   def run_bi(workspace)
@@ -95,12 +144,12 @@ class RvCiFallbackTest < Minitest::Test
     run_command("zsh", "-f", "-c", command, chdir: workspace)
   end
 
-  def run_shell(command, chdir:)
-    run_command("sh", "-c", command, chdir:)
+  def run_shell(command, chdir:, env: {})
+    run_command("sh", "-c", command, chdir:, env:)
   end
 
-  def run_command(*command, chdir:)
-    stdout, stderr, status = Open3.capture3(base_env, *command, chdir:)
+  def run_command(*command, chdir:, env: {})
+    stdout, stderr, status = Open3.capture3(base_env.merge(env), *command, chdir:)
     return if status.success?
 
     flunk <<~MSG
@@ -126,6 +175,15 @@ class RvCiFallbackTest < Minitest::Test
   def lefthook_bundle_command
     config = YAML.safe_load(File.read(File.join(@repo_root, "lefthook.yml")), aliases: true)
     config.fetch("migrations").fetch("commands").fetch("bundle").fetch("run")
+  end
+
+  def pre_push_command(name)
+    config = YAML.safe_load(File.read(File.join(@repo_root, "lefthook.yml")), aliases: true)
+    config.fetch("pre-push").fetch("commands").fetch(name).fetch("run")
+  end
+
+  def path_env_for(binary_path)
+    { "PATH" => "#{File.dirname(binary_path)}:/usr/bin:/bin" }
   end
 
   def command_log
