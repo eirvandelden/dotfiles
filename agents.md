@@ -946,3 +946,18 @@ how an AI agent should operate when working in this codebase.
     - Before starting work, identify whether this is a personal or work project. The rules
       differ (Minitest vs. RSpec, fixtures vs. FactoryBot, i18n vs. gettext, etc.).
     - NEVER copy code, configuration, or credentials between personal and work projects.
+15. Code review workflow:
+    - When asked to review work: first look for an `agents.md` file in the project root;
+      if none exists, fall back to `~/Developer/dotfiles/agents.md`. Add the rules found
+      there to any existing review criteria (e.g. PR description, CLAUDE.md, explicit
+      instructions) rather than replacing them.
+    - When asked to implement fixes for issues found during a review (e.g. "implement fixes
+      for the issues you've found", "please fix the issues you've found", "implement a fix
+      for issue X"):
+      - Run linters on every touched file and fix all issues.
+      - Run the full test suite. Only fix failures that are directly caused by your changes;
+        do not fix pre-existing failures. Report any pre-existing failures explicitly.
+      - If linters or tests caused by your changes cannot be made green, proceed to
+        re-review but explicitly report the failures.
+      - After fixes are applied, perform the review again using the same parameters.
+      - Explicitly report whether new issues were found or whether the re-review is clean.
