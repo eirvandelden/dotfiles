@@ -20,11 +20,6 @@ module WorktreeTools
         return
       end
 
-      if in_conductor?
-        log "Conductor workspace detected, skipping puma-dev setup (Caddy handles proxying)"
-        return
-      end
-
       validate_rack_app!
 
       puma_dev_dir = Pathname.new(@config.puma_dev_dir)
