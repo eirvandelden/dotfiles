@@ -94,8 +94,10 @@ echo ""
 if [ "$RAILS_PROJECT" = true ]; then
   echo "Next steps:"
   echo "  1. Start the server: ./bin/run"
-  if command -v puma-dev >/dev/null 2>&1; then
-    echo "  2. Or access via puma-dev: https://${WORKTREE_NAME}.${PROJECT_NAME}.localhost"
+  if [ -n "${CONDUCTOR_ROOT_PATH:-}" ]; then
+    echo "  2. Or access via Caddy: https://${WORKTREE_NAME}.${PROJECT_NAME}.localhost"
+  elif command -v puma-dev >/dev/null 2>&1; then
+    echo "  2. Or access via puma-dev: https://${WORKTREE_NAME}.${PROJECT_NAME}.test"
   fi
   echo ""
   echo "Database: ${DATABASE_NAME}"
