@@ -28,13 +28,13 @@ class RvCiFallbackTest < Minitest::Test
     assert_nil(/rv ci/.match(command_log))
   end
 
-  def test_bi_uses_rv_ci_with_lockfile
+  def test_bi_uses_bundle_install_with_lockfile
     workspace = ruby_workspace("locked-app", lockfile: true)
 
     run_bi(workspace)
 
-    assert_match(/rv ci/, command_log)
-    assert_nil(/bundle install/.match(command_log))
+    assert_match(/bundle install/, command_log)
+    assert_nil(/rv ci/.match(command_log))
   end
 
   def test_lefthook_uses_bundle_install_without_lockfile
