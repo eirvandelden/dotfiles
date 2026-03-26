@@ -162,6 +162,54 @@ pre-push:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {push_files}
+    verify-ruby-version:
+      tags: shell-defaults
+      run: |
+        expected=$(cat ~/.ruby-version)
+        actual=$(ruby --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+        if [ "$actual" != "$expected" ]; then
+          echo "Ruby version mismatch: expected $expected, got ${actual:-not found}"
+          exit 1
+        fi
+      fail_text: |
+        Ruby version does not match ~/.ruby-version. Check rv configuration in paths.zsh.
+        Use --no-verify to skip if you're in the middle of fixing this.
+    verify-ruby-path:
+      tags: shell-defaults
+      run: |
+        expected=$(cat ~/.ruby-version)
+        expected_path="$HOME/.local/share/rv/rubies/ruby-$expected/bin/ruby"
+        ruby_path=$(which ruby 2>/dev/null)
+        if [ "$ruby_path" != "$expected_path" ]; then
+          echo "ruby resolves outside rv-managed path: expected $expected_path, got ${ruby_path:-not found}"
+          exit 1
+        fi
+      fail_text: |
+        ruby does not resolve to the expected rv-managed binary. Check rv PATH setup in paths.zsh.
+    verify-node-version:
+      tags: shell-defaults
+      run: |
+        expected=$(cat ~/.node-version)
+        actual=$(node --version 2>/dev/null | tr -d 'v')
+        if [ "$actual" != "$expected" ]; then
+          echo "Node version mismatch: expected $expected, got ${actual:-not found}"
+          exit 1
+        fi
+      fail_text: |
+        Node version does not match ~/.node-version. Check chnode configuration.
+        Use --no-verify to skip if you're in the middle of fixing this.
+    verify-node-path:
+      tags: shell-defaults
+      run: |
+        expected=$(cat ~/.node-version)
+        expected_path="$HOME/.nodes/node-$expected/bin/node"
+        node_path=$(which node 2>/dev/null)
+        if [ "$node_path" != "$expected_path" ]; then
+          echo "node resolves outside chnode-managed path: expected $expected_path, got ${node_path:-not found}"
+          exit 1
+        fi
+      fail_text: |
+        node does not resolve to the expected chnode-managed binary. Check chnode PATH setup.
     no-fixme:
       tags: fixme
       run: |
