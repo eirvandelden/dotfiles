@@ -183,6 +183,27 @@ pre-push:
         esac
       fail_text: |
         ruby resolves to a system binary. Check rv PATH setup in paths.zsh.
+    verify-node-version:
+      tags: shell-defaults
+      run: |
+        expected=$(cat ~/.node-version)
+        actual=$(node --version 2>/dev/null | tr -d 'v')
+        if [ "$actual" != "$expected" ]; then
+          echo "Node version mismatch: expected $expected, got ${actual:-not found}"
+          exit 1
+        fi
+      fail_text: |
+        Node version does not match ~/.node-version. Check chnode configuration.
+        Use --no-verify to skip if you're in the middle of fixing this.
+    verify-node-path:
+      tags: shell-defaults
+      run: |
+        node_path=$(which node 2>/dev/null)
+        case "$node_path" in
+          /usr/bin/*) echo "node resolves to system binary: $node_path"; exit 1 ;;
+        esac
+      fail_text: |
+        node resolves to a system binary. Check chnode PATH setup.
     no-fixme:
       tags: fixme
       run: |
