@@ -271,5 +271,59 @@ module WorktreeTools
 
       assert_raises(ConfigError) { load_config(worktree) }
     end
+
+    # --- Conductor environment defaults ---
+
+    def test_conductor_defaults_to_caddy_enabled_for_rails_project
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "3000",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert config.caddy_enabled?, "caddy should be enabled by default in Conductor for Rails projects"
+      end
+    end
+
+    def test_conductor_defaults_to_puma_dev_disabled_for_rails_project
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "3000",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert_not config.puma_dev_enabled?, "puma-dev should be disabled by default in Conductor"
+      end
+    end
+
+    def test_conductor_explicit_config_overrides_defaults
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        puma_dev:
+          enabled: true
+        caddy:
+          enabled: false
+      YAML
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "3000",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert config.puma_dev_enabled?, "explicit puma_dev: true should override Conductor default"
+        assert_not config.caddy_enabled?, "explicit caddy: false should override Conductor default"
+      end
+    end
   end
 end
