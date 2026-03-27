@@ -74,25 +74,12 @@ module WorktreeTools
     end
 
     def create_port_symlink(symlink_path, port)
-      # Remove existing symlink if it exists
+      # Remove existing entry if it exists
       FileUtils.rm_f(symlink_path) if symlink_path.exist? || symlink_path.symlink?
 
-      # Puma-dev expects either:
-      # 1. A symlink to the project directory (it will auto-detect port via Procfile or use default)
-      # 2. A file containing just the port number
-
-      # For Conductor compatibility and explicit port control, we create a file with the port number
-      # But we need to write it through a temp file approach since puma-dev prefers directories
-
-      # Actually, per puma-dev docs, we should create a symlink to the directory
-      # and let puma-dev handle port via PORT env var or .pumadev file
-
-      # Let's create a .pumadev file in the worktree root with the port
-      pumadev_file = @path.join('.pumadev')
-      File.write(pumadev_file, port.to_s)
-
-      # Create symlink to the worktree directory
-      FileUtils.ln_sf(@path, symlink_path)
+      # Puma-dev proxies to an existing server when ~/.puma-dev/<name> is a plain
+      # text file containing just the port number.
+      File.write(symlink_path, port.to_s)
     end
   end
 end

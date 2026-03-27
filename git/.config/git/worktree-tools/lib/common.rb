@@ -122,7 +122,7 @@ module WorktreeTools
     # Command detection
     def command_exists?(command)
       # Use array form to avoid shell injection
-      _output, status = Open3.capture2("command", "-v", command.to_s, err: "/dev/null", out: "/dev/null")
+      _output, status = Open3.capture2("which", command.to_s, err: "/dev/null", out: "/dev/null")
       status.success?
     end
 

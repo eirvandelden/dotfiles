@@ -189,13 +189,13 @@ module WorktreeTools
           "source_dir" => default_source_dir
         },
         "puma_dev" => {
-          "enabled" => @detector.rails? && @detector.puma_dev_compatible?,
+          "enabled" => !in_conductor? && @detector.rails? && @detector.puma_dev_compatible?,
           "name" => build_puma_dev_name,
           "domain" => "test",
           "dir" => File.expand_path("~/.puma-dev")
         },
         "caddy" => {
-          "enabled" => false,
+          "enabled" => in_conductor? && @detector.rails?,
           "name" => build_caddy_name,
           "tld" => "localhost",
           "tls_cert" => nil,
