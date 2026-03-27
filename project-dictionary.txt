@@ -97,4 +97,7 @@ ZDOTDIR
 zsh
 binstubs
 chnode
+chpwd
+compinit
 tkareine
+precmd

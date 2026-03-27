@@ -20,6 +20,9 @@ export PATH="$PATH:$HOME/.rd/bin:$HOME/.local/bin" # .rd = Rancher Desktop
 # 3. SSL certificate configuration (depends on HOMEBREW_PREFIX from step 1)
 export SSL_CERT_FILE="$HOMEBREW_PREFIX/etc/openssl@3/cert.pem"
 
+# Hook helper is needed here because paths.zsh is sourced from .zshenv.
+autoload -Uz add-zsh-hook
+
 # 4. rv (Ruby version manager) — MUST be last.
 # rv shell init prepends Ruby paths to PATH, so anything added after this
 # would end up ahead of Ruby and break version management.
@@ -29,4 +32,29 @@ if [[ -x "${HOMEBREW_PREFIX:-/opt/homebrew}/bin/rv" ]]; then
   # shells (editors, AI agents, CI). Adding `chpwd` ensures rv re-evaluates
   # .ruby-version whenever the working directory changes.
   add-zsh-hook chpwd _rv_autoload_hook
+fi
+
+# 5. chnode (Node version manager) — mirrors the rv pattern above.
+# Sourced here so non-interactive shells (editors, AI agents, CI) also
+# get the correct Node version on startup and on directory change.
+if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]]; then
+  source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh"
+  source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/auto.sh"
+
+  function apply_default_node_version() {
+    local default_node_version
+
+    chnode_auto
+    [[ -n "${CHNODE_ROOT:-}" ]] && return 0
+    [[ -r "$HOME/.node-version" ]] || return 0
+
+    read -r default_node_version < "$HOME/.node-version"
+    default_node_version="${default_node_version#v}"
+    [[ -n "$default_node_version" ]] || return 0
+
+    chnode "$default_node_version"
+  }
+
+  apply_default_node_version
+  add-zsh-hook chpwd apply_default_node_version
 fi
