@@ -4,6 +4,23 @@
 
 set -e
 
+yaml_enabled_setting() {
+  file_path="$1"
+  section_name="$2"
+
+  [ -f "$file_path" ] || return 0
+
+  awk -v section="$section_name" '
+    $0 ~ "^[[:space:]]*" section ":[[:space:]]*$" { in_section = 1; next }
+    in_section && $0 ~ "^[^[:space:]]" { in_section = 0 }
+    in_section && $0 ~ "^[[:space:]]+enabled:[[:space:]]*(true|false)[[:space:]]*$" {
+      sub(/^[[:space:]]+enabled:[[:space:]]*/, "", $0)
+      print $0
+      exit
+    }
+  ' "$file_path"
+}
+
 workspace_name() {
   if [ -n "${CONDUCTOR_WORKSPACE_NAME:-}" ]; then
     printf '%s\n' "${CONDUCTOR_WORKSPACE_NAME}"
@@ -12,12 +29,49 @@ workspace_name() {
   fi
 }
 
+repo_root_path() {
+  git worktree list | awk 'NR==1{print $1}'
+}
+
 workspace_database_name() {
   local worktree_name repo_root project_name
   worktree_name="$(workspace_name)"
-  repo_root="$(git rev-parse --show-toplevel)"
+  repo_root="$(repo_root_path)"
   project_name="$(basename "${repo_root}")"
   printf '%s\n' "${project_name}_${worktree_name}_development"
+}
+
+resolve_proxy_mode() {
+  repo_config="${REPO_ROOT}/.worktree.yml"
+  worktree_config="${PWD}/.worktree.yml"
+
+  if [ -n "${CONDUCTOR_ROOT_PATH:-}" ]; then
+    caddy_enabled="true"
+    puma_dev_enabled="false"
+  else
+    caddy_enabled="false"
+    if [ -f "config.ru" ] || [ -f "config/application.rb" ]; then
+      puma_dev_enabled="true"
+    else
+      puma_dev_enabled="false"
+    fi
+  fi
+
+  repo_caddy_enabled="$(yaml_enabled_setting "$repo_config" caddy)"
+  repo_puma_enabled="$(yaml_enabled_setting "$repo_config" puma_dev)"
+  worktree_caddy_enabled="$(yaml_enabled_setting "$worktree_config" caddy)"
+  worktree_puma_enabled="$(yaml_enabled_setting "$worktree_config" puma_dev)"
+
+  [ -n "$repo_caddy_enabled" ] && caddy_enabled="$repo_caddy_enabled"
+  [ -n "$repo_puma_enabled" ] && puma_dev_enabled="$repo_puma_enabled"
+  [ -n "$worktree_caddy_enabled" ] && caddy_enabled="$worktree_caddy_enabled"
+  [ -n "$worktree_puma_enabled" ] && puma_dev_enabled="$worktree_puma_enabled"
+
+  if [ "$caddy_enabled" = "true" ]; then
+    echo "caddy"
+  elif [ "$puma_dev_enabled" = "true" ]; then
+    echo "puma-dev"
+  fi
 }
 
 upsert_env_local() {
@@ -83,10 +137,11 @@ if [ "$RAILS_PROJECT" = true ]; then
 
   # Configure workspace-specific database name
   WORKTREE_NAME="$(workspace_name)"
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  REPO_ROOT="$(repo_root_path)"
   PROJECT_NAME="$(basename "$REPO_ROOT")"
   DATABASE_NAME="$(workspace_database_name)"
   export DATABASE_NAME
+  PROXY_MODE="$(resolve_proxy_mode)"
 
   echo ""
   echo "Database configuration:"
@@ -125,9 +180,9 @@ echo ""
 if [ "$RAILS_PROJECT" = true ]; then
   echo "Next steps:"
   echo "  1. Start the server: ./bin/run"
-  if [ -n "${CONDUCTOR_ROOT_PATH:-}" ]; then
+  if [ "${PROXY_MODE:-}" = "caddy" ]; then
     echo "  2. Or access via Caddy: https://${WORKTREE_NAME}.${PROJECT_NAME}.localhost"
-  elif command -v puma-dev >/dev/null 2>&1; then
+  elif [ "${PROXY_MODE:-}" = "puma-dev" ] && command -v puma-dev >/dev/null 2>&1; then
     echo "  2. Or access via puma-dev: https://${WORKTREE_NAME}.${PROJECT_NAME}.test"
   fi
   echo ""

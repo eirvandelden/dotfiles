@@ -21,10 +21,14 @@ workspace_name() {
   fi
 }
 
+repo_root_path() {
+  git worktree list | awk 'NR==1{print $1}'
+}
+
 workspace_database_name() {
   local worktree_name repo_root project_name
   worktree_name="$(workspace_name)"
-  repo_root="$(git rev-parse --show-toplevel)"
+  repo_root="$(repo_root_path)"
   project_name="$(basename "${repo_root}")"
   printf '%s\n' "${project_name}_${worktree_name}_development"
 }
@@ -56,6 +60,17 @@ if [ -f "config/database.yml" ] && [ -f "Gemfile" ]; then
   else
     echo "warning: Could not drop database (it may not exist)" >&2
   fi
+fi
+
+# Run worktree-remove to clean up puma-dev, Caddy config, and stow symlinks
+echo ""
+echo "Running worktree-remove..."
+if command -v worktree-remove >/dev/null 2>&1; then
+  worktree-remove "$PWD"
+elif [ -x "${HOME}/.config/git/worktree-tools/worktree-remove" ]; then
+  "${HOME}/.config/git/worktree-tools/worktree-remove" "$PWD"
+else
+  echo "warning: worktree-remove not found, skipping worktree cleanup" >&2
 fi
 
 echo ""
