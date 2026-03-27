@@ -30,3 +30,13 @@ if [[ -x "${HOMEBREW_PREFIX:-/opt/homebrew}/bin/rv" ]]; then
   # .ruby-version whenever the working directory changes.
   add-zsh-hook chpwd _rv_autoload_hook
 fi
+
+# 5. chnode (Node version manager) — mirrors the rv pattern above.
+# Sourced here so non-interactive shells (editors, AI agents, CI) also
+# get the correct Node version on startup and on directory change.
+if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]]; then
+  source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh"
+  source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/auto.sh"
+  chnode_auto
+  add-zsh-hook chpwd chnode_auto
+fi
