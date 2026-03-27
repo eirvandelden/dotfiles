@@ -64,6 +64,6 @@ fi
 
 # Javascript
 ## chnode — precmd hook for interactive shells (init is in paths.zsh)
-if (( ${+functions[chnode_auto]} )) && [[ "${precmd_functions[*]}" != *"chnode_auto"* ]]; then
-  precmd_functions+=(chnode_auto)
+if (( ${+functions[apply_default_node_version]} )) && [[ "${precmd_functions[*]}" != *"apply_default_node_version"* ]]; then
+  precmd_functions+=(apply_default_node_version)
 fi

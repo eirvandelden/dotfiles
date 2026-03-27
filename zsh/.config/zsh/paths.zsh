@@ -40,6 +40,21 @@ fi
 if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]]; then
   source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh"
   source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/auto.sh"
-  chnode_auto
-  add-zsh-hook chpwd chnode_auto
+
+  function apply_default_node_version() {
+    local default_node_version
+
+    chnode_auto
+    [[ -n "${CHNODE_ROOT:-}" ]] && return 0
+    [[ -r "$HOME/.node-version" ]] || return 0
+
+    read -r default_node_version < "$HOME/.node-version"
+    default_node_version="${default_node_version#v}"
+    [[ -n "$default_node_version" ]] || return 0
+
+    chnode "$default_node_version"
+  }
+
+  apply_default_node_version
+  add-zsh-hook chpwd apply_default_node_version
 fi

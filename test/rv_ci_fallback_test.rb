@@ -125,7 +125,61 @@ class RvCiFallbackTest < Minitest::Test
 
     assert_equal("", result[:stderr])
     assert_match(/_rv_autoload_hook/, result[:stdout])
-    assert_match(/chnode_auto/, result[:stdout])
+    assert_match(/apply_default_node_version/, result[:stdout])
+  end
+
+  def test_paths_uses_home_node_version_when_workspace_has_no_local_node_version
+    write_stub_homebrew_command("rv", <<~SH)
+      #!/bin/sh
+      if [ "$1" = "shell" ] && [ "$2" = "init" ]; then
+        printf '%s\n' 'function _rv_autoload_hook() { :; }'
+      fi
+    SH
+    write_version_file(".node-version", "24.14.0")
+    write_managed_executable(".nodes/node-24.14.0/bin/node", body: "#!/bin/sh\nprintf 'v24.14.0\\n'\n")
+    write_stub_chnode_scripts
+
+    result = capture_command_result(
+      "zsh", "-f", "-c", <<~SH, chdir: @tmpdir,
+        export HOMEBREW_PREFIX="#{@tmpdir}/homebrew"
+        source "#{File.join(@repo_root, "zsh/.config/zsh/paths.zsh")}"
+        command -v node
+        node --version
+      SH
+    )
+
+    assert_equal("", result[:stderr])
+    assert_match(%r{#{Regexp.escape(File.join(@tmpdir, ".nodes/node-24.14.0/bin/node"))}}, result[:stdout])
+    assert_match(/v24\.14\.0/, result[:stdout])
+  end
+
+  def test_paths_prefers_local_node_version_over_home_default
+    write_stub_homebrew_command("rv", <<~SH)
+      #!/bin/sh
+      if [ "$1" = "shell" ] && [ "$2" = "init" ]; then
+        printf '%s\n' 'function _rv_autoload_hook() { :; }'
+      fi
+    SH
+    workspace = File.join(@tmpdir, "workspace")
+    FileUtils.mkdir_p(workspace)
+    write_version_file(".node-version", "24.14.0")
+    File.write(File.join(workspace, ".node-version"), "22.21.1\n")
+    write_managed_executable(".nodes/node-24.14.0/bin/node", body: "#!/bin/sh\nprintf 'v24.14.0\\n'\n")
+    write_managed_executable(".nodes/node-22.21.1/bin/node", body: "#!/bin/sh\nprintf 'v22.21.1\\n'\n")
+    write_stub_chnode_scripts
+
+    result = capture_command_result(
+      "zsh", "-f", "-c", <<~SH, chdir: workspace,
+        export HOMEBREW_PREFIX="#{@tmpdir}/homebrew"
+        source "#{File.join(@repo_root, "zsh/.config/zsh/paths.zsh")}"
+        command -v node
+        node --version
+      SH
+    )
+
+    assert_equal("", result[:stderr])
+    assert_match(%r{#{Regexp.escape(File.join(@tmpdir, ".nodes/node-22.21.1/bin/node"))}}, result[:stdout])
+    assert_match(/v22\.21\.1/, result[:stdout])
   end
 
   private
@@ -164,10 +218,10 @@ class RvCiFallbackTest < Minitest::Test
     path
   end
 
-  def write_managed_executable(relative_path)
+  def write_managed_executable(relative_path, body: "#!/bin/sh\nexit 0\n")
     path = File.join(@tmpdir, relative_path)
     FileUtils.mkdir_p(File.dirname(path))
-    File.write(path, "#!/bin/sh\nexit 0\n")
+    File.write(path, body)
     FileUtils.chmod("+x", path)
     path
   end
@@ -275,8 +329,46 @@ class RvCiFallbackTest < Minitest::Test
   def write_stub_chnode_scripts
     chnode_root = File.join(@tmpdir, "homebrew", "opt", "chnode", "share", "chnode")
     FileUtils.mkdir_p(chnode_root)
-    File.write(File.join(chnode_root, "chnode.sh"), "# chnode stub\n")
-    File.write(File.join(chnode_root, "auto.sh"), "chnode_auto() { :; }\n")
+    File.write(File.join(chnode_root, "chnode.sh"), <<~SH)
+      chnode_reset() {
+        if [ -n "${CHNODE_ROOT:-}" ]; then
+          PATH="${PATH#"$CHNODE_ROOT/bin:"}"
+          unset CHNODE_ROOT
+          export PATH
+        fi
+      }
+
+      chnode() {
+        version="${1#v}"
+        root="$HOME/.nodes/node-$version"
+        if [ ! -x "$root/bin/node" ]; then
+          return 1
+        fi
+
+        chnode_reset
+        PATH="$root/bin:$PATH"
+        export CHNODE_ROOT="$root"
+        export PATH
+      }
+    SH
+    File.write(File.join(chnode_root, "auto.sh"), <<~SH)
+      chnode_auto() {
+        dir="$PWD"
+
+        while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+          version_file="$dir/.node-version"
+          if [ -r "$version_file" ]; then
+            read -r version < "$version_file"
+            version="${version#v}"
+            chnode "$version"
+            return $?
+          fi
+          dir="${dir%/*}"
+        done
+
+        chnode_reset
+      }
+    SH
   end
 
   def path_env_for(binary_path)
