@@ -20,6 +20,9 @@ export PATH="$PATH:$HOME/.rd/bin:$HOME/.local/bin" # .rd = Rancher Desktop
 # 3. SSL certificate configuration (depends on HOMEBREW_PREFIX from step 1)
 export SSL_CERT_FILE="$HOMEBREW_PREFIX/etc/openssl@3/cert.pem"
 
+# Hook helper is needed here because paths.zsh is sourced from .zshenv.
+autoload -Uz add-zsh-hook
+
 # 4. rv (Ruby version manager) — MUST be last.
 # rv shell init prepends Ruby paths to PATH, so anything added after this
 # would end up ahead of Ruby and break version management.

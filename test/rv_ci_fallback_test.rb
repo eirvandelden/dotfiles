@@ -91,6 +91,43 @@ class RvCiFallbackTest < Minitest::Test
     assert_match(/node resolves outside chnode-managed path/, error.message)
   end
 
+  def test_environment_skips_chnode_prompt_hook_when_chnode_is_unavailable
+    output = capture_command(
+      "zsh", "-f", "-c", <<~SH, chdir: @tmpdir
+        autoload -Uz compinit
+        compinit
+        export HOMEBREW_PREFIX="#{@tmpdir}/missing-homebrew"
+        source "#{File.join(@repo_root, "zsh/.config/zsh/paths.zsh")}"
+        source "#{File.join(@repo_root, "zsh/.config/zsh/environment.zsh")}"
+        printf '%s\n' "${precmd_functions[*]}"
+      SH
+    )
+
+    assert_no_match(/chnode_auto/, output)
+  end
+
+  def test_paths_registers_directory_hooks_without_startup_errors
+    write_stub_homebrew_command("rv", <<~SH)
+      #!/bin/sh
+      if [ "$1" = "shell" ] && [ "$2" = "init" ]; then
+        printf '%s\n' 'function _rv_autoload_hook() { :; }'
+      fi
+    SH
+    write_stub_chnode_scripts
+
+    result = capture_command_result(
+      "zsh", "-f", "-c", <<~SH, chdir: @tmpdir,
+        export HOMEBREW_PREFIX="#{@tmpdir}/homebrew"
+        source "#{File.join(@repo_root, "zsh/.config/zsh/paths.zsh")}"
+        printf '%s\n' "${chpwd_functions[*]}"
+      SH
+    )
+
+    assert_equal("", result[:stderr])
+    assert_match(/_rv_autoload_hook/, result[:stdout])
+    assert_match(/chnode_auto/, result[:stdout])
+  end
+
   private
 
   def ruby_workspace(name, lockfile: false)
@@ -161,6 +198,24 @@ class RvCiFallbackTest < Minitest::Test
     MSG
   end
 
+  def capture_command(*command, chdir:, env: {})
+    result = capture_command_result(*command, chdir:, env:)
+    return result[:stdout] if result[:status].success?
+
+    flunk <<~MSG
+      #{command.join(" ")} failed with #{result[:status].exitstatus}
+      stdout:
+      #{result[:stdout]}
+      stderr:
+      #{result[:stderr]}
+    MSG
+  end
+
+  def capture_command_result(*command, chdir:, env: {})
+    stdout, stderr, status = Open3.capture3(base_env.merge(env), *command, chdir:)
+    { stdout:, stderr:, status: }
+  end
+
   def base_env
     {
       "HOME" => @tmpdir,
@@ -173,13 +228,55 @@ class RvCiFallbackTest < Minitest::Test
   end
 
   def lefthook_bundle_command
-    config = YAML.safe_load(File.read(File.join(@repo_root, "lefthook.yml")), aliases: true)
-    config.fetch("migrations").fetch("commands").fetch("bundle").fetch("run")
+    lefthook_config.fetch("migrations").fetch("commands").fetch("bundle").fetch("run")
   end
 
   def pre_push_command(name)
-    config = YAML.safe_load(File.read(File.join(@repo_root, "lefthook.yml")), aliases: true)
-    config.fetch("pre-push").fetch("commands").fetch(name).fetch("run")
+    lefthook_config.fetch("pre-push").fetch("commands").fetch(name).fetch("run")
+  end
+
+  def lefthook_config
+    deep_merge(load_yaml("lefthook.yml"), load_yaml("lefthook-local.yml"))
+  end
+
+  def load_yaml(name)
+    path = File.join(@repo_root, name)
+    return {} unless File.exist?(path)
+
+    YAML.safe_load(File.read(path), aliases: true) || {}
+  end
+
+  def deep_merge(left, right)
+    left.merge(right) do |_key, left_value, right_value|
+      if left_value.is_a?(Hash) && right_value.is_a?(Hash)
+        deep_merge(left_value, right_value)
+      else
+        right_value
+      end
+    end
+  end
+
+  def assert_no_match(pattern, value)
+    assert_not(pattern.match?(value), "Expected #{value.inspect} to not match #{pattern.inspect}")
+  end
+
+  def assert_not(value, message = nil)
+    assert_equal(false, !!value, message)
+  end
+
+  def write_stub_homebrew_command(name, body)
+    path = File.join(@tmpdir, "homebrew", "bin", name)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, body)
+    FileUtils.chmod("+x", path)
+    path
+  end
+
+  def write_stub_chnode_scripts
+    chnode_root = File.join(@tmpdir, "homebrew", "opt", "chnode", "share", "chnode")
+    FileUtils.mkdir_p(chnode_root)
+    File.write(File.join(chnode_root, "chnode.sh"), "# chnode stub\n")
+    File.write(File.join(chnode_root, "auto.sh"), "chnode_auto() { :; }\n")
   end
 
   def path_env_for(binary_path)
