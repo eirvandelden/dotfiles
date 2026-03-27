@@ -52,8 +52,9 @@ if [ "$RAILS_PROJECT" = true ]; then
   fi
 
   # Configure workspace-specific database name
+  # Use `git worktree list` so PROJECT_NAME is the main repo name even in linked worktrees
   WORKTREE_NAME="$(basename "$PWD")"
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  REPO_ROOT="$(git worktree list | awk 'NR==1{print $1}')"
   PROJECT_NAME="$(basename "$REPO_ROOT")"
   export DATABASE_NAME="${PROJECT_NAME}_${WORKTREE_NAME}_development"
 
