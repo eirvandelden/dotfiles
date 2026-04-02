@@ -4,6 +4,10 @@
 # Sourced from .zshenv so it runs for every shell type, including
 # non-interactive shells used by editors, IDEs, and AI coding agents.
 
+# 0. Ensure standard system paths are always present.
+# Non-login shells (Conductor, editors, CI) may start with a stripped PATH.
+path=(/usr/local/bin /usr/bin /bin /usr/sbin /sbin "${path[@]}")
+
 # 1. Homebrew — must come first so later tools can rely on HOMEBREW_PREFIX.
 if [[ -z "${HOMEBREW_PREFIX:-}" ]]; then
   if [[ -x /opt/homebrew/bin/brew ]]; then
