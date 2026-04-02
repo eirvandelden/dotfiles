@@ -37,8 +37,8 @@ fi
 
 TMPPREFIX="${TMPDIR%/}/zsh"
 
-# GPG agent
-export GPG_TTY=$(tty)
+# GPG agent — only meaningful when a controlling terminal exists.
+[[ -t 0 ]] && export GPG_TTY=$(tty)
 
 # Node-build definitions path
 export NODE_BUILD_DEFINITIONS="/opt/homebrew/opt/node-build-update-defs/share/node-build"
