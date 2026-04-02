@@ -52,8 +52,9 @@ if [ "$RAILS_PROJECT" = true ]; then
   fi
 
   # Configure workspace-specific database name
+  # Use `git worktree list` so PROJECT_NAME is the main repo name even in linked worktrees
   WORKTREE_NAME="$(basename "$PWD")"
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  REPO_ROOT="$(git worktree list | awk 'NR==1{print $1}')"
   PROJECT_NAME="$(basename "$REPO_ROOT")"
   export DATABASE_NAME="${PROJECT_NAME}_${WORKTREE_NAME}_development"
 
@@ -94,8 +95,10 @@ echo ""
 if [ "$RAILS_PROJECT" = true ]; then
   echo "Next steps:"
   echo "  1. Start the server: ./bin/run"
-  if command -v puma-dev >/dev/null 2>&1; then
-    echo "  2. Or access via puma-dev: https://${WORKTREE_NAME}.${PROJECT_NAME}.localhost"
+  if [ -n "${CONDUCTOR_ROOT_PATH:-}" ]; then
+    echo "  2. Or access via Caddy: https://${WORKTREE_NAME}.${PROJECT_NAME}.localhost"
+  elif command -v puma-dev >/dev/null 2>&1; then
+    echo "  2. Or access via puma-dev: https://${WORKTREE_NAME}.${PROJECT_NAME}.test"
   fi
   echo ""
   echo "Database: ${DATABASE_NAME}"
