@@ -961,3 +961,18 @@ how an AI agent should operate when working in this codebase.
         re-review but explicitly report the failures.
       - After fixes are applied, perform the review again using the same parameters.
       - Explicitly report whether new issues were found or whether the re-review is clean.
+16. Plan before implementing:
+    - NEVER start writing or modifying code without first presenting a plan to the user
+      and receiving explicit approval to proceed.
+    - The plan must describe what will be changed and why, at a level of detail sufficient
+      for the user to evaluate it.
+    - If a task seems trivial (e.g. a single-character typo fix), still state the intended
+      change and wait for a go-ahead before touching files.
+17. Commit only with explicit approval:
+    - NEVER create a git commit without the user explicitly asking you to commit.
+    - Do not interpret task completion, test passing, or any other signal as implicit
+      permission to commit. The user must request it.
+18. Push only with explicit approval:
+    - NEVER run `git push` or any equivalent (force-push, push to remote, etc.) without
+      the user explicitly asking you to push.
+    - Do not assume that creating a PR or finishing implementation implies permission to push.
