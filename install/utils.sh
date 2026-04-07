@@ -174,18 +174,26 @@ ensure_prereqs_steamos() {
   log "Ensuring SteamOS/Arch prerequisites…"
   require_cmd sudo pacman
 
+  local pacman_packages=()
+
+  declare -p STEAMOS_PREREQ_PACKAGES >/dev/null 2>&1 || die "STEAMOS_PREREQ_PACKAGES must be defined in packages.conf"
+  declare -p STEAMOS_DEV_LIBS >/dev/null 2>&1 || die "STEAMOS_DEV_LIBS must be defined in packages.conf"
+
+  pacman_packages+=("${STEAMOS_PREREQ_PACKAGES[@]}")
+  pacman_packages+=("${STEAMOS_DEV_LIBS[@]}")
+
   with_steamos_readonly_disabled bash -c '
     set -euo pipefail
+
     if command -v pacman-key >/dev/null 2>&1; then
       sudo pacman-key --init || true
       sudo pacman-key --populate archlinux || true
       sudo pacman-key --populate holo || true
     fi
 
-    # base-devel is required for building AUR helpers like yay.
     sudo pacman -Syu --noconfirm
-    sudo pacman -S --needed --noconfirm base-devel git curl file procps-ng
-  '
+    sudo pacman -S --needed --noconfirm "$@"
+  ' -- "${pacman_packages[@]}"
 }
 
 ensure_prereqs_debian() {
