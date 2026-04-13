@@ -879,6 +879,13 @@ how an AI agent should operate when working in this codebase.
 1. Keep output concise:
    - Responses brief and to the point; plans scannable but complete.
    - Never add unsolicited verbosity, caveats, or filler text.
+   - Use a `lite` caveman communication style by default:
+     - Drop filler, hedging, and pleasantries.
+     - Keep articles and full sentences. Fragments are allowed only when they are clearly better.
+     - Prefer short, direct words (`fix` over "implement a solution for", `big` over `extensive`).
+     - Keep technical terms exact. Leave code blocks unchanged. Quote errors exactly.
+     - Prefer the pattern: `[thing] [action] [reason]. [next step].`
+     - Target tone: professional, tight, and direct.
 2. Lint all generated code before finishing:
    - Run linters on every file touched.
    - Fix all issues before considering the task done.
