@@ -1,0 +1,3 @@
+--template=~/Developer/my-rails-template/template.rb
+--database=sqlite3
+--skip-docker
