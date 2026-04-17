@@ -38,6 +38,23 @@ class ConductorScriptTest < Minitest::Test
     assert_includes command_log, "bundle exec rails db:prepare"
   end
 
+  def test_setup_in_conductor_uses_worktree_proxy_configuration_for_next_steps
+    workspace = rails_workspace("proxy-app", lockfile: true)
+    stub_setup_commands(database_exists: true)
+    write_executable("puma-dev", "#!/bin/sh\nexit 0\n")
+    File.write(File.join(workspace, ".worktree.yml"), <<~YAML)
+      puma_dev:
+        enabled: true
+      caddy:
+        enabled: false
+    YAML
+
+    result = run_script("setup", chdir: workspace, env: conductor_env(workspace))
+
+    assert_includes result.fetch(:stdout), "Or access via puma-dev: https://proxy-app.proxy-app.test"
+    refute_includes result.fetch(:stdout), "Or access via Caddy"
+  end
+
   def test_run_uses_bundle_exec_for_procfile_projects
     workspace = rails_workspace("procfile-app", procfile: true)
     stub_run_commands
@@ -73,7 +90,7 @@ class ConductorScriptTest < Minitest::Test
     write_executable("bundle", bundle_setup_script(database_exists:))
     write_executable("git", <<~SH)
       #!/bin/sh
-      if [ "$1" = "rev-parse" ] && [ "$2" = "--show-toplevel" ]; then
+      if [ "$1" = "worktree" ] && [ "$2" = "list" ]; then
         pwd
         exit 0
       fi
@@ -119,6 +136,15 @@ class ConductorScriptTest < Minitest::Test
     SH
   end
 
+  def conductor_env(workspace)
+    {
+      "CONDUCTOR_ROOT_PATH" => @tmpdir,
+      "CONDUCTOR_PORT" => "4567",
+      "CONDUCTOR_WORKSPACE_NAME" => File.basename(workspace),
+      "CONDUCTOR_WORKSPACE_PATH" => workspace
+    }
+  end
+
   def write_executable(name, body)
     path = File.join(@bin_dir, name)
     File.write(path, body)
@@ -128,7 +154,7 @@ class ConductorScriptTest < Minitest::Test
   def run_script(name, chdir:, env: {})
     script = File.join(SCRIPT_DIR, name)
     stdout, stderr, status = Open3.capture3(base_env.merge(env), script, chdir:)
-    return if status.success?
+    return { stdout:, stderr:, status: } if status.success?
 
     flunk <<~MSG
       #{name} failed with #{status.exitstatus}

@@ -1,48 +1,7 @@
 #!/bin/sh
 
-if [ "$LEFTHOOK_VERBOSE" = "1" -o "$LEFTHOOK_VERBOSE" = "true" ]; then
+if [ "$LEFTHOOK_VERBOSE" = "1" ] || [ "$LEFTHOOK_VERBOSE" = "true" ]; then
   set -x
-fi
-
-# Git post-checkout hook arguments
-old_sha="$1"
-new_sha="$2"
-branch_checkout="$3"
-
-# Worktree automation: runs BEFORE lefthook delegation
-# This ensures symlinks are in place before any lefthook commands run
-
-# Detect new worktree creation
-# When a new worktree is created, old_sha is all zeros
-if [ "$old_sha" = "0000000000000000000000000000000000000000" ]; then
-  echo "New worktree detected, running worktree-setup..."
-
-  # Find worktree-setup script
-  # Try to find it relative to git config directory
-  git_dir="$(git rev-parse --git-common-dir)"
-  worktree_setup="$git_dir/worktree-tools/worktree-setup"
-
-  # Fallback: try XDG config directory
-  if [ ! -x "$worktree_setup" ]; then
-    worktree_setup="${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-setup"
-  fi
-
-  # Fallback: try HOME config directory
-  if [ ! -x "$worktree_setup" ]; then
-    worktree_setup="$HOME/.config/git/worktree-tools/worktree-setup"
-  fi
-
-  if [ -x "$worktree_setup" ]; then
-    echo "Running: $worktree_setup"
-    "$worktree_setup" || {
-      echo "warning: worktree-setup failed with exit code $?" >&2
-      # Continue despite failure - don't block the checkout
-    }
-  else
-    echo "worktree-setup not found at $worktree_setup, skipping" >&2
-  fi
-
-  echo ""
 fi
 
 # Lefthook delegation

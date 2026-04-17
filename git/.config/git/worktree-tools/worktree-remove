@@ -27,12 +27,11 @@ module WorktreeTools
       # Load configuration
       config = WorktreeConfig.new(@path, detector).load!
 
-      # Remove puma-dev
-      if config.puma_dev_enabled?
-        puma_dev = PumaDev.new(config, @path)
-        puma_dev.remove!
-        log ""
-      end
+      # Always attempt puma-dev cleanup so older entries are removed when
+      # defaults change, such as Conductor switching to Caddy.
+      puma_dev = PumaDev.new(config, @path)
+      puma_dev.remove!
+      log ""
 
       # Remove Caddy config even when currently disabled in config.
       caddy = CaddyDev.new(config, @path)
