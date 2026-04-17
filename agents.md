@@ -898,10 +898,18 @@ how an AI agent should operate when working in this codebase.
    - Always target `origin` (personal fork) over upstream.
    - If the target repository is ambiguous, ask before proceeding.
    - Never create PRs to an upstream project without explicit instruction.
-6. Branch protection:
+6. GitHub identity and consent:
+   - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit
+     instruction for that exact message.
+   - This includes issue comments, pull request comments, review comments, and replies.
+   - Do not infer permission from approval to open a PR, push code, request review, or perform
+     any other GitHub action.
+   - If GitHub communication is needed, draft the proposed text in chat first and wait for
+     explicit approval before posting it.
+7. Branch protection:
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
-7. Hands off system tooling:
+8. Hands off system tooling:
    - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other
      system-level tools without explicit instruction.
    - The Ruby version manager is `rv` (see §9.3). Do not assume or use any other version manager
@@ -912,48 +920,48 @@ how an AI agent should operate when working in this codebase.
      for instructions. Do not attempt to fix it autonomously.
    - This rule extends to all language runtimes, package managers, and system dependencies —
      not just Ruby.
-8. Database safety:
+9. Database safety:
    - NEVER run destructive database commands (`db:drop`, `db:reset`, `db:schema:load`,
      `db:migrate:down` on unknown migrations) without explicit instruction.
    - NEVER write migrations that drop tables or remove columns without explicit instruction.
    - NEVER run `db:migrate` against a production database.
    - Prefer `db:migrate:status` to check migration state before running migrations.
-9. Secrets and credentials:
+10. Secrets and credentials:
    - NEVER read, print, log, or output the contents of `.env`, `.env.*`,
      `credentials.yml.enc`, `master.key`, or any file likely containing secrets.
    - NEVER commit files containing secrets. If creating `.env` files, use placeholder values.
    - NEVER hardcode secrets, API keys, tokens, or passwords in source code.
      Use `Rails.application.credentials` or environment variables.
    - If a secret is accidentally printed in output, warn immediately to rotate it.
-10. Dependency management:
+11. Dependency management:
     - NEVER add or remove gems, npm packages, or other dependencies without asking for approval
       first. The request must explain why the dependency is needed and what it does.
     - NEVER run `bundle update` (all gems) without explicit instruction. Prefer
       `bundle update <specific-gem>`.
-11. Symlinks and dotfiles:
+12. Symlinks and dotfiles:
     - NEVER overwrite, delete, or modify symlinks directly. When editing dotfiles, always edit
       the source file in `~/Developer/dotfiles/<package>/`, never the symlinked target in `~/`
       or `~/.config/`.
     - NEVER run `stow` or `stow -R` without explicit instruction.
     - NEVER create new stow packages (top-level directories in the dotfiles repo) without
       explicit instruction.
-12. Deployment and infrastructure:
+13. Deployment and infrastructure:
     - NEVER run deploy commands (`kamal deploy`, `kamal app exec`, `cap deploy`, etc.)
       without explicit approval.
     - NEVER modify deployment configuration (`deploy.yml`, `deploy.rb`, `Dockerfile`,
       `docker-compose.yml`, `.github/workflows/`, `.gitlab-ci.yml`) without explicit approval.
     - Treat `config/environments/production.rb` as a high-risk file. Always ask before
       modifying it.
-13. Error recovery:
+14. Error recovery:
     - If a change breaks tests, fix what you introduced rather than modifying the test to pass.
     - NEVER delete or skip failing tests to make a suite pass.
     - If stuck after 3 failed attempts at the same problem, stop and explain the situation
       rather than continuing to make speculative changes.
-14. Project scope awareness:
+15. Project scope awareness:
     - Before starting work, identify whether this is a personal or work project. The rules
       differ (Minitest vs. RSpec, fixtures vs. FactoryBot, i18n vs. gettext, etc.).
     - NEVER copy code, configuration, or credentials between personal and work projects.
-15. Code review workflow:
+16. Code review workflow:
     - When asked to review work: first look for an `agents.md` file in the project root;
       if none exists, fall back to `~/Developer/dotfiles/agents.md`. Add the rules found
       there to any existing review criteria (e.g. PR description, CLAUDE.md, explicit
@@ -968,18 +976,18 @@ how an AI agent should operate when working in this codebase.
         re-review but explicitly report the failures.
       - After fixes are applied, perform the review again using the same parameters.
       - Explicitly report whether new issues were found or whether the re-review is clean.
-16. Plan before implementing:
+17. Plan before implementing:
     - NEVER start writing or modifying code without first presenting a plan to the user
       and receiving explicit approval to proceed.
     - The plan must describe what will be changed and why, at a level of detail sufficient
       for the user to evaluate it.
     - If a task seems trivial (e.g. a single-character typo fix), still state the intended
       change and wait for a go-ahead before touching files.
-17. Commit only with explicit approval:
+18. Commit only with explicit approval:
     - NEVER create a git commit without the user explicitly asking you to commit.
     - Do not interpret task completion, test passing, or any other signal as implicit
       permission to commit. The user must request it.
-18. Push only with explicit approval:
+19. Push only with explicit approval:
     - NEVER run `git push` or any equivalent (force-push, push to remote, etc.) without
       the user explicitly asking you to push.
     - Do not assume that creating a PR or finishing implementation implies permission to push.
