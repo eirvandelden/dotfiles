@@ -4,6 +4,40 @@
 
 set -e
 
+load_env_local() {
+  if [ -f ".env.local" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . ./.env.local
+    set +a
+  fi
+}
+
+workspace_name() {
+  if [ -n "${CONDUCTOR_WORKSPACE_NAME:-}" ]; then
+    printf '%s\n' "${CONDUCTOR_WORKSPACE_NAME}"
+  else
+    basename "$PWD"
+  fi
+}
+
+workspace_database_name() {
+  local worktree_name repo_root project_name
+  worktree_name="$(workspace_name)"
+  repo_root="$(git rev-parse --show-toplevel)"
+  project_name="$(basename "${repo_root}")"
+  printf '%s\n' "${project_name}_${worktree_name}_development"
+}
+
+load_database_name() {
+  load_env_local
+
+  if [ -z "${DATABASE_NAME:-}" ] && { [ -d ".git" ] || [ -f ".git" ]; }; then
+    DATABASE_NAME="$(workspace_database_name)"
+    export DATABASE_NAME
+  fi
+}
+
 # Use CONDUCTOR_PORT if set, otherwise PORT env var, or default to 3000
 PORT="${CONDUCTOR_PORT:-${PORT:-3000}}"
 
@@ -13,6 +47,7 @@ echo ""
 # Rails project
 if [ -f "config/application.rb" ] && [ -f "Gemfile" ]; then
   echo "Detected Rails project"
+  load_database_name
 
   # Prefer bin/dev (Rails 7+ convention)
   if [ -x "bin/dev" ]; then
