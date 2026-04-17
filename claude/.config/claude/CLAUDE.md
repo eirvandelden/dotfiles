@@ -1,1 +1,1 @@
-/Users/etienne.vandelden/Developer/dotfiles/agents.md
+%HOME/Developer/dotfiles/agents.md
