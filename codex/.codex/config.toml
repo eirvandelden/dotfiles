@@ -1,0 +1,9 @@
+personality = "pragmatic"
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+
+[features]
+multi_agent = true
+
+[projects."/Users/etienne.vandelden/Developer"]
+trust_level = "trusted"

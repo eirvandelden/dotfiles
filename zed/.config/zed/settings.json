@@ -96,33 +96,13 @@
   //
   // Chat / Agent
   "agent": {
-    "favorite_models": [
-      {
-        "provider": "openai",
-        "model": "gpt-5.2",
-      },
-      {
-        "provider": "copilot_chat",
-        "model": "claude-opus-4.5",
-      },
-      {
-        "provider": "copilot_chat",
-        "model": "claude-sonnet-4.5",
-      },
-    ],
-    "default_profile": "write",
     "default_model": {
       "provider": "openai",
-      "model": "gpt-5.2",
+      "model": "gpt-5.4",
+      "enable_thinking": false
     },
-    "inline_assistant_model": {
-      "provider": "openai",
-      "model": "gpt-5",
-    },
-    "always_allow_tool_actions": true,
-    "model_parameters": [],
-    "notify_when_agent_waiting": "primary_screen",
-    "play_sound_when_agent_done": true,
+    "favorite_models": [],
+    "model_parameters": []
   },
 
   // Predictions

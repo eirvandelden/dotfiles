@@ -47,7 +47,9 @@ eval "$(/opt/homebrew/bin/rv shell completions zsh)"
 
 ## Add trusted ./bin for safe projects
 function set_local_bin_path() {
-  export PATH="${1:-""}`echo "$PATH"|sed -e 's,[^:]*\.git/[^:]*bin:,,g'`"
+  local cleaned
+  cleaned="${1:-""}$(echo "$PATH" | sed -e 's,[^:]*\.git/[^:]*bin:,,g')"
+  export PATH="$cleaned"
 }
 
 function add_trusted_local_bin_to_path() {
@@ -61,8 +63,7 @@ if [[ -n "$ZSH_VERSION" && "$preexec_functions" != *add_trusted_local_bin_to_pat
 fi
 
 # Javascript
-## chnode setup
-source /opt/homebrew/opt/chnode/share/chnode/chnode.sh
-source /opt/homebrew/opt/chnode/share/chnode/auto.sh
-precmd_functions+=(chnode_auto)
-
+## chnode — precmd hook for interactive shells (init is in paths.zsh)
+if (( ${+functions[apply_default_node_version]} )) && [[ "${precmd_functions[*]}" != *"apply_default_node_version"* ]]; then
+  precmd_functions+=(apply_default_node_version)
+fi

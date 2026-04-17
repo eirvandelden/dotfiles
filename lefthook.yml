@@ -1,3 +1,4 @@
+---
 pre-commit:
   parallel: true
   commands:
@@ -48,12 +49,24 @@ pre-commit:
     no-fixme:
       tags: fixme
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings FIXME "{staged_files}"
+        ! grep \
+          --exclude="sorbet/**/*" \
+          --exclude="lefthook.yml" \
+          --line-number \
+          --with-filename \
+          --fixed-strings \
+          FIXME "{staged_files}"
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings NOCOMMIT "{staged_files}"
+        ! grep \
+          --exclude="sorbet/**/*" \
+          --exclude="lefthook.yml" \
+          --line-number \
+          --with-filename \
+          --fixed-strings \
+          NOCOMMIT "{staged_files}"
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
 # TODO: fix loading of extra words
@@ -77,7 +90,9 @@ pre-push:
       fail_text: |
         Fix vulnerabilities if you can.
         If you're in a hurry to push, use the `--no-verify` git flag.
-        If brakeman is presenting false positives or needs further configuration, look into adding options to a configuration file — see https://brakemanscanner.org/docs/options/
+        If brakeman is presenting false positives or needs further configuration,
+        look into adding options to a configuration file.
+        See https://brakemanscanner.org/docs/options/
     bundle-audit:
       tags:
         - ruby
@@ -88,7 +103,8 @@ pre-push:
       fail_text: |
         Upgrade vulnerable dependencies if you can.
         If you're in a hurry to push, use the `--no-verify` git flag.
-        If you need to 🚩 ignore dependencies in the longer-term 🚩 see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
+        If you need to ignore dependencies in the longer term,
+        see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     stylelint:
       run: yarn stylelint {push_files}
       tags: css linter
@@ -101,15 +117,15 @@ pre-push:
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: erb_lint {staged_files}
+      run: erb_lint {push_files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
-      run: yarn eslint {staged_files}
+      run: yarn eslint {push_files}
     rubocop:
       tags: linter
       glob: "*.rb"
-      run: rubocop --force-exclusion {staged_files}
+      run: rubocop --force-exclusion {push_files}
     minitest:
       tags:
         - ruby
@@ -117,7 +133,7 @@ pre-push:
         - minitest
       glob: "app/**/*.rb"
       run: |
-        for file in {staged_files}; do
+        for file in {push_files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
           test_file="test/${base_name}_test.rb"
@@ -137,7 +153,7 @@ pre-push:
         - rspec
       glob: "app/**/*.rb"
       run: |
-        for file in {staged_files}; do
+        for file in {push_files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
           spec_file="spec/${base_name}_spec.rb"
@@ -165,13 +181,25 @@ pre-push:
     no-fixme:
       tags: fixme
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings FIXME "{staged_files}"
-      fail_text: Your staged files include a FIXME. See above for details.
+        ! grep \
+          --exclude="sorbet/**/*" \
+          --exclude="lefthook.yml" \
+          --line-number \
+          --with-filename \
+          --fixed-strings \
+          FIXME "{push_files}"
+      fail_text: Your pushed files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
       run: |
-        ! grep --exclude="sorbet/**/*" --exclude="lefthook.yml" --line-number --with-filename --fixed-strings NOCOMMIT "{staged_files}"
-      fail_text: Your staged files include a NOCOMMIT. See above for details.
+        ! grep \
+          --exclude="sorbet/**/*" \
+          --exclude="lefthook.yml" \
+          --line-number \
+          --with-filename \
+          --fixed-strings \
+          NOCOMMIT "{push_files}"
+      fail_text: Your pushed files include a NOCOMMIT. See above for details.
 
 # Run installs and migrations after pull
 post-merge:
@@ -198,7 +226,7 @@ migrations:
     bundle:
       priority: 1
       glob: "Gemfile*"
-      run: bundle install
+      run: if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi
     migrate:
       priority: 2
       glob: "db/migrations/*"
