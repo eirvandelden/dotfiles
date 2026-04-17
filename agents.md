@@ -614,7 +614,7 @@ Work-specific configuration lives in a separate private repository at `~/Develop
 **Ruby**
 
 - Version manager: `rv` (spinel-coop/rv). No other Ruby version manager is used.
-- Default Ruby version is declared in `ruby/.ruby-version` (currently 4.0.1).
+- Default Ruby version is declared in `ruby/.ruby-version` (currently latest 4.x).
 - Ruby is built with YJIT and jemalloc enabled.
 - If there is a Ruby version mismatch, use `rv ruby run -- COMMAND` to run a command in the
   correct Ruby context rather than attempting to install or switch versions.
