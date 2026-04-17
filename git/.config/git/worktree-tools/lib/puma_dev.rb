@@ -40,20 +40,16 @@ module WorktreeTools
     end
 
     def remove!
-      unless @config.puma_dev_enabled?
-        return
-      end
-
       puma_dev_dir = Pathname.new(@config.puma_dev_dir)
       symlink_name = @config.puma_dev_name
       symlink_path = puma_dev_dir.join(symlink_name)
 
       if symlink_path.exist? || symlink_path.symlink?
-        log "Removing puma-dev symlink: #{symlink_name}"
+        log "Removing puma-dev entry: #{symlink_name}"
         FileUtils.rm_f(symlink_path)
-        log "Puma-dev symlink removed"
+        log "Puma-dev entry removed"
       else
-        log "No puma-dev symlink to remove"
+        log "No puma-dev entry to remove"
       end
     end
 

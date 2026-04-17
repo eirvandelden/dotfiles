@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+script_dir="$(CDPATH='' cd -- "$(dirname "$0")" && pwd)"
+worktree_setup="$script_dir/worktree-setup"
+
+if [ ! -x "$worktree_setup" ]; then
+  echo "worktree-setup not found at $worktree_setup" >&2
+  exit 1
+fi
+
+"$worktree_setup" "$@"

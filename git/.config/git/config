@@ -8,6 +8,7 @@
   hist = log --graph --date-order --date=short --pretty=format:'%C(auto)%h%d %C(reset)%s %C(bold blue)%ce %C(reset)%C(green)%cr (%cd)'
   trust = "!mkdir -p .git/safe" # Mark a repo as trusted
   undo = reset --soft HEAD^
+  worktree-init = "!f() { \"${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-init\" \"$@\"; }; f"
 [apply]
   whitespace = nowarn
 [credential]

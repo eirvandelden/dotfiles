@@ -1,17 +1,17 @@
 # Git Worktree Tools
 
-Generic, reusable tooling for automating git worktree setup across Rails, Node, and generic projects.
+Generic, reusable tooling for opt-in git worktree setup across Rails, Node, and generic projects.
 
 ## Overview
 
-This toolkit automatically configures new git worktrees by:
+This toolkit configures git worktrees on demand by:
 
 1. **Symlinking shared files** from `.worktree-local/` using GNU Stow
 2. **Configuring puma-dev** for Rails projects (enables `https://<name>.localhost` access)
 3. **Integrating with Conductor** for seamless workspace creation
-4. **Running automatically** via git `post-checkout` hook
+4. **Running explicitly** via `git worktree-init`
 
-**Key benefit:** Run `git worktree add feature-branch` and immediately start developing at `https://feature-branch.myproject.localhost` with all shared configuration files in place.
+**Key benefit:** Run `git worktree add feature-branch`, then opt into setup only for the worktrees that need it.
 
 ## Quick Start
 
@@ -33,12 +33,12 @@ brew install puma-dev
    stow git
    ```
 
-2. **Create a worktree** - automation runs automatically:
+2. **Create a worktree**:
    ```bash
    cd ~/Developer/myproject
    git worktree add feature-branch
    cd feature-branch
-   # worktree-setup runs automatically via post-checkout hook!
+   git worktree-init
    ```
 
 3. **Access your app** (Rails with puma-dev):
@@ -56,10 +56,10 @@ You can also run the tools manually:
 
 ```bash
 # Setup current directory
-worktree-setup
+git worktree-init
 
 # Setup specific worktree
-worktree-setup /path/to/worktree
+git worktree-init /path/to/worktree
 
 # Setup all worktrees in current repo
 worktree-setup-all
@@ -139,8 +139,8 @@ stow:
    - `worktree-setup-all` - Bulk setup for all worktrees
    - `worktree-remove` - Cleanup (remove puma-dev, unstow packages)
 
-3. **Git Hook Integration**
-   - `post-checkout` - Runs `worktree-setup` automatically on new worktrees
+3. **Explicit Git Command**
+   - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path
 
 ### How It Works
 
@@ -149,9 +149,9 @@ stow:
    git worktree add feature-branch
    ```
 
-2. **Git triggers `post-checkout` hook:**
-   - Detects new worktree (old SHA is all zeros)
-   - Calls `worktree-setup` automatically
+2. **Run `git worktree-init`:**
+   - Calls `worktree-setup` for the current worktree
+   - Leaves unrelated repositories and branches untouched until you opt in
 
 3. **`worktree-setup` orchestrates:**
    - Detects project type (Rails/Node/generic)
@@ -214,10 +214,10 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
    # config/database.yml
    development:
      <<: *default
-     database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
+     database: <%= ENV.fetch("DATABASE_NAME", "sample_app_development") %>
    ```
 
-   This allows each workspace to have its own database. `bin/setup` automatically sets `DATABASE_NAME` to `projectname_workspacename_development`.
+   This allows each workspace to have its own database. `bin/setup` automatically sets `DATABASE_NAME` to `project_name_workspace_name_development`.
 
 2. **Setup shared files in .worktree-local:**
    ```bash
@@ -244,7 +244,7 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
 
 4. **Create workspace in Conductor:**
    - Conductor will call `bin/setup`
-   - `worktree-setup` will run automatically
+   - `bin/setup` will call `worktree-setup`
    - Database will be created with unique name
    - Workspace is ready for development!
 
@@ -270,7 +270,7 @@ The scripts you copy from `~/.config/conductor/scripts/` provide Conductor integ
 
 Called when creating a new workspace. This script:
 
-1. **Runs worktree-setup** - Sets up Stow symlinks and puma-dev
+1. **Runs worktree-setup** - Sets up Stow symlinks and proxy configuration
 2. **For Rails projects:**
    - Loads secrets from 1Password (via `unlock` or `secrets` command)
    - Configures workspace-specific database name
@@ -283,8 +283,8 @@ Called when creating a new workspace. This script:
 **Work projects** (Rails with database): Adds full Rails setup with isolated database
 
 **Database naming pattern:**
-- Format: `projectname_workspacename_development`
-- Example: `myapp_feature-auth_development`
+- Format: `project_name_workspace_name_development`
+- Example: `sample_app_feature_auth_development`
 - Ensures no conflicts between workspaces
 
 #### `bin/run`
@@ -326,16 +326,16 @@ Use environment variables for database naming instead of hardcoding in `database
 # config/database.yml
 development:
   <<: *default
-  database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
+  database: <%= ENV.fetch("DATABASE_NAME", "sample_app_development") %>
 ```
 
 ### How It Works
 
 1. **`bin/setup` calculates a unique database name:**
    ```bash
-   # Format: projectname_workspacename_development
-   # Example: myapp_feature-auth_development
-   DATABASE_NAME="myapp_feature-auth_development"
+   # Format: project_name_workspace_name_development
+   # Example: sample_app_feature_auth_development
+   DATABASE_NAME="sample_app_feature_auth_development"
    ```
 
 2. **Writes to `.env.local` (not tracked by git):**
@@ -419,14 +419,14 @@ git worktree remove feature-auth
 4. Is the `.pumadev` file present? `cat .pumadev`
 5. Check puma-dev logs: `tail -f ~/Library/Logs/puma-dev.log`
 
-### Post-checkout hook not running
+### Running setup explicitly
 
-**Problem:** `worktree-setup` doesn't run automatically.
+**Problem:** A worktree is missing symlinks or proxy setup.
 
 **Solution:**
-1. Check if the hook is installed: `ls -la $(git config core.hooksPath || echo .git/hooks)/post-checkout`
-2. If not, stow the git package: `cd ~/dotfiles && stow git`
-3. Verify hook is executable: `chmod +x ~/.config/git/hooks/post-checkout`
+1. Run `git worktree-init` from inside the worktree
+2. Or target a path directly: `git worktree-init /path/to/worktree`
+3. For all worktrees in the repo, use `worktree-setup-all`
 
 ### Configuration errors
 
@@ -455,11 +455,11 @@ brew install stow
 1. Configure `database.yml` to use `DATABASE_NAME` environment variable:
    ```yaml
    development:
-     database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
+     database: <%= ENV.fetch("DATABASE_NAME", "sample_app_development") %>
    ```
 2. Run `./bin/setup` to configure the workspace-specific database
 3. Check `.env.local` to verify `DATABASE_NAME` is set correctly
-4. Each workspace should have a unique database name like `myapp_workspace-name_development`
+4. Each workspace should have a unique database name like `sample_app_workspace_name_development`
 
 ### Missing secrets or authentication
 
@@ -496,7 +496,7 @@ bundle exec rails db:drop
 1. Is `.env.local` present? `cat .env.local`
 2. Is `DATABASE_NAME` set? `echo $DATABASE_NAME`
 3. Is dotenv-rails in Gemfile? `grep dotenv-rails Gemfile`
-4. Try loading manually: `export DATABASE_NAME=myapp_workspace_development && rails console`
+4. Try loading manually: `export DATABASE_NAME=sample_app_workspace_development && rails console`
 
 ## Advanced Usage
 
@@ -504,27 +504,11 @@ bundle exec rails db:drop
 
 You can override configuration by creating `.worktree.yml` in individual worktrees (though this is rarely needed).
 
-### Disabling Auto-Setup
+### Using the Tools Directly
 
-To prevent the hook from running automatically:
-
-```bash
-export WORKTREE_AUTO_SETUP=0
-git worktree add feature-branch
-```
-
-Or disable the hook entirely:
+You can use the tools directly without the git alias:
 
 ```bash
-git config core.hooksPath /dev/null
-```
-
-### Using Without Git Hooks
-
-You can use the tools standalone without the git hook:
-
-```bash
-# Just run worktree-setup manually after creating worktrees
 git worktree add feature-branch
 cd feature-branch
 worktree-setup
@@ -553,15 +537,10 @@ Enable verbose output:
 DEBUG=1 worktree-setup
 ```
 
-Enable git hook debugging:
-
-```bash
-LEFTHOOK_VERBOSE=1 git worktree add feature-branch
-```
-
 ## Related Files
 
-- `~/.config/git/hooks/post-checkout` - Git hook that triggers automation
+- `~/.config/git/config` - Git aliases including `git worktree-init`
+- `~/.config/git/worktree-tools/worktree-init` - Explicit entrypoint for worktree setup
 - `~/.config/git/worktree-tools/` - This toolkit
 - `~/.puma-dev/` - Puma-dev symlinks directory
 - `.worktree.yml` - Per-project configuration (in repo root)

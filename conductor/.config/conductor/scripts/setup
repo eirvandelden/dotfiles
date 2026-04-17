@@ -40,7 +40,6 @@ workspace_database_name() {
   project_name="$(basename "${repo_root}")"
   printf '%s\n' "${project_name}_${worktree_name}_development"
 }
-
 resolve_proxy_mode() {
   repo_config="${REPO_ROOT}/.worktree.yml"
   worktree_config="${PWD}/.worktree.yml"
@@ -87,7 +86,6 @@ upsert_env_local() {
   printf '%s=%s\n' "${key}" "${value}" >> "${tmp_file}"
   mv "${tmp_file}" .env.local
 }
-
 echo "=== Workspace Setup ==="
 echo ""
 
@@ -141,6 +139,7 @@ if [ "$RAILS_PROJECT" = true ]; then
   PROJECT_NAME="$(basename "$REPO_ROOT")"
   DATABASE_NAME="$(workspace_database_name)"
   export DATABASE_NAME
+  export REPO_ROOT
   PROXY_MODE="$(resolve_proxy_mode)"
 
   echo ""
