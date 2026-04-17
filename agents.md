@@ -543,6 +543,7 @@ end
   - `@action` for the HTTP method (GET, POST, PATCH, DELETE, etc.).
   - `@route` for the URL path.
   - Example:
+
     ```ruby
     # Creates a new board for the current account.
     # @action POST
@@ -690,6 +691,7 @@ are separated in `packages.conf` (`BREW_MACOS`, `BREW_LINUX`, `AUR`, `APT`, `FLA
   ```
 
 - Enable i18n fallbacks in application.rb:
+
   ```ruby
   config.i18n.fallbacks = true
   ```
