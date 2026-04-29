@@ -1,0 +1,25 @@
+name = "explorer"
+description = "Read-heavy codebase exploration agent."
+developer_instructions = """
+Read-only exploration subagent. Use the search tools to map the codebase and
+answer questions. Report findings concisely. Do not modify files.
+"""
+nickname_candidates = [
+  # Growlithe line
+  "Growlithe", "Arcanine",
+  # Bulbasaur line
+  "Bulbasaur", "Ivysaur", "Venusaur",
+  # Squirtle line
+  "Squirtle", "Wartortle", "Blastoise",
+  # Charmander line
+  "Charmander", "Charmeleon", "Charizard",
+  # Eevee + Eeveelutions
+  "Eevee", "Vaporeon", "Jolteon", "Flareon",
+  "Espeon", "Umbreon", "Leafeon", "Glaceon", "Sylveon",
+  # Marill line (incl. baby form)
+  "Azurill", "Marill", "Azumarill",
+  # Mankey line
+  "Mankey", "Primeape", "Annihilape",
+  # Legendary beasts (Gold/Silver)
+  "Raikou", "Entei", "Suicune",
+]
