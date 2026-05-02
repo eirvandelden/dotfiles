@@ -5,9 +5,12 @@ export ZDOTDIR="$HOME/.config/zsh"
 # and their terminal-shell-integration wrappers can source the real config.
 # macOS only — launchctl does not exist on Linux/SteamOS.
 # Skip if already correct so we only spawn launchctl on the first shell per login.
+# Use the absolute path /bin/launchctl: this file runs before paths.zsh, and some
+# GUI-spawned shells (e.g. Conductor's terminal) start with a PATH that doesn't
+# resolve "launchctl" by name yet.
 if [[ "$OSTYPE" == darwin* ]]; then
-  if [[ "$(launchctl getenv ZDOTDIR 2>/dev/null)" != "$ZDOTDIR" ]]; then
-    launchctl setenv ZDOTDIR "$ZDOTDIR"
+  if [[ "$(/bin/launchctl getenv ZDOTDIR 2>/dev/null)" != "$ZDOTDIR" ]]; then
+    /bin/launchctl setenv ZDOTDIR "$ZDOTDIR"
   fi
 fi
 
