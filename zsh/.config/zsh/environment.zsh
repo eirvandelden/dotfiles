@@ -62,6 +62,23 @@ if [[ -n "$ZSH_VERSION" && "$preexec_functions" != *add_trusted_local_bin_to_pat
   preexec_functions+=("add_trusted_local_bin_to_path")
 fi
 
+# Nix
+if [[ -f '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]]; then
+  source '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+fi
+
+# direnv
+if command -v direnv > /dev/null 2>&1; then
+  eval "$(direnv hook zsh)"
+fi
+
+# nix-direnv (caches flake evaluations so `cd` stays instant)
+if [[ -f "${XDG_DATA_HOME:-$HOME/.local/share}/nix-direnv/direnvrc" ]]; then
+  source "${XDG_DATA_HOME:-$HOME/.local/share}/nix-direnv/direnvrc"
+elif [[ -f "$HOME/.nix-profile/share/nix-direnv/direnvrc" ]]; then
+  source "$HOME/.nix-profile/share/nix-direnv/direnvrc"
+fi
+
 # Javascript
 ## chnode — precmd hook for interactive shells (init is in paths.zsh)
 if (( ${+functions[apply_default_node_version]} )) && [[ "${precmd_functions[*]}" != *"apply_default_node_version"* ]]; then

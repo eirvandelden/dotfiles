@@ -101,3 +101,13 @@ chpwd
 compinit
 tkareine
 precmd
+direnv
+direnvrc
+envrc
+footgun
+nixpkgs
+nixgl
+onepassword
+reimage
+tableplus
+vimrc
