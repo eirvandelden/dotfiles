@@ -69,12 +69,12 @@ alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
 
 # Caddy
-alias caddyedit='zed $HOMEBREW_PREFIX/etc/Caddyfile'
-alias caddyfmt='caddy fmt --overwrite $HOMEBREW_PREFIX/etc/Caddyfile'
-alias caddylog='tail -f $HOMEBREW_PREFIX/var/log/caddy.log'
+alias caddyedit="zed $HOMEBREW_PREFIX/etc/Caddyfile"
+alias caddyfmt="caddy fmt --overwrite $HOMEBREW_PREFIX/etc/Caddyfile"
+alias caddylog="tail -f $HOMEBREW_PREFIX/var/log/caddy.log"
 alias caddyrestart="brew services restart caddy"
 alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
-alias caddyvalidate='caddy validate --config $HOMEBREW_PREFIX/etc/Caddyfile'
+alias caddyvalidate="caddy validate --config $HOMEBREW_PREFIX/etc/Caddyfile"
 
 # Portless (proxy lives behind Caddy on :1355)
 alias portless-start='portless proxy start -p 1355 --no-tls'
