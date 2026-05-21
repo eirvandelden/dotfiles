@@ -23,5 +23,32 @@ writebook.localhost, writebook.test {
 	}
 }
 
-# Private, machine-local includes (NOT in git)
-import /Users/etienne.vandelden/.config/caddy/*.caddy
+# Work-side fixed Rails servers (manually run, not puma-dev).
+caren.localhost {
+	tls internal
+	reverse_proxy http://127.0.0.1:3100 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+development.ons-client.localhost {
+	tls internal
+	reverse_proxy http://127.0.0.1:3131 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+# Two-label catch-all: forward Conductor + manual-worktree hostnames
+# to the Portless proxy, which resolves <name>.<project>.localhost to the
+# app port registered at worktree-setup time.
+# Caddy site-address specificity ensures the dedicated blocks above win
+# over this wildcard for their exact hostnames.
+*.*.localhost {
+	tls internal
+	reverse_proxy http://127.0.0.1:1355 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
