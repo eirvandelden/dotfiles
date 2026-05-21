@@ -85,4 +85,4 @@ alias portless-log='tail -f /tmp/portless-proxy.log'
 alias unlock='eval "$(secrets)"'
 
 # Editors
-e() { zed "$@"; }
+alias e="zed $@"
