@@ -121,6 +121,23 @@ module WorktreeTools
       @config.dig("caddy", "config_dir")
     end
 
+    def portless_enabled?
+      @config.dig("portless", "enabled") == true
+    end
+
+    def portless_name
+      @config.dig("portless", "name")
+    end
+
+    def portless_tld
+      @config.dig("portless", "tld") || "localhost"
+    end
+
+    def portless_project_name
+      root = find_git_repo_root
+      root ? root.basename.to_s : project_name
+    end
+
     private
 
     def find_config_file
@@ -201,6 +218,11 @@ module WorktreeTools
           "tls_cert" => nil,
           "tls_key" => nil,
           "config_dir" => File.expand_path("~/.config/caddy")
+        },
+        "portless" => {
+          "enabled" => false,
+          "name" => build_caddy_name,
+          "tld" => "localhost"
         },
         "port" => {
           "base" => 3000,
@@ -296,6 +318,7 @@ module WorktreeTools
 
       validate_port!
       validate_caddy!
+      validate_portless!
     end
 
     def deep_merge(hash1, hash2)
@@ -348,6 +371,14 @@ module WorktreeTools
       return if caddy_config_dir.is_a?(String) && !caddy_config_dir.empty?
 
       raise ConfigError, "Caddy config directory is required when caddy is enabled"
+    end
+
+    def validate_portless!
+      return unless portless_enabled?
+
+      validate_hostname_value!(portless_name, "portless name")
+      validate_hostname_value!(portless_project_name, "portless project name")
+      validate_hostname_value!(portless_tld, "portless tld")
     end
 
     def validate_port!

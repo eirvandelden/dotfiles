@@ -289,6 +289,22 @@ module WorktreeTools
       end
     end
 
+    def test_conductor_defaults_to_portless_disabled
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "3000",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert_not config.portless_enabled?,
+          "portless should be opt-in (default off) until the proxy is in production use"
+      end
+    end
+
     def test_conductor_defaults_to_puma_dev_disabled_for_rails_project
       repo, worktree = setup_regular_repo_with_worktree
       rails_structure(worktree)
@@ -310,6 +326,8 @@ module WorktreeTools
       worktree_yml(worktree, <<~YAML)
         puma_dev:
           enabled: true
+        portless:
+          enabled: true
         caddy:
           enabled: false
       YAML
@@ -323,6 +341,7 @@ module WorktreeTools
         config = load_config(worktree)
         assert config.puma_dev_enabled?, "explicit puma_dev: true should override Conductor default"
         assert_not config.caddy_enabled?, "explicit caddy: false should override Conductor default"
+        assert config.portless_enabled?, "explicit portless: true should override default off"
       end
     end
   end

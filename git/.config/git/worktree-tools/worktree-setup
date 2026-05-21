@@ -10,6 +10,7 @@ require 'config'
 require 'symlinker'
 require 'puma_dev'
 require 'caddy'
+require 'portless'
 
 module WorktreeTools
   class Setup
@@ -63,6 +64,13 @@ module WorktreeTools
       if config.caddy_enabled?
         caddy = CaddyDev.new(config, @path)
         caddy.setup!
+        log ""
+      end
+
+      # Setup Portless
+      if config.portless_enabled?
+        portless = PortlessDev.new(config, @path)
+        portless.setup!
         log ""
       end
 

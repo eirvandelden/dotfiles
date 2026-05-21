@@ -8,6 +8,7 @@ require 'config'
 require 'symlinker'
 require 'puma_dev'
 require 'caddy'
+require 'portless'
 
 module WorktreeTools
   class Remove
@@ -36,6 +37,11 @@ module WorktreeTools
       # Remove Caddy config even when currently disabled in config.
       caddy = CaddyDev.new(config, @path)
       caddy.remove!
+      log ""
+
+      # Remove Portless alias even when currently disabled in config.
+      portless = PortlessDev.new(config, @path)
+      portless.remove!
       log ""
 
       # Remove symlinks via Stow
