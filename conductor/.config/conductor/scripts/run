@@ -1,45 +1,10 @@
 #!/bin/bash
-# Development server launcher
-# Detects project type and starts the appropriate server
+# Development server launcher for personal AI workspaces
+# Always starts on port 3010, matching the ai.<project>.localhost Caddy route
 
 set -e
 
-load_env_local() {
-  if [ -f ".env.local" ]; then
-    set -a
-    # shellcheck disable=SC1091
-    . ./.env.local
-    set +a
-  fi
-}
-
-workspace_name() {
-  if [ -n "${CONDUCTOR_WORKSPACE_NAME:-}" ]; then
-    printf '%s\n' "${CONDUCTOR_WORKSPACE_NAME}"
-  else
-    basename "$PWD"
-  fi
-}
-
-workspace_database_name() {
-  local worktree_name repo_root project_name
-  worktree_name="$(workspace_name)"
-  repo_root="$(git rev-parse --show-toplevel)"
-  project_name="$(basename "${repo_root}")"
-  printf '%s\n' "${project_name}_${worktree_name}_development"
-}
-
-load_database_name() {
-  load_env_local
-
-  if [ -z "${DATABASE_NAME:-}" ] && { [ -d ".git" ] || [ -f ".git" ]; }; then
-    DATABASE_NAME="$(workspace_database_name)"
-    export DATABASE_NAME
-  fi
-}
-
-# Use CONDUCTOR_PORT if set, otherwise PORT env var, or default to 3000
-PORT="${CONDUCTOR_PORT:-${PORT:-3000}}"
+PORT=3010
 
 echo "Starting development server on port ${PORT}..."
 echo ""
@@ -47,7 +12,6 @@ echo ""
 # Rails project
 if [ -f "config/application.rb" ] && [ -f "Gemfile" ]; then
   echo "Detected Rails project"
-  load_database_name
 
   # Prefer bin/dev (Rails 7+ convention)
   if [ -x "bin/dev" ]; then
@@ -68,7 +32,6 @@ fi
 if [ -f "package.json" ]; then
   echo "Detected Node project"
 
-  # Check for common dev scripts
   if grep -q '"dev"' package.json; then
     echo "Using npm run dev"
     PORT="${PORT}" exec npm run dev
@@ -84,11 +47,5 @@ if [ -f "package.json" ]; then
   fi
 fi
 
-# Generic project - try common server commands
-echo "Could not detect project type"
-echo ""
-echo "Please create a project-specific bin/run script or use one of:"
-echo "  - Rails: bin/rails server -p ${PORT}"
-echo "  - Node: npm start"
-echo "  - Other: your-server-command"
+echo "Could not detect project type" >&2
 exit 1
