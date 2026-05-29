@@ -208,18 +208,7 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
 
 #### Next Steps
 
-1. **For Rails projects, configure database.yml:**
-
-   ```yaml
-   # config/database.yml
-   development:
-     <<: *default
-     database: <%= ENV.fetch("DATABASE_NAME", "sample_app_development") %>
-   ```
-
-   This allows each workspace to have its own database. `bin/setup` automatically sets `DATABASE_NAME` to `project_name_workspace_name_development`.
-
-2. **Setup shared files in .worktree-local:**
+1. **Setup shared files in .worktree-local:**
    ```bash
    # Copy Rails credentials key (needed by all worktrees)
    cp config/master.key .worktree-local/rails/config/
@@ -228,7 +217,7 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
    $EDITOR .worktree-local/rails/.env
    ```
 
-3. **Create `.worktree.yml`** (optional but recommended):
+2. **Create `.worktree.yml`** (optional but recommended):
    ```yaml
    project:
      name: myproject
@@ -242,10 +231,9 @@ Conductor is a Mac app for managing multiple coding agents in parallel. Each wor
      enabled: true
    ```
 
-4. **Create workspace in Conductor:**
+3. **Create workspace in Conductor:**
    - Conductor will call `bin/setup`
    - `bin/setup` will call `worktree-setup`
-   - Database will be created with unique name
    - Workspace is ready for development!
 
 ### Environment Variables
@@ -257,10 +245,13 @@ When running in Conductor, these variables are available:
 - `CONDUCTOR_WORKSPACE_NAME` - Name of the workspace
 - `CONDUCTOR_PORT` - First port in a range of 10 consecutive ports allocated to workspace
 
-The tooling automatically detects Conductor and adjusts behavior:
+The generic worktree tooling automatically detects Conductor and adjusts behavior:
 - Uses `CONDUCTOR_ROOT_PATH/.worktree-local/` for shared files
-- Uses `CONDUCTOR_PORT` for server and puma-dev
 - Uses `CONDUCTOR_WORKSPACE_NAME` for puma-dev naming
+
+The personal Conductor scripts in `~/.config/conductor/scripts/` intentionally use a fixed server port instead:
+- `bin/run` always starts the app on port `3010`
+- Personal AI workspaces are routed through `https://ai.<project>.localhost`
 
 ### Workspace Scripts
 
@@ -271,21 +262,9 @@ The scripts you copy from `~/.config/conductor/scripts/` provide Conductor integ
 Called when creating a new workspace. This script:
 
 1. **Runs worktree-setup** - Sets up Stow symlinks and proxy configuration
-2. **For Rails projects:**
-   - Loads secrets from 1Password (via `unlock` or `secrets` command)
-   - Configures workspace-specific database name
-   - Writes `DATABASE_NAME` to `.env.local`
-   - Runs `bundle install`
-   - Creates and migrates database with `rails db:prepare`
+2. **Does not** install dependencies, load secrets, create databases, or write `.env.local`
 
-**Personal projects** (non-Rails): Just runs `worktree-setup`
-
-**Work projects** (Rails with database): Adds full Rails setup with isolated database
-
-**Database naming pattern:**
-- Format: `project_name_workspace_name_development`
-- Example: `sample_app_feature_auth_development`
-- Ensures no conflicts between workspaces
+Add those steps in your project-specific copy if your app needs them.
 
 #### `bin/run`
 
@@ -301,63 +280,15 @@ Starts the development server. Intelligently detects project type:
 2. Falls back to `npm run start:dev`
 3. Falls back to `npm start`
 
-Always respects `CONDUCTOR_PORT` environment variable.
+This personal script always binds port `3010`. That matches the Caddy route for `ai.<project>.localhost`.
 
 #### `bin/archive`
 
 Called before removing a workspace. This script:
 
-- **For Rails projects:** Drops the workspace-specific database
-- **For other projects:** Does nothing (but required by Conductor)
-
-Safe error handling - won't fail if database doesn't exist.
-
-## Database Configuration (Rails Projects)
-
-### Problem
-
-When working with multiple worktrees, each needs its own database to avoid conflicts. If all worktrees share the same database name, migrations and data changes in one worktree affect all others.
-
-### Solution
-
-Use environment variables for database naming instead of hardcoding in `database.yml`:
-
-```yaml
-# config/database.yml
-development:
-  <<: *default
-  database: <%= ENV.fetch("DATABASE_NAME", "sample_app_development") %>
-```
-
-### How It Works
-
-1. **`bin/setup` calculates a unique database name:**
-   ```bash
-   # Format: project_name_workspace_name_development
-   # Example: sample_app_feature_auth_development
-   DATABASE_NAME="sample_app_feature_auth_development"
-   ```
-
-2. **Writes to `.env.local` (not tracked by git):**
-   ```bash
-   echo "DATABASE_NAME=${DATABASE_NAME}" > .env.local
-   ```
-
-3. **Rails loads `.env.local` automatically** (if using dotenv-rails gem)
-
-4. **Each workspace gets its own isolated database**
-
-### Shared vs Per-Worktree Configuration
-
-**Shared** (in `.worktree-local/rails/.env`):
-- `RAILS_ENV`
-- `REDIS_URL`
-- Other common settings
-
-**Per-worktree** (in `.env.local`):
-- `DATABASE_NAME` - unique per workspace
-- `PORT` - from `CONDUCTOR_PORT`
-- Workspace-specific overrides
+- Removes the workspace `.context/` directory
+- Runs `worktree-remove` to clean up puma-dev, Caddy config, and Stow symlinks
+- Does not drop databases or remove other app-specific resources unless you add that yourself
 
 ### Manual Worktree Setup
 
@@ -366,36 +297,41 @@ If you're creating worktrees manually (not using Conductor):
 ```bash
 git worktree add feature-auth
 cd feature-auth
-./bin/setup  # Creates database and configures everything
+./bin/setup  # Runs worktree-setup and any project-specific setup you add
 ```
 
 To remove:
 
 ```bash
-./bin/archive  # Drops the database
+./bin/archive
 cd ..
 git worktree remove feature-auth
 ```
 
-## Puma-dev Integration
+## Routing and Puma-dev Integration
 
 ### URL Naming Pattern
 
 - **Main worktree:** `https://myproject.localhost`
 - **Feature worktree:** `https://feature-branch.myproject.localhost`
-- **Conductor workspace:** `https://workspace-name.myproject.localhost`
+- **Conductor personal AI workspace:** `https://ai.myproject.localhost`
 
 ### Port Assignment
 
-- **Conductor:** Uses `CONDUCTOR_PORT` environment variable
+- **Conductor personal AI scripts:** Fixed port `3010`
 - **Main worktree:** Uses base port from config (default: 3000)
 - **Feature worktrees:** Uses hash-based stable port offset (base + hash % 1000)
 
 ### How It Works
 
+For standard worktrees:
 1. Creates a symlink in `~/.puma-dev/` pointing to the worktree directory
 2. Creates a `.pumadev` file in the worktree root with the assigned port
 3. Puma-dev proxies `https://<name>.<domain>` to the specified port
+
+For personal Conductor AI workspaces:
+1. `bin/run` starts the app on port `3010`
+2. Caddy routes `https://ai.<project>.localhost` to `127.0.0.1:3010`
 
 ## Troubleshooting
 
@@ -447,56 +383,6 @@ git worktree remove feature-auth
 brew install stow
 ```
 
-### Database name conflicts
-
-**Problem:** Multiple worktrees trying to use the same database, or database operations affecting other worktrees.
-
-**Solution:**
-1. Configure `database.yml` to use `DATABASE_NAME` environment variable:
-   ```yaml
-   development:
-     database: <%= ENV.fetch("DATABASE_NAME", "sample_app_development") %>
-   ```
-2. Run `./bin/setup` to configure the workspace-specific database
-3. Check `.env.local` to verify `DATABASE_NAME` is set correctly
-4. Each workspace should have a unique database name like `sample_app_workspace_name_development`
-
-### Missing secrets or authentication
-
-**Problem:** `bin/setup` fails because JFrog tokens or other secrets aren't available.
-
-**Solution:**
-1. **For work projects:** Ensure `unlock` or `secrets` command is available
-   - This loads secrets from 1Password or other secret managers
-   - Contact your team if you don't have this set up
-2. **For personal projects:** Set secrets manually in `.worktree-local/rails/.env`
-3. **Skip secret loading:** Edit `bin/setup` to comment out the unlock/secrets section
-
-### Database already exists error
-
-**Problem:** Running `bin/setup` fails because database already exists from previous workspace.
-
-**Solution:**
-```bash
-# Drop the old database manually
-bundle exec rails db:drop
-
-# Or use the archive script
-./bin/archive
-
-# Then re-run setup
-./bin/setup
-```
-
-### Wrong database in Rails console
-
-**Problem:** `rails console` connects to main worktree's database instead of workspace-specific one.
-
-**Checklist:**
-1. Is `.env.local` present? `cat .env.local`
-2. Is `DATABASE_NAME` set? `echo $DATABASE_NAME`
-3. Is dotenv-rails in Gemfile? `grep dotenv-rails Gemfile`
-4. Try loading manually: `export DATABASE_NAME=sample_app_workspace_development && rails console`
 
 ## Advanced Usage
 

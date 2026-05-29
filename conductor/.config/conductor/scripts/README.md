@@ -54,7 +54,6 @@ Personal AI workspaces are routed via the public dotfiles Caddyfile:
 
 ```
 ai.*.localhost  →  127.0.0.1:3010   (personal AI workspaces, this script)
-*.*.localhost   →  127.0.0.1:1355   (Portless catch-all for other workspaces)
 ```
 
 Work project routes (caren, ons-client) live in `dotfiles-work`.
