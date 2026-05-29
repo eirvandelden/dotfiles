@@ -1,6 +1,6 @@
 # Conductor Workspace Scripts
 
-These are generic, reusable scripts for Conductor workspace lifecycle management. Copy them into your project's `bin/` directory to enable Conductor integration.
+Generic scripts for personal AI workspace lifecycle management in Conductor. These scripts are used by personal projects running as AI workspaces at `https://ai.<project>.localhost`.
 
 ## Quick Start
 
@@ -24,28 +24,13 @@ JSON
 
 ### `setup`
 
-Called when Conductor creates a new workspace. This script:
-
-1. **Runs worktree-setup** - Sets up Stow symlinks and puma-dev
-2. **For Rails projects:**
-   - Loads secrets from 1Password (via `unlock` or `secrets` command)
-   - Configures workspace-specific database name
-   - Writes `DATABASE_NAME` to `.env.local`
-   - Runs `bundle install`
-   - Creates and migrates database with `rails db:prepare`
-
-**Personal projects** (non-Rails): Just runs worktree-setup
-
-**Work projects** (Rails with database): Adds full Rails setup with isolated database
-
-**Database naming pattern:**
-- Format: `projectname_workspacename_development`
-- Example: `myapp_feature-auth_development`
-- Ensures no conflicts between workspaces
+Called when Conductor creates a new workspace. Runs `worktree-setup` to configure Stow symlinks and puma-dev. No database or dependency setup — handle those in your project's own setup steps if needed.
 
 ### `run`
 
-Starts the development server. Intelligently detects project type:
+Starts the development server on port **3010**, matching the `ai.<project>.localhost → 3010` Caddy route.
+
+Detects project type automatically:
 
 **Rails projects:**
 1. Prefers `bin/dev` (Rails 7+ convention)
@@ -57,88 +42,29 @@ Starts the development server. Intelligently detects project type:
 2. Falls back to `npm run start:dev`
 3. Falls back to `npm start`
 
-Always respects `CONDUCTOR_PORT` environment variable.
+Port is fixed at 3010. Work projects with different ports use separate scripts in `dotfiles-work`.
 
 ### `archive`
 
-Called before Conductor removes a workspace. This script:
+Called before Conductor removes a workspace. Removes the `.context/` directory (AI-generated workspace files) and runs `worktree-remove` to clean up puma-dev, Caddy config, and Stow symlinks.
 
-- **For Rails projects:** Drops the workspace-specific database
-- **For other projects:** Does nothing (but required by Conductor)
+## Caddy routing
 
-Safe error handling - won't fail if database doesn't exist.
-
-## Rails Database Configuration
-
-For Rails projects, configure your `database.yml` to use the `DATABASE_NAME` environment variable:
-
-```yaml
-# config/database.yml
-development:
-  <<: *default
-  database: <%= ENV.fetch("DATABASE_NAME", "myapp_development") %>
-```
-
-This allows each workspace to have its own isolated database.
-
-## Shared Files Setup
-
-Create a `.worktree-local/` directory in your project root (or let Conductor use `CONDUCTOR_ROOT_PATH`):
-
-```bash
-mkdir -p .worktree-local/rails/config
-mkdir -p .worktree-local/rails/storage
-
-# Copy Rails credentials key
-cp config/master.key .worktree-local/rails/config/
-
-# Create shared .env
-cat > .worktree-local/rails/.env <<'EOF'
-RAILS_ENV=development
-# Add other shared environment variables here
-EOF
-```
-
-Create `.worktree.yml` to enable Stow:
-
-```yaml
-project:
-  name: myproject
-
-stow:
-  enabled: true
-  packages:
-    - rails
-
-puma_dev:
-  enabled: true
-```
-
-Add to `.gitignore`:
+Personal AI workspaces are routed via the public dotfiles Caddyfile:
 
 ```
-/.worktree-local/
-/.env.local
+ai.*.localhost  →  127.0.0.1:3010   (personal AI workspaces, this script)
 ```
 
-## Environment Variables
-
-These scripts use Conductor environment variables:
-
-- `CONDUCTOR_PORT` - First port in a range of 10 consecutive ports
-- `CONDUCTOR_ROOT_PATH` - Path to project root (one level above workspace)
-- `CONDUCTOR_WORKSPACE_PATH` - Path to current workspace
-- `CONDUCTOR_WORKSPACE_NAME` - Name of the workspace
+Work project routes (caren, ons-client) live in `dotfiles-work`.
 
 ## Customization
 
 These scripts are meant to be copied and customized per-project. After copying:
 
 1. Edit `bin/setup` to add project-specific setup steps
-2. Edit `bin/run` to adjust server startup behavior
-3. Edit `bin/archive` to add cleanup steps
-
-The scripts are designed to work for most Rails and Node projects out of the box.
+2. Edit `bin/run` to adjust server startup if your project needs a different port or command
+3. Edit `bin/archive` to add any additional cleanup steps
 
 ## Troubleshooting
 
@@ -149,6 +75,5 @@ cat ~/.config/git/worktree-tools/README.md
 ```
 
 Common issues:
-- **Missing secrets**: Install `unlock` or `secrets` command for 1Password integration
-- **Database conflicts**: Ensure `DATABASE_NAME` is in `database.yml`
 - **Stow conflicts**: Make sure `.worktree-local/` exists and files are symlinked
+- **Wrong port**: Verify the `ai.<project>.localhost` Caddy block routes to 3010

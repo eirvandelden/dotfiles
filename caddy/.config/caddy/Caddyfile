@@ -23,14 +23,21 @@ writebook.localhost, writebook.test {
 	}
 }
 
-# Two-label catch-all: forward Conductor + manual-worktree hostnames
-# (e.g. <workspace>.<project>.localhost) to the Portless proxy, which
-# resolves the hostname to the per-app port registered by `portless run`
-# at dev-server start. Caddy site-address specificity ensures any literal
-# blocks (here or in imported files below) win over this wildcard.
-*.*.localhost {
+# Manual personal project that does not auto-start via puma-dev.
+# Uncomment and replace <manual-project> with the actual hostname.
+# <manual-project>.localhost {
+# 	tls internal
+# 	reverse_proxy http://127.0.0.1:3000 {
+# 		header_up Host {host}
+# 		header_up X-Forwarded-Proto {scheme}
+# 	}
+# }
+
+# Personal AI workspaces: ai.<project>.localhost -> port 3010.
+# More specific than *.*.localhost, so Caddy matches this first.
+ai.*.localhost {
 	tls internal
-	reverse_proxy http://127.0.0.1:1355 {
+	reverse_proxy http://127.0.0.1:3010 {
 		header_up Host {host}
 		header_up X-Forwarded-Proto {scheme}
 	}

@@ -8,7 +8,7 @@ class ConductorScriptTest < Minitest::Test
   SCRIPT_DIR = File.expand_path("..", __dir__)
 
   def setup
-    @tmpdir = Dir.mktmpdir
+    @tmpdir = File.realpath(Dir.mktmpdir)
     @bin_dir = File.join(@tmpdir, "bin")
     @log_file = File.join(@tmpdir, "commands.log")
     FileUtils.mkdir_p(@bin_dir)
@@ -18,95 +18,88 @@ class ConductorScriptTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir)
   end
 
-  def test_setup_without_lockfile_uses_bundle_install
-    workspace = rails_workspace("fresh-app")
-    stub_setup_commands(database_exists: true)
+  def test_setup_runs_worktree_setup_when_available
+    workspace = rails_workspace("my-app")
+    write_executable("worktree-setup", "#!/bin/sh\necho 'worktree-setup' >> \"#{@log_file}\"\n")
 
     run_script("setup", chdir: workspace)
 
-    assert_includes command_log, "bundle install"
-    refute_includes command_log, "rv ci"
+    assert_includes command_log, "worktree-setup"
   end
 
-  def test_setup_uses_bundle_exec_for_database_commands
-    workspace = rails_workspace("db-app", lockfile: true)
-    stub_setup_commands(database_exists: false)
+  def test_setup_warns_when_worktree_setup_missing
+    workspace = rails_workspace("my-app")
 
-    run_script("setup", chdir: workspace)
+    result = run_script("setup", chdir: workspace)
 
-    assert_includes command_log, "bundle exec rails db:version"
-    assert_includes command_log, "bundle exec rails db:prepare"
+    assert_includes result.fetch(:stderr), "worktree-setup not found"
   end
 
-  def test_setup_in_conductor_uses_worktree_proxy_configuration_for_next_steps
-    workspace = rails_workspace("proxy-app", lockfile: true)
-    stub_setup_commands(database_exists: true)
-    write_executable("puma-dev", "#!/bin/sh\nexit 0\n")
-    File.write(File.join(workspace, ".worktree.yml"), <<~YAML)
-      puma_dev:
-        enabled: true
-      caddy:
-        enabled: false
-    YAML
+  def test_run_starts_bin_dev_when_present
+    workspace = rails_workspace("bin-dev-app", bin_dev: true)
+    stub_run_commands
 
-    result = run_script("setup", chdir: workspace, env: conductor_env(workspace))
+    result = run_script("run", chdir: workspace)
 
-    assert_includes result.fetch(:stdout), "Or access via puma-dev: https://proxy-app.proxy-app.test"
-    refute_includes result.fetch(:stdout), "Or access via Caddy"
+    assert_includes result.fetch(:stdout), "Using bin/dev"
+    assert_includes result.fetch(:stdout), "port 3010"
   end
 
   def test_run_uses_bundle_exec_for_procfile_projects
     workspace = rails_workspace("procfile-app", procfile: true)
     stub_run_commands
 
-    run_script("run", chdir: workspace, env: { "CONDUCTOR_PORT" => "4567" })
+    run_script("run", chdir: workspace)
 
-    assert_includes command_log, "bundle exec foreman start -f Procfile.dev -p 4567"
+    assert_includes command_log, "bundle exec foreman start -f Procfile.dev -p 3010"
   end
 
   def test_run_uses_bundle_exec_for_rails_server_fallback
     workspace = rails_workspace("server-app")
     stub_run_commands
 
-    run_script("run", chdir: workspace, env: { "CONDUCTOR_PORT" => "4567" })
+    run_script("run", chdir: workspace)
 
-    assert_includes command_log, "bundle exec rails server -p 4567"
+    assert_includes command_log, "bundle exec rails server -p 3010"
+  end
+
+  def test_archive_removes_context_directory
+    workspace = rails_workspace("my-app")
+    context_dir = File.join(workspace, ".context")
+    FileUtils.mkdir_p(context_dir)
+    File.write(File.join(context_dir, "notes.md"), "some notes")
+
+    run_script("archive", chdir: workspace)
+
+    refute File.exist?(context_dir)
+  end
+
+  def test_archive_runs_worktree_remove_when_available
+    workspace = rails_workspace("my-app")
+    write_executable("worktree-remove", "#!/bin/sh\necho \"worktree-remove $*\" >> \"#{@log_file}\"\n")
+
+    run_script("archive", chdir: workspace)
+
+    assert_includes command_log, "worktree-remove #{workspace}"
   end
 
   private
 
-  def rails_workspace(name, lockfile: false, procfile: false)
+  def rails_workspace(name, bin_dev: false, procfile: false)
     workspace = File.join(@tmpdir, name)
     FileUtils.mkdir_p(File.join(workspace, "config"))
     FileUtils.touch(File.join(workspace, "config", "application.rb"))
     FileUtils.touch(File.join(workspace, "config", "database.yml"))
     FileUtils.touch(File.join(workspace, "Gemfile"))
-    FileUtils.touch(File.join(workspace, "Gemfile.lock")) if lockfile
+    if bin_dev
+      bin_dir = File.join(workspace, "bin")
+      FileUtils.mkdir_p(bin_dir)
+      dev_script = File.join(bin_dir, "dev")
+      File.write(dev_script, "#!/bin/sh\necho \"bin/dev PORT=$PORT\" >> \"#{@log_file}\"\n")
+      FileUtils.chmod("+x", dev_script)
+    end
     FileUtils.touch(File.join(workspace, "Procfile.dev")) if procfile
     workspace
-  end
-
-  def stub_setup_commands(database_exists:)
-    write_executable("bundle", bundle_setup_script(database_exists:))
-    write_executable("git", <<~SH)
-      #!/bin/sh
-      if [ "$1" = "worktree" ] && [ "$2" = "list" ]; then
-        pwd
-        exit 0
-      fi
-      exit 1
-    SH
-    write_executable("rv", <<~SH)
-      #!/bin/sh
-      echo "rv $*" >> "#{@log_file}"
-    SH
-    write_executable("rails", <<~SH)
-      #!/bin/sh
-      echo "rails $*" >> "#{@log_file}"
-      if [ "$1" = "db:version" ]; then
-        exit #{database_exists ? 0 : 1}
-      fi
-    SH
   end
 
   def stub_run_commands
@@ -118,31 +111,6 @@ class ConductorScriptTest < Minitest::Test
       #!/bin/sh
       echo "foreman $*" >> "#{@log_file}"
     SH
-    write_executable("rails", <<~SH)
-      #!/bin/sh
-      echo "rails $*" >> "#{@log_file}"
-    SH
-  end
-
-  def bundle_setup_script(database_exists:)
-    result = database_exists ? 0 : 1
-
-    <<~SH
-      #!/bin/sh
-      echo "bundle $*" >> "#{@log_file}"
-      if [ "$1" = "exec" ] && [ "$2" = "rails" ] && [ "$3" = "db:version" ]; then
-        exit #{result}
-      fi
-    SH
-  end
-
-  def conductor_env(workspace)
-    {
-      "CONDUCTOR_ROOT_PATH" => @tmpdir,
-      "CONDUCTOR_PORT" => "4567",
-      "CONDUCTOR_WORKSPACE_NAME" => File.basename(workspace),
-      "CONDUCTOR_WORKSPACE_PATH" => workspace
-    }
   end
 
   def write_executable(name, body)
