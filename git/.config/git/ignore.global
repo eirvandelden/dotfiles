@@ -36,6 +36,9 @@
 ehthumbs.db
 Thumbs.db
 
+# EDITORS and others
+####################
+
 # VIM
 *.swp
 
@@ -46,6 +49,9 @@ Thumbs.db
 
 # Nova by Panic
 .nova/*
+
+# Zed
+.zed/*
 
 ## Ruby
 # https://github.com/github/gitignore/blob/master/Ruby.gitignore
