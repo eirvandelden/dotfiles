@@ -10,11 +10,20 @@
   //
   // Theming
   //
+  "cli_default_open_behavior": "new_window",
+  "proxy": "",
   "edit_predictions": {
-    "provider": "copilot"
+    "provider": "copilot",
   },
   "agent_servers": {
-    "claude": {
+    "github-copilot-cli": {
+      "type": "registry"
+    },
+    "codex-acp": {
+      "type": "registry"
+    },
+    "claude-acp": {
+      "type": "registry",
       "favorite_models": [
         "opus",
         "haiku"
@@ -63,11 +72,9 @@
     "default_width": 450,
   },
   "outline_panel": {
+    "dock": "right",
     "button": false,
     "default_width": 450,
-  },
-  "notification_panel": {
-    "button": false,
   },
 
   "project_panel": {
@@ -96,13 +103,17 @@
   //
   // Chat / Agent
   "agent": {
+    "new_thread_location": "new_worktree",
+    "dock": "left",
+    "default_profile": "ask",
     "default_model": {
-      "provider": "openai",
-      "model": "gpt-5.4",
-      "enable_thinking": false
+      "effort": "high",
+      "provider": "copilot_chat",
+      "model": "claude-opus-4.6",
+      "enable_thinking": true,
     },
     "favorite_models": [],
-    "model_parameters": []
+    "model_parameters": [],
   },
 
   // Predictions
