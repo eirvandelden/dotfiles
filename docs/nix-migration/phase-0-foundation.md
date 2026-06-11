@@ -6,7 +6,7 @@ reachable — without touching any existing stow packages or Homebrew state.
 ## Prerequisites
 
 - macOS machine with Homebrew installed.
-- SteamOS 3.5+ with the `/nix` overlay partition available (`findmnt /nix` shows it mounted).
+- SteamOS 3.5+ installed. The `/nix` bind mount is created by the installer — no pre-existing `/nix` partition needed.
 - Both machines are running and accessible.
 
 ## Step-by-step checklist
@@ -93,5 +93,13 @@ rm ~/.config/nix/nix.conf
 ```
 
 ## Notes
+
+**SteamOS update survival:** After any SteamOS OS update, verify the nix-daemon is still running:
+```sh
+systemctl status nix-daemon
+```
+If it's stopped, the Determinate Systems installer's systemd units should restart it automatically.
+If not: `sudo systemctl start nix-daemon`. The Nix store itself lives on `/home/nix` and survives
+updates — only the daemon service occasionally needs a nudge after a major OS update.
 
 <!-- Fill in during execution: surprises, decisions made, version numbers installed, etc. -->
