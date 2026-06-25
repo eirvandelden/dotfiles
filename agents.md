@@ -151,6 +151,28 @@ If you think you need a service object:
 - Predicate methods must never change state or have side effects.
 - They should be pure queries about an object.
 
+### Conditionals
+
+- Personal projects:
+  - Prefer guard clause style over `if/else/end` blocks.
+  - Use `return x if y` / `z` when the guard line fits within 120 characters.
+
+Example:
+
+```ruby
+# ❌ Don't: if/else/end when a guard clause fits
+if closed?
+  return false
+else
+  do_thing
+end
+
+# ✅ Do: guard clause
+return false if closed?
+
+do_thing
+```
+
 ## 1.4 Tell, Don't Ask
 
 - Tell objects what to do rather than querying their state and then deciding what to do with it.
