@@ -424,6 +424,23 @@ end
   - Prefer Rails fixtures.
 - Work projects:
   - Comfortable using FactoryBot.
+- Test data selection discipline:
+  - Before creating any object, scan existing fixtures/factories. Use one that already has the right state — no mutation needed.
+  - If no suitable record exists, build the correct object directly with the right attributes from the start.
+  - NEVER create a generic base object and then update it to fit the test.
+
+```ruby
+# ❌ Don't: create generic then mutate
+user = create(:user)
+user.update!(role: :admin, confirmed_at: Time.current)
+
+# ✅ Prefer: use an existing factory trait or fixture that is already correct
+user = create(:user, :admin)   # factory trait
+user = users(:admin)           # fixture
+
+# ✅ Also fine: build the correct object directly
+user = create(:user, role: :admin, confirmed_at: Time.current)
+```
 
 ### 5.4 Front end tests
 
