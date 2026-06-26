@@ -20,6 +20,10 @@
       "type": "registry"
     },
     "codex-acp": {
+      "default_config_options": {
+        "mode": "auto",
+        "reasoning_effort": "xhigh"
+      },
       "type": "registry"
     },
     "claude-acp": {

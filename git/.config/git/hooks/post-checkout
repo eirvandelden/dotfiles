@@ -1,10 +1,9 @@
 #!/bin/sh
 
-if [ "$LEFTHOOK_VERBOSE" = "1" ] || [ "$LEFTHOOK_VERBOSE" = "true" ]; then
+if [ "$LEFTHOOK_VERBOSE" = "1" -o "$LEFTHOOK_VERBOSE" = "true" ]; then
   set -x
 fi
 
-# Lefthook delegation
 if [ "$LEFTHOOK" = "0" ]; then
   exit 0
 fi
@@ -17,6 +16,9 @@ call_lefthook()
   elif lefthook -h >/dev/null 2>&1
   then
     lefthook "$@"
+  elif /Users/etienne.vandelden/.local/share/rv/rubies/ruby-3.4.9/lib/ruby/gems/3.4.0/gems/lefthook-2.1.9/libexec/lefthook-darwin-arm64/lefthook -h >/dev/null 2>&1
+  then
+    /Users/etienne.vandelden/.local/share/rv/rubies/ruby-3.4.9/lib/ruby/gems/3.4.0/gems/lefthook-2.1.9/libexec/lefthook-darwin-arm64/lefthook "$@"
   else
     dir="$(git rev-parse --show-toplevel)"
     osArch=$(uname | tr '[:upper:]' '[:lower:]')
