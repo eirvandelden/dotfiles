@@ -1,9 +1,98 @@
-personality = "pragmatic"
-model = "gpt-5.4"
-model_reasoning_effort = "medium"
+model = "gpt-5.5"
+model_reasoning_effort = "high"
+notify = ["/Users/etienne.vandelden/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+service_tier = "default"
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."superpowers@openai-curated"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[desktop]
+appearanceLightCodeThemeId = "solarized"
+appearanceDarkCodeThemeId = "solarized"
+sansFontSize = 14
+codeFontSize = 14
+usePointerCursors = true
+default-service-tier = "priority"
+git-branch-prefix = "ai/"
+git-pull-request-merge-method = "squash"
+git-show-sidebar-pr-icons = true
+followUpQueueMode = "queue"
+reviewDelivery = "detached"
+selected-avatar-id = "hoots"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#b58900"
+contrast = 45
+ink = "#657b83"
+opaqueWindows = false
+surface = "#fdf6e3"
+
+[desktop.appearanceLightChromeTheme.fonts]
+code = "MonoLisa"
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#859900"
+diffRemoved = "#dc322f"
+skill = "#d33682"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#d30102"
+contrast = 60
+ink = "#839496"
+opaqueWindows = false
+surface = "#002b36"
+
+[desktop.appearanceDarkChromeTheme.fonts]
+code = "MonoLisa"
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#859900"
+diffRemoved = "#dc322f"
+skill = "#d33682"
+
+[desktop.open-in-target-preferences]
+global = "zed"
 
 [features]
-multi_agent = true
+js_repl = false
 
-[projects."/Users/etienne.vandelden/Developer"]
-trust_level = "trusted"
+[mcp_servers.super-mcp]
+url = "https://api.super.work/mcp"
+
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN"
+
+[mcp_servers.fizzy]
+url = "http://fizzy-mcp.home.arpa/mcp"
+bearer_token_env_var = "FIZZY_PAT"
+
+[mcp_servers.fizzy.tools.fizzy_create_card]
+approval_mode = "approve"
+
+[mcp_servers.fizzy.tools.fizzy_update_card]
+approval_mode = "approve"
