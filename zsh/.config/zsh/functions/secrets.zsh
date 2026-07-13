@@ -38,6 +38,7 @@ secrets() {
   # Args:
   #   1: file path
   #   2: origin label (base/work) for override warnings
+  #   3: 1Password account shorthand (passed to --account; empty = no flag)
   #
   # Uses by reference:
   #   seen_keys (assoc array: key -> origin)
@@ -47,8 +48,9 @@ secrets() {
 
     local file="$1"
     local origin="$2"
+    local account="$3"
 
-    local line key ref val
+    local line key ref val escaped_val
 
     while IFS= read -r line || [[ -n "$line" ]]; do
       # Skip blanks
@@ -84,20 +86,25 @@ secrets() {
         print -u2 "secrets: warning: overriding $key (was from ${seen_keys[$key]}, now from ${origin})"
       fi
 
-      # Resolve secret (never print raw). Escape for safe eval as an export.
-      val="$(op read "$ref")"
-      print -r -- "export ${key}=${(qqq)val}"
+      # Resolve secret via the correct account. Never print raw value.
+      local op_args=("read" "$ref")
+      [[ -n "$account" ]] && op_args+=("--account" "$account")
+      val="$(op "${op_args[@]}")"
+      escaped_val="$(printf "%q" "$val")"
+      print -r -- "export ${key}=${escaped_val}"
 
       seen_keys[$key]="$origin"
     done < "$file"
   }
 
   local -A seen_keys
+  local personal_account="vandelden"
+  local work_account="nedap"
 
-  _secrets_emit_file "$cfg" "base"
+  _secrets_emit_file "$cfg" "base" "$personal_account"
 
   # Optional overlay (not required, typically gitignored)
   if [[ -f "$cfg_work" ]]; then
-    _secrets_emit_file "$cfg_work" "work"
+    _secrets_emit_file "$cfg_work" "work" "$work_account"
   fi
 }
