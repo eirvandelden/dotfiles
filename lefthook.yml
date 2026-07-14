@@ -46,6 +46,15 @@ pre-commit:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {staged_files}
+    no-push-to-main:
+      tags: branch-protection
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+          echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
+          exit 1
+        fi
+      fail_text: Direct commits to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
       run: |
@@ -178,6 +187,15 @@ pre-push:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {push_files}
+    no-push-to-main:
+      tags: branch-protection
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+          echo "Direct push to $branch is not allowed. Create a feature branch and open a PR."
+          exit 1
+        fi
+      fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
       run: |
