@@ -24,8 +24,7 @@ pre-commit:
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"
-      exclude: "application.rb|routes.rb|schema.rb"
-      run: rubocop -a {staged_files} --parallel
+      run: rubocop -a --force-exclusion {staged_files} --parallel
       stage_fixed: true
     ruby-syntax:
       tags:

@@ -3,5 +3,18 @@
     "superpowers@claude-plugins-official": true,
     "github@claude-plugins-official": true
   },
-  "theme": "dark-ansi"
+  "theme": "dark-ansi",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ]
+  }
 }
