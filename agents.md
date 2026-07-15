@@ -78,18 +78,29 @@ General engineering practice:
 ## 5. Detailed Guidance
 
 Claude Code loads these skills automatically by relevance. Any other agent (Codex, ChatGPT, etc.):
-read the matching file below before proceeding when the task at hand matches.
+read the matching file below before proceeding when the task at hand matches. Inside this repo,
+read the repo-local `claude/.claude/skills/...` path; after stowing the `claude` package, the same
+files are installed at `~/.claude/skills/...`.
 
-| Working on... | Read first |
-|---|---|
-| Object-oriented design in any language — class/method responsibilities, DI, composition vs inheritance, avoiding anemic models | `~/.claude/skills/object-oriented-design/SKILL.md` |
-| Rails domain modeling specifically — where logic/state transitions live in an ActiveRecord app | `~/.claude/skills/rails-architecture/SKILL.md` |
-| Writing/reviewing tests, fixtures vs factories, Minitest/RSpec conventions | `~/.claude/skills/rails-testing/SKILL.md` |
-| Views, Hotwire/Stimulus, CSS, HTML, forms, i18n, accessibility, dialog/UX rules | `~/.claude/skills/rails-ui/SKILL.md` |
-| REST endpoints, JSON responses, API auth, pagination/versioning | `~/.claude/skills/rails-api-design/SKILL.md` |
-| Deployment, error tracking, performance monitoring | `~/.claude/skills/rails-ops/SKILL.md` |
-| Reviewing a PR / implementing review feedback | `~/.claude/skills/code-review/SKILL.md` |
-| Working inside the dotfiles repo (stow, bootstrap, symlinks, machine setup) | `~/.claude/skills/dotfiles-maintenance/SKILL.md` |
+Read first:
+
+- Object-oriented design in any language — class/method responsibilities, DI, composition vs
+  inheritance, avoiding anemic models:
+  `claude/.claude/skills/object-oriented-design/SKILL.md`
+- Rails domain modeling specifically — where logic/state transitions live in an ActiveRecord app:
+  `claude/.claude/skills/rails-architecture/SKILL.md`
+- Writing/reviewing tests, fixtures vs factories, Minitest/RSpec conventions:
+  `claude/.claude/skills/rails-testing/SKILL.md`
+- Views, Hotwire/Stimulus, CSS, HTML, forms, i18n, accessibility, dialog/UX rules:
+  `claude/.claude/skills/rails-ui/SKILL.md`
+- REST endpoints, JSON responses, API auth, pagination/versioning:
+  `claude/.claude/skills/rails-api-design/SKILL.md`
+- Deployment, error tracking, performance monitoring:
+  `claude/.claude/skills/rails-ops/SKILL.md`
+- Reviewing a PR / implementing review feedback:
+  `claude/.claude/skills/code-review/SKILL.md`
+- Working inside the dotfiles repo (stow, bootstrap, symlinks, machine setup):
+  `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
 
 ## 6. Open Questions
 

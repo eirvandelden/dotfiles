@@ -1,6 +1,9 @@
 ---
 name: object-oriented-design
-description: Use when designing or reviewing object-oriented code in any language — class or method responsibilities, dependency injection, composition vs inheritance, Law of Demeter, or resisting an anemic-model-plus-service-layer design.
+description: >-
+  Use when designing or reviewing object-oriented code in any language — class or method
+  responsibilities, dependency injection, composition vs inheritance, Law of Demeter, or resisting
+  an anemic-model-plus-service-layer design.
 ---
 
 # Object-Oriented Design
@@ -21,7 +24,7 @@ If something feels like it needs orchestration, in order of preference:
 1. A method on the object that owns the behavior
 2. Shared behavior via composition (a mixin/module/trait — not inheritance)
 3. A dedicated object representing the state or transition itself, instead of a boolean flag
-4. An orchestrator, only when genuinely coordinating multiple independent objects
+4. An existing application boundary that delegates to rich objects, not a new service/manager class
 5. A stateless helper, only for presentation/formatting — never for business rules
 
 See `references/examples.md`. For how this maps onto Rails specifically (concerns, ActiveJob,
