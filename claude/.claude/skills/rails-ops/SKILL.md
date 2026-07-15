@@ -8,7 +8,8 @@ description: Use when making deployment, error tracking, or performance monitori
 ## Deployment
 
 - Personal projects: deploy with Kamal and Docker.
-- Work projects: depends on the team; historically Capistrano on bare metal.
+- Work projects: depends on the team. Current approach: GitHub Actions CI builds a Docker image
+  and deploys it to Nomad allocations. Historically Capistrano on bare metal.
 - Target Debian based Linux servers.
 
 ## Error tracking
