@@ -1,921 +1,126 @@
 # Etienne van Delden – Personal and Work Rails Playbook
 
-Snapshot: latest revision including Sandi Metz rules, OOP principles (Tell Don't Ask,
-Dependency Injection, Composition over Inheritance, Law of Demeter), and AI instructions.
+Snapshot: core rules only. Detailed Rails/OOP/testing/UI/API/ops/dotfiles guidance lives in
+skills — see §5 "Detailed Guidance".
 
 ## 0. How to Read This Playbook
 
-This document is the single source of truth for all code and suggestions — for humans and AI
-agents alike. Read and apply every section before producing output.
+This document is the single source of truth for the rules that must constrain almost every coding
+session — for humans and AI agents alike. Read and apply every section before producing output.
 
 - Personal: applies to personal projects.
 - Work: applies to professional and Nedap projects.
 - Both: applies to all projects.
 - If an item differs per scope, both are listed.
 
-## 1. Core Philosophy
-
-### 1.0 Sources and Influences
-
-The practices in this playbook are shaped by:
-
-- **37signals** — Rails conventions, "everything is CRUD", opinionated defaults, and open-source
-  tools such as Hotwire, Turbo, Stimulus, Kamal, Solid Queue/Cache/Cable, and the ONCE products.
-- **thoughtbot** — Testing discipline, clean Ruby, and guides such as
-  [thoughtbot/guides](https://github.com/thoughtbot/guides).
-- **Sandi Metz** — Object-oriented design rules: small classes, short methods, limited parameters,
-  Tell Don't Ask, Dependency Injection, and the Law of Demeter.
-
-### 1.1 Principles
-
-- Use Domain Driven Design, Rails convention/CRUD modeling, and SOLID principles.
-- Apply “everything is CRUD”:
-  - Prefer modeling behavior as resources over adding custom actions.
-  - Avoid non-RESTful controller actions beyond the standard seven actions.
-  - State transitions should usually be modeled as nested resources (e.g.
-    `resource :closure` for close/reopen with POST/DELETE).
-  - See also: §7.1 “Everything is CRUD (modeling discipline)”.
-- Personal projects:
-  - Prefer the Solid trifecta by default (Solid Queue, Solid Cache, Solid
-    Cable) rather than introducing Redis/Sidekiq/etc.
-  - See also: §4.3 (Kamal deployment) and §7.1 (Solid Queue/Cache defaults).
-- Prefer incremental refactoring over rewrites:
-  - Make small steps, keep tests green, and use feature flags for risky migrations and behavior changes.
-- Prefer intention revealing names.
-- Short names are fine in hot paths.
-- Longer names are fine in less used code.
-- Default to rich domain models:
-  - Business logic lives in models, not in separate service classes.
-  - NEVER use service objects. Service objects are NOT the correct pattern in any situation.
-    If something feels like it needs orchestration, use these patterns instead
-    (in order of preference):
-    - A model method (always try this first)
-    - A concern (for horizontal behaviour shared across models)
-    - A state record (see 7.1 for modeling state transitions as resources)
-    - An ActiveJob worker running inline (when cross-model orchestration is genuinely needed)
-    - A PORO only for presentation/view helpers, never for business logic
-- Use concerns for composition:
-  - Prefer horizontal behaviour concerns over inheritance.
-  - It is acceptable for a model to include many concerns, as long as each concern has one clear responsibility.
-
-Example (avoid service objects, prefer rich models):
-
-```ruby
-# ❌ Don't: service object for domain behaviour
-class CloseCardService
-  def initialize(card, user)
-    @card = card
-    @user = user
-  end
-
-  def call
-    ActiveRecord::Base.transaction do
-      closure = @card.create_closure!(user: @user)
-      @card.track_event("card_closed", user: @user)
-      NotifyRecipientsJob.perform_later(@card)
-    end
-  end
-end
-
-# ✅ Do: rich model method
-class Card < ApplicationRecord
-  include Closeable
-
-  def close(user: Current.user)
-    create_closure!(user: user)
-    track_event "card_closed", user: user
-    notify_recipients_later
-  end
-end
-
-# ✅ For complex cross-model orchestration, use an ActiveJob running inline
-class ProcessOrderJob < ApplicationJob
-  def perform(order)
-    order.process_payment
-    order.allocate_inventory
-    order.notify_customer
-  end
-end
-
-# In controller or model:
-ProcessOrderJob.perform_now(order)
-```
-
-### 1.1.1 Why Never Service Objects?
-
-Service objects extract business logic away from domain models, leading to:
-
-- Anemic domain models (data bags without behavior)
-- Scattered business logic that's hard to find and maintain
-- Violation of single responsibility (the model should own its behavior)
-- Unnecessary indirection and ceremony
-
-If you think you need a service object:
-
-1. First, add the method to the relevant domain model
-2. If it's shared behavior, extract a concern
-3. If it's a state transition, model it as a resource
-4. If it genuinely orchestrates multiple models, use an ActiveJob running inline
-5. Never reach for a service object - they are not part of this architecture
-
-### 1.2 Layout and Formatting
-
-- Target a maximum line length of 120 characters.
-- Keep classes under roughly 100 lines.
-- Target methods to be 5 lines; keep them under 10 lines.
-- Pass no more than 4 parameters into a method. Hash options count as one parameter.
-- Use blank lines between methods.
-- Group related private methods together.
-- Use explicit `private` and `protected` sections.
-- Avoid abbreviations unless they are universal (for example `id`, `url`,
-  `api`).
-
-## 1.3 Method Design and Naming (Ruby)
-
-### Single responsibility
-
-- Each method should do exactly one thing.
-- The name of the method should reflect that single purpose.
-- If a method starts to do more than one job, extract helper methods.
-
-### Bang methods (`!`)
-
-- Methods that end in `!` are considered unsafe.
-- Unsafe means they mutate the receiver or behave more dangerously than a
-  corresponding safe variant.
-- There should normally be a safe variant without `!` when a `!` method exists.
-
-### Predicate methods (`?`)
-
-- Methods that end in `?` must always return a boolean value.
-- Predicate methods must never change state or have side effects.
-- They should be pure queries about an object.
-
-### Conditionals
-
-- Personal projects:
-  - Prefer guard clause style over `if/else/end` blocks.
-  - Use `return x if y` / `z` when the guard line fits within 120 characters.
-
-Example:
-
-```ruby
-# ❌ Don't: if/else/end when a guard clause fits
-if closed?
-  return false
-else
-  do_thing
-end
-
-# ✅ Do: guard clause
-return false if closed?
-
-do_thing
-```
-
-## 1.4 Tell, Don't Ask
-
-- Tell objects what to do rather than querying their state and then deciding what to do with it.
-- Decisions about an object's state should live inside that object.
-
-Example:
-
-```ruby
-# ❌ Don't: ask for state, then act on it from outside
-if card.closed?
-  card.reopen
-end
-
-# ✅ Do: tell the object what to do
-card.reopen
-
-# The object handles its own guard internally
-def reopen
-  return if open?
-  destroy_closure!
-end
-```
-
-## 1.5 Dependency Injection
-
-- Inject collaborators rather than hard-coding them inside `initialize`.
-- This makes objects easier to test and swap out.
-- Use keyword arguments with sensible defaults so callsites stay clean.
-
-Example:
-
-```ruby
-# ❌ Don't: hard-coded collaborator
-class Order < ApplicationRecord
-  def notify_customer
-    @mailer = OrderMailer
-    @mailer.confirmation(self).deliver_later
-  end
-end
-
-# ✅ Do: inject the collaborator, default to the real one
-class Order < ApplicationRecord
-  def notify_customer(mailer: OrderMailer)
-    mailer.confirmation(self).deliver_later
-  end
-end
-```
-
-## 1.6 Prefer Composition Over Inheritance
-
-- Prefer composing behaviour through concerns and delegation over deep inheritance hierarchies.
-- Inheritance is appropriate when there is a genuine, stable is-a relationship (e.g. a specialised
-  subclass that never changes what it is).
-- For shared, cross-cutting behaviour, use concerns.
-
-Example:
-
-```ruby
-# ✅ Inheritance is fine for a genuine is-a relationship
-class AdminUser < User
-  def admin? = true
-end
-
-# ✅ Prefer concerns for shared behaviour across unrelated models
-module Closeable
-  extend ActiveSupport::Concern
-
-  included do
-    has_one :closure, dependent: :destroy
-  end
-
-  def close = create_closure!(user: Current.user)
-  def closed? = closure.present?
-end
-
-class Card < ApplicationRecord
-  include Closeable
-end
-
-class Task < ApplicationRecord
-  include Closeable
-end
-```
-
-## 1.7 Law of Demeter
-
-- Only talk to your immediate neighbours. Avoid reaching through a chain of objects.
-- If you find yourself writing `a.b.c`, the middle object (`b`) should expose what you need
-  directly, either by delegating or wrapping.
-
-Example:
-
-```ruby
-# ❌ Don't: reach through the object graph
-user.account.subscription.plan.name
-
-# ✅ Do: delegate through the chain so callsites stay simple
-class User < ApplicationRecord
-  delegate :plan_name, to: :account
-end
-
-class Account < ApplicationRecord
-  delegate :plan_name, to: :subscription
-end
-
-class Subscription < ApplicationRecord
-  delegate :name, to: :plan, prefix: true
-end
-
-user.plan_name
-```
-
-## 1.8 Controller and View Object Rule
-
-- Controllers should instantiate only one object.
-- Views should only know about one instance variable and should only send messages to that object.
-- Let the model (or a presenter built on one model) provide everything the view needs.
-
-Example:
-
-```ruby
-# ❌ Don't: multiple objects exposed to the view
-def show
-  @board = Board.find(params[:id])
-  @members = @board.members
-  @recent_cards = @board.cards.recent.limit(5)
-end
-
-# ✅ Do: expose one object; view reaches through it
-def show
-  @board = Board.find(params[:id])
-end
-
-# In the view:
-# @board.members, @board.recent_cards — fine, they're on the same object
-```
-
-## 2. Rendering and Front End
-
-### 2.1 Rendering model
-
-- Use server side rendering with Hotwire (Turbo and Stimulus).
-- Do not build single page applications.
-- Prefer Turbo Frames for:
-  - Lazy loading expensive content (e.g. comments panels, statistics).
-  - Modal flows (render forms into a `turbo_frame_tag "modal"`).
-  - Inline editing (frame-wrapped partials).
-- Prefer Turbo Stream broadcasts from models for real-time updates:
-  - Use `after_create_commit`, `after_update_commit`, and `after_destroy_commit` to broadcast.
-  - Keep controllers thin; let models broadcast updates to the relevant streams.
-- Prefer morphing for complex updates:
-  - Use `turbo_stream.morph` when you want to preserve focus/scroll and avoid
-    janky replacements.
-  - Consider global defaults via meta tags:
-    - `turbo-refresh-method: morph`
-    - `turbo-refresh-scroll: preserve`
-
-### 2.2 JavaScript stack
-
-- Use `importmap-rails`.
-- Do not use bundlers such as Webpack, esbuild, Vite or similar tools.
-- Prefer native JavaScript modules.
-- Stimulus controllers live in a flat folder unless there is a clear need
-  for namespacing.
-
-### 2.3 Components and behaviour
-
-- On the server side use ERB partials, not component frameworks.
-- On the client side prefer native HTML and a small amount of JavaScript.
-- Use custom elements only when they remove real duplication.
-- Use progressive enhancement:
-  - JavaScript is expected and should improve the experience.
-  - Core flows should still work without JavaScript when possible.
-- Stimulus usage rules:
-  - Stimulus is for “sprinkles”, not frameworks.
-  - Controllers must be small and single-purpose (ideally under ~50 LOC).
-  - Prefer configuration via Stimulus values/classes/targets over hardcoding.
-  - Prefer Turbo over `fetch` for most interactions. If using `fetch`, include
-    CSRF tokens and keep it focused on UI affordances (not business logic).
-  - Always clean up event listeners/timeouts/observers in `disconnect()`.
-
-### 2.4 Accessibility
-
-- Aim for good contrast, keyboard navigation and semantic HTML.
-- Use browser tools to simulate colour blindness and to check contrast.
-- Prefer simple and predictable interactions over flashy ones.
-
-### 2.5 HTML structure
-
-- Prefer semantic HTML elements over divs.
-- Use divs only when no semantic element fits the content or purpose.
-- Common semantic elements:
-  - `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`, `<footer>` for page structure.
-  - `<figure>`, `<figcaption>` for images with captions.
-  - `<details>`, `<summary>` for collapsible content.
-  - `<time>`, `<address>`, `<mark>` for specific content types.
-- Personal projects:
-  - Prefer classless HTML where possible.
-  - Let CSS determine appearance through element and attribute selectors.
-  - Add classes only when semantic targeting is insufficient.
-  - This works naturally with MVP.css (see section 3.2).
-- Work projects:
-  - Use classes when team conventions or design systems require them.
-  - Still prefer semantic elements as the foundation.
-
-## 3. CSS
-
-### 3.1 Processing and architecture
-
-- Use plain CSS files.
-- Do not use Sass or PostCSS.
-- Follow a SMACSS style structure for CSS organisation.
-
-### 3.2 Base stack
-
-- Start with a modern `normalize.css` (for example from Josh W Comeau).
-- Layer `mvp.css` for sensible defaults.
-- Add project specific CSS on top.
-
-## 4. Assets and Deployment
-
-### 4.1 Asset pipeline
-
-- Use Propshaft for assets.
-- Serve assets directly from Rails.
-- Do not use a CDN by default.
-
-### 4.2 Third party assets
-
-- Avoid npm in new projects.
-- Prefer CDN delivered scripts and styles.
-- If a build step is unavoidable, do a one off build outside the project and
-  commit the generated file to the repository.
-
-### 4.3 Deployment
-
-- Personal projects:
-  - Deploy with Kamal and Docker.
-- Work projects:
-  - Depends on the team.
-  - Historically Capistrano on bare metal.
-- Target Debian based Linux servers.
-
-## 5. Testing
-
-### 5.1 Framework choice
-
-- Personal projects:
-  - Use Minitest and aim for idiomatic Ruby tests.
-- Work projects:
-  - Use RSpec and follow advice from betterspecs.org.
-
-### 5.2 Style
-
-- Think in behaviour driven terms, even when using Minitest.
-- Group related tests using nested classes instead of comment headers:
-  - Use inner classes (`class WhenClosed < ActiveSupport::TestCase`) to create
-    context groupings, mirroring RSpec's `context` blocks.
-  - Never use comment headers (e.g. `# === given X ===`) to group tests.
-- Focus on observable behaviour and outcomes.
-- Write lots of integration tests (both personal and work):
-  - Prefer request/integration/system tests for core flows.
-  - For APIs, test real HTTP requests, JSON parsing, status codes, and auth behavior.
-- Test-driven development:
-  - All generated code must be driven from tests.
-  - If no test exists for the code you are about to write, create the test first.
-
-### 5.3 Data setup
-
-- Personal projects:
-  - Prefer Rails fixtures.
-- Work projects:
-  - Comfortable using FactoryBot.
-- Test data selection discipline:
-  - Before creating any object, scan existing fixtures/factories. Use one that already has the right state — no mutation needed.
-  - If no suitable record exists, build the correct object directly with the right attributes from the start.
-  - NEVER create a generic base object and then update it to fit the test.
-
-```ruby
-# ❌ Don't: create generic then mutate
-user = create(:user)
-user.update!(role: :admin, confirmed_at: Time.current)
-
-# ✅ Prefer: use an existing factory trait or fixture that is already correct
-user = create(:user, :admin)   # factory trait
-user = users(:admin)           # fixture
-
-# ✅ Also fine: build the correct object directly
-user = create(:user, role: :admin, confirmed_at: Time.current)
-```
-
-### 5.4 Front end tests
-
-- Use `@hotwired/stimulus-testing` for Stimulus controllers.
-- Run JavaScript tests with Jest in a separate repository or folder.
-- Use Capybara system tests for Hotwire flows.
-
-## 6. Error Handling and Observability
-
-### 6.1 Error handling
+Deeper, topic-specific guidance (object-oriented design, Rails architecture, testing, UI, API
+design, ops, dotfiles maintenance, code review) is not repeated here — it lives in skills. Claude
+Code loads those
+automatically by relevance. Any other agent (Codex, ChatGPT, etc.) should read the matching file
+in §5 before starting work that matches its trigger — the file exists and is meant to be opened
+manually when there's no automatic skill loader.
+
+Influences: 37signals (Rails conventions, "everything is CRUD", Hotwire/Kamal/Solid stack),
+thoughtbot (testing discipline, clean Ruby — [thoughtbot/guides](https://github.com/thoughtbot/guides)),
+Sandi Metz (small classes, short methods, Tell Don't Ask, Dependency Injection, Law of Demeter).
+
+## 1. Core Principles
+
+These apply in any language, not just Ruby/Rails — full principles and examples in the
+`object-oriented-design` skill:
+
+- Tell, Don't Ask; Dependency Injection; Composition over Inheritance; Law of Demeter.
+- Default to rich objects: business logic lives on the object that owns the data, not in a
+  separate service/manager layer. **Never use service objects.**
+- Model actions as resources ("everything is CRUD") rather than bespoke, ad hoc procedures.
+
+Rails/ActiveRecord-specific (full detail in `rails-architecture` skill):
+
+- Use Rails convention/CRUD modeling. Model state transitions as nested resources, not custom
+  controller actions.
+- If something needs orchestration in a Rails app, prefer (in order) a model method, a concern, a
+  state record, an inline ActiveJob, or a PORO for view-only presentation.
+- Personal projects: prefer the Solid trifecta (Solid Queue/Cache/Cable) over Redis/Sidekiq/etc.
+
+General engineering practice:
+
+- Prefer incremental refactoring over rewrites — small steps, tests green, feature flags for risky
+  changes.
+- Prefer intention-revealing names; short names are fine in hot paths, longer names in less-used
+  code.
+
+## 2. Method Style and Formatting
+
+- Each method does exactly one thing; if it starts doing more, extract helper methods.
+- Bang methods (`!`) are unsafe (mutate the receiver or behave more dangerously) — there should
+  normally be a safe non-bang variant.
+- Predicate methods (`?`) must always return a boolean and never mutate or have side effects.
+- Personal projects: prefer guard clause style (`return x if y`) over `if/else/end` when the line
+  fits within 120 characters.
+- Max line length ~120 characters. Keep classes under ~100 lines. Target methods at 5 lines, keep
+  under 10. Pass no more than 4 parameters (hash options count as one). Blank lines between
+  methods. Group related private methods together. Use explicit `private`/`protected` sections.
+  Avoid abbreviations unless universal (`id`, `url`, `api`).
+- Examples (guard clause, etc.): `rails-architecture` skill, `references/examples.md`.
+
+## 3. Error Handling
 
 - Raise errors freely when something goes wrong.
 - Rescue at higher layers so users do not see raw exceptions.
 - Return user friendly error pages.
 
-### 6.2 Error tracking
-
-- Personal projects:
-  - Prefer a simple, self hosted error tracker when needed.
-- Work projects:
-  - Use Datadog as the default.
-
-### 6.3 Performance monitoring
-
-- Use Rack Mini Profiler in development.
-- Aim for render times under roughly 100 milliseconds.
-- Treat anything over 250 milliseconds as a candidate for optimisation.
-
-## 7. Data and Persistence
-
-### 7.1 Integrity and modelling
-
-- Use database constraints for hard rules.
-- Mirror those constraints with Rails validations.
-- Prefer database column defaults over application-level defaults:
-  - Use migrations to set defaults: `change_column_default :table, :column, from: nil, to: "value"`.
-  - This ensures consistency across all entry points (console, rake tasks, etc.).
-  - Application code (controllers, models) inherits the default automatically.
-- Use concerns to share behaviour and reduce model size.
-- Rich models by default:
-  - Put domain behavior (commands and predicates) on the model that owns the state.
-  - Prefer explicit verbs for actions (`publish`, `archive`, `close`) and
-    predicates for queries (`closed?`, `assigned_to?`).
-- Horizontal behaviour concerns:
-  - Use concerns to encapsulate reusable cross-cutting behaviours.
-  - Examples of horizontal concerns: `Closeable`, `Watchable`, `Assignable`, `Eventable`, `Broadcastable`.
-- State as records (prefer this over booleans where it clarifies behavior):
-  - Represent state transitions as associated records (e.g. `Closure`) instead of boolean columns like `closed: true`.
-  - Use `where.missing(:association)` / joins-based scopes for “open/closed” style querying.
-- Use `Current` for request context:
-  - Use `Current.user` / `Current.account` for request-scoped defaults and
-    model methods that need the acting user/account.
-- Async vs sync side effects naming:
-  - Use `_later` for job-enqueued versions and `_now` for synchronous versions
-    (`notify_recipients_later` vs `notify_recipients_now`).
-- Everything is CRUD (modeling discipline):
-  - Prefer expressing “actions” as resources (state records, join models, etc.) and exposing them via REST routes.
-  - Avoid inventing custom controller actions for state transitions; model them
-    as nested resources and use POST/DELETE/PATCH appropriately.
-  - Cross-reference: 1.1 “Apply everything is CRUD” and 11.1 “API design” (REST-only, respond_to).
-
-Example (state as records and horizontal behaviour):
-
-```ruby
-class Closure < ApplicationRecord
-  belongs_to :card, touch: true
-  belongs_to :user, optional: true
-
-  validates :card, uniqueness: true
-end
-
-class Card < ApplicationRecord
-  include Closeable
-
-  has_one :closure, dependent: :destroy
-
-  scope :open, -> { where.missing(:closure) }
-  scope :closed, -> { joins(:closure) }
-
-  def close(user: Current.user)
-    create_closure!(user: user)
-    track_event "card_closed", user: user
-  end
-
-  def closed?
-    closure.present?
-  end
-end
-```
-
-Example (`_later` / `_now` convention):
-
-```ruby
-def notify_recipients_later
-  NotifyRecipientsJob.perform_later(self)
-end
-
-def notify_recipients_now
-  recipients.each do |recipient|
-    Notification.create!(recipient: recipient, notifiable: self)
-  end
-end
-```
-
-## 8. Documentation and Security Tooling
-
-### 8.1 Documentation
-
-- Write YARD comments for Ruby code.
-- Use YARD style comments for other languages where it fits.
-- Let Solargraph use these comments for better editor support.
-- Keep READMEs up to date with setup and deployment instructions.
-- Keep documentation concise and direct:
-  - Speak directly about the thing being documented (e.g., "Represents a card in a board").
-  - Never use verbose patterns like "Domain model for Card".
-- For Rails controller actions, use custom YARD tags to document routing:
-  - `@action` for the HTTP method (GET, POST, PATCH, DELETE, etc.).
-  - `@route` for the URL path.
-  - Example:
-
-    ```ruby
-    # Creates a new board for the current account.
-    # @action POST
-    # @route /boards
-    def create
-      # ...
-    end
-    ```
-
-### 8.2 Security tooling
+## 4. Security Tooling
 
 - Run Bundler Audit regularly and before pushes.
 - Run Brakeman regularly and before pushes.
 - Always use strong parameters in controllers.
 
-## 9. Tooling and Editor Setup
-
-### 9.1 Editors
-
-- Primary editor is Nova on macOS.
-- Secondary editors are Zed and VS Code.
-- Use VS Code mainly when debugging with RDBG.
-
-### 9.2 Language servers
-
-- Use Solargraph as the default Ruby language server.
-- Experiment with Ruby LSP but do not assume it is always available.
-
-### 9.3 Ruby management
-
-- Use `rv` (from spinel-coop/rv) as the Ruby version manager.
-- Installing, switching, or running commands with a specific Ruby version can be done via `rv`.
-- Do not use RVM, rbenv, or chruby in new setups.
-
-### 9.4 Linters and formatters
-
-- Use RuboCop for Ruby.
-- Use `scss-lint` for SCSS when it appears in legacy code.
-- Use Herb and cspell where they add value.
-- Never add linter disable comments (e.g., `rubocop:disable`, `eslint-disable`).
-- If a file already contains linter disable comments, you do not need to refactor the file to remove them.
-
-### 9.5 Git hooks and continuous integration
-
-- Run Bundler Audit before pushing.
-- Run Brakeman before pushing.
-- Expect continuous integration to run the full test suite.
-
-### 9.6 System environment and dotfiles
-
-All configuration is managed through a dotfiles repository at `~/Developer/dotfiles`,
-symlinked into `~/` and `~/.config/` using GNU Stow. This is true on every machine.
-Work-specific configuration lives in a separate private repository at `~/Developer/dotfiles-work`.
-
-**Shell and terminal**
-
-- Default shell: zsh.
-- Default terminal: Ghostty.
-- Shell config lives in `~/.config/zsh/` (`.zshrc`, `paths.zsh`, `environment.zsh`,
-  `aliases.zsh`, `prompt.zsh`, and modular `functions/` loaders).
-- Work-specific overlays are supported (e.g. `aliases.work.zsh`, `environment.work.zsh`).
-
-**Package management**
-
-- Primary package manager: Homebrew (`brew`).
-- All packages are declared in `packages.conf` inside the dotfiles repository.
-- Fallbacks exist for Linux: `yay` (Arch/AUR), `apt` (Debian), `flatpak` (GUI apps).
-
-**Ruby**
-
-- Version manager: `rv` (spinel-coop/rv). No other Ruby version manager is used.
-- Default Ruby version is declared in `ruby/.ruby-version` (currently latest 4.x).
-- Ruby is built with YJIT and jemalloc enabled.
-- If there is a Ruby version mismatch, use `rv ruby run -- COMMAND` to run a command in the
-  correct Ruby context rather than attempting to install or switch versions.
-- Global gems (bundler, rubocop, kamal, solargraph, etc.) are installed by the dotfiles
-  installer (`40_install_default_ruby_gems.sh`).
-
-**Node**
-
-- Version manager: `chnode` (via tkareine/chnode tap).
-- Default Node version is declared in `node/.node-version`.
-
-**Git and signing**
-
-- SSH signing via 1Password (ed25519 key, `gpg.format = ssh`).
-- Git hooks are managed by Lefthook (pre-commit, pre-push, commit-msg, post-merge).
-- Trusted binstubs via the `.git/safe` convention.
-
-**Stow packages**
-
-Each top-level directory in the dotfiles repo is a Stow package. Key packages include:
-`zsh`, `git`, `ghostty`, `ruby`, `bundler`, `node`, `neovim`, `zed`, `lefthook`, `rubocop`,
-`solargraph`, `1password`, `ssh`, `secrets`, `lazygit`, `pumadev`, `caddy`, `claude`.
-
-**Cross-platform**
-
-The dotfiles support macOS, SteamOS/Arch, and Debian-based Linux. Platform-specific packages
-are separated in `packages.conf` (`BREW_MACOS`, `BREW_LINUX`, `AUR`, `APT`, `FLATPAK`).
-
-**Install and bootstrap**
-
-- `bootstrap.sh` is a curlable POSIX script that clones the repo and runs the installer.
-- `install.sh` orchestrates numbered scripts (`00_common.sh` through `50_stow_all.sh`)
-  covering OS updates, prerequisites, packages, runtimes, gems, npm packages, and stow.
-
-## 10. Application UX
-
-### 10.1 Forms and validation
-
-- Use HTML5 validation attributes where useful.
-- Always validate on the server as the source of truth.
-- Show clear error messages next to fields.
-
-### 10.2 Internationalisation
-
-- NEVER hardcode a user-facing string anywhere — not in views, templates, models, controllers,
-  mailers, or jobs. Every string shown to a user must be a translation key.
-- Personal projects:
-  - Use Rails i18n with YAML files.
-- Work projects:
-  - Use gettext.
-- Personal projects always support Dutch (`nl`), English (`en`), and Italian (`it`).
-- Default to English text when another language is not specified.
-- Use the `rails-i18n` gem for default Rails framework translations
-  (date/time formats, validation messages, helpers, etc.).
-- Use the `i18n-tasks` gem for translation management and testing in development/test groups.
-- Namespace translations logically:
-  - App-wide translations at root level (e.g., `app_name`, `navigation`).
-  - Model-specific translations under model names (e.g., `time_entries`, `projects`).
-  - Enum-like values in their own namespace (e.g., `entry_types`, `statuses`).
-- Avoid duplication in translation files:
-  - Don't repeat the same translations in multiple namespaces.
-  - Use a single source of truth for each translatable value.
-  - Reference shared translations where needed.
-- Set database column defaults for enum-like fields instead of controller/model defaults when possible.
-- This applies to validation errors too — pass a symbol key, never a string:
-
-  ```ruby
-  # ✅ Do
-  errors.add(:base, :active_entry_exists)
-
-  # ❌ Don't
-  errors.add(:base, "You already have an active time entry")
-  ```
-
-- Enable i18n fallbacks in application.rb:
-
-  ```ruby
-  config.i18n.fallbacks = true
-  ```
-
-### 10.3 UI Layout and Actions
-
-Based on Apple's macOS dialog guidance and the referenced dialog placement guide:
-[Correct button placement in confirmation dialogs on Mac OS X](https://www.tempel.org/DialogButtonPlacement).
-
-Rule precedence (highest to lowest):
-
-- Safety rules override layout preferences.
-- Dialog placement rules override generic page-level conventions.
-- Control semantics (`<a>` vs `<button>`) follow whether the action navigates.
-
-These rules apply to user-facing action patterns across the UI, including
-modal dialogs, sheets, and page-level action groups:
-
-- The rightmost button continues the action the user invoked.
-- The button immediately to its left is `Cancel` and aborts the action.
-- If a third dismissal button exists, place it left of `Cancel`.
-- Pressing `Esc` must always trigger `Cancel`.
-- Pressing `Return` must trigger the safest operation for the context:
-  - If the action is destructive and there is no undo, default to `Cancel`.
-  - Otherwise, default to the preferred continuation action.
-- Label buttons with verbs (`Delete`, `Send`, `Proceed`, `Save`).
-- Avoid `OK`, `Yes`, and `No` labels in confirmation dialogs.
-- Back/Cancel control type:
-  - Use `<a>` when Cancel/Back navigates to another page or URL.
-  - Use `<button type="button">` when Cancel dismisses or resets in-place UI.
-
-**Color semantics**
-
-- Destructive actions (delete, remove, destroy) are red.
-- Mutating actions (change, update, edit state) are orange.
-- Primary constructive actions (save, publish, confirm) use the default
-  primary style (primary color/filled).
-
-**Forgiveness and reversibility**
-
-Prefer reversible actions and design safety nets (undo, revert) where possible.
-Before an irreversible destructive action, require explicit confirmation.
-Never silently destroy data.
-
-**Default / primary action styling**
-
-The primary constructive action (rightmost button) is styled as a
-filled/prominent button (blue by convention).
-It is activated by the Return key, so it must always be the safest forward
-action for that context.
-Never make a destructive action the default.
-
-**Confirmation dialogs for destructive actions**
-
-Use a modal confirmation when an action is irreversible.
-Name the confirm button with the action verb (`Delete`, not `OK`).
-Describe what will happen (for example: `Delete this board? This cannot be undone.`).
-Avoid vague prompts such as `Are you sure?`.
-In destructive confirmations, `Cancel` is the default Return-key action.
-
-**Progressive disclosure**
-
-Show only the controls needed for the current task.
-Reveal advanced options, secondary actions, and edge-case settings on demand.
-
-**Minimize modes**
-
-Prefer inline editing for single-field changes.
-When using the Rails show/edit split, keep the edit view visually close to the
-show view so users feel they are in the same place.
-Always provide a clear Cancel path back to show.
-Avoid nesting modes inside other modes.
-
-**Immediate feedback**
-
-Every user action should produce immediate visible feedback.
-Never leave users uncertain about whether an action succeeded.
-
-## 11. API Design
-
-### 11.1 API design
-
-- Use REST-only controllers and routes.
-- Never use GraphQL.
-- Prefer same controllers for HTML and JSON:
-  - Use `respond_to` blocks.
-  - Do not create separate "API controllers" when `respond_to` works.
-- Use Jbuilder templates for JSON responses:
-  - Do not inline JSON in controllers.
-  - Do not introduce serializer frameworks by default.
-- Authentication defaults:
-  - Web: session-based authentication.
-  - API: token-based authentication (Bearer token). Do not rely on sessions for API auth.
-- Use proper HTTP status codes (`201`, `204`, `404`, `422`, etc.).
-- Pagination:
-  - When returning paginated collections as JSON, include pagination headers:
-    - `X-Total-Count`, `X-Total-Pages`, `X-Page`, `X-Per-Page`
-  - Prefer simple page-based pagination by default; consider cursor pagination only when needed.
-- API versioning:
-  - Version APIs when making breaking changes.
-  - Prefer URL-based versioning (`/api/v1/...`) when versioning is needed.
-- Prefer clear and well documented endpoints over clever abstractions.
-
-Example (`respond_to` + Jbuilder):
-
-```ruby
-class BoardsController < ApplicationController
-  def index
-    @boards = Current.account.boards.includes(:creator)
-
-    respond_to do |format|
-      format.html
-      format.json # renders index.json.jbuilder
-    end
-  end
-end
-```
-
-Example (Jbuilder view):
-
-```ruby
-# app/views/boards/index.json.jbuilder
-json.array! @boards do |board|
-  json.id board.id
-  json.name board.name
-  json.url board_url(board, format: :json)
-end
-```
-
-Example (Bearer token API auth concept):
-
-```ruby
-module ApiAuthenticatable
-  extend ActiveSupport::Concern
-
-  included do
-    before_action :authenticate_from_token, if: :api_request?
-  end
-
-  private
-
-  def api_request?
-    request.format.json?
-  end
-
-  def authenticate_from_token
-    header = request.headers["Authorization"]
-    token = header&.match(/Bearer (.+)/)&.captures&.first
-    api_token = ApiToken.find_by(token: token)
-
-    return render(json: { error: "Unauthorized" }, status: :unauthorized) unless api_token
-
-    Current.user = api_token.user
-    Current.account = api_token.account
-  end
-end
-```
-
-## 12. Open Questions
+## 5. Detailed Guidance
+
+Claude Code loads these skills automatically by relevance. Any other agent (Codex, ChatGPT, etc.):
+read the matching file below before proceeding when the task at hand matches. Inside this repo,
+read the repo-local `claude/.claude/skills/...` path; after stowing the `claude` package, the same
+files are installed at `~/.claude/skills/...`.
+
+Read first:
+
+- Object-oriented design in any language — class/method responsibilities, DI, composition vs
+  inheritance, avoiding anemic models:
+  `claude/.claude/skills/object-oriented-design/SKILL.md`
+- Rails domain modeling specifically — where logic/state transitions live in an ActiveRecord app:
+  `claude/.claude/skills/rails-architecture/SKILL.md`
+- Writing/reviewing tests, fixtures vs factories, Minitest/RSpec conventions:
+  `claude/.claude/skills/rails-testing/SKILL.md`
+- Views, Hotwire/Stimulus, CSS, HTML, forms, i18n, accessibility, dialog/UX rules:
+  `claude/.claude/skills/rails-ui/SKILL.md`
+- REST endpoints, JSON responses, API auth, pagination/versioning:
+  `claude/.claude/skills/rails-api-design/SKILL.md`
+- Deployment, error tracking, performance monitoring:
+  `claude/.claude/skills/rails-ops/SKILL.md`
+- Reviewing a PR / implementing review feedback:
+  `claude/.claude/skills/code-review/SKILL.md`
+- Working inside the dotfiles repo (stow, bootstrap, symlinks, machine setup):
+  `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
+
+## 6. Open Questions
 
 These areas are intentionally left open and should be decided per project.
 
-- Front end performance budget:
-  - Decide LCP, bundle size and Lighthouse targets.
-- Authentication:
-  - Web: session-based authentication (implementation may vary).
-  - API: Bearer token authentication (no sessions).
-  - External providers (Auth0, etc.) only when required.
-- Continuous integration and delivery:
-  - Choose between GitHub Actions, GitLab CI and other options.
-- Front end documentation:
-  - Decide whether to use Storybook, zeroheight or rely on code and tests.
-- Onboarding:
-  - Identify common blockers that prevent a new developer from opening a pull
-    request within about one hour.
-- Linting stack:
-  - Finalise a modern HTML, CSS and JavaScript linting setup that works
-    without bundlers.
-- Architecture direction:
-  - Decide whether projects remain monoliths or might extract services later.
+- Front end performance budget: LCP, bundle size, Lighthouse targets.
+- Authentication: web stays session-based, API stays Bearer token; external providers (Auth0 etc.)
+  only when required.
+- Continuous integration and delivery: GitHub Actions vs GitLab CI vs other options.
+- Front end documentation: Storybook, zeroheight, or rely on code and tests.
+- Onboarding: identify common blockers that prevent a new developer from opening a pull request
+  within about one hour.
+- Linting stack: finalise a modern HTML, CSS, and JavaScript linting setup that works without
+  bundlers.
+- Architecture direction: monoliths vs extracting services later.
 
-## 13. AI Agent Workflow
+## 7. AI Agent Workflow
 
-The rules in sections 0–12 are the full ruleset. This section covers only behaviors specific to
-how an AI agent should operate when working in this codebase.
+The rules in sections 0–6 (plus the skills in §5) are the full ruleset. This section covers only
+behaviors specific to how an AI agent should operate.
 
 1. Keep output concise:
    - Responses brief and to the point; plans scannable but complete.
@@ -953,8 +158,8 @@ how an AI agent should operate when working in this codebase.
 8. Hands off system tooling:
    - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other
      system-level tools without explicit instruction.
-   - The Ruby version manager is `rv` (see §9.3). Do not assume or use any other version manager
-     (mise, asdf, rbenv, rvm, chruby, etc.).
+   - The Ruby version manager is `rv`. Do not assume or use any other version manager (mise, asdf,
+     rbenv, rvm, chruby, etc.).
    - Do not run commands that modify the system environment (e.g. `brew uninstall`, `rm` on
      toolchain paths, `mise use`, `asdf install`, etc.) unless the user explicitly asks for it.
    - If a Ruby version or tool appears to be missing or broken, report the problem and ask
@@ -968,12 +173,12 @@ how an AI agent should operate when working in this codebase.
    - NEVER run `db:migrate` against a production database.
    - Prefer `db:migrate:status` to check migration state before running migrations.
 10. Secrets and credentials:
-   - NEVER read, print, log, or output the contents of `.env`, `.env.*`,
-     `credentials.yml.enc`, `master.key`, or any file likely containing secrets.
-   - NEVER commit files containing secrets. If creating `.env` files, use placeholder values.
-   - NEVER hardcode secrets, API keys, tokens, or passwords in source code.
-     Use `Rails.application.credentials` or environment variables.
-   - If a secret is accidentally printed in output, warn immediately to rotate it.
+    - NEVER read, print, log, or output the contents of `.env`, `.env.*`,
+      `credentials.yml.enc`, `master.key`, or any file likely containing secrets.
+    - NEVER commit files containing secrets. If creating `.env` files, use placeholder values.
+    - NEVER hardcode secrets, API keys, tokens, or passwords in source code.
+      Use `Rails.application.credentials` or environment variables.
+    - If a secret is accidentally printed in output, warn immediately to rotate it.
 11. Dependency management:
     - NEVER add or remove gems, npm packages, or other dependencies without asking for approval
       first. The request must explain why the dependency is needed and what it does.
@@ -986,6 +191,7 @@ how an AI agent should operate when working in this codebase.
     - NEVER run `stow` or `stow -R` without explicit instruction.
     - NEVER create new stow packages (top-level directories in the dotfiles repo) without
       explicit instruction.
+    - Full dotfiles environment/bootstrap detail: `dotfiles-maintenance` skill.
 13. Deployment and infrastructure:
     - NEVER run deploy commands (`kamal deploy`, `kamal app exec`, `cap deploy`, etc.)
       without explicit approval.
@@ -1004,19 +210,9 @@ how an AI agent should operate when working in this codebase.
     - NEVER copy code, configuration, or credentials between personal and work projects.
 16. Code review workflow:
     - When asked to review work: first look for an `agents.md` file in the project root;
-      if none exists, fall back to `~/Developer/dotfiles/agents.md`. Add the rules found
-      there to any existing review criteria (e.g. PR description, CLAUDE.md, explicit
-      instructions) rather than replacing them.
-    - When asked to implement fixes for issues found during a review (e.g. "implement fixes
-      for the issues you've found", "please fix the issues you've found", "implement a fix
-      for issue X"):
-      - Run linters on every touched file and fix all issues.
-      - Run the full test suite. Only fix failures that are directly caused by your changes;
-        do not fix pre-existing failures. Report any pre-existing failures explicitly.
-      - If linters or tests caused by your changes cannot be made green, proceed to
-        re-review but explicitly report the failures.
-      - After fixes are applied, perform the review again using the same parameters.
-      - Explicitly report whether new issues were found or whether the re-review is clean.
+      if none exists, fall back to `~/Developer/dotfiles/agents.md`. Combine the rules found
+      there with any existing review criteria rather than replacing them.
+    - Full apply-fixes / re-review workflow: `code-review` skill.
 17. Plan before implementing:
     - NEVER start writing or modifying code without first presenting a plan to the user
       and receiving explicit approval to proceed.
