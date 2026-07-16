@@ -63,18 +63,31 @@ alias ls='ls -laG'
 alias rm="echo Use 'rmtrash', or the full path i.e. '/bin/rm'"
 alias clr="clear && printf '\e[3J'"
 alias ag="Echo Use 'rg', which is ripgrep"
-alias hosts="sudo zed /etc/hosts; sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder; say 'DNS Cache is geleegd'"
+# Edit /etc/hosts safely: copy to a user-owned temp file, edit with nvim
+# (terminal-only — no GUI process as root), then install back with sudo.
+hosts() {
+  local tmp
+  tmp="$(mktemp)"
+  trap 'rm -f "$tmp"' EXIT
+  sudo cp /etc/hosts "$tmp"
+  sudo chmod 644 "$tmp"
+  nvim "$tmp"
+  sudo install -m 644 "$tmp" /etc/hosts
+  sudo dscacheutil -flushcache
+  sudo killall -HUP mDNSResponder
+  say 'DNS Cache is geleegd'
+}
 alias pumalog="tail -f ~/Library/Logs/puma-dev.log"
 alias myip="curl http://ipecho.net/plain; echo"
 alias history="history 1"
 
 # Caddy
-alias caddyedit="zed $HOMEBREW_PREFIX/etc/Caddyfile"
-alias caddyfmt="caddy fmt --overwrite $HOMEBREW_PREFIX/etc/Caddyfile"
-alias caddylog="tail -f $HOMEBREW_PREFIX/var/log/caddy.log"
+alias caddyedit='editor-wait "$HOMEBREW_PREFIX/etc/Caddyfile"'
+alias caddyfmt='caddy fmt --overwrite "$HOMEBREW_PREFIX/etc/Caddyfile"'
+alias caddylog='tail -f "$HOMEBREW_PREFIX/var/log/caddy.log"'
 alias caddyrestart="brew services restart caddy"
 alias caddyconf="caddyedit; caddyfmt; caddyrestart; caddylog"
-alias caddyvalidate="caddy validate --config $HOMEBREW_PREFIX/etc/Caddyfile"
+alias caddyvalidate='caddy validate --config "$HOMEBREW_PREFIX/etc/Caddyfile"'
 
 # Portless (proxy lives behind Caddy on :1355)
 alias portless-start='portless proxy start -p 1355 --no-tls'
@@ -85,4 +98,6 @@ alias portless-log='tail -f /tmp/portless-proxy.log'
 alias unlock='eval "$(secrets)"'
 
 # Editors
-alias e="zed $@"
+# e: opens terminal Neovim when in a terminal, Neovide otherwise.
+# Aliases expand to the command + any arguments, so no "$@" is needed here.
+alias e='editor'

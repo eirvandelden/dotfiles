@@ -25,6 +25,80 @@ You can override defaults:
     cd dotfiles
     ./install.sh
 
+## Editor setup
+
+The `editor` stow package provides two terminal-aware editor launchers.
+
+| Command | Behavior |
+|---|---|
+| `e <path>` | Terminal Neovim when in a terminal; Neovide otherwise |
+| `$EDITOR`, `$VISUAL` | `editor` — routes to nvim or Neovide based on TTY |
+| Git editor | `editor-wait` — always blocks until editing is done |
+
+### Why a script instead of an alias
+
+Aliases only exist in interactive shells. `$EDITOR` is read by non-interactive processes (git, cron, editors, CI). A script in `~/.local/bin` is available everywhere.
+
+### editor
+
+Opens nvim when stdin **and** stdout are a terminal. Otherwise opens Neovide.
+
+On macOS, Neovide is opened with `--reuse-instance` so files appear in the existing window. On Linux, Neovide opens a new window (instance reuse is not supported on Linux).
+
+Default Neovide behavior is to detach (non-blocking), which is correct here — `editor` does not need to wait.
+
+### editor-wait
+
+Same TTY detection as `editor`. In a terminal, runs nvim (blocking). Outside a terminal, runs Neovide with `NEOVIDE_FORK=0`, which prevents it from detaching so the process blocks until the editing session ends.
+
+Used by git (`core.editor` and `sequence.editor`) so that `git commit` and `git rebase -i` wait correctly.
+
+### Installation
+
+**macOS:**
+
+```sh
+brew install --cask neovide
+# The installer handles the rest via stow
+./install.sh
+```
+
+**Arch Linux:**
+
+```sh
+sudo pacman -S neovide
+# Then run the installer
+./install.sh
+```
+
+**SteamOS (Steam Deck):**
+
+SteamOS uses an immutable filesystem. Install Neovide as a user Flatpak to survive OS updates:
+
+```sh
+flatpak install --user flathub io.neovide.Neovide
+# Add the Flatpak bin dir to PATH in your shell config
+export PATH="$HOME/.local/share/flatpak/exports/bin:$PATH"
+```
+
+Note: SteamOS Flatpak Neovide may not appear as `neovide` in PATH. Adjust the Flatpak app ID and launcher path as needed; the `editor` scripts will fall back to nvim when Neovide is not found.
+
+### Using a specific editor directly
+
+```sh
+nvim file.txt           # Always terminal Neovim
+neovide file.txt        # Always Neovide GUI
+zed file.txt            # Always Zed (still installed, not the default)
+```
+
+### Platform differences
+
+| Feature | macOS | Linux | SteamOS |
+|---|---|---|---|
+| Instance reuse | `--reuse-instance` | Not supported | Not supported |
+| Blocking mode | `NEOVIDE_FORK=0` | `NEOVIDE_FORK=0` | `NEOVIDE_FORK=0` |
+| Install method | Homebrew cask | pacman (extra) | Flatpak (user) |
+
 ## 🔁Syncing packages
 
 Packages are defined in `packages.conf` and installed by `./install.sh`.
