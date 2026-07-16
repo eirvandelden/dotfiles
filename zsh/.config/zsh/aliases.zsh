@@ -71,7 +71,7 @@ hosts() {
   trap 'rm -f "$tmp"' EXIT
   sudo cp /etc/hosts "$tmp"
   sudo chmod 644 "$tmp"
-  nvim "$tmp"
+  nvim "$tmp" || return
   sudo install -m 644 "$tmp" /etc/hosts
   sudo dscacheutil -flushcache
   sudo killall -HUP mDNSResponder

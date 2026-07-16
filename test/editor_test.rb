@@ -147,12 +147,32 @@ class EditorTest < Minitest::Test
     assert_match(/neovide/, content, "packages.conf must include neovide")
   end
 
+  def test_hosts_does_not_install_temp_file_after_failed_edit
+    stub("sudo", <<~SH)
+      #!/bin/sh
+      printf 'sudo %s\n' "$*" >> "#{@log}"
+    SH
+    stub("nvim", "#!/bin/sh\nexit 1\n")
+    stub("say")
+
+    result = run_hosts
+
+    assert_not result[:status].success?
+    assert_equal 2, log_contents.lines.count
+  end
+
   private
 
   # Run script non-interactively: Open3.capture3 uses pipes for stdin/stdout,
   # so [ -t 0 ] and [ -t 1 ] both return false — the non-interactive path runs.
   def run_script(script, *args, env:)
     stdout, stderr, status = Open3.capture3(env, script, *args)
+    { stdout: stdout, stderr: stderr, status: status }
+  end
+
+  def run_hosts
+    command = "source #{File.join(REPO_ROOT, "zsh/.config/zsh/aliases.zsh")}; hosts"
+    stdout, stderr, status = Open3.capture3(base_env, "zsh", "-f", "-c", command)
     { stdout: stdout, stderr: stderr, status: status }
   end
 
@@ -225,5 +245,13 @@ class EditorTest < Minitest::Test
   def assert_not_logged(pattern)
     assert_no_match(pattern, log_contents,
       "Expected log NOT to match #{pattern.inspect}. Log:\n#{log_contents}")
+  end
+
+  def assert_not(value, message = nil)
+    assert_equal(false, !!value, message)
+  end
+
+  def assert_no_match(pattern, value, message = nil)
+    assert_not(pattern.match?(value), message || "Expected #{value.inspect} not to match #{pattern.inspect}")
   end
 end
