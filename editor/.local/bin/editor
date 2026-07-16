@@ -45,6 +45,17 @@ _find_neovide() {
   return 1
 }
 
+_has_graphical_session() {
+  case "$(uname -s)" in
+    Darwin)
+      return 0
+      ;;
+    *)
+      [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+      ;;
+  esac
+}
+
 _setup_brew_path
 
 # Interactive terminal: use Neovim directly.
@@ -55,7 +66,7 @@ fi
 # Non-interactive: open Neovide GUI.
 # On macOS, --reuse-instance forwards to an existing window (macOS only).
 # Default Neovide behavior is to detach (non-blocking), which is correct here.
-if neovide_bin="$(_find_neovide)"; then
+if _has_graphical_session && neovide_bin="$(_find_neovide)"; then
   case "$(uname -s)" in
     Darwin)
       exec "$neovide_bin" --reuse-instance "$@"

@@ -47,6 +47,17 @@ _find_neovide() {
   return 1
 }
 
+_has_graphical_session() {
+  case "$(uname -s)" in
+    Darwin)
+      return 0
+      ;;
+    *)
+      [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+      ;;
+  esac
+}
+
 _setup_brew_path
 
 # Interactive terminal: nvim blocks until the user quits.
@@ -57,7 +68,7 @@ fi
 # Non-interactive: Neovide in attached (blocking) mode.
 # NEOVIDE_FORK=0 keeps the process connected to the caller; it returns only
 # after the Neovide window for this invocation is closed.
-if neovide_bin="$(_find_neovide)"; then
+if _has_graphical_session && neovide_bin="$(_find_neovide)"; then
   NEOVIDE_FORK=0 exec "$neovide_bin" "$@"
 fi
 

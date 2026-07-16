@@ -41,7 +41,7 @@ Aliases only exist in interactive shells. `$EDITOR` is read by non-interactive p
 
 ### editor
 
-Opens nvim when stdin **and** stdout are a terminal. Otherwise opens Neovide.
+Opens nvim when stdin **and** stdout are a terminal. Otherwise opens Neovide in a graphical session and falls back to nvim when no display is available.
 
 On macOS, Neovide is opened with `--reuse-instance` so files appear in the existing window. On Linux, Neovide opens a new window (instance reuse is not supported on Linux).
 

@@ -58,10 +58,34 @@ class EditorTest < Minitest::Test
     stub("neovide")
     stub_uname("Linux")
 
-    result = run_script(@editor, "file.txt", env: base_env)
+    result = run_script(@editor, "file.txt", env: graphical_env)
 
     assert_logged(/neovide file\.txt/)
     assert_not_logged(/--reuse-instance/)
+    assert result[:status].success?
+  end
+
+  def test_headless_linux_falls_back_to_nvim
+    stub("nvim")
+    stub("neovide")
+    stub_uname("Linux")
+
+    result = run_script(@editor, "file.txt", env: base_env)
+
+    assert_logged(/nvim file\.txt/)
+    assert_not_logged(/neovide/)
+    assert result[:status].success?
+  end
+
+  def test_headless_linux_editor_wait_falls_back_to_nvim
+    stub("nvim")
+    stub("neovide")
+    stub_uname("Linux")
+
+    result = run_script(@editor_wait, "file.txt", env: base_env)
+
+    assert_logged(/nvim file\.txt/)
+    assert_not_logged(/neovide/)
     assert result[:status].success?
   end
 
@@ -70,7 +94,7 @@ class EditorTest < Minitest::Test
     stub("neovide")
     stub_uname("Linux")
 
-    run_script(@editor, "a.txt", "b.txt", "c.txt", env: base_env)
+    run_script(@editor, "a.txt", "b.txt", "c.txt", env: graphical_env)
 
     assert_logged(/neovide a\.txt b\.txt c\.txt/)
   end
@@ -80,7 +104,7 @@ class EditorTest < Minitest::Test
     stub("neovide")
     stub_uname("Linux")
 
-    run_script(@editor, "my file.txt", env: base_env)
+    run_script(@editor, "my file.txt", env: graphical_env)
 
     assert_logged(/neovide my file\.txt/)
   end
@@ -110,7 +134,7 @@ class EditorTest < Minitest::Test
     stub_env_capturing_neovide
     stub_uname("Linux")
 
-    result = run_script(@editor_wait, "file.txt", env: base_env)
+    result = run_script(@editor_wait, "file.txt", env: graphical_env)
 
     assert_logged(/NEOVIDE_FORK=0/)
     assert result[:status].success?
@@ -126,17 +150,17 @@ class EditorTest < Minitest::Test
     assert_no_match(/VISUAL='nano'/, content)
   end
 
-  # 9. Git config uses editor-wait for both core and rebase sequencing.
+  # 9. Git config uses the stowed editor-wait executable for core and rebase sequencing.
   def test_git_config_uses_editor_wait
     content = File.read(File.join(REPO_ROOT, "git/.config/git/config"))
 
-    assert_match(/^\s*editor\s*=\s*editor-wait/, content)
+    assert_match(/^\s*editor\s*=\s*~\/.local\/bin\/editor-wait/, content)
     assert_match(/\[sequence\]/, content)
 
     # [sequence] section must also set editor = editor-wait
     sequence_section = content[/\[sequence\].*?(?=\[|\z)/m]
     assert sequence_section, "[sequence] section not found"
-    assert_match(/editor\s*=\s*editor-wait/, sequence_section)
+    assert_match(/editor\s*=\s*~\/.local\/bin\/editor-wait/, sequence_section)
   end
 
   # 10. packages.conf includes the editor stow package and neovide.
@@ -251,6 +275,10 @@ class EditorTest < Minitest::Test
       "HOME" => @tmpdir,
       "PATH" => "#{@bin_dir}:/usr/bin:/bin"
     )
+  end
+
+  def graphical_env
+    base_env.merge("DISPLAY" => ":0")
   end
 
   # PATH with only system dirs — no nvim, no neovide.
