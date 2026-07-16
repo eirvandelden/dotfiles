@@ -1,0 +1,86 @@
+#!/bin/sh
+# editor — terminal-aware Neovim/Neovide launcher.
+# Used as $EDITOR and $VISUAL. For callers that must block until editing
+# completes (e.g. git), use editor-wait instead.
+#
+# TTY detection: stdin + stdout both connected to a terminal → terminal mode.
+# Limitation: tools that redirect stdin while running in a visible terminal
+# (e.g. "editor < /dev/null") are treated as non-interactive. In those cases
+# use nvim directly.
+
+set -eu
+
+# Add Homebrew bin to PATH when invoked from non-interactive shells
+# (editors, IDEs, CI) that start with a stripped PATH.
+# Honors $HOMEBREW_PREFIX if already set (allows tests and other callers to
+# provide an explicit prefix without triggering filesystem discovery).
+_setup_brew_path() {
+  if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+    PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
+    export PATH
+    return 0
+  fi
+  for _prefix in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
+    if [ -x "$_prefix/bin/brew" ]; then
+      PATH="$_prefix/bin:$_prefix/sbin:$PATH"
+      export PATH
+      break
+    fi
+  done
+}
+
+# Print the absolute path to the neovide binary, or return 1.
+# $NEOVIDE_APP_PATH overrides the macOS .app location (used in tests).
+_find_neovide() {
+  if _cmd="$(command -v neovide 2>/dev/null)"; then
+    printf '%s\n' "$_cmd"
+    return 0
+  fi
+  # Homebrew cask installs Neovide.app without a PATH wrapper binary.
+  _app="${NEOVIDE_APP_PATH:-/Applications/Neovide.app/Contents/MacOS/neovide}"
+  if [ -x "$_app" ]; then
+    printf '%s\n' "$_app"
+    return 0
+  fi
+  return 1
+}
+
+_has_graphical_session() {
+  case "$(uname -s)" in
+    Darwin)
+      return 0
+      ;;
+    *)
+      [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+      ;;
+  esac
+}
+
+_setup_brew_path
+
+# Interactive terminal: use Neovim directly.
+if [ -t 0 ] && [ -t 1 ]; then
+  exec nvim "$@"
+fi
+
+# Non-interactive: open Neovide GUI.
+# On macOS, --reuse-instance forwards to an existing window (macOS only).
+# Default Neovide behavior is to detach (non-blocking), which is correct here.
+if _has_graphical_session && neovide_bin="$(_find_neovide)"; then
+  case "$(uname -s)" in
+    Darwin)
+      exec "$neovide_bin" --reuse-instance "$@"
+      ;;
+    *)
+      exec "$neovide_bin" "$@"
+      ;;
+  esac
+fi
+
+# Neovide unavailable: fall back to nvim.
+if command -v nvim > /dev/null 2>&1; then
+  exec nvim "$@"
+fi
+
+printf 'editor: neither neovide nor nvim found\n' >&2
+exit 127

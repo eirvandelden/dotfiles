@@ -23,7 +23,7 @@
   gpgsign = true
 [core]
 	excludesfile = ~/.config/git/ignore.global
-  editor = zed
+  editor = ~/.local/bin/editor-wait
   hooksPath = ~/.config/git/hooks
   pager = less -+X
 [difftool "default-difftool"]
@@ -60,6 +60,8 @@
 	autoSetupRemote = true
 [rebase]
   autoStash = true
+[sequence]
+  editor = ~/.local/bin/editor-wait
 [tag]
   gpgSign = true
 [includeIf "hasconfig:remote.*.url:git@github.com:nedap/**"]

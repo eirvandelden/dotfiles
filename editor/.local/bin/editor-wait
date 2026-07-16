@@ -1,0 +1,81 @@
+#!/bin/sh
+# editor-wait — blocking editor launcher for git and other callers that must
+# wait until the editing session ends before continuing.
+#
+# In a terminal: runs nvim (naturally blocking).
+# Outside a terminal: runs Neovide with NEOVIDE_FORK=0, which prevents
+# Neovide from detaching so this process stays alive until the window closes.
+#
+# Note: NEOVIDE_FORK=0 is the verified mechanism per Neovide docs. There is
+# no --no-fork or --wait CLI flag. Do not add arbitrary sleeps.
+#
+# TTY detection limitation: same as `editor` — stdin redirect is treated as
+# non-interactive even from a visible terminal.
+
+set -eu
+
+# Add Homebrew bin to PATH when invoked from non-interactive shells.
+# Honors $HOMEBREW_PREFIX if already set (allows tests and other callers to
+# provide an explicit prefix without triggering filesystem discovery).
+_setup_brew_path() {
+  if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+    PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
+    export PATH
+    return 0
+  fi
+  for _prefix in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
+    if [ -x "$_prefix/bin/brew" ]; then
+      PATH="$_prefix/bin:$_prefix/sbin:$PATH"
+      export PATH
+      break
+    fi
+  done
+}
+
+# Print the absolute path to the neovide binary, or return 1.
+# $NEOVIDE_APP_PATH overrides the macOS .app location (used in tests).
+_find_neovide() {
+  if _cmd="$(command -v neovide 2>/dev/null)"; then
+    printf '%s\n' "$_cmd"
+    return 0
+  fi
+  _app="${NEOVIDE_APP_PATH:-/Applications/Neovide.app/Contents/MacOS/neovide}"
+  if [ -x "$_app" ]; then
+    printf '%s\n' "$_app"
+    return 0
+  fi
+  return 1
+}
+
+_has_graphical_session() {
+  case "$(uname -s)" in
+    Darwin)
+      return 0
+      ;;
+    *)
+      [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]
+      ;;
+  esac
+}
+
+_setup_brew_path
+
+# Interactive terminal: nvim blocks until the user quits.
+if [ -t 0 ] && [ -t 1 ]; then
+  exec nvim "$@"
+fi
+
+# Non-interactive: Neovide in attached (blocking) mode.
+# NEOVIDE_FORK=0 keeps the process connected to the caller; it returns only
+# after the Neovide window for this invocation is closed.
+if _has_graphical_session && neovide_bin="$(_find_neovide)"; then
+  NEOVIDE_FORK=0 exec "$neovide_bin" "$@"
+fi
+
+# Neovide unavailable: fall back to nvim.
+if command -v nvim > /dev/null 2>&1; then
+  exec nvim "$@"
+fi
+
+printf 'editor-wait: neither neovide nor nvim found\n' >&2
+exit 127

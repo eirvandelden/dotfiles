@@ -6,8 +6,8 @@ if [[ "$OSTYPE" == darwin* ]]; then
 fi
 
 # Editors
-[ -z "$EDITOR" ] && export EDITOR='e'
-export VISUAL='nano'
+export EDITOR='editor'
+export VISUAL='editor'
 export PAGER='less'
 
 # Language

@@ -101,3 +101,5 @@ chpwd
 compinit
 tkareine
 precmd
+wenyan
+neovide
