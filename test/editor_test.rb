@@ -161,6 +161,34 @@ class EditorTest < Minitest::Test
     assert_equal 2, log_contents.lines.count
   end
 
+  def test_hosts_stops_when_copying_hosts_file_fails
+    stub("sudo", <<~SH)
+      #!/bin/sh
+      printf 'sudo %s\n' "$*" >> "#{@log}"
+      exit 1
+    SH
+    stub("nvim")
+    stub("say")
+
+    result = run_hosts
+
+    assert_not result[:status].success?
+    assert_equal 1, log_contents.lines.count
+  end
+
+  def test_hosts_removes_temp_copy_after_editing
+    stub("sudo")
+    stub("nvim")
+    stub("say")
+
+    run_hosts
+
+    temporary_copy = log_contents.lines.first.split.last
+    assert_not File.exist?(temporary_copy)
+  ensure
+    FileUtils.rm_f(temporary_copy) if temporary_copy
+  end
+
   private
 
   # Run script non-interactively: Open3.capture3 uses pipes for stdin/stdout,
