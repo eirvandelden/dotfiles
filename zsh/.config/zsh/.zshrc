@@ -3,8 +3,7 @@ HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 HISTSIZE=2000
 SAVEHIST=$HISTSIZE
 
-# Share history safely across multiple shells (including a secrets subshell)
-setopt SHARE_HISTORY
+# Append each command immediately so history is persisted per-session
 setopt INC_APPEND_HISTORY
 setopt HIST_IGNORE_DUPS
 # Optional: if you prefix a command with a space, don't write it to history
