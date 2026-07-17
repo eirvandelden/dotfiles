@@ -27,6 +27,8 @@ before switching. See [troubleshooting.md](troubleshooting.md) for the stow-befo
 - [ ] `lazygit/` → `programs.lazygit.settings`.
 - [ ] `rubocop/`, `solargraph/`, `yamllint/`, `cspell/` → `xdg.configFile`.
 - [ ] `bundler/` → `home.file."./.bundle/config"`.
+- [ ] `rv/` → `xdg.configFile."rv/rv.kdl"`. rv binary stays brew-managed.
+- [ ] `rtk/` → `xdg.configFile."rtk/config.toml"`.
 
 ## Tier 2 — Shell-adjacent
 
@@ -41,6 +43,9 @@ before switching. See [troubleshooting.md](troubleshooting.md) for the stow-befo
   plugins; home-manager only places `init.lua` and `nvim/` tree as `xdg.configFile`.
 - [ ] `vim/` → `programs.vim` or `xdg.configFile."vim/vimrc"`.
 - [ ] `claude/`, `codex/` → `xdg.configFile`. Binaries stay brew on macOS until Phase 6.
+- [ ] `avante/` → `xdg.configFile` alongside `neovim/` (AI plugin config, part of the nvim tree).
+- [ ] `editor/` → `home.file."./.local/bin/editor"` + `editor-wait`, executable bit preserved.
+  Terminal-aware nvim/Neovide routing script; keep `$EDITOR`/`$VISUAL` wiring intact.
 
 ## Tier 4 — macOS-app-tied (leave near nix-darwin in Phase 6)
 

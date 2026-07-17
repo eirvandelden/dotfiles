@@ -116,3 +116,4 @@ onepassword
 reimage
 tableplus
 vimrc
+avante
