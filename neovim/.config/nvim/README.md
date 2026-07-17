@@ -1,4 +1,4 @@
-# 💤 LazyVim
+# Neovim config
 
-A starter template for [LazyVim](https://github.com/LazyVim/LazyVim).
-Refer to the [documentation](https://lazyvim.github.io/installation) to get started.
+Standalone lazy.nvim config (no distro). Plugins auto-update on launch; native
+LSP via `vim.lsp.config`/`vim.lsp.enable` (no nvim-lspconfig, no mason).
