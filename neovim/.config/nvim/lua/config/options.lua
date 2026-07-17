@@ -1,6 +1,4 @@
--- Options are automatically loaded before lazy.nvim startup
--- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
--- Add any additional options here
+-- Loaded explicitly from init.lua before lazy.nvim startup
 -- Disable netrw so it doesn't hijack directory buffers
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
@@ -17,6 +15,26 @@ opt.endofline = true
 opt.fixendofline = true
 opt.fixeol = true
 
+opt.number = true
+opt.relativenumber = true
+opt.ignorecase = true
+opt.smartcase = true
+opt.expandtab = true
+opt.shiftwidth = 2
+opt.tabstop = 2
+opt.smartindent = true
+opt.splitbelow = true
+opt.splitright = true
+opt.termguicolors = true
+opt.undofile = true
+opt.signcolumn = "yes"
+opt.scrolloff = 4
+opt.cursorline = true
+opt.updatetime = 200
+opt.timeoutlen = 300
+opt.mouse = "a"
+opt.laststatus = 3
+
 -- set cursor
 opt.guicursor = {
   -- Normal/visual/command: thick solid bar
@@ -32,9 +50,6 @@ opt.clipboard = "unnamedplus"
 vim.g.mapleader = ";"
 vim.g.maplocalleader = ";"
 
--- RUBY
-vim.g.lazyvim_ruby_lsp = "solargraph"
-
 -- Ensure visible window separators between splits (including Avante sidebar)
 do
   local fill = opt.fillchars:get()
@@ -48,5 +63,3 @@ end
 pcall(function()
   vim.api.nvim_set_hl(0, "WinSeparator", { link = "FloatBorder" })
 end)
-
-vim.g.lazyvim_ruby_formatter = "rubocop"

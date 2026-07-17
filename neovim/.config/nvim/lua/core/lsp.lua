@@ -1,5 +1,4 @@
--- Solargraph is configured via nvim-lspconfig; avoid double-starting the server
--- vim.lsp.enable({ "solargraph" })
+vim.lsp.enable({ "solargraph", "lua_ls", "herb_ls" })
 
 vim.diagnostic.config({
   virtual_lines = true,

@@ -13,14 +13,10 @@ return {
     notify.setup(opts)
     vim.notify = notify
 
-    -- Defer loading the Telescope extension until Telescope is available
-    vim.api.nvim_create_autocmd("User", {
-      pattern = "TelescopeLoaded",
-      callback = function()
-        pcall(function()
-          require("telescope").load_extension("notify")
-        end)
-      end,
-    })
+    vim.api.nvim_create_user_command("Notifications", function()
+      for _, record in ipairs(notify.history()) do
+        vim.notify(table.concat(record.message, "\n"), record.level)
+      end
+    end, { desc = "Show notification history" })
   end,
 }

@@ -14,10 +14,15 @@ return {
         end
       end,
     },
-    format_on_save = {
-      timeout_ms = 500,
-      lsp_fallback = false,
-    },
+    format_on_save = function(bufnr)
+      if vim.b[bufnr].autoformat == false then
+        return nil
+      end
+      return {
+        timeout_ms = 500,
+        lsp_fallback = false,
+      }
+    end,
   },
   config = function(_, opts)
     local conform = require("conform")
