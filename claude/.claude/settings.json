@@ -1,9 +1,4 @@
 {
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
-    "github@claude-plugins-official": true
-  },
-  "theme": "dark-ansi",
   "hooks": {
     "PreToolUse": [
       {
@@ -16,5 +11,19 @@
         ]
       }
     ]
-  }
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "caveman@caveman": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "theme": "dark-ansi"
 }
