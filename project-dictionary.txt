@@ -106,3 +106,14 @@ neovide
 vandelden
 pytest
 reachingforthejack
+direnv
+direnvrc
+envrc
+footgun
+nixpkgs
+nixgl
+onepassword
+reimage
+tableplus
+vimrc
+avante
