@@ -46,7 +46,7 @@ git-show-sidebar-pr-icons = true
 followUpQueueMode = "queue"
 reviewDelivery = "detached"
 selected-avatar-id = "hoots"
-dock-icon-preference = "codex-system"
+dock-icon-preference = "app-default"
 
 [desktop.appearanceLightChromeTheme]
 accent = "#b58900"
@@ -101,3 +101,14 @@ approval_mode = "approve"
 
 [mcp_servers.fizzy.tools.fizzy_update_card]
 approval_mode = "approve"
+
+[mcp_servers.fizzy.tools.fizzy_close_card]
+approval_mode = "approve"
+
+[mcp_servers.fizzy.tools.fizzy_delete_card]
+approval_mode = "approve"
+
+[memories]
+generate_memories = true
+use_memories = true
+
