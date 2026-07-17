@@ -103,3 +103,6 @@ tkareine
 precmd
 wenyan
 neovide
+vandelden
+pytest
+reachingforthejack
