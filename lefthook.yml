@@ -302,4 +302,4 @@ migrations:
     migrate:
       priority: 2
       glob: "db/migrate/*"
-      run: bin/rails db:migrate
+      run: rails db:migrate
