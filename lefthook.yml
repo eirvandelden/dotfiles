@@ -258,7 +258,7 @@ post-merge:
     - rebase
   commands:
     migrations:
-      run: lefthook run migrations
+      run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
     client-dependencies:
@@ -273,7 +273,7 @@ post-rewrite:
     - ref: "main"
   commands:
     migrations:
-      run: lefthook run migrations
+      run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
 
@@ -283,7 +283,7 @@ post-checkout:
   files: "git diff --name-only HEAD@{1} HEAD"
   commands:
     migrations:
-      run: lefthook run migrations
+      run: git diff --name-only HEAD@{1} HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
     client-dependencies:
