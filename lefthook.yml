@@ -277,19 +277,6 @@ post-rewrite:
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
 
-# Run installs and migrations after branch switch
-post-checkout:
-  parallel: true
-  files: "git diff --name-only HEAD@{1} HEAD"
-  commands:
-    migrations:
-      run: git diff --name-only HEAD@{1} HEAD | lefthook run migrations --files-from-stdin
-      env:
-        LEFTHOOK_QUIET: execution_info,meta,skips,summary
-    client-dependencies:
-      glob: "{yarn.lock,package.json}"
-      run: yarn install
-
 # custom migrations command for running rails migrations
 migrations:
   piped: true

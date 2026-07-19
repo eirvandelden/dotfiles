@@ -55,7 +55,7 @@ class RvCiFallbackTest < Minitest::Test
     assert_nil(/bundle install/.match(command_log))
   end
 
-  def test_migration_hooks_pass_changed_files_to_nested_migration_hook
+  def test_main_update_migration_hooks_pass_changed_files_to_nested_migration_hook
     assert_equal(
       "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin",
       migration_hook_command("post-merge")
@@ -64,10 +64,7 @@ class RvCiFallbackTest < Minitest::Test
       "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin",
       migration_hook_command("post-rewrite")
     )
-    assert_equal(
-      "git diff --name-only HEAD@{1} HEAD | lefthook run migrations --files-from-stdin",
-      migration_hook_command("post-checkout")
-    )
+    assert_nil(lefthook_config["post-checkout"])
   end
 
   def test_verify_ruby_path_accepts_rv_managed_ruby
