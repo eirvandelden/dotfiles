@@ -77,6 +77,36 @@ pre-commit:
           NOCOMMIT "{staged_files}"
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
+    no-merge-conflicts:
+      tags: merge-conflicts
+      run: |
+        ! grep \
+          --line-number \
+          --with-filename \
+          --extended-regexp \
+          '^(<{7} |>{7} |={7}$)' "{staged_files}"
+      fail_text: Your staged files contain merge conflict markers. Resolve conflicts before committing.
+    no-debugger-ruby:
+      tags: debugger
+      glob: "*.rb"
+      run: |
+        ! grep \
+          --line-number \
+          --with-filename \
+          --extended-regexp \
+          '(binding\.irb|binding\.pry|byebug|debugger)' "{staged_files}"
+      fail_text: Your staged Ruby files contain debugger statements. Remove them before committing.
+    no-debugger-js:
+      tags: debugger
+      glob: "*.{js,ts,jsx,tsx}"
+      run: |
+        ! grep \
+          --line-number \
+          --with-filename \
+          --extended-regexp \
+          '(^|[^.])\bdebugger\b|console\.log' "{staged_files}"
+      fail_text: "Staged JS/TS files contain debugger statements or console.log calls. Remove before committing."
+
 # TODO: fix loading of extra words
 # commit-msg:
 #   parallel: true
@@ -228,12 +258,24 @@ post-merge:
     - rebase
   commands:
     migrations:
-      run: lefthook run migrations
+      run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
     client-dependencies:
       glob: "{yarn.lock,package.json}"
       run: yarn install
+
+# Run migrations after pull --rebase (post-merge skips rebase)
+post-rewrite:
+  parallel: true
+  files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
+  only:
+    - ref: "main"
+  commands:
+    migrations:
+      run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
+      env:
+        LEFTHOOK_QUIET: execution_info,meta,skips,summary
 
 # custom migrations command for running rails migrations
 migrations:
@@ -246,5 +288,5 @@ migrations:
       run: if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi
     migrate:
       priority: 2
-      glob: "db/migrations/*"
+      glob: "db/migrate/*"
       run: rails db:migrate
