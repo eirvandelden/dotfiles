@@ -102,6 +102,20 @@ Read first:
 - Working inside the dotfiles repo (stow, bootstrap, symlinks, machine setup):
   `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
 
+## 5a. Codex Skills Setup
+
+Custom Codex skills are symlinked under `~/.codex/skills/` (not stowed) to coexist with Codex's built-in
+`.system/` directory. When adding new skills:
+
+```bash
+ln -s "$(pwd)/codex/.codex/skills/<skill-name>" ~/.codex/skills/<skill-name>
+```
+
+Example: `fizzy-sync` skill is manually symlinked in setup. If stow cannot cleanly fold (due to existing
+real directories under `~/.codex/skills/`), manual symlinks are the intended pattern.
+
+Read Codex-specific setup details in `codex/.codex/HEADROOM.md`.
+
 ## 6. Open Questions
 
 These areas are intentionally left open and should be decided per project.
