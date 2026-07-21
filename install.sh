@@ -113,6 +113,7 @@ main() {
   run_task "31_install_default_node.sh" "$root"
   run_task "40_install_default_ruby_gems.sh" "$root"
   run_task "41_install_default_npm_packages.sh" "$root"
+  run_task "42_install_uv_tools.sh" "$root"
   run_task "50_stow_all.sh" "$root"
 
   log "Setup complete! You may want to restart your shell (or reboot)."

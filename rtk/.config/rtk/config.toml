@@ -1,6 +1,0 @@
-[hooks]
-exclude_commands = []
-
-[tee]
-enabled = true
-mode = "failures"

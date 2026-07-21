@@ -126,3 +126,4 @@ undofile
 updatetime
 vimdoc
 lspconfig
+semble

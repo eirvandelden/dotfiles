@@ -1,12 +1,25 @@
 {
   "hooks": {
-    "PreToolUse": [
+    "SessionStart": [
       {
-        "matcher": "Bash",
+        "matcher": "startup|resume",
         "hooks": [
           {
             "type": "command",
-            "command": "rtk hook claude"
+            "command": "headroom init hook ensure",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "headroom init hook ensure",
+            "timeout": 15
           }
         ]
       }
