@@ -1,0 +1,22 @@
+"$schema" = "https://conductor.build/schemas/settings.schema.json"
+enterprise_data_privacy = true
+tool_approvals_enabled = false
+
+[git]
+archive_on_merge = false
+branch_prefix = "ai/"
+branch_prefix_type = "custom"
+delete_branch_on_archive = false
+
+[models]
+default = "haiku"
+default_plan_mode = true
+review = "sonnet-5-1m"
+
+[models.claude_code]
+default_effort_level = "medium"
+
+[models.codex]
+default_thinking_level = "high"
+personality = "pragmatic"
+review_thinking_level = "medium"
