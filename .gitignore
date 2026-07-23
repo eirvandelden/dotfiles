@@ -29,3 +29,6 @@
 /**/*/id_*
 /**/*/id_*.pub
 /**/*/*.key
+
+# Codex vendored skills (Codex-owned, managed separately)
+codex/.codex/skills/.system
