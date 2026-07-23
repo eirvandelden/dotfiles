@@ -132,9 +132,9 @@ Document 1:
 Document 2:
 - Link: `https://slite.com/app/docs/doc-456` (different doc, same project)
 - Text mentions: "See the security audit review in doc-123"
-- Assigned/responsible: you
+- Assigned/responsible: teammate
 
-**Decision**: Document 2 is an incidental mention (not assigned, not marked responsible). Create Fizzy card only for Document 1.
+**Decision**: Document 2 is an incidental mention (not assigned to you, not marked responsible). Create Fizzy card only for Document 1.
 
 ## Column Mapping Edge Cases
 
