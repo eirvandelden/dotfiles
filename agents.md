@@ -104,15 +104,11 @@ Read first:
 
 ## 5a. Codex Skills Setup
 
-Custom Codex skills are symlinked under `~/.codex/skills/` (not stowed) to coexist with Codex's built-in
-`.system/` directory. When adding new skills:
+Codex skills are stowed as part of the `codex` package. Custom skills live under `codex/.codex/skills/`.
+Codex's bundled `.system/` skills are gitignored (Codex-owned, managed separately).
 
-```bash
-ln -s "$(pwd)/codex/.codex/skills/<skill-name>" ~/.codex/skills/<skill-name>
-```
-
-Example: `fizzy-sync` skill is manually symlinked in setup. If stow cannot cleanly fold (due to existing
-real directories under `~/.codex/skills/`), manual symlinks are the intended pattern.
+When adding new skills: create directory under `codex/.codex/skills/<skill-name>/` with SKILL.md and
+optionally `agents/openai.yaml`. Stow handles the rest on next install.
 
 Read Codex-specific setup details in `codex/.codex/HEADROOM.md`.
 
