@@ -53,15 +53,6 @@ Sync: github_status=In Review, fizzy_state=In Review, last_synced=2026-07-23
 ### Conflict: both sides changed
 
 Previous fingerprint: `Sync: github_status=In Progress, fizzy_state=In Progress, last_synced=2026-07-20`
-Current GitHub status: "In Review"
-Current Fizzy column: In Progress
-
-Detection:
-- GitHub status "In Review" ≠ fingerprint "In Progress" ✓
-- Fizzy state In Progress ≠ fingerprint "In Progress" ✗
-- Actually: Fizzy is still "In Progress", GitHub moved to "In Review"
-
-Previous fingerprint: `Sync: github_status=In Progress, fizzy_state=In Progress, last_synced=2026-07-20`
 Current GitHub status: "Done"
 Current Fizzy column: In Review
 
