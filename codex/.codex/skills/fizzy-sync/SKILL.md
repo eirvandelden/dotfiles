@@ -50,6 +50,8 @@ Sync runs in this order; each source is independent (no cross-source dedup):
 
 **Description**: Permalink only; do not copy large message excerpts.
 
+**One-way only**: If a Fizzy card sourced from a Slack saved item is closed, do not re-open it on subsequent syncs. Slack saved items are archived/discarded by you; closing the card is intentional and should not be reversed.
+
 **Limitation**: If saved items aren't directly available via the approved MCP, report incompleteness and ask whether to proceed with self-DM lines only.
 
 ### 3. Slack Self-DM Messages (one-way)
