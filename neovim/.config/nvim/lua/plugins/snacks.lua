@@ -63,9 +63,9 @@ return {
     {
       "<leader>un",
       function()
-        Snacks.notifier.hide()
+        Snacks.notifier.show_history()
       end,
-      desc = "Hide notifications",
+      desc = "Notification history",
     },
     {
       "<leader>ud",
@@ -76,6 +76,11 @@ return {
     },
   },
   init = function()
-    vim.print = Snacks.debug.inspect
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "VeryLazy",
+      callback = function()
+        vim.print = Snacks.debug.inspect
+      end,
+    })
   end,
 }
