@@ -14,6 +14,7 @@ return {
     -- add any opts here
     -- this file can contain specific instructions for your project
     instructions_file = "agents.md",
+    selector = { provider = "snacks" },
     providers = {
       openai = {
         api_key_name = "cmd:op read op://private/OpenAI/api_key --no-newline",
@@ -44,7 +45,6 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
-    "ibhagwan/fzf-lua", -- for file_selector provider fzf
     "stevearc/dressing.nvim", -- for input provider dressing
     "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
     {
