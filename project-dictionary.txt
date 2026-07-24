@@ -127,3 +127,10 @@ updatetime
 vimdoc
 lspconfig
 semble
+Slite
+dedup
+unflags
+reflag
+actionables
+Unassigning
+Kabisa

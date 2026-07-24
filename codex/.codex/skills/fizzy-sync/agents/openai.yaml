@@ -1,0 +1,25 @@
+---
+interface:
+  display_name: "Fizzy Sync"
+  short_description: "Sync GitHub/Slack/Outlook/Slite work items into Fizzy, two-way for GitHub/Outlook"
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "fizzy"
+      description: "Fizzy MCP server (read/write task cards)"
+    - type: "mcp"
+      value: "github"
+      description: "GitHub MCP server (read/write issues and Project Status field)"
+    - type: "mcp"
+      value: "slack"
+      description: "Slack MCP server (read saved items and self-DM messages)"
+    - type: "mcp"
+      value: "outlook"
+      description: "Outlook MCP server (read/write flagged emails)"
+    - type: "mcp"
+      value: "slite"
+      description: "Slite MCP server (read assigned todos and actionables)"
+
+policy:
+  allow_implicit_invocation: false
