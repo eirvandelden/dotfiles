@@ -70,7 +70,7 @@ return {
     {
       "<leader>ud",
       function()
-        Snacks.toggle.dim()
+        Snacks.toggle.dim():toggle()
       end,
       desc = "Toggle dim",
     },
