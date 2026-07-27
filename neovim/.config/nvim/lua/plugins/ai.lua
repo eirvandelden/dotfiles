@@ -1,5 +1,3 @@
--- op read op://private/OpenAI/api_key --no-newline"
-
 return {
   "yetone/avante.nvim",
   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
@@ -15,15 +13,18 @@ return {
     -- this file can contain specific instructions for your project
     instructions_file = "agents.md",
     selector = { provider = "snacks" },
-    providers = {
-      openai = {
-        api_key_name = "cmd:op read op://private/OpenAI/api_key --no-newline",
-        endpoint = "https://api.openai.com/v1",
-        model = "gpt-5", -- your desired model (or use gpt-4o, etc.)
-        timeout = 30000, -- Timeout in milliseconds, increase this for reasoning models
-        extra_request_body = {
-          temperature = 1,
-        },
+    provider = "claude-code",
+    acp_providers = {
+      ["claude-code"] = {
+        command = "npx",
+        args = { "@zed-industries/claude-code-acp" },
+        env = { NODE_NO_WARNINGS = "1" },
+      },
+      -- review work: :AvanteSwitchProvider codex
+      ["codex"] = {
+        command = "npx",
+        args = { "@zed-industries/codex-acp" },
+        env = { NODE_NO_WARNINGS = "1" },
       },
     },
     windows = {
