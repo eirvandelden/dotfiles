@@ -154,6 +154,8 @@ behaviors specific to how an AI agent should operate.
    - Always target `origin` (personal fork) over upstream.
    - If the target repository is ambiguous, ask before proceeding.
    - Never create PRs to an upstream project without explicit instruction.
+   - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md`
+     or similar). Mandatory on work repos; use on personal repos too if one exists.
 6. GitHub identity and consent:
    - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit
      instruction for that exact message.
