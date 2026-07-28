@@ -1,7 +1,5 @@
 -- Keymaps are automatically loaded on the VeryLazy event
 -- Add any additional keymaps here
--- Show notifications history
-vim.keymap.set("n", "<leader>un", "<cmd>Notifications<cr>", { desc = "Notification history" })
 -- remap ctrl+s to save
 vim.keymap.set({ "n", "i", "v" }, "<C-s>", "<cmd>w<CR>", { desc = "Save file" })
 -- remap ctrl+c to copy in visual
@@ -26,13 +24,6 @@ vim.keymap.set("n", "<M-f>", "w", { desc = "Move forward one word" })
 vim.keymap.set("n", "<M-b>", "b", { desc = "Move backward one word" })
 -- exit terminal mode with Escape
 vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "Terminal: exit to Normal", silent = true })
-
--- fzf-lua
-vim.keymap.set("n", "<leader>ff", "<cmd>FzfLua files<cr>", { desc = "Find files" })
-vim.keymap.set("n", "<leader>fr", "<cmd>FzfLua oldfiles<cr>", { desc = "Recent files" })
-vim.keymap.set("n", "<leader>fb", "<cmd>FzfLua buffers<cr>", { desc = "Buffers" })
-vim.keymap.set("n", "<leader>sg", "<cmd>FzfLua live_grep<cr>", { desc = "Grep" })
-vim.keymap.set("n", "<leader>sw", "<cmd>FzfLua grep_cword<cr>", { desc = "Grep word under cursor" })
 
 -- bufferline
 vim.keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev buffer" })

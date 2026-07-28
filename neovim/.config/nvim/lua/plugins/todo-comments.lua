@@ -6,7 +6,9 @@ return {
   keys = {
     {
       "<leader>st",
-      "<cmd>TodoFzfLua<cr>",
+      function()
+        Snacks.picker.todo_comments()
+      end,
       desc = "Search todos",
     },
   },

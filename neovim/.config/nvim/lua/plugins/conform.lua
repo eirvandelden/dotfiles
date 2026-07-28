@@ -9,8 +9,6 @@ return {
         local filename = vim.api.nvim_buf_get_name(bufnr)
         if filename:match("%.html%.erb$") then
           return { "herb" }
-        else
-          return { "erb_format" } -- fallback for other .erb files
         end
       end,
     },
