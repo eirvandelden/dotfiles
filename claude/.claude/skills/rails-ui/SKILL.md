@@ -50,6 +50,8 @@ Full Hotwire/Stimulus/Turbo detail: `references/hotwire-stimulus.md`.
   clear errors next to fields.
 - NEVER hardcode a user-facing string anywhere — every string shown to a user must be a
   translation key. Personal projects use Rails i18n (YAML); work projects use gettext.
+- Work projects: after adding or updating translated strings, run `bin/verify-translations`
+  before considering the change done.
 
 Full i18n namespacing/fallback conventions: `references/i18n.md`.
 
