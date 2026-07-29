@@ -43,6 +43,8 @@ main() {
   local work_conf="${HOME}/Developer/dotfiles-work/packages.conf"
   if [[ -f "$work_conf" ]]; then
     log "stow: loading work packages from ${work_conf}…"
+    # The work repo declares its own shared packages; ours must not apply to it.
+    unset STOW_SHARED
     # shellcheck disable=SC1090
     source "$work_conf"
 
