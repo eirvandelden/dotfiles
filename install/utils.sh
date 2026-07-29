@@ -580,6 +580,20 @@ install_npm_packages() {
 # Stow configuration
 ###############################################################################
 
+stow_shares_target_directory() {
+  # A package "shares" when a second dotfiles repo installs into the same
+  # directory. Listed in STOW_SHARED by the packages.conf that owns the package.
+  local app="$1"
+
+  declare -p STOW_SHARED >/dev/null 2>&1 || return 1
+
+  local shared
+  for shared in "${STOW_SHARED[@]}"; do
+    [[ "$shared" == "$app" ]] && return 0
+  done
+  return 1
+}
+
 stow_configure() {
   # Usage: stow_configure <stow_root_dir> "${STOW[@]}"
   local stow_dir="$1"
@@ -595,7 +609,16 @@ stow_configure() {
     [[ -z "$app" ]] && continue
     [[ -d "${stow_dir}/${app}" ]] || die "Stow package not found: ${stow_dir}/${app}"
 
-    log "stow: applying: $app"
-    stow --dir "$stow_dir" --target "$HOME" --restow "$app"
+    local options=(--restow)
+    if stow_shares_target_directory "$app"; then
+      # Without this, the first repo to run claims the whole shared directory as
+      # one symlink and the second repo aborts with a conflict.
+      options+=(--no-folding)
+      log "stow: applying: $app (shared directory, linking file by file)"
+    else
+      log "stow: applying: $app"
+    fi
+
+    stow --dir "$stow_dir" --target "$HOME" "${options[@]}" "$app"
   done
 }
