@@ -18,6 +18,15 @@ description: Use when writing or reviewing Ruby/Rails tests, choosing test data 
     mirroring RSpec's `context` blocks.
   - Never use comment headers (e.g. `# === given X ===`) to group tests.
 - Focus on observable behaviour and outcomes.
+- Test invalid and edge cases first, then the happy path.
+- Prefer `refute x` over `assert_equal false, x`.
+- Test behaviour, not configuration presence: exercise the effect (e.g. scrubbing actually
+  applied), not that a config key exists. When a concrete value is the behaviour (a size, an
+  amount), assert the exact value, not mere presence.
+- Do not duplicate coverage across layers: test a flow once, at the layer that owns it.
+- Delete or merge redundant tests when touching a file; near-identical tests are debt.
+- No meta-tests that assert code standards or repo plumbing (CI files, bin scripts exist) —
+  hooks and CI guard those.
 - Write lots of integration tests (both personal and work): prefer request/integration/system
   tests for core flows. For APIs, test real HTTP requests, JSON parsing, status codes, and auth
   behavior.
@@ -34,6 +43,8 @@ description: Use when writing or reviewing Ruby/Rails tests, choosing test data 
   - If no suitable record exists, build the correct object directly with the right attributes from
     the start.
   - NEVER create a generic base object and then update it to fit the test.
+  - NEVER mutate records in the middle of a test to force a state. Set the state up front, or
+    use a separate record that already has it.
 
 See `references/examples.md` for the fixture/factory pattern.
 

@@ -10,12 +10,21 @@ or the `~/Developer/dotfiles/agents.md` fallback — see core playbook) with any
 criteria (PR description, CLAUDE.md, explicit instructions) rather than replacing them.
 
 When asked to implement fixes for issues found during a review (e.g. "implement fixes for the
-issues you've found", "please fix the issues you've found", "implement a fix for issue X"):
+issues you've found", "verify and fix the above findings", "implement a fix for issue X"):
 
-1. Run linters on every touched file and fix all issues.
-2. Run the full test suite. Only fix failures that are directly caused by your changes; do not fix
+1. Verify each finding before touching code — confirm it is real using systematic debugging;
+   write a failing test that demonstrates it where possible. Report findings that do not hold
+   instead of "fixing" them.
+2. Fix the verified findings (failing test first, per the playbook TDD rule).
+3. Run linters on every touched file and fix all issues.
+4. Run the full test suite. Only fix failures that are directly caused by your changes; do not fix
    pre-existing failures. Report any pre-existing failures explicitly.
-3. If linters or tests caused by your changes cannot be made green, proceed to re-review but
+5. If linters or tests caused by your changes cannot be made green, proceed to re-review but
    explicitly report the failures.
-4. After fixes are applied, perform the review again using the same parameters.
-5. Explicitly report whether new issues were found or whether the re-review is clean.
+6. After fixes are applied, perform the review again using the same parameters.
+7. Loop verify → fix → lint → test → re-review until the review is clean or you are in a
+   deadlock. On deadlock, stop and explain the remaining findings instead of making
+   speculative changes.
+
+After a push (pushing itself needs explicit approval): wait for CI to finish, inspect the
+results, fix any failure, and repeat until all checks are green.

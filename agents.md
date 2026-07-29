@@ -57,6 +57,16 @@ General engineering practice:
 - Predicate methods (`?`) must always return a boolean and never mutate or have side effects.
 - Personal projects: prefer guard clause style (`return x if y`) over `if/else/end` when the line
   fits within 120 characters.
+- A guard clause is followed by a blank line. No one-line method definitions, and no inline
+  variable assignment inside a guard condition.
+- `rescue => error`, never `rescue => e`.
+- Never mutate a method's parameters — work on a copy (`dup`) when a transformation is needed.
+- Keep existing methods' visibility when refactoring; new helper methods default to `private`.
+- Add parentheses when a compound condition reads ambiguously.
+- No `send`/metaprogramming to shortcut a proper interface.
+- Documentation comments: work projects use YARD — short docs on classes always, on methods only
+  when complex, never on private methods, no giant `@example` blocks. Personal projects: no doc
+  comments unless a non-obvious "why" needs recording.
 - Max line length ~120 characters. Keep classes under ~100 lines. Target methods at 5 lines, keep
   under 10. Pass no more than 4 parameters (hash options count as one). Blank lines between
   methods. Group related private methods together. Use explicit `private`/`protected` sections.
@@ -74,6 +84,20 @@ General engineering practice:
 - Run Bundler Audit regularly and before pushes.
 - Run Brakeman regularly and before pushes.
 - Always use strong parameters in controllers.
+
+## 4a. Dependencies and Versioning
+
+- Ask before adding or removing any dependency (rule 11 in §7).
+- Personal: Gemfile source is `gem.coop`, not rubygems.org.
+- Do not pin gem versions by default; let them update. When a constraint is needed, use
+  major.minor (`~> 9.3`) and no upper bound. Add an upper bound only when something actually
+  breaks.
+- Personal gems (mvpa.css etc.): reference from GitHub without a version restriction
+  (`gem "mvpa-css", github: "eirvandelden/mvpa.css"`); version by git SHA, no semver tags.
+- Dependabot: minimal config, all ecosystems, all update types, cooldown of 1 week.
+- Node: use yarn, not npm. Prefer a gem over adding a JavaScript dependency.
+- Upgrades: never skip major versions (Rails 6 → 7 → 8, step by step). Fix deprecation
+  warnings as part of the work instead of leaving them.
 
 ## 5. Detailed Guidance
 
@@ -101,6 +125,12 @@ Read first:
   `claude/.claude/skills/code-review/SKILL.md`
 - Working inside the dotfiles repo (stow, bootstrap, symlinks, machine setup):
   `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
+- Syncing a branch with main — fetch, rebase, conflict resolution, force-with-lease push:
+  `claude/.claude/skills/sync/SKILL.md`
+- Setting up a new personal repo (symlinks, rv, lefthook, CI, dependabot, deploy):
+  `claude/.claude/skills/new-repo-setup/SKILL.md`
+- Writing a plan for another agent, reviewing a plan critically, or executing a handed-over plan:
+  `claude/.claude/skills/plan-handoff/SKILL.md`
 
 ## 5a. Codex Skills Setup
 
@@ -149,6 +179,8 @@ behaviors specific to how an AI agent should operate.
 3. Test-driven development:
    - Write the test first; never generate code without a corresponding test.
    - Run tests after every change and fix failures before finishing.
+   - A task is only done when all tests are green, all linters are green, and you have
+     re-read your own diff and adjusted.
 4. Ask for clarification when the playbook does not cover something.
 5. Pull request workflow:
    - Always target `origin` (personal fork) over upstream.
@@ -240,6 +272,33 @@ behaviors specific to how an AI agent should operate.
     - NEVER run `git push` or any equivalent (force-push, push to remote, etc.) without
       the user explicitly asking you to push.
     - Do not assume that creating a PR or finishing implementation implies permission to push.
+20. Branch sync (rebase workflow):
+    - When starting work on an existing branch and before any approved push or PR update,
+      fetch the latest main and rebase the feature branch on top of it. Rebase, never merge
+      main into the branch.
+    - Stacked branches: rebase onto the explicitly named base branch and target the PR at it.
+    - Resolve each conflicted file on its own merits; never blindly discard one side.
+    - After a rebase, push with `--force-with-lease` only. NEVER use plain `--force`.
+    - Full workflow: `sync` skill (`claude/.claude/skills/sync/SKILL.md`).
+21. Commit scope hygiene:
+    - Before committing, re-read the full diff. Every hunk must be required by the task.
+      Revert unrelated changes: whitespace, quote style, comments, renamed test strings,
+      lint configs, `.github/` files.
+    - NEVER commit personal or machine-local setup files (`.pumadev`, local `database.yml`,
+      local `.rubocop.yml` tweaks, editor configs). If such a file is already tracked and
+      shows up as modified, leave it out of the commit and mention it.
+    - Orthogonal improvements discovered while working: propose them for a separate
+      branch/PR. Never bundle them into the current one.
+22. Verify, don't assume:
+    - Verify claims by exercising the change (run the command, hit the endpoint, load the
+      page) before reporting done — "should work" is not verified.
+    - Never invent data, names, or content. When real data is needed, ask for it or read it
+      from the source.
+    - Don't assume CLI flags or API behaviour from memory — check the documentation.
+    - Conductor: before editing, verify the working directory is the assigned workspace
+      (`pwd`), not another checkout of the same repository.
+    - When re-checking an earlier fix, confirm it holds in the originally failing scenario
+      before closing the loop.
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
