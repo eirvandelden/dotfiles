@@ -22,6 +22,16 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/hooks/consent-guard.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   },
