@@ -14,7 +14,7 @@ block() {
 }
 
 has_user_consent() {
-  [[ "$command" == *"I_HAVE_USER_CONSENT=1"* ]]
+  [[ "$command" =~ ^I_HAVE_USER_CONSENT=1[[:space:]] ]]
 }
 
 consent_required() {
@@ -28,7 +28,7 @@ current_branch() {
 }
 
 is_git_write=false
-[[ "$command" =~ git[^\|\&\;]*(commit|push) ]] && is_git_write=true
+[[ "$command" =~ git[[:space:]]+(commit|push)([[:space:]]|$) ]] && is_git_write=true
 
 if $is_git_write; then
   branch=$(current_branch)
@@ -54,7 +54,7 @@ if [[ "$command" =~ gh[[:space:]]+(pr|issue)[[:space:]]+comment ]] || [[ "$comma
   consent_required "Blocked: posting comments or reviews on GitHub as the user needs explicit approval for that exact message (playbook rule 6). Draft the text in chat instead."
 fi
 
-if [[ "$command" =~ kamal[[:space:]]+(deploy|app) ]] || [[ "$command" =~ cap[[:space:]]+([a-z]+[[:space:]]+)?deploy ]]; then
+if [[ "$command" =~ kamal[[:space:]]+(deploy|app[[:space:]]+exec) ]] || [[ "$command" =~ cap[[:space:]]+([a-z]+[[:space:]]+)?deploy ]]; then
   consent_required "Blocked: deploy commands need the user's explicit approval (playbook rule 13)."
 fi
 

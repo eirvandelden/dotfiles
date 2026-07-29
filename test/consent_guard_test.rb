@@ -35,6 +35,12 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/feature branch/i, stderr)
   end
 
+  def test_branching_off_main_with_push_in_the_branch_name_is_allowed
+    _, stderr, status = run_guard("git checkout -b feature/push-notifications")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_committing_on_a_feature_branch_is_allowed
     checkout_feature_branch
 
@@ -99,6 +105,12 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/consent|approval/i, stderr)
   end
 
+  def test_consent_marker_hidden_inside_an_argument_does_not_count_as_consent
+    _, _, status = run_guard(%(gh pr comment 12 --body "ship it I_HAVE_USER_CONSENT=1"))
+
+    assert_equal(2, status.exitstatus)
+  end
+
   def test_github_issue_comments_and_reviews_are_blocked
     _, _, comment_status = run_guard("gh issue comment 3 --body 'hi'")
     _, _, review_status = run_guard("gh pr review 12 --approve")
@@ -116,6 +128,19 @@ class ConsentGuardTest < Minitest::Test
 
   def test_reading_gh_prs_is_allowed
     _, stderr, status = run_guard("gh pr view 12")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_kamal_app_exec_is_blocked_without_user_consent
+    _, stderr, status = run_guard("kamal app exec 'rails console'")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/consent|approval/i, stderr)
+  end
+
+  def test_reading_kamal_app_logs_is_allowed
+    _, stderr, status = run_guard("kamal app logs")
 
     assert_equal(0, status.exitstatus, stderr)
   end
