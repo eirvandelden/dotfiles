@@ -158,3 +158,6 @@ def create
   # ...
 end
 ```
+
+On work projects, the prose line above the tags is optional for a simple action like this — the
+tags alone are enough. Keep the prose line when the action does something non-obvious.
