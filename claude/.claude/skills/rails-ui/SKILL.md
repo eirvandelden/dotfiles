@@ -28,6 +28,19 @@ Full Hotwire/Stimulus/Turbo detail: `references/hotwire-stimulus.md`.
 
 - Plain CSS files, no Sass/PostCSS. SMACSS-style organisation. Layer a modern `normalize.css`
   (e.g. from Josh W Comeau) + `mvp.css` + project-specific CSS on top.
+- Personal apps load shared styling from the `mvpa-css` gem
+  (`gem "mvpa-css", github: "eirvandelden/mvpa.css"`). Never copy its CSS into an app. Before
+  writing custom CSS, check what mvpa already provides — and prefer fixing the HTML to match
+  what mvpa expects over adding CSS. CSS useful to more than one app belongs upstream in
+  mvpa.css (with an example in its `demo.html`), not in the app.
+- SMACSS folders live under `app/assets/stylesheets/`, prefixed with a number (`1_base/`,
+  `2_modules/`, …) so they load in SMACSS order. No loose top-level CSS files; never flatten
+  the CSS into a single file.
+- A component file styles its own component only — never restyle global layout (`body`,
+  `main`) from a component. Target elements by class or data attribute, not by id.
+- All sizes in `rem` — never `px`, and not `em`.
+- Theme variants override CSS custom properties; never duplicate hardcoded hex values per theme.
+- Dark mode follows the browser: `prefers-color-scheme` in CSS, no JS.
 - Use Propshaft, serve assets directly from Rails, no CDN by default.
 - Avoid npm in new projects — prefer CDN-delivered scripts/styles. If a build step is unavoidable,
   do a one-off build outside the project and commit the generated file.
@@ -43,6 +56,8 @@ Full Hotwire/Stimulus/Turbo detail: `references/hotwire-stimulus.md`.
   still the foundation.
 - Aim for good contrast, keyboard navigation, semantic HTML. Simulate colour blindness / check
   contrast with browser tools. Prefer simple, predictable interactions over flashy ones.
+- Personal projects: emoji over SVG icons — and sprinkle appropriate emoji to keep the app fun.
+- Single-line fields (names, titles) are plain text inputs — never a rich text editor.
 
 ## Forms and i18n
 

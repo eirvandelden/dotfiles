@@ -48,7 +48,8 @@ that context. Never make a destructive action the default.
 Use a modal confirmation when an action is irreversible. Name the confirm button with the action
 verb (`Delete`, not `OK`). Describe what will happen (for example: `Delete this board? This cannot
 be undone.`). Avoid vague prompts such as `Are you sure?`. In destructive confirmations, `Cancel`
-is the default Return-key action.
+is the default Return-key action. Never require the user to type the item's name to confirm a
+deletion — a confirmation dialog is enough.
 
 **Progressive disclosure**
 
