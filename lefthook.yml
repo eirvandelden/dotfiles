@@ -252,8 +252,6 @@ pre-push:
 post-merge:
   parallel: true
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
-  only:
-    - ref: "main"
   skip:
     - rebase
   commands:
@@ -261,16 +259,11 @@ post-merge:
       run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
-    client-dependencies:
-      glob: "{yarn.lock,package.json}"
-      run: yarn install
 
 # Run migrations after pull --rebase (post-merge skips rebase)
 post-rewrite:
   parallel: true
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
-  only:
-    - ref: "main"
   commands:
     migrations:
       run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
@@ -280,7 +273,6 @@ post-rewrite:
 # custom migrations command for running rails migrations
 migrations:
   piped: true
-  files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
   commands:
     bundle:
       priority: 1
@@ -288,5 +280,11 @@ migrations:
       run: if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi
     migrate:
       priority: 2
-      glob: "db/migrate/*"
+      glob:
+        - "db/migrate/*"
+        - "db/schema.rb"
       run: rails db:migrate
+    client-dependencies:
+      priority: 3
+      glob: "{yarn.lock,package-lock.json,package.json}"
+      run: yarn install
