@@ -59,6 +59,7 @@ killactive
 laststatus
 launchable
 lefthook
+libexec
 linuxbrew
 looknfeel
 lspconfig

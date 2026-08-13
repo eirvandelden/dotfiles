@@ -11,9 +11,14 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
    path — it exists on both macOS and SteamOS); `CLAUDE.md` is a symlink to `AGENTS.md`.
    Both symlinks are committed to the repository.
 2. Ruby: `.ruby-version` present; `rv` is the version manager — never mise/asdf/rbenv/rvm.
-3. Git hooks: symlink the default lefthook config from `~/Developer/dotfiles`, plus a
-   repo-local `lefthook-local.yml` for repo-specific tasks. Never disable hooks to get a
-   commit through.
+3. Git hooks: no lefthook files needed in a new repo. Global `core.hooksPath` scripts
+   automatically set `LEFTHOOK_CONFIG` to `~/Developer/dotfiles/lefthook.yml` when the repo has
+   no own config — pre-commit, pre-push, and pull hooks fire everywhere with zero setup.
+   Add a `lefthook-local.yml` only for repo-specific tasks on top of the defaults. A repo with
+   its own `lefthook.yml` opts back into defaults with:
+   `extends: ["${HOME}/Developer/dotfiles/lefthook.yml"]`.
+   Never run `lefthook install` (restow `git` package to repair hook scripts if needed).
+   Never disable hooks to get a commit through.
 4. Linters: copy rubocop and solargraph configuration from the reference repo.
 5. CI: GitHub Actions workflow running linters and the full test suite on push, based on the
    reference repo's workflows. Pre-existing rubocop offenses go into `.rubocop_todo.yml` —

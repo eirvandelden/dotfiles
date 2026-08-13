@@ -182,3 +182,6 @@ yarn-debug.log*
 # Superpowers (Claude plugin)
 .superpowers/
 docs/superpowers/
+
+# Lefthook local overrides (per https://lefthook.dev/examples/lefthook-local/)
+lefthook-local.yml
