@@ -23,5 +23,6 @@ return {
       PrevParagraph = { prio = 0 },
       NextParagraph = { prio = 0 },
     },
+    targetedMotionHints = { enabled = false },
   },
 }
