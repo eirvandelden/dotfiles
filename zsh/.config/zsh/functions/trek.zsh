@@ -18,6 +18,8 @@ trek_mcp_token() {
     return 1
   fi
 
+  unset TREK_MCP_ACCESS_TOKEN
+
   if ! command -v curl >/dev/null 2>&1; then
     print -u2 -- "trek_mcp_token: curl is required"
     return 1
@@ -31,7 +33,14 @@ trek_mcp_token() {
   request_body="$(
     TREK_MCP_CLIENT_ID="$client_id" \
     TREK_MCP_CLIENT_SECRET="$client_secret" \
-    jq -nr '"grant_type=client_credentials&client_id=" + (env.TREK_MCP_CLIENT_ID | @uri) + "&client_secret=" + (env.TREK_MCP_CLIENT_SECRET | @uri) + "&scope=" + ("trips:write reservations:write places:write geo:read" | @uri)'
+    jq -nr '
+      [
+        "grant_type=client_credentials",
+        ("client_id=" + (env.TREK_MCP_CLIENT_ID | @uri)),
+        ("client_secret=" + (env.TREK_MCP_CLIENT_SECRET | @uri)),
+        ("scope=" + ("trips:write reservations:write places:write geo:read" | @uri))
+      ] | join("&")
+    '
   )" || {
     print -u2 -- "trek_mcp_token: could not encode the OAuth request"
     return 1

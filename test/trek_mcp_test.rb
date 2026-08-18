@@ -78,14 +78,62 @@ class TrekMcpTest < Minitest::Test
     assert_equal false, result[:stderr].include?("client-secret")
   end
 
+  def test_failed_token_refresh_clears_a_previously_exported_token
+    write_executable("curl", <<~SH)
+      #!/bin/sh
+      exit 22
+    SH
+
+    result = run_helper(
+      env: {
+        "TREK_MCP_CLIENT_ID" => "client-id",
+        "TREK_MCP_CLIENT_SECRET" => "client-secret",
+        "TREK_MCP_ACCESS_TOKEN" => "stale-token"
+      }
+    )
+
+    assert_equal false, result[:status].success?
+    assert_equal "unset\n", result[:stdout]
+  end
+
+  def test_unlock_does_not_exchange_tokens_when_secrets_fails
+    marker_file = File.join(@tmpdir, "trek-called")
+    command = <<~'ZSH'
+      secrets() {
+        set -e
+        false
+        print 'export TREK_MCP_CLIENT_ID=client'
+      }
+
+      trek_mcp_token() {
+        : > "$TREK_TEST_MARKER_FILE"
+      }
+
+      source "$TREK_TEST_ALIASES"
+      eval unlock
+    ZSH
+    env = {
+      "PATH" => "#{@bin_dir}:/opt/homebrew/bin:/usr/bin:/bin",
+      "TREK_TEST_ALIASES" => File.join(REPO_ROOT, "zsh/.config/zsh/aliases.zsh"),
+      "TREK_TEST_MARKER_FILE" => marker_file
+    }
+
+    _stdout, _stderr, status = Open3.capture3(env, "zsh", "-f", "-o", "aliases", "-c", command)
+
+    assert_equal false, status.success?
+    assert_equal false, File.exist?(marker_file)
+  end
+
   def test_dotfiles_reference_the_trek_credentials_and_bearer_token
     mappings = File.read(File.join(REPO_ROOT, "secrets/.config/secrets/1password.env"))
     aliases = File.read(File.join(REPO_ROOT, "zsh/.config/zsh/aliases.zsh"))
     config = File.read(File.join(REPO_ROOT, "codex/.codex/config.toml"))
+    packages = File.read(File.join(REPO_ROOT, "packages.conf"))
 
     assert_match(%r{^TREK_MCP_CLIENT_ID=op://[^/]+/TrekMCP/CLIENT_ID$}, mappings)
     assert_match(%r{^TREK_MCP_CLIENT_SECRET=op://[^/]+/TrekMCP/CLIENT_SECRET$}, mappings)
-    assert_includes aliases, "alias unlock='eval \"$(secrets)\" && trek_mcp_token'"
+    assert_includes aliases, "unlock()"
+    assert_match(/^  jq$/, packages)
     assert_match(/\[mcp_servers\.trek\]/, config)
     assert_match(/url = \"https:\/\/trips\.vandelden\.family\/mcp\"/, config)
     assert_match(/bearer_token_env_var = \"TREK_MCP_ACCESS_TOKEN\"/, config)

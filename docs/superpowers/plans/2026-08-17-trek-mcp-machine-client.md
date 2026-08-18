@@ -80,6 +80,7 @@ Expected: failure because `zsh/.config/zsh/functions/trek.zsh` does not exist ye
 
 **Files:**
 - Create: `zsh/.config/zsh/functions/trek.zsh`
+- Modify: `packages.conf`
 
 - [ ] **Step 1: Add the minimal helper that satisfies the tests**
 
@@ -102,6 +103,8 @@ trek_mcp_token() {
     return 1
   fi
 
+  unset TREK_MCP_ACCESS_TOKEN
+
   if (( ! $+commands[curl] )); then
     print -u2 -- "trek_mcp_token: curl is required"
     return 1
@@ -115,7 +118,14 @@ trek_mcp_token() {
   request_body="$(
     TREK_MCP_CLIENT_ID="$client_id" \
     TREK_MCP_CLIENT_SECRET="$client_secret" \
-    jq -nr '"grant_type=client_credentials&client_id=" + (env.TREK_MCP_CLIENT_ID | @uri) + "&client_secret=" + (env.TREK_MCP_CLIENT_SECRET | @uri) + "&scope=" + ("trips:write reservations:write places:write geo:read" | @uri)'
+    jq -nr '
+      [
+        "grant_type=client_credentials",
+        ("client_id=" + (env.TREK_MCP_CLIENT_ID | @uri)),
+        ("client_secret=" + (env.TREK_MCP_CLIENT_SECRET | @uri)),
+        ("scope=" + ("trips:write reservations:write places:write geo:read" | @uri))
+      ] | join("&")
+    '
   )" || {
     print -u2 -- "trek_mcp_token: could not encode the OAuth request"
     return 1
@@ -155,6 +165,11 @@ ruby -I test test/trek_mcp_test.rb
 
 Expected: all TREK helper tests pass.
 
+- [ ] **Step 3: Declare the runtime dependency**
+
+Add `jq` to the Homebrew package inventory in `packages.conf` so a fresh bootstrap
+installs the encoder and response parser used by the helper.
+
 ### Task 3: Connect `unlock` and Codex configuration
 
 **Files:**
@@ -164,16 +179,18 @@ Expected: all TREK helper tests pass.
 
 - [ ] **Step 1: Make `unlock` exchange TREK credentials after loading 1Password values**
 
-Change the existing alias from:
+Replace the existing unlock alias with a function that stops if the 1Password lookup fails:
 
 ```zsh
-alias unlock='eval "$(secrets)"'
-```
+unlock() {
+  local secret_exports secrets_status
 
-to:
-
-```zsh
-alias unlock='eval "$(secrets)" && trek_mcp_token'
+  secret_exports="$(secrets)"
+  secrets_status=$?
+  (( secrets_status == 0 )) || return "$secrets_status"
+  eval "$secret_exports" || return 1
+  trek_mcp_token
+}
 ```
 
 - [ ] **Step 2: Add the two exact 1Password mappings supplied by the user**
@@ -214,10 +231,10 @@ Expected: focused tests pass, `git diff --check` is silent, and the diff contain
 Run:
 
 ```bash
-ruby -I test test/consent_guard_test.rb test/editor_test.rb test/lefthook_pull_hooks_test.rb test/rv_ci_fallback_test.rb test/trek_mcp_test.rb
+ruby -I test -e 'Dir["test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
 ```
 
-Expected: zero failures and zero errors.
+Expected: 62 tests, 185 assertions, zero failures and zero errors.
 
 - [ ] **Step 2: Validate Codex's parsed MCP configuration**
 
