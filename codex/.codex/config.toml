@@ -92,6 +92,10 @@ url = "https://api.super.work/mcp"
 url = "https://api.githubcopilot.com/mcp/"
 bearer_token_env_var = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN"
 
+[mcp_servers.trek]
+url = "https://trips.vandelden.family/mcp"
+bearer_token_env_var = "TREK_MCP_ACCESS_TOKEN"
+
 [mcp_servers.fizzy]
 url = "http://fizzy-mcp.home.arpa/mcp"
 bearer_token_env_var = "FIZZY_PAT"
@@ -155,4 +159,3 @@ source = "/Users/etienne.vandelden/.codex/.tmp/bundled-marketplaces/openai-bundl
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "2793c6809f8a4c90923435aa3a6d1e6f8cabb145212f06328b860b076b899525,6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f"
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/etienne.vandelden/.codex"
-
