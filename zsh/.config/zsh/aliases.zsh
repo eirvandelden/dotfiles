@@ -95,7 +95,7 @@ alias portless-stop='portless proxy stop'
 alias portless-log='tail -f /tmp/portless-proxy.log'
 
 # Secrets
-alias unlock='eval "$(secrets)"'
+alias unlock='eval "$(secrets)" && trek_mcp_token'
 
 # Editors
 # e: opens terminal Neovim when in a terminal, Neovide otherwise.
