@@ -199,6 +199,7 @@ behaviors specific to how an AI agent should operate.
 7. Branch protection:
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
+   - New code goes in its own git worktree, not the main checkout — `worktree-first` skill.
 8. Hands off system tooling:
    - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other
      system-level tools without explicit instruction.
