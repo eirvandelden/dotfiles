@@ -9,7 +9,7 @@ branch_prefix_type = "custom"
 delete_branch_on_archive = false
 
 [models]
-default = "haiku"
+default = "sonnet"
 default_plan_mode = true
 review = "sonnet-5-1m"
 
