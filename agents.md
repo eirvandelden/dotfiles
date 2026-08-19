@@ -264,14 +264,18 @@ behaviors specific to how an AI agent should operate.
       for the user to evaluate it.
     - If a task seems trivial (e.g. a single-character typo fix), still state the intended
       change and wait for a go-ahead before touching files.
-18. Commit only with explicit approval:
-    - NEVER create a git commit without the user explicitly asking you to commit.
-    - Do not interpret task completion, test passing, or any other signal as implicit
-      permission to commit. The user must request it.
-19. Push only with explicit approval:
-    - NEVER run `git push` or any equivalent (force-push, push to remote, etc.) without
-      the user explicitly asking you to push.
-    - Do not assume that creating a PR or finishing implementation implies permission to push.
+18. Commits:
+    - Agents may create commits without asking first.
+    - Each commit must be small and contain exactly one logical change. Split unrelated
+      concerns into separate commits.
+    - Still governed by rule 7 (never commit to `main`/`master`) and rule 21 (commit scope
+      hygiene).
+19. Pushes:
+    - Agents may push without asking to repos owned by the `eirvandelden` GitHub user, and
+      to `nedap/caren3` and `nedap/ons-client`.
+    - Pushing to any other remote or repository requires explicit permission first.
+    - Force-push rules (rule 20: `--force-with-lease` only, never plain `--force`) still
+      apply regardless of target repo.
 20. Branch sync (rebase workflow):
     - When starting work on an existing branch and before any approved push or PR update,
       fetch the latest main and rebase the feature branch on top of it. Rebase, never merge
