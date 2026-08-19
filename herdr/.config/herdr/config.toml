@@ -47,3 +47,11 @@ peach = "#ea8347"
 path         = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/ready-to-serve.mp3"
 request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.mp3"
 done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
+
+[theme]
+
+[ui.toast]
+delivery = "system"
+
+[ui]
+show_agent_labels_on_pane_borders = true
