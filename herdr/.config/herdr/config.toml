@@ -1,3 +1,4 @@
+onboarding = false
 [keys]
 # ctrl+; echoes the neovim leader (;) without stealing plain `;` keystrokes the way a bare
 # `;` prefix would — herdr's prefix is a raw keystroke grab across every pane, unlike vim's
@@ -49,9 +50,11 @@ request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.
 done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
 
 [theme]
+auto_switch = false
 
 [ui.toast]
 delivery = "system"
 
 [ui]
 show_agent_labels_on_pane_borders = true
+agent_panel_sort = "priority"
