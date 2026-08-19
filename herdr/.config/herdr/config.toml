@@ -1,3 +1,4 @@
+onboarding = false
 [keys]
 # On Dvorak, ";" sits on the physical Z key (bottom row, far left) — chording it with Ctrl
 # stretched the same hand from home row to bottom row on every prefix press. ctrl+s keeps
@@ -53,9 +54,11 @@ request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.
 done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
 
 [theme]
+auto_switch = false
 
 [ui.toast]
 delivery = "system"
 
 [ui]
 show_agent_labels_on_pane_borders = true
+agent_panel_sort = "priority"
