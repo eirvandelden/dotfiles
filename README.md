@@ -247,7 +247,6 @@ Available commands:
 - [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-autosuggestions)
   - Running `git clone https://github.com/zsh-users/zsh-autosuggestions.git ~/.zsh-autosuggestions/`
 - [solarized](http://ethanschoonover.com/solarized)
-- **terminal notifier** `brew install terminal-notifier`
 
 ### puma-dev
 
