@@ -1,5 +1,11 @@
 {
   "model": "sonnet",
+  "sandbox": {
+    "enabled": true
+  },
+  "permissions": {
+    "defaultMode": "auto"
+  },
   "hooks": {
     "SessionStart": [
       {
