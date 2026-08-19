@@ -185,3 +185,6 @@ docs/superpowers/
 
 # Lefthook local overrides (per https://lefthook.dev/examples/lefthook-local/)
 lefthook-local.yml
+
+# Per-repo hidden worktrees folder (see `spin` zsh function)
+.worktrees/

@@ -210,26 +210,22 @@ module WorktreeTools
     end
 
     def build_puma_dev_name
-      # Main worktree: <project>
-      # Feature worktree: <worktree-name>.<project>
-      # Conductor workspace: <workspace-name>.<project>
+      # Every worktree of a project shares one puma-dev name/URL: <project>.localhost.
+      project_root_name(@path) || @detector.project_info[:name]
+    end
 
-      # Get the actual project name from the git root
-      repo_root = @detector.project_info[:root]
-      project_name = repo_root ? repo_root.basename.to_s : @detector.project_info[:name]
+    # The name of the project shared by every worktree, regular or bare.
+    # `git rev-parse --show-toplevel` (used elsewhere for `worktree_name`) returns the
+    # *current* worktree's own path, not the shared root — unusable here. The common git
+    # dir is stable across all worktrees of a project: for a regular repo it's
+    # `<project>/.git`, so its parent is the project root; for a bare repo, the bare
+    # directory itself *is* the common dir.
+    def project_root_name(path)
+      common_dir = git_common_dir(path)
+      return nil unless common_dir
 
-      if in_conductor?
-        workspace_name = conductor_workspace_name
-        return workspace_name ? "#{workspace_name}.#{project_name}" : project_name
-      end
-
-      if @detector.project_info[:is_main_worktree]
-        project_name
-      else
-        # Use the worktree directory name
-        worktree_name = @detector.project_info[:name]
-        "#{worktree_name}.#{project_name}"
-      end
+      root = common_dir.basename.to_s == ".git" ? common_dir.dirname : common_dir
+      root.basename.to_s
     end
 
     def build_caddy_name

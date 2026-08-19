@@ -1,0 +1,47 @@
+[keys]
+# ctrl+; echoes the neovim leader (;) without stealing plain `;` keystrokes the way a bare
+# `;` prefix would — herdr's prefix is a raw keystroke grab across every pane, unlike vim's
+# leader which only fires inside vim's own normal-mode keymap engine. Default ctrl+b collides
+# with vim's built-in Ctrl-b (page up).
+prefix = "ctrl+;"
+
+[[keys.command]]
+key = "prefix+f"
+type = "plugin_action"
+command = "herdr-file-viewer.open-file-viewer"
+
+[[keys.command]]
+key = "prefix+g"
+type = "plugin_action"
+command = "herdr-lazygit.open"
+
+[[keys.command]]
+key = "prefix+shift+g"
+type = "plugin_action"
+command = "herdr-lazygit.open-tab"
+
+# panel_bg = "reset" makes herdr's panel follow the terminal's live background instead of a
+# fixed color. Revisit if it looks wrong — solunized's fg_0/fg_1 are tuned for contrast
+# against solunized's own bg_0, not necessarily against whatever background is actually live.
+[theme.custom]
+panel_bg = "reset"
+accent = "#ea8347"
+surface0 = "#0d3b4a"
+surface1 = "#2a5d6e"
+surface_dim = "#5e8c96"
+overlay0 = "#2a5d6e"
+overlay1 = "#5e8c96"
+text = "#cce2e7"
+subtext0 = "#b0d0d5"
+mauve = "#ac85e8"
+green = "#73b936"
+yellow = "#d9b02a"
+red = "#f7564f"
+blue = "#4191f4"
+teal = "#3fc4b6"
+peach = "#ea8347"
+
+[ui.sound]
+path         = "~/Documents/Tones/Warcraft/Humans/ready-to-serve.mp3"
+request_path = "~/Documents/Tones/Warcraft/Humans/milord.mp3"
+done_path    = "~/Documents/Tones/Warcraft/Humans/jobs-done.mp3"

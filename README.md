@@ -150,10 +150,10 @@ This repo includes a generic, reusable worktree tooling system that automates th
 
 ### What It Does
 
-When you create a new worktree with `git worktree add feature-branch`, the system automatically:
+After you create a new worktree with `git worktree add feature-branch` and run `git worktree-init`, the system:
 
 1. **Symlinks shared files** from `.worktree-local/` using GNU Stow (e.g., `.env`, `config/master.key`, `storage/`)
-2. **Configures puma-dev** for Rails projects (enables `https://feature-branch.myproject.localhost` access)
+2. **Configures puma-dev** for Rails projects (enables `https://myproject.localhost` access, shared by every worktree of the project)
 3. **Assigns stable ports** for development servers
 4. **Integrates with Conductor** for seamless workspace creation
 
@@ -168,14 +168,14 @@ brew install puma-dev  # Optional, for Rails projects
 cd ~/Developer/dotfiles
 stow git
 
-# Create a worktree - automation runs automatically!
+# Create a worktree and initialize it
 cd ~/Developer/myproject
 git worktree add feature-branch
 cd feature-branch
-# Setup is done automatically via post-checkout hook
+git worktree-init
 
-# Access your Rails app at:
-# https://feature-branch.myproject.localhost
+# Access your Rails app at (same URL for every worktree of this project):
+# https://myproject.localhost
 ```
 
 ### Configuration
@@ -208,17 +208,27 @@ Create `.worktree-local/` directory for shared files:
 
 ### Conductor Integration
 
-Initialize a project for Conductor:
+To use your project with Conductor:
 
 ```bash
 cd ~/Developer/myproject
-conductor-init myproject 3000
+
+# Copy Conductor scripts
+cp ~/.config/conductor/scripts/{setup,run,archive} bin/
+chmod +x bin/{setup,run,archive}
+
+# Create conductor.json
+cat > conductor.json <<'JSON'
+{
+  "name": "myproject",
+  "setup": "./bin/setup",
+  "server": "./bin/run",
+  "archive": "./bin/archive"
+}
+JSON
 ```
 
-This creates:
-- `conductor.json` - Conductor configuration
-- `bin/conductor-setup` - Setup script
-- `script/server` - Universal server launcher
+Then setup `.worktree-local/` for shared files (`.env`, `config/master.key`, etc.) and optionally create `.worktree.yml` for configuration.
 
 ### Documentation
 
@@ -226,10 +236,9 @@ For complete documentation, see:
 - [Git Worktree Tools README](git/.config/git/worktree-tools/README.md)
 
 Available commands:
-- `worktree-setup [path]` - Setup worktree (runs automatically via git hook)
+- `git worktree-init [path]` - Setup worktree (run explicitly after creating a worktree)
 - `worktree-setup-all` - Setup all worktrees in current repo
 - `worktree-remove <path>` - Cleanup before removing worktree
-- `conductor-init <name> [port]` - Initialize project for Conductor
 
 ## 😔Manual installation
 

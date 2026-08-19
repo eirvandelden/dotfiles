@@ -24,7 +24,7 @@ module WorktreeTools
       repo, worktree = setup_regular_repo_with_worktree
       rails_structure(worktree)
 
-      puma_dev_entry = File.join(@tmpdir, ".puma-dev", "mobile.mobile")
+      puma_dev_entry = File.join(@tmpdir, ".puma-dev", "repo")
       FileUtils.mkdir_p(File.dirname(puma_dev_entry))
       File.write(puma_dev_entry, "3000")
 

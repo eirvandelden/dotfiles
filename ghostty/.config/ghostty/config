@@ -10,7 +10,7 @@ shell-integration-features = cursor, sudo, title
 font-family = "MonoLisa"
 font-size = 15
 
-theme = dark:"selenized-black",light:"Selenized Light"
+theme = dark:"solunized-dark",light:"solunized-light"
 
 adjust-cursor-thickness = 1
 
