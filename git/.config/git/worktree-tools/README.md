@@ -43,11 +43,8 @@ brew install puma-dev
 
 3. **Access your app** (Rails with puma-dev):
    ```bash
-   # Main worktree
+   # Every worktree of a project shares the same URL
    https://myproject.localhost
-
-   # Feature worktree
-   https://feature-branch.myproject.localhost
    ```
 
 ### Manual Usage
@@ -312,15 +309,18 @@ git worktree remove feature-auth
 
 ### URL Naming Pattern
 
-- **Main worktree:** `https://myproject.localhost`
-- **Feature worktree:** `https://feature-branch.myproject.localhost`
+- **Every worktree of a project:** `https://myproject.localhost` — one URL per project, shared
+  by the main worktree and every linked worktree. Whichever worktree's puma-dev entry was
+  written most recently is what the URL proxies to.
 - **Conductor personal AI workspace:** `https://ai.myproject.localhost`
 
 ### Port Assignment
 
 - **Conductor personal AI scripts:** Fixed port `3010`
 - **Main worktree:** Uses base port from config (default: 3000)
-- **Feature worktrees:** Uses hash-based stable port offset (base + hash % 1000)
+- **Feature worktrees:** Uses hash-based stable port offset (base + hash % 1000) — this stays
+  per-worktree even though the URL doesn't, so multiple worktrees' dev servers can still run
+  concurrently on distinct ports without clashing.
 
 ### How It Works
 

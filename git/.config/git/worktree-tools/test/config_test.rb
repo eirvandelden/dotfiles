@@ -304,6 +304,44 @@ module WorktreeTools
       end
     end
 
+    # --- Puma-dev name: one URL per project, not one per worktree ---
+
+    def test_puma_dev_name_is_same_for_main_and_linked_worktree
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(repo)
+      rails_structure(worktree)
+
+      main_config = load_config(repo)
+      worktree_config = load_config(worktree)
+
+      assert_equal "repo", main_config.puma_dev_name
+      assert_equal main_config.puma_dev_name, worktree_config.puma_dev_name
+    end
+
+    def test_puma_dev_name_is_same_for_bare_repo_and_its_worktree
+      bare, worktree = setup_bare_repo_with_worktree
+      rails_structure(worktree)
+
+      config = load_config(worktree)
+
+      assert_equal "caren", config.puma_dev_name
+    end
+
+    def test_puma_dev_name_ignores_conductor_workspace_name
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "3000",
+        "CONDUCTOR_WORKSPACE_NAME" => "madrid",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert_equal "repo", config.puma_dev_name
+      end
+    end
+
     def test_conductor_explicit_config_overrides_defaults
       repo, worktree = setup_regular_repo_with_worktree
       rails_structure(worktree)
