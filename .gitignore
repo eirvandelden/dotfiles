@@ -32,3 +32,6 @@
 
 # Codex vendored skills (Codex-owned, managed separately)
 codex/.codex/skills/.system
+
+# Claude Code permissions granted for this checkout only
+/.claude/settings.local.json
