@@ -1,5 +1,5 @@
 {
-  "model": "sonnet",
+  "model": "opus[1m]",
   "sandbox": {
     "enabled": true
   },
@@ -27,6 +27,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -46,6 +56,28 @@
           {
             "type": "command",
             "command": "\"$HOME/.claude/hooks/consent-guard.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
             "timeout": 10
           }
         ]
@@ -78,5 +110,6 @@
       }
     }
   },
+  "effortLevel": "high",
   "theme": "dark-ansi"
 }
