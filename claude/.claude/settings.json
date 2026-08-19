@@ -38,6 +38,7 @@
   "enabledPlugins": {
     "github@claude-plugins-official": true,
     "caveman@caveman": true,
+    "agile@agile": true,
     "superpowers-ruby@superpowers-ruby": true
   },
   "extraKnownMarketplaces": {
@@ -45,6 +46,12 @@
       "source": {
         "source": "github",
         "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "agile": {
+      "source": {
+        "source": "github",
+        "repo": "hubertlepicki/agile"
       }
     },
     "superpowers-ruby": {
