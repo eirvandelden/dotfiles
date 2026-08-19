@@ -15,9 +15,6 @@ enabled = true
 [plugins."presentations@openai-primary-runtime"]
 enabled = true
 
-[plugins."superpowers@openai-curated"]
-enabled = true
-
 [plugins."sites@openai-bundled"]
 enabled = true
 
@@ -31,6 +28,9 @@ enabled = true
 enabled = true
 
 [plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."superpowers-ruby@superpowers-ruby"]
 enabled = true
 
 [desktop]
@@ -150,6 +150,11 @@ trust_level = "trusted"
 last_updated = "2026-07-23T08:11:26Z"
 source_type = "local"
 source = "/Users/etienne.vandelden/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.superpowers-ruby]
+last_updated = "2026-08-18T14:34:16Z"
+source_type = "git"
+source = "https://github.com/lucianghinda/superpowers-ruby.git"
 
 [shell_environment_policy.set]
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"

@@ -36,15 +36,21 @@
     ]
   },
   "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
     "github@claude-plugins-official": true,
-    "caveman@caveman": true
+    "caveman@caveman": true,
+    "superpowers-ruby@superpowers-ruby": true
   },
   "extraKnownMarketplaces": {
     "caveman": {
       "source": {
         "source": "github",
         "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "superpowers-ruby": {
+      "source": {
+        "source": "github",
+        "repo": "lucianghinda/superpowers-ruby"
       }
     }
   },
