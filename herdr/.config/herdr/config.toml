@@ -4,6 +4,9 @@
 # leader which only fires inside vim's own normal-mode keymap engine. Default ctrl+b collides
 # with vim's built-in Ctrl-b (page up).
 prefix = "ctrl+;"
+goto = "prefix+space"
+focus_agent = "prefix+alt+1..9"
+switch_workspace = "prefix+shift+1..9"
 
 [[keys.command]]
 key = "prefix+f"
