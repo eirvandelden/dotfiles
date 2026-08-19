@@ -11,4 +11,5 @@ zstyle ':notify:*' success-sound "wc3-work-complete"
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Set up fzf key bindings and fuzzy completion
+# shellcheck source=/dev/null
 source <(fzf --zsh)
