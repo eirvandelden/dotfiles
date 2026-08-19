@@ -140,8 +140,8 @@ BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
 NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.814.41407"
-NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/etienne.vandelden/.codex/plugins/cache/openai-bundled/browser/26.814.41407/scripts/browser-service.mjs"}'
+BROWSER_USE_CODEX_APP_VERSION = "26.814.41957"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/etienne.vandelden/.codex/plugins/cache/openai-bundled/browser/26.814.41957/scripts/browser-service.mjs"}'
 CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
 
 [memories]
@@ -182,7 +182,7 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [marketplaces.openai-bundled]
-last_updated = "2026-08-18T13:33:51Z"
+last_updated = "2026-08-19T13:45:13Z"
 source_type = "local"
 source = "/Users/etienne.vandelden/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
@@ -192,7 +192,8 @@ source_type = "local"
 source = "/Users/etienne.vandelden/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
 [marketplaces.superpowers-ruby]
-last_updated = "2026-08-18T14:34:16Z"
+last_updated = "2026-08-19T13:45:10Z"
+last_revision = "99fac3d8bee27bab20b23d4bef6fa634738a59e8"
 source_type = "git"
 source = "https://github.com/lucianghinda/superpowers-ruby.git"
 
