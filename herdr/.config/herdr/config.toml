@@ -42,6 +42,8 @@ teal = "#3fc4b6"
 peach = "#ea8347"
 
 [ui.sound]
-path         = "~/Documents/Tones/Warcraft/Humans/ready-to-serve.mp3"
-request_path = "~/Documents/Tones/Warcraft/Humans/milord.mp3"
-done_path    = "~/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
+# herdr does not expand `~` — only a leading `/` counts as absolute, otherwise it resolves
+# relative to this config file's own directory. Hardcode the real path instead.
+path         = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/ready-to-serve.mp3"
+request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.mp3"
+done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
