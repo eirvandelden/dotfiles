@@ -40,7 +40,7 @@ pre-commit:
     shellcheck-zsh:
       tags: shell linter
       glob: "*.zsh"
-      run: shellcheck -x -S warning -s bash {staged_files}
+      run: shellcheck -S warning -s bash {staged_files}
     yamllint:
       tags: yaml linter
       glob: "*.{yml,yaml}"
@@ -211,7 +211,7 @@ pre-push:
     shellcheck-zsh:
       tags: shell linter
       glob: "*.zsh"
-      run: shellcheck -x -S warning -s bash {push_files}
+      run: shellcheck -S warning -s bash {push_files}
     yamllint:
       tags: yaml linter
       glob: "*.{yml,yaml}"
