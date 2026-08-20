@@ -8,8 +8,8 @@ description: Use before writing, generating, or editing code for any new task in
 Never write code or push commits directly from the main checkout open in the current pane.
 Every new coding task gets its own git worktree.
 
-This skill only handles the git worktree itself. On this machine, most projects also have their
-own `git worktree-init` (symlinks `.env`/`master.key`, wires puma-dev/Caddy) — see Step 2.
+This skill only handles the git worktree itself. On this machine, a global `git worktree-init`
+alias (symlinks `.env`/`master.key`, wires puma-dev/Caddy) is also available — see Step 2.
 
 ## Skip when
 
@@ -21,13 +21,15 @@ own `git worktree-init` (symlinks `.env`/`master.key`, wires puma-dev/Caddy) —
 
 ## Step 1: sweep merged worktrees, then create the new one
 
-Run this as a single script — the shell variables it sets (`default_branch`) don't survive
-between separate commands, and re-deriving `default_branch` per step is wasted network calls.
+Run this as a single script — the shell variable it sets (`default_branch`) doesn't survive
+between separate commands.
 
 ```bash
 git worktree prune
 
-default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||')
+default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+[ -n "$default_branch" ] || default_branch=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+[ -n "$default_branch" ] || { echo "cannot determine default branch"; exit 1; }
 git fetch origin "$default_branch"
 
 for dir in .worktrees/*/; do
@@ -37,6 +39,11 @@ for dir in .worktrees/*/; do
   [ -z "$(git -C "$dir" status --porcelain)" ] || continue
 
   branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD)
+
+  # A worktree just created off origin/$default_branch, with nothing committed yet, is trivially
+  # its own ancestor — skip it, or a concurrent task's brand-new worktree gets swept from under it.
+  [ "$(git rev-parse "$branch")" != "$(git rev-parse "origin/$default_branch")" ] || continue
+
   state=$(gh pr view "$branch" --json state -q '.state' 2>/dev/null)
   ancestor=yes
   git merge-base --is-ancestor "$branch" "origin/$default_branch" 2>/dev/null || ancestor=no
@@ -45,7 +52,15 @@ for dir in .worktrees/*/; do
     worktree_remove="${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-remove"
     [ -x "$worktree_remove" ] && "$worktree_remove" "$dir"
     git worktree remove "$dir"
-    git branch -d "$branch" 2>/dev/null
+
+    # -D once GitHub itself confirms MERGED: a squash-merged branch is never an ancestor of
+    # main, so the safe -d refuses it and leaks the branch forever. Ancestor-confirmed branches
+    # (no PR, or a fast-forward merge) still go through -d.
+    if [ "$state" = "MERGED" ]; then
+      git branch -D "$branch" 2>/dev/null
+    else
+      git branch -d "$branch" 2>/dev/null
+    fi
   fi
 done
 
@@ -85,8 +100,9 @@ Edits, commits, `git push`, `gh pr create` all run with the worktree as `cwd`. N
 to the main checkout to commit or push. The worktree stays in place until a future task's Step 1
 sweeps it, once its PR merges.
 
-## Rails + SQLite projects
+## Rails + SQLite projects (Claude Code only)
 
 Also invoke the `using-sqlite-worktrees` skill (superpowers-ruby plugin) after dependency
 install, before running tests — it copies the main checkout's dev/test databases into the new
-worktree.
+worktree. Its script resolves paths via `${CLAUDE_PLUGIN_ROOT}`, so it only works under Claude
+Code even though the plugin files also exist in Codex's cache.
