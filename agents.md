@@ -131,6 +131,8 @@ Read first:
   `claude/.claude/skills/new-repo-setup/SKILL.md`
 - Writing a plan for another agent, reviewing a plan critically, or executing a handed-over plan:
   `claude/.claude/skills/plan-handoff/SKILL.md`
+- Isolating new-code tasks into their own git worktree instead of the main checkout:
+  `claude/.claude/skills/worktree-first/SKILL.md`
 
 ## 5a. Codex Skills Setup
 

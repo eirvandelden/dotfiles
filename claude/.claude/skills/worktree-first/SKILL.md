@@ -8,56 +8,78 @@ description: Use before writing, generating, or editing code for any new task in
 Never write code or push commits directly from the main checkout open in the current pane.
 Every new coding task gets its own git worktree.
 
+This skill only handles the git worktree itself. On this machine, most projects also have their
+own `git worktree-init` (symlinks `.env`/`master.key`, wires puma-dev/Caddy) — see Step 2.
+
 ## Skip when
 
 - The task is read-only: answering questions, reviewing a diff, exploring code.
-- `git rev-parse --show-toplevel` already resolves inside a `.worktrees/` path — you're already
-  isolated.
+- Already inside a linked worktree — `[ "$(git rev-parse --git-dir)" != "$(git rev-parse
+  --git-common-dir)" ]` is true. Checking for a literal `.worktrees/` path in the cwd misses
+  worktrees kept elsewhere (e.g. `~/.config/superpowers/worktrees/`).
 - The user explicitly asked to work in the main checkout.
 
-## Step 1: sweep merged worktrees
+## Step 1: sweep merged worktrees, then create the new one
 
-Before creating a new one, clean up finished work so `.worktrees/` doesn't accumulate:
+Run this as a single script — the shell variables it sets (`default_branch`) don't survive
+between separate commands, and re-deriving `default_branch` per step is wasted network calls.
 
 ```bash
-default_branch=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+git worktree prune
+
+default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's|^origin/||')
 git fetch origin "$default_branch"
 
 for dir in .worktrees/*/; do
   [ -d "$dir" ] || continue
-  branch=$(basename "$dir")
+
+  # Never touch a worktree with anything uncommitted, no matter what its PR/merge state says.
+  [ -z "$(git -C "$dir" status --porcelain)" ] || continue
+
+  branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD)
   state=$(gh pr view "$branch" --json state -q '.state' 2>/dev/null)
-  merged_locally=$(git branch --merged "origin/$default_branch" 2>/dev/null | grep -qx "  $branch" && echo yes)
-  if [ "$state" = "MERGED" ] || [ "$merged_locally" = "yes" ]; then
-    git worktree remove "$dir" --force
-    git branch -D "$branch" 2>/dev/null
+  ancestor=yes
+  git merge-base --is-ancestor "$branch" "origin/$default_branch" 2>/dev/null || ancestor=no
+
+  if [ "$state" = "MERGED" ] || [ "$ancestor" = "yes" ]; then
+    worktree_remove="${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-remove"
+    [ -x "$worktree_remove" ] && "$worktree_remove" "$dir"
+    git worktree remove "$dir"
+    git branch -d "$branch" 2>/dev/null
   fi
 done
-```
 
-If the check errors for a worktree (no PR yet, branch not pushed, detached HEAD) leave it — never
-guess, never remove unmerged work.
-
-## Step 2: create the worktree
-
-```bash
 branch="<kebab-case-task-slug>"
 git worktree add ".worktrees/$branch" -b "$branch" "origin/$default_branch"
-cd ".worktrees/$branch"
+cd ".worktrees/$branch" || exit
 ```
 
-Verify `.worktrees/` is gitignored before the first worktree in an unfamiliar repo
-(`git check-ignore -q .worktrees`) — already true globally on this machine via
-`~/.config/git/ignore.global`, but a repo on another machine or a fresh clone may not have it.
-If it isn't ignored, add the line and commit that alone before continuing.
+If a worktree's PR/merge check errors (no PR yet, branch not pushed, detached HEAD) leave it —
+never guess, never remove unmerged work.
 
-## Step 3: project setup
+The new worktree branches from `origin/$default_branch`, not the main checkout's current HEAD —
+deliberately different from the `spin()` shell function
+(`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout
+happens to have checked out. A fresh-from-remote base means the task never inherits a stale or
+dirty main checkout.
 
-Auto-detect and install dependencies the same way you would after a fresh clone — `bundle
-install`, `npm install`/`yarn`, `cargo build`, `pip install`/`poetry install`, `go mod download`,
-whatever the project's manifest calls for.
+`.worktrees/` is already gitignored globally on this machine (`~/.config/git/ignore.global`). On
+an unfamiliar machine or a fresh clone, check first (`git check-ignore -q .worktrees`); if it
+isn't ignored, add it to `.git/info/exclude` (local-only — never commit a `.gitignore` change
+into a repo you don't own without asking, per commit-scope-hygiene rules).
 
-## Step 4: work, commit, push — all from here
+## Step 2: set up the worktree
+
+```bash
+git config --get alias.worktree-init >/dev/null 2>&1 && git worktree-init
+```
+
+Then install dependencies the same way you would after a fresh clone — `bundle install`, `npm
+install`/`yarn`, `cargo build`, `pip install`/`poetry install`, `go mod download`, whatever the
+project's manifest calls for. `git worktree-init` only handles symlinks and local-service
+wiring; it does not install dependencies.
+
+## Step 3: work, commit, push — all from here
 
 Edits, commits, `git push`, `gh pr create` all run with the worktree as `cwd`. Never `cd` back
 to the main checkout to commit or push. The worktree stays in place until a future task's Step 1
