@@ -41,7 +41,10 @@ subtext0 = "#b0d0d5"
 mauve = "#ac85e8"
 green = "#73b936"
 yellow = "#d9b02a"
-red = "#c51f23"
+# Deliberately solunized's brighter red, not the darker one the ghostty palette now uses. Herdr
+# draws red as text on the dark panel ("blocked"), where the darker red falls to 2.9:1; ghostty's
+# red gets painted behind text instead, so there it needs to be dark.
+red = "#f7564f"
 blue = "#4191f4"
 teal = "#3fc4b6"
 peach = "#ea8347"
