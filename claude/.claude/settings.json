@@ -111,7 +111,7 @@
     }
   },
   "effortLevel": "high",
-  "theme": "dark-ansi",
+  "theme": "auto",
   "spinnerVerbs": {
     "mode": "replace",
     "verbs": [
