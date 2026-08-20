@@ -3,7 +3,10 @@
 if [[ "$TERM_PROGRAM" == "Apple_Terminal" || "$TERM_PROGRAM" == "iTerm.app" || "$TERM_PROGRAM" == "ghostty" ]]; then
   [[ -f "$HOME/.zsh-notify/notify.plugin.zsh" ]] && source "$HOME/.zsh-notify/notify.plugin.zsh"
 fi
-zstyle ':notify:*' notifier /opt/homebrew/bin/noti
+if command -v noti >/dev/null 2>&1; then
+  SYS_NOTIFIER="$(command -v noti)"
+  export SYS_NOTIFIER
+fi
 zstyle ':notify:*' error-title "failed"
 zstyle ':notify:*' error-sound "default"
 zstyle ':notify:*' success-sound "wc3-work-complete"
