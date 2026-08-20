@@ -1,9 +1,10 @@
 [keys]
-# ctrl+; echoes the neovim leader (;) without stealing plain `;` keystrokes the way a bare
-# `;` prefix would — herdr's prefix is a raw keystroke grab across every pane, unlike vim's
-# leader which only fires inside vim's own normal-mode keymap engine. Default ctrl+b collides
-# with vim's built-in Ctrl-b (page up).
-prefix = "ctrl+;"
+# On Dvorak, ";" sits on the physical Z key (bottom row, far left) — chording it with Ctrl
+# stretched the same hand from home row to bottom row on every prefix press. ctrl+t keeps
+# both pinkies near their resting spot on a split board: Ctrl on the left (Caps Lock), "t"
+# (Dvorak, physical K) on the right hand's home row. Default ctrl+b collides with vim's
+# built-in Ctrl-b (page up).
+prefix = "ctrl+t"
 goto = "prefix+space"
 focus_agent = "prefix+alt+1..9"
 switch_workspace = "prefix+shift+1..9"
