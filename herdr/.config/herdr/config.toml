@@ -25,30 +25,6 @@ key = "prefix+shift+g"
 type = "plugin_action"
 command = "herdr-lazygit.open-tab"
 
-# Herdr allows one custom theme, and these are solunized's dark colors. Pinning panel_bg to
-# solunized's own dark background keeps the panel readable by day too — with "reset" the panel
-# followed the terminal into light mode while the text stayed pale, down to 1.3:1 on the rows.
-[theme.custom]
-panel_bg = "#012b38"
-accent = "#ea8347"
-surface0 = "#0d3b4a"
-surface1 = "#2a5d6e"
-surface_dim = "#5e8c96"
-overlay0 = "#2a5d6e"
-overlay1 = "#5e8c96"
-text = "#cce2e7"
-subtext0 = "#b0d0d5"
-mauve = "#ac85e8"
-green = "#73b936"
-yellow = "#d9b02a"
-# Deliberately solunized's brighter red, not the darker one the ghostty palette now uses. Herdr
-# draws red as text on the dark panel ("blocked"), where the darker red falls to 2.9:1; ghostty's
-# red gets painted behind text instead, so there it needs to be dark.
-red = "#f7564f"
-blue = "#4191f4"
-teal = "#3fc4b6"
-peach = "#ea8347"
-
 [ui.sound]
 # herdr does not expand `~` — only a leading `/` counts as absolute, otherwise it resolves
 # relative to this config file's own directory. Hardcode the real path instead.
@@ -57,6 +33,10 @@ request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.
 done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
 
 [theme]
+# Take every color from the terminal's own palette. Ghostty already swaps solunized dark and
+# light with the system appearance, so herdr follows along without a hand-copied palette here.
+# auto_switch stays off because it swaps between two named themes, which this no longer needs.
+name = "terminal"
 auto_switch = false
 
 [ui.toast]
@@ -65,3 +45,4 @@ delivery = "system"
 [ui]
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "priority"
+status_indicators = "symbols"
