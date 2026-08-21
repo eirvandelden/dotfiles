@@ -27,8 +27,28 @@ current_branch() {
   git -C "$cwd" branch --show-current 2>/dev/null || true
 }
 
+push_remote_name() {
+  local rest="${command#*push}" token
+  for token in $rest; do
+    [[ "$token" == -* ]] && continue
+    printf '%s' "$token"
+    return 0
+  done
+}
+
+remote_allowed() {
+  local remote="$1" url
+  url=$(git -C "$cwd" remote get-url "$remote" 2>/dev/null) || return 1
+  [[ "$url" =~ github\.com[:/]eirvandelden/ ]] && return 0
+  [[ "$url" =~ github\.com[:/]nedap/(caren3|ons-client)(\.git)?$ ]] && return 0
+  return 1
+}
+
 is_git_write=false
 [[ "$command" =~ git[[:space:]]+(commit|push)([[:space:]]|$) ]] && is_git_write=true
+
+is_git_push=false
+[[ "$command" =~ git[[:space:]]+push([[:space:]]|$) ]] && is_git_push=true
 
 if $is_git_write; then
   branch=$(current_branch)
@@ -47,6 +67,14 @@ if $is_git_write; then
 
   if [[ "$command" == *"--no-verify"* ]]; then
     consent_required "Blocked: --no-verify skips the git hooks and needs the user's explicit approval (playbook rule 19)."
+  fi
+
+  if $is_git_push; then
+    remote=$(push_remote_name)
+    [[ -z "$remote" ]] && remote="origin"
+    if ! remote_allowed "$remote"; then
+      consent_required "Blocked: pushing to remote '$remote' isn't on the unattended allowlist — eirvandelden/*, nedap/caren3, nedap/ons-client (playbook rule 19)."
+    fi
   fi
 fi
 
