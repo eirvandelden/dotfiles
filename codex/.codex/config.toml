@@ -125,6 +125,9 @@ approval_mode = "approve"
 [mcp_servers.fizzy.tools.fizzy_delete_card]
 approval_mode = "approve"
 
+[mcp_servers.fizzy.tools.fizzy_delete_board]
+approval_mode = "approve"
+
 [mcp_servers.node_repl]
 args = []
 command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
