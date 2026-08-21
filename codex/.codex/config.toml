@@ -6,7 +6,7 @@ notify = ["/Users/etienne.vandelden/.codex/computer-use/Codex Computer Use.app/C
 service_tier = "default"
 
 [sandbox_workspace_write]
-network_access = true
+network_access = false
 
 [plugins."github@openai-curated"]
 enabled = true
