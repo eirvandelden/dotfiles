@@ -6,7 +6,11 @@ description: Use before writing, generating, or editing code for any new task in
 # Worktree First
 
 Never write code or push commits directly from the main checkout open in the current pane.
-Every new coding task gets its own git worktree.
+Every new coding task gets its own git worktree under `.worktrees/`.
+
+That means never `git checkout -b`/`git switch -c` a feature branch in the main checkout either
+— that's just working directly on main's disk with extra steps. The main checkout stays on
+whatever branch it's already on; every other branch lives in a worktree.
 
 This skill only handles the git worktree itself. On this machine, a global `git worktree-init`
 alias (symlinks `.env`/`master.key`, wires puma-dev/Caddy) is also available — see Step 2.
