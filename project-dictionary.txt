@@ -3,6 +3,7 @@ actionables
 archlinux
 AUR
 autorun
+backticked
 bdelete
 betterspecs
 binstubs
@@ -140,3 +141,4 @@ zed
 Zed
 zeroheight
 zsh
+zubat
