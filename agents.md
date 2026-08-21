@@ -131,6 +131,8 @@ Read first:
   `claude/.claude/skills/new-repo-setup/SKILL.md`
 - Writing a plan for another agent, reviewing a plan critically, or executing a handed-over plan:
   `claude/.claude/skills/plan-handoff/SKILL.md`
+- Isolating new-code tasks into their own git worktree instead of the main checkout:
+  `claude/.claude/skills/worktree-first/SKILL.md`
 
 ## 5a. Codex Skills Setup
 
@@ -199,6 +201,9 @@ behaviors specific to how an AI agent should operate.
 7. Branch protection:
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
+   - New code goes in its own git worktree under `.worktrees/`, not the main checkout —
+     `worktree-first` skill. Never `git checkout -b`/`git switch -c` a feature branch in the
+     main checkout as a substitute; the main checkout stays on whatever branch it's already on.
 8. Hands off system tooling:
    - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other
      system-level tools without explicit instruction.

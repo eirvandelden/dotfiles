@@ -1,0 +1,1 @@
+../../../../claude/.claude/skills/worktree-first/SKILL.md

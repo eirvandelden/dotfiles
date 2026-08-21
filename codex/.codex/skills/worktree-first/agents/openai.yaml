@@ -1,0 +1,7 @@
+---
+interface:
+  display_name: "Worktree First"
+  short_description: "Isolate every new coding task in its own git worktree instead of the main checkout"
+
+policy:
+  allow_implicit_invocation: false
