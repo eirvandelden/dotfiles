@@ -128,6 +128,18 @@ approval_mode = "approve"
 [mcp_servers.fizzy.tools.fizzy_delete_board]
 approval_mode = "approve"
 
+[mcp_servers.fizzy.tools.fizzy_delete_column]
+approval_mode = "approve"
+
+[mcp_servers.fizzy.tools.fizzy_delete_comment]
+approval_mode = "approve"
+
+[mcp_servers.fizzy.tools.fizzy_delete_step]
+approval_mode = "approve"
+
+[mcp_servers.fizzy.tools.fizzy_deactivate_user]
+approval_mode = "approve"
+
 [mcp_servers.node_repl]
 args = []
 command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
