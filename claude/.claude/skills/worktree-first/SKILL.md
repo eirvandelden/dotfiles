@@ -33,22 +33,24 @@ git worktree prune
 
 default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
 [ -n "$default_branch" ] || default_branch=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
-[ -n "$default_branch" ] || { echo "cannot determine default branch"; exit 1; }
+[ -n "$default_branch" ] && [ "$default_branch" != "(unknown)" ] || { echo "cannot determine default branch"; exit 1; }
 git fetch origin "$default_branch"
 
-for dir in .worktrees/*/; do
-  [ -d "$dir" ] || continue
-
+find .worktrees -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read -r dir; do
   # Never touch a worktree with anything uncommitted, no matter what its PR/merge state says.
   [ -z "$(git -C "$dir" status --porcelain)" ] || continue
 
   branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD)
-
-  # A worktree just created off origin/$default_branch, with nothing committed yet, is trivially
-  # its own ancestor — skip it, or a concurrent task's brand-new worktree gets swept from under it.
-  [ "$(git rev-parse "$branch")" != "$(git rev-parse "origin/$default_branch")" ] || continue
-
   state=$(gh pr view "$branch" --json state -q '.state' 2>/dev/null)
+
+  # A worktree just created off origin/$default_branch, with nothing committed and no PR opened
+  # yet, is trivially its own ancestor — skip it, or a concurrent task's brand-new worktree gets
+  # swept from under it. Once it has a PR (any state, including MERGED), it's no longer "fresh"
+  # even if a fast-forward merge left its tip identical to origin/$default_branch again.
+  if [ -z "$state" ] && [ "$(git rev-parse "$branch")" = "$(git rev-parse "origin/$default_branch")" ]; then
+    continue
+  fi
+
   ancestor=yes
   git merge-base --is-ancestor "$branch" "origin/$default_branch" 2>/dev/null || ancestor=no
 
