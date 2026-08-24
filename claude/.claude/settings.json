@@ -2,6 +2,7 @@
   "model": "opus[1m]",
   "sandbox": {
     "enabled": true,
+    "allowUnsandboxedCommands": false,
     "failIfUnavailable": true,
     "network": {
       "allowedDomains": [
@@ -10,9 +11,6 @@
         "rubygems.org",
         "registry.yarnpkg.com",
         "api.anthropic.com"
-      ],
-      "allowUnixSockets": [
-        "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
       ]
     },
     "filesystem": {
@@ -20,8 +18,7 @@
         "~/.local/share/rv",
         "~/.bundle",
         "~/.cache",
-        "~/Library/Caches",
-        "~/Developer/dotfiles"
+        "~/Library/Caches"
       ]
     },
     "credentials": {
