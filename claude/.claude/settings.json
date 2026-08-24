@@ -1,7 +1,7 @@
 {
   "model": "opus[1m]",
   "sandbox": {
-    "enabled": true,
+    "enabled": false,
     "allowUnsandboxedCommands": false,
     "failIfUnavailable": true,
     "network": {
