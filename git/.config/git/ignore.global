@@ -188,3 +188,7 @@ lefthook-local.yml
 
 # Per-repo hidden worktrees folder (see `spin` zsh function)
 .worktrees/
+
+# Claude Code local state
+**/.claude/settings.local.json
+**/.claude/.cc-writes/
