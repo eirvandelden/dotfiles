@@ -15,7 +15,9 @@ pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 
 # Herdr agent names allow [a-z][a-z0-9_-]{0,31}, and pane ids are unique for the life of the
 # session, so a name built from the pane id can never collide with a live reviewer.
+# Pane ids carry uppercase letters (w1:pV), which those names may not.
 reviewer="review-${pane//:/-}"
+reviewer=$(printf '%s' "$reviewer" | tr '[:upper:]' '[:lower:]')
 
 herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev/null
 

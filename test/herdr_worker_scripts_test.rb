@@ -48,7 +48,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, plan_file)
 
     assert_includes(herdr_calls,
-                    "agent start handoff-w1-p7 --kind claude --pane w1:p7 -- --model sonnet")
+                    "agent start handoff-w1-pv --kind claude --pane w1:pV -- --model sonnet")
   end
 
   def test_the_worker_is_told_to_read_the_plan_and_work_in_its_own_worktree
@@ -56,7 +56,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, plan)
 
-    prompt = herdr_calls.find { |call| call.start_with?("agent prompt handoff-w1-p7 ") }
+    prompt = herdr_calls.find { |call| call.start_with?("agent prompt handoff-w1-pv ") }
     assert_includes(prompt, plan)
     assert_match(/worktree/i, prompt)
   end
@@ -65,7 +65,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     stdout, = run_script(HAND_OFF_PLAN, plan_file)
 
     assert_equal(1, stdout.lines.count, stdout)
-    assert_match(/handoff-w1-p7/, stdout)
+    assert_match(/handoff-w1-pv/, stdout)
   end
 
   def test_reviewing_outside_herdr_is_refused
@@ -86,13 +86,13 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(START_REVIEW)
 
     assert_includes(herdr_calls,
-                    "agent start review-w1-p8 --kind claude --pane w1:p8 -- --model opus")
+                    "agent start review-w1-pw --kind claude --pane w1:pW -- --model opus")
   end
 
   def test_the_reviewer_is_told_to_read_the_branch_diff_and_the_uncommitted_changes
     run_script(START_REVIEW)
 
-    prompt = herdr_calls.find { |call| call.start_with?("agent prompt review-w1-p8 ") }
+    prompt = herdr_calls.find { |call| call.start_with?("agent prompt review-w1-pw ") }
     assert_includes(prompt, "git diff main...HEAD")
     assert_match(/uncommitted/i, prompt)
     assert_match(/report|findings/i, prompt)
@@ -103,7 +103,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(START_REVIEW)
 
-    prompt = herdr_calls.find { |call| call.start_with?("agent prompt review-w1-p8 ") }
+    prompt = herdr_calls.find { |call| call.start_with?("agent prompt review-w1-pw ") }
     assert_includes(prompt, "git diff master...HEAD")
   end
 
@@ -135,8 +135,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
       #!/bin/sh
       printf '%s\\n' "$*" >> "$HERDR_CALL_LOG"
       case "$1 $2" in
-        "tab create") echo '{"result":{"root_pane":{"pane_id":"w1:p7"}}}' ;;
-        "pane split") echo '{"result":{"pane":{"pane_id":"w1:p8"}}}' ;;
+        "tab create") echo '{"result":{"root_pane":{"pane_id":"w1:pV"}}}' ;;
+        "pane split") echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
         *) echo '{"result":{}}' ;;
       esac
     SH
