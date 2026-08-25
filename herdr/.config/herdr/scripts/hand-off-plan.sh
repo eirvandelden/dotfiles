@@ -17,9 +17,19 @@ if [ -z "$plan" ] || [ ! -f "$plan" ]; then
   exit 1
 fi
 
+# The worker starts in the main checkout, not in the caller's worktree: worktree-first skips
+# itself when it is already inside a linked worktree, which would put a second agent on the
+# caller's own branch and directory.
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "Not inside a git repository: the worker has nowhere to create its worktree." >&2
+  exit 1
+fi
+
+main_checkout=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+
 tab=$(herdr tab create \
   --workspace "$HERDR_WORKSPACE_ID" \
-  --cwd "$PWD" \
+  --cwd "$main_checkout" \
   --label handoff \
   --no-focus)
 pane=$(printf '%s' "$tab" | jq -r '.result.root_pane.pane_id')

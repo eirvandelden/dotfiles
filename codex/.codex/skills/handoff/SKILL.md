@@ -23,7 +23,9 @@ references back to this chat.
 ~/.config/herdr/scripts/hand-off-plan.sh <absolute-plan-path>
 ```
 
-Run it from the repository this work belongs to: the worker inherits that directory.
+Run it from the repository this work belongs to. The worker starts in that repository's main
+checkout even when you call this from a worktree, so it can branch off cleanly instead of landing
+on the branch you are on.
 
 The script opens a background tab, starts Claude on sonnet there, and tells it to create its own
 worktree before writing anything. The tab lands at the end of the tab list — Herdr cannot insert
@@ -31,5 +33,5 @@ one next to the current tab.
 
 ## 3. Report and stop
 
-Tell the user which worker took the plan and where its tab is. The work is theirs now: do not
-start on it, and do not check up on it unless asked.
+Tell the user which worker took the plan, using the name the script printed. The work is theirs
+now: do not start on it, and do not check up on it unless asked.
