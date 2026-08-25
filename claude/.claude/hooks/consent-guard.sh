@@ -27,13 +27,64 @@ current_branch() {
   git -C "$cwd" branch --show-current 2>/dev/null || true
 }
 
-push_remote_name() {
-  local rest="${command#*push}" token
-  for token in $rest; do
-    [[ "$token" == -* ]] && continue
-    printf '%s' "$token"
-    return 0
+# Prints one line per git invocation found in the command, as the subcommand
+# followed by its first non-flag argument: "push origin", "commit". Reading the
+# command as tokens rather than matching "git push" as text keeps redirects,
+# pipes and quoted prose from being mistaken for a remote name, and still finds
+# a push that sits behind git's own flags, as in "git -C <dir> push".
+git_invocations() {
+  local token seen_git=false skip_flag_value=false invocation="" wants_argument=false
+
+  # Runs inside a command substitution, so disabling globbing here cannot leak
+  # into the rest of the hook. Without it a token like *.md would expand to
+  # whatever happens to be on disk and be read as an argument.
+  set -f
+  for token in $command; do
+    if $wants_argument; then
+      [[ "$token" == -* ]] && continue
+
+      # A redirect or shell operator ends the invocation, so anything past it
+      # belongs to another command rather than to this subcommand. A bare "git"
+      # starts the next invocation and is never an argument to this one.
+      if [[ "$token" != *[\|\&\;\<\>]* && "$token" != "git" ]]; then
+        invocation="$invocation $token"
+      fi
+
+      printf '%s\n' "$invocation"
+      invocation=""
+      wants_argument=false
+      [[ "$token" == "git" ]] && seen_git=true
+      continue
+    fi
+
+    if $skip_flag_value; then
+      skip_flag_value=false
+      continue
+    fi
+
+    case "$token" in
+      git) seen_git=true ;;
+      -C | -c | --git-dir | --work-tree | --namespace | --super-prefix)
+        $seen_git && skip_flag_value=true
+        ;;
+      -*) ;;
+      *)
+        if $seen_git; then
+          invocation="$token"
+          wants_argument=true
+        fi
+        # Any other word starts a different command, so a later bare "push" is
+        # not this git's push.
+        seen_git=false
+        ;;
+    esac
   done
+
+  if [[ -n "$invocation" ]]; then
+    printf '%s\n' "$invocation"
+  fi
+
+  return 0
 }
 
 remote_allowed() {
@@ -45,10 +96,23 @@ remote_allowed() {
 }
 
 is_git_write=false
-[[ "$command" =~ git[[:space:]]+(commit|push)([[:space:]]|$) ]] && is_git_write=true
-
 is_git_push=false
-[[ "$command" =~ git[[:space:]]+push([[:space:]]|$) ]] && is_git_push=true
+push_remote=""
+
+while IFS= read -r invocation; do
+  case "$invocation" in
+    push)
+      is_git_write=true
+      is_git_push=true
+      ;;
+    "push "*)
+      is_git_write=true
+      is_git_push=true
+      push_remote="${invocation#push }"
+      ;;
+    commit | "commit "*) is_git_write=true ;;
+  esac
+done <<<"$(git_invocations)"
 
 if $is_git_write; then
   branch=$(current_branch)
@@ -70,8 +134,7 @@ if $is_git_write; then
   fi
 
   if $is_git_push; then
-    remote=$(push_remote_name)
-    [[ -z "$remote" ]] && remote="origin"
+    remote="${push_remote:-origin}"
     if ! remote_allowed "$remote"; then
       consent_required "Blocked: pushing to remote '$remote' isn't on the unattended allowlist — eirvandelden/*, nedap/caren3, nedap/ons-client (playbook rule 19)."
     fi
