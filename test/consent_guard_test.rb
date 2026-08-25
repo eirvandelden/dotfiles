@@ -68,6 +68,15 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_committing_in_a_worktree_named_from_the_home_directory_is_allowed
+    worktree = worktree_on_feature_branch
+
+    _, stderr, status = run_guard("cd ~/#{File.basename(worktree)} && git commit -m 'quick fix'",
+                                  home: File.dirname(worktree))
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_committing_in_another_checkout_that_is_on_main_is_still_blocked
     _, stderr, status = run_guard("cd #{another_checkout_on_main} && git commit -m 'quick fix'")
 
@@ -285,8 +294,8 @@ class ConsentGuardTest < Minitest::Test
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", *arguments)
   end
 
-  def run_guard(command)
+  def run_guard(command, home: nil)
     payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: @repo })
-    Open3.capture3(GUARD, stdin_data: payload)
+    Open3.capture3(home ? { "HOME" => home } : {}, GUARD, stdin_data: payload)
   end
 end
