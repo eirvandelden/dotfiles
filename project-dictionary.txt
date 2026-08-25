@@ -41,6 +41,8 @@ gamemode
 gamescope
 ghostty
 Ghostty
+herdr
+Herdr
 hypr
 hyprctl
 hypridle
