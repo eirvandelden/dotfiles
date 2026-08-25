@@ -24,7 +24,8 @@ consent_required() {
 
 # A git command can act on a checkout other than the tool's working directory,
 # through `git -C <path>` or a leading `cd <path> &&`. Read the branch and the
-# remotes there. A path that cannot be resolved falls back to the working
+# remotes there. The shell would expand a leading ~ before git ever saw it, so
+# expand it here too. A path that cannot be resolved falls back to the working
 # directory, so an unparsable command is judged by where the agent stands
 # rather than waved through.
 git_repo_dir() {
@@ -34,6 +35,7 @@ git_repo_dir() {
   elif [[ "$command" =~ (^|[[:space:]])cd[[:space:]]+([^[:space:]\&\;\|]+) ]]; then
     dir="${BASH_REMATCH[2]}"
   fi
+  [[ "${dir:0:1}" == '~' ]] && dir="$HOME${dir:1}"
   [[ -d "$dir" ]] || dir="$cwd"
   printf '%s' "$dir"
 }
