@@ -1,0 +1,7 @@
+---
+interface:
+  display_name: "Review"
+  short_description: "Ask a Claude reviewer to review this branch in a pane beside this one"
+
+policy:
+  allow_implicit_invocation: false
