@@ -22,9 +22,27 @@ consent_required() {
   block "$1 Ask the user first; once they explicitly agree, re-run the command prefixed with I_HAVE_USER_CONSENT=1."
 }
 
+# A git command can act on a checkout other than the tool's working directory,
+# through `git -C <path>` or a leading `cd <path> &&`. Read the branch and the
+# remotes there. A path that cannot be resolved falls back to the working
+# directory, so an unparsable command is judged by where the agent stands
+# rather than waved through.
+git_repo_dir() {
+  local dir="$cwd"
+  if [[ "$command" =~ git[[:space:]]+-C[[:space:]]+([^[:space:]]+) ]]; then
+    dir="${BASH_REMATCH[1]}"
+  elif [[ "$command" =~ (^|[[:space:]])cd[[:space:]]+([^[:space:]\&\;\|]+) ]]; then
+    dir="${BASH_REMATCH[2]}"
+  fi
+  [[ -d "$dir" ]] || dir="$cwd"
+  printf '%s' "$dir"
+}
+
 current_branch() {
-  [[ -n "$cwd" ]] || return 0
-  git -C "$cwd" branch --show-current 2>/dev/null || true
+  local dir
+  dir=$(git_repo_dir)
+  [[ -n "$dir" ]] || return 0
+  git -C "$dir" branch --show-current 2>/dev/null || true
 }
 
 # Prints one line per git invocation found in the command, as the subcommand
@@ -89,7 +107,7 @@ git_invocations() {
 
 remote_allowed() {
   local remote="$1" url
-  url=$(git -C "$cwd" remote get-url "$remote" 2>/dev/null) || return 1
+  url=$(git -C "$(git_repo_dir)" remote get-url "$remote" 2>/dev/null) || return 1
   [[ "$url" =~ github\.com[:/]eirvandelden/ ]] && return 0
   [[ "$url" =~ github\.com[:/]nedap/(caren3|ons-client)(\.git)?$ ]] && return 0
   return 1
