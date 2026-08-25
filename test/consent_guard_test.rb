@@ -14,6 +14,7 @@ class ConsentGuardTest < Minitest::Test
   def setup
     @repo = Dir.mktmpdir
     system("git", "init", "--quiet", "--initial-branch=main", @repo)
+    add_remote("origin", "git@github.com:eirvandelden/dotfiles.git")
   end
 
   def teardown
@@ -145,7 +146,83 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_pushing_with_a_redirect_after_the_arguments_is_allowed
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git push origin my-branch 2>&1 | tail -4")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_with_a_redirect_where_the_remote_would_go_is_allowed
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git push 2>&1")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_after_an_earlier_command_that_mentions_pushing_is_allowed
+    checkout_feature_branch
+
+    _, stderr, status = run_guard(%(echo "=== pushing ===" && git push origin my-branch))
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_to_main_is_blocked_when_git_runs_against_another_directory
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git -C #{@repo} push origin main")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/main/, stderr)
+  end
+
+  def test_the_remote_is_found_when_git_runs_against_another_directory
+    checkout_feature_branch
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git -C #{@repo} push upstream my-branch")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
+  def test_an_earlier_git_command_does_not_make_a_quoted_word_count_as_the_push
+    checkout_feature_branch
+
+    command = %(git add file\necho "=== push ===" && git push origin my-branch)
+    _, stderr, status = run_guard(command)
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_remote_outside_the_allowlist_is_still_found_on_a_later_line
+    checkout_feature_branch
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("cd /tmp\ngit status\ngit push upstream my-branch")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
+  def test_pushing_to_a_remote_outside_the_allowlist_is_still_blocked
+    checkout_feature_branch
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push upstream my-branch 2>&1 | tail -4")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
   private
+
+  def add_remote(name, url)
+    system("git", "-C", @repo, "remote", "add", name, url)
+  end
 
   def checkout_feature_branch
     system("git", "-C", @repo, "checkout", "--quiet", "-b", "feature/guarded")
