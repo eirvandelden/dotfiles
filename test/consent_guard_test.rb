@@ -13,12 +13,14 @@ class ConsentGuardTest < Minitest::Test
 
   def setup
     @repo = Dir.mktmpdir
+    @extra_dirs = []
     system("git", "init", "--quiet", "--initial-branch=main", @repo)
     add_remote("origin", "git@github.com:eirvandelden/dotfiles.git")
   end
 
   def teardown
     FileUtils.rm_rf(@repo)
+    @extra_dirs.each { |dir| FileUtils.rm_rf(dir) }
   end
 
   def test_unrelated_commands_run_untouched
@@ -48,6 +50,36 @@ class ConsentGuardTest < Minitest::Test
     _, stderr, status = run_guard("git commit -m 'quick fix'")
 
     assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_committing_in_a_worktree_on_a_feature_branch_is_allowed
+    worktree = worktree_on_feature_branch
+
+    _, stderr, status = run_guard("cd #{worktree} && git commit -m 'quick fix'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_committing_in_a_worktree_named_by_the_c_option_is_allowed
+    worktree = worktree_on_feature_branch
+
+    _, stderr, status = run_guard("git -C #{worktree} commit -m 'quick fix'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_committing_in_another_checkout_that_is_on_main_is_still_blocked
+    _, stderr, status = run_guard("cd #{another_checkout_on_main} && git commit -m 'quick fix'")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/main/, stderr)
+  end
+
+  def test_committing_by_the_c_option_in_a_checkout_on_main_is_blocked
+    _, stderr, status = run_guard("git -C #{another_checkout_on_main} commit -m 'quick fix'")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/main/, stderr)
   end
 
   def test_pushing_to_main_by_refspec_is_blocked_even_from_a_feature_branch
@@ -226,6 +258,31 @@ class ConsentGuardTest < Minitest::Test
 
   def checkout_feature_branch
     system("git", "-C", @repo, "checkout", "--quiet", "-b", "feature/guarded")
+  end
+
+  # core.hooksPath is pointed away from this machine's global hooks: they would
+  # otherwise run inside the throwaway repo and stop it from getting a commit.
+  def worktree_on_feature_branch
+    git_in_repo("-c", "user.email=test@example.com", "-c", "user.name=Test",
+                "commit", "--quiet", "--allow-empty", "-m", "initial") ||
+      raise("could not create the initial commit")
+    parent = Dir.mktmpdir
+    @extra_dirs << parent
+    checkout = File.join(parent, "checkout")
+    git_in_repo("worktree", "add", "--quiet", checkout, "-b", "feature/guarded") ||
+      raise("could not create the worktree")
+    checkout
+  end
+
+  def another_checkout_on_main
+    checkout = Dir.mktmpdir
+    @extra_dirs << checkout
+    system("git", "init", "--quiet", "--initial-branch=main", checkout)
+    checkout
+  end
+
+  def git_in_repo(*arguments)
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", *arguments)
   end
 
   def run_guard(command)
