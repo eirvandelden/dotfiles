@@ -51,13 +51,16 @@ herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev
 # outlives the caller's worktree, which the next task's worktree sweep may remove.
 report="$(git rev-parse --path-format=absolute --git-common-dir)/herdr/$reviewer.md"
 mkdir -p "$(dirname "$report")"
+# Pane ids are recycled across sessions, so emptied first: a caller must never read a report
+# left by an earlier reviewer as if it were this one.
+: >"$report"
 
 # No --wait: the reviewer works in its own pane while the caller carries on.
 herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origin first so the \
 comparison is against current work, then read git diff $base...HEAD for what is committed, and \
 git status plus git diff for the uncommitted changes on top of it. Use the code-review skill and \
 the applicable agents.md. Write your findings as Markdown to $report, worst first, and change \
-nothing. Then report back to the agent that asked, with herdr agent prompt, sending pane \
+no code. Then report back to the agent that asked, with herdr agent prompt, sending pane \
 $HERDR_PANE_ID the single line Review ready: followed by that file path. Quote the path yourself. \
 That call is rejected while the caller is blocked on a prompt of its own, so if it fails, wait a \
 few seconds and send it again until it is accepted." >/dev/null
