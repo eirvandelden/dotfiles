@@ -240,14 +240,49 @@ class HerdrWorkerScriptsTest < Minitest::Test
                  "a path containing an apostrophe would break a quoted command line")
   end
 
-  def test_a_report_left_by_an_earlier_session_cannot_be_mistaken_for_this_one
+  def test_a_report_left_by_an_earlier_session_is_cleared_before_the_reviewer_can_write
     stale = report_path("review-w1-pw")
     FileUtils.mkdir_p(File.dirname(stale))
     File.write(stale, "yesterday's findings\n")
 
     run_script(START_REVIEW)
 
-    assert_empty(File.read(stale))
+    assert_includes(report_state_at_agent_start, "review-w1-pw empty")
+  end
+
+  def test_a_report_left_by_an_earlier_session_is_cleared_before_the_worker_can_write
+    stale = report_path("handoff-w1-pv")
+    FileUtils.mkdir_p(File.dirname(stale))
+    File.write(stale, "an earlier worker's notes\n")
+
+    run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_includes(report_state_at_agent_start, "handoff-w1-pv empty")
+  end
+
+  def test_a_report_directory_that_cannot_be_created_stops_the_review_before_anything_is_spawned
+    git_directory = File.join(@repo, ".git")
+    FileUtils.chmod(0o500, git_directory)
+
+    _, stderr, status = run_script(START_REVIEW)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/report/i, stderr)
+    assert_empty(herdr_calls)
+  ensure
+    FileUtils.chmod(0o700, git_directory)
+  end
+
+  def test_a_report_directory_that_cannot_be_created_stops_the_handoff_before_anything_is_spawned
+    git_directory = File.join(@repo, ".git")
+    FileUtils.chmod(0o500, git_directory)
+
+    _, _, status = run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_equal(1, status.exitstatus)
+    assert_empty(herdr_calls)
+  ensure
+    FileUtils.chmod(0o700, git_directory)
   end
 
   private
@@ -306,6 +341,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
       case "$1 $2" in
         "tab create") echo '{"result":{"root_pane":{"pane_id":"w1:pV"}}}' ;;
         "pane split") echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
+        "agent start")
+          if [ ! -e "$REPORT_DIR/$3.md" ]; then state=missing
+          elif [ -s "$REPORT_DIR/$3.md" ]; then state=holds-something
+          else state=empty
+          fi
+          printf '%s\\n' "$3 $state" >> "$REPORT_STATE_LOG"
+          echo '{"result":{}}'
+          ;;
         *) echo '{"result":{}}' ;;
       esac
     SH
@@ -317,6 +360,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GIT_CALL_LOG" => git_call_log,
+      "REPORT_DIR" => File.join(@repo, ".git", "herdr"),
+      "REPORT_STATE_LOG" => report_state_log,
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1",
       "HERDR_PANE_ID" => caller_pane
@@ -338,6 +383,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def reviewer_prompt
     herdr_calls.find { |call| call.start_with?("agent prompt review-w1-pw ") }
+  end
+
+  def report_state_log
+    @report_state_log ||= File.join(@stub_bin, "report-state.log")
+  end
+
+  def report_state_at_agent_start
+    File.exist?(report_state_log) ? File.readlines(report_state_log, chomp: true) : []
   end
 
   def git_call_log

@@ -28,6 +28,16 @@ fi
 common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir)
 main_checkout=$(dirname "$common_git_dir")
 
+# Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
+# pane. A file in the shared git directory can be: it never shows up in the tree, and it outlives
+# the caller's worktree, which the next task's worktree sweep may remove.
+report_directory="$common_git_dir/herdr"
+
+if ! mkdir -p "$report_directory" 2>/dev/null; then
+  echo "Cannot create the report directory $report_directory: the worker would have nowhere to report." >&2
+  exit 1
+fi
+
 tab=$(herdr tab create \
   --workspace "$HERDR_WORKSPACE_ID" \
   --cwd "$main_checkout" \
@@ -41,16 +51,12 @@ pane=$(printf '%s' "$tab" | jq -r '.result.root_pane.pane_id')
 worker="handoff-${pane//:/-}"
 worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 
-herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev/null
-
-# Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
-# pane. A file in the shared git directory can be: it never shows up in the tree, and it
-# outlives the caller's worktree, which the next task's worktree sweep may remove.
-report="$common_git_dir/herdr/$worker.md"
-mkdir -p "$(dirname "$report")"
-# Pane ids are recycled across sessions, so emptied first: a caller must never read a report
-# left by an earlier worker as if it were this one.
+# Pane ids are recycled across sessions, so the file is emptied before the worker can write to it:
+# an initiator must never read a report left by an earlier worker as if it were this one.
+report="$report_directory/$worker.md"
 : >"$report"
+
+herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev/null
 
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "You are taking over a plan written by another agent. Read $plan in \

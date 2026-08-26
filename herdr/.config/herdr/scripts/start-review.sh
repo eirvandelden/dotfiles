@@ -35,6 +35,16 @@ if [ -z "$base" ]; then
   exit 1
 fi
 
+# Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
+# pane. A file in the shared git directory can be: it never shows up in the tree, and it outlives
+# the caller's worktree, which the next task's worktree sweep may remove.
+report_directory="$(git rev-parse --path-format=absolute --git-common-dir)/herdr"
+
+if ! mkdir -p "$report_directory" 2>/dev/null; then
+  echo "Cannot create the report directory $report_directory: the reviewer would have nowhere to report." >&2
+  exit 1
+fi
+
 split=$(herdr pane split --current --direction right --cwd "$PWD" --no-focus)
 pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 
@@ -44,16 +54,12 @@ pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 reviewer="review-${pane//:/-}"
 reviewer=$(printf '%s' "$reviewer" | tr '[:upper:]' '[:lower:]')
 
-herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev/null
-
-# Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
-# pane. A file in the shared git directory can be: it never shows up in the tree, and it
-# outlives the caller's worktree, which the next task's worktree sweep may remove.
-report="$(git rev-parse --path-format=absolute --git-common-dir)/herdr/$reviewer.md"
-mkdir -p "$(dirname "$report")"
-# Pane ids are recycled across sessions, so emptied first: a caller must never read a report
-# left by an earlier reviewer as if it were this one.
+# Pane ids are recycled across sessions, so the file is emptied before the reviewer can write to
+# it: a caller must never read a report left by an earlier reviewer as if it were this one.
+report="$report_directory/$reviewer.md"
 : >"$report"
+
+herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev/null
 
 # No --wait: the reviewer works in its own pane while the caller carries on.
 herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origin first so the \
