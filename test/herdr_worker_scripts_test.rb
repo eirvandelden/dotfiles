@@ -137,7 +137,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def test_handing_off_from_a_worktree_sends_the_worker_to_the_main_checkout
     main_checkout = @repo
-    @repo = linked_worktree_of(main_checkout)
+    @repo = linked_worktree
 
     run_script(HAND_OFF_PLAN, plan_file)
 
@@ -194,6 +194,16 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(handoff_prompt, "herdr agent prompt w1:p1")
   end
 
+  def test_a_review_started_from_a_worktree_reports_where_the_worktree_sweep_cannot_delete_it
+    main_checkout = @repo
+    @repo = linked_worktree
+
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt,
+                    File.join(File.realpath(main_checkout), ".git", "herdr", "review-w1-pw.md"))
+  end
+
   private
 
   def track_origin_head_on(branch)
@@ -202,7 +212,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/#{branch}")
   end
 
-  def linked_worktree_of(repository)
+  def linked_worktree
     worktree = File.join(Dir.mktmpdir, "worktree")
     @extra_dirs << File.dirname(worktree)
     git("worktree", "add", "--quiet", worktree, "-b", "handed-over")
