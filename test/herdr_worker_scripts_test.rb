@@ -204,6 +204,21 @@ class HerdrWorkerScriptsTest < Minitest::Test
                     File.join(File.realpath(main_checkout), ".git", "herdr", "review-w1-pw.md"))
   end
 
+  def test_reviewing_without_a_caller_to_report_to_is_refused_before_a_pane_is_opened
+    _, stderr, status = run_script(START_REVIEW, caller_pane: nil)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/herdr/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_handing_off_without_a_caller_to_report_to_is_refused_before_a_tab_is_opened
+    _, _, status = run_script(HAND_OFF_PLAN, plan_file, caller_pane: nil)
+
+    assert_equal(1, status.exitstatus)
+    assert_empty(herdr_calls)
+  end
+
   private
 
   def track_origin_head_on(branch)
@@ -266,14 +281,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
     FileUtils.chmod(0o755, stub)
   end
 
-  def run_script(script, *arguments, herdr_env: "1")
+  def run_script(script, *arguments, herdr_env: "1", caller_pane: "w1:p1")
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GIT_CALL_LOG" => git_call_log,
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1",
-      "HERDR_PANE_ID" => "w1:p1"
+      "HERDR_PANE_ID" => caller_pane
     }
     Open3.capture3(environment, script, *arguments, chdir: @repo)
   end

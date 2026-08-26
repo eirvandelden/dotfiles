@@ -5,8 +5,8 @@
 
 set -euo pipefail
 
-if [ "${HERDR_ENV:-}" != "1" ]; then
-  echo "Not running inside Herdr: there is no pane to split." >&2
+if [ "${HERDR_ENV:-}" != "1" ] || [ -z "${HERDR_PANE_ID:-}" ]; then
+  echo "Not running inside a Herdr pane: there is no pane to split, and nobody to report back to." >&2
   exit 1
 fi
 
