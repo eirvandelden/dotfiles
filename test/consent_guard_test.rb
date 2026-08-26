@@ -279,6 +279,23 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/upstream/, stderr)
   end
 
+  def test_the_last_directory_change_before_the_git_command_decides_the_checkout
+    worktree = worktree_on_feature_branch
+
+    _, stderr, status = run_guard("cd #{another_checkout_on_main} && cd #{worktree} && git commit -m 'quick fix'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_directory_change_after_the_git_command_does_not_decide_the_checkout
+    worktree = worktree_on_feature_branch
+
+    _, stderr, status = run_guard("git commit -m 'quick fix' && cd #{worktree}")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/main/, stderr)
+  end
+
   private
 
   def add_remote(name, url)
@@ -310,8 +327,11 @@ class ConsentGuardTest < Minitest::Test
     checkout
   end
 
+  # Signing is turned off as well as hooks: this machine signs commits through
+  # the 1Password agent, which fails whenever it is locked, and a throwaway
+  # repository has nothing worth signing.
   def git_in_repo(*arguments)
-    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", *arguments)
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false", *arguments)
   end
 
   def run_guard(command, home: nil)

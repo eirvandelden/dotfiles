@@ -23,18 +23,28 @@ consent_required() {
 }
 
 # A git command can act on a checkout other than the tool's working directory,
-# through `git -C <path>` or a leading `cd <path> &&`. Read the branch and the
-# remotes there. The shell would expand a leading ~ before git ever saw it, so
-# expand it here too. A path that cannot be resolved falls back to the working
-# directory, so an unparsable command is judged by where the agent stands
-# rather than waved through.
+# through `git -C <path>` or a `cd <path> &&` ahead of it. Read the branch and
+# the remotes there. Of several `cd`s the last one before the git command wins,
+# as it would in the shell, and a `cd` after the command is not what git ran
+# in. The shell would expand a leading ~ before git ever saw it, so expand it
+# here too. A path that cannot be resolved falls back to the working directory,
+# so an unparsable command is judged by where the agent stands rather than
+# waved through.
 git_repo_dir() {
-  local dir="$cwd"
+  local dir="$cwd" token previous="" destination=""
+
   if [[ "$command" =~ git[[:space:]]+-C[[:space:]]+([^[:space:]]+) ]]; then
     dir="${BASH_REMATCH[1]}"
-  elif [[ "$command" =~ (^|[[:space:]])cd[[:space:]]+([^[:space:]\&\;\|]+) ]]; then
-    dir="${BASH_REMATCH[2]}"
+  else
+    set -f
+    for token in $command; do
+      [[ "$token" == "git" ]] && break
+      [[ "$previous" == "cd" ]] && destination="$token"
+      previous="$token"
+    done
+    [[ -n "$destination" ]] && dir="$destination"
   fi
+
   [[ "${dir:0:1}" == '~' ]] && dir="$HOME${dir:1}"
   [[ -d "$dir" ]] || dir="$cwd"
   printf '%s' "$dir"
