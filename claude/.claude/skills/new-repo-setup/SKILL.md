@@ -19,7 +19,25 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
    `extends: ["${HOME}/Developer/dotfiles/lefthook.yml"]`.
    Never run `lefthook install` (restow `git` package to repair hook scripts if needed).
    Never disable hooks to get a commit through.
-4. Linters: copy rubocop and solargraph configuration from the reference repo.
+4. Linters: RuboCop rules come from the `rubocop-eirvandelden` gem — never copy the rules into
+   the repo. Add to the `:development` group:
+   `gem "rubocop-eirvandelden", github: "eirvandelden/rubocop-eirvandelden", require: false`
+   Then name the layers the project needs in `.rubocop.yml`:
+
+   ```yaml
+   inherit_gem:
+     rubocop-eirvandelden:
+       - config/default.yml    # always
+       - config/rails.yml      # a Rails app or engine
+       - config/rspec.yml      # the tests are specs
+       - config/capybara.yml   # the tests drive a browser (also add rubocop-capybara)
+   ```
+
+   The layers stack rather than inherit, so name every one that applies. A Rails app that
+   leaves out `config/rails.yml` loses its Rails cops with no error at all, and naming only an
+   extra drops everything in `config/default.yml`. Rails advice is separate because the cops
+   asking for `assert_not` and `index_by` would autocorrect a plain Ruby project into methods it
+   does not have. Copy solargraph configuration from the reference repo.
 5. CI: GitHub Actions workflow running linters and the full test suite on push, based on the
    reference repo's workflows. Pre-existing rubocop offenses go into `.rubocop_todo.yml` —
    except in files created in the current PR, which must be clean.
