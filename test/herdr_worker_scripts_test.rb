@@ -38,11 +38,11 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/plan/i, stderr)
   end
 
-  def test_handing_off_opens_a_tab_here_without_taking_the_screen
+  def test_handing_off_splits_a_pane_below_here_without_taking_the_screen
     run_script(HAND_OFF_PLAN, plan_file)
 
     assert_includes(herdr_calls,
-                    "tab create --workspace w1 --cwd #{File.realpath(@repo)} --label handoff --no-focus")
+                    "pane split --current --direction down --cwd #{File.realpath(@repo)} --no-focus")
   end
 
   def test_handing_off_starts_claude_on_sonnet_in_the_new_tab
@@ -141,8 +141,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, plan_file)
 
     assert_includes(herdr_calls,
-                    "tab create --workspace w1 --cwd #{File.realpath(main_checkout)} " \
-                    "--label handoff --no-focus")
+                    "pane split --current --direction down " \
+                    "--cwd #{File.realpath(main_checkout)} --no-focus")
   end
 
   def test_handing_off_outside_a_repository_is_refused_before_a_tab_is_opened
@@ -358,8 +358,12 @@ class HerdrWorkerScriptsTest < Minitest::Test
       #!/bin/sh
       printf '%s\\n' "$*" >> "$HERDR_CALL_LOG"
       case "$1 $2" in
-        "tab create") echo '{"result":{"root_pane":{"pane_id":"w1:pV"}}}' ;;
-        "pane split") echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
+        "pane split")
+          case "$*" in
+            *"--direction down"*) echo '{"result":{"pane":{"pane_id":"w1:pV"}}}' ;;
+            *) echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
+          esac
+          ;;
         "agent start")
           if [ ! -e "$REPORT_DIR/$3.md" ]; then state=missing
           elif [ -s "$REPORT_DIR/$3.md" ]; then state=holds-something

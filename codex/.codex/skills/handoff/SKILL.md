@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Hand the plan for this task to a fresh Claude worker on sonnet, in a new Herdr tab.
+description: Hand the plan for this task to a fresh Claude worker on sonnet, in a pane below this one.
 ---
 
 # Handoff
@@ -27,9 +27,8 @@ Run it from the repository this work belongs to. The worker starts in that repos
 checkout even when you call this from a worktree, so it can branch off cleanly instead of landing
 on the branch you are on.
 
-The script opens a background tab, starts Claude on sonnet there, and tells it to create its own
-worktree before writing anything. The tab lands at the end of the tab list — Herdr cannot insert
-one next to the current tab.
+The script splits the current pane downward, starts Claude on sonnet in the lower half, and tells
+it to create its own worktree before writing anything. Your focus stays where it is.
 
 ## 3. Report and stop
 

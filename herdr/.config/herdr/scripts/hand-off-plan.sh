@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # hand-off-plan.sh <plan-file>
 #
-# Hands a written plan to a fresh Claude worker in a new Herdr tab.
+# Hands a written plan to a fresh Claude worker in a pane below the caller.
 
 set -euo pipefail
 
 if [ "${HERDR_ENV:-}" != "1" ] || [ -z "${HERDR_PANE_ID:-}" ]; then
-  echo "Not running inside a Herdr pane: there is no session to open a tab in, and nobody to report back to." >&2
+  echo "Not running inside a Herdr pane: there is nothing to split, and nobody to report back to." >&2
   exit 1
 fi
 
@@ -38,12 +38,8 @@ if ! mkdir -p "$report_directory"; then
   exit 1
 fi
 
-tab=$(herdr tab create \
-  --workspace "$HERDR_WORKSPACE_ID" \
-  --cwd "$main_checkout" \
-  --label handoff \
-  --no-focus)
-pane=$(printf '%s' "$tab" | jq -r '.result.root_pane.pane_id')
+split=$(herdr pane split --current --direction down --cwd "$main_checkout" --no-focus)
+pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
 # uppercase letters (w1:pV), which Herdr's agent names may not, hence the lowercasing. Two ids
@@ -71,4 +67,4 @@ initiator is blocked on a prompt of its own, so if it fails, wait a few seconds 
 again, at most twelve times. Then stop and say so in your own pane: the report is on disk and \
 its path was printed when you were started, so nothing is lost." >/dev/null
 
-echo "Handed $plan to $worker in a new tab. Its report will land in $report."
+echo "Handed $plan to $worker in a pane below. Its report will land in $report."
