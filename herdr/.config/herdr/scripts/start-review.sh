@@ -69,6 +69,7 @@ the applicable agents.md. Write your findings as Markdown to $report, worst firs
 no code. Then report back to the agent that asked, with herdr agent prompt, sending pane \
 $HERDR_PANE_ID the single line Review ready: followed by that file path. Quote the path yourself. \
 That call is rejected while the caller is blocked on a prompt of its own, so if it fails, wait a \
-few seconds and send it again until it is accepted." >/dev/null
+few seconds and send it again. Give up after ten minutes and say so in your own pane: the report \
+is on disk and its path was printed when you were started, so nothing is lost." >/dev/null
 
 echo "Asked $reviewer to review this branch against $base. Findings will land in $report."

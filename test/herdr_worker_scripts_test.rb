@@ -61,7 +61,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/worktree/i, handoff_prompt)
   end
 
-  def test_handing_off_reports_only_where_the_work_went
+  def test_handing_off_reports_where_the_work_went_and_where_its_report_lands
     stdout, = run_script(HAND_OFF_PLAN, plan_file)
 
     assert_equal(1, stdout.lines.count, stdout)
@@ -192,6 +192,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_includes(handoff_prompt, report_path("handoff-w1-pv"))
     assert_includes(handoff_prompt, "pane w1:p1")
+    assert(File.directory?(File.dirname(report_path("handoff-w1-pv"))),
+           "the worker cannot write a report into a directory that is not there")
   end
 
   def test_a_review_started_from_a_worktree_reports_where_the_worktree_sweep_cannot_delete_it
@@ -213,31 +215,36 @@ class HerdrWorkerScriptsTest < Minitest::Test
   end
 
   def test_handing_off_without_a_caller_to_report_to_is_refused_before_a_tab_is_opened
-    _, _, status = run_script(HAND_OFF_PLAN, plan_file, caller_pane: nil)
+    _, stderr, status = run_script(HAND_OFF_PLAN, plan_file, caller_pane: nil)
 
     assert_equal(1, status.exitstatus)
+    assert_match(/herdr/i, stderr)
     assert_empty(herdr_calls)
   end
 
   def test_the_reviewer_is_told_to_keep_trying_until_the_caller_accepts_the_ping
     run_script(START_REVIEW)
 
-    assert_match(/again|retry|until it is accepted/i, reviewer_prompt)
+    assert_match(/again/i, reviewer_prompt)
     assert_match(/blocked/i, reviewer_prompt)
+    assert_match(/give up|stop trying/i, reviewer_prompt)
   end
 
   def test_the_worker_is_told_to_keep_trying_until_the_initiator_accepts_the_ping
     run_script(HAND_OFF_PLAN, plan_file)
 
-    assert_match(/again|retry|until it is accepted/i, handoff_prompt)
+    assert_match(/again/i, handoff_prompt)
+    assert_match(/give up|stop trying/i, handoff_prompt)
   end
 
-  def test_the_ping_instruction_does_not_hand_over_a_pre_quoted_command
+  def test_an_awkward_repository_path_still_reaches_the_reviewer_intact
+    @repo = repo_on("main", inside: "o'brien's work files")
+
     run_script(START_REVIEW)
 
     assert_includes(reviewer_prompt, report_path("review-w1-pw"))
-    assert_equal(0, reviewer_prompt.count("'"),
-                 "a path containing an apostrophe would break a quoted command line")
+    assert_equal(0, reviewer_prompt.count("'") - report_path("review-w1-pw").count("'"),
+                 "the prompt adds quotes of its own, which this path would break")
   end
 
   def test_a_report_left_by_an_earlier_session_is_cleared_before_the_reviewer_can_write
@@ -293,6 +300,13 @@ class HerdrWorkerScriptsTest < Minitest::Test
     git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/#{branch}")
   end
 
+  def awkward_parent(name)
+    parent = File.join(Dir.mktmpdir, name)
+    @extra_dirs << parent
+    FileUtils.mkdir_p(parent)
+    parent
+  end
+
   def linked_worktree
     worktree = File.join(Dir.mktmpdir, "worktree")
     @extra_dirs << File.dirname(worktree)
@@ -300,8 +314,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
     worktree
   end
 
-  def repo_on(branch)
-    @repo = Dir.mktmpdir
+  def repo_on(branch, inside: nil)
+    @repo = inside ? Dir.mktmpdir(nil, awkward_parent(inside)) : Dir.mktmpdir
     @extra_dirs << @repo
     git("init", "--quiet", "--initial-branch=#{branch}")
     git("commit", "--quiet", "--allow-empty", "-m", "initial")

@@ -45,3 +45,5 @@ the report is never lost either way, because the script printed the path when it
 
 Read the file and tell the user what came back. Do not pick up the leftovers yourself unless the
 user asks.
+
+Reports pile up in that directory over time. Nothing prunes it — that is the user's to clear.
