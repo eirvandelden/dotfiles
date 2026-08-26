@@ -222,19 +222,17 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
-  def test_the_reviewer_is_told_to_keep_trying_until_the_caller_accepts_the_ping
+  def test_the_reviewer_retries_a_busy_caller_but_gives_up_eventually
     run_script(START_REVIEW)
 
-    assert_match(/again/i, reviewer_prompt)
     assert_match(/blocked/i, reviewer_prompt)
-    assert_match(/give up|stop trying/i, reviewer_prompt)
+    assert_includes(reviewer_prompt, "at most twelve times")
   end
 
-  def test_the_worker_is_told_to_keep_trying_until_the_initiator_accepts_the_ping
+  def test_the_worker_retries_a_busy_initiator_but_gives_up_eventually
     run_script(HAND_OFF_PLAN, plan_file)
 
-    assert_match(/again/i, handoff_prompt)
-    assert_match(/give up|stop trying/i, handoff_prompt)
+    assert_includes(handoff_prompt, "at most twelve times")
   end
 
   def test_an_awkward_repository_path_still_reaches_the_reviewer_intact
@@ -242,9 +240,15 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(START_REVIEW)
 
-    assert_includes(reviewer_prompt, report_path("review-w1-pw"))
-    assert_equal(0, reviewer_prompt.count("'") - report_path("review-w1-pw").count("'"),
-                 "the prompt adds quotes of its own, which this path would break")
+    assert_path_survived(reviewer_prompt, report_path("review-w1-pw"))
+  end
+
+  def test_an_awkward_repository_path_still_reaches_the_worker_intact
+    @repo = repo_on("main", inside: "o'brien's work files")
+
+    run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_path_survived(handoff_prompt, report_path("handoff-w1-pv"))
   end
 
   def test_a_report_left_by_an_earlier_session_is_cleared_before_the_reviewer_can_write
@@ -301,8 +305,9 @@ class HerdrWorkerScriptsTest < Minitest::Test
   end
 
   def awkward_parent(name)
-    parent = File.join(Dir.mktmpdir, name)
-    @extra_dirs << parent
+    enclosing = Dir.mktmpdir
+    @extra_dirs << enclosing
+    parent = File.join(enclosing, name)
     FileUtils.mkdir_p(parent)
     parent
   end
@@ -374,7 +379,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GIT_CALL_LOG" => git_call_log,
-      "REPORT_DIR" => File.join(@repo, ".git", "herdr"),
+      "REPORT_DIR" => report_directory,
       "REPORT_STATE_LOG" => report_state_log,
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1",
@@ -391,8 +396,23 @@ class HerdrWorkerScriptsTest < Minitest::Test
     herdr_calls.find { |call| call.start_with?("agent prompt handoff-w1-pv ") }
   end
 
+  def assert_path_survived(prompt, path)
+    assert_includes(prompt, path)
+    quoted = [ "'#{path}", "#{path}'" ].select { |form| prompt.include?(form) }
+    assert_empty(quoted,
+                 "the prompt wraps the path in quotes of its own, which this path would break")
+  end
+
+  # 5: asking git keeps this right for a linked worktree, where .git is a file rather than a
+  # directory and the reports live in the main checkout.
+  def report_directory
+    shared_git_directory, = Open3.capture2("git", "-C", @repo, "rev-parse",
+                                           "--path-format=absolute", "--git-common-dir")
+    File.join(shared_git_directory.strip, "herdr")
+  end
+
   def report_path(agent_name)
-    File.join(File.realpath(@repo), ".git", "herdr", "#{agent_name}.md")
+    File.join(report_directory, "#{agent_name}.md")
   end
 
   def reviewer_prompt

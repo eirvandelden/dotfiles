@@ -17,7 +17,7 @@ Run it from the repository being reviewed: the reviewer inherits that directory.
 
 The script splits the current pane to the right, starts Claude on opus there, and asks it to read
 the branch diff against the base branch plus the uncommitted changes, and to report its findings
-without changing any code. The only file it writes is that report.
+without changing any code. The only file it writes in your tree is that report.
 
 Tell the user which reviewer is looking at what, and where its report will land. Then carry on with
 work outside this branch's files. The reviewer reads the uncommitted changes as they are now, so
