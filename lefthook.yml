@@ -147,7 +147,11 @@ pre-push:
       glob: "Gemfile"
       # Gem advisories matter in every Ruby project, so this runs everywhere. It used to go
       # through a bin/ binstub and a config file that only Rails apps carry.
+      # Git exports GIT_DIR to its hooks, so --update's internal "git pull" would run against
+      # the repository being pushed instead of the advisory database, and ask it for a master
+      # branch it does not have.
       run: |
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
         if [ -f config/bundler-audit.yml ]; then
           bundler-audit check --update --config config/bundler-audit.yml
         else
