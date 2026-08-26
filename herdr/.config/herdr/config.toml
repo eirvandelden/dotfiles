@@ -35,10 +35,21 @@ done_path    = "/Users/etienne.vandelden/Documents/Tones/Overlord/MinionVoiceDat
 
 [theme]
 # Take every color from the terminal's own palette. Ghostty already swaps solunized dark and
-# light with the system appearance, so herdr follows along without a hand-copied palette here.
+# light with the system appearance, so herdr follows along without a hand-copied palette, apart
+# from the three border tokens below.
 # auto_switch stays off because it swaps between two named themes, which this no longer needs.
 name = "terminal"
 auto_switch = false
+
+# Pane borders are the only thing worth taking out of the terminal palette's hands: herdr has no
+# border-width setting, so a loud focused border and near-invisible inactive ones are the only way
+# to tell the focused pane apart. Values are solunized light bg_2 and orange, from
+# eirvandelden/solunized dist/herdr/solunized-light.toml. A [theme.custom] block does not follow
+# the system light/dark switch, so dark mode gets these cream-toned borders too.
+[theme.custom]
+accent   = "#b05015"
+surface1 = "#d5d2c8"
+overlay0 = "#d5d2c8"
 
 [ui.toast]
 delivery = "system"
