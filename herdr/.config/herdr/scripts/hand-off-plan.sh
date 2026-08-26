@@ -67,7 +67,8 @@ work onward. Done means all tests green, all linters green, and a self-reviewed 
 what you did, and anything you could not finish, as Markdown to $report. Then report back to the \
 agent that handed this over, with herdr agent prompt, sending pane $HERDR_PANE_ID the single line \
 Handoff done: followed by that file path. Quote the path yourself. That call is rejected while the \
-initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it again \
-until it is accepted." >/dev/null
+initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
+again. Give up after ten minutes and say so in your own pane: the report is on disk and its \
+path was printed when you were started, so nothing is lost." >/dev/null
 
 echo "Handed $plan to $worker in a new tab. Its report will land in $report."
