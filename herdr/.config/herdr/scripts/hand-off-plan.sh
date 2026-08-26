@@ -33,8 +33,8 @@ main_checkout=$(dirname "$common_git_dir")
 # the caller's worktree, which the next task's worktree sweep may remove.
 report_directory="$common_git_dir/herdr"
 
-if ! mkdir -p "$report_directory" 2>/dev/null; then
-  echo "Cannot create the report directory $report_directory: the worker would have nowhere to report." >&2
+if ! mkdir -p "$report_directory"; then
+  echo "Cannot create that report directory: the worker would have nowhere to report." >&2
   exit 1
 fi
 
@@ -68,7 +68,7 @@ what you did, and anything you could not finish, as Markdown to $report. Then re
 agent that handed this over, with herdr agent prompt, sending pane $HERDR_PANE_ID the single line \
 Handoff done: followed by that file path. Quote the path yourself. That call is rejected while the \
 initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
-again. Give up after ten minutes and say so in your own pane: the report is on disk and its \
-path was printed when you were started, so nothing is lost." >/dev/null
+again, at most twelve times. Then stop and say so in your own pane: the report is on disk and \
+its path was printed when you were started, so nothing is lost." >/dev/null
 
 echo "Handed $plan to $worker in a new tab. Its report will land in $report."

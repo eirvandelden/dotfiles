@@ -40,8 +40,8 @@ fi
 # the caller's worktree, which the next task's worktree sweep may remove.
 report_directory="$(git rev-parse --path-format=absolute --git-common-dir)/herdr"
 
-if ! mkdir -p "$report_directory" 2>/dev/null; then
-  echo "Cannot create the report directory $report_directory: the reviewer would have nowhere to report." >&2
+if ! mkdir -p "$report_directory"; then
+  echo "Cannot create that report directory: the reviewer would have nowhere to report." >&2
   exit 1
 fi
 
@@ -69,7 +69,7 @@ the applicable agents.md. Write your findings as Markdown to $report, worst firs
 no code. Then report back to the agent that asked, with herdr agent prompt, sending pane \
 $HERDR_PANE_ID the single line Review ready: followed by that file path. Quote the path yourself. \
 That call is rejected while the caller is blocked on a prompt of its own, so if it fails, wait a \
-few seconds and send it again. Give up after ten minutes and say so in your own pane: the report \
-is on disk and its path was printed when you were started, so nothing is lost." >/dev/null
+few seconds and send it again, at most twelve times. Then stop and say so in your own pane: the \
+report is on disk and its path was printed when you were started, so nothing is lost." >/dev/null
 
 echo "Asked $reviewer to review this branch against $base. Findings will land in $report."
