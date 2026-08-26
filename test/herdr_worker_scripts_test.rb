@@ -178,7 +178,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_the_reviewer_is_told_to_ping_the_agent_that_asked_for_the_review
     run_script(START_REVIEW)
 
-    assert_includes(reviewer_prompt, "herdr agent prompt w1:p1")
+    assert_includes(reviewer_prompt, "herdr agent prompt")
+    assert_includes(reviewer_prompt, "pane w1:p1")
   end
 
   def test_reviewing_reports_where_the_findings_will_land
@@ -191,7 +192,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, plan_file)
 
     assert_includes(handoff_prompt, report_path("handoff-w1-pv"))
-    assert_includes(handoff_prompt, "herdr agent prompt w1:p1")
+    assert_includes(handoff_prompt, "pane w1:p1")
   end
 
   def test_a_review_started_from_a_worktree_reports_where_the_worktree_sweep_cannot_delete_it
@@ -217,6 +218,27 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_equal(1, status.exitstatus)
     assert_empty(herdr_calls)
+  end
+
+  def test_the_reviewer_is_told_to_keep_trying_until_the_caller_accepts_the_ping
+    run_script(START_REVIEW)
+
+    assert_match(/again|retry|until it is accepted/i, reviewer_prompt)
+    assert_match(/blocked/i, reviewer_prompt)
+  end
+
+  def test_the_worker_is_told_to_keep_trying_until_the_initiator_accepts_the_ping
+    run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_match(/again|retry|until it is accepted/i, handoff_prompt)
+  end
+
+  def test_the_ping_instruction_does_not_hand_over_a_pre_quoted_command
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt, report_path("review-w1-pw"))
+    assert_equal(0, reviewer_prompt.count("'"),
+                 "a path containing an apostrophe would break a quoted command line")
   end
 
   private
