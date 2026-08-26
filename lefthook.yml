@@ -124,7 +124,15 @@ pre-push:
         - rails
         - security
       glob: "Gemfile"
-      run: brakeman --quiet --no-pager --no-progress --no-summary
+      # Brakeman only understands Rails applications. Everywhere else it exits 4 with
+      # "Please supply the path to a Rails application", which blocked the push in every
+      # plain Ruby project and gem.
+      run: |
+        if [ -f config/application.rb ]; then
+          brakeman --quiet --no-pager --no-progress --no-summary
+        else
+          echo "brakeman: not a Rails application, nothing for it to analyse"
+        fi
       fail_text: |
         Fix vulnerabilities if you can.
         If you're in a hurry to push, use the `--no-verify` git flag.
@@ -137,7 +145,14 @@ pre-push:
         - security
         - bundle-audit
       glob: "Gemfile"
-      run: bin/bundler-audit --config config/bundler-audit.yml --update
+      # Gem advisories matter in every Ruby project, so this runs everywhere. It used to go
+      # through a bin/ binstub and a config file that only Rails apps carry.
+      run: |
+        if [ -f config/bundler-audit.yml ]; then
+          bundler-audit check --update --config config/bundler-audit.yml
+        else
+          bundler-audit check --update
+        fi
       fail_text: |
         Upgrade vulnerable dependencies if you can.
         If you're in a hurry to push, use the `--no-verify` git flag.
