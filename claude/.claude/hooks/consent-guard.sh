@@ -53,56 +53,58 @@ current_branch() {
 # pipes and quoted prose from being mistaken for a remote name, and still finds
 # a push that sits behind git's own flags, as in "git -C <dir> push".
 git_invocations() {
-  local token seen_git=false skip_flag_value=false invocation="" wants_argument=false
+  local segment token invocation seen_git skip_flag_value normalised
+
+  # Only a shell operator starts a new command, so splitting on them leaves each
+  # segment with its program as the first word. Reading the command as one flat
+  # list of words instead would find "git" and "push" inside a commit message and
+  # judge the prose as if it were a command.
+  normalised=${command//&&/$'\n'}
+  normalised=${normalised//||/$'\n'}
+  normalised=${normalised//|/$'\n'}
+  normalised=${normalised//;/$'\n'}
 
   # Runs inside a command substitution, so disabling globbing here cannot leak
   # into the rest of the hook. Without it a token like *.md would expand to
   # whatever happens to be on disk and be read as an argument.
   set -f
-  for token in $command; do
-    if $wants_argument; then
-      [[ "$token" == -* ]] && continue
+  while IFS= read -r segment; do
+    seen_git=false
+    skip_flag_value=false
+    invocation=""
 
-      # A redirect or shell operator ends the invocation, so anything past it
-      # belongs to another command rather than to this subcommand. A bare "git"
-      # starts the next invocation and is never an argument to this one.
-      if [[ "$token" != *[\|\&\;\<\>]* && "$token" != "git" ]]; then
-        invocation="$invocation $token"
+    for token in $segment; do
+      if $skip_flag_value; then
+        skip_flag_value=false
+        continue
       fi
 
-      printf '%s\n' "$invocation"
-      invocation=""
-      wants_argument=false
-      [[ "$token" == "git" ]] && seen_git=true
-      continue
-    fi
+      if ! $seen_git; then
+        case "$token" in
+          # Environment assignments come before the program name.
+          *=*) continue ;;
+          git) seen_git=true ;;
+          # Anything else is a different program, and this segment is not git's.
+          *) break ;;
+        esac
+        continue
+      fi
 
-    if $skip_flag_value; then
-      skip_flag_value=false
-      continue
-    fi
+      case "$token" in
+        -C | -c | --git-dir | --work-tree | --namespace | --super-prefix)
+          skip_flag_value=true
+          ;;
+        -*) ;;
+        *)
+          # A redirect ends the arguments; where it points is not a remote.
+          [[ "$token" == *[\|\&\;\<\>]* ]] && break
+          invocation="${invocation:+$invocation }$token"
+          ;;
+      esac
+    done
 
-    case "$token" in
-      git) seen_git=true ;;
-      -C | -c | --git-dir | --work-tree | --namespace | --super-prefix)
-        $seen_git && skip_flag_value=true
-        ;;
-      -*) ;;
-      *)
-        if $seen_git; then
-          invocation="$token"
-          wants_argument=true
-        fi
-        # Any other word starts a different command, so a later bare "push" is
-        # not this git's push.
-        seen_git=false
-        ;;
-    esac
-  done
-
-  if [[ -n "$invocation" ]]; then
-    printf '%s\n' "$invocation"
-  fi
+    [[ -n "$invocation" ]] && printf '%s\n' "$invocation"
+  done <<<"$normalised"
 
   return 0
 }
@@ -118,6 +120,7 @@ remote_allowed() {
 is_git_write=false
 is_git_push=false
 push_remote=""
+push_arguments=""
 
 while IFS= read -r invocation; do
   case "$invocation" in
@@ -128,7 +131,8 @@ while IFS= read -r invocation; do
     "push "*)
       is_git_write=true
       is_git_push=true
-      push_remote="${invocation#push }"
+      push_arguments="${invocation#push }"
+      push_remote="${push_arguments%% *}"
       ;;
     commit | "commit "*) is_git_write=true ;;
   esac
@@ -140,10 +144,15 @@ if $is_git_write; then
     block "Blocked: committing or pushing on $branch is never allowed (playbook rule 7). Create a feature branch and open a PR."
   fi
 
-  if [[ "$command" =~ git[^\|\&\;]*push[^\|\&\;]*[[:space:]](origin[[:space:]]+)?(main|master)([[:space:]]|$) ]] ||
-     [[ "$command" =~ :(main|master)([[:space:]]|$) ]]; then
-    block "Blocked: pushing to main/master is never allowed (playbook rule 7). Push the feature branch and open a PR."
-  fi
+  # Read the branch out of the parsed push arguments. Matching the raw command
+  # instead would find these names in a commit message describing a push.
+  for push_argument in $push_arguments; do
+    case "$push_argument" in
+      main | master | *:main | *:master)
+        block "Blocked: pushing to main/master is never allowed (playbook rule 7). Push the feature branch and open a PR."
+        ;;
+    esac
+  done
 
   if [[ "$command" == *"--force"* && "$command" != *"--force-with-lease"* ]]; then
     block "Blocked: plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)."
