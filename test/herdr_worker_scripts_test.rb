@@ -57,9 +57,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, plan)
 
-    prompt = herdr_calls.find { |call| call.start_with?("agent prompt handoff-w1-pv ") }
-    assert_includes(prompt, plan)
-    assert_match(/worktree/i, prompt)
+    assert_includes(handoff_prompt, plan)
+    assert_match(/worktree/i, handoff_prompt)
   end
 
   def test_handing_off_reports_only_where_the_work_went
@@ -239,6 +238,16 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(reviewer_prompt, report_path("review-w1-pw"))
     assert_equal(0, reviewer_prompt.count("'"),
                  "a path containing an apostrophe would break a quoted command line")
+  end
+
+  def test_a_report_left_by_an_earlier_session_cannot_be_mistaken_for_this_one
+    stale = report_path("review-w1-pw")
+    FileUtils.mkdir_p(File.dirname(stale))
+    File.write(stale, "yesterday's findings\n")
+
+    run_script(START_REVIEW)
+
+    assert_empty(File.read(stale))
   end
 
   private

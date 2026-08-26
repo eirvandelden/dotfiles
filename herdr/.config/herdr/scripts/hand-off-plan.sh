@@ -48,6 +48,9 @@ herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev
 # outlives the caller's worktree, which the next task's worktree sweep may remove.
 report="$common_git_dir/herdr/$worker.md"
 mkdir -p "$(dirname "$report")"
+# Pane ids are recycled across sessions, so emptied first: a caller must never read a report
+# left by an earlier worker as if it were this one.
+: >"$report"
 
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "You are taking over a plan written by another agent. Read $plan in \
