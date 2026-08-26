@@ -167,6 +167,33 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/fetch/i, reviewer_prompt)
   end
 
+  def test_the_reviewer_is_given_a_place_to_write_its_findings
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt, report_path("review-w1-pw"))
+    assert(File.directory?(File.dirname(report_path("review-w1-pw"))),
+           "the reviewer cannot write a report into a directory that is not there")
+  end
+
+  def test_the_reviewer_is_told_to_ping_the_agent_that_asked_for_the_review
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt, "herdr agent prompt w1:p1")
+  end
+
+  def test_reviewing_reports_where_the_findings_will_land
+    stdout, = run_script(START_REVIEW)
+
+    assert_includes(stdout, report_path("review-w1-pw"))
+  end
+
+  def test_the_worker_is_told_where_to_report_and_who_to_tell
+    run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_includes(handoff_prompt, report_path("handoff-w1-pv"))
+    assert_includes(handoff_prompt, "herdr agent prompt w1:p1")
+  end
+
   private
 
   def track_origin_head_on(branch)
@@ -243,6 +270,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def call_log
     @call_log ||= File.join(@stub_bin, "calls.log")
+  end
+
+  def handoff_prompt
+    herdr_calls.find { |call| call.start_with?("agent prompt handoff-w1-pv ") }
+  end
+
+  def report_path(agent_name)
+    File.join(File.realpath(@repo), ".git", "herdr", "#{agent_name}.md")
   end
 
   def reviewer_prompt

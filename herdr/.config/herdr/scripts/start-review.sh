@@ -46,10 +46,17 @@ reviewer=$(printf '%s' "$reviewer" | tr '[:upper:]' '[:lower:]')
 
 herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev/null
 
-# No --wait: the reviewer works in its own pane while the caller carries on.
-herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origin first so \
-the comparison is against current work, then read git diff $base...HEAD for what is committed, and git status plus git diff for the uncommitted changes on top of it. Use the \
-code-review skill and the applicable agents.md. Report your findings in this pane, worst first, \
-and change nothing." >/dev/null
+# Claude runs on the terminal's alternate screen, so its report cannot be read back out of the
+# pane. A file inside the git directory can: it is per-worktree, and it never shows up in the tree.
+report=$(git rev-parse --path-format=absolute --git-path "herdr/$reviewer.md")
+mkdir -p "$(dirname "$report")"
 
-echo "Asked $reviewer to review this branch against $base."
+# No --wait: the reviewer works in its own pane while the caller carries on.
+herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origin first so the \
+comparison is against current work, then read git diff $base...HEAD for what is committed, and \
+git status plus git diff for the uncommitted changes on top of it. Use the code-review skill and \
+the applicable agents.md. Write your findings as Markdown to $report, worst first, and change \
+nothing. Then tell the agent that asked for the review, in one line, by running: \
+herdr agent prompt $HERDR_PANE_ID 'Review ready: $report'" >/dev/null
+
+echo "Asked $reviewer to review this branch against $base. Findings will land in $report."

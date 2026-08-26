@@ -33,5 +33,14 @@ one next to the current tab.
 
 ## 3. Report and stop
 
-Tell the user which worker took the plan, using the name the script printed. The work is theirs
-now: do not start on it, and do not check up on it unless asked.
+Tell the user which worker took the plan, using the name the script printed, and where its report
+will land. The work is theirs now: do not start on it, and do not check up on it unless asked.
+
+## When the worker finishes
+
+The worker writes what it did, and anything it could not finish, to a Markdown file inside the
+repository's git directory, then sends you one line: `Handoff done: <path>`. That line arrives as
+an ordinary message, possibly in the middle of other work.
+
+Read the file and tell the user what came back. Do not pick up the leftovers yourself unless the
+user asks.
