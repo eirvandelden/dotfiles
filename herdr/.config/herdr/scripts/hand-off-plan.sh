@@ -25,7 +25,8 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
   exit 1
 fi
 
-main_checkout=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir)
+main_checkout=$(dirname "$common_git_dir")
 
 tab=$(herdr tab create \
   --workspace "$HERDR_WORKSPACE_ID" \
@@ -42,11 +43,20 @@ worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 
 herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev/null
 
+# Claude runs on the terminal's alternate screen, so the worker's report cannot be read back out
+# of its pane. The shared git directory can hold it: it outlives the worktree the worker creates,
+# and it never shows up in the tree.
+report="$common_git_dir/herdr/$worker.md"
+mkdir -p "$(dirname "$report")"
+
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "You are taking over a plan written by another agent. Read $plan in \
 full; it is the only context you get. Invoke the worktree-first skill before writing anything, so \
 all work happens in its own git worktree instead of the main checkout. Read the applicable \
 agents.md and CLAUDE.md, then execute only that plan: do not widen the scope and do not hand the \
-work onward. Done means all tests green, all linters green, and a self-reviewed diff." >/dev/null
+work onward. Done means all tests green, all linters green, and a self-reviewed diff. Then write \
+what you did, and anything you could not finish, as Markdown to $report, and tell the agent that \
+handed this over, in one line, by running: \
+herdr agent prompt $HERDR_PANE_ID 'Handoff done: $report'" >/dev/null
 
-echo "Handed $plan to $worker in a new tab."
+echo "Handed $plan to $worker in a new tab. Its report will land in $report."
