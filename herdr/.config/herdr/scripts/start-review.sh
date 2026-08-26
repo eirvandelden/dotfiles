@@ -57,7 +57,9 @@ herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origi
 comparison is against current work, then read git diff $base...HEAD for what is committed, and \
 git status plus git diff for the uncommitted changes on top of it. Use the code-review skill and \
 the applicable agents.md. Write your findings as Markdown to $report, worst first, and change \
-nothing. Then tell the agent that asked for the review, in one line, by running: \
-herdr agent prompt $HERDR_PANE_ID 'Review ready: $report'" >/dev/null
+nothing. Then report back to the agent that asked, with herdr agent prompt, sending pane \
+$HERDR_PANE_ID the single line Review ready: followed by that file path. Quote the path yourself. \
+That call is rejected while the caller is blocked on a prompt of its own, so if it fails, wait a \
+few seconds and send it again until it is accepted." >/dev/null
 
 echo "Asked $reviewer to review this branch against $base. Findings will land in $report."

@@ -55,8 +55,10 @@ full; it is the only context you get. Invoke the worktree-first skill before wri
 all work happens in its own git worktree instead of the main checkout. Read the applicable \
 agents.md and CLAUDE.md, then execute only that plan: do not widen the scope and do not hand the \
 work onward. Done means all tests green, all linters green, and a self-reviewed diff. Then write \
-what you did, and anything you could not finish, as Markdown to $report, and tell the agent that \
-handed this over, in one line, by running: \
-herdr agent prompt $HERDR_PANE_ID 'Handoff done: $report'" >/dev/null
+what you did, and anything you could not finish, as Markdown to $report. Then report back to the \
+agent that handed this over, with herdr agent prompt, sending pane $HERDR_PANE_ID the single line \
+Handoff done: followed by that file path. Quote the path yourself. That call is rejected while the \
+initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it again \
+until it is accepted." >/dev/null
 
 echo "Handed $plan to $worker in a new tab. Its report will land in $report."
