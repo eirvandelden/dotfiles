@@ -2,7 +2,7 @@
 name: review
 description: Ask a Claude reviewer on opus to review this branch in a pane beside the current one.
 disable-model-invocation: true
-allowed-tools: Bash(/Users/etienne.vandelden/.config/herdr/scripts/start-review.sh)
+allowed-tools: Bash(~/.config/herdr/scripts/start-review.sh)
 ---
 
 # Review
@@ -10,7 +10,7 @@ allowed-tools: Bash(/Users/etienne.vandelden/.config/herdr/scripts/start-review.
 Get this branch reviewed by another model. Do not review it yourself.
 
 ```bash
-/Users/etienne.vandelden/.config/herdr/scripts/start-review.sh
+~/.config/herdr/scripts/start-review.sh
 ```
 
 Run it from the repository being reviewed: the reviewer inherits that directory.

@@ -15,6 +15,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def setup
     @stub_bin = Dir.mktmpdir
     install_herdr_stub
+    install_git_recorder
     @extra_dirs = []
     repo_on("main")
   end
@@ -115,7 +116,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def test_a_tag_named_after_the_default_branch_is_not_taken_for_the_base_branch
     @repo = repo_on("feature")
-    git("tag", "-m", "release", "main")
+    git("tag", "main")
 
     _, stderr, status = run_script(START_REVIEW)
 
@@ -156,6 +157,16 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
+  def test_reviewing_never_reaches_the_network_itself
+    track_origin_head_on("main")
+
+    run_script(START_REVIEW)
+
+    assert_includes(git_calls, "symbolic-ref --short refs/remotes/origin/HEAD")
+    assert_empty(git_calls.grep(/fetch|pull|ls-remote/))
+    assert_match(/fetch/i, reviewer_prompt)
+  end
+
   private
 
   def track_origin_head_on(branch)
@@ -181,7 +192,9 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def git(*arguments)
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null",
-           "-c", "user.email=test@example.com", "-c", "user.name=Test", *arguments) ||
+           "-c", "user.email=test@example.com", "-c", "user.name=Test",
+           "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false",
+           "-c", "tag.forceSignAnnotated=false", *arguments) ||
       raise("git #{arguments.join(' ')} failed")
   end
 
@@ -189,6 +202,17 @@ class HerdrWorkerScriptsTest < Minitest::Test
     path = File.join(@repo, "plan.md")
     File.write(path, "# Plan\n\nDo the thing.\n")
     path
+  end
+
+  # Records what the scripts ask git to do, then hands the call to the real git.
+  def install_git_recorder
+    recorder = File.join(@stub_bin, "git")
+    File.write(recorder, <<~SH)
+      #!/bin/sh
+      printf '%s\\n' "$*" >> "$GIT_CALL_LOG"
+      exec /usr/bin/git "$@"
+    SH
+    FileUtils.chmod(0o755, recorder)
   end
 
   def install_herdr_stub
@@ -209,6 +233,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
+      "GIT_CALL_LOG" => git_call_log,
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1",
       "HERDR_PANE_ID" => "w1:p1"
@@ -222,6 +247,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def reviewer_prompt
     herdr_calls.find { |call| call.start_with?("agent prompt review-w1-pw ") }
+  end
+
+  def git_call_log
+    @git_call_log ||= File.join(@stub_bin, "git-calls.log")
+  end
+
+  def git_calls
+    File.exist?(git_call_log) ? File.readlines(git_call_log, chomp: true) : []
   end
 
   def herdr_calls

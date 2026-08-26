@@ -41,6 +41,7 @@ gamemode
 gamescope
 ghostty
 Ghostty
+gpgsign
 herdr
 Herdr
 hypr
