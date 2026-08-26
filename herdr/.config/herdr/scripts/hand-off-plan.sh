@@ -34,9 +34,9 @@ tab=$(herdr tab create \
   --no-focus)
 pane=$(printf '%s' "$tab" | jq -r '.result.root_pane.pane_id')
 
-# Herdr agent names allow [a-z][a-z0-9_-]{0,31}, and pane ids are unique for the life of the
-# session, so a name built from the pane id can never collide with a live worker.
-# Pane ids carry uppercase letters (w1:pV), which those names may not.
+# Pane ids are unique for the life of the session, so they make a good name. They also carry
+# uppercase letters (w1:pV), which Herdr's agent names may not, hence the lowercasing. Two ids
+# differing only in case would collide, and Herdr would refuse the duplicate name outright.
 worker="handoff-${pane//:/-}"
 worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 

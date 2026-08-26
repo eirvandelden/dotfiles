@@ -2,7 +2,7 @@
 name: handoff
 description: Hand the plan for this task to a fresh Claude worker on sonnet, in a new Herdr tab.
 disable-model-invocation: true
-allowed-tools: Bash(/Users/etienne.vandelden/.config/herdr/scripts/hand-off-plan.sh *)
+allowed-tools: Bash(~/.config/herdr/scripts/hand-off-plan.sh *)
 ---
 
 # Handoff
@@ -21,7 +21,7 @@ The worker gets the plan file and nothing else — no conversation, no follow-up
 ## 2. Hand it over
 
 ```bash
-/Users/etienne.vandelden/.config/herdr/scripts/hand-off-plan.sh <absolute-plan-path>
+~/.config/herdr/scripts/hand-off-plan.sh <absolute-plan-path>
 ```
 
 Run it from the repository this work belongs to. The worker starts in that repository's main
