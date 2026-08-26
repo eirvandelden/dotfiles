@@ -100,6 +100,26 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/main/, stderr)
   end
 
+  # A commit message is prose, not a command. One describing a pull that ran against the
+  # repository being pushed, and naming a master branch, used to read as a push to master.
+  def test_a_commit_message_describing_a_push_to_master_is_allowed
+    checkout_feature_branch
+    message = "fix: refresh the advisory database. The git pull ran against the repository " \
+              "being pushed instead, asking it for a master branch it does not have."
+
+    _, stderr, status = run_guard("git commit -m '#{message}'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_commit_message_naming_a_branch_called_main_is_allowed
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git commit -m 'docs: explain why we never git push to main'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_plain_force_push_is_blocked_with_force_with_lease_advice
     checkout_feature_branch
 
