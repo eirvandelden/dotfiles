@@ -46,9 +46,10 @@ reviewer=$(printf '%s' "$reviewer" | tr '[:upper:]' '[:lower:]')
 
 herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev/null
 
-# Claude runs on the terminal's alternate screen, so its report cannot be read back out of the
-# pane. A file inside the git directory can: it is per-worktree, and it never shows up in the tree.
-report=$(git rev-parse --path-format=absolute --git-path "herdr/$reviewer.md")
+# Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
+# pane. A file in the shared git directory can be: it never shows up in the tree, and it
+# outlives the caller's worktree, which the next task's worktree sweep may remove.
+report="$(git rev-parse --path-format=absolute --git-common-dir)/herdr/$reviewer.md"
 mkdir -p "$(dirname "$report")"
 
 # No --wait: the reviewer works in its own pane while the caller carries on.

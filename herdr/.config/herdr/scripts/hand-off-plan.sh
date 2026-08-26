@@ -43,9 +43,9 @@ worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 
 herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev/null
 
-# Claude runs on the terminal's alternate screen, so the worker's report cannot be read back out
-# of its pane. The shared git directory can hold it: it outlives the worktree the worker creates,
-# and it never shows up in the tree.
+# Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
+# pane. A file in the shared git directory can be: it never shows up in the tree, and it
+# outlives the caller's worktree, which the next task's worktree sweep may remove.
 report="$common_git_dir/herdr/$worker.md"
 mkdir -p "$(dirname "$report")"
 
