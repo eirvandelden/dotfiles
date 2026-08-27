@@ -127,10 +127,32 @@ remote_allowed() {
   return 1
 }
 
+# Prints "yes" when any refspec of the push writes main or master. A refspec's
+# destination is what it writes: "source:destination" writes the destination, a
+# bare name writes itself, and HEAD writes whichever branch is checked out.
+push_writes_default_branch() {
+  local checked_out_branch="$1" refspec destination
+
+  set -f
+  for refspec in $push_refspecs; do
+    destination="${refspec##*:}"
+    destination="${destination#+}"
+    destination="${destination#refs/heads/}"
+    [[ "$destination" == "HEAD" ]] && destination="$checked_out_branch"
+    if [[ "$destination" == "main" || "$destination" == "master" ]]; then
+      printf 'yes'
+      return 0
+    fi
+  done
+
+  return 0
+}
+
 is_git_write=false
 is_git_push=false
 push_remote=""
 push_arguments=""
+push_refspecs=""
 
 while IFS= read -r invocation; do
   case "$invocation" in
@@ -143,6 +165,8 @@ while IFS= read -r invocation; do
       is_git_push=true
       push_arguments="${invocation#push }"
       push_remote="${push_arguments%% *}"
+      push_refspecs="${push_arguments#"$push_remote"}"
+      push_refspecs="${push_refspecs# }"
       ;;
     commit | "commit "*) is_git_write=true ;;
   esac
@@ -150,19 +174,26 @@ done <<<"$(git_invocations)"
 
 if $is_git_write; then
   branch=$(current_branch)
-  if [[ "$branch" == "main" || "$branch" == "master" ]]; then
-    block "Blocked: committing or pushing on $branch is never allowed (playbook rule 7). Create a feature branch and open a PR."
-  fi
+  on_default_branch=false
+  [[ "$branch" == "main" || "$branch" == "master" ]] && on_default_branch=true
 
-  # Read the branch out of the parsed push arguments. Matching the raw command
-  # instead would find these names in a commit message describing a push.
-  for push_argument in $push_arguments; do
-    case "$push_argument" in
-      main | master | *:main | *:master)
-        block "Blocked: pushing to main/master is never allowed (playbook rule 7). Push the feature branch and open a PR."
-        ;;
-    esac
-  done
+  if $is_git_push; then
+    # A push with no refspec sends the checked-out branch, so the branch is what
+    # decides. A push that names refspecs sends only those, so a checkout that
+    # merely happens to sit on main does not turn deleting or pushing some other
+    # branch into a write to main. The refspecs are read from the parsed push
+    # arguments; matching the raw command would find these names in a commit
+    # message describing a push.
+    if [[ -z "$push_refspecs" ]]; then
+      if $on_default_branch; then
+        block "Blocked: pushing $branch is never allowed (playbook rule 7). Push a feature branch and open a PR."
+      fi
+    elif [[ "$(push_writes_default_branch "$branch")" == "yes" ]]; then
+      block "Blocked: pushing to main/master is never allowed (playbook rule 7). Push the feature branch and open a PR."
+    fi
+  elif $on_default_branch; then
+    block "Blocked: committing on $branch is never allowed (playbook rule 7). Create a feature branch and open a PR."
+  fi
 
   if [[ "$command" == *"--force"* && "$command" != *"--force-with-lease"* ]]; then
     block "Blocked: plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)."
