@@ -1,0 +1,6 @@
+# Public keys git trusts to have signed a commit or tag, in ssh-keygen's
+# allowed-signers format. Signing itself needs nothing from here — this is only
+# what lets `git verify-commit`, `%G?` and `merge --verify-signatures` tell a
+# good signature from an unknown key. namespaces="git" keeps each key trusted
+# for git signatures alone, not for signing files.
+etienne@vandelden.family namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH+VU1lBs/Q9q+irnjGr2fXWs5J3FQc6ajw1MLUnEde
