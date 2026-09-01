@@ -335,6 +335,23 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/main/, stderr)
   end
 
+  def test_a_wrapper_word_before_git_does_not_hide_a_commit_on_main
+    [ "time", "nice", "sudo", "env", "command" ].each do |wrapper|
+      _, stderr, status = run_guard("#{wrapper} git commit -m 'quick fix'")
+
+      assert_equal(2, status.exitstatus, "#{wrapper} should not slip past the guard")
+      assert_match(/main/, stderr)
+    end
+  end
+
+  def test_a_wrapper_word_before_git_still_allows_a_commit_on_a_feature_branch
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("time git commit -m 'quick fix'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   private
 
   def add_remote(name, url)

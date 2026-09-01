@@ -22,6 +22,15 @@ consent_required() {
   block "$1 Ask the user first; once they explicitly agree, re-run the command prefixed with I_HAVE_USER_CONSENT=1."
 }
 
+# Words that run another program, so git can be sitting behind one of them.
+# Treating such a word as "not git" would leave `sudo git commit` unguarded.
+runs_another_program() {
+  case "$1" in
+    time | nice | nohup | sudo | env | command | xargs) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # A git command can act on a checkout other than the tool's working directory,
 # through `git -C <path>` or a `cd <path> &&` ahead of it. Read the branch and
 # the remotes there. Of several `cd`s the last one before the git command wins,
@@ -94,8 +103,11 @@ git_invocations() {
           # Environment assignments come before the program name.
           *=*) continue ;;
           git) seen_git=true ;;
-          # Anything else is a different program, and this segment is not git's.
-          *) break ;;
+          *)
+            runs_another_program "$token" && continue
+            # Anything else is a different program, and this segment is not git's.
+            break
+            ;;
         esac
         continue
       fi
