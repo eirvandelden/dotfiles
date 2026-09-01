@@ -22,6 +22,18 @@ consent_required() {
   block "$1 Ask the user first; once they explicitly agree, re-run the command prefixed with I_HAVE_USER_CONSENT=1."
 }
 
+# Splits the command into one shell command per line. Only an operator starts a
+# new command, so each line begins with its own program name. Every reader of
+# the command shares this, because a reader that splits differently disagrees
+# about which checkout git ran in.
+command_segments() {
+  local normalised=${command//&&/$'\n'}
+  normalised=${normalised//||/$'\n'}
+  normalised=${normalised//|/$'\n'}
+  normalised=${normalised//;/$'\n'}
+  printf '%s\n' "$normalised"
+}
+
 # Words that run another program, so git can be sitting behind one of them.
 # Treating such a word as "not git" would leave `sudo git commit` unguarded.
 runs_another_program() {
@@ -31,27 +43,76 @@ runs_another_program() {
   esac
 }
 
+# The subcommand a segment hands to git, empty when the segment does not run
+# git. Leading environment assignments and wrappers are stepped over, and git's
+# own flags are skipped so `git -C <path> commit` still reads as a commit.
+segment_git_subcommand() {
+  local segment="$1" token seen_git=false skip_flag_value=false
+
+  set -f
+  for token in $segment; do
+    if $skip_flag_value; then
+      skip_flag_value=false
+      continue
+    fi
+
+    if ! $seen_git; then
+      case "$token" in
+        *=*) continue ;;
+        git) seen_git=true ;;
+        *)
+          runs_another_program "$token" && continue
+          return 0
+          ;;
+      esac
+      continue
+    fi
+
+    case "$token" in
+      -C | -c | --git-dir | --work-tree | --namespace | --super-prefix)
+        skip_flag_value=true
+        ;;
+      -*) ;;
+      *)
+        printf '%s' "$token"
+        return 0
+        ;;
+    esac
+  done
+
+  return 0
+}
+
 # A git command can act on a checkout other than the tool's working directory,
 # through `git -C <path>` or a `cd <path> &&` ahead of it. Read the branch and
-# the remotes there. Of several `cd`s the last one before the git command wins,
-# as it would in the shell, and a `cd` after the command is not what git ran
-# in. The shell would expand a leading ~ before git ever saw it, so expand it
-# here too. A path that cannot be resolved falls back to the working directory,
-# so an unparsable command is judged by where the agent stands rather than
-# waved through.
+# the remotes there. Each `cd` moves where every later command runs, so they are
+# applied in order until the segment that writes is reached — stopping at the
+# first mention of git instead would judge `git fetch && cd <elsewhere> && git
+# commit` by the directory the fetch ran in. A `cd` after the write is not where
+# git ran. The shell would expand a leading ~ before git ever saw it, so expand
+# it here too. A path that cannot be resolved falls back to the working
+# directory, so an unparsable command is judged by where the agent stands rather
+# than waved through.
 git_repo_dir() {
-  local dir="$cwd" token previous="" destination=""
+  local dir="$cwd" segment destination
+  local -a words
 
   if [[ "$command" =~ git[[:space:]]+-C[[:space:]]+([^[:space:]]+) ]]; then
     dir="${BASH_REMATCH[1]}"
   else
-    set -f
-    for token in $command; do
-      [[ "$token" == "git" ]] && break
-      [[ "$previous" == "cd" ]] && destination="$token"
-      previous="$token"
-    done
-    [[ -n "$destination" ]] && dir="$destination"
+    while IFS= read -r segment; do
+      case "$(segment_git_subcommand "$segment")" in
+        commit | push) break ;;
+      esac
+
+      IFS=$' \t' read -ra words <<<"$segment"
+      [[ "${words[0]:-}" == "cd" ]] || continue
+
+      destination="${words[1]:-}"
+      [[ -n "$destination" ]] || continue
+      [[ "${destination:0:1}" == '~' ]] && destination="$HOME${destination:1}"
+      [[ -d "$destination" ]] && dir="$destination"
+    done <<<"$(command_segments)"
   fi
 
   [[ "${dir:0:1}" == '~' ]] && dir="$HOME${dir:1}"
@@ -72,16 +133,7 @@ current_branch() {
 # pipes and quoted prose from being mistaken for a remote name, and still finds
 # a push that sits behind git's own flags, as in "git -C <dir> push".
 git_invocations() {
-  local segment token invocation seen_git skip_flag_value normalised
-
-  # Only a shell operator starts a new command, so splitting on them leaves each
-  # segment with its program as the first word. Reading the command as one flat
-  # list of words instead would find "git" and "push" inside a commit message and
-  # judge the prose as if it were a command.
-  normalised=${command//&&/$'\n'}
-  normalised=${normalised//||/$'\n'}
-  normalised=${normalised//|/$'\n'}
-  normalised=${normalised//;/$'\n'}
+  local segment token invocation seen_git skip_flag_value
 
   # Runs inside a command substitution, so disabling globbing here cannot leak
   # into the rest of the hook. Without it a token like *.md would expand to
@@ -126,7 +178,7 @@ git_invocations() {
     done
 
     [[ -n "$invocation" ]] && printf '%s\n' "$invocation"
-  done <<<"$normalised"
+  done <<<"$(command_segments)"
 
   return 0
 }

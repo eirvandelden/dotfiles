@@ -335,6 +335,24 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/main/, stderr)
   end
 
+  def test_a_read_only_git_command_before_the_directory_change_does_not_hide_a_commit_on_main
+    checkout_feature_branch
+
+    command = "git fetch && cd #{another_checkout_on_main} && git commit -m 'quick fix'"
+    _, stderr, status = run_guard(command)
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/main/, stderr)
+  end
+
+  def test_a_read_only_git_command_before_the_directory_change_still_allows_a_worktree_commit
+    worktree = worktree_on_feature_branch
+
+    _, stderr, status = run_guard("git fetch && cd #{worktree} && git commit -m 'quick fix'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_a_wrapper_word_before_git_does_not_hide_a_commit_on_main
     [ "time", "nice", "sudo", "env", "command" ].each do |wrapper|
       _, stderr, status = run_guard("#{wrapper} git commit -m 'quick fix'")
