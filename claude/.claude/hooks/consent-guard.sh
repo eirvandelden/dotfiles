@@ -219,25 +219,32 @@ remote_allowed() {
   return 1
 }
 
-# Prints "yes" when any refspec of the push writes main or master. A refspec's
+# True when any refspec of the push writes main or master. A refspec's
 # destination is what it writes: "source:destination" writes the destination, a
 # bare name writes itself, and HEAD writes whichever branch is checked out.
 push_writes_default_branch() {
-  local checked_out_branch="$1" refspec destination
+  local refspec destination writes_default_branch=1 globbing_was_enabled=false
 
+  # Splitting the refspecs needs globbing off, or a refspec like *.md expands to
+  # whatever is on disk. Unlike the readers that run inside a command
+  # substitution, this runs in the hook's own shell, so the previous setting has
+  # to be put back.
+  [[ -o noglob ]] || globbing_was_enabled=true
   set -f
+
   for refspec in $push_refspecs; do
     destination="${refspec##*:}"
     destination="${destination#+}"
     destination="${destination#refs/heads/}"
-    [[ "$destination" == "HEAD" ]] && destination="$checked_out_branch"
+    [[ "$destination" == "HEAD" ]] && destination="$branch"
     if [[ "$destination" == "main" || "$destination" == "master" ]]; then
-      printf 'yes'
-      return 0
+      writes_default_branch=0
+      break
     fi
   done
 
-  return 0
+  $globbing_was_enabled && set +f
+  return $writes_default_branch
 }
 
 is_git_write=false
@@ -282,7 +289,7 @@ if $is_git_write; then
       if $on_default_branch; then
         block "Blocked: pushing $branch is never allowed (playbook rule 7). Push a feature branch and open a PR."
       fi
-    elif [[ "$(push_writes_default_branch "$branch")" == "yes" ]]; then
+    elif push_writes_default_branch; then
       block "Blocked: pushing to main/master is never allowed (playbook rule 7). Push the feature branch and open a PR."
     fi
   elif $on_default_branch; then
