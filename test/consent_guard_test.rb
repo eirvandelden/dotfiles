@@ -381,6 +381,80 @@ class ConsentGuardTest < Minitest::Test
     end
   end
 
+  # The tests below pin behaviour that is wrong. The guard reads parts of the raw
+  # command as though they were configuration, because it splits on shell
+  # operators without understanding quoting. Fixing that properly needs a
+  # quote-aware parser, which is a bigger change than a hook wants to carry, so
+  # the current behaviour is recorded here instead of left undocumented.
+  #
+  # Each of these should fail the day the command is parsed properly. When one
+  # does, delete it — a failure here is the fix landing, not a regression.
+
+  def test_known_limit_a_path_in_a_commit_message_decides_which_checkout_is_judged
+    worktree = worktree_on_feature_branch
+
+    _, _, status = run_guard("git commit -m 'see git -C #{worktree} for the fix'")
+
+    assert_equal(0, status.exitstatus,
+                 "the -C path is read from the raw command, so prose picks the checkout")
+  end
+
+  def test_known_limit_a_path_in_a_commit_message_can_also_block_a_valid_commit
+    checkout_feature_branch
+    elsewhere = another_checkout_on_main
+
+    _, stderr, status = run_guard("git commit -m 'see git -C #{elsewhere} for the fix'")
+
+    assert_equal(2, status.exitstatus, "the same prose reads as a commit on main")
+    assert_match(/main/, stderr)
+  end
+
+  def test_known_limit_an_operator_inside_a_quoted_message_splits_it_into_commands
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git commit -m 'docs: never do this; git push origin main is banned'")
+
+    assert_equal(2, status.exitstatus, "the semicolon splits the message and the rest reads as a push")
+    assert_match(/main|master/, stderr)
+  end
+
+  def test_known_limit_a_command_that_never_runs_git_can_still_be_blocked
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("echo 'note: never do this; git push origin main is banned'")
+
+    assert_equal(2, status.exitstatus, "echo is not a git command, but the fragment after the semicolon reads as one")
+    assert_match(/main|master/, stderr)
+  end
+
+  def test_known_limit_naming_force_in_a_commit_message_blocks_the_commit
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git commit -m 'docs: explain why --force is banned'")
+
+    assert_equal(2, status.exitstatus, "the flag checks still match the raw command")
+    assert_match(/force-with-lease/, stderr)
+  end
+
+  def test_known_limit_naming_no_verify_in_a_commit_message_blocks_the_commit
+    checkout_feature_branch
+
+    _, stderr, status = run_guard("git commit -m 'docs: never pass --no-verify'")
+
+    assert_equal(2, status.exitstatus, "the flag checks still match the raw command")
+    assert_match(/consent|approval/i, stderr)
+  end
+
+  def test_known_limit_a_grouping_construct_hides_the_checkout_and_the_write
+    checkout_feature_branch
+    elsewhere = another_checkout_on_main
+
+    _, _, status = run_guard("(cd #{elsewhere} && git commit -m 'quick fix')")
+
+    assert_equal(0, status.exitstatus,
+                 "the parenthesis stays glued to cd and to the subcommand, so neither is recognised")
+  end
+
   private
 
   def add_remote(name, url)

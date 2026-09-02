@@ -26,6 +26,13 @@ consent_required() {
 # new command, so each line begins with its own program name. Every reader of
 # the command shares this, because a reader that splits differently disagrees
 # about which checkout git ran in.
+#
+# Known limit: quoting is not understood, so an operator inside a quoted
+# argument splits it too, and a grouping parenthesis stays glued to the word
+# beside it. A message mentioning a command can therefore be read as one, and a
+# write inside parentheses can be missed. Closing this needs a quote-aware
+# parser; the behaviour it produces today is pinned in the tests named
+# "known_limit".
 command_segments() {
   local normalised=${command//&&/$'\n'}
   normalised=${normalised//||/$'\n'}
@@ -97,6 +104,8 @@ git_repo_dir() {
   local dir="$cwd" segment destination
   local -a words
 
+  # Known limit: this reads the raw command, so a `git -C <path>` written inside
+  # a commit message picks the checkout to judge. See the "known_limit" tests.
   if [[ "$command" =~ git[[:space:]]+-C[[:space:]]+([^[:space:]]+) ]]; then
     dir="${BASH_REMATCH[1]}"
   else
@@ -298,6 +307,8 @@ if $is_git_write; then
     block "Blocked: committing on $branch is never allowed (playbook rule 7). Create a feature branch and open a PR."
   fi
 
+  # Known limit: both flag checks read the raw command, so naming either flag in
+  # a commit message refuses the commit. See the "known_limit" tests.
   if [[ "$command" == *"--force"* && "$command" != *"--force-with-lease"* ]]; then
     block "Blocked: plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)."
   fi
