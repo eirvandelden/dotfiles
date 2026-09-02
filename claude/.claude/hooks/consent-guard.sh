@@ -183,6 +183,34 @@ git_invocations() {
   return 0
 }
 
+# True when the push sends every branch rather than named ones. `--all` and
+# `--mirror` write main without naming it, and `--mirror` deletes remote refs
+# the local side does not have, so neither can be judged by its refspecs.
+push_sends_every_branch() {
+  local segment token seen_git=false
+
+  set -f
+  while IFS= read -r segment; do
+    seen_git=false
+    for token in $segment; do
+      if ! $seen_git; then
+        case "$token" in
+          *=*) continue ;;
+          git) seen_git=true ;;
+          *) runs_another_program "$token" || break ;;
+        esac
+        continue
+      fi
+
+      case "$token" in
+        --all | --mirror) return 0 ;;
+      esac
+    done
+  done <<<"$(command_segments)"
+
+  return 1
+}
+
 remote_allowed() {
   local remote="$1" url
   url=$(git -C "$(git_repo_dir)" remote get-url "$remote" 2>/dev/null) || return 1
@@ -248,7 +276,9 @@ if $is_git_write; then
     # branch into a write to main. The refspecs are read from the parsed push
     # arguments; matching the raw command would find these names in a commit
     # message describing a push.
-    if [[ -z "$push_refspecs" ]]; then
+    if push_sends_every_branch; then
+      block "Blocked: pushing every branch at once sends main with them (playbook rule 7). Name the branch to push."
+    elif [[ -z "$push_refspecs" ]]; then
       if $on_default_branch; then
         block "Blocked: pushing $branch is never allowed (playbook rule 7). Push a feature branch and open a PR."
       fi

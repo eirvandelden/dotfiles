@@ -370,6 +370,17 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_pushing_every_branch_at_once_is_blocked
+    checkout_feature_branch
+
+    [ "--all", "--mirror" ].each do |flag|
+      _, stderr, status = run_guard("git push #{flag} origin")
+
+      assert_equal(2, status.exitstatus, "#{flag} sends main to the remote")
+      assert_match(/main|every branch/i, stderr)
+    end
+  end
+
   private
 
   def add_remote(name, url)
