@@ -18,6 +18,7 @@ chnode
 chpwd
 compinit
 conductor
+consentable
 cooldown
 cursorline
 cword
@@ -73,6 +74,7 @@ metaprogramming
 mvpa
 myproject
 neovide
+nohup
 neovim
 Neovim
 oldfiles
@@ -88,6 +90,7 @@ pytest
 reachingforthejack
 reflag
 refspec
+refspecs
 relativenumber
 restow
 ripgrep
@@ -121,6 +124,7 @@ undofile
 unflags
 unsets
 unstow
+Unparseable
 updatetime
 uwsm
 vandelden

@@ -9,7 +9,7 @@ require "tmpdir"
 # JSON on stdin and exits 2 (block, reason on stderr) when the command needs
 # consent the user has not given, 0 when the command may run.
 class ConsentGuardTest < Minitest::Test
-  GUARD = File.expand_path("../claude/.claude/hooks/consent-guard.sh", __dir__)
+  GUARD = File.expand_path("../claude/.claude/hooks/consent-guard.rb", __dir__)
 
   def setup
     @repo = Dir.mktmpdir
@@ -381,78 +381,75 @@ class ConsentGuardTest < Minitest::Test
     end
   end
 
-  # The tests below pin behaviour that is wrong. The guard reads parts of the raw
-  # command as though they were configuration, because it splits on shell
-  # operators without understanding quoting. Fixing that properly needs a
-  # quote-aware parser, which is a bigger change than a hook wants to carry, so
-  # the current behaviour is recorded here instead of left undocumented.
-  #
-  # Each of these should fail the day the command is parsed properly. When one
-  # does, delete it — a failure here is the fix landing, not a regression.
+  # The four findings below were open while the command was read as text. Reading
+  # it the way the shell would closed all of them, so these assert the behaviour
+  # that was wanted all along rather than the behaviour that was.
 
-  def test_known_limit_a_path_in_a_commit_message_decides_which_checkout_is_judged
+  def test_a_path_in_a_commit_message_does_not_decide_which_checkout_is_judged
     worktree = worktree_on_feature_branch
 
-    _, _, status = run_guard("git commit -m 'see git -C #{worktree} for the fix'")
+    _, stderr, status = run_guard("git commit -m 'see git -C #{worktree} for the fix'")
 
-    assert_equal(0, status.exitstatus,
-                 "the -C path is read from the raw command, so prose picks the checkout")
+    assert_equal(2, status.exitstatus, "the commit still runs on main, whatever the message mentions")
+    assert_match(/main/, stderr)
   end
 
-  def test_known_limit_a_path_in_a_commit_message_can_also_block_a_valid_commit
+  def test_a_path_in_a_commit_message_does_not_block_a_valid_commit
     checkout_feature_branch
     elsewhere = another_checkout_on_main
 
     _, stderr, status = run_guard("git commit -m 'see git -C #{elsewhere} for the fix'")
 
-    assert_equal(2, status.exitstatus, "the same prose reads as a commit on main")
-    assert_match(/main/, stderr)
+    assert_equal(0, status.exitstatus, stderr)
   end
 
-  def test_known_limit_an_operator_inside_a_quoted_message_splits_it_into_commands
+  def test_an_operator_inside_a_quoted_message_stays_part_of_the_message
     checkout_feature_branch
 
     _, stderr, status = run_guard("git commit -m 'docs: never do this; git push origin main is banned'")
 
-    assert_equal(2, status.exitstatus, "the semicolon splits the message and the rest reads as a push")
-    assert_match(/main|master/, stderr)
+    assert_equal(0, status.exitstatus, stderr)
   end
 
-  def test_known_limit_a_command_that_never_runs_git_can_still_be_blocked
+  def test_a_command_that_never_runs_git_is_left_alone
     checkout_feature_branch
 
     _, stderr, status = run_guard("echo 'note: never do this; git push origin main is banned'")
 
-    assert_equal(2, status.exitstatus, "echo is not a git command, but the fragment after the semicolon reads as one")
-    assert_match(/main|master/, stderr)
+    assert_equal(0, status.exitstatus, stderr)
   end
 
-  def test_known_limit_naming_force_in_a_commit_message_blocks_the_commit
+  def test_naming_force_in_a_commit_message_does_not_block_the_commit
     checkout_feature_branch
 
     _, stderr, status = run_guard("git commit -m 'docs: explain why --force is banned'")
 
-    assert_equal(2, status.exitstatus, "the flag checks still match the raw command")
-    assert_match(/force-with-lease/, stderr)
+    assert_equal(0, status.exitstatus, stderr)
   end
 
-  def test_known_limit_naming_no_verify_in_a_commit_message_blocks_the_commit
+  def test_naming_no_verify_in_a_commit_message_does_not_block_the_commit
     checkout_feature_branch
 
     _, stderr, status = run_guard("git commit -m 'docs: never pass --no-verify'")
 
-    assert_equal(2, status.exitstatus, "the flag checks still match the raw command")
-    assert_match(/consent|approval/i, stderr)
+    assert_equal(0, status.exitstatus, stderr)
   end
 
-  def test_known_limit_a_grouping_construct_hides_the_checkout_and_the_write
+  def test_a_grouping_construct_does_not_hide_the_checkout_or_the_write
     checkout_feature_branch
     elsewhere = another_checkout_on_main
 
-    _, _, status = run_guard("(cd #{elsewhere} && git commit -m 'quick fix')")
+    _, stderr, status = run_guard("(cd #{elsewhere} && git commit -m 'quick fix')")
 
-    assert_equal(0, status.exitstatus,
-                 "the parenthesis stays glued to cd and to the subcommand, so neither is recognised")
+    assert_equal(2, status.exitstatus, "the write runs in a checkout on main, parentheses or not")
+    assert_match(/main/, stderr)
+  end
+
+  def test_a_command_with_an_unmatched_quote_is_still_judged_by_the_checkout
+    _, stderr, status = run_guard("git commit -m 'unmatched")
+
+    assert_equal(2, status.exitstatus, "an unreadable command must not be waved through")
+    assert_match(/main/, stderr)
   end
 
   private

@@ -104,7 +104,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$HOME/.claude/hooks/consent-guard.sh\"",
+            "command": "\"$HOME/.claude/hooks/consent-guard.rb\"",
             "timeout": 10
           }
         ]
