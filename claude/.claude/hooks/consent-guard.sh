@@ -128,10 +128,10 @@ current_branch() {
 }
 
 # Prints one line per git invocation found in the command, as the subcommand
-# followed by its first non-flag argument: "push origin", "commit". Reading the
-# command as tokens rather than matching "git push" as text keeps redirects,
-# pipes and quoted prose from being mistaken for a remote name, and still finds
-# a push that sits behind git's own flags, as in "git -C <dir> push".
+# followed by every non-flag argument: "push origin my-branch", "commit".
+# Reading the command as tokens rather than matching "git push" as text keeps
+# redirects, pipes and quoted prose from being mistaken for a remote name, and
+# still finds a push that sits behind git's own flags, as in "git -C <dir> push".
 git_invocations() {
   local segment token invocation seen_git skip_flag_value
 
@@ -170,8 +170,10 @@ git_invocations() {
           ;;
         -*) ;;
         *)
-          # A redirect ends the arguments; where it points is not a remote.
-          [[ "$token" == *[\|\&\;\<\>]* ]] && break
+          # A redirect ends the arguments; where it points is not a remote. Only
+          # these three can appear, because splitting into segments has already
+          # turned every pipe and semicolon into a segment boundary.
+          [[ "$token" == *[\&\<\>]* ]] && break
           invocation="${invocation:+$invocation }$token"
           ;;
       esac
