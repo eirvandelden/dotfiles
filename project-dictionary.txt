@@ -18,6 +18,7 @@ chnode
 chpwd
 compinit
 conductor
+consentable
 cooldown
 cursorline
 cword
