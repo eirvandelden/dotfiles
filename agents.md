@@ -308,6 +308,13 @@ behaviors specific to how an AI agent should operate.
       (`pwd`), not another checkout of the same repository.
     - When re-checking an earlier fix, confirm it holds in the originally failing scenario
       before closing the loop.
+23. Test output hygiene:
+    - Run the narrowest thing first: a single test file or example, then the full suite only
+      once that is green.
+    - Trim verbose suite output instead of dumping it whole: pipe through `tail` or use the
+      runner's fail-fast flag.
+    - NEVER re-run an identical failing command more than twice. Change it instead — narrower
+      scope, more diagnostics, a different flag.
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
