@@ -9,14 +9,6 @@ single biggest context saving.
 
 ## Test and build output
 
-Run test suites fail-fast and trimmed — full passing output burns context
-Claude ignores:
-
-- Rails/Minitest: `bin/rails test ... 2>&1 | tail -20`, single failing file
-  first, whole suite only when that's green
-- RSpec: `--fail-fast`
-- Jest: `--bail`
-- pytest: `-x --tb=short`
-
-Never re-run the identical failing command more than twice; change the
-command (narrower scope, more diagnostics) or stop and reason instead.
+Covered by `agents.md` rule 23 (Test runs and output) — that file is
+project instructions in every personal repo, not Claude-only, so the rule
+lives there instead of being duplicated here.
