@@ -308,13 +308,16 @@ behaviors specific to how an AI agent should operate.
       (`pwd`), not another checkout of the same repository.
     - When re-checking an earlier fix, confirm it holds in the originally failing scenario
       before closing the loop.
-23. Test output hygiene:
+23. Test runs and output:
     - Run the narrowest thing first: a single test file or example, then the full suite only
       once that is green.
-    - Trim verbose suite output instead of dumping it whole: pipe through `tail` or use the
-      runner's fail-fast flag.
-    - NEVER re-run an identical failing command more than twice. Change it instead — narrower
-      scope, more diagnostics, a different flag.
+    - Stop at the first failure instead of dumping full output: Rails/Minitest `-f`/`--fail-fast`,
+      RSpec `--fail-fast`, Jest `--bail`, pytest `-x --tb=short`. Only pipe through `tail -20` as
+      a fallback, and read the summary line for pass/fail — a bare pipe reports `tail`'s exit
+      status, not the runner's, unless `set -o pipefail` is active.
+    - NEVER re-run an identical failing command more than twice; change it instead — narrower
+      scope, more diagnostics, a different flag. (Rule 14's 3-attempt cap covers the whole stuck
+      problem; this caps one exact command.)
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
