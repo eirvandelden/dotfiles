@@ -10,6 +10,13 @@ goto = "prefix+space"
 focus_agent = "prefix+alt+1..9"
 switch_workspace = "prefix+shift+1..9"
 
+# Default pane-focus bindings are hjkl, which sit together only on QWERTY. On Dvorak they're
+# scattered across the keyboard, so arrow keys replace them.
+focus_pane_left = "prefix+left"
+focus_pane_down = "prefix+down"
+focus_pane_up = "prefix+up"
+focus_pane_right = "prefix+right"
+
 [[keys.command]]
 key = "prefix+f"
 type = "plugin_action"
