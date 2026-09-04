@@ -25,6 +25,13 @@ vim.keymap.set("n", "<M-b>", "b", { desc = "Move backward one word" })
 -- exit terminal mode with Escape
 vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "Terminal: exit to Normal", silent = true })
 
+-- window focus (LazyVim binds <C-hjkl> to these; on Dvorak those keys are
+-- scattered, so arrow keys give an ergonomic alternative)
+vim.keymap.set("n", "<C-Left>", "<C-w>h", { desc = "Go to left window" })
+vim.keymap.set("n", "<C-Down>", "<C-w>j", { desc = "Go to lower window" })
+vim.keymap.set("n", "<C-Up>", "<C-w>k", { desc = "Go to upper window" })
+vim.keymap.set("n", "<C-Right>", "<C-w>l", { desc = "Go to right window" })
+
 -- bufferline
 vim.keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev buffer" })
 vim.keymap.set("n", "<S-l>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
