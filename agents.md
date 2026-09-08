@@ -51,27 +51,14 @@ General engineering practice:
 
 ## 2. Method Style and Formatting
 
-- Each method does exactly one thing; if it starts doing more, extract helper methods.
-- Bang methods (`!`) are unsafe (mutate the receiver or behave more dangerously) — there should
-  normally be a safe non-bang variant.
-- Predicate methods (`?`) must always return a boolean and never mutate or have side effects.
-- Personal projects: prefer guard clause style (`return x if y`) over `if/else/end` when the line
-  fits within 120 characters.
-- A guard clause is followed by a blank line. No one-line method definitions, and no inline
-  variable assignment inside a guard condition.
-- `rescue => error`, never `rescue => e`.
-- Never mutate a method's parameters — work on a copy (`dup`) when a transformation is needed.
-- Keep existing methods' visibility when refactoring; new helper methods default to `private`.
-- Add parentheses when a compound condition reads ambiguously.
+Full rules — method shape, naming, guard clauses, visibility, doc comments — in the `ruby-style`
+skill. Enforced mechanically by the `rubocop-eirvandelden` gem.
+
+- Each method does exactly one thing; extract helper methods when it grows.
+- `rescue => error`, never `rescue => e`. Never mutate a method's parameters.
 - No `send`/metaprogramming to shortcut a proper interface.
-- Documentation comments: work projects use YARD — short docs on classes always, on methods only
-  when complex, never on private methods, no giant `@example` blocks. Personal projects: no doc
-  comments unless a non-obvious "why" needs recording.
-- Max line length ~120 characters. Keep classes under ~100 lines. Target methods at 5 lines, keep
-  under 10. Pass no more than 4 parameters (hash options count as one). Blank lines between
-  methods. Group related private methods together. Use explicit `private`/`protected` sections.
-  Avoid abbreviations unless universal (`id`, `url`, `api`).
-- Examples (guard clause, etc.): `rails-architecture` skill, `references/examples.md`.
+- Target methods at 5 lines (under 10), classes under ~100 lines, at most 4 parameters, lines
+  under ~120 characters.
 
 ## 3. Error Handling
 
@@ -111,6 +98,9 @@ Read first:
 - Object-oriented design in any language — class/method responsibilities, DI, composition vs
   inheritance, avoiding anemic models:
   `claude/.claude/skills/object-oriented-design/SKILL.md`
+- Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc
+  comments:
+  `claude/.claude/skills/ruby-style/SKILL.md`
 - Rails domain modeling specifically — where logic/state transitions live in an ActiveRecord app:
   `claude/.claude/skills/rails-architecture/SKILL.md`
 - Writing/reviewing tests, fixtures vs factories, Minitest/RSpec conventions:
