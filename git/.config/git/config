@@ -65,5 +65,7 @@
   editor = ~/.local/bin/editor-wait
 [tag]
   gpgSign = true
-[includeIf "hasconfig:remote.*.url:git@github.com:nedap/**"]
-  path = ~/.config/git/work.config
+# The work remote condition lives in dotfiles-work, so this file names no
+# employer. Git ignores an include whose file is missing.
+[include]
+  path = ~/.config/git/work-remotes.config
