@@ -1,5 +1,6 @@
 {
   "model": "opusplan[1m]",
+  "showMessageTimestamps": true,
   "sandbox": {
     "enabled": false,
     "allowUnsandboxedCommands": false,
