@@ -35,3 +35,6 @@ codex/.codex/skills/.system
 
 # Claude Code permissions granted for this checkout only
 /.claude/settings.local.json
+
+# Session handoff notes written by the superpowers-ruby skill
+docs/handoffs/
