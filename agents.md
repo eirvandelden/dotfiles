@@ -9,7 +9,7 @@ This document is the single source of truth for the rules that must constrain al
 session — for humans and AI agents alike. Read and apply every section before producing output.
 
 - Personal: applies to personal projects.
-- Work: applies to professional and Nedap projects.
+- Work: applies to professional projects.
 - Both: applies to all projects.
 - If an item differs per scope, both are listed.
 
@@ -277,7 +277,8 @@ behaviors specific to how an AI agent should operate.
       hygiene).
 19. Pushes:
     - Agents may push without asking to repos owned by the `eirvandelden` GitHub user, and
-      to `nedap/caren3` and `nedap/ons-client`.
+      to any remote listed in `~/.claude/consent-guard-allowed-remotes.txt` (supplied by
+      `dotfiles-work`; the same file the consent guard reads).
     - Pushing to any other remote or repository requires explicit permission first.
     - Force-push rules (rule 20: `--force-with-lease` only, never plain `--force`) still
       apply regardless of target repo.

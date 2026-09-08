@@ -20,10 +20,30 @@ require "shellwords"
 
 CONSENT_MARKER = "I_HAVE_USER_CONSENT=1 ".freeze
 
-ALLOWED_REMOTES = [
-  %r{github\.com[:/]eirvandelden/},
-  %r{github\.com[:/]nedap/(caren3|ons-client)(\.git)?\z}
-].freeze
+BUILTIN_REMOTES = [ %r{github\.com[:/]eirvandelden/} ].freeze
+
+# Remotes beyond the personal ones are named in a file this repository does not
+# hold, so a public checkout carries no employer's name. One entry per line,
+# "owner/repo", or "owner/" for everything under an owner.
+ALLOWLIST_FILE = "~/.claude/consent-guard-allowed-remotes.txt".freeze
+
+def allowed_remotes
+  BUILTIN_REMOTES + listed_remotes
+end
+
+def listed_remotes
+  path = File.expand_path(ALLOWLIST_FILE)
+  return [] unless File.exist?(path)
+
+  File.readlines(path, chomp: true).filter_map { |line| remote_pattern(line.strip) }
+end
+
+def remote_pattern(entry)
+  return nil if entry.empty? || entry.start_with?("#")
+  return %r{github\.com[:/]#{Regexp.escape(entry)}} if entry.end_with?("/")
+
+  %r{github\.com[:/]#{Regexp.escape(entry)}(\.git)?\z}
+end
 
 # The command as words. Quoted text arrives as one word, so prose that mentions
 # a flag is not mistaken for the flag itself. A command that cannot be
@@ -56,7 +76,7 @@ def consentable_reason(words, working_directory)
   return nil unless unnamed_remote
 
   "pushing to remote '#{unnamed_remote}' isn't on the unattended allowlist — " \
-    "eirvandelden/*, nedap/caren3, nedap/ons-client (playbook rule 19)."
+    "eirvandelden/*, plus whatever #{ALLOWLIST_FILE} lists (playbook rule 19)."
 end
 
 def posts_to_github?(words)
@@ -81,7 +101,7 @@ def disallowed_remote(words, working_directory)
   candidates = words.drop(words.index("push") + 1).reject { |word| word.start_with?("-") }
   candidates.find do |candidate|
     url = `git -C #{Shellwords.escape(working_directory)} remote get-url #{Shellwords.escape(candidate)} 2>/dev/null`.strip
-    !url.empty? && ALLOWED_REMOTES.none? { |pattern| url.match?(pattern) }
+    !url.empty? && allowed_remotes.none? { |pattern| url.match?(pattern) }
   end
 end
 

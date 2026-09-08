@@ -20,10 +20,15 @@ class ConsentGuardTest < Minitest::Test
     @repo = Dir.mktmpdir
     system("git", "init", "--quiet", "--initial-branch=main", @repo)
     add_remote("origin", "git@github.com:eirvandelden/dotfiles.git")
+    # A home of its own, so the guard reads the allowlist this test wrote and
+    # never the one installed on the machine running the suite.
+    @home = Dir.mktmpdir
+    FileUtils.mkdir_p(File.join(@home, ".claude"))
   end
 
   def teardown
     FileUtils.rm_rf(@repo)
+    FileUtils.rm_rf(@home)
   end
 
   def test_unrelated_commands_run_untouched
@@ -161,7 +166,57 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/no-verify/, stderr)
   end
 
+  # The employer's repositories are named in a file the public repository does
+  # not carry, so a public checkout spells out no employer.
+  def test_pushing_to_a_remote_the_allowlist_file_names_is_allowed
+    allow_remotes("employer/their-app")
+    add_remote("work", "git@github.com:employer/their-app.git")
+
+    _, stderr, status = run_guard("git push work my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_the_allowlist_file_does_not_open_up_a_sibling_repository
+    allow_remotes("employer/their-app")
+    add_remote("work", "git@github.com:employer/another-app.git")
+
+    _, stderr, status = run_guard("git push work my-branch")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_allowlist_entry_ending_in_a_slash_covers_every_repository_of_that_owner
+    allow_remotes("employer/")
+    add_remote("work", "git@github.com:employer/another-app.git")
+
+    _, stderr, status = run_guard("git push work my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_comments_and_blank_lines_in_the_allowlist_file_are_ignored
+    allow_remotes("# the work repositories", "", "employer/their-app")
+    add_remote("work", "git@github.com:employer/their-app.git")
+
+    _, stderr, status = run_guard("git push work my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_the_refusal_points_at_the_allowlist_file_instead_of_naming_repositories
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, = run_guard("git push upstream my-branch")
+
+    assert_match(/consent-guard-allowed-remotes\.txt/, stderr)
+  end
+
   private
+
+  def allow_remotes(*entries)
+    File.write(File.join(@home, ".claude", "consent-guard-allowed-remotes.txt"), entries.join("\n"))
+  end
 
   def add_remote(name, url)
     system("git", "-C", @repo, "remote", "add", name, url)
@@ -169,6 +224,6 @@ class ConsentGuardTest < Minitest::Test
 
   def run_guard(command)
     payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: @repo })
-    Open3.capture3(GUARD, stdin_data: payload)
+    Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
   end
 end
