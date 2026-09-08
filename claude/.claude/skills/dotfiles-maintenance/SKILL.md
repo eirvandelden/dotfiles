@@ -58,3 +58,15 @@ for the current package list and the cross-platform package-manager breakdown.
   `~/Developer/dotfiles/<package>/`, never the symlinked target in `~/` or `~/.config/`.
 - NEVER run `stow` or `stow -R` without explicit instruction.
 - NEVER create new stow packages (top-level directories) without explicit instruction.
+
+## Agent skills
+
+Claude skills live under `claude/.claude/skills/<skill-name>/SKILL.md` and are installed at
+`~/.claude/skills/` by stowing the `claude` package.
+
+Codex skills are stowed as part of the `codex` package, under `codex/.codex/skills/<skill-name>/`
+with a `SKILL.md` and optionally `agents/openai.yaml`. Codex's bundled `.system/` skills are
+gitignored — Codex owns those and manages them separately.
+
+Stow handles installation on the next install run. Codex-specific setup detail:
+`codex/.codex/HEADROOM.md`.

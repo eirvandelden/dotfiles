@@ -43,7 +43,7 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
    except in files created in the current PR, which must be clean.
 6. Dependabot: minimal config, all ecosystems, all update types, cooldown of 1 week.
 7. Dependencies: Gemfile source `gem.coop`; UI apps load `mvpa-css` from GitHub
-   (see agents.md §4a for the full dependency policy).
+   (see the `dependencies` skill for the full policy).
 8. i18n: Dutch, English, and Italian locales from the start; no hardcoded user-facing strings.
 9. Deploy (when the app deploys): Kamal, mirroring the reference repo's setup with names and
    URLs updated.
