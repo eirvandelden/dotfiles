@@ -99,12 +99,15 @@ secrets() {
 
   local -A seen_keys
   local personal_account="vandelden"
-  local work_account="nedap"
+  local work_account="${SECRETS_WORK_OP_ACCOUNT:-}"
 
   _secrets_emit_file "$cfg" "base" "$personal_account"
 
-  # Optional overlay (not required, typically gitignored)
-  if [[ -f "$cfg_work" ]]; then
+  # Optional overlay (not required, typically gitignored). Without an account
+  # the references would be read from the personal one, so skip it instead.
+  if [[ -f "$cfg_work" && -z "$work_account" ]]; then
+    print -u2 "secrets: SECRETS_WORK_OP_ACCOUNT is unset, skipping $cfg_work"
+  elif [[ -f "$cfg_work" ]]; then
     _secrets_emit_file "$cfg_work" "work" "$work_account"
   fi
 }

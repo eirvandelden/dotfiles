@@ -21,7 +21,7 @@
   },
 
   {
-    "label": "Start Caren ElasticSearch",
+    "label": "Start work Elasticsearch",
     "command": "celastic",
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
@@ -29,7 +29,7 @@
     "hide": "always"
   },
   {
-    "label": "Run Caren",
+    "label": "Run work app",
     "command": "bin/dev",
     //"args": [],
     // Env overrides for the command, will be appended to the terminal's environment from the settings.
@@ -67,7 +67,7 @@
     "shell": "system"
   },
   {
-    "label": "Run Caren2",
+    "label": "Run legacy work app",
     "cwd": "ZED_WORKTREE_ROOT",
     "command": "./start.sh",
     "use_new_terminal": false,

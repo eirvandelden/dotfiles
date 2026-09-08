@@ -6,7 +6,6 @@ Finalize
 Hotwire
 Kamal
 Lefthook
-Nedap
 Propshaft
 RDBG
 SMACCS
