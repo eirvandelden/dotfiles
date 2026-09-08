@@ -74,17 +74,11 @@ skill. Enforced mechanically by the `rubocop-eirvandelden` gem.
 
 ## 4a. Dependencies and Versioning
 
+Full policy — sources, constraint style, personal gems, Dependabot, upgrade steps — in the
+`dependencies` skill.
+
 - Ask before adding or removing any dependency (rule 11 in §7).
-- Personal: Gemfile source is `gem.coop`, not rubygems.org.
-- Do not pin gem versions by default; let them update. When a constraint is needed, use
-  major.minor (`~> 9.3`) and no upper bound. Add an upper bound only when something actually
-  breaks.
-- Personal gems (mvpa.css etc.): reference from GitHub without a version restriction
-  (`gem "mvpa-css", github: "eirvandelden/mvpa.css"`); version by git SHA, no semver tags.
-- Dependabot: minimal config, all ecosystems, all update types, cooldown of 1 week.
-- Node: use yarn, not npm. Prefer a gem over adding a JavaScript dependency.
-- Upgrades: never skip major versions (Rails 6 → 7 → 8, step by step). Fix deprecation
-  warnings as part of the work instead of leaving them.
+- Never skip major versions when upgrading (Rails 6 → 7 → 8, step by step).
 
 ## 5. Detailed Guidance
 
@@ -101,6 +95,8 @@ Read first:
 - Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc
   comments:
   `claude/.claude/skills/ruby-style/SKILL.md`
+- Adding, removing, or upgrading a dependency — gem sources, version constraints, Dependabot:
+  `claude/.claude/skills/dependencies/SKILL.md`
 - Rails domain modeling specifically — where logic/state transitions live in an ActiveRecord app:
   `claude/.claude/skills/rails-architecture/SKILL.md`
 - Writing/reviewing tests, fixtures vs factories, Minitest/RSpec conventions:
