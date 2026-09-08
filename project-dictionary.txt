@@ -79,6 +79,7 @@ Neovim
 oldfiles
 omarchy
 Omarchy
+opusplan
 pacman
 pkgconfig
 polkit
