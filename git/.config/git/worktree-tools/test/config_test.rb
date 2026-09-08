@@ -42,10 +42,10 @@ module WorktreeTools
     end
 
     # Sets up a bare-style repo (no main worktree checkout) with a linked worktree:
-    #   caren/          <- bare repo (no .git subdir, is itself the git dir)
-    #   caren/mobile/   <- linked worktree inside the bare repo dir
+    #   warehouse/      <- bare repo (no .git subdir, is itself the git dir)
+    #   warehouse/mobile/ <- linked worktree inside the bare repo dir
     def setup_bare_repo_with_worktree
-      bare = File.join(@tmpdir, "caren")
+      bare = File.join(@tmpdir, "warehouse")
       FileUtils.mkdir_p(bare)
       run_command("git", "-C", bare, "init", "--bare", "-q")
 
@@ -324,7 +324,7 @@ module WorktreeTools
 
       config = load_config(worktree)
 
-      assert_equal "caren", config.puma_dev_name
+      assert_equal "warehouse", config.puma_dev_name
     end
 
     def test_puma_dev_name_ignores_conductor_workspace_name

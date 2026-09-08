@@ -13,7 +13,6 @@ brewfiles
 Broadcastable
 caddyfile
 callsites
-caren
 chnode
 chpwd
 compinit
