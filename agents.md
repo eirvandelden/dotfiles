@@ -82,43 +82,11 @@ Full policy — sources, constraint style, personal gems, Dependabot, upgrade st
 
 ## 5. Detailed Guidance
 
-Claude Code loads these skills automatically by relevance. Any other agent (Codex, ChatGPT, etc.):
-read the matching file below before proceeding when the task at hand matches. Inside this repo,
-read the repo-local `claude/.claude/skills/...` path; after stowing the `claude` package, the same
-files are installed at `~/.claude/skills/...`.
+Topic-specific guidance — object-oriented design, Rails architecture, Ruby style, testing, UI,
+API design, dependencies, ops, git workflow, code review, dotfiles — is not repeated here.
 
-Read first:
-
-- Object-oriented design in any language — class/method responsibilities, DI, composition vs
-  inheritance, avoiding anemic models:
-  `claude/.claude/skills/object-oriented-design/SKILL.md`
-- Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc
-  comments:
-  `claude/.claude/skills/ruby-style/SKILL.md`
-- Adding, removing, or upgrading a dependency — gem sources, version constraints, Dependabot:
-  `claude/.claude/skills/dependencies/SKILL.md`
-- Rails domain modeling specifically — where logic/state transitions live in an ActiveRecord app:
-  `claude/.claude/skills/rails-architecture/SKILL.md`
-- Writing/reviewing tests, fixtures vs factories, Minitest/RSpec conventions:
-  `claude/.claude/skills/rails-testing/SKILL.md`
-- Views, Hotwire/Stimulus, CSS, HTML, forms, i18n, accessibility, dialog/UX rules:
-  `claude/.claude/skills/rails-ui/SKILL.md`
-- REST endpoints, JSON responses, API auth, pagination/versioning:
-  `claude/.claude/skills/rails-api-design/SKILL.md`
-- Deployment, error tracking, performance monitoring:
-  `claude/.claude/skills/rails-ops/SKILL.md`
-- Reviewing a PR / implementing review feedback:
-  `claude/.claude/skills/code-review/SKILL.md`
-- Working inside the dotfiles repo (stow, bootstrap, symlinks, machine setup):
-  `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
-- Syncing a branch with main — fetch, rebase, conflict resolution, force-with-lease push:
-  `claude/.claude/skills/sync/SKILL.md`
-- Setting up a new personal repo (symlinks, rv, lefthook, CI, dependabot, deploy):
-  `claude/.claude/skills/new-repo-setup/SKILL.md`
-- Writing a plan for another agent, reviewing a plan critically, or executing a handed-over plan:
-  `claude/.claude/skills/plan-handoff/SKILL.md`
-- Isolating new-code tasks into their own git worktree instead of the main checkout:
-  `claude/.claude/skills/worktree-first/SKILL.md`
+Claude Code loads those skills automatically by relevance. Any other agent has no loader and
+should read the index, then the matching skill file: `SKILLS-INDEX.md`.
 
 ## 6. Open Questions
 
