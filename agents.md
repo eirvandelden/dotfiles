@@ -318,6 +318,21 @@ behaviors specific to how an AI agent should operate.
     - NEVER re-run an identical failing command more than twice; change it instead — narrower
       scope, more diagnostics, a different flag. (Rule 14's 3-attempt cap covers the whole stuck
       problem; this caps one exact command.)
+24. Model selection:
+    - Claude Code: Opus for planning and research, Sonnet for implementing. The `opusplan`
+      alias does the switch automatically — Opus while in plan mode, Sonnet once execution
+      starts — so `claude/.claude/settings.json` sets `"model": "opusplan[1m]"` and no manual
+      switch is needed. Pick a plain `opus` or `sonnet` session only when a task is entirely
+      research or entirely mechanical.
+    - Codex: Terra for planning and research, Luna for implementing. Luna is the base default
+      in `codex/.codex/config.toml`; start a planning session with `codex -p terra`, which
+      layers `~/.codex/terra.config.toml` over that base.
+    - Haiku belongs in subagents, never in the main session. Delegate to it for direct commands
+      that need no interpretation — running a known command, listing files, a mechanical rename,
+      a fixed-format lookup. Pass `model: "haiku"` on the individual Agent call rather than
+      setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
+    - Anything requiring judgement — reading a diff for correctness, choosing between designs,
+      writing tests — stays on Opus or Sonnet.
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
