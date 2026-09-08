@@ -122,18 +122,7 @@ Read first:
 
 ## 6. Open Questions
 
-These areas are intentionally left open and should be decided per project.
-
-- Front end performance budget: LCP, bundle size, Lighthouse targets.
-- Authentication: web stays session-based, API stays Bearer token; external providers (Auth0 etc.)
-  only when required.
-- Continuous integration and delivery: GitHub Actions vs GitLab CI vs other options.
-- Front end documentation: Storybook, zeroheight, or rely on code and tests.
-- Onboarding: identify common blockers that prevent a new developer from opening a pull request
-  within about one hour.
-- Linting stack: finalise a modern HTML, CSS, and JavaScript linting setup that works without
-  bundlers.
-- Architecture direction: monoliths vs extracting services later.
+Undecided areas, to be settled per project: `docs/open-questions.md`.
 
 ## 7. AI Agent Workflow
 
