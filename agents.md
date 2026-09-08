@@ -120,16 +120,6 @@ Read first:
 - Isolating new-code tasks into their own git worktree instead of the main checkout:
   `claude/.claude/skills/worktree-first/SKILL.md`
 
-## 5a. Codex Skills Setup
-
-Codex skills are stowed as part of the `codex` package. Custom skills live under `codex/.codex/skills/`.
-Codex's bundled `.system/` skills are gitignored (Codex-owned, managed separately).
-
-When adding new skills: create directory under `codex/.codex/skills/<skill-name>/` with SKILL.md and
-optionally `agents/openai.yaml`. Stow handles the rest on next install.
-
-Read Codex-specific setup details in `codex/.codex/HEADROOM.md`.
-
 ## 6. Open Questions
 
 These areas are intentionally left open and should be decided per project.
