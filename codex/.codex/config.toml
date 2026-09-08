@@ -35,13 +35,13 @@ enabled = true
 [plugins."chrome@openai-bundled"]
 enabled = true
 
-[plugins."sites@openai-bundled"]
-enabled = true
-
 [plugins."codex-app-tools@openai-bundled"]
 enabled = true
 
 [plugins."superpowers-ruby@superpowers-ruby"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
 enabled = true
 
 [desktop]
@@ -91,7 +91,7 @@ diffRemoved = "#dc322f"
 skill = "#d33682"
 
 [desktop.open-in-target-preferences]
-global = "zed"
+global = "systemDefault"
 
 [features]
 hooks = true
@@ -108,6 +108,9 @@ bearer_token_env_var = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN"
 [mcp_servers.email]
 url = "http://email-mcp.home.arpa/mcp"
 bearer_token_env_var = "MCP_EMAIL_SERVER_AUTH_TOKEN"
+
+[mcp_servers.email.tools.get_emails_content]
+approval_mode = "approve"
 
 [mcp_servers.fizzy]
 url = "http://fizzy-mcp.home.arpa/mcp"
@@ -152,11 +155,12 @@ NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin
 NODE_REPL_TRUSTED_CODE_PATHS = "/Users/etienne.vandelden/.codex:/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
 CODEX_HOME = "/Users/etienne.vandelden/.codex"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
-NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
-NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+BROWSER_USE_TINYSKY_ENABLED = "1"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = ""
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = ""
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.814.41957"
-NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/etienne.vandelden/.codex/plugins/cache/openai-bundled/browser/26.814.41957/scripts/browser-service.mjs"}'
+BROWSER_USE_CODEX_APP_VERSION = "26.901.51231"
+NODE_REPL_TRUSTED_SERVICES = '{"browser":"/Users/etienne.vandelden/.codex/plugins/cache/openai-bundled/browser/26.901.51231/scripts/browser-service.mjs"}'
 CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
 
 [memories]
@@ -167,9 +171,6 @@ use_memories = true
 trust_level = "trusted"
 
 [projects."/Users/etienne.vandelden/Developer/dotfiles"]
-trust_level = "trusted"
-
-[projects."/Users/etienne.vandelden/Developer/conductor/repos/caren3"]
 trust_level = "trusted"
 
 [projects."/Users/etienne.vandelden/Developer/conductor/repos/dotfiles"]
@@ -196,13 +197,41 @@ trust_level = "trusted"
 [projects."/Users/etienne.vandelden/Documents/Codex/2026-08-18/laten-we-samen-een-geplande-taak-2"]
 trust_level = "trusted"
 
+[projects."/Users/etienne.vandelden/Developer/ambx"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-08-25/do-x20"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-08-26/i-x20"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-08-26/home-assistant-automatisering-schrijven-chatgpt-conversation"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-08-26/i-x20-2"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-08-26/we-x20"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-08-27/toen-x20"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/.codex/.chatgpt-projects/g-p-697bb5b6b6e481a4ad8880b0a4b9f321"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-09-08/ik"]
+trust_level = "trusted"
+
+[projects."/Users/etienne.vandelden/Documents/Codex/2026-09-08/i-want-to-use-a-different"]
+trust_level = "trusted"
+
 [marketplaces.openai-bundled]
-last_updated = "2026-08-19T13:45:13Z"
 source_type = "local"
 source = "/Users/etienne.vandelden/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
 [marketplaces.openai-primary-runtime]
-last_updated = "2026-08-19T07:50:22Z"
 source_type = "local"
 source = "/Users/etienne.vandelden/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
@@ -214,4 +243,24 @@ source = "https://github.com/lucianghinda/superpowers-ruby.git"
 
 [shell_environment_policy.set]
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "9230e2bd8b24b7ac7a0ba6774c64bf0d78ecdabbdd91d0ed627b02a587bae2df"
+
+[hooks.state]
+
+[hooks.state."/Users/etienne.vandelden/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:306e848443a8537ddeb040672c0569691189cb6e7ff9ffa17453915ff1dcfc06"
+
+[hooks.state."superpowers-ruby@superpowers-ruby:hooks/hooks.json:pre_compact:0:0"]
+trusted_hash = "sha256:19df220033616f028fc9b93a4e443fb1707e9f82d8c84a360189cf494f073015"
+
+[hooks.state."superpowers-ruby@superpowers-ruby:hooks/hooks.json:post_compact:0:0"]
+trusted_hash = "sha256:51b9c54a77e81184fb393410569bc5e0c601d893786660bcb6cab7d5ba01e4f7"
+
+[hooks.state."superpowers-ruby@superpowers-ruby:hooks/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:62acbaff2b2f55f41971e21a164990aaa53c96919baa0a5eae2eb5db73b9e6e6"
+
+[hooks.state."browser@openai-bundled:plugin.json#hooks[0]:stop:0:0"]
+trusted_hash = "sha256:317a07045dfc95aef2e80c55428a2f817e2768be867e3b1ef29a73da8636ae7f"
+
+[hooks.state."chrome@openai-bundled:plugin.json#hooks[0]:stop:0:0"]
+trusted_hash = "sha256:317a07045dfc95aef2e80c55428a2f817e2768be867e3b1ef29a73da8636ae7f"
 
