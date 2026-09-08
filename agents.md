@@ -1,24 +1,14 @@
 # Etienne van Delden – Personal and Work Rails Playbook
 
-Snapshot: core rules only. Detailed Rails/OOP/testing/UI/API/ops/dotfiles guidance lives in
-skills — see §5 "Detailed Guidance".
+Core rules only. Topic-specific guidance lives in skills — see §5.
 
 ## 0. How to Read This Playbook
 
-This document is the single source of truth for the rules that must constrain almost every coding
-session — for humans and AI agents alike. Read and apply every section before producing output.
+Single source of truth for the rules that constrain almost every coding session, for humans and
+agents alike. Read and apply every section before producing output.
 
-- Personal: applies to personal projects.
-- Work: applies to professional projects.
-- Both: applies to all projects.
-- If an item differs per scope, both are listed.
-
-Deeper, topic-specific guidance (object-oriented design, Rails architecture, testing, UI, API
-design, ops, dotfiles maintenance, code review) is not repeated here — it lives in skills. Claude
-Code loads those
-automatically by relevance. Any other agent (Codex, ChatGPT, etc.) should read the matching file
-in §5 before starting work that matches its trigger — the file exists and is meant to be opened
-manually when there's no automatic skill loader.
+Scope labels: **Personal** for personal projects, **Work** for professional projects,
+**Both** for all of them. Where an item differs per scope, both are listed.
 
 Influences: 37signals (Rails conventions, "everything is CRUD", Hotwire/Kamal/Solid stack),
 thoughtbot (testing discipline, clean Ruby — [thoughtbot/guides](https://github.com/thoughtbot/guides)),
@@ -26,28 +16,24 @@ Sandi Metz (small classes, short methods, Tell Don't Ask, Dependency Injection, 
 
 ## 1. Core Principles
 
-These apply in any language, not just Ruby/Rails — full principles and examples in the
+Any language, not just Ruby/Rails — full principles and examples in the
 `object-oriented-design` skill:
 
 - Tell, Don't Ask; Dependency Injection; Composition over Inheritance; Law of Demeter.
-- Default to rich objects: business logic lives on the object that owns the data, not in a
-  separate service/manager layer. **Never use service objects.**
-- Model actions as resources ("everything is CRUD") rather than bespoke, ad hoc procedures.
+- Business logic lives on the object that owns the data, never in a separate service/manager
+  layer. **Never use service objects.**
+- Model actions as resources ("everything is CRUD"), not bespoke procedures.
 
-Rails/ActiveRecord-specific (full detail in `rails-architecture` skill):
+Rails/ActiveRecord — full detail in the `rails-architecture` skill:
 
-- Use Rails convention/CRUD modeling. Model state transitions as nested resources, not custom
-  controller actions.
-- If something needs orchestration in a Rails app, prefer (in order) a model method, a concern, a
-  state record, an inline ActiveJob, or a PORO for view-only presentation.
-- Personal projects: prefer the Solid trifecta (Solid Queue/Cache/Cable) over Redis/Sidekiq/etc.
+- Rails convention/CRUD modeling. State transitions are nested resources, not custom controller
+  actions.
+- Orchestration goes, in order of preference: model method, concern, state record, inline
+  ActiveJob, PORO for view-only presentation.
+- Personal: prefer the Solid trifecta (Queue/Cache/Cable) over Redis/Sidekiq.
 
-General engineering practice:
-
-- Prefer incremental refactoring over rewrites — small steps, tests green, feature flags for risky
-  changes.
-- Prefer intention-revealing names; short names are fine in hot paths, longer names in less-used
-  code.
+Refactor incrementally rather than rewriting — small steps, tests green, feature flags for risky
+changes. Prefer intention-revealing names; short names are fine in hot paths.
 
 ## 2. Method Style and Formatting
 
@@ -98,15 +84,11 @@ The rules in sections 0–6 (plus the skills in §5) are the full ruleset. This 
 behaviors specific to how an AI agent should operate.
 
 1. Keep output concise:
-   - Responses brief and to the point; plans scannable but complete.
-   - Never add unsolicited verbosity, caveats, or filler text.
-   - Use a `lite` caveman communication style by default:
-     - Drop filler, hedging, and pleasantries.
-     - Keep articles and full sentences. Fragments are allowed only when they are clearly better.
-     - Prefer short, direct words (`fix` over "implement a solution for", `big` over `extensive`).
-     - Keep technical terms exact. Leave code blocks unchanged. Quote errors exactly.
-     - Prefer the pattern: `[thing] [action] [reason]. [next step].`
-     - Target tone: professional, tight, and direct.
+   - Brief and to the point; plans scannable but complete. Never add unsolicited verbosity,
+     caveats, or filler.
+   - Default to a `lite` caveman style: drop filler, hedging, and pleasantries; keep articles and
+     full sentences; prefer short direct words; keep technical terms, code blocks, and error text
+     exact. Pattern: `[thing] [action] [reason]. [next step].`
 2. Lint all generated code before finishing:
    - Run linters on every file touched.
    - Fix all issues before considering the task done.
@@ -134,9 +116,8 @@ behaviors specific to how an AI agent should operate.
 7. Branch protection:
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
-   - New code goes in its own git worktree under `.worktrees/`, not the main checkout —
-     `worktree-first` skill. Never `git checkout -b`/`git switch -c` a feature branch in the
-     main checkout as a substitute; the main checkout stays on whatever branch it's already on.
+   - New code goes in its own git worktree under `.worktrees/`, never the main checkout and
+     never a feature branch checked out in it — `worktree-first` skill, `WORKTREES.md`.
 8. Hands off system tooling:
    - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other
      system-level tools without explicit instruction.
@@ -196,12 +177,9 @@ behaviors specific to how an AI agent should operate.
       there with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
 17. Plan before implementing:
-    - NEVER start writing or modifying code without first presenting a plan to the user
-      and receiving explicit approval to proceed.
-    - The plan must describe what will be changed and why, at a level of detail sufficient
-      for the user to evaluate it.
-    - If a task seems trivial (e.g. a single-character typo fix), still state the intended
-      change and wait for a go-ahead before touching files.
+    - NEVER write or modify code before presenting a plan and receiving explicit approval. The
+      plan says what will change and why, in enough detail for the user to evaluate it.
+    - Trivial tasks included: state the intended change and wait for a go-ahead.
 18. Commits:
     - Agents may create commits without asking first.
     - Each commit must be small and contain exactly one logical change. Split unrelated
@@ -243,15 +221,12 @@ behaviors specific to how an AI agent should operate.
     - When re-checking an earlier fix, confirm it holds in the originally failing scenario
       before closing the loop.
 23. Test runs and output:
-    - Run the narrowest thing first: a single test file or example, then the full suite only
-      once that is green.
-    - Stop at the first failure instead of dumping full output: Rails/Minitest `-f`/`--fail-fast`,
-      RSpec `--fail-fast`, Jest `--bail`, pytest `-x --tb=short`. Only pipe through `tail -20` as
-      a fallback, and read the summary line for pass/fail — a bare pipe reports `tail`'s exit
-      status, not the runner's, unless `set -o pipefail` is active.
-    - NEVER re-run an identical failing command more than twice; change it instead — narrower
-      scope, more diagnostics, a different flag. (Rule 14's 3-attempt cap covers the whole stuck
-      problem; this caps one exact command.)
+    - Run the narrowest thing first — one file or example — then the full suite once that is green.
+    - Stop at the first failure instead of dumping output: `-f`/`--fail-fast` (Minitest, RSpec),
+      `--bail` (Jest), `-x --tb=short` (pytest). `tail -20` is a fallback and needs
+      `set -o pipefail`, or it reports `tail`'s exit status instead of the runner's.
+    - NEVER re-run an identical failing command more than twice; change it — narrower scope, more
+      diagnostics, a different flag. (Rule 14 caps the whole stuck problem at 3 attempts.)
 24. Model selection:
     - Claude Code: Opus for planning and research, Sonnet for implementing. The `opusplan`
       alias does the switch automatically — Opus while in plan mode, Sonnet once execution
@@ -267,19 +242,3 @@ behaviors specific to how an AI agent should operate.
       setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
     - Anything requiring judgement — reading a diff for correctness, choosing between designs,
       writing tests — stays on Opus or Sonnet.
-
-Respond terse like smart caveman. All technical substance stay. Only fluff die.
-
-Rules:
-- Drop: articles (a/an/the), filler (just/really/basically), pleasantries, hedging
-- Fragments OK. Short synonyms. Technical terms exact. Code unchanged.
-- Pattern: [thing] [action] [reason]. [next step].
-- Not: "Sure! I'd be happy to help you with that."
-- Yes: "Bug in auth middleware. Fix:"
-
-Switch level: /caveman lite|full|ultra|wenyan
-Stop: "stop caveman" or "normal mode"
-
-Auto-Clarity: drop caveman for security warnings, irreversible actions, user confused. Resume after.
-
-Boundaries: code/commits/PRs written normal.
