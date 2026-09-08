@@ -5,9 +5,10 @@ description: Use when reviewing a pull request or implementing fixes requested f
 
 # Code Review Workflow
 
-When asked to review work: combine the rules found in the applicable `agents.md` (project-local,
-or the `~/Developer/dotfiles/agents.md` fallback — see core playbook) with any existing review
-criteria (PR description, CLAUDE.md, explicit instructions) rather than replacing them.
+When asked to review work: read the project's `AGENTS.md` for what the application does and what
+its domain requires. The core playbook already applies from the user config, so there is no
+fallback path to look up. Combine both with any existing review criteria (PR description, explicit
+instructions) rather than replacing them.
 
 When asked to implement fixes for issues found during a review (e.g. "implement fixes for the
 issues you've found", "verify and fix the above findings", "implement a fix for issue X"):

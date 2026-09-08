@@ -28,7 +28,8 @@ Three roles. Do only the one asked for.
 
 ## Executing a handed-over plan
 
-- Read the applicable `agents.md` fully first, following links.
+- Read the project's `AGENTS.md` fully first, following links — the shared playbook already
+  applies from the user config.
 - Execute only the assigned phase or scope — nothing beyond it, no handing work onward.
 - An approved plan means: stop asking what to do next; work through it.
 - When the plan no longer matches reality (e.g. main moved), rebase, re-verify the plan against
