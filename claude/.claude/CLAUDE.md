@@ -1,3 +1,4 @@
+@PLAYBOOK.md
 @HEADROOM.md
 @WORKTREES.md
 @TOKENS.md
