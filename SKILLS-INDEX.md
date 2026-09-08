@@ -51,11 +51,6 @@ at `~/.claude/skills/...`.
 - Working inside the dotfiles repository — stow, bootstrap, symlinks, machine setup, agent skill
   layout: `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
 
-## Codex-only
-
-- Syncing GitHub/Slack/Outlook/Slite work items into Fizzy:
-  `codex/.codex/skills/fizzy-sync/SKILL.md`
-
 ## Not listed here
 
 `handoff` and `review` are Claude-only slash commands that drive Herdr panes. They cannot be used
