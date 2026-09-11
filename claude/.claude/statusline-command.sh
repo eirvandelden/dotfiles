@@ -14,4 +14,13 @@ if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
   fi
 fi
 
-[ -n "$last_message_time" ] && echo "Last reply: $last_message_time"
+pr_block=$(echo "$input" | grep -o '"pr":{[^}]*}')
+pr_url=$(echo "$pr_block" | grep -o '"url":"[^"]*"' | head -1 | sed 's/"url":"//;s/"$//')
+
+line=""
+[ -n "$last_message_time" ] && line="Last reply: $last_message_time"
+if [ -n "$pr_url" ]; then
+  [ -n "$line" ] && line="$line | $pr_url" || line="$pr_url"
+fi
+
+[ -n "$line" ] && echo "$line"
