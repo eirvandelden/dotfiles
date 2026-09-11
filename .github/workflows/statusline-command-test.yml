@@ -1,0 +1,24 @@
+name: Statusline command test
+
+on:
+  push:
+    paths:
+      - claude/.claude/statusline-command.rb
+      - claude/.claude/test/statusline_command_test.rb
+      - .github/workflows/statusline-command-test.yml
+  pull_request:
+    paths:
+      - claude/.claude/statusline-command.rb
+      - claude/.claude/test/statusline_command_test.rb
+      - .github/workflows/statusline-command-test.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+      - run: gem install minitest --no-document
+      - run: ruby claude/.claude/test/statusline_command_test.rb
