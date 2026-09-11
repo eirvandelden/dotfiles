@@ -1,6 +1,10 @@
 {
   "model": "opusplan[1m]",
   "showMessageTimestamps": true,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh"
+  },
   "sandbox": {
     "enabled": false,
     "allowUnsandboxedCommands": false,
