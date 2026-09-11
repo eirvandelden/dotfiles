@@ -7,6 +7,11 @@ Core rules only. Topic-specific guidance lives in skills — see §5.
 Single source of truth for the rules that constrain almost every coding session, for humans and
 agents alike. Read and apply every section before producing output.
 
+This file arrives from the user config — `~/.claude/PLAYBOOK.md` for Claude,
+`~/.codex/PLAYBOOK.md` for Codex — so it applies in every repository with no per-repo setup. A
+repository's own `AGENTS.md` covers the other half: what that application does, its domain, its
+commands, its gotchas. Read both.
+
 Scope labels: **Personal** for personal projects, **Work** for professional projects,
 **Both** for all of them. Where an item differs per scope, both are listed.
 
@@ -172,9 +177,10 @@ behaviors specific to how an AI agent should operate.
       differ (Minitest vs. RSpec, fixtures vs. FactoryBot, i18n vs. gettext, etc.).
     - NEVER copy code, configuration, or credentials between personal and work projects.
 16. Code review workflow:
-    - When asked to review work: first look for an `agents.md` file in the project root;
-      if none exists, fall back to `~/Developer/dotfiles/agents.md`. Combine the rules found
-      there with any existing review criteria rather than replacing them.
+    - When asked to review work: read the project's `AGENTS.md` for what the application does and
+      what its domain requires. This playbook already applies from the user config, so there is no
+      fallback to look up.
+    - Combine both with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
 17. Plan before implementing:
     - NEVER write or modify code before presenting a plan and receiving explicit approval. The

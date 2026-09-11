@@ -1,15 +1,17 @@
 ---
 name: new-repo-setup
-description: Use when creating a new personal repository or bringing an existing one up to standard — agents.md symlinks, rv, lefthook, linters, CI, dependabot, deploy config.
+description: Use when creating a new personal repository or bringing an existing one up to standard — the repo context file, .claude config, rv, lefthook, linters, CI, dependabot, deploy config.
 ---
 
 # New Repo Setup (personal projects)
 
 Checklist, in order. Reference repo for configs: `~/Developer/journal_administration`.
 
-1. Agent instructions: `AGENTS.md` is a symlink to `~/Developer/dotfiles/agents.md` (absolute
-   path — it exists on both macOS and SteamOS); `CLAUDE.md` is a symlink to `AGENTS.md`.
-   Both symlinks are committed to the repository.
+1. Agent instructions: `AGENTS.md` is a real committed file describing this application — see
+   "The repo context file" below. `CLAUDE.md` is a symlink to `AGENTS.md`, also committed.
+   Never symlink either one to the shared playbook: that arrives from the user config
+   (`~/.claude/PLAYBOOK.md`, `~/.codex/PLAYBOOK.md`) in every repository already, and a repo
+   that symlinks it too just loads it twice.
 2. Ruby: `.ruby-version` present; `rv` is the version manager — never mise/asdf/rbenv/rvm.
 3. Git hooks: no lefthook files needed in a new repo. Global `core.hooksPath` scripts
    automatically set `LEFTHOOK_CONFIG` to `~/Developer/dotfiles/lefthook.yml` when the repo has
@@ -47,3 +49,44 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
 8. i18n: Dutch, English, and Italian locales from the start; no hardcoded user-facing strings.
 9. Deploy (when the app deploys): Kamal, mirroring the reference repo's setup with names and
    URLs updated.
+10. Claude Code project config — personal repos only, never a work repository. Commit
+    `.claude/settings.json` (repo-scoped permissions and hooks), `.claude/skills/` and
+    `.claude/agents/`. Add the session state to `.gitignore`:
+
+    ```gitignore
+    .claude/settings.local.json
+    .claude/.cc-writes
+    .claude/worktrees/
+    .claude/scheduled_tasks.lock
+    ```
+
+## The repo context file
+
+`AGENTS.md` answers what the shared playbook cannot: what this particular application is for.
+Keep it under a page — every session reads all of it, so anything stale costs context and buys
+nothing. Grow the gotchas by correction: when an agent gets the same thing wrong twice, the
+correction goes in the file.
+
+```markdown
+# <name>
+
+## What this is
+
+The use case in two or three sentences. Who uses it, and what problem it solves for them.
+
+## Domain
+
+The nouns and how they relate. State transitions. Invariants that must never break.
+
+## Commands
+
+Setup, run, test, lint.
+
+## Gotchas
+
+What an agent gets wrong here.
+```
+
+Write it for the agent, in the domain's own words: precise nouns, real state transitions, the
+things that must never happen. That text reads well to a person too, which is why the README can
+link here rather than repeat it.
