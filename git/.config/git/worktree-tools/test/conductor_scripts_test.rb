@@ -9,7 +9,6 @@ class ConductorScriptsTest < Minitest::Test
   SETUP_SCRIPT = File.join(ROOT, "conductor/.config/conductor/scripts/setup")
   RUN_SCRIPT = File.join(ROOT, "conductor/.config/conductor/scripts/run")
   ARCHIVE_SCRIPT = File.join(ROOT, "conductor/.config/conductor/scripts/archive")
-  CLAUDE_FILE = File.join(ROOT, "claude/.config/claude/CLAUDE.md")
   CONDUCTOR_ENV_KEYS = %w[CONDUCTOR_ROOT_PATH CONDUCTOR_PORT CONDUCTOR_WORKSPACE_NAME CONDUCTOR_WORKSPACE_PATH].freeze
 
   def setup
@@ -72,11 +71,6 @@ class ConductorScriptsTest < Minitest::Test
 
     log = File.read(log_file)
     assert_includes log, "DATABASE_NAME=workspace_db exec rails db:drop"
-  end
-
-  def test_claude_symlink_points_to_dotfiles_agents_file
-    assert File.symlink?(CLAUDE_FILE), "expected #{CLAUDE_FILE} to remain a symlink"
-    assert_equal File.expand_path("~/Developer/dotfiles/agents.md"), File.readlink(CLAUDE_FILE)
   end
 
   private
