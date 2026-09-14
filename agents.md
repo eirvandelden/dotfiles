@@ -105,9 +105,12 @@ behaviors specific to how an AI agent should operate.
      re-read your own diff and adjusted.
 4. Ask for clarification when the playbook does not cover something.
 5. Pull request workflow:
-   - Always target `origin` (personal fork) over upstream.
+   - Always target `origin` (personal fork or own work repo) over upstream.
+   - Agents may push branches and open PRs against `origin` without asking first, while
+     implementing. Rule 6 still applies: never post/comment as Etienne on them without
+     explicit instruction for that exact message.
    - If the target repository is ambiguous, ask before proceeding.
-   - Never create PRs to an upstream project without explicit instruction.
+   - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md`
      or similar). Mandatory on work repos; use on personal repos too if one exists.
 6. GitHub identity and consent:
