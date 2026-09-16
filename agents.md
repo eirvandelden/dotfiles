@@ -251,3 +251,9 @@ behaviors specific to how an AI agent should operate.
       setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
     - Anything requiring judgement — reading a diff for correctness, choosing between designs,
       writing tests — stays on Opus or Sonnet.
+25. Pre-existing CI failures:
+    - CI red on a branch or repo for reasons unrelated to the current task never gets ignored.
+      Fix it.
+    - Workflow: new worktree → fix the CI failure there → push → open a PR (rules 5/6/19
+      consent still apply) → rebase the original in-progress work on top of that fix.
+    - Applies to personal and work projects both.
