@@ -1,0 +1,59 @@
+# Prompt before a handful of destructive or infra-affecting commands, so Codex
+# stays autonomous (approval_policy = "on-request") for everything else.
+# Reference: https://github.com/openai/codex/tree/main/codex-rs/execpolicy
+
+prefix_rule(
+    pattern = ["rm"],
+    decision = "prompt",
+    justification = "deletes files with no undo",
+    match = [["rm", "file.txt"], "rm -rf build"],
+)
+
+prefix_rule(
+    pattern = ["trash"],
+    decision = "prompt",
+    justification = "removes files, even if recoverable from the system trash",
+    match = [["trash", "file.txt"]],
+)
+
+prefix_rule(
+    pattern = ["kamal", "deploy"],
+    decision = "prompt",
+    justification = "deploys to production (playbook rule 13)",
+    match = [["kamal", "deploy"]],
+)
+
+prefix_rule(
+    pattern = ["cap", "deploy"],
+    decision = "prompt",
+    justification = "deploys to production (playbook rule 13)",
+    match = [["cap", "deploy"]],
+)
+
+prefix_rule(
+    pattern = ["terraform", "destroy"],
+    decision = "prompt",
+    justification = "destroys provisioned infrastructure",
+    match = [["terraform", "destroy"]],
+)
+
+prefix_rule(
+    pattern = ["terraform", "apply"],
+    decision = "prompt",
+    justification = "changes provisioned infrastructure",
+    match = [["terraform", "apply"]],
+)
+
+prefix_rule(
+    pattern = ["kubectl", "delete"],
+    decision = "prompt",
+    justification = "deletes cluster resources",
+    match = [["kubectl", "delete", "pod", "foo"]],
+)
+
+prefix_rule(
+    pattern = ["docker", "system", "prune"],
+    decision = "prompt",
+    justification = "deletes unused containers, images, and volumes",
+    match = [["docker", "system", "prune"]],
+)
