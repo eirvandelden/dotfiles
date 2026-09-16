@@ -22,7 +22,7 @@ require("lazy").setup({
     lazy = false,
     version = false, -- always use the latest git commit
   },
-  install = { colorscheme = { "selenized" } },
+  install = { colorscheme = { "solunized" } },
   checker = {
     enabled = true, -- check for plugin updates periodically
     notify = false, -- notify on update

@@ -63,3 +63,10 @@ end
 pcall(function()
   vim.api.nvim_set_hl(0, "WinSeparator", { link = "FloatBorder" })
 end)
+
+if vim.o.background == "light" then
+  vim.g.solunized_light_variant = "light"
+else
+  vim.g.solunized_dark_variant = "dark"
+end
+vim.cmd.colorscheme("solunized")
