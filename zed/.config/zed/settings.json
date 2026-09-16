@@ -43,8 +43,8 @@
   },
   "theme": {
     "mode": "system",
-    "dark": "Selenized (Rails) Black",
-    "light": "Selenized (Rails) Light",
+    "dark": "Solunized Black",
+    "light": "Solunized Light",
   },
   "icon_theme": "Bearded Icon Theme",
   "base_keymap": null, // Base keymap still influences non-Vim contexts (palette, lists, etc.)
