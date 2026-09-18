@@ -31,7 +31,16 @@ module Claude
         { type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" }
       )
 
-      assert_equal "Last reply: 09:30", StatuslineCommand.render({ transcript_path: path }.to_json)
+      today = Time.parse("2026-01-15T12:00:00.000Z")
+
+      assert_equal "Last reply: 09:30", StatuslineCommand.render({ transcript_path: path }.to_json, today: today)
+    end
+
+    def test_shows_the_date_when_the_last_reply_was_not_today
+      path = transcript({ type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" })
+      today = Time.parse("2026-01-16T00:00:00.000Z")
+
+      assert_equal "Last reply: Jan 15 09:30", StatuslineCommand.render({ transcript_path: path }.to_json, today: today)
     end
 
     def test_picks_the_last_assistant_message_not_the_first
@@ -41,14 +50,18 @@ module Claude
         { type: "assistant", timestamp: "2026-01-15T09:45:00.000Z" }
       )
 
-      assert_equal "Last reply: 09:45", StatuslineCommand.render({ transcript_path: path }.to_json)
+      today = Time.parse("2026-01-15T12:00:00.000Z")
+
+      assert_equal "Last reply: 09:45", StatuslineCommand.render({ transcript_path: path }.to_json, today: today)
     end
 
     def test_includes_the_full_pr_url_alongside_the_reply_time
       path = transcript({ type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" })
       input = { transcript_path: path, pr: { number: 130, url: "https://github.com/eirvandelden/dotfiles/pull/130" } }
+      today = Time.parse("2026-01-15T12:00:00.000Z")
 
-      assert_equal "Last reply: 09:30 | https://github.com/eirvandelden/dotfiles/pull/130", StatuslineCommand.render(input.to_json)
+      assert_equal "Last reply: 09:30 | https://github.com/eirvandelden/dotfiles/pull/130",
+        StatuslineCommand.render(input.to_json, today: today)
     end
 
     def test_shows_only_the_pr_url_when_there_is_no_reply_yet
