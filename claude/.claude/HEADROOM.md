@@ -27,9 +27,10 @@ valid `settings.json` key, so this can't be dotfiles-managed):
 claude mcp add --scope user semble uvx -- --from "semble[mcp]" semble
 ```
 
-## Home MCP servers (email, fizzy)
+## Home MCP servers (email, fizzy, home-assistant)
 
-Same servers as `[mcp_servers.email]` / `[mcp_servers.fizzy]` in `codex/.codex/config.toml`.
+Same servers as `[mcp_servers.email]` / `[mcp_servers.fizzy]` / `[mcp_servers.home-assistant]` in
+`codex/.codex/config.toml`.
 Claude has no `bearer_token_env_var`, so the token comes from `${VAR}` expansion instead —
 run `unlock` before `claude`, or the server sends the literal `${VAR}` text and gets a 401.
 
@@ -42,4 +43,14 @@ claude mcp add --scope user --transport http email http://email-mcp.home.arpa/mc
 
 claude mcp add --scope user --transport http fizzy http://fizzy-mcp.home.arpa/mcp \
   --header 'Authorization: Bearer ${FIZZY_PAT}'
+
+claude mcp add --scope user --transport http home-assistant http://ha-mcp.home.arpa/mcp \
+  --header 'Authorization: Bearer ${HOME_ASSISTANT_MCP_TOKEN}'
 ```
+
+Home Assistant is deployed from `~/Developer/ha-mcp`: a token-checking gate in front of
+[ha-mcp](https://github.com/homeassistant-ai/ha-mcp), because ha-mcp itself authenticates only by
+keeping its URL path secret — and a secret URL cannot live in this repo. Codex gates the
+irreversible tools (removing automations, scenes, scripts, dashboards, devices, entities; writing
+raw YAML or files; reloading or restarting Home Assistant) behind an approval prompt. Claude Code
+has no equivalent per-tool setting, so there it relies on the usual permission prompts.
