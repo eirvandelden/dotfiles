@@ -25,13 +25,30 @@ module Claude
       path
     end
 
+    def reply_date
+      Date.new(2026, 1, 15)
+    end
+
     def test_shows_the_last_assistant_reply_time
       path = transcript(
         { type: "user", timestamp: "2026-01-15T08:00:00.000Z" },
         { type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" }
       )
 
-      assert_equal "Last reply: 09:30", StatuslineCommand.render({ transcript_path: path }.to_json)
+      assert_equal "Last reply: 09:30", StatuslineCommand.render({ transcript_path: path }.to_json, today: reply_date)
+    end
+
+    def test_shows_the_date_when_the_last_reply_was_not_today
+      path = transcript({ type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" })
+
+      assert_equal "Last reply: Jan 15 09:30",
+        StatuslineCommand.render({ transcript_path: path }.to_json, today: reply_date.next_day)
+    end
+
+    def test_omits_the_date_for_a_reply_made_just_now
+      path = transcript({ type: "assistant", timestamp: Time.now.utc.iso8601(3) })
+
+      assert_match(/\ALast reply: \d\d:\d\d\z/, StatuslineCommand.render({ transcript_path: path }.to_json))
     end
 
     def test_picks_the_last_assistant_message_not_the_first
@@ -41,14 +58,15 @@ module Claude
         { type: "assistant", timestamp: "2026-01-15T09:45:00.000Z" }
       )
 
-      assert_equal "Last reply: 09:45", StatuslineCommand.render({ transcript_path: path }.to_json)
+      assert_equal "Last reply: 09:45", StatuslineCommand.render({ transcript_path: path }.to_json, today: reply_date)
     end
 
     def test_includes_the_full_pr_url_alongside_the_reply_time
       path = transcript({ type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" })
       input = { transcript_path: path, pr: { number: 130, url: "https://github.com/eirvandelden/dotfiles/pull/130" } }
 
-      assert_equal "Last reply: 09:30 | https://github.com/eirvandelden/dotfiles/pull/130", StatuslineCommand.render(input.to_json)
+      assert_equal "Last reply: 09:30 | https://github.com/eirvandelden/dotfiles/pull/130",
+        StatuslineCommand.render(input.to_json, today: reply_date)
     end
 
     def test_shows_only_the_pr_url_when_there_is_no_reply_yet

@@ -2,6 +2,7 @@
 
 require "json"
 require "time"
+require "date"
 
 module StatuslineCommand
   module_function
@@ -15,17 +16,18 @@ module StatuslineCommand
     nil
   end
 
-  def format_local_time(timestamp)
+  def format_local_time(timestamp, today:)
     return nil unless timestamp
 
-    Time.parse(timestamp).localtime.strftime("%H:%M")
+    reply_time = Time.parse(timestamp).localtime
+    reply_time.strftime(reply_time.to_date == today ? "%H:%M" : "%b %-d %H:%M")
   rescue ArgumentError
     nil
   end
 
-  def render(json_input)
+  def render(json_input, today: Time.now.getlocal.to_date)
     data = JSON.parse(json_input)
-    reply_time = format_local_time(last_assistant_timestamp(data["transcript_path"]))
+    reply_time = format_local_time(last_assistant_timestamp(data["transcript_path"]), today: today)
     pr_url = data.dig("pr", "url")
 
     [ ("Last reply: #{reply_time}" if reply_time), pr_url ].compact.join(" | ")
