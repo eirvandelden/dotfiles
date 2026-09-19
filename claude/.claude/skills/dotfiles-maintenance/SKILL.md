@@ -59,6 +59,10 @@ for the current package list and the cross-platform package-manager breakdown.
 - NEVER run `stow` or `stow -R` without explicit instruction.
 - NEVER create new stow packages (top-level directories) without explicit instruction.
 
+## Core values hook
+
+`claude/.claude/core-values.yml` mirrors a handful of PLAYBOOK.md §7 rules — the judgment-based ones a linter can't enforce — so `hooks/core-values.rb` can reinject them on every session start and prompt. Edit both together: a rule that changes in PLAYBOOK.md and not here is the one the agent stops following, since the hook's copy is what keeps getting read after the first message. Like any other hook script, it only runs on this machine once the `claude` package is stowed again.
+
 ## Agent skills
 
 Claude skills live under `claude/.claude/skills/<skill-name>/SKILL.md` and are installed at
