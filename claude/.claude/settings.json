@@ -91,6 +91,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/hooks/core-values.rb\" full",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -121,6 +131,15 @@
           {
             "type": "command",
             "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/hooks/core-values.rb\" motto",
             "timeout": 10
           }
         ]
