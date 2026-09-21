@@ -61,6 +61,9 @@
 	autoSetupRemote = true
 [rebase]
   autoStash = true
+[rerere]
+  enabled = true
+  autoUpdate = true
 [sequence]
   editor = ~/.local/bin/editor-wait
 [tag]
