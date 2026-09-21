@@ -112,6 +112,106 @@ bearer_token_env_var = "MCP_EMAIL_SERVER_AUTH_TOKEN"
 [mcp_servers.email.tools.get_emails_content]
 approval_mode = "approve"
 
+[mcp_servers.home-assistant]
+url = "http://ha-mcp.home.arpa/mcp"
+bearer_token_env_var = "HOME_ASSISTANT_MCP_TOKEN"
+
+[mcp_servers.home-assistant.tools.ha_bulk_control]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_call_service]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_delete_dashboard]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_delete_dashboard_resource]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_automation]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_calendar_event]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_category]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_group]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_label]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_scene]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_remove_script]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_config_set_yaml]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_delete_file]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_dev_manage_server]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_dev_manage_settings]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_list_files]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_manage_app]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_manage_backup]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_manage_custom_tool]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_manage_hacs]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_manage_security_policy]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_manage_updates]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_read_file]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_reload_core]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_remove_area_or_floor]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_remove_device]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_remove_entity]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_remove_helpers_integrations]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_remove_todo_item]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_remove_zone]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_restart]
+approval_mode = "approve"
+
+[mcp_servers.home-assistant.tools.ha_write_file]
+approval_mode = "approve"
+
 [mcp_servers.fizzy]
 url = "http://fizzy-mcp.home.arpa/mcp"
 bearer_token_env_var = "FIZZY_PAT"
