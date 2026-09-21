@@ -88,6 +88,8 @@ Undecided areas, to be settled per project: `docs/open-questions.md`.
 The rules in sections 0–6 (plus the skills in §5) are the full ruleset. This section covers only
 behaviors specific to how an AI agent should operate.
 
+Claude Code: a subset of the workflow, verification, and consent rules below is also mirrored in `claude/.claude/core-values.yml`, which a hook reinjects every session and prompt so it survives context compaction. Editing a mirrored rule here means editing it there too — see the `dotfiles-maintenance` skill.
+
 1. Keep output concise:
    - Brief and to the point; plans scannable but complete. Never add unsolicited verbosity,
      caveats, or filler.

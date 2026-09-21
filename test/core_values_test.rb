@@ -95,6 +95,53 @@ class CoreValuesTest < Minitest::Test
     assert_match(/\S/, stderr)
   end
 
+  def test_an_empty_config_file_warns_instead_of_going_quiet
+    write_config("")
+
+    stdout, stderr, status = run_hook("full")
+
+    assert_equal(0, status.exitstatus)
+    assert_empty(stdout)
+    assert_match(/\S/, stderr)
+  end
+
+  def test_a_config_that_parses_to_null_warns_instead_of_going_quiet
+    write_config("--- null\n")
+
+    stdout, stderr, status = run_hook("full")
+
+    assert_equal(0, status.exitstatus)
+    assert_empty(stdout)
+    assert_match(/\S/, stderr)
+  end
+
+  def test_a_sections_value_that_is_not_a_mapping_warns_instead_of_crashing
+    write_config(<<~YAML)
+      ---
+      motto: "Plan first."
+      sections: "oops"
+    YAML
+
+    stdout, stderr, status = run_hook("full")
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_match(/\S/, stderr)
+  end
+
+  def test_a_sections_value_that_is_a_bare_list_warns_instead_of_crashing
+    write_config(<<~YAML)
+      ---
+      motto: "Plan first."
+      sections:
+        - "Never write code before a plan."
+    YAML
+
+    stdout, stderr, status = run_hook("full")
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_match(/\S/, stderr)
+  end
+
   def test_an_empty_sections_key_does_not_crash
     write_config(<<~YAML)
       ---
