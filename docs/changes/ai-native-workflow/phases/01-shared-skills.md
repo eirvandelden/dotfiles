@@ -24,7 +24,7 @@ Codex facts, verified against its docs on 2026-09-18 (`learn.chatgpt.com/docs/bu
    - A skill whose Claude frontmatter has `disable-model-invocation: true` has `allow_implicit_invocation: false` in its `agents/openai.yaml`, and vice versa.
    - `codex/.codex/WORKTREES.md` resolves to `claude/.claude/WORKTREES.md`. Run it; it fails because the Codex copies are real files. That is the gap.
 
-2. **GREEN — convert existing skills.** For each of `handoff`, `review`, `worktree-first`:
+2. **GREEN — convert existing skills.** For each of `handoff`, `review`, `worktree-first` (`handoff` is absorbed into `implement` in phase 2 and `review` is rewritten in phase 3; converting them here still proves the mechanism on real files):
    - Diff the Codex `SKILL.md` against the Claude one. Fold any Codex-only sentence into the Claude file under a short `## Codex` heading (the Codex `worktree-first` note about `allow_implicit_invocation: false` is the known case).
    - Move `codex/.codex/skills/<name>/agents/openai.yaml` to `claude/.claude/skills/<name>/agents/openai.yaml` (Claude ignores `agents/`).
    - Replace the directory `codex/.codex/skills/<name>` with a relative symlink to `../../../claude/.claude/skills/<name>` (`git rm -r` the old files, `ln -s`, `git add`).

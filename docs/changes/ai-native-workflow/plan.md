@@ -13,7 +13,7 @@ Dotfiles (`~/Developer/dotfiles`, public — no employer names):
 - `agents.md` (the playbook): §7.17, §7.24, new "Things agents get wrong here", §5 pointer.
 - `SKILLS-INDEX.md`: new skills, removed `plan-handoff`.
 - `claude/.claude/settings.json`: `enabledPlugins`.
-- `claude/.claude/skills/`: new `intent`, `spec`, `plan`, `implement`, `review-branch`, `finish`; adapted `handoff`, `review`; removed `plan-handoff`; vendored domain skills.
+- `claude/.claude/skills/`: new `intent`, `spec`, `plan`, `implement`, `finish`; rewritten `review` (absorbs the pane version); removed `plan-handoff`, `handoff` (absorbed by `implement handoff`); vendored domain skills.
 - `claude/.claude/agents/`: new `reviewer.md`, `test-writer.md`, `implementer.md`; `zubat.md` unchanged.
 - `claude/.claude/skills/new-repo-setup/references/REVIEW.md`: the review policy template.
 - `claude/.claude/skills/plan/scripts/change-folder`, `claude/.claude/skills/finish/scripts/{fill-pr-template,change-scope}`, `bin/generate-codex-agents`, `git/.config/git/worktree-tools/review-report-fresh`: small Ruby scripts, each with a test.
@@ -38,8 +38,8 @@ Personal repositories: `REVIEW.md` and `docs/changes/` via `new-repo-setup`, one
 | # | Phase file | Delivers | Habit it enables |
 |---|---|---|---|
 | 1 | `phases/01-shared-skills.md` | one-source skill linking Claude ↔ Codex, drift test, existing `handoff`/`review`/`worktree-first` migrated onto it | — (mechanics) |
-| 2 | `phases/02-artifact-skills.md` | `docs/changes/<slug>/`, `intent`/`spec`/`plan`/`implement` skills, playbook §7.17, `handoff` reads the change folder, `plan-handoff` absorbed | habits 1, 2 |
-| 3 | `phases/03-review-branch.md` | `REVIEW.md` template, `reviewer` agent (Claude md + generated Codex toml), `review-branch` skill, pre-push freshness check, `new-repo-setup` step | habit 3 |
+| 2 | `phases/02-artifact-skills.md` | `docs/changes/<slug>/`, `intent`/`spec`/`plan`/`implement` skills, playbook §7.17, `handoff` and `plan-handoff` absorbed | habits 1, 2 |
+| 3 | `phases/03-review.md` | `REVIEW.md` template, `reviewer` agent (Claude md + generated Codex toml), `review` skill, pre-push freshness check, `new-repo-setup` step | habit 3 |
 | 4 | `phases/04-finish.md` | `finish`: review fresh → (work: PR template fill, ADR) → delete → commit → (work: push, review board, reviewers); work details in dotfiles-work | habit 5 |
 | 5 | `phases/05-plugins-and-playbook.md` | plugins off in both tools, domain skills vendored, playbook edits, `/audit-token` before/after | habit 4 |
 | 6 | `phases/06-codex-guard-parity.md` | consent guard from Codex inline hooks, rules purge with `forbidden`, parity test extended to hooks | habit 6 |
@@ -65,11 +65,11 @@ Adoption pace: one phase per one to two weeks. Do not start phase N+1's habit un
 The change is done when, in a fresh session of each tool, in a throwaway personal repo:
 
 1. `/intent` → `/spec` → `/plan` produce the three files under `docs/changes/<branch>/`, each with a `Status:` line, and `implement` refuses to start on a plan not marked accepted.
-2. `/review-branch` appends a round to `docs/changes/<branch>/review.md` and commits it; `git push` fails while the newest code commit is newer than the newest `review.md` commit, passes after re-running.
+2. `/review` appends a round to `docs/changes/<branch>/review.md` and commits it; `git push` fails while the newest code commit is newer than the newest `review.md` commit, passes after re-running.
 3. `/finish` in a personal repo deletes the folder in one commit and stops. In a work checkout it fills the PR template, deletes, pushes, puts the PR on the review board, requests reviewers — dry-run mode first.
 4. `ruby -Itest -e 'Dir["test/*_test.rb"].each { require "./#{it}" }'` is green in dotfiles, including the parity test.
 5. `/audit-token` shows session-start context at or below the playbook plus includes; no plugin injection; no per-subagent injection.
-6. `codex exec` in the same repo with `$review-branch` produces the same report shape.
+6. `codex exec` in the same repo with `$review` produces the same report shape.
 7. Every plugin listed in §5 of the spec shows `false`/`enabled = false`; none uninstalled.
 
 ## Out of scope for every phase
