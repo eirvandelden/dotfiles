@@ -1,0 +1,68 @@
+# Phase 2: the artifact chain — `intent`, `spec`, `plan`, `implement`
+
+Part of the change in `docs/changes/ai-native-workflow/` (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phase 1 merged. Work in a worktree, PR against `origin`.
+
+## Context
+
+Every change gets a folder in the application repository:
+
+```
+docs/changes/<slug>/
+  intent.md   # Problem / Proposed outcome / Affected users and systems / Constraints / Open questions
+  spec.md     # Requirements / Design decisions / Integration points / Flagged concerns
+  plan.md     # Files that change / Order of work / Risks / Proof
+```
+
+`<slug>` is the current branch name with any `<prefix>/` removed (`ai/foo` → `foo`). Each file starts with a title line and a `Status: draft` or `Status: accepted` line. Files are committed on the feature branch and removed at the end of the change (phase 4). Skills derive the folder; nobody types the path.
+
+Today plans go to `~/.claude/plans/<random>.md` (the `handoff` skill writes there), the `plan-handoff` skill describes writing/critiquing/executing a plan without saying where it lives, and playbook §7.17 says "present a plan" without a file. This phase replaces all three with the folder above. The skills are written once under `claude/.claude/skills/` and linked into Codex via the phase-1 mechanism.
+
+Claude facts (verified 2026-09-18, `code.claude.com/docs/en/skills`): `SKILL.md` frontmatter supports `name`, `description`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `context: fork` + `agent`, `paths`, `arguments`. Plan mode: `--permission-mode plan` or `permissions.defaultMode: "plan"`. Codex: `/plan` toggles plan mode; no default setting; skills invoked as `$name`.
+
+## Talk first
+
+- None. Decisions are in `spec.md` §1–2. If a template wording question comes up, use the playbook's templates verbatim and note the question in the PR.
+
+## Steps
+
+1. **RED — slug and folder script.** `claude/.claude/skills/plan/scripts/change-folder` (Ruby, executable) prints `docs/changes/<slug>` for the current branch, exit 1 with a clear message on `main`/`master`/detached HEAD. Test `test/change_folder_test.rb` covers: plain branch, prefixed branch (`ai/x`, `feature/x`), main refuses, detached refuses. Run: fails, script missing. Then write it. Other skills call this script; do not duplicate the logic.
+
+2. **`intent` skill** — `claude/.claude/skills/intent/SKILL.md` (+ `agents/openai.yaml`, Codex link per phase 1). Behaviour:
+   - Interview in the domain's words: what can users not do today, what does better look like, who and what systems are affected, constraints, success. Three to five questions, then write. A small change still gets an intent; three lines is valid.
+   - Writes `<folder>/intent.md` from the playbook template with `Author:` and `Status: draft`. Creates the folder. Does not `git add` — the user or `implement` commits.
+   - On the words "accepted" / "accept the intent": flips to `Status: accepted`.
+   - Never proposes a solution inside the intent.
+
+3. **`spec` skill** — reads `intent.md` (refuses if `Status: draft`), applies the domain skills that match (it names which ones it used at the bottom), writes `spec.md` with the four sections plus a `## Flagged concerns` list at the top when policies conflict. `Status:` line same as intent.
+
+4. **`plan` skill** — three roles, chosen by the request:
+   - **write**: must run in plan mode. Claude: if not already in plan mode, the skill tells the session to enter it (`EnterPlanMode`) before reading code; Codex: says to run `/plan`. Reads intent + spec (refuses on draft) + codebase; writes `plan.md` with the four sections; asks the user at least one interrogation question ("what could break", "what did you reject") before offering acceptance; `Status: accepted` only on the user's word.
+   - **critique**: the `plan-handoff` "critically review a plan" text, unchanged in substance — read the plan, read the code it touches, verify claims, propose better alternatives. Meant for a second model (`codex -p terra` or an Opus session).
+   - Absorb the "write a plan for another agent" rules from `plan-handoff` (self-contained, no chat references, explicit out-of-scope, one file per phase when phased) into the write role.
+
+5. **`implement` skill** — reads `plan.md`; refuses on `Status: draft`; works through the plan in the current worktree following the playbook (TDD, lint, small commits); when reality departs from the plan, edits `plan.md` **in the same commit** as the code that departs; ends with the plan's Proof section run and its output pasted. Absorbs `plan-handoff`'s "executing a handed-over plan" rules.
+
+6. **Retire `plan-handoff`.** `git rm -r claude/.claude/skills/plan-handoff`; update `SKILLS-INDEX.md` ("Planning and setup" entry → `intent`, `spec`, `plan`, `implement`). Grep the repo for `plan-handoff` and fix every reference (`handoff/SKILL.md` names it).
+
+7. **Adapt `handoff`.** Step 1 of `claude/.claude/skills/handoff/SKILL.md`: the plan is `<folder>/plan.md` (via `change-folder`); it must be `Status: accepted`; if absent, run the `plan` skill first. Drop every mention of `~/.claude/plans/`. Check `herdr/.config/herdr/scripts/hand-off-plan.sh` and `test/herdr_worker_scripts_test.rb` for assumptions about that path; the script takes an absolute path argument today, so likely nothing changes — confirm by running the test.
+
+8. **Playbook §7.17.** Replace the rule text with: no code before an accepted `plan.md` in `docs/changes/<slug>/`, produced in plan mode from an accepted `intent.md` and `spec.md`; trivial tasks get a one-line intent and a one-line plan, not an exemption. Keep the rule number. Add one line to §5 pointing at the four skills.
+
+9. **`new-repo-setup`.** Step 1: mention that `docs/changes/` is reserved for change folders and must not be in `.gitignore`. Nothing else in this phase.
+
+10. **Parity.** `test/skill_parity_test.rb` (phase 1) must stay green: each new skill needs its Codex symlink and `agents/openai.yaml`. `intent`, `spec`, `plan`, `implement` are model-invocable in both tools (no `disable-model-invocation`).
+
+## Files
+
+New: `claude/.claude/skills/{intent,spec,plan,implement}/SKILL.md` and `agents/openai.yaml`, `claude/.claude/skills/plan/scripts/change-folder`, `test/change_folder_test.rb`, `codex/.codex/skills/{intent,spec,plan,implement}` (symlinks). Changed: `claude/.claude/skills/handoff/SKILL.md`, `claude/.claude/skills/new-repo-setup/SKILL.md`, `agents.md` (§5, §7.17), `SKILLS-INDEX.md`. Removed: `claude/.claude/skills/plan-handoff/`.
+
+## Verification
+
+- `test/` green (`change_folder_test.rb`, `skill_parity_test.rb`, `herdr_worker_scripts_test.rb`).
+- Dry run in a throwaway repo, both tools, fresh sessions: `/intent` → file with `Status: draft`; "accepted" → flipped; `/spec` refuses before that, writes after; `/plan` enters plan mode, asks a question, writes; `/implement` refuses on draft. In Codex the same with `$intent` etc.
+- Grep: no `~/.claude/plans` and no `plan-handoff` left in the repo.
+- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`. Start habit 1.
+
+## Out of scope
+
+Review skills, `REVIEW.md` (phase 3). Deleting folders (phase 4). Plugin changes (phase 5). Migrating existing files in `~/.claude/plans/` — leave them; they are no longer written to. Codex plan-mode-by-default — not available.
