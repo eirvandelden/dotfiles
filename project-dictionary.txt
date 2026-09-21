@@ -129,7 +129,6 @@ updatetime
 uwsm
 vandelden
 vimdoc
-voor
 voska
 wayland
 Wayland

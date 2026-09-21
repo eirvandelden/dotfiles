@@ -49,8 +49,11 @@ claude mcp add --scope user --transport http home-assistant http://ha-mcp.home.a
 ```
 
 Home Assistant is deployed from `~/Developer/ha-mcp`: a token-checking gate in front of
-[ha-mcp](https://github.com/homeassistant-ai/ha-mcp), because ha-mcp itself authenticates only by
-keeping its URL path secret — and a secret URL cannot live in this repo. Codex gates the
-irreversible tools (removing automations, scenes, scripts, dashboards, devices, entities; writing
-raw YAML or files; reloading or restarting Home Assistant) behind an approval prompt. Claude Code
-has no equivalent per-tool setting, so there it relies on the usual permission prompts.
+[ha-mcp](https://github.com/homeassistant-ai/ha-mcp). ha-mcp's standalone HTTP mode does support
+OAuth, but that means a consent-form flow per user; the gate gives one user a shared bearer token
+in the same config shape as email and fizzy, with no consent flow to drive from a headless agent.
+Codex gates every ha-mcp tool that removes, overwrites, or reconfigures Home Assistant, or that
+could change what the agent is allowed to do next (installing add-ons, editing the security
+policy, defining new tools) — see the `[mcp_servers.home-assistant.tools.*]` blocks in
+`codex/.codex/config.toml` for the current list. Claude Code has no equivalent per-tool setting,
+so there it relies on the usual permission prompts.
