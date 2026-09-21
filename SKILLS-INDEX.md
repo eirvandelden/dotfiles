@@ -6,9 +6,10 @@ Claude Code loads these automatically by relevance and does not need this list. 
 (Codex, ChatGPT, etc.) has no automatic loader: read the matching file below before starting work
 that matches its trigger.
 
-Two path forms for the same files. Inside the dotfiles repository, read the repo-local
+Three path forms for the same files. Inside the dotfiles repository, read the repo-local
 `claude/.claude/skills/...` path. After stowing the `claude` package, the same files are installed
-at `~/.claude/skills/...`.
+at `~/.claude/skills/...`. A skill shared with Codex also appears at `~/.agents/skills/...` after
+stowing the `agents` package — the path Codex actually reads.
 
 ## Design and architecture
 
@@ -50,8 +51,3 @@ at `~/.claude/skills/...`.
   `claude/.claude/skills/rails-ops/SKILL.md`
 - Working inside the dotfiles repository — stow, bootstrap, symlinks, machine setup, agent skill
   layout: `claude/.claude/skills/dotfiles-maintenance/SKILL.md`
-
-## Not listed here
-
-`handoff` and `review` are Claude-only slash commands that drive Herdr panes. They cannot be used
-by an agent without Herdr, and they are never model-invoked.
