@@ -1,6 +1,6 @@
 # Spec: AI-native workflow for personal and work development
 
-From `intent.md` (2026-09-18). Decisions below were made in conversation on 2026-09-18 and are settled; the plan does not reopen them.
+From `intent.md` (2026-09-18). Status: accepted (2026-09-21). Decisions below were made in conversation between 2026-09-18 and 2026-09-21 and are settled; the plan does not reopen them.
 
 ## 1. The artifact chain
 

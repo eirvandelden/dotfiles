@@ -1,6 +1,6 @@
 # Intent: AI-native workflow for personal and work development
 
-Author: Etienne van Delden. Status: accepted (2026-09-18).
+Author: Etienne van Delden. Status: accepted (2026-09-21).
 
 ## Problem
 
