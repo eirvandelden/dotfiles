@@ -61,9 +61,9 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: personal — review clean, ready to merge. Work — ready for the team.
 
-**Habit**: personal: `/finish-change`, then merge. Work: `/prepare-for-team`, check the PR body it wrote, then let it flip status and request reviewers. Never delete the folder by hand; never open the team PR by hand any more.
+**Habit**: `/finish`, in both scopes. Personal: it deletes and stops; then merge. Work: check the PR body it wrote, then let it put the PR on the review board and request reviewers. Never delete the folder by hand; never flag the team PR by hand any more.
 
-**Backing**: `finish-change` and `prepare-for-team` skills; ADR prompt for cross-application changes.
+**Backing**: the `finish` skill, scope detected from the remote; ADR prompt for cross-application changes at work.
 
 **Replaces**: leaving artifacts around, or forgetting them in a PR the team sees.
 

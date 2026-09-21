@@ -38,7 +38,7 @@ Each stage is a fresh session or a fresh context. No stage relies on chat histor
 The folder is deleted in its own commit, the last one before the change is handed on:
 
 - **Personal**: after Etienne's review is complete and nothing is open. Then merge.
-- **Work**: by the `prepare-for-team` skill (§5), before the PR is flagged for the team. Team reviewers see the artifacts only through git history. Anyone who looks at the PR earlier sees them; that is accepted.
+- **Work**: by the same `finish` skill (§2), which also fills the PR body and flags the PR for the team, before colleagues look. Team reviewers see the artifacts only through git history. Anyone who looks at the PR earlier sees them; that is accepted.
 
 Kept permanently only as an ADR, and only at work, and only for changes that affect another application (API contracts, published events, shared schemas, anything another team consumes). The finishing skill asks "does this change affect another application?" and, on yes, distils `intent.md` + `spec.md` into an ADR at `docs/adr/NNNN-<slug>.md` in the work repository (Context / Decision / Consequences; numbered sequentially; the folder is created on first use) before deleting the folder.
 
@@ -67,8 +67,7 @@ New skills, one source each, available in both Claude and Codex (§3):
 | `plan` | Runs in plan mode; reads intent + spec + codebase; writes `plan.md` (files, order, risks, structured Proof mapping criteria to tests and files to unit tests); order of work starts with the first failing acceptance test; refuses to implement until accepted; absorbs today's `plan-handoff` "write" and "critique" roles | Codex plan mode; `codex -p terra` for critique |
 | `implement` | Reads `plan.md`; outer loop one failing acceptance test, inner loop red/green/refactor per Proof; updates `plan.md` in the same commit when departing from it; on `Type: bugfix` commits the reproduction test first and marks `Reproduction: committed`; `split` mode (§1.4) hands tests to a `test-writer` agent and production code to an `implementer` agent that cannot write test paths | same; Codex agents restricted by sandbox, path rule by instruction |
 | `review-branch` | Report-only: reads `REVIEW.md` + `plan.md` + `spec.md` + diff; compliance pass includes criterion→test coverage and no weakened tests; writes findings to `docs/changes/<slug>/review.md` (the only file it may write), one dated round per run, and commits it; never edits code | Claude: subagent; Codex: fresh session or Codex subagent if the docs confirm one exists |
-| `finish-change` | Personal: confirms review report exists and is newer than the last code commit; deletes the folder; commits | same |
-| `prepare-for-team` | Work: assumes review already happened (no re-review); fills the repo PR template from `intent.md`/`plan.md` (Summary/Why ← intent; Implementation ← plan; Testing ← plan Proof); deletes the folder; commits; pushes; sets PR status to the team's review state; requests reviewers. Runs only on explicit command | same; status mechanism read from `fizzy-sync` |
+| `finish` | One skill, scope from the remote. Both: confirms `review.md` is fresh and closed; deletes the folder; commits. Work only, before the delete: fills the repo PR template from `intent.md`/`plan.md` (Summary/Why ← intent; Implementation ← plan; Testing ← plan Proof); ADR for cross-application changes. Work only, after: pushes; puts the PR on the team's review project with Status "Needs Review"; requests reviewers. Assumes review already happened. Runs only on explicit command | same; board mechanism in a private after-push script |
 
 Existing skills adapt:
 
@@ -99,7 +98,7 @@ Principle: **one source, thin adapters, a test that fails on drift.**
 - `review-branch` writes `docs/changes/<slug>/review.md` and commits it on the branch — the same place as the other artifacts, deleted with them at the end. Each run appends a round: UTC timestamp, the commit reviewed, the findings by pass and severity. Findings are closed in the same file: `fixed (<commit>)` or `dismissed: <reason>`; the reviewer's only write permission is this one path. Identical for both tools and both scopes; the existing `/review` pane skill already prescribes a written review document and adopts this location.
 - Freshness is defined in git terms, not mtime: the last commit that touched anything outside `docs/changes/<slug>/` must be no newer than the last commit that touched `review.md`, and the working tree must have no uncommitted changes outside the change folder.
 - Deterministic backstop (playbook's hook + skill pattern): a lefthook pre-push command in the global `lefthook.yml` fails when the branch has a `docs/changes/<slug>/` folder and no review report newer than the last commit. Skippable only by the normal `--no-verify` route, which the consent guard already gates.
-- Work repos additionally keep the `review-as-*` persona skills; they run before `prepare-for-team`, as today.
+- Work repos additionally keep the `review-as-*` persona skills; they run before `finish`, as today.
 - Test-file guard (§1.4 bugfix rule): a `PreToolUse` hook on file-editing tools, one Ruby script shared by both tools like the consent guard. It reads the current branch's `plan.md`; when that file contains `Reproduction: committed`, any edit or write to a test path (`test/**`, `spec/**`, `*_test.rb`, `*_spec.rb`, `__tests__/**`, `*.test.*`) is blocked with a message naming the rule. Removing the line from `plan.md` is the deliberate override, and the skill says so.
 
 ## 5. Plugins and always-loaded context
