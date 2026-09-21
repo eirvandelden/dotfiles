@@ -147,3 +147,10 @@ Zed
 zeroheight
 zsh
 zubat
+SDLC
+cavecrew
+evals
+frontmatter
+immich
+Itest
+lucianghinda
