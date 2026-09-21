@@ -1,6 +1,6 @@
 # Habits: what Etienne changes
 
-Tooling makes the new way possible; habits make it happen. One habit per phase, adopted in this order. Each entry: the cue that triggers it, the habit, the tooling that backs it, and the old habit it replaces. Read this before starting any phase; re-read the current phase's entry at the start of each working day for the first two weeks of that phase.
+Tooling makes the new way possible; habits make it happen. Habits 1, 2, 3 and 5 are one workflow and start together on the day phase 4 merges; habits 4, 6 and 7 follow their phases. Read them in this order. Each entry: the cue that triggers it, the habit, the tooling that backs it, and the old habit it replaces. Read this before starting any phase; re-read the current phase's entry at the start of each working day for the first two weeks of that phase.
 
 The playbook's own rule for tuning applies to this file too: when the same slip happens twice, add the cue that would have caught it.
 

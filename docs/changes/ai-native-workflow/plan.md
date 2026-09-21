@@ -47,7 +47,7 @@ Personal repositories: `REVIEW.md` and `docs/changes/` via `new-repo-setup`, one
 
 Phases 1–4 are sequential. Phase 5 can start after 2. Phase 6 after 1. Phase 7 items are independent and may be picked up any time by a mechanical (Haiku) worker, one item per commit.
 
-Adoption pace: one phase per one to two weeks. Do not start phase N+1's habit until phase N's habit has held for a week; the tooling may go faster than the habit, that is fine.
+Adoption pace: phases 1–4 are built back-to-back, one PR each, merged in order, with no waiting between them. Together they form one workflow — intent → spec → plan → implement → review → finish — and replace the `handoff` and `review` skills that are already in daily use, so the habits for phases 1–4 (habits 1, 2, 3, 5 in `habits.md`) start on the same day, when phase 4 merges. Phases 5–7 follow at whatever pace suits; phase 5 needs two weeks of use before judging the plugin removal.
 
 ## Risks
 
