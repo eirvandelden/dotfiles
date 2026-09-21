@@ -38,7 +38,7 @@ The folder is deleted in its own commit, the last one before the change is hande
 - **Personal**: after Etienne's review is complete and nothing is open. Then merge.
 - **Work**: by the `prepare-for-team` skill (§5), before the PR is flagged for the team. Team reviewers see the artifacts only through git history. Anyone who looks at the PR earlier sees them; that is accepted.
 
-Kept permanently only as an ADR, and only at work, and only for changes that affect another application (API contracts, published events, shared schemas, anything another team consumes). The finishing skill asks "does this change affect another application?" and, on yes, distils `intent.md` + `spec.md` into an ADR in the work repo's existing ADR location (or proposes one if none exists) before deleting the folder.
+Kept permanently only as an ADR, and only at work, and only for changes that affect another application (API contracts, published events, shared schemas, anything another team consumes). The finishing skill asks "does this change affect another application?" and, on yes, distils `intent.md` + `spec.md` into an ADR at `docs/adr/NNNN-<slug>.md` in the work repository (Context / Decision / Consequences; numbered sequentially; the folder is created on first use) before deleting the folder.
 
 Evals, metrics on artifact history, and the monitoring loop are out of scope.
 
