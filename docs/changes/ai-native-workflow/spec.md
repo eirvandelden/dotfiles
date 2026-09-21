@@ -9,8 +9,8 @@ From `intent.md` (2026-09-18). Decisions below were made in conversation on 2026
 ```
 docs/changes/<slug>/
   intent.md    # what and why — playbook template
-  spec.md      # requirements + design decisions + flagged concerns
-  plan.md      # files that change, order of work, risks, proof
+  spec.md      # requirements + design decisions + acceptance criteria + flagged concerns
+  plan.md      # files that change, order of work, risks, proof (the test list)
 ```
 
 - Lives in the application repository, committed on the feature branch. Same layout for personal and work repositories.
@@ -26,8 +26,8 @@ docs/changes/<slug>/
 | Intent | `intent.md` | conversation | Etienne accepts; `Status: accepted` |
 | Spec | `spec.md` | `intent.md` + skills | Etienne accepts |
 | Plan | `plan.md` | `intent.md`, `spec.md`, codebase (plan mode) | Etienne accepts; optional second-model critique |
-| Build | code + tests; `plan.md` updated when reality departs | `plan.md` | tests + linters green |
-| Review | review report (outside the repo, see §4) | `REVIEW.md`, `plan.md`, `spec.md`, diff | Etienne reads findings |
+| Build | failing acceptance test first, then unit red/green/refactor per the plan's Proof; `plan.md` updated when reality departs | `plan.md` | every test named in Proof exists and passes; linters green |
+| Review | review report (outside the repo, see §4) | `REVIEW.md`, `plan.md`, `spec.md`, diff | Etienne reads findings; compliance pass confirms each acceptance criterion has its test |
 | Finish | removes `docs/changes/<slug>/` | — | see §1.3 |
 
 Each stage is a fresh session or a fresh context. No stage relies on chat history from the previous one. This is the same rule `plan-handoff` already states for plans.
@@ -43,6 +43,17 @@ Kept permanently only as an ADR, and only at work, and only for changes that aff
 
 Evals, metrics on artifact history, and the monitoring loop are out of scope.
 
+### 1.4 Where tests come from
+
+Tests are the spec made executable. Two documents, two altitudes; no separate test document.
+
+- **`intent.md`** carries a `Type:` line — `feature`, `bugfix`, `refactor`, or `chore` — because a bugfix follows a stricter test rule (below).
+- **`spec.md` → `## Acceptance criteria`** (required section). One concrete example per behaviour, in the domain's words, as a sentence a domain expert would agree with ("Paying empties the basket"; "A closed card is not reopened while its source is still visible"). Each criterion becomes exactly one acceptance test at the level the repository already uses (system, request, or feature test). A requirement that cannot be written as an example is not clear enough; the spec is not accepted until it can.
+- **`plan.md` → `## Proof`** (structured). For each acceptance criterion: the test file and test name that proves it. For each file in "Files that change": the unit tests expected, named as behaviour ("`Basket#pay` clears the items", "refuses an unpaid order"). "Order of work" always starts with: write the acceptance test for the first criterion, run it, watch it fail — the walking skeleton. Test setup worth stating (fixtures, test data, boundaries that are faked) goes in a short "Test setup" paragraph inside Proof; if that paragraph grows long, the change is too big and is split.
+- **Build**: outer loop — one failing acceptance test from Proof; inner loop — red/green/refactor per unit test named in Proof. A unit test the plan did not foresee is added to `plan.md` in the same commit. Done means the Proof list exists and passes, output pasted.
+- **Bugfix rule** (`Type: bugfix`): the failing reproduction test is written and committed first; then the fix, without touching test files. The `implement` skill adds `Reproduction: committed` to `plan.md` after that commit, and a deterministic hook (§4) blocks agent edits to test files while that line is present — the playbook's "fix the code, not the test", enforced rather than advised.
+- **Review**: the compliance pass checks that every acceptance criterion in `spec.md` has a test in the diff, every test named in Proof exists, and no existing test was weakened, skipped, or deleted.
+
 ## 2. Skills that produce and consume the chain
 
 New skills, one source each, available in both Claude and Codex (§3):
@@ -50,10 +61,10 @@ New skills, one source each, available in both Claude and Codex (§3):
 | Skill | Does | Codex note |
 |---|---|---|
 | `intent` | Interview → `intent.md` from the playbook template; asks scope, users, constraints, success; writes `Status: draft`, flips to `accepted` on Etienne's word | same |
-| `spec` | Reads `intent.md`, applies relevant domain skills, writes `spec.md`; flags conflicts it cannot resolve at the top | same |
-| `plan` | Runs in plan mode; reads intent + spec + codebase; writes `plan.md` (files, order, risks, proof); refuses to implement until accepted; absorbs today's `plan-handoff` "write" and "critique" roles | Codex plan mode; `codex -p terra` for critique |
-| `implement` | Reads `plan.md`, works through it in the worktree, TDD per playbook, updates `plan.md` in the same commit when departing from it | same |
-| `review-branch` | Report-only: reads `REVIEW.md` + `plan.md` + `spec.md` + diff; writes findings to `.git/<agent>/review-<slug>.md`; never edits code | Claude: subagent; Codex: fresh session or Codex subagent if the docs confirm one exists |
+| `spec` | Reads `intent.md`, applies relevant domain skills, writes `spec.md` including `## Acceptance criteria` (one example per behaviour); flags conflicts it cannot resolve at the top; refuses acceptance while a requirement has no example | same |
+| `plan` | Runs in plan mode; reads intent + spec + codebase; writes `plan.md` (files, order, risks, structured Proof mapping criteria to tests and files to unit tests); order of work starts with the first failing acceptance test; refuses to implement until accepted; absorbs today's `plan-handoff` "write" and "critique" roles | Codex plan mode; `codex -p terra` for critique |
+| `implement` | Reads `plan.md`; outer loop one failing acceptance test, inner loop red/green/refactor per Proof; updates `plan.md` in the same commit when departing from it; on `Type: bugfix` commits the reproduction test first and marks `Reproduction: committed` | same |
+| `review-branch` | Report-only: reads `REVIEW.md` + `plan.md` + `spec.md` + diff; compliance pass includes criterion→test coverage and no weakened tests; writes findings to `.git/<agent>/review-<slug>.md`; never edits code | Claude: subagent; Codex: fresh session or Codex subagent if the docs confirm one exists |
 | `finish-change` | Personal: confirms review report exists and is newer than the last code commit; deletes the folder; commits | same |
 | `prepare-for-team` | Work: assumes review already happened (no re-review); fills the repo PR template from `intent.md`/`plan.md` (Summary/Why ← intent; Implementation ← plan; Testing ← plan Proof); deletes the folder; commits; pushes; sets PR status to the team's review state; requests reviewers. Runs only on explicit command | same; status mechanism read from `fizzy-sync` |
 
@@ -86,6 +97,7 @@ Principle: **one source, thin adapters, a test that fails on drift.**
 - `review-branch` produces a report outside the tracked tree. Identical for both tools and both scopes.
 - Deterministic backstop (playbook's hook + skill pattern): a lefthook pre-push command in the global `lefthook.yml` fails when the branch has a `docs/changes/<slug>/` folder and no review report newer than the last commit. Skippable only by the normal `--no-verify` route, which the consent guard already gates.
 - Work repos additionally keep the `review-as-*` persona skills; they run before `prepare-for-team`, as today.
+- Test-file guard (§1.4 bugfix rule): a `PreToolUse` hook on file-editing tools, one Ruby script shared by both tools like the consent guard. It reads the current branch's `plan.md`; when that file contains `Reproduction: committed`, any edit or write to a test path (`test/**`, `spec/**`, `*_test.rb`, `*_spec.rb`, `__tests__/**`, `*.test.*`) is blocked with a message naming the rule. Removing the line from `plan.md` is the deliberate override, and the skill says so.
 
 ## 5. Plugins and always-loaded context
 

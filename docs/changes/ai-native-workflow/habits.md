@@ -20,7 +20,7 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: the intent is accepted.
 
-**Habit**: `/spec`, read it, fix what is wrong, say "accepted". Then start plan mode, `/plan`, interrogate it — "what could break?", "what is riskiest?", "what did you reject?" — until a new engineer could implement from `plan.md` alone. Then say "accepted" and let it implement. Do not approve with "ok" or "looks fine"; the word is "accepted" so the agent flips the status line.
+**Habit**: `/spec`, read it, and read the acceptance criteria twice: each one is a sentence you would say to a colleague about what the system does, and each one becomes a test. A requirement without an example is not done; ask for the example before anything else. Fix what is wrong, say "accepted". Then start plan mode, `/plan`, check that Proof names a test for every criterion and that step 1 is a failing acceptance test, interrogate it — "what could break?", "what is riskiest?", "what did you reject?" — until a new engineer could implement from `plan.md` alone. Then say "accepted" and let it implement. Do not approve with "ok" or "looks fine"; the word is "accepted" so the agent flips the status line.
 
 **Backing**: `spec` and `plan` skills; plan mode refuses edits until you accept.
 

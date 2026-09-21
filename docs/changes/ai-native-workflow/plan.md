@@ -23,6 +23,7 @@ Dotfiles (`~/Developer/dotfiles`, public — no employer names):
 - `codex/.codex/rules/default.rules`: hand-written `prompt`/`forbidden` rules only.
 - `codex/.codex/HEADROOM.md`, `codex/.codex/WORKTREES.md`: become links or one file.
 - `lefthook.yml`: pre-push `review-report-fresh`.
+- `claude/.claude/hooks/test-guard.rb` + `test/test_guard_test.rb`: blocks test edits during a bugfix once the reproduction test is committed; wired as `PreToolUse` on edit tools in both tools.
 - `test/`: `skill_parity_test.rb`, `change_folder_test.rb`, `review_report_check_test.rb`, `codex_agent_generation_test.rb`, `fill_pr_template_test.rb`, `consent_guard_test.rb` (Codex stdin case).
 - `herdr/.config/herdr/scripts/hand-off-plan.sh`, `start-review.sh`: read the change folder.
 - `claude/.config/claude/settings.json`: removed (orphan).
