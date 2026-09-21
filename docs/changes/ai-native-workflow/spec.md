@@ -110,7 +110,7 @@ Disable (keep installed; one line to re-enable):
 
 Replace what they provided:
 
-- Terseness: playbook rule 1 already states caveman-lite. Nothing else.
+- Output style: playbook rule 1 is rewritten as terseness plus Simplified Technical English (ASD-STE100 principles): sentences of at most 20 words; active voice; present tense; one instruction per sentence; one meaning per word; simple words over jargon; keep the articles. No filler, hedging, or pleasantries. Code, commands, error text, and commit messages stay exact. STE keeps articles, so the "drop articles" caveman style is superseded. Principles only; the ASD-STE100 dictionary is not bundled.
 - Talk-before-code, TDD, verification: playbook §7.3, §7.17, §7.22 and the `plan` skill.
 - superpowers domain skills worth keeping are copied into `claude/.claude/skills/` (linked to Codex): decided per skill during the phase; candidates are rails-guides, 37signals-style, the Hotwire set, ruby, sandi-metz-rules, brakeman, rails-upgrade, ruby-upgrade, systematic-debugging, compound. Each copy records its upstream path and version for re-sync.
 - `cavecrew-investigator`/`-reviewer` behaviour: covered by `zubat` and the new review agent.

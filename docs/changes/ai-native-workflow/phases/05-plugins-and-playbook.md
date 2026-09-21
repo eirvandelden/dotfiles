@@ -29,7 +29,7 @@ Current keys in `claude/.claude/settings.json`: `"caveman@caveman"`, `"agile@agi
 5. **Add the two agents that caveman provided.** Only if Etienne wants them: the read-only investigator is already `zubat`; a compressed-output reviewer is phase 3's `reviewer`. Default: nothing to add. Record the decision in the PR.
 
 6. **Playbook edits** (`agents.md`):
-   - §7.1: keep the caveman-lite sentence; add "no plugin enforces this; the rule is the rule".
+   - §7.1: replace the caveman-lite sentence with the output style from spec §5: terseness (no filler, hedging, pleasantries) plus Simplified Technical English principles — sentences of at most 20 words, active voice, present tense, one instruction per sentence, one meaning per word, simple words, keep the articles. Two example pairs (before/after), no more. Add "no plugin enforces this; the rule is the rule". Do not paste the ASD-STE100 dictionary; the spec is licensed and a list that long costs context.
    - §7.24: name the model alias actually committed in `settings.json`; delete any claim about automatic switching that the docs do not back (the `opusplan` alias is not in public docs; describe observed behaviour or drop the sentence).
    - New section after §7, "Things agents get wrong here": the tuning rule (same mistake twice → one line; ten lines max; remove lines not repeated in three months). Seed it empty or with at most two lines Etienne dictates.
    - §5: add the vendored skills to the list and `SKILLS-INDEX.md`.
