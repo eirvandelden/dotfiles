@@ -14,7 +14,7 @@ Dotfiles (`~/Developer/dotfiles`, public — no employer names):
 - `SKILLS-INDEX.md`: new skills, removed `plan-handoff`.
 - `claude/.claude/settings.json`: `enabledPlugins`.
 - `claude/.claude/skills/`: new `intent`, `spec`, `plan`, `implement`, `review-branch`, `finish-change`, `prepare-for-team`; adapted `handoff`, `review`; removed `plan-handoff`; vendored domain skills.
-- `claude/.claude/agents/`: new `reviewer.md`; `zubat.md` unchanged.
+- `claude/.claude/agents/`: new `reviewer.md`, `test-writer.md`, `implementer.md`; `zubat.md` unchanged.
 - `claude/.claude/skills/new-repo-setup/references/REVIEW.md`: the review policy template.
 - `claude/.claude/skills/plan/scripts/change-folder`, `claude/.claude/skills/prepare-for-team/scripts/fill-pr-template`, `bin/generate-codex-agents`, `git/.config/git/worktree-tools/review-report-fresh`: small Ruby scripts, each with a test.
 - `codex/.codex/skills/`: links to the shared sources plus `agents/openai.yaml` per skill.
