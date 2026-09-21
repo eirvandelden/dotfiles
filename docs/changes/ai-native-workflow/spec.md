@@ -85,7 +85,7 @@ Repo root, playbook structure: passes (bugs / security / compliance with `spec.m
 Principle: **one source, thin adapters, a test that fails on drift.**
 
 - Artifacts and `REVIEW.md` are markdown in the repo — parity for free.
-- Each shared skill has one `SKILL.md` in the dotfiles. Both `~/.claude/skills/<name>/SKILL.md` and `~/.codex/skills/<name>/SKILL.md` resolve to it (symlink inside the repo, same trick as `PLAYBOOK.md → agents.md`). Codex gets `agents/openai.yaml` beside the link where needed.
+- Each shared skill has one `SKILL.md` in the dotfiles, under `claude/.claude/skills/<name>/`. Codex reads skills from `~/.agents/skills/` (verified 2026-09-21: `~/.codex/skills/` is not scanned by `codex-cli` 0.154), so a new stow package `agents` holds `agents/.agents/skills/<name>` as a relative symlink to the Claude folder (same trick as `PLAYBOOK.md → agents.md`). Codex's `agents/openai.yaml` sits inside the Claude skill folder, which Claude ignores. `codex/.codex/skills/` is removed. Decided by Etienne 2026-09-21 (playbook rule 12).
 - Consent guard stays one Ruby script. Claude calls it from `PreToolUse`; Codex calls it from its hook system, with the stdin/exit contract adapted in a small shim. Codex `rules/default.rules` is reduced to the hand-written prompt rules plus a short vetted allow-list.
 - Report-only agents: Claude `.claude/agents/*.md`; Codex equivalent per its docs, or the same instructions as a skill run in a fresh session. Behaviour parity, not file parity.
 - Hand-copied files today (`handoff`, `review`, `HEADROOM.md`, `WORKTREES.md`) become links or one file with tool-specific sections.
@@ -126,7 +126,7 @@ Target after this change: session start loads the playbook and its includes only
 
 ## 6. Hygiene uncovered by the inventory (in scope because it blocks the above)
 
-- Dangling stow symlinks in `~/.claude/skills/` and `~/.codex/skills/` from removed skills.
+- Dangling stow symlinks in `~/.claude/skills/` and `~/.codex/skills/` from removed skills; after phase 1, everything under `~/.codex/skills/` except Codex's own `.system/` is obsolete.
 - Codex `config.toml` `[projects.*]` and `[hooks.state]` machine churn; `.gitignore` or `config.d` split so the committed file holds intent, not state.
 - Orphaned `claude/.config/claude/settings.json`.
 - Stray multi-MB log files at both repo roots.

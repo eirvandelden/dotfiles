@@ -25,7 +25,7 @@ Dotfiles (`~/Developer/dotfiles`, public — no employer names):
 - `claude/.claude/agents/`: new `reviewer.md`, `test-writer.md`, `implementer.md`; `zubat.md` unchanged.
 - `claude/.claude/skills/new-repo-setup/references/REVIEW.md`: the review policy template.
 - `claude/.claude/skills/plan/scripts/change-folder`, `claude/.claude/skills/finish/scripts/{fill-pr-template,change-scope}`, `bin/generate-codex-agents`, `git/.config/git/worktree-tools/review-report-fresh`: small Ruby scripts, each with a test.
-- `codex/.codex/skills/`: links to the shared sources plus `agents/openai.yaml` per skill.
+- `agents/.agents/skills/` (new stow package `agents`, also in `STOW_SHARED`): symlinks to the shared skill folders; `codex/.codex/skills/` removed; `packages.conf` updated.
 - `codex/.codex/agents/reviewer.toml`, generated from the Claude agent.
 - `codex/.codex/config.toml`: plugin off, inline `[hooks]` for the consent guard, `[projects]` and `[hooks.state]` moved out of the committed file.
 - `codex/.codex/rules/default.rules`: hand-written `prompt`/`forbidden` rules only.
@@ -59,7 +59,7 @@ Adoption pace: phases 1–4 are built back-to-back, one PR each, merged in order
 
 ## Risks
 
-- **Codex skill path.** Current Codex docs list `~/.agents/skills`, not `~/.codex/skills`. If the installed Codex no longer scans `~/.codex/skills`, the `codex` stow package must target `~/.agents/skills` — a new stow package, which playbook rule 12 says needs explicit instruction. Phase 1 verifies first and stops if so. **Talk first.**
+- ~~Codex skill path~~ — resolved 2026-09-21. Phase 1's first run confirmed Codex 0.154 does not scan `~/.codex/skills`; Etienne instructed a new `agents` stow package targeting `~/.agents/skills`. Residual risk: Codex must follow a symlinked skill folder whose target sits under another stow package; phase 1 step 0 and its manual verification cover it.
 - **Stow `--no-folding`.** New skill files need a re-stow, run by Etienne, never by the agent. Every phase ends with "Etienne: `stow -R claude codex`" as a manual step, and tests run against the repo paths, not `~`.
 - **herdr owns `~/.codex/hooks.json` and `~/.claude/hooks/herdr-*`.** Never edit those. Codex hooks from dotfiles go inline in `config.toml` `[hooks]`; verify Codex merges both sources before relying on it.
 - **Auto-appended Codex allow rules come back.** Codex writes to `default.rules` on every TUI approval and this cannot be turned off. Mitigation: the hand-written rules use `prompt` and `forbidden`, which win over `allow` when both match; the parity test fails on any `allow` that matches a guarded pattern; `default.rules` is reviewed at every commit touching `codex/`.
