@@ -1,6 +1,6 @@
 # Phase 5: disable process plugins, vendor domain skills, trim the playbook
 
-Part of the change on branch `ai-native-workflow`. Its documents live in the worktree `~/Developer/dotfiles/.worktrees/ai-native-workflow/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phase 2 merged (the artifact skills replace what the plugins did). Work in a worktree, PR against `origin`.
+Part of the change on branch `ai-native-workflow`. Its documents are merged to `main` and live at `~/Developer/dotfiles/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phase 2 merged (the artifact skills replace what the plugins did). Work in a worktree, PR against `origin`.
 
 ## Context
 

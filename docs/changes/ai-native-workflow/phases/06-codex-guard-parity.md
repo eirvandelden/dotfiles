@@ -1,6 +1,6 @@
 # Phase 6: the consent guard in Codex, rules purge, hook parity test
 
-Part of the change on branch `ai-native-workflow`. Its documents live in the worktree `~/Developer/dotfiles/.worktrees/ai-native-workflow/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phase 1 merged. Work in a worktree, PR against `origin`.
+Part of the change on branch `ai-native-workflow`. Its documents are merged to `main` and live at `~/Developer/dotfiles/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phase 1 merged. Work in a worktree, PR against `origin`.
 
 ## Context
 

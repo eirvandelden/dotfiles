@@ -1,6 +1,6 @@
 # Phase 7: hygiene the inventory turned up
 
-Part of the change on branch `ai-native-workflow`. Its documents live in the worktree `~/Developer/dotfiles/.worktrees/ai-native-workflow/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md` first). Repositories: `~/Developer/dotfiles` (items 1–6) and `~/Developer/dotfiles-work` (items in `work-specifics.md`). Items are independent: one worktree and PR per item, one logical change per commit. Mechanical items suit a Haiku worker; items marked **judgement** do not.
+Part of the change on branch `ai-native-workflow`. Its documents are merged to `main` and live at `~/Developer/dotfiles/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md` first). Repositories: `~/Developer/dotfiles` (items 1–6) and `~/Developer/dotfiles-work` (items in `work-specifics.md`). Items are independent: one worktree and PR per item, one logical change per commit. Mechanical items suit a Haiku worker; items marked **judgement** do not.
 
 ## Items
 

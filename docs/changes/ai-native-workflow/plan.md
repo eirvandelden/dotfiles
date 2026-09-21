@@ -8,9 +8,9 @@ This plan is executed phase by phase, each phase in its own worktree and PR, by 
 
 A normal change keeps documents and code on one branch, in one worktree, with one PR; nothing merges before the work is done. This change cannot: its deliverables are skills, hooks and agents that only go live through stow, and stow links point into the main checkout. Each phase must therefore land on `main` before Etienne can use it. So:
 
-- The documents stay on branch `ai-native-workflow`, checked out at `~/Developer/dotfiles/.worktrees/ai-native-workflow/` (work-specifics at `~/Developer/dotfiles-work/.worktrees/ai-native-workflow/`). Executors read their phase file from that absolute path; nothing is merged for that.
-- Each phase branches from `main` in its own worktree, one PR each, merged in order. When a phase departs from its file, the executor edits the phase file in the documents worktree and says so in its report.
-- The two document PRs (#140, #27) stay open. After phase 7, `/finish` runs in the documents worktree, removes the folder, and both PRs close with no net change — the branch is history, as the convention intends.
+- The documents are merged to `main` first (PRs #140 and #27), so executors and the main checkout both see them: `~/Developer/dotfiles/docs/changes/ai-native-workflow/` and `~/Developer/dotfiles-work/docs/changes/ai-native-workflow/work-specifics.md`.
+- Each phase branches from `main` in its own worktree, one PR each, merged in order. When a phase departs from its file, the executor edits the phase file in its own worktree, in the same PR, and says so in its report.
+- After phase 7, `/finish` runs on a last branch, removes `docs/changes/ai-native-workflow/` (and `docs/changes/` if empty) in both repositories, and that PR closes the change.
 
 Read in order: `intent.md` → `spec.md` → this file → `habits.md` → the phase file.
 

@@ -1,6 +1,6 @@
 # Phase 4: `finish` — one skill closes a change in both scopes
 
-Part of the change on branch `ai-native-workflow`. Its documents live in the worktree `~/Developer/dotfiles/.worktrees/ai-native-workflow/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`; employer-specific parts are in `~/Developer/dotfiles-work/.worktrees/ai-native-workflow/docs/changes/ai-native-workflow/work-specifics.md` and are executed there, in that repo's own worktree. Requires phase 3 merged.
+Part of the change on branch `ai-native-workflow`. Its documents are merged to `main` and live at `~/Developer/dotfiles/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`; employer-specific parts are in `~/Developer/dotfiles-work/docs/changes/ai-native-workflow/work-specifics.md` and are executed there, in that repo's own worktree. Requires phase 3 merged.
 
 ## Context
 
