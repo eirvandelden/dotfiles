@@ -10,3 +10,9 @@ it's already on.
 Mechanics: `worktree-first` skill. Explicitly invoke it yourself before starting any
 code-writing task — don't rely on it firing on its own. It skips itself when already inside a
 worktree or when the user asked to work in place.
+
+## Codex
+
+The skill lives at `agents/.agents/skills/worktree-first`, a symlink to
+`claude/.claude/skills/worktree-first`. Its `agents/openai.yaml` sets
+`allow_implicit_invocation: false`, so it never fires on its own here either.
