@@ -1,6 +1,6 @@
 # Plan: AI-native workflow (from intent.md 2026-09-18)
 
-Status: draft — awaiting acceptance.
+Status: accepted (2026-09-21).
 
 This plan is executed phase by phase, each phase in its own worktree and PR, by an agent that gets the phase file and nothing else. Every phase file is self-contained; this file is the map. Decisions marked **talk first** need a conversation with Etienne before that phase starts. Nothing here is implemented by the session that wrote it.
 
