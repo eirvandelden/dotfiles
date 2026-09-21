@@ -49,4 +49,4 @@ New: `claude/.claude/skills/new-repo-setup/references/REVIEW.md`, `git/.config/g
 
 ## Out of scope
 
-Deleting change folders (phase 4). Work `REVIEW.local.md` content (dotfiles-work phase file). Any GitHub Action or app. Tuning `REVIEW.md` per repo — that is habit 4's job over time.
+Deleting change folders (phase 4). Work `REVIEW.local.md` content (dotfiles-work phase file). Any GitHub Action or app. Tuning `REVIEW.md` per repo — that is the "mistake twice → one line" habit's job over time.
