@@ -66,7 +66,7 @@ Claude facts (verified 2026-09-18, `code.claude.com/docs/en/skills`): `SKILL.md`
 
 ## Files
 
-New: `claude/.claude/skills/{intent,spec,plan,implement}/SKILL.md` and `agents/openai.yaml`, `claude/.claude/agents/{test-writer,implementer}.md`, `claude/.claude/skills/plan/scripts/change-folder`, `test/change_folder_test.rb`, `codex/.codex/skills/{intent,spec,plan,implement}` (symlinks). Changed: `claude/.claude/skills/new-repo-setup/SKILL.md`, `agents.md` (§5, §7.17), `SKILLS-INDEX.md`. Removed: `claude/.claude/skills/plan-handoff/`, `claude/.claude/skills/handoff/` (and its Codex link).
+New: `claude/.claude/skills/{intent,spec,plan,implement}/SKILL.md` and `agents/openai.yaml`, `claude/.claude/agents/{test-writer,implementer}.md`, `claude/.claude/skills/plan/scripts/change-folder`, `test/change_folder_test.rb`, `agents/.agents/skills/{intent,spec,plan,implement}` (symlinks). Changed: `claude/.claude/skills/new-repo-setup/SKILL.md`, `agents.md` (§5, §7.17), `SKILLS-INDEX.md`. Removed: `claude/.claude/skills/plan-handoff/`, `claude/.claude/skills/handoff/` (and its Codex link).
 
 ## Verification
 

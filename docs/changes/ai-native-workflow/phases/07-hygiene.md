@@ -16,7 +16,7 @@ Part of the change on branch `ai-native-workflow`. Its documents are merged to `
 
 6. **Empty handoff templates.** `docs/handoffs/_archive/*.md` with every section "to be enriched by LLM": `git rm` if tracked; otherwise list for Etienne. Phase 5 stops new ones appearing.
 
-7. **Dangling stow symlinks in `$HOME`** — `~/.claude/skills/code-style-team/`, `~/.claude/skills/review-as-team/`, `~/.codex/skills/plan-my-day/`. These are symlinks in `~`; playbook rule 12 forbids the agent deleting symlinks. Produce the exact `stow -D` / `rm` commands for Etienne, with the target each link points to, and stop.
+7. **Dangling stow symlinks in `$HOME`** — `~/.claude/skills/code-style-team/`, `~/.claude/skills/review-as-team/`, `~/.codex/skills/plan-my-day/`, and after phase 1 every remaining link under `~/.codex/skills/` (Codex does not read that directory). These are symlinks in `~`; playbook rule 12 forbids the agent deleting symlinks. Produce the exact `stow -D` / `rm` commands for Etienne, with the target each link points to, and stop.
 
 8. **`~/.claude/plans/` leftovers.** Nine files, random names. Not written to after phase 2. List them with first lines for Etienne; suggest moving the still-relevant ones into their repo's `docs/changes/<slug>/plan.md` by hand. Do not delete.
 
