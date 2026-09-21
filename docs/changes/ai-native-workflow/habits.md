@@ -1,46 +1,82 @@
 # Habits: what Etienne changes
 
-Tooling makes the new way possible; habits make it happen. Habits 1, 2, 3 and 5 are one workflow and start together on the day phase 4 merges; habits 4, 6 and 7 follow their phases. Read them in this order. Each entry: the cue that triggers it, the habit, the tooling that backs it, and the old habit it replaces. Read this before starting any phase; re-read the current phase's entry at the start of each working day for the first two weeks of that phase.
+Tooling makes the new way possible; habits make it happen. The first six habits are the workflow, in the order a change moves: intent, spec, plan, implement, review, finish. They start together on the day phase 4 merges. The last three are cross-cutting and follow their phases. Each entry: the cue that triggers it, the habit, the tooling that backs it, the old habit it replaces, and the slip to watch. Read this before starting any phase; re-read the current entries at the start of each working day for the first two weeks.
 
 The playbook's own rule for tuning applies to this file too: when the same slip happens twice, add the cue that would have caught it.
 
-## Phase 1 — Start every change with `intent.md`
+## 1. Intent — start every change with `intent.md`
 
 **Cue**: you are about to type a request that would change code — a bug, a feature, a refactor, a config change. Personal or work.
 
-**Habit**: say `/intent` first (or "write the intent") and answer the questions. Do not describe the solution; describe what someone cannot do today and what better looks like. Accept the file before anything else happens. Small change? Still an intent — three lines is a valid intent.
+**Habit**: say `/intent` first (or "write the intent") and answer the questions, one at a time. Give the issue number if there is one. Do not describe the solution; describe what someone cannot do today and what better looks like. Accept the file before anything else happens. Small change? Still an intent — three lines is a valid intent.
 
-**Backing**: the `intent` skill writes `docs/changes/<branch-slug>/intent.md`. Playbook §7.17 now says "no code before an accepted intent and plan". Later phases add a check that refuses a plan without an intent.
+**Backing**: the `intent` skill creates the worktree through `worktree-first` when needed and writes `docs/changes/<branch-slug>/intent.md`. Playbook §7.17 says "no code before an accepted intent and plan".
 
 **Replaces**: starting in chat and letting the agent guess scope from the first message; plans appearing in `~/.claude/plans/` under random names.
 
 **Slip to watch**: "this one is trivial, skip it". Trivial changes still get an intent; the plan may be one line.
 
-## Phase 2 — Spec before plan, plan before code, accept each by name
+## 2. Spec — no requirement without an example
 
 **Cue**: the intent is accepted.
 
-**Habit**: `/spec`, read it, and read the acceptance criteria twice: each one is a sentence you would say to a colleague about what the system does, and each one becomes a test. A requirement without an example is not done; ask for the example before anything else. Fix what is wrong, say "accepted". Then start plan mode, `/plan`, check that Proof names a test for every criterion and that step 1 is a failing acceptance test, interrogate it — "what could break?", "what is riskiest?", "what did you reject?" — until a new engineer could implement from `plan.md` alone. Then say "accepted" and let it implement. Do not approve with "ok" or "looks fine"; the word is "accepted" so the agent flips the status line.
+**Habit**: `/spec`, read it, and read the acceptance criteria twice. Each one is a sentence you would say to a colleague about what the system does, and each one becomes a test. A requirement without an example is not done; ask for the example before anything else. Fix what is wrong, then say "accepted".
 
-**Backing**: `spec` and `plan` skills; plan mode refuses edits until you accept.
+**Backing**: the `spec` skill refuses acceptance while a requirement has no example.
+
+**Replaces**: requirements that live in your head until the review finds the gap.
+
+**Slip to watch**: accepting criteria that describe the solution ("uses a background job") instead of the behaviour ("the export arrives by mail within a minute").
+
+## 3. Plan — interrogate, then accept by name
+
+**Cue**: the spec is accepted.
+
+**Habit**: start plan mode, `/plan`. Check that Proof names a test for every criterion and that step 1 is a failing acceptance test. Interrogate it — "what could break?", "what is riskiest?", "what did you reject?" — until a new engineer could implement from `plan.md` alone. For anything non-trivial, let the other model critique it first ("critically review this plan"). Then say "accepted". Do not approve with "ok" or "looks fine"; the word is "accepted" so the agent flips the status line.
+
+**Backing**: `plan` skill; plan mode refuses edits until you accept.
 
 **Replaces**: agreeing to a plan in chat that never becomes a file; correcting course mid-build instead of in the document where correcting is cheap.
 
 **Slip to watch**: accepting a plan you did not read. Ask one question per plan minimum.
 
-## Phase 3 — Review reads the plan, not your memory
+## 4. Implement — steer through the plan, not through chat
 
-**Cue**: the agent says the work is done and tests are green.
+**Cue**: the plan is accepted.
 
-**Habit**: run `/review` before anything is pushed for others. Read findings worst first. Every finding is either fixed or explicitly dismissed with a reason, written on its line in `docs/changes/<slug>/review.md`; nothing is left "for later". The file travels with the branch and disappears with the other artifacts.
+**Habit**: `/implement`, or `/implement handoff` to give it to a worker pane and keep your session free. Watch the first thing it does: the acceptance test must fail before any production code exists. If it does not, stop it. When you want to change direction mid-build, edit `plan.md` and say so; do not steer with chat corrections the plan never records. Three or more acceptance criteria: let `split` mode run, and expect two reports (tests, then implementation).
 
-**Backing**: `review` report-only agent reading `REVIEW.md` + `plan.md` + `spec.md`; pre-push lefthook check fails when a change folder exists and the newest code commit is newer than the newest `review.md` commit.
+**Backing**: `implement` skill with `single`, `split` and `handoff` modes; the `implementer` agent cannot write test files; `plan.md` is updated in the same commit when the work departs from it.
+
+**Replaces**: "just build it" followed by a long chat of corrections that a second session cannot see.
+
+**Slip to watch**: saying "just do it" to skip the plan. Say it to skip *discussion*, after the plan exists.
+
+## 5. Review — read the findings, close every one
+
+**Cue**: the agent says the work is done and the Proof list is green.
+
+**Habit**: run `/review` before anything is pushed for others. It opens a fresh reviewer in a pane; wait for `Review ready`. Read findings worst first. Every finding is either fixed or explicitly dismissed with a reason, written on its line in `docs/changes/<slug>/review.md`; nothing is left "for later". Change code after the review? Run it again.
+
+**Backing**: `review` skill (pane by default, `here` without herdr) reading `REVIEW.md` + `plan.md` + `spec.md`; pre-push lefthook check fails when the newest code commit is newer than the newest `review.md` commit.
 
 **Replaces**: eyeballing the diff, or trusting the implementer session's own summary.
 
-**Slip to watch**: editing code after the review and pushing without re-running it. The hook catches the stale report; the habit is to expect that and re-run.
+**Slip to watch**: editing code after the review and pushing without re-running it. The hook catches the stale review; the habit is to expect that and re-run.
 
-## Phase 4 — Mistake twice → one line in the right file
+## 6. Finish — the change folder leaves with the change
+
+**Cue**: personal — review closed, ready to merge. Work — ready for the team.
+
+**Habit**: `/finish`, in both scopes. Personal: it removes `docs/changes/<slug>/` (and `docs/changes/` itself when that was the last folder), commits, and stops; then merge. Work: check the PR body it wrote from the intent and plan, answer the ADR question honestly, then let it push, put the PR on the review board and request reviewers. Never delete the folder by hand; never flag the team PR by hand any more.
+
+**Backing**: the `finish` skill, scope detected from the remote; ADR prompt for cross-application changes at work.
+
+**Replaces**: leaving artifacts around, or forgetting them in a PR the team sees.
+
+**Slip to watch**: a work change that touches an API contract and you answer "no" to the ADR question to save time. The ADR is the only artifact that survives; it is the point.
+
+## 7. Mistake twice → one line in the right file
 
 **Cue**: an agent does something wrong that it (or another agent) already did before. You feel the "again?!".
 
@@ -51,41 +87,29 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 - Applies to one kind of task → that skill.
 - Must never happen regardless of instructions → a hook or lefthook check.
 
-**Backing**: playbook section exists and is capped at ten lines; `REVIEW.md` "do not report" grows the same way. Quarterly: remove lines that have not fired in three months.
+**Backing**: playbook section exists and is capped at ten lines (phase 5); `REVIEW.md` "do not report" grows the same way. Quarterly: remove lines that have not fired in three months.
 
 **Replaces**: correcting in chat and losing the correction when the session ends.
 
 **Slip to watch**: writing a paragraph. One line. If it needs more, it is a skill.
 
-## Phase 5 — Finish means delete
-
-**Cue**: personal — review clean, ready to merge. Work — ready for the team.
-
-**Habit**: `/finish`, in both scopes. Personal: it deletes and stops; then merge. Work: check the PR body it wrote, then let it put the PR on the review board and request reviewers. Never delete the folder by hand; never flag the team PR by hand any more.
-
-**Backing**: the `finish` skill, scope detected from the remote; ADR prompt for cross-application changes at work.
-
-**Replaces**: leaving artifacts around, or forgetting them in a PR the team sees.
-
-**Slip to watch**: work change that touches an API contract and you answer "no" to the ADR question to save time. The ADR is the only artifact that survives; it is the point.
-
-## Phase 6 — Same file, either tool
+## 8. Switch tools, not process
 
 **Cue**: Claude is capped, or the task needs a work integration Codex has and Claude does not, or you want a second opinion on a plan.
 
-**Habit**: switch tools, not process. Open the other tool in the same worktree, point it at the change folder, continue from the file. For plans: have the other model critique `plan.md` before you accept it ("critically review this plan" — the `plan` skill's second role).
+**Habit**: open the other tool in the same worktree, point it at the change folder, continue from the file. For plans: have the other model critique `plan.md` before you accept it — the `plan` skill's second role.
 
-**Backing**: shared skills, drift test, both tools reading the same `docs/changes/<slug>/`.
+**Backing**: shared skills, drift test, both tools reading the same `docs/changes/<slug>/` (phases 1 and 6).
 
 **Replaces**: re-explaining the task in the second tool; Codex and Claude having different habits.
 
-**Slip to watch**: pushing or opening a PR from Codex. Its guard is a prompt, not a block. Push from Claude until the Codex guard shim is verified.
+**Slip to watch**: pushing or opening a PR from Codex before phase 6 lands. Until then its guard is a prompt, not a block; push from Claude.
 
-## Phase 7 — Parallel only as wide as you can review
+## 9. Parallel only as wide as you can review
 
 **Cue**: two independent tasks, both planned.
 
-**Habit**: two worktrees, two sessions, each from its own `plan.md`. Not three until two feels boring. Review capacity, not agent capacity, is the limit.
+**Habit**: two worktrees, two sessions, each from its own `plan.md`, each through `implement handoff`. Not three until two feels boring. Review capacity, not agent capacity, is the limit.
 
 **Backing**: `worktree-first`, `implement handoff` sending each plan to its own pane, herdr panes.
 
@@ -94,7 +118,7 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 ## Things to stop doing, from day one
 
 - Reading `~/.claude/plans/`. It is no longer written to.
-- Saying "just do it" to skip the intent. Say it to skip *discussion*, after the intent exists.
+- Steering a build with chat corrections. Edit `plan.md`.
 - Re-enabling a disabled plugin because a session felt less guided. Two weeks first; then decide with `/audit-token` numbers.
 - Running `stow` from an agent session. New skill files need a re-stow; that is yours, by hand.
 

@@ -73,7 +73,7 @@ New: `claude/.claude/skills/{intent,spec,plan,implement}/SKILL.md` and `agents/o
 - `test/` green (`change_folder_test.rb`, `skill_parity_test.rb`, `herdr_worker_scripts_test.rb`).
 - Dry run in a throwaway repo, both tools, fresh sessions: `/intent` → file with `Status: draft`; "accepted" → flipped; `/spec` refuses before that, writes after; `/plan` enters plan mode, asks a question, writes; `/implement` refuses on draft. In Codex the same with `$intent` etc.
 - Grep: no `~/.claude/plans` and no `plan-handoff` left in the repo.
-- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`. Start habit 1.
+- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`. The intent, spec, plan and implement habits start when phase 4 merges.
 
 ## Out of scope
 

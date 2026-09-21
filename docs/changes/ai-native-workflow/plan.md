@@ -38,16 +38,16 @@ Personal repositories: `REVIEW.md` and `docs/changes/` via `new-repo-setup`, one
 | # | Phase file | Delivers | Habit it enables |
 |---|---|---|---|
 | 1 | `phases/01-shared-skills.md` | one-source skill linking Claude ↔ Codex, drift test, existing `handoff`/`review`/`worktree-first` migrated onto it | — (mechanics) |
-| 2 | `phases/02-artifact-skills.md` | `docs/changes/<slug>/`, `intent`/`spec`/`plan`/`implement` skills, playbook §7.17, `handoff` and `plan-handoff` absorbed | habits 1, 2 |
-| 3 | `phases/03-review.md` | `REVIEW.md` template, `reviewer` agent (Claude md + generated Codex toml), `review` skill, pre-push freshness check, `new-repo-setup` step | habit 3 |
-| 4 | `phases/04-finish.md` | `finish`: review fresh → (work: PR template fill, ADR) → delete → commit → (work: push, review board, reviewers); work details in dotfiles-work | habit 5 |
-| 5 | `phases/05-plugins-and-playbook.md` | plugins off in both tools, domain skills vendored, playbook edits, `/audit-token` before/after | habit 4 |
-| 6 | `phases/06-codex-guard-parity.md` | consent guard from Codex inline hooks, rules purge with `forbidden`, parity test extended to hooks | habit 6 |
+| 2 | `phases/02-artifact-skills.md` | `docs/changes/<slug>/`, `intent`/`spec`/`plan`/`implement` skills, playbook §7.17, `handoff` and `plan-handoff` absorbed | intent, spec, plan, implement |
+| 3 | `phases/03-review.md` | `REVIEW.md` template, `reviewer` agent (Claude md + generated Codex toml), `review` skill, pre-push freshness check, `new-repo-setup` step | review |
+| 4 | `phases/04-finish.md` | `finish`: review fresh → (work: PR template fill, ADR) → delete → commit → (work: push, review board, reviewers); work details in dotfiles-work | finish |
+| 5 | `phases/05-plugins-and-playbook.md` | plugins off in both tools, domain skills vendored, playbook edits, `/audit-token` before/after | mistake twice → one line |
+| 6 | `phases/06-codex-guard-parity.md` | consent guard from Codex inline hooks, rules purge with `forbidden`, parity test extended to hooks | switch tools, not process |
 | 7 | `phases/07-hygiene.md` | dangling symlinks, config churn, orphan settings, logs, work text out of the public repo | — |
 
 Phases 1–4 are sequential. Phase 5 can start after 2. Phase 6 after 1. Phase 7 items are independent and may be picked up any time by a mechanical (Haiku) worker, one item per commit.
 
-Adoption pace: phases 1–4 are built back-to-back, one PR each, merged in order, with no waiting between them. Together they form one workflow — intent → spec → plan → implement → review → finish — and replace the `handoff` and `review` skills that are already in daily use, so the habits for phases 1–4 (habits 1, 2, 3, 5 in `habits.md`) start on the same day, when phase 4 merges. Phases 5–7 follow at whatever pace suits; phase 5 needs two weeks of use before judging the plugin removal.
+Adoption pace: phases 1–4 are built back-to-back, one PR each, merged in order, with no waiting between them. Together they form one workflow — intent → spec → plan → implement → review → finish — and replace the `handoff` and `review` skills that are already in daily use, so the six workflow habits in `habits.md` (intent, spec, plan, implement, review, finish) start on the same day, when phase 4 merges. Phases 5–7 follow at whatever pace suits; phase 5 needs two weeks of use before judging the plugin removal.
 
 ## Risks
 

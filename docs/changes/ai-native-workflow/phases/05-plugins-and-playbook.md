@@ -48,7 +48,7 @@ Current keys in `claude/.claude/settings.json`: `"caveman@caveman"`, `"agile@agi
 - `test/skill_parity_test.rb` green (every vendored skill linked).
 - Fresh Claude session: SessionStart output contains no AGILE/CAVEMAN/superpowers banner; `/audit-token` figures recorded. Fresh Codex session: superpowers skills not listed.
 - `claude plugin list` (or the equivalent) still shows the three plugins installed.
-- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`. Start habit 4. Give it two weeks before judging whether anything is missed; re-enable with one word if so.
+- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`. Start the "mistake twice → one line" habit. Give it two weeks before judging whether anything is missed; re-enable with one word if so.
 
 ## Out of scope
 

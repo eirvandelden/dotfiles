@@ -35,7 +35,7 @@ Each stage is a fresh session or a fresh context. No stage relies on chat histor
 
 ### 1.3 Removal
 
-The folder is deleted in its own commit, the last one before the change is handed on:
+The folder is deleted in its own commit, the last one before the change is handed on. When it was the last folder under `docs/changes/`, that directory goes too — the repository carries no trace of the convention between changes:
 
 - **Personal**: after Etienne's review is complete and nothing is open. Then merge.
 - **Work**: by the same `finish` skill (§2), which also fills the PR body and flags the PR for the team, before colleagues look. Team reviewers see the artifacts only through git history. Anyone who looks at the PR earlier sees them; that is accepted.
@@ -135,7 +135,7 @@ Target after this change: session start loads the playbook and its includes only
 
 ## 7. Habits
 
-A `habits.md` next to this spec lists what Etienne changes, in adoption order, one habit per phase, with the cue that triggers it and the tooling that backs it. Written for a reader who has not seen this conversation.
+A `habits.md` next to this spec lists what Etienne changes, in workflow order (intent, spec, plan, implement, review, finish) followed by three cross-cutting habits, with the cue that triggers it and the tooling that backs it. Written for a reader who has not seen this conversation.
 
 ## 8. Out of scope
 

@@ -45,7 +45,7 @@ New: `claude/.claude/skills/new-repo-setup/references/REVIEW.md`, `git/.config/g
 - Throwaway repo with a change folder and a commit: `git push` fails with the message; run `/review`; `docs/changes/<slug>/review.md` appears with Round 1 and its own commit; `git push` passes. Same via Codex `$review`, which appends Round 2. Then change a code file, commit, `git push` fails again.
 - Reviewer never modified a tracked file: `git status` clean apart from its report location.
 - Test guard: in a throwaway repo with `Reproduction: committed` in the branch's `plan.md`, an `Edit` of `test/foo_test.rb` is refused with the message and an `Edit` of `app/foo.rb` goes through; remove the line, the test edit goes through.
-- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex git`. Start habit 3.
+- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex git`. The review habit starts when phase 4 merges.
 
 ## Out of scope
 

@@ -26,7 +26,7 @@ Public repo constraint: the skill must not know employer names, project numbers,
    - Preconditions, both scopes: `review-report-fresh` exits 0 (else: "run `/review` first"); `review.md` has no open finding without a later round (else list them: "close or dismiss these first"); working tree clean; scope resolved by `change-scope`.
    - **Work only**: a PR exists for the branch (`gh pr view --json number,url,isDraft`). Find the template (`.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, or under `docs/`); run `fill-pr-template`; show the result; on confirmation `gh pr edit --body-file`.
    - **Work only**: ADR question — "Does this change affect another application: API contract, published event, shared schema, anything another team consumes?" On yes: write the ADR from `intent.md` + `spec.md` at the path pattern in `~/.claude/finish/adr-location` (`docs/adr/NNNN-<slug>.md`; numbered after the highest existing one; sections Context / Decision / Consequences), commit it `Add ADR NNNN: <title>`. On no: continue. If the file is absent: ask where.
-   - **Both**: `git rm -r docs/changes/<slug>` and commit `Remove change artifacts for <slug>`.
+   - **Both**: `git rm -r docs/changes/<slug>`; when `docs/changes/` is now empty, remove the directory too (git does not track empty directories, so this is a working-tree `rmdir`); commit `Remove change artifacts for <slug>`.
    - **Personal**: print the merge command and stop. No push unless asked.
    - **Work only**: `git push` (the consent guard governs the remote; `--force-with-lease` only if the branch was rebased in this run). If executable, run `~/.claude/finish/after-push <pr-number> <pr-url>` — the private repo's script that puts the PR on the review board and sets the status; absent script: print "no after-push script; set the review status by hand". Then `gh pr edit --add-reviewer` with the confirmed list. Print what it did and the PR URL. Never comments on the PR (playbook rule 6).
 
@@ -46,7 +46,7 @@ New: `claude/.claude/skills/finish/` (+ `scripts/fill-pr-template`, `scripts/cha
 - Personal throwaway repo: `/finish` refuses without a fresh review, refuses with an open finding, deletes with a closed review, leaves one commit `Remove change artifacts for <slug>`, prints the merge command, pushes nothing.
 - Work checkout, a real in-flight branch, `--dry-run`: printed steps match expectations; Etienne runs them by hand once; second time for real. Colleagues see a PR with a filled template and no `docs/changes/` in "Files changed".
 - Codex: `$finish --dry-run` prints the same steps.
-- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`; in dotfiles-work, restow its `claude` package. Start habit 5.
+- **Etienne, by hand, after merge:** `stow -R --no-folding claude codex`; in dotfiles-work, restow its `claude` package. All six workflow habits in `habits.md` start now.
 
 ## Out of scope
 

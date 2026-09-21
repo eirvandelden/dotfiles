@@ -31,7 +31,7 @@ Verified against Codex docs (2026-09-18, `learn.chatgpt.com/docs/hooks`, `.../ag
 
 5. **RED — parity test extension.** In `test/skill_parity_test.rb` (or a new `test/guard_parity_test.rb`, one place): parse `default.rules`; assert no `allow` rule's pattern begins with a guarded command (`git push --force`, `git commit --no-verify`, `git push --no-verify`, `gh pr comment`, `gh pr review`, `gh issue comment`, `kamal deploy`, `kamal app exec`, `cap deploy`); assert no rule contains a path under `/Users/` or `/private/tmp/`; assert the inline `[hooks]` `PreToolUse` command in `config.toml` points at the same script as `claude/.claude/settings.json`'s `PreToolUse` `Bash` hook. Run: red until step 4 is complete.
 
-6. **Playbook and habits.** `agents.md` §7.19/§7.20: note that the guard now runs in both tools. `habits.md` phase 6 "push from Claude until verified" becomes obsolete once step 7 passes — update the line to say so.
+6. **Playbook and habits.** `agents.md` §7.19/§7.20: note that the guard now runs in both tools. `habits.md` "Switch tools, not process" slip "push from Claude before phase 6 lands" becomes obsolete once step 7 passes — update the line to say so.
 
 ## Files
 
