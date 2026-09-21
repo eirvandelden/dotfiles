@@ -7,7 +7,7 @@ Part of the change in `docs/changes/ai-native-workflow/` (read `intent.md`, `spe
 The change folder is removed when the change is handed on (spec §1.3):
 
 - Personal: `finish-change`, after Etienne's review is complete. Then merge.
-- Work: `prepare-for-team`, before the PR becomes visible to colleagues. Work PRs exist early; colleagues only look once the linked issue's status flips to the review state. This skill **assumes review already happened** (the phase-3 freshness check proves it); it does not review again.
+- Work: `prepare-for-team`, before the PR becomes visible to colleagues. Work PRs exist early; colleagues only look once the PR itself is on the team's review project with its Status field set to the review state. This skill **assumes review already happened** (the phase-3 freshness check proves it); it does not review again.
 
 `prepare-for-team` also carries the intent into the PR body, because the files disappear: it fills the repository's PR template (playbook rule 5 — always the template) from `intent.md` and `plan.md`. Work-only: when the change affects another application, the artifacts are distilled into an ADR before deletion — the only artifact that survives (spec §1.3).
 

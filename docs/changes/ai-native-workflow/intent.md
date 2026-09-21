@@ -34,5 +34,5 @@ Etienne, in both roles. `~/Developer/dotfiles` (public; Claude, Codex, git, left
 ## Open questions
 
 - ~~Do the work applications already have an ADR convention?~~ Resolved 2026-09-21: they do not, and they should. Cross-application ADRs go in `docs/adr/` in the work repository.
-- How is the work PR status flipped to "Needs Review" today (GitHub Project field, label, draft→ready)? `fizzy-sync` already writes Project Status; read the mechanism from there.
+- ~~How is the work PR status flipped to "Needs Review" today?~~ Resolved 2026-09-21: on GitHub, the PR is added to the team's review project and its Status field set to "Needs Review". `fizzy-sync` only reads that status.
 - Which superpowers-ruby domain skills are actually used? Decide keep/drop per skill during the vendoring phase, not up front.
