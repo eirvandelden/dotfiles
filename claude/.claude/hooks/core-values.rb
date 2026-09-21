@@ -14,27 +14,38 @@ def load_config
   YAML.safe_load_file(CONFIG_PATH, permitted_classes: [], aliases: false)
 rescue StandardError => error
   warn "core-values: could not read #{CONFIG_PATH}: #{error.message}"
-  nil
+  :unreadable
+end
+
+def print_motto(motto)
+  puts "Core value: #{motto}" if motto
+end
+
+def print_full(config)
+  puts "CORE VALUES ACTIVE — #{config["motto"]}"
+
+  sections = config["sections"]
+  unless sections.nil? || sections.is_a?(Hash)
+    warn "core-values: \"sections\" should be a mapping, got #{sections.inspect}"
+    return
+  end
+
+  sections.to_h.each do |name, rules|
+    puts
+    puts "#{name}:"
+    Array(rules).each { |rule| puts "  - #{rule}" }
+  end
 end
 
 config = load_config
-if config.is_a?(Hash)
-  motto = config["motto"]
-  mode = ARGV.first
 
-  case mode
-  when "motto"
-    puts "Core value: #{motto}" if motto
-  when "full"
-    puts "CORE VALUES ACTIVE — #{motto}"
-    config["sections"].to_h.each do |name, rules|
-      puts
-      puts "#{name}:"
-      Array(rules).each { |rule| puts "  - #{rule}" }
-    end
-  else
-    warn "core-values: unknown mode #{mode.inspect}, expected \"motto\" or \"full\""
-  end
-elsif config
-  warn "core-values: #{CONFIG_PATH} did not parse to a mapping, got #{config.class}"
+unless config.is_a?(Hash)
+  warn "core-values: #{CONFIG_PATH} did not parse to a mapping, got #{config.inspect}" unless config == :unreadable
+  exit 0
+end
+
+case ARGV.first
+when "motto" then print_motto(config["motto"])
+when "full" then print_full(config)
+else warn "core-values: unknown mode #{ARGV.first.inspect}, expected \"motto\" or \"full\""
 end
