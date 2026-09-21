@@ -32,9 +32,9 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: the agent says the work is done and tests are green.
 
-**Habit**: run `/review-branch` before anything is pushed for others. Read findings worst first. Every finding is either fixed or explicitly dismissed with a reason in the report; nothing is left "for later".
+**Habit**: run `/review-branch` before anything is pushed for others. Read findings worst first. Every finding is either fixed or explicitly dismissed with a reason, written on its line in `docs/changes/<slug>/review.md`; nothing is left "for later". The file travels with the branch and disappears with the other artifacts.
 
-**Backing**: `review-branch` report-only agent reading `REVIEW.md` + `plan.md` + `spec.md`; pre-push lefthook check fails when a change folder exists without a fresh review report.
+**Backing**: `review-branch` report-only agent reading `REVIEW.md` + `plan.md` + `spec.md`; pre-push lefthook check fails when a change folder exists and the newest code commit is newer than the newest `review.md` commit.
 
 **Replaces**: eyeballing the diff, or trusting the implementer session's own summary.
 

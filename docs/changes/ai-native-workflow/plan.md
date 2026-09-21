@@ -65,7 +65,7 @@ Adoption pace: one phase per one to two weeks. Do not start phase N+1's habit un
 The change is done when, in a fresh session of each tool, in a throwaway personal repo:
 
 1. `/intent` → `/spec` → `/plan` produce the three files under `docs/changes/<branch>/`, each with a `Status:` line, and `implement` refuses to start on a plan not marked accepted.
-2. `/review-branch` writes a report outside the tree; `git push` fails while the report is older than the last commit, passes after re-running.
+2. `/review-branch` appends a round to `docs/changes/<branch>/review.md` and commits it; `git push` fails while the newest code commit is newer than the newest `review.md` commit, passes after re-running.
 3. `/finish-change` deletes the folder in one commit. In a work checkout, `/prepare-for-team` fills the PR template, deletes, pushes, flips status, requests reviewers — dry-run mode first.
 4. `ruby -Itest -e 'Dir["test/*_test.rb"].each { require "./#{it}" }'` is green in dotfiles, including the parity test.
 5. `/audit-token` shows session-start context at or below the playbook plus includes; no plugin injection; no per-subagent injection.
