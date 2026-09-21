@@ -16,8 +16,13 @@ class SkillParityTest < Minitest::Test
   CODEX_SKILLS = File.join(REPO_ROOT, "codex/.codex/skills")
   PACKAGES_CONF = File.join(REPO_ROOT, "packages.conf")
 
-  # Skills that stay Claude-only, with the reason on record. Empty for now.
-  CLAUDE_ONLY = [].freeze
+  # Process and domain skills not yet vendored onto the shared mechanism — a later
+  # phase decides, skill by skill, whether each is worth linking into Codex too.
+  CLAUDE_ONLY = %w[
+    code-review dependencies dotfiles-maintenance new-repo-setup object-oriented-design
+    plan-handoff rails-api-design rails-architecture rails-ops rails-testing rails-ui
+    ruby-style sync
+  ].freeze
   # Skills that stay Codex-only, with the reason on record. Empty for now.
   CODEX_ONLY = [].freeze
 
