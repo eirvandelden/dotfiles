@@ -1,6 +1,6 @@
 # Phase 3: `REVIEW.md`, the report-only reviewer, and the freshness check
 
-Part of the change in `docs/changes/ai-native-workflow/` (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phases 1 and 2 merged. Work in a worktree, PR against `origin`.
+Part of the change on branch `ai-native-workflow`. Its documents live in the worktree `~/Developer/dotfiles/.worktrees/ai-native-workflow/docs/changes/ai-native-workflow/` until the change finishes; read them there (read `intent.md`, `spec.md`, `plan.md`, `habits.md` first). Repository: `~/Developer/dotfiles`. Requires phases 1 and 2 merged. Work in a worktree, PR against `origin`.
 
 ## Context
 

@@ -4,6 +4,14 @@ Status: accepted (2026-09-21).
 
 This plan is executed phase by phase, each phase in its own worktree and PR, by an agent that gets the phase file and nothing else. Every phase file is self-contained; this file is the map. Decisions marked **talk first** need a conversation with Etienne before that phase starts. Nothing here is implemented by the session that wrote it.
 
+## How this change deviates from its own convention
+
+A normal change keeps documents and code on one branch, in one worktree, with one PR; nothing merges before the work is done. This change cannot: its deliverables are skills, hooks and agents that only go live through stow, and stow links point into the main checkout. Each phase must therefore land on `main` before Etienne can use it. So:
+
+- The documents stay on branch `ai-native-workflow`, checked out at `~/Developer/dotfiles/.worktrees/ai-native-workflow/` (work-specifics at `~/Developer/dotfiles-work/.worktrees/ai-native-workflow/`). Executors read their phase file from that absolute path; nothing is merged for that.
+- Each phase branches from `main` in its own worktree, one PR each, merged in order. When a phase departs from its file, the executor edits the phase file in the documents worktree and says so in its report.
+- The two document PRs (#140, #27) stay open. After phase 7, `/finish` runs in the documents worktree, removes the folder, and both PRs close with no net change — the branch is history, as the convention intends.
+
 Read in order: `intent.md` → `spec.md` → this file → `habits.md` → the phase file.
 
 ## Files that change
