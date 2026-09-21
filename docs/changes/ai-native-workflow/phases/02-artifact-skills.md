@@ -28,6 +28,7 @@ Claude facts (verified 2026-09-18, `code.claude.com/docs/en/skills`): `SKILL.md`
 1. **RED — slug and folder script.** `claude/.claude/skills/plan/scripts/change-folder` (Ruby, executable) prints `docs/changes/<slug>` for the current branch, exit 1 with a clear message on `main`/`master`/detached HEAD. Test `test/change_folder_test.rb` covers: plain branch, prefixed branch (`ai/x`, `feature/x`), main refuses, detached refuses. Run: fails, script missing. Then write it. Other skills call this script; do not duplicate the logic.
 
 2. **`intent` skill** — `claude/.claude/skills/intent/SKILL.md` (+ `agents/openai.yaml`, Codex link per phase 1). Behaviour:
+   - First asks for the GitHub issue (number or URL) if none was given; reads its title and body with `gh issue view` as input to the interview. When an issue exists, the branch — and therefore the folder — is named `<issue-number>-<issue-title-in-kebab-case>`, the same name GitHub's "Create a branch" button generates; if the current branch does not match, the skill says so and hands over to `worktree-first` before writing anything. Without an issue: a kebab-case task slug.
    - Interview in the domain's words: what can users not do today, what does better look like, who and what systems are affected, constraints, success. Three to five questions, then write. A small change still gets an intent; three lines is valid.
    - Writes `<folder>/intent.md` from the playbook template with `Author:` and `Status: draft`. Creates the folder. Does not `git add` — the user or `implement` commits.
    - On the words "accepted" / "accept the intent": flips to `Status: accepted`.
@@ -47,6 +48,8 @@ Claude facts (verified 2026-09-18, `code.claude.com/docs/en/skills`): `SKILL.md`
 7. **Adapt `handoff`.** Step 1 of `claude/.claude/skills/handoff/SKILL.md`: the plan is `<folder>/plan.md` (via `change-folder`); it must be `Status: accepted`; if absent, run the `plan` skill first. Drop every mention of `~/.claude/plans/`. Check `herdr/.config/herdr/scripts/hand-off-plan.sh` and `test/herdr_worker_scripts_test.rb` for assumptions about that path; the script takes an absolute path argument today, so likely nothing changes — confirm by running the test.
 
 8. **Playbook §7.17.** Replace the rule text with: no code before an accepted `plan.md` in `docs/changes/<slug>/`, produced in plan mode from an accepted `intent.md` and `spec.md`; trivial tasks get a one-line intent and a one-line plan, not an exemption. Keep the rule number. Add one line to §5 pointing at the four skills.
+
+8a. **`worktree-first` branch naming.** In `claude/.claude/skills/worktree-first/SKILL.md` Step 1, replace `branch="<kebab-case-task-slug>"` guidance with: when a GitHub issue is known, `branch="<issue-number>-<issue-title-in-kebab-case>"` exactly as GitHub's "Create a branch" would name it (`gh issue view <n> --json title` for the title; lowercase, non-alphanumerics to `-`, collapse repeats, trim); otherwise a kebab-case task slug. No prefix in either case. Add a `test/branch_name_test.rb` if the derivation becomes a script; if it stays prose in the skill, no test.
 
 9. **`new-repo-setup`.** Step 1: mention that `docs/changes/` is reserved for change folders and must not be in `.gitignore`. Nothing else in this phase.
 

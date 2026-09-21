@@ -15,6 +15,7 @@ docs/changes/<slug>/
 
 - Lives in the application repository, committed on the feature branch. Same layout for personal and work repositories.
 - `<slug>` is the branch name without any prefix: branch `ai/claims-status` and branch `claims-status` both map to `docs/changes/claims-status/`. Skills derive the folder from the current branch; nobody types the path.
+- Branch naming: when a GitHub issue is known, the branch is `<issue-number>-<issue-title-in-kebab-case>` — the name GitHub's "Create a branch" button generates (e.g. `7716-calendar-occurrence-range-fix`), so the issue number travels into the folder name. Without an issue, a kebab-case task slug. No prefix in either case; `worktree-first` and `intent` apply this.
 - `docs/changes/` is reserved for these folders only. Other documentation stays where it is.
 - Fixed filenames. A skill or hook can say "read `plan.md` in this branch's change folder" without searching.
 
