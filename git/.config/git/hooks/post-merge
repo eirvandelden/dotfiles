@@ -8,6 +8,17 @@ if [ "$LEFTHOOK" = "0" ]; then
   exit 0
 fi
 
+set_global_config()
+{
+  _root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 0
+  test -f "$_root/lefthook.yml" && return 0
+  test -f "$_root/.lefthook.yml" && return 0
+  test -f "$_root/.config/lefthook.yml" && return 0
+  _conf="$HOME/Developer/dotfiles/lefthook.yml"
+  test -f "$_conf" && export LEFTHOOK_CONFIG="$_conf"
+  return 0
+}
+
 call_lefthook()
 {
   if test -n "$LEFTHOOK_BIN"
@@ -68,4 +79,5 @@ call_lefthook()
   fi
 }
 
-call_lefthook run "post-merge" "$@"
+set_global_config
+call_lefthook run "post-merge" --no-auto-install "$@"

@@ -1,0 +1,36 @@
+---
+name: Dotfiles tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+      - run: gem install minitest --no-document
+      # editor_test.rb, rv_ci_fallback_test.rb and secrets_loader_test.rb source zsh scripts.
+      - run: sudo apt-get update && sudo apt-get install -y zsh
+      - name: Run test/*_test.rb
+        run: |
+          set -o pipefail
+          for file in test/*_test.rb; do
+            # test/lefthook_pull_hooks_test.rb needs a real lefthook binary at a path
+            # shaped like this machine's rv install (~/.local/share/rv/rubies/*/.../
+            # libexec/lefthook-darwin-arm64/lefthook) to exercise the real pull-hook
+            # pipeline. Runners are Linux and have no rv, so it cannot run here yet.
+            # Skipped pending Etienne's agreement on how to run it in CI (see PR body).
+            if [ "$file" = "test/lefthook_pull_hooks_test.rb" ]; then
+              echo "Skipping $file (needs a real lefthook binary, see PR description)"
+              continue
+            fi
+            echo "=== $file ==="
+            ruby -Itest "$file"
+          done
