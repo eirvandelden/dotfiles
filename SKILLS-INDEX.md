@@ -43,8 +43,14 @@ stowing the `agents` package — the path Codex actually reads.
 
 ## Planning and setup
 
-- Writing a plan for another agent, reviewing a plan critically, or executing a handed-over plan:
-  `claude/.claude/skills/plan-handoff/SKILL.md`
+- Starting any change — interview for the problem and proposed outcome, write
+  `docs/changes/<slug>/intent.md`: `claude/.claude/skills/intent/SKILL.md`
+- Turning an accepted intent into requirements and testable acceptance criteria:
+  `claude/.claude/skills/spec/SKILL.md`
+- Writing `plan.md` in plan mode, critiquing a plan, or executing a handed-over one:
+  `claude/.claude/skills/plan/SKILL.md`
+- Building an accepted plan — single session, split across a test-writer/implementer pair, or
+  handed to a worker pane: `claude/.claude/skills/implement/SKILL.md`
 - Setting up a new personal repository — repo context file, rv, lefthook, CI, Dependabot, deploy:
   `claude/.claude/skills/new-repo-setup/SKILL.md`
 - Deployment, error tracking, performance monitoring:

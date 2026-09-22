@@ -20,7 +20,7 @@ class SkillParityTest < Minitest::Test
   # phase decides, skill by skill, whether each is worth linking into Codex too.
   CLAUDE_ONLY = %w[
     code-review dependencies dotfiles-maintenance new-repo-setup object-oriented-design
-    plan-handoff rails-api-design rails-architecture rails-ops rails-testing rails-ui
+    rails-api-design rails-architecture rails-ops rails-testing rails-ui
     ruby-style sync
   ].freeze
   # Skills that stay Codex-only, with the reason on record. Empty for now.
