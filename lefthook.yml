@@ -19,8 +19,7 @@ pre-commit:
       glob: "*.{js,ts,jsx,tsx}"
       run: yarn eslint {staged_files}
     spelling:
-      glob: "*.{js,rb,md}"
-      run: cspell {staged_files}
+      run: cspell --no-must-find-files {staged_files}
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"
@@ -60,6 +59,7 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
+          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -71,6 +71,7 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
+          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -250,6 +251,7 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
+          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -261,6 +263,7 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
+          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \

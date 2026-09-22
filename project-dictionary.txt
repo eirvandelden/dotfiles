@@ -6,11 +6,14 @@ autorun
 backticked
 bdelete
 betterspecs
+binstub
 binstubs
 brew
 brewfile
 brewfiles
 Broadcastable
+browserslist
+browserslistrc
 caddyfile
 callsites
 chnode
@@ -79,6 +82,8 @@ myproject
 neovide
 neovim
 Neovim
+nocommit
+NOCOMMIT
 oldfiles
 omarchy
 Omarchy
