@@ -19,24 +19,23 @@ jobs:
       # editor_test.rb, rv_ci_fallback_test.rb and secrets_loader_test.rb source zsh scripts.
       - run: sudo apt-get update && sudo apt-get install -y zsh
       - name: Install lefthook
-        env:
-          # Pinned to the version installed locally via rv (`lefthook --version`).
-          # Bump this alongside the rv gem, and update the checksum below from the
-          # release's lefthook_checksums.txt.
-          LEFTHOOK_VERSION: "2.1.12"
-          LEFTHOOK_SHA256: "22ff1ad48d1a0f4dca8d6b7e920056c6a9015f9204e5b693858ed9c2db759a16"
+        # Always the latest GitHub release, no version to remember to bump.
+        # Checksum is still verified, from that same release's own
+        # lefthook_checksums.txt.
         run: |
           set -o pipefail
-          asset="lefthook_${LEFTHOOK_VERSION}_Linux_x86_64"
-          curl -fsSLO "https://github.com/evilmartians/lefthook/releases/download/v${LEFTHOOK_VERSION}/${asset}"
-          echo "${LEFTHOOK_SHA256}  ${asset}" | sha256sum -c -
+          tag=$(curl -fsSL https://api.github.com/repos/evilmartians/lefthook/releases/latest | jq -r .tag_name)
+          version=${tag#v}
+          asset="lefthook_${version}_Linux_x86_64"
+          curl -fsSLO "https://github.com/evilmartians/lefthook/releases/download/${tag}/${asset}"
+          curl -fsSLO "https://github.com/evilmartians/lefthook/releases/download/${tag}/lefthook_checksums.txt"
+          grep " ${asset}\$" lefthook_checksums.txt | sha256sum -c -
           install -m 755 "${asset}" /usr/local/bin/lefthook
-          rm "${asset}"
+          rm "${asset}" lefthook_checksums.txt
       - name: Install cspell
-        # Pinned to the version installed locally (`cspell --version`), so
-        # lefthook_local_hooks_test.rb exercises the real spelling fallback
-        # instead of skipping because cspell is missing from PATH.
-        run: npm install -g cspell@10.0.0
+        # Always the latest npm release; npm's own registry integrity check
+        # covers it, so no separate checksum step is needed here.
+        run: npm install -g cspell
       - name: Run test/*_test.rb
         run: |
           set -o pipefail
