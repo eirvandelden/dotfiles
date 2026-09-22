@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+# Pre-push backstop: refuses a push whose change folder has no review.md at least as new,
+# in commits, as the last change to anything outside the folder. Freshness is defined in git
+# terms, not mtime — see spec.md §4. Exits 0 when there is nothing to enforce yet (no change
+# folder in HEAD) or when the review is fresh; exits 1 with a message otherwise.
+require "open3"
+require "time"
+
+CHANGE_FOLDER_SCRIPT = File.expand_path("../../../../claude/.claude/skills/plan/scripts/change-folder", __dir__)
+
+def capture(*command)
+  stdout, status = Open3.capture2(*command)
+  raise "#{command.join(' ')} failed" unless status.success?
+
+  stdout
+end
+
+def folder
+  stdout, status = Open3.capture2(CHANGE_FOLDER_SCRIPT)
+  exit(0) unless status.success?
+
+  stdout.strip
+end
+
+def folder_in_head?(folder)
+  _, status = Open3.capture2("git", "cat-file", "-e", "HEAD:#{folder}")
+  status.success?
+end
+
+def latest_commit(pathspec)
+  format = "%H\x1f%s\x1f%cI"
+  stdout = capture("git", "log", "-1", "--format=#{format}", "--", *pathspec)
+  return nil if stdout.strip.empty?
+
+  sha, subject, date = stdout.strip.split("\x1f")
+  { sha: sha, subject: subject, date: Time.iso8601(date).strftime("%Y-%m-%d") }
+end
+
+def code_commit(folder)
+  latest_commit([ ".", ":(exclude,glob)#{folder}/**" ])
+end
+
+def review_commit(folder)
+  latest_commit([ "#{folder}/review.md" ])
+end
+
+def review_covers_code?(code, review)
+  return false if review.nil?
+  return true if code.nil?
+
+  code[:sha] == review[:sha] ||
+    system("git", "merge-base", "--is-ancestor", code[:sha], review[:sha])
+end
+
+def uncommitted_paths_outside(folder)
+  capture("git", "status", "--porcelain", "--untracked-files=all").lines.filter_map do |line|
+    path = line[3..].strip.delete_prefix('"').delete_suffix('"')
+    path unless path.start_with?("#{folder}/")
+  end
+end
+
+def describe(commit, label)
+  return "no #{label}" if commit.nil?
+
+  "#{label}: \"#{commit[:subject]}\" (#{commit[:date]})"
+end
+
+def refuse(folder, code, review, dirty_paths)
+  lines = [ "Change folder #{folder} is not covered by a fresh review." ]
+  lines << describe(code, "last code commit")
+  lines << describe(review, "review.md")
+  unless dirty_paths.empty?
+    lines << "Uncommitted, outside the change folder: #{dirty_paths.join(', ')}"
+  end
+  lines << "Run /review, then push again."
+
+  warn(lines.join("\n"))
+  exit(1)
+end
+
+slug_folder = folder
+exit(0) unless folder_in_head?(slug_folder)
+
+code = code_commit(slug_folder)
+review = review_commit(slug_folder)
+dirty_paths = uncommitted_paths_outside(slug_folder)
+
+exit(0) if review_covers_code?(code, review) && dirty_paths.empty?
+
+refuse(slug_folder, code, review, dirty_paths)

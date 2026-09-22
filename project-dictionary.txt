@@ -90,6 +90,7 @@ omarchy
 Omarchy
 opusplan
 pacman
+pathspec
 pkgconfig
 polkit
 precmd
