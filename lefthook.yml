@@ -269,6 +269,10 @@ pre-push:
           --fixed-strings \
           NOCOMMIT "{push_files}"
       fail_text: Your pushed files include a NOCOMMIT. See above for details.
+    review-report-fresh:
+      tags: review
+      run: ~/.config/git/worktree-tools/review-report-fresh
+      fail_text: Run /review, then push again. --no-verify skips this if you must.
 
 # Run installs and migrations after pull
 post-merge:
