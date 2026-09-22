@@ -48,7 +48,7 @@ pre-commit:
       tags: branch-protection
       run: |
         branch=$(git rev-parse --abbrev-ref HEAD)
-        if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+        if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
           echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
           exit 1
         fi
@@ -240,7 +240,7 @@ pre-push:
       tags: branch-protection
       run: |
         branch=$(git rev-parse --abbrev-ref HEAD)
-        if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+        if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
           echo "Direct push to $branch is not allowed. Create a feature branch and open a PR."
           exit 1
         fi
