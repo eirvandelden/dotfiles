@@ -79,6 +79,9 @@ API design, dependencies, ops, git workflow, code review, dotfiles — is not re
 Claude Code loads those skills automatically by relevance. Any other agent has no loader and
 should read the index, then the matching skill file: `SKILLS-INDEX.md`.
 
+Every change moves through the `intent`, `spec`, `plan` and `implement` skills, in that order —
+see rule 17 below.
+
 ## 6. Open Questions
 
 Undecided areas, to be settled per project: `docs/open-questions.md`.
@@ -188,9 +191,12 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Combine both with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
 17. Plan before implementing:
-    - NEVER write or modify code before presenting a plan and receiving explicit approval. The
-      plan says what will change and why, in enough detail for the user to evaluate it.
-    - Trivial tasks included: state the intended change and wait for a go-ahead.
+    - NEVER write or modify code before an accepted `plan.md` exists at
+      `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` and
+      `spec.md` in the same folder. The `intent`, `spec`, `plan` and `implement` skills produce
+      and consume that chain in order.
+    - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption
+      from having them.
 18. Commits:
     - Agents may create commits without asking first.
     - Each commit must be small and contain exactly one logical change. Split unrelated

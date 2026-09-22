@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Intent"
+  short_description: "Interview for the problem and proposed outcome, then write docs/changes/<slug>/intent.md"

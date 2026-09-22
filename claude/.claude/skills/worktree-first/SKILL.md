@@ -70,7 +70,17 @@ find .worktrees -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read -r dir;
   fi
 done
 
-branch="<kebab-case-task-slug>"
+# Branch naming: with a known GitHub issue, "<issue-number>-<issue-title-in-kebab-case>" —
+# the same name GitHub's own "Create a branch" button generates. Without one, a kebab-case
+# task slug. No prefix either way.
+#
+#   title=$(gh issue view "$issue_number" --json title -q '.title')
+#   slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+#   branch="${issue_number}-${slug}"
+#
+# otherwise:
+#   branch="<kebab-case-task-slug>"
+
 git worktree add ".worktrees/$branch" -b "$branch" "origin/$default_branch"
 cd ".worktrees/$branch" || exit
 ```

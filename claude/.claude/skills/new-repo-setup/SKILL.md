@@ -11,7 +11,8 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
    "The repo context file" below. `CLAUDE.md` is a symlink to `AGENTS.md`, also committed.
    Never symlink either one to the shared playbook: that arrives from the user config
    (`~/.claude/PLAYBOOK.md`, `~/.codex/PLAYBOOK.md`) in every repository already, and a repo
-   that symlinks it too just loads it twice.
+   that symlinks it too just loads it twice. `docs/changes/` is reserved for the `intent` →
+   `spec` → `plan` → `implement` chain's change folders; it must not appear in `.gitignore`.
 2. Ruby: `.ruby-version` present; `rv` is the version manager — never mise/asdf/rbenv/rvm.
 3. Git hooks: no lefthook files needed in a new repo. Global `core.hooksPath` scripts
    automatically set `LEFTHOOK_CONFIG` to `~/Developer/dotfiles/lefthook.yml` when the repo has

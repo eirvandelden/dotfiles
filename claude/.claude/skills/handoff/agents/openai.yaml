@@ -1,7 +1,0 @@
----
-interface:
-  display_name: "Handoff"
-  short_description: "Hand this task's plan to a fresh Claude worker in a pane below this one"
-
-policy:
-  allow_implicit_invocation: false
