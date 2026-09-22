@@ -72,6 +72,7 @@ launchable
 lefthook
 libexec
 linuxbrew
+lockfiles
 looknfeel
 lspconfig
 macos
