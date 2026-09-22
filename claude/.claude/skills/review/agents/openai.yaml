@@ -1,7 +1,7 @@
 ---
 interface:
   display_name: "Review"
-  short_description: "Ask a Claude reviewer to review this branch in a pane beside this one"
+  short_description: "Report-only review of this branch, findings written to review.md"
 
 policy:
   allow_implicit_invocation: false
