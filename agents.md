@@ -190,6 +190,9 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
       fallback to look up.
     - Combine both with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
+    - Before pushing a branch for others to see: run `review`. It is report-only — findings land
+      in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces
+      a fresh report whenever the branch has a change folder.
 17. Plan before implementing:
     - NEVER write or modify code before an accepted `plan.md` exists at
       `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` and
