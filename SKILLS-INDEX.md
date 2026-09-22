@@ -40,6 +40,12 @@ stowing the `agents` package — the path Codex actually reads.
   `claude/.claude/skills/sync/SKILL.md`
 - Reviewing a pull request, or implementing review feedback:
   `claude/.claude/skills/code-review/SKILL.md`
+- Report-only review of the current branch before pushing — a fresh reviewer in a herdr pane, or
+  in-session with `here`; findings land in `docs/changes/<slug>/review.md`:
+  `claude/.claude/skills/review/SKILL.md`. The review policy template (passes, what "Important"
+  means, nit cap, do-not-report list) ships at
+  `claude/.claude/skills/new-repo-setup/references/REVIEW.md`; `new-repo-setup` copies it to a
+  personal repo's root as `REVIEW.md`.
 
 ## Planning and setup
 
