@@ -48,7 +48,7 @@ Personal repositories: `REVIEW.md` and `docs/changes/` via `new-repo-setup`, one
 | 1 | `phases/01-shared-skills.md` | one-source skill linking Claude ↔ Codex, drift test, existing `handoff`/`review`/`worktree-first` migrated onto it | — (mechanics) |
 | 2 | `phases/02-artifact-skills.md` | `docs/changes/<slug>/`, `intent`/`spec`/`plan`/`implement` skills, playbook §7.17, `handoff` and `plan-handoff` absorbed | intent, spec, plan, implement |
 | 3 | `phases/03-review.md` | `REVIEW.md` template, `reviewer` agent (Claude md + generated Codex toml), `review` skill, pre-push freshness check, `new-repo-setup` step | review |
-| 4 | `phases/04-finish.md` | `finish`: review fresh → (work: PR template fill, ADR) → delete → commit → (work: push, review board, reviewers); work details in dotfiles-work | finish |
+| 4 | `phases/04-finish.md` | `finish`: review fresh → (work: PR template fill, ADR) → delete → commit → (work: push, open the PR in the work browser profile, reviewers); work details in dotfiles-work | finish |
 | 5 | `phases/05-plugins-and-playbook.md` | plugins off in both tools, domain skills vendored, playbook edits, `/audit-token` before/after | mistake twice → one line |
 | 6 | `phases/06-codex-guard-parity.md` | consent guard from Codex inline hooks, rules purge with `forbidden`, parity test extended to hooks | switch tools, not process |
 | 7 | `phases/07-hygiene.md` | dangling symlinks, config churn, orphan settings, logs, work text out of the public repo | — |
@@ -74,7 +74,7 @@ The change is done when, in a fresh session of each tool, in a throwaway persona
 
 1. `/intent` → `/spec` → `/plan` produce the three files under `docs/changes/<branch>/`, each with a `Status:` line, and `implement` refuses to start on a plan not marked accepted.
 2. `/review` appends a round to `docs/changes/<branch>/review.md` and commits it; `git push` fails while the newest code commit is newer than the newest `review.md` commit, passes after re-running.
-3. `/finish` in a personal repo deletes the folder in one commit and stops. In a work checkout it fills the PR template, deletes, pushes, puts the PR on the review board, requests reviewers — dry-run mode first.
+3. `/finish` in a personal repo deletes the folder in one commit and stops. In a work checkout it fills the PR template, deletes, pushes, opens the PR in the work browser profile for the manual status step, requests reviewers — dry-run mode first.
 4. `ruby -Itest -e 'Dir["test/*_test.rb"].each { require "./#{it}" }'` is green in dotfiles, including the parity test.
 5. `/audit-token` shows session-start context at or below the playbook plus includes; no plugin injection; no per-subagent injection.
 6. `codex exec` in the same repo with `$review` produces the same report shape.
