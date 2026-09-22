@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Spec"
+  short_description: "Turn an accepted intent into requirements and testable acceptance criteria"
