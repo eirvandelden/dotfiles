@@ -166,12 +166,12 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/fetch/i, reviewer_prompt)
   end
 
-  def test_the_reviewer_is_given_a_place_to_write_its_findings
+  def test_the_reviewer_derives_its_own_change_folder_and_report_location
     run_script(START_REVIEW)
 
-    assert_includes(reviewer_prompt, report_path("review-w1-pw"))
-    assert(File.directory?(File.dirname(report_path("review-w1-pw"))),
-           "the reviewer cannot write a report into a directory that is not there")
+    assert_includes(reviewer_prompt, "change-folder")
+    assert_includes(reviewer_prompt, "REVIEW.md")
+    assert_includes(reviewer_prompt, "review.md")
   end
 
   def test_the_reviewer_is_told_to_ping_the_agent_that_asked_for_the_review
@@ -184,7 +184,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_reviewing_reports_where_the_findings_will_land
     stdout, = run_script(START_REVIEW)
 
-    assert_includes(stdout, report_path("review-w1-pw"))
+    assert_includes(stdout, "docs/changes")
+    assert_includes(stdout, "review.md")
   end
 
   def test_the_worker_is_told_where_to_report_and_who_to_tell
@@ -196,14 +197,13 @@ class HerdrWorkerScriptsTest < Minitest::Test
            "the worker cannot write a report into a directory that is not there")
   end
 
-  def test_a_review_started_from_a_worktree_reports_where_the_worktree_sweep_cannot_delete_it
-    main_checkout = @repo
+  def test_reviewing_from_a_worktree_still_reviews_that_branch
     @repo = linked_worktree
 
     run_script(START_REVIEW)
 
-    assert_includes(reviewer_prompt,
-                    File.join(File.realpath(main_checkout), ".git", "herdr", "review-w1-pw.md"))
+    assert_includes(herdr_calls,
+                    "pane split --current --direction right --cwd #{File.realpath(@repo)} --no-focus")
   end
 
   def test_reviewing_without_a_caller_to_report_to_is_refused_before_a_pane_is_opened
@@ -235,30 +235,12 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(handoff_prompt, "at most twelve times")
   end
 
-  def test_an_awkward_repository_path_still_reaches_the_reviewer_intact
-    @repo = repo_on("main", inside: "o'brien's work files")
-
-    run_script(START_REVIEW)
-
-    assert_path_survived(reviewer_prompt, report_path("review-w1-pw"))
-  end
-
   def test_an_awkward_repository_path_still_reaches_the_worker_intact
     @repo = repo_on("main", inside: "o'brien's work files")
 
     run_script(HAND_OFF_PLAN, plan_file)
 
     assert_path_survived(handoff_prompt, report_path("handoff-w1-pv"))
-  end
-
-  def test_a_report_left_by_an_earlier_session_is_cleared_before_the_reviewer_can_write
-    stale = report_path("review-w1-pw")
-    FileUtils.mkdir_p(File.dirname(stale))
-    File.write(stale, "yesterday's findings\n")
-
-    run_script(START_REVIEW)
-
-    assert_includes(report_state_at_agent_start, "review-w1-pw empty")
   end
 
   def test_a_report_left_by_an_earlier_session_is_cleared_before_the_worker_can_write
@@ -269,19 +251,6 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, plan_file)
 
     assert_includes(report_state_at_agent_start, "handoff-w1-pv empty")
-  end
-
-  def test_a_report_directory_that_cannot_be_created_stops_the_review_before_anything_is_spawned
-    git_directory = File.join(@repo, ".git")
-    FileUtils.chmod(0o500, git_directory)
-
-    _, stderr, status = run_script(START_REVIEW)
-
-    assert_equal(1, status.exitstatus)
-    assert_match(/report/i, stderr)
-    assert_empty(herdr_calls)
-  ensure
-    FileUtils.chmod(0o700, git_directory)
   end
 
   def test_a_report_directory_that_cannot_be_created_stops_the_handoff_before_anything_is_spawned
