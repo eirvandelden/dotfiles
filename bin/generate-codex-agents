@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+# Compiles each Claude agent (claude/.claude/agents/<name>.md) into a Codex agent
+# (codex/.codex/agents/<name>.toml). Codex has no shared agent-definition format with
+# Claude (spec.md §3), so this generated adapter is the one place the translation happens;
+# test/codex_agent_generation_test.rb fails when a committed .toml has drifted from it.
+require "yaml"
+require "fileutils"
+
+def frontmatter_and_body(markdown)
+  match = markdown.match(/\A---\n(.*?)\n---\n(.*)\z/m)
+  raise "no frontmatter in #{markdown[0, 40].inspect}" unless match
+
+  [ YAML.safe_load(match[1]), match[2].strip ]
+end
+
+def read_only?(tools)
+  Array(tools).none? { |tool| %w[Edit Write MultiEdit].include?(tool) }
+end
+
+def toml_string(value)
+  escaped = value.gsub(/[\\"]/) { |char| "\\#{char}" }
+  %("#{escaped}")
+end
+
+def toml_literal_block(value)
+  raise "body contains a triple single-quote, which would break the TOML literal string" \
+    if value.include?("'''")
+
+  "'''\n#{value}\n'''"
+end
+
+def render(name, frontmatter, body)
+  lines = []
+  lines << "name = #{toml_string(name)}"
+  lines << "description = #{toml_string(frontmatter.fetch('description').strip)}"
+  lines << %(sandbox_mode = "read-only") if read_only?(frontmatter["tools"])
+  lines << "developer_instructions = #{toml_literal_block(body)}"
+  "#{lines.join("\n")}\n"
+end
+
+claude_dir = ARGV[0] || File.expand_path("../claude/.claude/agents", __dir__)
+codex_dir = ARGV[1] || File.expand_path("../codex/.codex/agents", __dir__)
+
+FileUtils.mkdir_p(codex_dir)
+
+Dir.glob(File.join(claude_dir, "*.md")).each do |path|
+  name = File.basename(path, ".md")
+  frontmatter, body = frontmatter_and_body(File.read(path))
+  File.write(File.join(codex_dir, "#{name}.toml"), render(name, frontmatter, body))
+end
