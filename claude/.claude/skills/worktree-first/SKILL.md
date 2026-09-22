@@ -1,7 +1,6 @@
 ---
 name: worktree-first
 description: Use before writing, generating, or editing code for any new task in a git repository — sets up an isolated worktree under .worktrees/ so all commits and pushes happen there instead of the main checkout, sweeping merged worktrees for cleanup first.
-disable-model-invocation: true
 ---
 
 # Worktree First

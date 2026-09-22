@@ -25,6 +25,11 @@ class SkillParityTest < Minitest::Test
   ].freeze
   # Skills that stay Codex-only, with the reason on record. Empty for now.
   CODEX_ONLY = [].freeze
+  # Skills where the two flags intentionally disagree: worktree-first must stay
+  # model-invocable on Claude (WORKTREES.md and the intent skill call it), while
+  # Codex's allow_implicit_invocation only disables automatic triggering, which
+  # is the intended behaviour there.
+  AGENT_INVOKED = %w[worktree-first].freeze
 
   def test_agents_skills_are_symlinks_into_the_claude_skill_folder
     assert(Dir.exist?(AGENTS_SKILLS), "#{AGENTS_SKILLS} does not exist")
@@ -51,7 +56,7 @@ class SkillParityTest < Minitest::Test
   end
 
   def test_implicit_invocation_policy_matches_between_frontmatter_and_openai_yaml
-    skill_names(AGENTS_SKILLS).each do |name|
+    (skill_names(AGENTS_SKILLS) - AGENT_INVOKED).each do |name|
       skill_md = File.join(CLAUDE_SKILLS, name, "SKILL.md")
       openai_yaml = File.join(CLAUDE_SKILLS, name, "agents/openai.yaml")
       assert(File.exist?(openai_yaml), "#{name} has no agents/openai.yaml")
