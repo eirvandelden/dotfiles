@@ -118,6 +118,8 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md`
      or similar). Mandatory on work repos; use on personal repos too if one exists.
+   - `docs/changes/<slug>/` artifacts are removed by the `finish` skill; never delete them by
+     hand.
 6. GitHub identity and consent:
    - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit
      instruction for that exact message.

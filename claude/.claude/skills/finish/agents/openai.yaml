@@ -1,0 +1,7 @@
+---
+interface:
+  display_name: "Finish"
+  short_description: "Closes a change once review is fresh — folder removal, and at work the PR handoff"
+
+policy:
+  allow_implicit_invocation: false
