@@ -8,7 +8,9 @@ tools: [Read, Grep, Glob, Bash, Write, Edit]
 hooks:
   PreToolUse:
     - matcher: "Edit|Write|MultiEdit"
-      command: "~/.claude/hooks/test-guard.rb --always"
+      hooks:
+        - type: command
+          command: "~/.claude/hooks/test-guard.rb --always"
 ---
 
 <!--
