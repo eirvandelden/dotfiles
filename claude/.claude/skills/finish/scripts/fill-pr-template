@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+# Fills a work PR template from intent.md and plan.md before finish opens it
+# for the team. A heading is matched by what it asks for, not by its exact
+# wording, so any repository's own template phrasing still gets filled. A
+# heading nothing matches keeps its own text; a template where nothing
+# matched — including no template at all — gets one "## Context" block
+# prepended instead, built from the same four pieces.
+CATEGORIES = [
+  [ :summary, /summary|what/i ],
+  [ :why, /why|motivation/i ],
+  [ :implementation, /implementation|how|details/i ],
+  [ :test, /test|verify/i ]
+].freeze
+
+HEADING = /^(#+\s+.*)$/.freeze
+
+def parse_sections(markdown)
+  parts = markdown.split(HEADING)
+  preamble = parts.shift || ""
+  sections = parts.each_slice(2).map do |heading, body|
+    { heading: heading, title: heading.sub(/^#+\s*/, "").strip, body: body || "" }
+  end
+  [ preamble, sections ]
+end
+
+def section_body(markdown, title)
+  _preamble, sections = parse_sections(markdown)
+  match = sections.find { |section| section[:title].casecmp?(title) }
+  match && match[:body].strip
+end
+
+def joined(*parts)
+  parts.compact.reject(&:empty?).join("\n\n")
+end
+
+def filler(intent, plan)
+  {
+    summary: joined(section_body(intent, "Problem"), section_body(intent, "Proposed outcome")),
+    why: section_body(intent, "Problem") || "",
+    implementation: joined(section_body(plan, "Files that change"), section_body(plan, "Order of work")),
+    test: section_body(plan, "Proof") || ""
+  }
+end
+
+def category_for(title)
+  CATEGORIES.find { |_name, pattern| title.match?(pattern) }&.first
+end
+
+def context_block(fill)
+  <<~MARKDOWN.strip
+    ## Context
+
+    **Summary**
+
+    #{fill[:summary]}
+
+    **Why**
+
+    #{fill[:why]}
+
+    **Implementation**
+
+    #{fill[:implementation]}
+
+    **Testing**
+
+    #{fill[:test]}
+  MARKDOWN
+end
+
+def fill_template(template, fill)
+  preamble, sections = parse_sections(template)
+  categories = sections.map { |section| category_for(section[:title]) }
+
+  return joined(context_block(fill), template.strip) if categories.compact.empty?
+
+  rebuilt = sections.zip(categories).map do |section, category|
+    category ? "#{section[:heading]}\n\n#{fill[category]}\n" : "#{section[:heading]}#{section[:body]}"
+  end
+
+  (preamble + rebuilt.join).strip
+end
+
+template_path, intent_path, plan_path = ARGV
+unless intent_path && plan_path
+  warn("usage: fill-pr-template <template-path-or-empty> <intent.md> <plan.md>")
+  exit(1)
+end
+
+intent = File.read(intent_path)
+plan = File.read(plan_path)
+fill = filler(intent, plan)
+
+template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
+
+result = template.strip.empty? ? context_block(fill) : fill_template(template, fill)
+
+puts(result)
