@@ -61,11 +61,12 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
   end
 
-  def test_pre_push_uses_global_fallback_and_rejects_push_from_main
-    setup_repo("main")
+  def test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme
+    setup_repo("trunk")
     stub_real_lefthook
+    commit_file("todo.txt", "FIX" + "ME: something\n")
     _out, _err, status = push
-    assert_not(status.success?, "Expected a push from main to be rejected by the global fallback")
+    assert_not(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
   end
 
   def test_pre_push_calls_lefthook_with_no_auto_install
@@ -113,6 +114,11 @@ class LefthookLocalHooksTest < Minitest::Test
   def stage_file(name, content)
     File.write(File.join(@repo_dir, name), content)
     run_git("-C", @repo_dir, "add", ".")
+  end
+
+  def commit_file(name, content)
+    stage_file(name, content)
+    run_git("-C", @repo_dir, "commit", "-q", "-m", "add #{name}", env: { "LEFTHOOK" => "0" })
   end
 
   def stub_real_lefthook
