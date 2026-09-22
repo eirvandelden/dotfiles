@@ -27,8 +27,16 @@ class LefthookLocalHooksTest < Minitest::Test
     "lefthook not found: not on PATH (checked LEFTHOOK_BIN and `which lefthook`) " \
     "and no rv install matched #{RV_LEFTHOOK_GLOB}"
 
+  def self.locate_cspell_dir
+    found = `which cspell 2>/dev/null`.strip
+    File.dirname(found) unless found.empty?
+  end
+
+  CSPELL_DIR = locate_cspell_dir
+
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
+    skip("cspell not found on PATH") unless CSPELL_DIR
 
     @repo_root = File.expand_path("..", __dir__)
     @tmpdir = Dir.mktmpdir
@@ -76,6 +84,22 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
+  def test_pre_commit_uses_global_fallback_and_rejects_an_unknown_word_outside_js_rb_md
+    setup_repo("trunk")
+    stub_real_lefthook
+    stage_file("notes.txt", "zzqxklmnop is not a real word\n")
+    _out, _err, status = git("commit", "-m", "notes")
+    assert_not(status.success?, "Expected an unknown word outside js/rb/md to be rejected by the global fallback")
+  end
+
+  def test_pre_commit_still_commits_a_binary_only_change
+    setup_repo("trunk")
+    stub_real_lefthook
+    stage_binary_file("icon.png", "\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR".b)
+    _out, _err, status = git("commit", "-m", "add icon")
+    assert(status.success?, "Expected a binary-only commit to succeed")
+  end
+
   private
 
   def assert_not(value, message = nil)
@@ -116,6 +140,11 @@ class LefthookLocalHooksTest < Minitest::Test
     run_git("-C", @repo_dir, "add", ".")
   end
 
+  def stage_binary_file(name, bytes)
+    File.binwrite(File.join(@repo_dir, name), bytes)
+    run_git("-C", @repo_dir, "add", ".")
+  end
+
   def commit_file(name, content)
     stage_file(name, content)
     run_git("-C", @repo_dir, "commit", "-q", "-m", "add #{name}", env: { "LEFTHOOK" => "0" })
@@ -139,7 +168,7 @@ class LefthookLocalHooksTest < Minitest::Test
   def repo_env
     {
       "HOME" => @tmpdir,
-      "PATH" => "#{@bin_dir}:/usr/bin:/bin",
+      "PATH" => "#{@bin_dir}:#{CSPELL_DIR}:/usr/bin:/bin",
       "GIT_CONFIG_GLOBAL" => "/dev/null",
       "GIT_CONFIG_SYSTEM" => "/dev/null",
       "GIT_AUTHOR_NAME" => "Test",

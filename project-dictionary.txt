@@ -58,6 +58,7 @@ Hyprland
 hyprlock
 hyprpaper
 hyprsunset
+IHDR
 janky
 Kabisa
 keybind
@@ -150,6 +151,7 @@ Zed
 zeroheight
 zsh
 zubat
+zzqxklmnop
 SDLC
 cavecrew
 evals
