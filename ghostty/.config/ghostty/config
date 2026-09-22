@@ -21,6 +21,9 @@ macos-option-as-alt = true
 
 ## save like macos
 keybind = cmd+s=text:\x13
+
+## send CSI u sequence so herdr forwards shift+enter as distinct from plain enter
+keybind = shift+enter=text:\x1b[13;2u
 # keybind = cmd+c=text:\x03
 ## send option+arrow keys
 # Move backward by word
