@@ -29,12 +29,19 @@ def toml_literal_block(value)
   "'''\n#{value}\n'''"
 end
 
+def with_hook_disclaimer(body, frontmatter)
+  return body unless frontmatter["hooks"]
+
+  "#{body}\n\nCodex has no per-path hook to enforce this the way Claude does: the restriction " \
+    "above is an instruction here, backstopped by the `review` skill's compliance check."
+end
+
 def render(name, frontmatter, body)
   lines = []
   lines << "name = #{toml_string(name)}"
   lines << "description = #{toml_string(frontmatter.fetch('description').strip)}"
   lines << %(sandbox_mode = "read-only") if read_only?(frontmatter["tools"])
-  lines << "developer_instructions = #{toml_literal_block(body)}"
+  lines << "developer_instructions = #{toml_literal_block(with_hook_disclaimer(body, frontmatter))}"
   "#{lines.join("\n")}\n"
 end
 

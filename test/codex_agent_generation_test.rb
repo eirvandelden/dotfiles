@@ -63,6 +63,25 @@ class CodexAgentGenerationTest < Minitest::Test
     assert_includes(toml, "Read the diff.")
   end
 
+  def test_a_hook_the_generator_cannot_translate_becomes_an_instruction
+    claude_dir = write_fixture_agent("implementer", tools: "[Read, Grep, Glob, Bash, Write, Edit]",
+      description: "Makes failing tests pass.", body: "You make failing tests pass.\n",
+      hooks: <<~HOOKS)
+        hooks:
+          PreToolUse:
+            - matcher: "Edit|Write"
+              command: "~/.claude/hooks/test-guard.rb --always"
+      HOOKS
+    codex_dir = File.join(@tmpdir, "codex")
+
+    run_generator(claude_dir, codex_dir)
+
+    toml = File.read(File.join(codex_dir, "implementer.toml"))
+
+    assert_not(toml.include?("hooks"))
+    assert_includes(toml, "the `review` skill's compliance check")
+  end
+
   def test_every_committed_codex_agent_matches_what_the_generator_produces_now
     generated_dir = File.join(@tmpdir, "generated")
 
@@ -78,7 +97,7 @@ class CodexAgentGenerationTest < Minitest::Test
 
   private
 
-  def write_fixture_agent(name, tools:, description:, body:)
+  def write_fixture_agent(name, tools:, description:, body:, hooks: nil)
     dir = File.join(@tmpdir, "claude-#{name}")
     FileUtils.mkdir_p(dir)
     File.write(File.join(dir, "#{name}.md"), <<~MARKDOWN)
@@ -86,7 +105,7 @@ class CodexAgentGenerationTest < Minitest::Test
       name: #{name}
       description: #{description}
       tools: #{tools}
-      ---
+      #{hooks}---
 
       #{body}
     MARKDOWN
