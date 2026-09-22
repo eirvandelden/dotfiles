@@ -1,8 +1,10 @@
 # Headroom
 
-Context compression layer for Claude Code sessions.
+Context compression layer for Claude Code and Codex sessions.
 
-## Launch
+## Claude
+
+### Launch
 
 ```bash
 headroom wrap claude                    # full integration (preferred)
@@ -10,7 +12,7 @@ headroom wrap claude -- --model opus    # pass flags through to claude
 headroom unwrap claude                  # remove durable wrapping
 ```
 
-## Meta commands
+### Meta commands
 
 ```bash
 headroom stats                          # token savings
@@ -18,7 +20,7 @@ headroom update                         # self-update
 headroom learn                          # mine session learnings → CLAUDE.md
 ```
 
-## Semble (semantic code search MCP)
+### Semble (semantic code search MCP)
 
 One-time registration after `install.sh` installs `semble[mcp]` via uv (`mcpServers` is not a
 valid `settings.json` key, so this can't be dotfiles-managed):
@@ -27,7 +29,7 @@ valid `settings.json` key, so this can't be dotfiles-managed):
 claude mcp add --scope user semble uvx -- --from "semble[mcp]" semble
 ```
 
-## Home MCP servers (email, fizzy)
+### Home MCP servers (email, fizzy)
 
 Same servers as `[mcp_servers.email]` / `[mcp_servers.fizzy]` in `codex/.codex/config.toml`.
 Claude has no `bearer_token_env_var`, so the token comes from `${VAR}` expansion instead —
@@ -42,4 +44,22 @@ claude mcp add --scope user --transport http email http://email-mcp.home.arpa/mc
 
 claude mcp add --scope user --transport http fizzy http://fizzy-mcp.home.arpa/mcp \
   --header 'Authorization: Bearer ${FIZZY_PAT}'
+```
+
+## Codex
+
+### Launch
+
+```bash
+headroom wrap codex                     # full integration (preferred)
+headroom wrap codex -- --model opus     # pass flags through to codex
+headroom unwrap codex                   # remove durable wrapping
+```
+
+### Meta commands
+
+```bash
+headroom stats                          # token savings
+headroom update                         # self-update
+headroom learn                          # mine session learnings
 ```

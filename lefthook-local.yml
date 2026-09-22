@@ -58,3 +58,14 @@ pre-push:
         ENDZSH
       fail_text: |
         node does not resolve to the expected chnode-managed binary. Check chnode PATH setup.
+    skill-parity:
+      tags: skills
+      glob:
+        - "claude/.claude/skills/**/*"
+        - "agents/.agents/skills/**/*"
+        - "codex/.codex/skills/**/*"
+        - "packages.conf"
+      run: ruby -Itest test/skill_parity_test.rb
+      fail_text: |
+        A Claude skill and its Codex link have drifted. See the failure above and fix it,
+        or use --no-verify to skip.

@@ -18,6 +18,12 @@ The worker gets the plan file and nothing else — no conversation, no follow-up
   `plan-handoff` skill's rules for writing a plan for another agent — context, concrete steps,
   files involved, verification, explicit out-of-scope list, and no references back to this chat.
 
+## Codex
+
+Codex has no Skill tool to invoke `plan-handoff` — read `claude/.claude/skills/plan-handoff/SKILL.md`
+in the dotfiles repo (installed at `~/.claude/skills/plan-handoff/SKILL.md`) directly and follow its
+rules instead.
+
 ## 2. Hand it over
 
 ```bash
