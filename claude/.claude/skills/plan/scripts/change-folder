@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# Prints docs/changes/<slug> for the current git branch. <slug> is the branch
+# name with any single leading "<prefix>/" removed, so intent/spec/plan/implement
+# all land in the same folder regardless of how the branch was named. Other
+# skills call this script rather than re-deriving the slug themselves.
+require "open3"
+
+def current_branch
+  branch, status = Open3.capture2("git", "rev-parse", "--abbrev-ref", "HEAD")
+  raise "not a git repository" unless status.success?
+
+  branch.strip
+end
+
+def refuse(message)
+  warn(message)
+  exit(1)
+end
+
+branch = current_branch
+
+refuse("On a detached HEAD: no branch to derive a change folder from.") if branch == "HEAD"
+
+if %w[main master].include?(branch)
+  refuse("On #{branch}: change folders belong to a feature branch, not #{branch}.")
+end
+
+slug = branch.sub(%r{\A[^/]+/}, "")
+puts "docs/changes/#{slug}"
