@@ -18,19 +18,28 @@ jobs:
       - run: gem install minitest --no-document
       # editor_test.rb, rv_ci_fallback_test.rb and secrets_loader_test.rb source zsh scripts.
       - run: sudo apt-get update && sudo apt-get install -y zsh
+      - name: Install lefthook
+        # Always the latest GitHub release, no version to remember to bump.
+        # Checksum is still verified, from that same release's own
+        # lefthook_checksums.txt.
+        run: |
+          set -o pipefail
+          tag=$(curl -fsSL https://api.github.com/repos/evilmartians/lefthook/releases/latest | jq -r .tag_name)
+          version=${tag#v}
+          asset="lefthook_${version}_Linux_x86_64"
+          curl -fsSLO "https://github.com/evilmartians/lefthook/releases/download/${tag}/${asset}"
+          curl -fsSLO "https://github.com/evilmartians/lefthook/releases/download/${tag}/lefthook_checksums.txt"
+          grep " ${asset}\$" lefthook_checksums.txt | sha256sum -c -
+          install -m 755 "${asset}" /usr/local/bin/lefthook
+          rm "${asset}" lefthook_checksums.txt
+      - name: Install cspell
+        # Always the latest npm release; npm's own registry integrity check
+        # covers it, so no separate checksum step is needed here.
+        run: npm install -g cspell
       - name: Run test/*_test.rb
         run: |
           set -o pipefail
           for file in test/*_test.rb; do
-            # test/lefthook_pull_hooks_test.rb needs a real lefthook binary at a path
-            # shaped like this machine's rv install (~/.local/share/rv/rubies/*/.../
-            # libexec/lefthook-darwin-arm64/lefthook) to exercise the real pull-hook
-            # pipeline. Runners are Linux and have no rv, so it cannot run here yet.
-            # Skipped pending Etienne's agreement on how to run it in CI (see PR body).
-            if [ "$file" = "test/lefthook_pull_hooks_test.rb" ]; then
-              echo "Skipping $file (needs a real lefthook binary, see PR description)"
-              continue
-            fi
             echo "=== $file ==="
             ruby -Itest "$file"
           done

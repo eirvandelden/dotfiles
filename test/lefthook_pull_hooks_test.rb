@@ -7,11 +7,31 @@ require "tmpdir"
 
 class LefthookPullHooksTest < Minitest::Test
   TRUNK = "trunk"
-  NATIVE_LEFTHOOK = Dir.glob(
-    File.join(Dir.home, ".local/share/rv/rubies/*/lib/ruby/gems/*/gems/lefthook-*/libexec/lefthook-darwin-arm64/lefthook")
-  ).find { |f| File.executable?(f) }
+  RV_LEFTHOOK_GLOB = File.join(
+    Dir.home, ".local/share/rv/rubies/*/lib/ruby/gems/*/gems/lefthook-*/libexec/lefthook-darwin-arm64/lefthook"
+  )
+
+  def self.env_lefthook_bin
+    ENV["LEFTHOOK_BIN"] if ENV["LEFTHOOK_BIN"] && File.executable?(ENV["LEFTHOOK_BIN"])
+  end
+
+  def self.path_lefthook_bin
+    found = `which lefthook 2>/dev/null`.strip
+    found unless found.empty?
+  end
+
+  def self.locate_native_lefthook
+    env_lefthook_bin || path_lefthook_bin || Dir.glob(RV_LEFTHOOK_GLOB).find { |f| File.executable?(f) }
+  end
+
+  NATIVE_LEFTHOOK = locate_native_lefthook
+  MISSING_LEFTHOOK_MESSAGE =
+    "lefthook not found: not on PATH (checked LEFTHOOK_BIN and `which lefthook`) " \
+    "and no rv install matched #{RV_LEFTHOOK_GLOB}"
 
   def setup
+    skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
+
     @repo_root = File.expand_path("..", __dir__)
     @tmpdir = Dir.mktmpdir
     @bin_dir = File.join(@tmpdir, "bin")

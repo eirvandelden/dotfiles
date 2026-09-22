@@ -6,11 +6,14 @@ autorun
 backticked
 bdelete
 betterspecs
+binstub
 binstubs
 brew
 brewfile
 brewfiles
 Broadcastable
+browserslist
+browserslistrc
 caddyfile
 callsites
 chnode
@@ -19,6 +22,7 @@ compinit
 conductor
 consentable
 cooldown
+csjones
 cursorline
 cword
 dapui
@@ -26,11 +30,13 @@ dbus
 DBus
 DBus
 dedup
+devbox
 edge
 Edge
 Edge
 eirvandelden
 Eventable
+evilmartians
 expandtab
 flathub
 flatpak
@@ -55,6 +61,7 @@ Hyprland
 hyprlock
 hyprpaper
 hyprsunset
+IHDR
 janky
 Kabisa
 keybind
@@ -75,6 +82,8 @@ myproject
 neovide
 neovim
 Neovim
+nocommit
+NOCOMMIT
 oldfiles
 omarchy
 Omarchy
@@ -147,6 +156,7 @@ Zed
 zeroheight
 zsh
 zubat
+zzqxklmnop
 SDLC
 cavecrew
 evals
