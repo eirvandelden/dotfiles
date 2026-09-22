@@ -19,6 +19,7 @@ compinit
 conductor
 consentable
 cooldown
+csjones
 cursorline
 cword
 dapui
@@ -26,11 +27,13 @@ dbus
 DBus
 DBus
 dedup
+devbox
 edge
 Edge
 Edge
 eirvandelden
 Eventable
+evilmartians
 expandtab
 flathub
 flatpak
