@@ -24,12 +24,12 @@ second review.
 
 Stop at the first failure and say why:
 
-1. Run `claude/.claude/skills/plan/scripts/change-folder` for the folder path.
-2. `git/.config/git/worktree-tools/review-report-fresh` exits 0. Non-zero: "run `/review` first."
+1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path.
+2. `~/.config/git/worktree-tools/review-report-fresh` exits 0. Non-zero: "run `/review` first."
 3. `<folder>/review.md` has no open finding without a later round closing it. Any that are open:
    list them — "close or dismiss these first."
 4. The working tree is clean (`git status --porcelain` is empty).
-5. `claude/.claude/skills/finish/scripts/change-scope` resolves to `personal` or `work`. It exits
+5. `~/.claude/skills/finish/scripts/change-scope` resolves to `personal` or `work`. It exits
    1 on a remote it does not recognise — stop and say so; this skill never guesses scope.
 
 ## 2. Work only: fill the PR template
@@ -39,7 +39,7 @@ Stop at the first failure and say why:
 2. Find the template: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`,
    `PULL_REQUEST_TEMPLATE.md`, or one under `docs/`. None found: continue with an empty template
    path — the filler still produces a `## Context` block from `intent.md` and `plan.md` alone.
-3. Run `claude/.claude/skills/finish/scripts/fill-pr-template <template-path-or-empty>
+3. Run `~/.claude/skills/finish/scripts/fill-pr-template <template-path-or-empty>
    <folder>/intent.md <folder>/plan.md`. Show the result to the user before writing it anywhere.
 4. On confirmation: `gh pr edit --body-file <the result>`.
 
