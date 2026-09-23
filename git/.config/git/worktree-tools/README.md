@@ -135,6 +135,9 @@ stow:
    - `worktree-setup` - Main orchestration (detect → config → stow → puma-dev)
    - `worktree-setup-all` - Bulk setup for all worktrees
    - `worktree-remove` - Cleanup (remove puma-dev, unstow packages)
+   - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>`
+     off `origin`'s default branch; prints its path
+   - `worktree-pane open|close <path>` - Open or close the herdr pane rooted in a worktree
 
 3. **Explicit Git Command**
    - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path

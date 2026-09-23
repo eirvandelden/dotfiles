@@ -74,9 +74,10 @@ Send `plan.md` to a fresh Sonnet worker in a herdr pane instead of building here
 1. `plan.md` must be `Status: accepted`; if it is not, or the folder does not exist yet, say
    "run `/plan` first" and stop.
 2. From the repository's main checkout (not a worktree — the worker branches off cleanly from
-   there):
+   there), passing the change folder's slug as the worktree name so the worker starts already
+   inside it:
    ```bash
-   ~/.config/herdr/scripts/hand-off-plan.sh <absolute path to plan.md>
+   ~/.config/herdr/scripts/hand-off-plan.sh <absolute path to plan.md> <slug>
    ```
 3. Tell the user which worker took it (the name the script printed) and where its report will
    land. The work is now theirs: do not start on it, and do not check up on it unless asked.
