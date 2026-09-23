@@ -73,17 +73,23 @@ class WorktreePaneTest < Minitest::Test
     assert_empty(stdout)
   end
 
-  def test_close_skips_a_pane_with_a_running_agent_and_names_it
-    write_stub_panes([ { pane_id: "w1:pQ", cwd: File.realpath(@worktree), agent_status: "running" } ])
+  def test_close_skips_panes_with_an_agent_whatever_their_status_and_names_them
+    write_stub_panes([
+      { pane_id: "w1:pA", cwd: File.realpath(@worktree), agent: "claude", agent_status: "idle" },
+      { pane_id: "w1:pB", cwd: File.realpath(@worktree), agent: "claude", agent_status: "working" },
+      { pane_id: "w1:pC", cwd: File.realpath(@worktree), agent: "claude", agent_status: "done" }
+    ])
 
     _, stderr, = run_script("close", @worktree)
 
     assert_empty(herdr_calls.grep(/\Apane close/))
-    assert_includes(stderr, "w1:pQ")
+    assert_includes(stderr, "w1:pA")
+    assert_includes(stderr, "w1:pB")
+    assert_includes(stderr, "w1:pC")
   end
 
-  def test_close_closes_an_idle_pane_rooted_in_the_worktree
-    write_stub_panes([ { pane_id: "w1:pQ", cwd: File.realpath(@worktree), agent_status: "idle" } ])
+  def test_close_closes_a_pane_without_an_agent
+    write_stub_panes([ { pane_id: "w1:pQ", cwd: File.realpath(@worktree), agent: nil, agent_status: "unknown" } ])
 
     run_script("close", @worktree)
 
@@ -123,6 +129,29 @@ class WorktreePaneTest < Minitest::Test
 
     assert_equal(0, status.exitstatus)
     assert_empty(herdr_calls)
+  end
+
+  def test_open_without_a_path_prints_usage_and_exits_one
+    _, stderr, status = run_script("open", nil)
+
+    assert_equal(1, status.exitstatus)
+    assert_equal(1, stderr.lines.count, stderr)
+    assert_match(/Usage: worktree-pane/, stderr)
+  end
+
+  def test_label_without_a_pane_id_prints_usage_and_exits_one
+    _, stderr, status = run_script("label", @worktree)
+
+    assert_equal(1, status.exitstatus)
+    assert_equal(1, stderr.lines.count, stderr)
+    assert_match(/Usage: worktree-pane/, stderr)
+  end
+
+  def test_open_on_a_missing_path_prints_one_line_and_exits_one
+    _, stderr, status = run_script("open", "/no/such/path")
+
+    assert_equal(1, status.exitstatus)
+    assert_equal(1, stderr.lines.count, stderr)
   end
 
   private
@@ -190,7 +219,7 @@ class WorktreePaneTest < Minitest::Test
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1"
     }.merge(env)
-    Open3.capture3(environment, "ruby", SCRIPT, command, path, *rest)
+    Open3.capture3(environment, "ruby", SCRIPT, *[ command, path, *rest ].compact)
   end
 
   def call_log

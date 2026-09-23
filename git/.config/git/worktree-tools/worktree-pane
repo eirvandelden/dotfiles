@@ -14,19 +14,28 @@ module WorktreeTools
       new.run!(argv)
     end
 
+    USAGE = "Usage: worktree-pane open|close <path> | label <path> <pane-id>"
+
     def run!(argv)
       command, path, pane_id = argv
       return unless herdr_env?
+      die(USAGE) if path.to_s.empty? || (command == "label" && pane_id.to_s.empty?)
 
       case command
-      when "open" then open(File.realpath(path))
-      when "close" then close(File.realpath(path))
-      when "label" then label(File.realpath(path), pane_id)
-      else die("Usage: worktree-pane open|close <path> | label <path> <pane-id>")
+      when "open" then open(realpath!(path))
+      when "close" then close(realpath!(path))
+      when "label" then label(realpath!(path), pane_id)
+      else die(USAGE)
       end
     end
 
     private
+
+    def realpath!(path)
+      File.realpath(path)
+    rescue Errno::ENOENT
+      die("worktree-pane: no such path: #{path}")
+    end
 
     def herdr_env?
       ENV["HERDR_ENV"] == "1" && command_exists?("herdr")
@@ -48,13 +57,13 @@ module WorktreeTools
     end
 
     def close_pane(pane)
-      return warn("worktree-pane: leaving pane #{pane['pane_id']} open (agent running)") if running?(pane)
+      return warn("worktree-pane: leaving pane #{pane['pane_id']} open (agent running)") if has_agent?(pane)
 
       herdr("pane", "close", pane["pane_id"])
     end
 
-    def running?(pane)
-      ![ nil, "idle", "unknown" ].include?(pane["agent_status"])
+    def has_agent?(pane)
+      !pane["agent"].nil?
     end
 
     def panes_at(target)

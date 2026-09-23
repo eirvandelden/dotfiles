@@ -28,7 +28,7 @@ From `intent.md` (2026-09-23). Status: accepted (2026-09-23).
 - **One script for herdr calls.** Testable with a stub `herdr` on `PATH` (the `test/herdr_worker_scripts_test.rb` pattern); the skill prose stays short; Codex and Claude run the same bytes.
 - **Language.** Ruby with the `#!/usr/bin/env rv run ruby` shebang, like `worktree-remove` and `worktree-setup`; tests under `git/.config/git/worktree-tools/test/`, which already hold `remove_test.rb`.
 - **Degrade silently.** `HERDR_ENV` unset or `herdr` missing → `worktree-pane` exits 0 without output. Any herdr error → one line to stderr, exit 0. The worktree is never the casualty of a UI convenience.
-- **Running agents.** `agent_status` values other than `idle`/`unknown`/absent count as running; such panes are skipped at sweep with a line naming the pane id. Decided: "close it too" for panes without an agent.
+- **Running agents.** The `agent` field, not `agent_status`, decides: a pane with any `agent` value (herdr 0.9.1: `claude`, or another kind) is skipped at sweep, named on stderr, whatever its `agent_status` — `idle` is a live agent waiting for input, closing it ends the session same as `working` or `done`. A pane with `agent: null` (a plain shell) is closed regardless of `agent_status`.
 - **Superpowers worktree** under `~/.config/superpowers/worktrees/` is out of scope; only `.worktrees/` worktrees are swept or paned.
 
 ## Integration points
