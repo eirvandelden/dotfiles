@@ -139,6 +139,47 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/- \[ \] Feature/, output)
   end
 
+  def test_a_choice_list_sub_heading_of_a_matched_heading_keeps_its_checkboxes
+    output = run_fill(<<~MARKDOWN)
+      ## Description
+
+      TODO
+
+      ### Type of change
+
+      - [ ] Bug fix
+      - [ ] Feature
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+    assert_match(/### Type of change/, output)
+    assert_match(/- \[ \] Bug fix/, output)
+    assert_match(/- \[ \] Feature/, output)
+  end
+
+  def test_a_choice_list_sub_heading_after_a_prose_sub_heading_still_keeps_its_checkboxes
+    output = run_fill(<<~MARKDOWN)
+      ## Testing
+
+      TODO
+
+      ### Notes
+
+      _prose to absorb_
+
+      ### Type of change
+
+      - [ ] Bug fix
+      - [ ] Feature
+    MARKDOWN
+
+    assert_match(/test_shows_export_status/, output)
+    assert_no_match(/prose to absorb/, output)
+    assert_match(/### Type of change/, output)
+    assert_match(/- \[ \] Bug fix/, output)
+    assert_match(/- \[ \] Feature/, output)
+  end
+
   def test_a_what_does_this_pr_do_heading_is_filled
     output = run_fill(<<~MARKDOWN)
       ## What does this PR do?

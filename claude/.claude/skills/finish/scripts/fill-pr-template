@@ -110,11 +110,24 @@ def fill_template(template, fill)
 
   rebuilt = []
   absorbed_until_level = nil
+  keep_verbatim_until_level = nil
 
   sections.zip(categories).each do |section, category|
     level = heading_level(section[:heading])
-    next if absorbed_until_level && level > absorbed_until_level
 
+    if keep_verbatim_until_level && level > keep_verbatim_until_level
+      rebuilt << "#{section[:heading]}#{section[:body]}"
+      next
+    end
+    keep_verbatim_until_level = nil
+
+    if absorbed_until_level && level > absorbed_until_level
+      if choice_list?(section[:body])
+        keep_verbatim_until_level = absorbed_until_level
+        rebuilt << "#{section[:heading]}#{section[:body]}"
+      end
+      next
+    end
     absorbed_until_level = nil
 
     if category
