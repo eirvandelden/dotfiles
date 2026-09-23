@@ -13,13 +13,27 @@ CATEGORIES = [
 ].freeze
 
 HEADING = /^(#+\s+.*)$/.freeze
+FENCE = /^(`{3,}|~{3,})/.freeze
 
 def parse_sections(markdown)
-  parts = markdown.split(HEADING)
-  preamble = parts.shift || ""
-  sections = parts.each_slice(2).map do |heading, body|
-    { heading: heading, title: heading.sub(/^#+\s*/, "").strip, body: body || "" }
+  preamble = ""
+  sections = []
+  current = nil
+  in_fence = false
+
+  markdown.each_line do |line|
+    in_fence = !in_fence if line.match?(FENCE)
+
+    if !in_fence && line.match?(HEADING)
+      current = { heading: line.chomp, title: line.sub(/^#+\s*/, "").strip, body: "\n" }
+      sections << current
+    elsif current
+      current[:body] << line
+    else
+      preamble << line
+    end
   end
+
   [ preamble, sections ]
 end
 

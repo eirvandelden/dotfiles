@@ -147,6 +147,24 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/attach screenshots here/, output)
   end
 
+  def test_a_heading_like_line_inside_a_fenced_code_block_is_not_split_on
+    output = run_fill(<<~MARKDOWN)
+      ## Summary
+
+      ```sh
+      # run this
+      echo hello
+      ```
+
+      ## Rollout notes
+
+      _flag or migration to coordinate_
+    MARKDOWN
+
+    assert_no_match(/# run this\necho hello/, output)
+    assert_match(/flag or migration to coordinate/, output)
+  end
+
   def test_a_template_with_no_matching_headings_gets_a_context_block_prepended
     output = run_fill(<<~MARKDOWN)
       ## Screenshots
