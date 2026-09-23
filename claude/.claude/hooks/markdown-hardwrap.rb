@@ -11,6 +11,10 @@ RULE_PATH = File.join(CONFIG_DIR, "no-hardwrap.cjs")
 CHECK_CONFIG_PATH = File.join(CONFIG_DIR, "no-hardwrap.json")
 FIX_COMMAND = "markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix"
 
+def markdown_file?(file_path)
+  file_path.match?(/\.(md|markdown)\z/i)
+end
+
 def markdownlint_available?
   system("markdownlint", "--version", out: File::NULL, err: File::NULL)
 end
@@ -34,7 +38,7 @@ begin
   call = JSON.parse($stdin.read)
   file_path = call.dig("tool_input", "file_path") || ""
 
-  if file_path.end_with?(".md") && File.exist?(file_path) && markdownlint_available?
+  if markdown_file?(file_path) && File.exist?(file_path) && markdownlint_available?
     findings = findings_for(file_path)
     tell_claude(file_path, findings) unless findings.empty?
   end

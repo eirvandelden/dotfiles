@@ -174,7 +174,7 @@ class LefthookLocalHooksTest < Minitest::Test
     @cspell_only_dir = File.join(@tmpdir, "cspell-bin")
     FileUtils.mkdir_p(@cspell_only_dir)
     File.symlink(File.join(CSPELL_DIR, "cspell"), File.join(@cspell_only_dir, "cspell"))
-    File.symlink(File.join(CSPELL_DIR, "node"), File.join(@cspell_only_dir, "node"))
+    File.symlink(`which node`.strip, File.join(@cspell_only_dir, "node"))
 
     return unless MARKDOWNLINT_DIR
 

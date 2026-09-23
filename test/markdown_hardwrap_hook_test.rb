@@ -60,6 +60,17 @@ class MarkdownHardwrapHookTest < Minitest::Test
     assert_empty(stdout)
   end
 
+  def test_a_markdown_file_with_a_long_extension_or_upper_case_is_checked
+    skip(MISSING_MARKDOWNLINT_MESSAGE) unless MARKDOWNLINT_DIR
+
+    %w[wrapped.markdown WRAPPED.MD].each do |name|
+      stdout, stderr, status = run_hook(write_markdown(name, "This is line one\nand line two.\n"))
+
+      assert_equal(0, status.exitstatus, stderr)
+      assert_includes(stdout, "join lines 1–2 into one line", name)
+    end
+  end
+
   def test_a_non_markdown_file_is_not_checked
     file = write_markdown("notes.rb", "This is line one\nand line two.\n")
 
@@ -78,9 +89,8 @@ class MarkdownHardwrapHookTest < Minitest::Test
 
   def test_missing_markdownlint_tells_claude_nothing
     file = write_markdown("wrapped.md", "This is line one\nand line two.\n")
-    ruby_dir = File.dirname(`which ruby`.strip)
 
-    stdout, stderr, status = run_hook(file, path: "#{ruby_dir}:/usr/bin:/bin")
+    stdout, stderr, status = run_hook(file, path: ruby_only_bin_dir)
 
     assert_equal(0, status.exitstatus, stderr)
     assert_empty(stdout)
@@ -98,6 +108,14 @@ class MarkdownHardwrapHookTest < Minitest::Test
     path = File.join(@dir, name)
     File.write(path, content)
     path
+  end
+
+  # Only Ruby, so the hook cannot find markdownlint even where both live in one directory.
+  def ruby_only_bin_dir
+    bin_dir = File.join(@dir, "ruby-bin")
+    FileUtils.mkdir_p(bin_dir)
+    File.symlink(`which ruby`.strip, File.join(bin_dir, "ruby"))
+    bin_dir
   end
 
   def run_hook(file_path, path: nil)
