@@ -18,6 +18,7 @@ caddyfile
 callsites
 chnode
 chpwd
+clinerules
 compinit
 conductor
 consentable
@@ -45,9 +46,15 @@ ghostty
 Ghostty
 glsl
 gpgsign
+Haije
+hardwrap
+hardwrapped
+hardwrapping
+hardwraps
 herdr
 Herdr
 herdrdev
+heredocs
 hypr
 hyprctl
 hypridle
@@ -84,6 +91,7 @@ NOCOMMIT
 oldfiles
 omarchy
 Omarchy
+opencode
 opusplan
 pacman
 pathspec
@@ -223,13 +231,9 @@ Unsandboxed
 Venusaur
 Wartortle
 Wobbuffet
-Haije
 smarzban
 hjkl
 restows
-hardwrap
-hardwrapped
-hardwrapping
 ambx
 argjson
 Combustd
