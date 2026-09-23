@@ -46,9 +46,9 @@ stowing the `agents` package — the path Codex actually reads.
   means, nit cap, do-not-report list) ships at
   `claude/.claude/skills/new-repo-setup/references/REVIEW.md`; `new-repo-setup` copies it to a
   personal repo's root as `REVIEW.md`.
-- Closing a change once review is fresh — deletes `docs/changes/<slug>/`, and at work fills the
-  PR template, asks about an ADR, pushes, and requests reviewers:
-  `claude/.claude/skills/finish/SKILL.md`
+- Closing a change once review is fresh — deletes `docs/changes/<slug>/`, fills the PR body,
+  pushes, and creates or updates the PR, in both scopes; work also asks about an ADR and
+  requests reviewers: `claude/.claude/skills/finish/SKILL.md`
 
 ## Planning and setup
 
