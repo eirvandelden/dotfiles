@@ -13,6 +13,7 @@ class WorktreeCreateTest < Minitest::Test
   def setup
     @enclosing = Dir.mktmpdir
     @stub_bin = Dir.mktmpdir
+    @gh_stub_bin = Dir.mktmpdir
     install_gh_stub
     install_herdr_stub
     install_git_recorder
@@ -20,7 +21,7 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_rf([ @enclosing, @stub_bin ])
+    FileUtils.rm_rf([ @enclosing, @stub_bin, @gh_stub_bin ])
   end
 
   def test_creates_a_worktree_off_the_default_branch_and_prints_its_path
@@ -116,13 +117,13 @@ class WorktreeCreateTest < Minitest::Test
     assert(File.directory?(stdout.strip))
   end
 
-  def test_a_pane_with_a_running_agent_is_named_on_stderr_during_the_sweep
+  def test_a_pane_with_an_agent_is_named_on_stderr_during_the_sweep
     add_worktree("merged-branch", from: "origin/main")
     merged = File.join(@repo, ".worktrees", "merged-branch")
     commit(merged, "more work")
     write_gh_states("merged-branch" => "MERGED")
 
-    _, stderr, = run_script("feature", pane_cwd: File.realpath(merged), pane_status: "running")
+    _, stderr, = run_script("feature", pane_cwd: File.realpath(merged), pane_agent: "claude")
 
     assert_match(/w1:pQ/, stderr)
   end
@@ -182,7 +183,51 @@ class WorktreeCreateTest < Minitest::Test
     assert_not(File.exist?(File.join(@enclosing, "worktree-init-ran-in.txt")))
   end
 
+  def test_a_clean_worktree_on_a_detached_head_survives_the_sweep_even_when_origin_moved_on
+    add_worktree("detached-branch", from: "origin/main")
+    detached = File.join(@repo, ".worktrees", "detached-branch")
+    commit(detached, "unique work")
+    git(detached, "checkout", "--quiet", "--detach", "HEAD")
+    advance_origin_main
+
+    _, stderr, = run_script("feature")
+
+    assert(File.directory?(detached))
+    assert_match(/detached HEAD, left alone/, stderr)
+  end
+
+  def test_without_gh_on_path_worktree_create_still_succeeds
+    add_worktree("clean-branch", from: "origin/main")
+
+    stdout, stderr, status = run_script("feature", without_gh: true)
+
+    assert(status.success?, stderr)
+    assert(File.directory?(stdout.strip))
+  end
+
+  def test_a_worktree_git_refuses_to_remove_prints_gits_error_and_continues
+    add_worktree("merged-branch", from: "origin/main")
+    merged = File.join(@repo, ".worktrees", "merged-branch")
+    commit(merged, "more work")
+    write_gh_states("merged-branch" => "MERGED")
+    git(@repo, "worktree", "lock", File.join(".worktrees", "merged-branch"))
+
+    stdout, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    assert(File.directory?(merged))
+    assert_match(/cannot remove a locked working tree/, stderr)
+    assert(File.directory?(stdout.strip))
+  end
+
   private
+
+  def advance_origin_main
+    extra_clone = File.join(@enclosing, "advance")
+    hookless_git(@enclosing, "clone", "--quiet", @origin, extra_clone)
+    commit(extra_clone, "origin moved on")
+    hookless_git(extra_clone, "push", "--quiet", "origin", "main")
+  end
 
   def origin_and_clone
     origin = File.join(@enclosing, "origin.git")
@@ -239,7 +284,7 @@ class WorktreeCreateTest < Minitest::Test
 
   def install_gh_stub
     write_gh_states({})
-    stub = File.join(@stub_bin, "gh")
+    stub = File.join(@gh_stub_bin, "gh")
     File.write(stub, <<~'RUBY')
       #!/usr/bin/env ruby
       branch = ARGV[2]
@@ -276,7 +321,8 @@ class WorktreeCreateTest < Minitest::Test
       when [ "pane", "list" ]
         cwd = ENV["HERDR_STUB_PANE_CWD"]
         status = ENV["HERDR_STUB_PANE_STATUS"] || "idle"
-        panes = cwd ? [ { pane_id: "w1:pQ", cwd: cwd, agent_status: status } ] : []
+        agent = ENV["HERDR_STUB_PANE_AGENT"]
+        panes = cwd ? [ { pane_id: "w1:pQ", cwd: cwd, agent: agent, agent_status: status } ] : []
         puts JSON.generate({ result: { panes: panes } })
       when [ "pane", "split" ]
         puts JSON.generate({ result: { pane: { pane_id: "w1:pV" } } })
@@ -287,9 +333,10 @@ class WorktreeCreateTest < Minitest::Test
     FileUtils.chmod(0o755, stub)
   end
 
-  def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", chdir: @repo, name_after_flag: false)
+  def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", pane_agent: nil, chdir: @repo,
+                 name_after_flag: false, without_gh: false)
     environment = {
-      "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
+      "PATH" => without_gh ? path_without_gh : "#{@stub_bin}:#{@gh_stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GH_STUB_STATES" => gh_states_file,
       "HOME" => @enclosing,
@@ -299,8 +346,15 @@ class WorktreeCreateTest < Minitest::Test
       "ORDER_LOG" => order_log
     }
     environment["HERDR_STUB_PANE_CWD"] = pane_cwd if pane_cwd
+    environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
     arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
     Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  def path_without_gh
+    dirs = ENV.fetch("PATH").split(File::PATH_SEPARATOR)
+    dirs.unshift(@stub_bin)
+    dirs.reject { |dir| File.executable?(File.join(dir, "gh")) }.join(File::PATH_SEPARATOR)
   end
 
   def call_log

@@ -77,10 +77,12 @@ module WorktreeTools
       return unless clean?(dir)
 
       branch = worktree_branch(dir)
-      state = pr_state(branch)
-      return if fresh?(branch, state, default_branch)
+      return warn("worktree-create: #{dir}: detached HEAD, left alone") if branch == "HEAD"
 
-      remove_worktree(dir, branch, state) if state == "MERGED" || ancestor?(branch, default_branch)
+      state = pr_state(branch)
+      return if fresh?(dir, branch, state, default_branch)
+
+      remove_worktree(dir, branch, state) if state == "MERGED" || ancestor?(dir, branch, default_branch)
     end
 
     def clean?(dir)
@@ -97,29 +99,36 @@ module WorktreeTools
       output, status = Open3.capture2("gh", "pr", "view", branch, "--json", "state", "-q", ".state",
                                        err: File::NULL)
       output.strip if status.success?
+    rescue Errno::ENOENT
+      nil
     end
 
-    def fresh?(branch, state, default_branch)
+    def fresh?(dir, branch, state, default_branch)
       return false unless state.to_s.empty?
 
-      branch_sha(branch) == branch_sha("origin/#{default_branch}")
+      branch_sha(dir, branch) == branch_sha(dir, "origin/#{default_branch}")
     end
 
-    def branch_sha(ref)
-      output, = git("rev-parse", ref)
+    def branch_sha(dir, ref)
+      output, = git("-C", dir, "rev-parse", ref)
       output.strip
     end
 
-    def ancestor?(branch, default_branch)
-      _, status = git("merge-base", "--is-ancestor", branch, "origin/#{default_branch}")
+    def ancestor?(dir, branch, default_branch)
+      _, status = git("-C", dir, "merge-base", "--is-ancestor", branch, "origin/#{default_branch}")
       status.success?
     end
 
     def remove_worktree(dir, branch, state)
       close_pane(dir)
       run_worktree_remove(dir)
-      git("worktree", "remove", dir)
-      git("branch", state == "MERGED" ? "-D" : "-d", branch)
+      git_showing_errors("worktree", "remove", dir)
+      git_showing_errors("branch", state == "MERGED" ? "-D" : "-d", branch)
+    end
+
+    def git_showing_errors(*arguments)
+      _output, error, status = Open3.capture3("git", *arguments)
+      $stderr.print(error) unless status.success?
     end
 
     def close_pane(dir)
