@@ -224,3 +224,5 @@ Unsandboxed
 Venusaur
 Wartortle
 Wobbuffet
+Haije
+smarzban
