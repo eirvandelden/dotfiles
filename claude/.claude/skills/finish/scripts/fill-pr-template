@@ -8,8 +8,8 @@
 CATEGORIES = [
   [ :summary, /summary|what/i ],
   [ :why, /why|motivation/i ],
-  [ :implementation, /implementation|how|details/i ],
-  [ :test, /test|verify/i ]
+  [ :test, /test|verify/i ],
+  [ :implementation, /implementation|how|details/i ]
 ].freeze
 
 HEADING = /^(#+\s+.*)$/.freeze

@@ -106,6 +106,17 @@ class FillPrTemplateTest < Minitest::Test
     assert_no_match(/- \[ \] Added tests/, output)
   end
 
+  def test_a_how_has_this_been_tested_heading_gets_the_plans_proof_not_its_files
+    output = run_fill(<<~MARKDOWN)
+      ## How has this been tested?
+
+      TODO
+    MARKDOWN
+
+    assert_match(/test_shows_export_status/, output)
+    assert_no_match(%r{app/models/claim\.rb}, output)
+  end
+
   def test_an_unmatched_heading_keeps_its_template_text
     output = run_fill(<<~MARKDOWN)
       ## Screenshots
