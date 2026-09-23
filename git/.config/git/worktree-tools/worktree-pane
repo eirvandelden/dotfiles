@@ -1,0 +1,94 @@
+#!/usr/bin/env rv run ruby
+# open/close the herdr pane rooted in a worktree's directory.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "common"
+require "json"
+require "open3"
+
+module WorktreeTools
+  class Pane
+    include Helpers
+
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    def run!(argv)
+      command, path = argv
+      return unless herdr_env?
+
+      case command
+      when "open" then open(File.realpath(path))
+      when "close" then close(File.realpath(path))
+      else die("Usage: worktree-pane open|close <path>")
+      end
+    end
+
+    private
+
+    def herdr_env?
+      ENV["HERDR_ENV"] == "1" && command_exists?("herdr")
+    end
+
+    def open(target)
+      return if panes_at(target).any?
+
+      pane_id = split(target)
+      rename(pane_id, target) if pane_id
+    end
+
+    def close(target)
+      panes_at(target).each { |pane| close_pane(pane) }
+    end
+
+    def close_pane(pane)
+      return log(pane["pane_id"]) if running?(pane)
+
+      herdr("pane", "close", pane["pane_id"])
+    end
+
+    def running?(pane)
+      ![ nil, "idle", "unknown" ].include?(pane["agent_status"])
+    end
+
+    def panes_at(target)
+      output, status = herdr("pane", "list")
+      return [] unless status.success?
+
+      JSON.parse(output).dig("result", "panes").to_a.select { |pane| pane["cwd"] == target }
+    rescue JSON::ParserError
+      []
+    end
+
+    def split(target)
+      output, status = herdr("pane", "split", "--current", "--direction", "down", "--cwd", target, "--no-focus")
+      return warn_refused unless status.success?
+
+      JSON.parse(output).dig("result", "pane", "pane_id")
+    rescue JSON::ParserError
+      warn_refused
+    end
+
+    def warn_refused
+      warn("worktree-pane: herdr refused to split a pane for this worktree")
+      nil
+    end
+
+    def rename(pane_id, target)
+      herdr("pane", "rename", pane_id, label_for(target))
+    end
+
+    def label_for(target)
+      repo = git_common_dir(target).dirname.basename.to_s
+      branch, = Open3.capture2("git", "-C", target, "rev-parse", "--abbrev-ref", "HEAD")
+      "#{repo}/#{branch.strip}"
+    end
+
+    def herdr(*arguments)
+      Open3.capture2("herdr", *arguments, err: File::NULL)
+    end
+  end
+end
+
+WorktreeTools::Pane.run!(ARGV) if $PROGRAM_NAME == __FILE__
