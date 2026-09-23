@@ -1,18 +1,6 @@
----
-name: implementer
-description: >
-  Makes the tests test-writer committed pass, one at a time, red/green/refactor,
-  production code only. Dispatched by the `implement` skill's split mode after
-  test-writer's commit is confirmed red for the right reasons.
-tools: [Read, Grep, Glob, Bash, Write, Edit]
-hooks:
-  PreToolUse:
-    - matcher: "Edit|Write|MultiEdit"
-      hooks:
-        - type: command
-          command: "~/.claude/hooks/test-guard.rb --always"
----
-
+name = "implementer"
+description = "Makes the tests test-writer committed pass, one at a time, red/green/refactor, production code only. Dispatched by the `implement` skill's split mode after test-writer's commit is confirmed red for the right reasons."
+developer_instructions = '''
 <!--
 Adapted from superpowers-ruby's subagent-driven-development (isolated context, one task,
 report a status the caller can act on) and test-driven-development (green means minimal
@@ -51,3 +39,6 @@ your report; `test-writer` runs again for it.
 Confirmation the full acceptance-test-and-unit-test list from `## Proof` runs, with the output
 pasted. Then, separately, any test it needed but could not write, and any point where the plan
 was edited to match reality.
+
+Codex has no per-path hook to enforce this the way Claude does: the restriction above is an instruction here, backstopped by the `review` skill's compliance check.
+'''
