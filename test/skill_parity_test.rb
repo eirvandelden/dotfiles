@@ -25,6 +25,10 @@ class SkillParityTest < Minitest::Test
   ].freeze
   # Skills that stay Codex-only, with the reason on record. Empty for now.
   CODEX_ONLY = [].freeze
+  # Skills whose SKILL.md talks about this repository's own layout on purpose
+  # (installing it, setting up a new repo to match it) — a repo-relative path
+  # there is documentation, not a command another checkout is meant to run.
+  REPO_LAYOUT_SKILLS = %w[dotfiles-maintenance new-repo-setup].freeze
   # Skills where the two flags intentionally disagree: worktree-first must stay
   # model-invocable on Claude (WORKTREES.md and the intent skill call it), while
   # Codex's allow_implicit_invocation only disables automatic triggering, which
@@ -83,6 +87,17 @@ class SkillParityTest < Minitest::Test
   def test_packages_conf_lists_agents_in_stow_and_stow_shared
     assert_includes(bash_array("STOW"), "agents")
     assert_includes(bash_array("STOW_SHARED"), "agents")
+  end
+
+  def test_no_skill_or_agent_body_names_a_repo_relative_path_as_a_command
+    pattern = %r{claude/\.claude/skills/|git/\.config/git/}
+
+    (Dir.glob(File.join(CLAUDE_SKILLS, "*/SKILL.md")) + Dir.glob(File.join(REPO_ROOT, "claude/.claude/agents/*.md"))).each do |path|
+      next if REPO_LAYOUT_SKILLS.include?(File.basename(File.dirname(path)))
+
+      body = File.read(path).gsub(/<!--.*?-->/m, "")
+      assert_not(pattern.match?(body), "#{path} names a repo-relative path where the installed one belongs")
+    end
   end
 
   private
