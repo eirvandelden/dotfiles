@@ -94,3 +94,47 @@ deleted. Files changed match the plan's list; the `label` command is recorded as
 plan step 8.
 
 Counts: 3 Important, 2 Nit.
+
+## Round 3 — 2026-09-23T12:34Z — 0289af84
+
+State at review: `test/worktree_pane_test.rb` (17 runs), `test/worktree_create_test.rb` (19 runs),
+`test/herdr_worker_scripts_test.rb` (30 runs) green locally; `rubocop` on the two scripts and
+three tests clean; `shellcheck -x -S warning` on `hand-off-plan.sh` clean. No uncommitted
+changes. No PR yet, so CI has not run on this branch. All round 2 fixes hold.
+
+### Bugs
+
+- [ ] Important: `implement handoff` fails in the normal flow. The `intent` skill always creates `.worktrees/<slug>` on branch `<slug>` before it writes `intent.md` (`intent/SKILL.md:40-43`), so by handoff time the worktree and branch already exist. `hand-off-plan.sh <plan> <slug>` then runs `worktree-create <slug>`, whose `git worktree add … -b <slug>` fails; the script exits 1 and `set -e` aborts the hand-off before any pane is split. Reproduced in a scratch repo: `git worktree add .worktrees/my-change -b my-change origin/main`, then `worktree-create my-change --no-pane` → `fatal: a branch named 'my-change' already exists`, exit 1. The worker should start in the existing worktree when `.worktrees/<name>` is already a worktree on branch `<name>`. The spec's criterion "`worktree-first` run twice for the same name opens one pane" has the same gap one level up: the second `worktree-create` now exits 1 (the old prose fell through to `cd .worktrees/$branch`), and only `worktree-pane open` is tested for it. — `git/.config/git/worktree-tools/worktree-create:146`, `herdr/.config/herdr/scripts/hand-off-plan.sh:48` →
+- [ ] Important: the new hand-off test fails in CI. Since 19da212f `hand-off-plan.sh` runs `worktree-create` directly, so its `#!/usr/bin/env rv run ruby` shebang is used; `.github/workflows/dotfiles-tests.yml` installs Ruby with `ruby/setup-ruby` and no `rv`. Reproduced with `rv` removed from `PATH`: `worktree-create` prints `env: rv: No such file or directory` and `test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree` fails at line 143. The plan's risk note ("the tests run the scripts as `ruby <script>`, so the shebang is not exercised in CI") no longer holds for this test. — `herdr/.config/herdr/scripts/hand-off-plan.sh:48`, `test/herdr_worker_scripts_test.rb:137` →
+
+### Security
+
+Nothing found. Git, gh and herdr calls still use argument arrays; branch names reach `gh` and
+`git` only as single arguments, and git refuses branch names that start with `-`.
+
+### Compliance
+
+Acceptance criteria against tests in the diff:
+
+| Criterion | Test |
+| --- | --- |
+| Pane in current workspace, rooted, labelled `<repo>/<branch>`, caller keeps focus | `worktree_pane_test` `test_open_splits_a_pane_below_rooted_in_the_worktree_without_focus`, `test_open_labels_the_pane_repo_slash_branch`, `test_open_scopes_the_pane_lookup_to_the_current_workspace` |
+| Outside herdr: no pane, no herdr output, worktree exists | `worktree_pane_test` `test_open_outside_herdr_does_nothing_and_exits_zero` |
+| herdr refuses the split: exit 0, one warning naming the error | `worktree_pane_test` `test_open_warns_once_and_exits_zero_when_herdr_refuses_the_split` |
+| Sweep closes the pane, then removes the worktree | `worktree_create_test` `test_sweep_closes_the_pane_rooted_in_a_merged_worktree_before_removing_it` |
+| Sweep leaves an agent's pane open, names it, removes the worktree | `worktree_create_test` `test_a_pane_with_an_agent_is_named_on_stderr_during_the_sweep`, `worktree_pane_test` `test_close_skips_panes_with_an_agent_whatever_their_status_and_names_them` |
+| Sweep with no pane closes nothing, removes the worktree | `worktree_pane_test` `test_close_with_no_matching_pane_closes_nothing` |
+| `hand-off-plan.sh <plan> <name>` creates the worktree, worker rooted there, "already in worktree" prompt | `herdr_worker_scripts_test` `test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree` (red in CI — see Bugs) |
+| `hand-off-plan.sh <plan>` unchanged | existing hand-off tests, unchanged in the diff |
+| `implement handoff` passes the branch name | prose, `implement/SKILL.md:80` (passes the slug — see Nit) |
+| Twice for the same name opens one pane | `worktree_pane_test` `test_open_reuses_an_existing_pane_rooted_in_the_worktree` — through `worktree-create`: missing (see Bugs) |
+| `WORKTREES.md` mentions the pane | `claude/.claude/WORKTREES.md:12` |
+
+No existing test was weakened, skipped or deleted.
+
+- [ ] Important: a test named in `plan.md`'s `## Proof` no longer exists: `test_close_skips_a_pane_with_a_running_agent_and_names_it` was renamed to `test_close_skips_panes_with_an_agent_whatever_their_status_and_names_them` in 8261d679, and the Proof line was not updated. — `docs/changes/herdr-worktree-panes/plan.md:123` →
+- [ ] Nit: `implement/SKILL.md` passes the change folder's slug, but spec requirement 6 and its criterion say the branch name. `change-folder` strips a leading `<prefix>/`, so for a branch `fix/foo` the hand-off asks for a new worktree and branch `foo` instead of the one the change lives on. — `claude/.claude/skills/implement/SKILL.md:80` →
+- [ ] Nit: `repo_root!` uses `git rev-parse --show-toplevel`, which inside a linked worktree returns that worktree, so `worktree-create` run from a worktree creates a nested `<worktree>/.worktrees/<name>` and sweeps nothing. The parent of `--git-common-dir` is the main checkout from anywhere. The skill's skip rule hides this for `worktree-first`, but not for a direct call. — `git/.config/git/worktree-tools/worktree-create:41` →
+- [ ] Nit: `worktree-pane open|label` on an existing path outside any git repository raises `NoMethodError` (`git_common_dir` returns nil, then `.dirname`) instead of one line and exit 1, as the missing-path case now does. — `git/.config/git/worktree-tools/worktree-pane:105` →
+
+Counts: 3 Important, 3 Nit.
