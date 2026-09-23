@@ -52,8 +52,9 @@ what to diff against. Read its round back directly; there is no pane message to 
 
 Read `docs/changes/<slug>/review.md`, summarise the round worst first, and stop — do not start
 fixing anything until the user says so. The `code-review` skill implements fixes: it writes
-`fixed (<sha>)` or `dismissed: <reason>` on each finding's `→` slot, in the same commit as the
-fix or its own commit.
+`fixed (<commit subject>)` or `dismissed: <reason>` on each finding's `→` slot, in the same
+commit as the fix or its own commit. The subject, not the SHA, because a rebase changes the SHA
+but not the subject line.
 
 A round left with an open finding and no newer round means the review is not closed; this skill
 reports that plainly. The pre-push freshness check does not enforce closure, only recency — that
