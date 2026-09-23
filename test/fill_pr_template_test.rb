@@ -255,6 +255,26 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/attach screenshots here/, output)
   end
 
+  def test_a_screenshots_slash_showcase_heading_keeps_its_own_text
+    output = run_fill(<<~MARKDOWN)
+      ## Screenshots / showcase
+
+      _attach screenshots here_
+    MARKDOWN
+
+    assert_match(%r{## Screenshots / showcase\n\n_attach screenshots here_}, output)
+  end
+
+  def test_a_latest_release_notes_heading_keeps_its_own_text
+    output = run_fill(<<~MARKDOWN)
+      ## Latest release notes
+
+      _list the changes_
+    MARKDOWN
+
+    assert_match(/## Latest release notes\n\n_list the changes_/, output)
+  end
+
   def test_a_sub_heading_under_a_matched_heading_is_not_filled_a_second_time
     output = run_fill(<<~MARKDOWN)
       ## Testing

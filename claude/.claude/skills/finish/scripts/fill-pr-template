@@ -7,10 +7,10 @@
 # gets one "## Context" block prepended instead, built from the same four
 # pieces.
 CATEGORIES = [
-  [ :summary, /summary|description|\A\s*what\s+(does|changed|is\s+this)\b/i ],
-  [ :why, /why|motivation/i ],
-  [ :test, /test|verify/i ],
-  [ :implementation, /implementation|how|details/i ]
+  [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
+  [ :why, /\bwhy|\bmotivation/i ],
+  [ :test, /\btest|\bverify/i ],
+  [ :implementation, /\bimplementation|\bhow|\bdetails/i ]
 ].freeze
 
 TYPE_HEADING = /type/i
