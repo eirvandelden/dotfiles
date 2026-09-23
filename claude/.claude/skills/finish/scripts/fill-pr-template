@@ -1,16 +1,20 @@
 #!/usr/bin/env ruby
-# Fills a work PR template from intent.md and plan.md before finish opens it
-# for the team. A heading is matched by what it asks for, not by its exact
+# Fills a PR template from intent.md and plan.md before finish opens it, in
+# either scope. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own template phrasing still gets filled. A
-# heading nothing matches keeps its own text; a template where nothing
-# matched — including no template at all — gets one "## Context" block
-# prepended instead, built from the same four pieces.
+# heading nothing matches, or whose body is a checkbox list, keeps its own
+# text; a template where nothing matched — including no template at all —
+# gets one "## Context" block prepended instead, built from the same four
+# pieces.
 CATEGORIES = [
-  [ :summary, /summary|what/i ],
+  [ :summary, /summary|description|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /why|motivation/i ],
   [ :test, /test|verify/i ],
   [ :implementation, /implementation|how|details/i ]
 ].freeze
+
+TYPE_HEADING = /type/i
+CHOICE_LIST = /^-\s*\[[ xX]\]/.freeze
 
 HEADING = /^(#+\s+.*)$/.freeze
 FENCE = /^(`{3,}|~{3,})/.freeze
@@ -57,7 +61,15 @@ def filler(intent, plan)
 end
 
 def category_for(title)
-  CATEGORIES.find { |_name, pattern| title.match?(pattern) }&.first
+  CATEGORIES.find do |name, pattern|
+    next false if name == :summary && title.match?(TYPE_HEADING)
+
+    title.match?(pattern)
+  end&.first
+end
+
+def choice_list?(body)
+  body.match?(CHOICE_LIST)
 end
 
 def context_block(fill)
@@ -82,14 +94,35 @@ def context_block(fill)
   MARKDOWN
 end
 
+def heading_level(heading)
+  heading[/^#+/].length
+end
+
+def category_for_section(section)
+  choice_list?(section[:body]) ? nil : category_for(section[:title])
+end
+
 def fill_template(template, fill)
   preamble, sections = parse_sections(template)
-  categories = sections.map { |section| category_for(section[:title]) }
+  categories = sections.map { |section| category_for_section(section) }
 
   return joined(context_block(fill), template.strip) if categories.compact.empty?
 
-  rebuilt = sections.zip(categories).map do |section, category|
-    category ? "#{section[:heading]}\n\n#{fill[category]}\n\n" : "#{section[:heading]}#{section[:body]}"
+  rebuilt = []
+  absorbed_until_level = nil
+
+  sections.zip(categories).each do |section, category|
+    level = heading_level(section[:heading])
+    next if absorbed_until_level && level > absorbed_until_level
+
+    absorbed_until_level = nil
+
+    if category
+      rebuilt << "#{section[:heading]}\n\n#{fill[category]}\n\n"
+      absorbed_until_level = level
+    else
+      rebuilt << "#{section[:heading]}#{section[:body]}"
+    end
   end
 
   (preamble + rebuilt.join).strip

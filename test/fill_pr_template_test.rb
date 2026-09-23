@@ -80,7 +80,7 @@ class FillPrTemplateTest < Minitest::Test
     assert_no_match(/_describe what this changes_/, output)
   end
 
-  def test_a_checkbox_style_template_gets_its_matching_headings_filled_too
+  def test_a_checkbox_style_templates_prose_headings_get_filled_but_its_checkboxes_stay
     output = run_fill(<<~MARKDOWN)
       ## What does this PR do?
 
@@ -102,8 +102,61 @@ class FillPrTemplateTest < Minitest::Test
 
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(%r{app/models/claim\.rb}, output)
-    assert_match(/test_shows_export_status/, output)
-    assert_no_match(/- \[ \] Added tests/, output)
+    assert_match(/- \[ \] Added tests/, output)
+    assert_match(/- \[ \] Ran the linter/, output)
+  end
+
+  def test_a_description_heading_is_filled_with_the_summary_text
+    output = run_fill(<<~MARKDOWN)
+      ## Description
+
+      TODO
+
+      ## What type of change is this?
+
+      - [ ] Bug fix
+      - [ ] Feature
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+    assert_match(/- \[ \] Bug fix/, output)
+    assert_match(/- \[ \] Feature/, output)
+  end
+
+  def test_a_what_type_of_change_heading_with_checkboxes_keeps_its_checkboxes
+    output = run_fill(<<~MARKDOWN)
+      ## Summary
+
+      TODO
+
+      ## What type of change is this?
+
+      - [ ] Bug fix
+      - [ ] Feature
+    MARKDOWN
+
+    assert_match(/- \[ \] Bug fix/, output)
+    assert_match(/- \[ \] Feature/, output)
+  end
+
+  def test_a_what_does_this_pr_do_heading_is_filled
+    output = run_fill(<<~MARKDOWN)
+      ## What does this PR do?
+
+      TODO
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+  end
+
+  def test_a_what_type_of_change_heading_without_checkboxes_is_still_not_filled
+    output = run_fill(<<~MARKDOWN)
+      ## What type of change
+
+      Pick one: bug fix, feature, chore.
+    MARKDOWN
+
+    assert_match(/Pick one: bug fix, feature, chore\./, output)
   end
 
   def test_a_how_has_this_been_tested_heading_gets_the_plans_proof_not_its_files
@@ -159,6 +212,20 @@ class FillPrTemplateTest < Minitest::Test
     MARKDOWN
 
     assert_match(/attach screenshots here/, output)
+  end
+
+  def test_a_sub_heading_under_a_matched_heading_is_not_filled_a_second_time
+    output = run_fill(<<~MARKDOWN)
+      ## Testing
+
+      TODO
+
+      ### Steps to verify
+
+      TODO
+    MARKDOWN
+
+    assert_equal(1, output.scan(/test_shows_export_status/).length)
   end
 
   def test_a_heading_like_line_inside_a_fenced_code_block_is_not_split_on
