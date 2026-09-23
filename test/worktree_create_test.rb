@@ -15,6 +15,7 @@ class WorktreeCreateTest < Minitest::Test
     @stub_bin = Dir.mktmpdir
     install_gh_stub
     install_herdr_stub
+    install_git_recorder
     @origin, @repo = origin_and_clone
   end
 
@@ -46,7 +47,7 @@ class WorktreeCreateTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
-  def test_a_merged_worktree_is_swept_before_the_new_one_is_created
+  def test_sweep_closes_the_pane_rooted_in_a_merged_worktree_before_removing_it
     add_worktree("merged-branch", from: "origin/main")
     merged = File.join(@repo, ".worktrees", "merged-branch")
     commit(merged, "more work")
@@ -57,6 +58,12 @@ class WorktreeCreateTest < Minitest::Test
     assert_not(File.directory?(File.join(@repo, ".worktrees", "merged-branch")))
     assert_not(branch?(@repo, "merged-branch"))
     assert_includes(herdr_calls, "pane close w1:pQ")
+
+    close_index = order_calls.index("herdr: pane close w1:pQ")
+    remove_index = order_calls.index { |call| call.start_with?("git: worktree remove") }
+    assert(close_index, order_calls.join("\n"))
+    assert(remove_index, order_calls.join("\n"))
+    assert_operator(close_index, :<, remove_index)
   end
 
   def test_a_dirty_worktree_is_kept
@@ -87,6 +94,55 @@ class WorktreeCreateTest < Minitest::Test
     run_script("feature")
 
     assert(File.directory?(File.join(@repo, ".worktrees", "fresh-branch")))
+  end
+
+  def test_refuses_and_prints_nothing_when_git_worktree_add_fails
+    git(@repo, "branch", "feature")
+
+    stdout, stderr, status = run_script("feature")
+
+    assert_not(status.success?)
+    assert_empty(stdout)
+    assert_match(/already exists|worktree add/i, stderr)
+  end
+
+  def test_prunes_a_manually_deleted_worktrees_administrative_files_so_the_path_can_be_reused
+    add_worktree("feature", from: "origin/main", branch: "something-else")
+    FileUtils.rm_rf(File.join(@repo, ".worktrees", "feature"))
+
+    stdout, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    assert(File.directory?(stdout.strip))
+  end
+
+  def test_a_pane_with_a_running_agent_is_named_on_stderr_during_the_sweep
+    add_worktree("merged-branch", from: "origin/main")
+    merged = File.join(@repo, ".worktrees", "merged-branch")
+    commit(merged, "more work")
+    write_gh_states("merged-branch" => "MERGED")
+
+    _, stderr, = run_script("feature", pane_cwd: File.realpath(merged), pane_status: "running")
+
+    assert_match(/w1:pQ/, stderr)
+  end
+
+  def test_no_pane_flag_is_recognised_before_the_name_too
+    stdout, stderr, status = run_script("feature", extra_args: [ "--no-pane" ], name_after_flag: true)
+
+    assert(status.success?, stderr)
+    assert_equal(File.join(File.realpath(@repo), ".worktrees", "feature"), stdout.strip)
+    assert_empty(herdr_calls)
+  end
+
+  def test_creates_the_worktree_at_the_repository_root_even_when_run_from_a_subdirectory
+    subdirectory = File.join(@repo, "sub")
+    FileUtils.mkdir_p(subdirectory)
+
+    stdout, stderr, status = run_script("feature", chdir: subdirectory)
+
+    assert(status.success?, stderr)
+    assert_equal(File.join(File.realpath(@repo), ".worktrees", "feature"), stdout.strip)
   end
 
   def test_refuses_an_empty_name
@@ -155,8 +211,8 @@ class WorktreeCreateTest < Minitest::Test
     git(dir, "commit", "--quiet", "-m", message)
   end
 
-  def add_worktree(branch, from:)
-    git(@repo, "worktree", "add", "--quiet", File.join(".worktrees", branch), "-b", branch, from)
+  def add_worktree(name, from:, branch: name)
+    git(@repo, "worktree", "add", "--quiet", File.join(".worktrees", name), "-b", branch, from)
   end
 
   def branch?(repo, name)
@@ -196,6 +252,17 @@ class WorktreeCreateTest < Minitest::Test
     FileUtils.chmod(0o755, stub)
   end
 
+  def install_git_recorder
+    recorder = File.join(@stub_bin, "git")
+    File.write(recorder, <<~SH)
+      #!/bin/sh
+      printf '%s\\n' "$*" >> "$GIT_CALL_LOG"
+      printf 'git: %s\\n' "$*" >> "$ORDER_LOG"
+      exec /usr/bin/git "$@"
+    SH
+    FileUtils.chmod(0o755, recorder)
+  end
+
   def install_herdr_stub
     stub = File.join(@stub_bin, "herdr")
     File.write(stub, <<~'RUBY')
@@ -203,11 +270,13 @@ class WorktreeCreateTest < Minitest::Test
       require "json"
 
       File.open(ENV.fetch("HERDR_CALL_LOG"), "a") { |file| file.puts(ARGV.join(" ")) }
+      File.open(ENV.fetch("ORDER_LOG"), "a") { |file| file.puts("herdr: #{ARGV.join(' ')}") }
 
       case ARGV[0..1]
       when [ "pane", "list" ]
         cwd = ENV["HERDR_STUB_PANE_CWD"]
-        panes = cwd ? [ { pane_id: "w1:pQ", cwd: cwd, agent_status: "idle" } ] : []
+        status = ENV["HERDR_STUB_PANE_STATUS"] || "idle"
+        panes = cwd ? [ { pane_id: "w1:pQ", cwd: cwd, agent_status: status } ] : []
         puts JSON.generate({ result: { panes: panes } })
       when [ "pane", "split" ]
         puts JSON.generate({ result: { pane: { pane_id: "w1:pV" } } })
@@ -218,16 +287,20 @@ class WorktreeCreateTest < Minitest::Test
     FileUtils.chmod(0o755, stub)
   end
 
-  def run_script(name, extra_args: [], pane_cwd: nil)
+  def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", chdir: @repo, name_after_flag: false)
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GH_STUB_STATES" => gh_states_file,
       "HOME" => @enclosing,
-      "HERDR_ENV" => "1"
+      "HERDR_ENV" => "1",
+      "HERDR_STUB_PANE_STATUS" => pane_status,
+      "GIT_CALL_LOG" => git_call_log,
+      "ORDER_LOG" => order_log
     }
     environment["HERDR_STUB_PANE_CWD"] = pane_cwd if pane_cwd
-    Open3.capture3(environment, "ruby", SCRIPT, name, *extra_args, chdir: @repo)
+    arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
+    Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
   end
 
   def call_log
@@ -236,6 +309,24 @@ class WorktreeCreateTest < Minitest::Test
 
   def herdr_calls
     File.exist?(call_log) ? File.readlines(call_log, chomp: true) : []
+  end
+
+  def git_call_log
+    @git_call_log ||= File.join(@stub_bin, "git-calls.log")
+  end
+
+  def git_calls
+    File.exist?(git_call_log) ? File.readlines(git_call_log, chomp: true) : []
+  end
+
+  def order_log
+    @order_log ||= File.join(@stub_bin, "order.log")
+  end
+
+  # herdr and git calls each land in their own log, so their positions can't be compared
+  # directly; both stubs also append here, in the order the script actually invoked them.
+  def order_calls
+    File.exist?(order_log) ? File.readlines(order_log, chomp: true) : []
   end
 
   def assert_not(value, message = nil)

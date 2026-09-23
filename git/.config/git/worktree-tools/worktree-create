@@ -18,10 +18,13 @@ module WorktreeTools
     end
 
     def run!(argv)
-      name = argv.shift
       no_pane = !argv.delete("--no-pane").nil?
+      name = argv.shift
       die("worktree-create: a branch name is required") if name.to_s.empty?
+
+      Dir.chdir(repo_root!)
       die("worktree-create: .worktrees is not gitignored; add it to .git/info/exclude") unless worktrees_ignored?
+      git("worktree", "prune")
 
       default_branch = default_branch!
       fetch(default_branch)
@@ -33,6 +36,13 @@ module WorktreeTools
     end
 
     private
+
+    def repo_root!
+      output, status = git("rev-parse", "--show-toplevel")
+      die("worktree-create: not inside a git repository") unless status.success?
+
+      output.strip
+    end
 
     def worktrees_ignored?
       _, status = git("check-ignore", "-q", ".worktrees")
@@ -113,7 +123,8 @@ module WorktreeTools
     end
 
     def close_pane(dir)
-      Open3.capture2(RbConfig.ruby, PANE, "close", dir)
+      _, stderr, = Open3.capture3(RbConfig.ruby, PANE, "close", dir)
+      $stderr.print(stderr) unless stderr.empty?
     end
 
     def run_worktree_remove(dir)
@@ -123,7 +134,10 @@ module WorktreeTools
     end
 
     def create_worktree(name, default_branch)
-      git("worktree", "add", ".worktrees/#{name}", "-b", name, "origin/#{default_branch}")
+      _output, error, status = Open3.capture3("git", "worktree", "add", ".worktrees/#{name}", "-b", name,
+                                               "origin/#{default_branch}")
+      die("worktree-create: git worktree add failed: #{error.strip}") unless status.success?
+
       File.expand_path(".worktrees/#{name}")
     end
 
