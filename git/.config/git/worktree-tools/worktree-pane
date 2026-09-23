@@ -1,5 +1,5 @@
 #!/usr/bin/env rv run ruby
-# open/close the herdr pane rooted in a worktree's directory.
+# open/close/label the herdr pane rooted in a worktree's directory.
 $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 
 require "common"
@@ -15,13 +15,14 @@ module WorktreeTools
     end
 
     def run!(argv)
-      command, path = argv
+      command, path, pane_id = argv
       return unless herdr_env?
 
       case command
       when "open" then open(File.realpath(path))
       when "close" then close(File.realpath(path))
-      else die("Usage: worktree-pane open|close <path>")
+      when "label" then label(File.realpath(path), pane_id)
+      else die("Usage: worktree-pane open|close <path> | label <path> <pane-id>")
       end
     end
 
@@ -42,8 +43,12 @@ module WorktreeTools
       panes_at(target).each { |pane| close_pane(pane) }
     end
 
+    def label(target, pane_id)
+      rename(pane_id, target)
+    end
+
     def close_pane(pane)
-      return log(pane["pane_id"]) if running?(pane)
+      return warn("worktree-pane: leaving pane #{pane['pane_id']} open (agent running)") if running?(pane)
 
       herdr("pane", "close", pane["pane_id"])
     end
@@ -53,7 +58,7 @@ module WorktreeTools
     end
 
     def panes_at(target)
-      output, status = herdr("pane", "list")
+      output, _error, status = herdr(*pane_list_arguments)
       return [] unless status.success?
 
       JSON.parse(output).dig("result", "panes").to_a.select { |pane| pane["cwd"] == target }
@@ -61,17 +66,25 @@ module WorktreeTools
       []
     end
 
+    # HERDR_WORKSPACE_ID unset (herdr didn't put it in the pane's environment) falls back to no
+    # filter — every workspace's panes are considered, rather than matching none.
+    def pane_list_arguments
+      workspace = ENV["HERDR_WORKSPACE_ID"]
+      workspace.to_s.empty? ? [ "pane", "list" ] : [ "pane", "list", "--workspace", workspace ]
+    end
+
     def split(target)
-      output, status = herdr("pane", "split", "--current", "--direction", "down", "--cwd", target, "--no-focus")
-      return warn_refused unless status.success?
+      output, error, status = herdr("pane", "split", "--current", "--direction", "down", "--cwd", target,
+                                     "--no-focus")
+      return warn_refused(error) unless status.success?
 
       JSON.parse(output).dig("result", "pane", "pane_id")
     rescue JSON::ParserError
-      warn_refused
+      warn_refused("herdr returned unparsable output")
     end
 
-    def warn_refused
-      warn("worktree-pane: herdr refused to split a pane for this worktree")
+    def warn_refused(error)
+      warn("worktree-pane: herdr refused to split a pane for this worktree (#{error.to_s.strip})")
       nil
     end
 
@@ -86,7 +99,7 @@ module WorktreeTools
     end
 
     def herdr(*arguments)
-      Open3.capture2("herdr", *arguments, err: File::NULL)
+      Open3.capture3("herdr", *arguments)
     end
   end
 end

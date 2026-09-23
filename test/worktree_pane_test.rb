@@ -34,6 +34,21 @@ class WorktreePaneTest < Minitest::Test
     assert_includes(herdr_calls, "pane rename w1:pV dotfiles/feature")
   end
 
+  def test_open_scopes_the_pane_lookup_to_the_current_workspace
+    run_script("open", @worktree)
+
+    assert_includes(herdr_calls, "pane list --workspace w1")
+  end
+
+  def test_open_splits_when_the_only_matching_pane_is_in_another_workspace
+    write_stub_panes([ { pane_id: "w2:pQ", cwd: File.realpath(@worktree), agent_status: "idle", workspace_id: "w2" } ])
+
+    run_script("open", @worktree)
+
+    assert_includes(herdr_calls.grep(/\Apane split/),
+                    "pane split --current --direction down --cwd #{File.realpath(@worktree)} --no-focus")
+  end
+
   def test_open_reuses_an_existing_pane_rooted_in_the_worktree
     write_stub_panes([ { pane_id: "w1:pQ", cwd: File.realpath(@worktree), agent_status: "idle" } ])
 
@@ -50,19 +65,21 @@ class WorktreePaneTest < Minitest::Test
   end
 
   def test_open_warns_once_and_exits_zero_when_herdr_refuses_the_split
-    _, stderr, status = run_script("open", @worktree, env: { "HERDR_STUB_FAIL_SPLIT" => "1" })
+    stdout, stderr, status = run_script("open", @worktree, env: { "HERDR_STUB_FAIL_SPLIT" => "1" })
 
     assert_equal(0, status.exitstatus)
     assert_equal(1, stderr.lines.count, stderr)
+    assert_match(/herdr: refused to split/, stderr)
+    assert_empty(stdout)
   end
 
   def test_close_skips_a_pane_with_a_running_agent_and_names_it
     write_stub_panes([ { pane_id: "w1:pQ", cwd: File.realpath(@worktree), agent_status: "running" } ])
 
-    stdout, = run_script("close", @worktree)
+    _, stderr, = run_script("close", @worktree)
 
     assert_empty(herdr_calls.grep(/\Apane close/))
-    assert_includes(stdout, "w1:pQ")
+    assert_includes(stderr, "w1:pQ")
   end
 
   def test_close_closes_an_idle_pane_rooted_in_the_worktree
@@ -73,12 +90,39 @@ class WorktreePaneTest < Minitest::Test
     assert_includes(herdr_calls, "pane close w1:pQ")
   end
 
+  def test_close_scopes_the_pane_lookup_to_the_current_workspace
+    run_script("close", @worktree)
+
+    assert_includes(herdr_calls, "pane list --workspace w1")
+  end
+
   def test_close_with_no_matching_pane_closes_nothing
     write_stub_panes([ { pane_id: "w1:pQ", cwd: "/somewhere/else", agent_status: "idle" } ])
 
     run_script("close", @worktree)
 
     assert_empty(herdr_calls.grep(/\Apane close/))
+  end
+
+  def test_close_leaves_a_pane_in_another_workspace_alone
+    write_stub_panes([ { pane_id: "w2:pQ", cwd: File.realpath(@worktree), agent_status: "idle", workspace_id: "w2" } ])
+
+    run_script("close", @worktree)
+
+    assert_empty(herdr_calls.grep(/\Apane close/))
+  end
+
+  def test_label_renames_the_given_pane_repo_slash_branch
+    run_script("label", @worktree, "w1:pQ")
+
+    assert_includes(herdr_calls, "pane rename w1:pQ dotfiles/feature")
+  end
+
+  def test_label_outside_herdr_does_nothing
+    _, _, status = run_script("label", @worktree, "w1:pQ", herdr_env: nil)
+
+    assert_equal(0, status.exitstatus)
+    assert_empty(herdr_calls)
   end
 
   private
@@ -103,6 +147,7 @@ class WorktreePaneTest < Minitest::Test
   end
 
   def write_stub_panes(panes)
+    panes = panes.map { |pane| { workspace_id: "w1" }.merge(pane) }
     File.write(stub_panes_file, JSON.generate(panes))
   end
 
@@ -121,6 +166,8 @@ class WorktreePaneTest < Minitest::Test
       case ARGV[0..1]
       when [ "pane", "list" ]
         panes = File.exist?(ENV["HERDR_STUB_PANES"].to_s) ? JSON.parse(File.read(ENV["HERDR_STUB_PANES"])) : []
+        workspace_index = ARGV.index("--workspace")
+        panes = panes.select { |pane| pane["workspace_id"] == ARGV[workspace_index + 1] } if workspace_index
         puts JSON.generate({ result: { panes: panes } })
       when [ "pane", "split" ]
         if ENV["HERDR_STUB_FAIL_SPLIT"] == "1"
@@ -135,14 +182,15 @@ class WorktreePaneTest < Minitest::Test
     FileUtils.chmod(0o755, stub)
   end
 
-  def run_script(command, path, herdr_env: "1", env: {})
+  def run_script(command, path, *rest, herdr_env: "1", env: {})
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "HERDR_STUB_PANES" => stub_panes_file,
-      "HERDR_ENV" => herdr_env
+      "HERDR_ENV" => herdr_env,
+      "HERDR_WORKSPACE_ID" => "w1"
     }.merge(env)
-    Open3.capture3(environment, "ruby", SCRIPT, command, path)
+    Open3.capture3(environment, "ruby", SCRIPT, command, path, *rest)
   end
 
   def call_log
