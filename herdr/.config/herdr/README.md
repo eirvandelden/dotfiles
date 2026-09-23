@@ -27,7 +27,7 @@ There is no `herdr plugin update` — re-running the install is the update. The 
 
 ### Reading a file an agent wrote
 
-**The viewer opens where the focused pane is.** It does not follow an agent's own `cd`, and worktrees created with `git worktree add` are invisible to it, because herdr was never told they exist. Sitting in the main checkout, that is what you get.
+**The viewer opens where the focused pane is.** It does not follow an agent's own `cd`. A worktree created with `git worktree add` is never opened as a herdr workspace, so no pane is ever in one — sitting in the main checkout, that is what you get. The viewer can still reach those worktrees; nothing puts you in one for it.
 
 **Press `W` to fix it.** It opens a picker of the repository's git worktrees, marks the current one, and pre-selects the one with an active herdr agent. `↑`/`↓` move, `Enter` switches, `Esc` cancels. It re-roots the viewer only; it never checks out a branch or touches a file.
 
@@ -48,6 +48,8 @@ Reach a worktree that way rather than browsing into `.worktrees/`. The viewer co
 | `c` | Filter the tree to changed files only |
 | `e` | Open the file in `$EDITOR`; the viewer never writes it |
 | `L` | Copy a `path:line` reference, or the selected lines |
+| `y` `Y` | Copy the file's repo-relative or absolute path. From a focused pin, the pin's own path |
+| `i` | Show gitignored entries, `.worktrees/` among them, along with every dependency and build directory |
 | `?` | Help overlay, including the settings actually in effect |
 | `q` `Esc` | Close |
 

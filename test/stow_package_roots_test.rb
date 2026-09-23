@@ -26,6 +26,15 @@ class StowPackageRootsTest < Minitest::Test
     assert_equal([ "untidy/README.md" ], strays_in(root))
   end
 
+  def test_the_rejection_names_the_file_and_where_it_would_land
+    root = fixture_repository("untidy" => [ "README.md" ])
+
+    report = stray_report(strays_in(root))
+
+    assert_includes(report, "untidy/README.md")
+    assert_includes(report, "~/README.md")
+  end
+
   def test_the_checked_packages_come_from_packages_conf
     root = fixture_repository("declared" => [ "README.md" ])
     FileUtils.mkdir_p(File.join(root, "undeclared"))
@@ -37,20 +46,27 @@ class StowPackageRootsTest < Minitest::Test
   def test_every_stowed_package_root_holds_only_dotfiles
     strays = strays_in(REPO_ROOT)
 
-    assert_empty(strays,
-                 "Stow links a package's top-level entries into $HOME. These would land there: " +
-                 strays.map { |s| "#{s} -> ~/#{File.basename(s)}" }.join(", "))
+    assert_empty(strays, stray_report(strays))
   end
 
   private
+
+  # Names each stray and the path in $HOME it would become, so a failure says what goes wrong
+  # rather than only which file is unexpected.
+  def stray_report(strays)
+    "Stow links a package's top-level entries into $HOME. These would land there: " +
+      strays.map { |stray| "#{stray} -> ~/#{File.basename(stray)}" }.join(", ")
+  end
 
   # Every entry at a declared package's root that is not dot-prefixed, as "<package>/<entry>".
   def strays_in(root)
     stow_packages(root).flat_map { |package|
       directory = File.join(root, package)
+      # A declared package with no directory is packages.conf's bug, not a stray file, and stow
+      # itself fails on it at install time. Nothing for this guard to say about it.
       next [] unless File.directory?(directory)
 
-      (Dir.children(directory) - [ ".", ".." ])
+      Dir.children(directory)
         .reject { |entry| entry.start_with?(".") }
         .map { |entry| "#{package}/#{entry}" }
     }.sort

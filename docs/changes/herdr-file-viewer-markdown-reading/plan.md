@@ -39,6 +39,7 @@ source rather than assumed.
 | `herdr/.config/herdr/README.md` | New. How to browse and read files in herdr, including `W`. |
 | `README.md` | Pointer to the above, mirroring how the worktree section links `worktree-tools`. |
 | `test/stow_package_roots_test.rb` | New. Guards that no file at a stow package root gets linked into `$HOME`. |
+| `project-dictionary.txt` | Words cspell needs to pass the touched files: `Haije`, `smarzban`, and `hjkl`/`solunized` from lines of `config.toml` it now scans. |
 
 Not the package root for the README: stow maps a package's top-level entries to the target root
 and `README.md` is not in `.stow-global-ignore`, so `herdr/README.md` would become `~/README.md`.
