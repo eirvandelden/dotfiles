@@ -271,5 +271,4 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
       consent still apply) → rebase the original in-progress work on top of that fix.
     - Applies to personal and work projects both.
 26. Markdown prose:
-    - One line per paragraph, list item, and block quote in markdown prose — the renderer
-      wraps it. Applies even in a file whose existing content is hardwrapped.
+    - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
