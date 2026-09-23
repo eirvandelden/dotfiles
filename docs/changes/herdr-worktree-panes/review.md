@@ -50,3 +50,47 @@ No existing test was weakened, skipped or deleted.
 - [x] Nit: the Step 1 code block in `worktree-first/SKILL.md` now shows only the issue-number case (`title=… slug=… branch=…`). Without an issue, `$issue_number` is unset and the block produces `branch="-"`; the "otherwise a kebab-case task slug" case exists only in the sentence above it. — `claude/.claude/skills/worktree-first/SKILL.md:31` → fixed (86537461)
 
 Counts: 6 Important, 5 Nit.
+
+## Round 2 — 2026-09-23T12:05Z — c9185ec9
+
+State at review: `test/worktree_pane_test.rb` (14 runs), `test/worktree_create_test.rb` (16 runs),
+`test/herdr_worker_scripts_test.rb` (30 runs) green; `rubocop` on the two scripts and three tests
+clean; `shellcheck -x -S warning` on `hand-off-plan.sh` clean. No uncommitted changes. All
+round 1 fixes hold.
+
+### Bugs
+
+- [ ] Important: the sweep closes panes with a live Claude session. `running?` treats `idle` as "no agent", but herdr 0.9.1 reports `agent_status: "idle"` for a Claude agent that waits for input (live `herdr pane list` on this machine: 10 panes `{"agent":"claude","agent_status":"idle"}`, 8 `done`, 2 `working`, 23 `unknown` with `agent: null`). An idle worker or reviewer pane in a merged worktree gets `herdr pane close`, which ends its session; a `done` pane (also a live agent) is kept, so the two waiting states are handled in opposite ways. Shell panes show `unknown` and `agent: null`. The `agent` field, not `agent_status`, tells "has an agent". The tests use `agent_status: "running"`, which herdr never emits (`working` is the real value), and no fixture sets `agent`. The spec's design decision ("`idle`/`unknown`/absent count as not running") rests on the same wrong assumption; correct it there too. — `git/.config/git/worktree-tools/worktree-pane:56` →
+- [ ] Important: a clean worktree on a detached HEAD is swept, and its commits are lost. `worktree_branch` returns `HEAD`; `fresh?` and `ancestor?` then run `git rev-parse HEAD` / `merge-base --is-ancestor HEAD origin/main` in the main checkout, so they test the main checkout's HEAD, not the worktree's. When the main checkout sits on or behind `origin/main` (the usual case), the detached worktree is removed. Reproduced in a scratch repo: `git worktree add --detach .worktrees/det`, one commit there, `origin/main` moved on, `gh` stubbed to fail; `worktree-create another-branch` removed `.worktrees/det` and its commit became unreachable. The old prose had the same shell bug but also the rule "detached HEAD … leave it — never guess, never remove unmerged work"; the port dropped that sentence from `SKILL.md` and did not implement it. — `git/.config/git/worktree-tools/worktree-create:79` →
+- [ ] Important: without `gh` on `PATH`, `worktree-create` crashes (`No such file or directory - gh (Errno::ENOENT)` from `Open3.capture2`) as soon as one clean worktree exists, so no new worktree can be created at all. The old prose ran `gh … 2>/dev/null` and got an empty state, then fell back to the ancestor check. Reproduced with `PATH=/usr/bin:/bin`. Spec requirement 9 says the sweep uses `gh pr view` "as today". — `git/.config/git/worktree-tools/worktree-create:97` →
+- [ ] Nit: `worktree-pane` with a missing path or pane id raises (`File.realpath(nil)` → `TypeError`, `herdr pane rename <nil>` → `TypeError`) instead of printing the usage line; `worktree-pane open /missing` raises `Errno::ENOENT`. — `git/.config/git/worktree-tools/worktree-pane:22` →
+- [ ] Nit: a failed `git worktree remove` or `git branch -d` during the sweep is silent (`git` helper sends stderr to `/dev/null`), and the worktree's pane has already been closed by then. The old prose showed git's error. — `git/.config/git/worktree-tools/worktree-create:121` →
+
+### Security
+
+Nothing found. All git, gh and herdr calls still use argument arrays; the branch name reaches
+`hand-off-plan.sh`'s prompt text only as a path, not as shell code.
+
+### Compliance
+
+Acceptance criteria against tests in the diff:
+
+| Criterion | Test |
+| --- | --- |
+| Pane in current workspace, rooted, labelled `<repo>/<branch>`, caller keeps focus | `worktree_pane_test` `test_open_splits_a_pane_below_rooted_in_the_worktree_without_focus`, `test_open_labels_the_pane_repo_slash_branch`, `test_open_scopes_the_pane_lookup_to_the_current_workspace` |
+| Outside herdr: no pane, no herdr output, worktree exists | `worktree_pane_test` `test_open_outside_herdr_does_nothing_and_exits_zero` (asserts no calls and exit 0, not empty output) |
+| herdr refuses the split: exit 0, one warning naming the error | `worktree_pane_test` `test_open_warns_once_and_exits_zero_when_herdr_refuses_the_split` |
+| Sweep closes the pane, then removes the worktree | `worktree_create_test` `test_sweep_closes_the_pane_rooted_in_a_merged_worktree_before_removing_it` |
+| Sweep leaves a running agent's pane open, names it, removes the worktree | `worktree_create_test` `test_a_pane_with_a_running_agent_is_named_on_stderr_during_the_sweep`, `worktree_pane_test` `test_close_skips_a_pane_with_a_running_agent_and_names_it` (fixture status `running` is not a herdr value — see Bugs) |
+| Sweep with no pane closes nothing, removes the worktree | `worktree_pane_test` `test_close_with_no_matching_pane_closes_nothing` |
+| `hand-off-plan.sh <plan> <name>` creates the worktree, worker rooted there, "already in worktree" prompt | `herdr_worker_scripts_test` `test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree` |
+| `hand-off-plan.sh <plan>` unchanged | existing hand-off tests, unchanged in the diff |
+| `implement handoff` passes the branch name | prose, `implement/SKILL.md` §5 (no test, as planned) |
+| Twice for the same name opens one pane | `worktree_pane_test` `test_open_reuses_an_existing_pane_rooted_in_the_worktree` |
+| `WORKTREES.md` mentions the pane | `claude/.claude/WORKTREES.md:12` |
+
+Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or
+deleted. Files changed match the plan's list; the `label` command is recorded as a departure in
+plan step 8.
+
+Counts: 3 Important, 2 Nit.
