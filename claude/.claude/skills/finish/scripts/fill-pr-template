@@ -89,7 +89,7 @@ def fill_template(template, fill)
   return joined(context_block(fill), template.strip) if categories.compact.empty?
 
   rebuilt = sections.zip(categories).map do |section, category|
-    category ? "#{section[:heading]}\n\n#{fill[category]}\n" : "#{section[:heading]}#{section[:body]}"
+    category ? "#{section[:heading]}\n\n#{fill[category]}\n\n" : "#{section[:heading]}#{section[:body]}"
   end
 
   (preamble + rebuilt.join).strip

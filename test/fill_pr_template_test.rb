@@ -117,6 +117,20 @@ class FillPrTemplateTest < Minitest::Test
     assert_no_match(%r{app/models/claim\.rb}, output)
   end
 
+  def test_a_filled_section_ends_with_a_blank_line_before_the_next_heading
+    output = run_fill(<<~MARKDOWN)
+      ## Why
+
+      _describe the motivation_
+
+      ## Implementation
+
+      _how did you build it_
+    MARKDOWN
+
+    assert_match(/without asking engineering\.\n\n## Implementation/, output)
+  end
+
   def test_an_unmatched_heading_among_matched_ones_keeps_its_own_text
     output = run_fill(<<~MARKDOWN)
       ## Summary
