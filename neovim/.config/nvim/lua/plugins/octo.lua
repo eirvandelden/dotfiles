@@ -8,4 +8,7 @@ return {
   opts = {
     picker = "snacks",
   },
+  keys = {
+    { "<leader>go", "<cmd>Octo pr list<cr>", desc = "Octo: list PRs" },
+  },
 }
