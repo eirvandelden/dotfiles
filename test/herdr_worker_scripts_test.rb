@@ -134,6 +134,18 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
+  def test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, plan_file, "some-branch")
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down " \
+                    "--cwd #{File.realpath(@repo)}/.worktrees/some-branch --no-focus")
+    assert_match(/already/i, handoff_prompt)
+    assert_match(/do not invoke worktree-first/i, handoff_prompt)
+  end
+
   def test_handing_off_from_a_worktree_sends_the_worker_to_the_main_checkout
     main_checkout = @repo
     @repo = linked_worktree
@@ -273,6 +285,16 @@ class HerdrWorkerScriptsTest < Minitest::Test
     git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/#{branch}")
   end
 
+  def worktree_creatable!
+    origin = Dir.mktmpdir
+    @extra_dirs << origin
+    system("git", "init", "--quiet", "--bare", "--initial-branch=main", origin) ||
+      raise("git init --bare failed")
+    git("remote", "add", "origin", origin)
+    git("push", "--quiet", "origin", "main")
+    File.write(File.join(@repo, ".git", "info", "exclude"), ".worktrees\n")
+  end
+
   def awkward_parent(name)
     enclosing = Dir.mktmpdir
     @extra_dirs << enclosing
@@ -347,6 +369,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
     FileUtils.chmod(0o755, stub)
   end
 
+  WORKTREE_TOOLS_DIR = File.expand_path("../git/.config/git/worktree-tools", __dir__)
+
   def run_script(script, *arguments, herdr_env: "1", caller_pane: "w1:p1")
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
@@ -356,7 +380,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
       "REPORT_STATE_LOG" => report_state_log,
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1",
-      "HERDR_PANE_ID" => caller_pane
+      "HERDR_PANE_ID" => caller_pane,
+      "WORKTREE_TOOLS_DIR" => WORKTREE_TOOLS_DIR
     }
     Open3.capture3(environment, script, *arguments, chdir: @repo)
   end
