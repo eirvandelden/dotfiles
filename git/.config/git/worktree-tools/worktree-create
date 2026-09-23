@@ -38,10 +38,10 @@ module WorktreeTools
     private
 
     def repo_root!
-      output, status = git("rev-parse", "--show-toplevel")
+      output, status = git("rev-parse", "--path-format=absolute", "--git-common-dir")
       die("worktree-create: not inside a git repository") unless status.success?
 
-      output.strip
+      File.dirname(output.strip)
     end
 
     def worktrees_ignored?

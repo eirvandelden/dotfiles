@@ -205,6 +205,16 @@ class WorktreeCreateTest < Minitest::Test
     assert(File.directory?(stdout.strip))
   end
 
+  def test_creates_the_worktree_under_the_main_checkouts_worktrees_even_from_inside_a_linked_worktree
+    add_worktree("caller-branch", from: "origin/main")
+    caller_worktree = File.join(@repo, ".worktrees", "caller-branch")
+
+    stdout, stderr, status = run_script("feature", chdir: caller_worktree)
+
+    assert(status.success?, stderr)
+    assert_equal(File.join(File.realpath(@repo), ".worktrees", "feature"), stdout.strip)
+  end
+
   def test_a_worktree_git_refuses_to_remove_prints_gits_error_and_continues
     add_worktree("merged-branch", from: "origin/main")
     merged = File.join(@repo, ".worktrees", "merged-branch")
