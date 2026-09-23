@@ -11,8 +11,7 @@ requirement in it must be testable — a requirement with no example is not done
 
 ## 1. Read the intent
 
-Run `claude/.claude/skills/plan/scripts/change-folder` (installed at
-`~/.claude/skills/plan/scripts/change-folder`) for the folder path. Read `<folder>/intent.md`.
+Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<folder>/intent.md`.
 Refuse and say why if its `Status:` line is not `accepted`.
 
 ## 2. Apply domain skills

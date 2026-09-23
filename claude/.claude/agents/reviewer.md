@@ -13,7 +13,7 @@ You review. You do not fix.
 
 ## Job
 
-1. Run `claude/.claude/skills/plan/scripts/change-folder` for the folder path. Read `REVIEW.md`
+1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `REVIEW.md`
    at the repository root, or `REVIEW.local.md` if that is what exists (never both — the first
    one found), plus `<folder>/spec.md` and `<folder>/plan.md`.
 2. Read the diff: `git diff <base>...HEAD` for what is committed, plus `git status` and
