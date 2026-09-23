@@ -16,9 +16,9 @@ Agents hardwrap markdown paragraphs. The rule against it is only in Claude's dot
 - `claude/.claude/core-values.yml` — new line in `workflow:` with the same rule.
 - `markdownlint/.config/markdownlint/config` — new stow package (approved by spec acceptance). JSON `{ "MD013": false }`. markdownlint-cli's `rc('markdownlint')` reads `~/.config/markdownlint/config`.
 - `markdownlint/.config/markdownlint/no-hardwrap.cjs` — the custom rule (CommonJS; markdownlint-cli 0.48 loads rules with `require`). Uses `parser: "micromark"`.
-  - Detection: walk every `paragraph` token at any depth (this covers paragraphs inside list items and block quotes; tables, headings, code, HTML and front matter never produce `paragraph` tokens). A paragraph is wrapped when it contains a `lineEnding` child that is not preceded by `hardBreakEscape` or `hardBreakTrailing`.
-  - Default mode: one `onError` per wrapped paragraph, at its first line, detail `"join lines N–M into one line"`. No fix info.
-  - Unwrap mode (rule config `{ "unwrap": true }`): per run of soft-joined lines, one error on the run's first line with `fixInfo` appending the rest (continuation text taken from the first paragraph child token on each line, so list indentation and `> ` prefixes drop; single spaces between), and one error per continuation line with `fixInfo: { deleteCount: -1 }`. Needed because one markdownlint error can carry only one single-line edit.
+  - Detection: walk every `paragraph` token at any depth (this covers paragraphs inside list items and block quotes; tables, headings, code, HTML and front matter never produce `paragraph` tokens). A paragraph is wrapped when it contains a `lineEnding`, at any depth (inside emphasis, link labels and code spans too), whose previous sibling is not `hardBreakEscape` or `hardBreakTrailing`. Its lines split into runs at the hard breaks.
+  - Default mode: one `onError` per run of two or more soft-joined lines, at the run's first line, detail `"join lines N–M into one line"`. No fix info.
+  - Unwrap mode (rule config `{ "unwrap": true }`): per run of soft-joined lines, one error on the run's first line with `fixInfo` appending the rest (continuation text is the whole source line from the first paragraph text token on it, so list indentation and `> ` prefixes drop but inline markup stays; single spaces between; the run's last line keeps a trailing hard break), and one error per continuation line with `fixInfo: { deleteCount: -1 }`. Needed because one markdownlint error can carry only one single-line edit.
 - `markdownlint/.config/markdownlint/no-hardwrap.json` — `{ "default": false, "no-hardwrap": true }`, used by the commit check and the Claude hook.
 - `markdownlint/.config/markdownlint/unwrap.json` — `{ "default": false, "no-hardwrap": { "unwrap": true } }`, used with `--fix` (phase 2, and by hand).
 - `packages.conf` — add `markdownlint` to `STOW=(…)`.
@@ -83,7 +83,7 @@ Agents hardwrap markdown paragraphs. The rule against it is only in Claude's dot
 - 17 → phase 2.
 
 Per changed file, the unit tests expected:
-- `markdownlint/.config/markdownlint/no-hardwrap.cjs`: covered by `test/no_hardwrap_rule_test.rb` through the CLI (criteria 4–11); plus `test_a_paragraph_mixing_a_hard_break_and_a_soft_wrap_is_reported`, `test_a_nested_list_item_is_unwrapped_at_its_own_indentation`.
+- `markdownlint/.config/markdownlint/no-hardwrap.cjs`: covered by `test/no_hardwrap_rule_test.rb` through the CLI (criteria 4–11); plus `test_a_paragraph_mixing_a_hard_break_and_a_soft_wrap_is_reported`, `test_a_nested_list_item_is_unwrapped_at_its_own_indentation`; review round 1: `test_unwrapping_keeps_inline_markup_on_a_continuation_line`, `test_unwrapping_keeps_an_indented_continuation_line`, `test_unwrapping_a_block_quote_keeps_the_whole_second_line`, `test_a_wrap_inside_emphasis_is_reported_and_unwrapped`, `test_a_wrap_inside_a_link_label_is_reported_and_unwrapped`, `test_a_hard_break_then_a_soft_wrap_reports_only_the_soft_run`, `test_unwrapping_does_not_leave_a_double_space_after_trailing_whitespace`, `test_unwrapping_keeps_a_trailing_hard_break_at_the_end_of_a_run`.
 - `claude/.claude/hooks/markdown-hardwrap.rb`: `test_a_missing_file_tells_claude_nothing`, `test_missing_markdownlint_tells_claude_nothing`, `test_the_hook_always_exits_zero`.
 - `lefthook.yml`: covered by criteria 12–14.
 

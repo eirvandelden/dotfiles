@@ -132,6 +132,62 @@ class NoHardwrapRuleTest < Minitest::Test
     assert_equal("- outer\n  - inner item continues\n", File.read(file))
   end
 
+  def test_unwrapping_keeps_inline_markup_on_a_continuation_line
+    file = fix("one two\nthree *bold* four `code` five\n")
+
+    assert_equal("one two three *bold* four `code` five\n", File.read(file))
+  end
+
+  def test_unwrapping_keeps_an_indented_continuation_line
+    file = fix("para one\n   indented two\n")
+
+    assert_equal("para one indented two\n", File.read(file))
+  end
+
+  def test_unwrapping_a_block_quote_keeps_the_whole_second_line
+    file = fix("> line one\n> line two *b* c\n")
+
+    assert_equal("> line one line two *b* c\n", File.read(file))
+  end
+
+  def test_a_wrap_inside_emphasis_is_reported_and_unwrapped
+    content = "one *bold\nspan* rest\n"
+    _stdout, stderr, status = check(content)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/:1 .*no-hardwrap.*join lines 1–2 into one line/, stderr)
+    assert_equal("one *bold span* rest\n", File.read(fix(content)))
+  end
+
+  def test_a_wrap_inside_a_link_label_is_reported_and_unwrapped
+    content = "see [a link\ntext](http://x) end\n"
+    _stdout, stderr, status = check(content)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/:1 .*no-hardwrap.*join lines 1–2 into one line/, stderr)
+    assert_equal("see [a link text](http://x) end\n", File.read(fix(content)))
+  end
+
+  def test_a_hard_break_then_a_soft_wrap_reports_only_the_soft_run
+    _stdout, stderr, _status = check("line one\\\nline two\nline three\n")
+
+    assert_match(/:2 .*no-hardwrap.*join lines 2–3 into one line/, stderr)
+    assert_no_match(/join lines 1–/, stderr)
+  end
+
+  def test_unwrapping_does_not_leave_a_double_space_after_trailing_whitespace
+    file = fix("line one \nline two\n")
+
+    assert_equal("line one line two\n", File.read(file))
+  end
+
+  def test_unwrapping_keeps_a_trailing_hard_break_at_the_end_of_a_run
+    trailing_spaces = " " * 2
+    file = fix("line one\nline two#{trailing_spaces}\nline three\n")
+
+    assert_equal("line one line two#{trailing_spaces}\nline three\n", File.read(file))
+  end
+
   def test_the_global_config_does_not_report_a_long_paragraph_line
     home = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(home, ".config"))

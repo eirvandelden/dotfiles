@@ -6,7 +6,7 @@
 // items and block quotes are covered without separate handling.
 
 const HARD_LINE_ENDING_TYPES = new Set([ "hardBreakEscape", "hardBreakTrailing" ]);
-const INDENT_OR_PREFIX_TYPES = new Set([ "listItemIndent", "blockQuotePrefix" ]);
+const NOT_LINE_TEXT_TYPES = new Set([ "lineEnding", "linePrefix", "listItemIndent", "blockQuotePrefix", "whitespace" ]);
 
 function collectParagraphs(tokens, found) {
   for (const token of tokens) {
@@ -18,23 +18,28 @@ function collectParagraphs(tokens, found) {
   return found;
 }
 
-function softLineEndingAt(children, index) {
-  const previous = children[index - 1];
-  return !previous || !HARD_LINE_ENDING_TYPES.has(previous.type);
+// The paragraph's text tokens at every depth, leaving out prefixes and their own children (a
+// block quote's `>` marker sits inside its prefix token).
+function textTokensOf(token, found = []) {
+  for (const child of token.children) {
+    if (NOT_LINE_TEXT_TYPES.has(child.type)) {
+      continue;
+    }
+    found.push(child);
+    textTokensOf(child, found);
+  }
+  return found;
 }
 
-function isWrapped(paragraph) {
-  const children = paragraph.children;
-  return children.some((child, index) => child.type === "lineEnding" && softLineEndingAt(children, index));
-}
-
-function softLinesAfter(paragraph) {
-  const children = paragraph.children;
-  const lines = new Set();
-  children.forEach((child, index) => {
-    if (child.type === "lineEnding" && softLineEndingAt(children, index)) {
+// A line ending counts as soft unless a hard line break sits right before it in the same parent;
+// looking at every depth catches a wrap inside emphasis, a link label or a code span.
+function softLinesAfter(token, lines = new Set()) {
+  token.children.forEach((child, index) => {
+    const previous = token.children[index - 1];
+    if (child.type === "lineEnding" && !(previous && HARD_LINE_ENDING_TYPES.has(previous.type))) {
       lines.add(child.endLine);
     }
+    softLinesAfter(child, lines);
   });
   return lines;
 }
@@ -54,44 +59,56 @@ function runsIn(paragraph) {
     }
   }
   runs.push(run);
-  return runs;
+  return runs.filter((lines) => lines.length > 1);
 }
 
-// The line's own text, dropping any list indentation or block quote prefix that precedes it.
-function textOnLine(paragraph, lineNumber) {
-  const token = paragraph.children.find(
-    (child) => child.startLine === lineNumber && !INDENT_OR_PREFIX_TYPES.has(child.type)
-  );
-  return token ? token.text : "";
+// Everything on the line from where the paragraph's text starts, so list indentation and a block
+// quote prefix drop but no inline markup does.
+function textOnLine(textTokens, line, sourceLine) {
+  const columns = textTokens
+    .filter((token) => token.startLine === line)
+    .map((token) => token.startColumn);
+  return columns.length > 0 ? sourceLine.slice(Math.min(...columns) - 1) : "";
+}
+
+// Trailing whitespace inside a run is dropped, but the run's last line keeps its own: two
+// trailing spaces there are the hard line break that ended the run.
+function joinedContinuation(continuationLines, textTokens, params) {
+  const lastLine = continuationLines[continuationLines.length - 1];
+  return continuationLines
+    .map((line) => {
+      const text = textOnLine(textTokens, line, params.lines[line - 1]);
+      return line === lastLine ? text : text.trimEnd();
+    })
+    .join(" ");
+}
+
+function detailFor(run) {
+  return `join lines ${run[0]}–${run[run.length - 1]} into one line`;
 }
 
 function reportParagraph(paragraph, onError) {
-  if (!isWrapped(paragraph)) {
-    return;
+  for (const run of runsIn(paragraph)) {
+    onError({ lineNumber: run[0], detail: detailFor(run) });
   }
-
-  onError({
-    lineNumber: paragraph.startLine,
-    detail: `join lines ${paragraph.startLine}–${paragraph.endLine} into one line`
-  });
 }
 
 function unwrapParagraph(paragraph, params, onError) {
-  for (const run of runsIn(paragraph)) {
-    if (run.length < 2) {
-      continue;
-    }
+  const textTokens = textTokensOf(paragraph);
 
+  for (const run of runsIn(paragraph)) {
     const [ firstLine, ...continuationLines ] = run;
-    const lastLine = run[run.length - 1];
-    const detail = `join lines ${firstLine}–${lastLine} into one line`;
-    const continuationText = continuationLines.map((line) => textOnLine(paragraph, line)).join(" ");
+    const detail = detailFor(run);
+    const continuationText = joinedContinuation(continuationLines, textTokens, params);
+    const firstSource = params.lines[firstLine - 1];
+    const firstText = firstSource.trimEnd();
 
     onError({
       lineNumber: firstLine,
       detail,
       fixInfo: {
-        editColumn: params.lines[firstLine - 1].length + 1,
+        editColumn: firstText.length + 1,
+        deleteCount: firstSource.length - firstText.length,
         insertText: ` ${continuationText}`
       }
     });
