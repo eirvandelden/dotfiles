@@ -1,0 +1,26 @@
+# Settings for the herdr-file-viewer plugin, at the path `herdr plugin config-dir
+# herdr-file-viewer` prints. Read once when the viewer launches — there is no reload, so quit the
+# viewer pane and reopen it after changing anything here. The `?` overlay's Settings tab shows
+# what is actually in effect.
+
+# Agent-written files are always git-changed, and a changed file opens as a diff by default. A
+# file an agent has just created is no exception: an untracked path is diffed against /dev/null,
+# so a brand-new markdown file arrives as a whole-file "+" diff and reads as plain source, which
+# is the opposite of why the viewer is open. "content" applies the normal file-type policy to a
+# changed file instead, so markdown opens rendered. Deleted paths stay diff-first either way —
+# there is no content left to render — and `v` still cycles to both diff views.
+#
+# This is one switch over every changed file, not only markdown: a changed Ruby file now opens as
+# highlighted source, so reviewing what moved costs a `v`. Deliberate — reading an agent's prose
+# is the frequent act, reviewing its diff the rarer one.
+changed_file_view = "content"
+
+# Deliberately unset, with reasons, so a later reader does not "fix" them:
+#
+# markdown — the default passes the plugin's own assets/markdown-style.json, which colours
+#   headings by ANSI palette index. That is what makes rendered markdown follow Ghostty's
+#   light/dark swap. Any explicit `glow -s …` hardcodes one palette and breaks it.
+# show_ignored — `.worktrees/` is hidden because ~/.config/git/ignore.global ignores it, but `W`
+#   reaches a worktree properly and keeps git status, the diff baseline and the changed-file
+#   filters correct for that root. Revealing the folder gives a plain tree with the wrong
+#   baseline, and surfaces dependency and build directories besides.
