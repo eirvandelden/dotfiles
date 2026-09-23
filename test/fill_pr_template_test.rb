@@ -180,6 +180,22 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/- \[ \] Feature/, output)
   end
 
+  def test_a_choice_list_testing_heading_gets_the_plans_proof_appended
+    output = run_fill(<<~MARKDOWN)
+      ## Description
+
+      TODO
+
+      ## Testing
+
+      - [ ] Unit tests added
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+    assert_match(/- \[ \] Unit tests added/, output)
+    assert_match(/## Proof\n\n.*test_shows_export_status/m, output)
+  end
+
   def test_a_what_does_this_pr_do_heading_is_filled
     output = run_fill(<<~MARKDOWN)
       ## What does this PR do?
@@ -207,8 +223,9 @@ class FillPrTemplateTest < Minitest::Test
       TODO
     MARKDOWN
 
-    assert_match(/test_shows_export_status/, output)
-    assert_no_match(%r{app/models/claim\.rb}, output)
+    filled_section = output[/## How has this been tested\?\n\n(.*?)\n\n##/m, 1]
+    assert_match(/test_shows_export_status/, filled_section)
+    assert_no_match(%r{app/models/claim\.rb}, filled_section)
   end
 
   def test_a_filled_section_ends_with_a_blank_line_before_the_next_heading
@@ -307,21 +324,28 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/flag or migration to coordinate/, output)
   end
 
-  def test_a_template_with_no_matching_headings_gets_a_context_block_prepended
+  def test_a_template_with_no_matching_headings_gets_four_sections_appended
     output = run_fill(<<~MARKDOWN)
       ## Screenshots
 
       _attach screenshots here_
     MARKDOWN
 
-    assert_match(/\A## Context/, output)
+    assert_match(/\A## Screenshots\n\n_attach screenshots here_/, output)
+    assert_match(/## Summary/, output)
+    assert_match(/## Why/, output)
+    assert_match(/## Implementation/, output)
+    assert_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
   end
 
-  def test_no_template_produces_a_context_block_from_intent_and_plan_alone
+  def test_no_template_produces_four_sections_from_intent_and_plan_alone
     output = run_fill(nil)
 
-    assert_match(/\A## Context/, output)
+    assert_match(/\A## Summary/, output)
+    assert_match(/## Why/, output)
+    assert_match(/## Implementation/, output)
+    assert_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(%r{app/models/claim\.rb}, output)
     assert_match(/test_shows_export_status/, output)

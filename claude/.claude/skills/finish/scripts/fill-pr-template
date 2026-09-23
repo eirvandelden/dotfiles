@@ -3,14 +3,22 @@
 # either scope. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own template phrasing still gets filled. A
 # heading nothing matches, or whose body is a checkbox list, keeps its own
-# text; a template where nothing matched — including no template at all —
-# gets one "## Context" block prepended instead, built from the same four
-# pieces.
+# text. Any of the four categories that ends up with no heading filled —
+# no heading matched it, or the one that did is a checkbox list — is
+# appended at the end under its own heading; with no template at all, or
+# no matching heading anywhere, that means all four.
 CATEGORIES = [
   [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /\bwhy|\bmotivation/i ],
   [ :test, /\btest|\bverify/i ],
   [ :implementation, /\bimplementation|\bhow|\bdetails/i ]
+].freeze
+
+APPEND_ORDER = [
+  [ :summary, "Summary" ],
+  [ :why, "Why" ],
+  [ :implementation, "Implementation" ],
+  [ :test, "Proof" ]
 ].freeze
 
 TYPE_HEADING = /type/i
@@ -72,26 +80,11 @@ def choice_list?(body)
   body.match?(CHOICE_LIST)
 end
 
-def context_block(fill)
-  <<~MARKDOWN.strip
-    ## Context
-
-    **Summary**
-
-    #{fill[:summary]}
-
-    **Why**
-
-    #{fill[:why]}
-
-    **Implementation**
-
-    #{fill[:implementation]}
-
-    **Testing**
-
-    #{fill[:test]}
-  MARKDOWN
+def appended_sections(fill, present_categories)
+  APPEND_ORDER
+    .reject { |category, _heading| present_categories.include?(category) }
+    .map { |category, heading| "## #{heading}\n\n#{fill[category]}" }
+    .join("\n\n")
 end
 
 def heading_level(heading)
@@ -105,8 +98,6 @@ end
 def fill_template(template, fill)
   preamble, sections = parse_sections(template)
   categories = sections.map { |section| category_for_section(section) }
-
-  return joined(context_block(fill), template.strip) if categories.compact.empty?
 
   rebuilt = []
   absorbed_until_level = nil
@@ -138,7 +129,8 @@ def fill_template(template, fill)
     end
   end
 
-  (preamble + rebuilt.join).strip
+  body = (preamble + rebuilt.join).strip
+  joined(body, appended_sections(fill, categories.compact))
 end
 
 template_path, intent_path, plan_path = ARGV
@@ -153,6 +145,4 @@ fill = filler(intent, plan)
 
 template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
 
-result = template.strip.empty? ? context_block(fill) : fill_template(template, fill)
-
-puts(result)
+puts(fill_template(template, fill))

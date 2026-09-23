@@ -49,8 +49,8 @@ anything another team consumes?"
 
 1. Find the template: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`,
    `PULL_REQUEST_TEMPLATE.md`, or `docs/pull_request_template.md`. None found: continue with an
-   empty template path — the filler still produces a `## Context` block from `intent.md` and
-   `plan.md` alone.
+   empty template path — the filler still produces the four `## Summary` / `## Why` /
+   `## Implementation` / `## Proof` sections from `intent.md` and `plan.md` alone.
 2. Run `~/.claude/skills/finish/scripts/fill-pr-template <template-path-or-empty>
    <folder>/intent.md <folder>/plan.md`. Show the result to the user.
 3. On confirmation: write the filled body to a `mktemp` file outside the repository, and record
