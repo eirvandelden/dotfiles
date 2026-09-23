@@ -30,7 +30,6 @@ fi
 
 common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir)
 main_checkout=$(dirname "$common_git_dir")
-repo_name=$(basename "$main_checkout")
 
 # Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
 # pane. A file in the shared git directory can be: it never shows up in the tree, and it outlives
@@ -46,7 +45,7 @@ if [ -n "$name" ]; then
   # --no-pane: this script splits the worker's own pane below, so worktree-create must not also
   # open one, or the worktree ends up with two panes rooted in it.
   worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
-  worker_cwd=$(cd "$main_checkout" && ruby "$worktree_tools/worktree-create" "$name" --no-pane)
+  worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$name" --no-pane)
 else
   worker_cwd="$main_checkout"
 fi
@@ -66,7 +65,9 @@ report="$report_directory/$worker.md"
 : >"$report"
 
 if [ -n "$name" ]; then
-  herdr pane rename "$pane" "$repo_name/$name" >/dev/null
+  # worktree-pane is the only thing that calls `herdr pane` for a worktree; label reuses that
+  # instead of renaming the pane here directly.
+  "$worktree_tools/worktree-pane" label "$worker_cwd" "$pane" >/dev/null
   intro="You are taking over a plan written by another agent. You are already inside your own git \
 worktree, at $worker_cwd; do not invoke worktree-first, and do not create another worktree."
 else

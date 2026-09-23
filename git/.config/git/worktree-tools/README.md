@@ -137,7 +137,8 @@ stow:
    - `worktree-remove` - Cleanup (remove puma-dev, unstow packages)
    - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>`
      off `origin`'s default branch; prints its path
-   - `worktree-pane open|close <path>` - Open or close the herdr pane rooted in a worktree
+   - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or
+     rename the herdr pane rooted in a worktree
 
 3. **Explicit Git Command**
    - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path

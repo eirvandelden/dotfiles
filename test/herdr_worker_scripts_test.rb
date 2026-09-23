@@ -136,12 +136,16 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree
     worktree_creatable!
+    worktree = File.join(@repo, ".worktrees", "some-branch")
 
     run_script(HAND_OFF_PLAN, plan_file, "some-branch")
 
+    assert(File.directory?(worktree), "expected worktree-create to have created #{worktree}")
     assert_includes(herdr_calls,
-                    "pane split --current --direction down " \
-                    "--cwd #{File.realpath(@repo)}/.worktrees/some-branch --no-focus")
+                    "pane split --current --direction down --cwd #{File.realpath(worktree)} --no-focus")
+    assert_equal(1, herdr_calls.grep(/\Apane split/).size,
+                 "worktree-create should not have opened a second pane of its own (--no-pane)")
+    assert_includes(herdr_calls, "pane rename w1:pV #{File.basename(@repo)}/some-branch")
     assert_match(/already/i, handoff_prompt)
     assert_match(/do not invoke worktree-first/i, handoff_prompt)
   end
