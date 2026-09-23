@@ -228,3 +228,5 @@ Haije
 smarzban
 hjkl
 solunized
+restow
+restows
