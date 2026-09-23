@@ -117,6 +117,26 @@ class FillPrTemplateTest < Minitest::Test
     assert_no_match(%r{app/models/claim\.rb}, output)
   end
 
+  def test_an_unmatched_heading_among_matched_ones_keeps_its_own_text
+    output = run_fill(<<~MARKDOWN)
+      ## Summary
+
+      _describe what this changes_
+
+      ## Rollout notes
+
+      _flag or migration to coordinate_
+
+      ## Testing
+
+      _how was this verified_
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+    assert_match(/test_shows_export_status/, output)
+    assert_match(/flag or migration to coordinate/, output)
+  end
+
   def test_an_unmatched_heading_keeps_its_template_text
     output = run_fill(<<~MARKDOWN)
       ## Screenshots
