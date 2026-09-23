@@ -22,6 +22,16 @@ key = "prefix+f"
 type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer"
 
+# The same viewer in its own tab instead of a split, for when reading a file is the task rather
+# than a glance beside the work: prose gets the whole terminal instead of a column the tree takes
+# a share of. Idempotent — it switches to an existing viewer tab rather than opening a second, and
+# toggles off when already there. Shift+f is free: herdr's defaults take shift with r, n, g, w, d,
+# t, x, p and Tab, and this file takes prefix+shift+1..9 for workspaces.
+[[keys.command]]
+key = "prefix+shift+f"
+type = "plugin_action"
+command = "herdr-file-viewer.open-file-viewer-tab"
+
 [[keys.command]]
 key = "prefix+g"
 type = "plugin_action"
