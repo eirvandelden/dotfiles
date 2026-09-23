@@ -8,6 +8,7 @@ sections:
     - "New code goes in its own git worktree, never the main checkout or a feature branch checked out there."
     - "Re-read the full diff before committing; revert any hunk the task didn't ask for."
     - "Always target origin (fork or own repo) for PRs — never open a PR against upstream without explicit instruction."
+    - "One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it."
   verification:
     - "Verify by running the command, not by assuming it works."
     - "Fix what broke instead of weakening or deleting a test."

@@ -270,3 +270,6 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Workflow: new worktree → fix the CI failure there → push → open a PR (rules 5/6/19
       consent still apply) → rebase the original in-progress work on top of that fix.
     - Applies to personal and work projects both.
+26. Markdown prose:
+    - One line per paragraph, list item, and block quote in markdown prose — the renderer
+      wraps it. Applies even in a file whose existing content is hardwrapped.
