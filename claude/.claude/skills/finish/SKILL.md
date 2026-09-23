@@ -53,8 +53,9 @@ anything another team consumes?"
    `plan.md` alone.
 2. Run `~/.claude/skills/finish/scripts/fill-pr-template <template-path-or-empty>
    <folder>/intent.md <folder>/plan.md`. Show the result to the user.
-3. On confirmation: hold the filled body for §5 — nothing is written yet, since no PR may exist
-   to write it to.
+3. On confirmation: write the filled body to a `mktemp` file outside the repository, and record
+   the PR title — the text after `# Intent:` in `<folder>/intent.md` — for §5. `<folder>` is
+   removed in §4, so both must be captured here, not read again later.
 
 ## 4. Both scopes: remove the change folder
 
@@ -67,17 +68,18 @@ git operation. Commit alone: `Remove change artifacts for <slug>`.
 1. `git push -u origin <branch>`. The consent guard governs which remote this may run against
    unattended; `--force-with-lease` only if this run rebased the branch, never plain `--force`.
 2. `gh pr view --json number,url,isDraft` on this branch:
-   - **Exists**: `gh pr edit --body-file <the filled body>`.
-   - **Missing**: `gh pr create --title "<the title after "# Intent:" in intent.md>" --body-file
-     <the filled body>`. Never `--draft`, in either scope — a personal repo has no board to hide
+   - **Exists**: `gh pr edit --body-file <the mktemp body file from §3>`.
+   - **Missing**: `gh pr create --title "<the title recorded in §3>" --body-file <the mktemp
+     body file from §3>`. Never `--draft`, in either scope — a personal repo has no board to hide
      the PR behind, and at work the team's board status is what governs visibility, not draft
      state.
-3. **Work**: `~/.claude/finish/after-push` exists and is executable: run it with the PR number
+3. Delete the mktemp body file.
+4. **Work**: `~/.claude/finish/after-push` exists and is executable: run it with the PR number
    and URL (contract in §7) — it marks the PR ready and opens it in the work browser profile for
    the manual review-status step. It is absent: `gh pr view --web`, then print "no after-push
    script; open the PR and set the review status by hand."
-4. **Personal**: `gh pr view --web`.
-5. Print what it did and the PR URL. Never comment on the PR (playbook rule 6) — this skill's
+5. **Personal**: `gh pr view --web`.
+6. Print what it did and the PR URL. Never comment on the PR (playbook rule 6) — this skill's
    only writes are the template edit, the ADR commit, the artifact-removal commit, the PR itself,
    and the reviewer list.
 
