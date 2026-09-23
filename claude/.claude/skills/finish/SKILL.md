@@ -77,7 +77,8 @@ git operation. Commit alone: `Remove change artifacts for <slug>`.
 4. **Work**: `~/.claude/finish/after-push` exists and is executable: run it with the PR number
    and URL (contract in §7) — it marks the PR ready and opens it in the work browser profile for
    the manual review-status step. It is absent: `gh pr view --web`, then print "no after-push
-   script; open the PR and set the review status by hand."
+   script; open the PR and set the review status by hand." Non-zero exit: print its stderr and
+   stop; do not request reviewers.
 5. **Personal**: `gh pr view --web`.
 6. Print what it did and the PR URL. Never comment on the PR (playbook rule 6) — this skill's
    only writes are the template edit, the ADR commit, the artifact-removal commit, the PR itself,
