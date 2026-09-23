@@ -28,15 +28,20 @@ alias (symlinks `.env`/`master.key`, wires puma-dev/Caddy) is also available —
 Branch naming: with a known GitHub issue, `<issue-number>-<issue-title-in-kebab-case>` — the same name GitHub's own "Create a branch" button generates. Without one, a kebab-case task slug. No prefix either way.
 
 ```bash
-title=$(gh issue view "$issue_number" --json title -q '.title')
-slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
-branch="${issue_number}-${slug}"
+if [ -n "$issue_number" ]; then
+  title=$(gh issue view "$issue_number" --json title -q '.title')
+  slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+  branch="${issue_number}-${slug}"
+else
+  branch="<kebab-case-task-slug>"
+fi
 ```
 
 Then run:
 
 ```bash
-cd "$(~/.config/git/worktree-tools/worktree-create "$branch")"
+worktree_path=$(~/.config/git/worktree-tools/worktree-create "$branch") || exit 1
+cd "$worktree_path"
 ```
 
 `worktree-create` prunes stale admin files, fetches `origin`'s default branch, sweeps worktrees that are merged, gone, or fast-forwarded into it — leaving anything dirty, with an open PR, or freshly branched with nothing committed yet — then branches the new worktree off `origin/<default>`, not the main checkout's current HEAD. That's deliberately different from the `spin()` shell function (`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout happens to have checked out: a fresh-from-remote base means the task never inherits a stale or dirty main checkout. It refuses if `.worktrees` isn't gitignored (`git check-ignore -q .worktrees` — already true on this machine via `~/.config/git/ignore.global`; on an unfamiliar machine or a fresh clone, add it to `.git/info/exclude` first, local-only) or if the name is empty.
