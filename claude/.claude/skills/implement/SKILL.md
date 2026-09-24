@@ -74,10 +74,13 @@ Send `plan.md` to a fresh Sonnet worker in a herdr pane instead of building here
 1. `plan.md` must be `Status: accepted`; if it is not, or the folder does not exist yet, say
    "run `/plan` first" and stop.
 2. From the repository's main checkout (not a worktree — the worker branches off cleanly from
-   there), passing the change folder's slug as the worktree name so the worker starts already
-   inside it:
+   there), passing the change's branch name as the worktree name so the worker starts already
+   inside it. The `intent` skill already created `.worktrees/<slug>` on that branch, so read the
+   branch off it rather than assuming it matches the slug (a branch named `fix/foo` gives a slug
+   of `foo`):
    ```bash
-   ~/.config/herdr/scripts/hand-off-plan.sh <absolute path to plan.md> <slug>
+   branch=$(git -C .worktrees/<slug> rev-parse --abbrev-ref HEAD 2>/dev/null || echo <slug>)
+   ~/.config/herdr/scripts/hand-off-plan.sh <absolute path to plan.md> "$branch"
    ```
 3. Tell the user which worker took it (the name the script printed) and where its report will
    land. The work is now theirs: do not start on it, and do not check up on it unless asked.
