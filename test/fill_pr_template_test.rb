@@ -45,6 +45,21 @@ class FillPrTemplateTest < Minitest::Test
     - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
   MARKDOWN
 
+  PLAN_WITHOUT_PROOF = <<~MARKDOWN
+    # Plan: Claims status export
+
+    Status: accepted.
+
+    ## Files that change
+
+    `app/models/claim.rb`: adds `#export_status`.
+
+    ## Order of work
+
+    1. Write the acceptance test, watch it fail.
+    2. Add `#export_status`.
+  MARKDOWN
+
   def setup
     @dir = Dir.mktmpdir
   end
@@ -351,11 +366,76 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/test_shows_export_status/, output)
   end
 
+  def test_a_how_to_test_sub_heading_that_gets_absorbed_still_gets_the_proof_appended
+    output = run_fill(<<~MARKDOWN)
+      ## Description
+
+      TODO
+
+      ### How to test
+
+      TODO
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+    assert_match(/## Proof\n\n.*test_shows_export_status/m, output)
+  end
+
+  def test_a_testing_notes_sub_heading_kept_verbatim_by_a_choice_list_sibling_still_gets_the_proof_appended
+    output = run_fill(<<~MARKDOWN)
+      ## Description
+
+      TODO
+
+      ### Type of change
+
+      - [ ] Bug fix
+      - [ ] Feature
+
+      ### Testing notes
+
+      _describe how you tested this_
+
+      ## Why
+
+      TODO
+    MARKDOWN
+
+    assert_match(/### Testing notes\n\n_describe how you tested this_/, output)
+    assert_match(/## Proof\n\n.*test_shows_export_status/m, output)
+  end
+
+  def test_a_second_heading_of_an_already_filled_category_keeps_its_template_text
+    output = run_fill(<<~MARKDOWN)
+      ## Summary
+
+      TODO
+
+      ## Description
+
+      _still the template text_
+    MARKDOWN
+
+    assert_match(/Claims adjusters cannot see export status/, output)
+    assert_match(/## Description\n\n_still the template text_/, output)
+  end
+
+  def test_a_missing_proof_in_the_plan_is_not_appended_as_an_empty_heading
+    output = run_fill(<<~MARKDOWN, plan: PLAN_WITHOUT_PROOF)
+      ## Screenshots
+
+      _attach screenshots here_
+    MARKDOWN
+
+    assert_match(/## Implementation/, output)
+    assert_no_match(/## Proof/, output)
+  end
+
   private
 
-  def run_fill(template)
+  def run_fill(template, plan: PLAN)
     intent_path = write("intent.md", INTENT)
-    plan_path = write("plan.md", PLAN)
+    plan_path = write("plan.md", plan)
     template_path = template.nil? ? "" : write("template.md", template)
 
     stdout, stderr, status = Open3.capture3(SCRIPT, template_path, intent_path, plan_path)

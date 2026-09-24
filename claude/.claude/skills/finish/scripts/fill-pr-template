@@ -80,9 +80,9 @@ def choice_list?(body)
   body.match?(CHOICE_LIST)
 end
 
-def appended_sections(fill, present_categories)
+def appended_sections(fill, filled_categories)
   APPEND_ORDER
-    .reject { |category, _heading| present_categories.include?(category) }
+    .reject { |category, _heading| filled_categories.include?(category) || fill[category].to_s.empty? }
     .map { |category, heading| "## #{heading}\n\n#{fill[category]}" }
     .join("\n\n")
 end
@@ -100,6 +100,7 @@ def fill_template(template, fill)
   categories = sections.map { |section| category_for_section(section) }
 
   rebuilt = []
+  filled_categories = []
   absorbed_until_level = nil
   keep_verbatim_until_level = nil
 
@@ -121,8 +122,9 @@ def fill_template(template, fill)
     end
     absorbed_until_level = nil
 
-    if category
+    if category && !filled_categories.include?(category)
       rebuilt << "#{section[:heading]}\n\n#{fill[category]}\n\n"
+      filled_categories << category
       absorbed_until_level = level
     else
       rebuilt << "#{section[:heading]}#{section[:body]}"
@@ -130,7 +132,7 @@ def fill_template(template, fill)
   end
 
   body = (preamble + rebuilt.join).strip
-  joined(body, appended_sections(fill, categories.compact))
+  joined(body, appended_sections(fill, filled_categories))
 end
 
 template_path, intent_path, plan_path = ARGV
