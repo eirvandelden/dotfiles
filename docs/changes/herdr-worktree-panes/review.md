@@ -212,3 +212,23 @@ per that documented guarantee". That guarantee does not exist (see Bugs), so tha
 - [x] Nit: `plan.md`'s "Files that change" still lists `worktree-pane` with `open <path>` and `close <path>` only. Step 8 records the `label` departure, and spec requirement 8 now names all three commands. — `docs/changes/herdr-worktree-panes/plan.md:21` → fixed (docs(herdr-worktree-panes): list all three worktree-pane commands in plan.md)
 
 Counts: 0 Important, 2 Nit.
+
+## Round 6 — 2026-09-24T12:58Z — 0937ab7f
+
+State at review: `test/worktree_pane_test.rb` (20 runs), `test/worktree_create_test.rb` (24 runs), `test/herdr_worker_scripts_test.rb` (32 runs), `test/skill_parity_test.rb` (6 runs) green locally; `rubocop` on the two scripts and three tests clean; `shellcheck -x -S warning` on `hand-off-plan.sh` clean. No uncommitted changes. The round 5 submodule fix holds for the submodule's own checkout: both new submodule tests pass. The branch is behind `origin/main` (merge base 82141b79, `origin/main` at 2fd908d9).
+
+### Bugs
+
+- [ ] Nit: the submodule fallback still gives the wrong root from a linked worktree of a submodule. There the first `worktree` line is the submodule's git directory, so `repo_root!` falls back to `--show-toplevel`, which returns the linked worktree itself. `worktree-create` then creates a nested `<linked worktree>/.worktrees/<name>` and sweeps nothing. Reproduced in a scratch repo: `parent/child` is a submodule, `git -C parent/child worktree add .worktrees/one -b one origin/main`, then `worktree-create two --no-pane` from inside `.worktrees/one` prints `…/child/.worktrees/one/.worktrees/two` and exits 0. `hand-off-plan.sh`'s `main_checkout` has the same fallback. The `worktree-first` skip rule and the "from the main checkout" rule in `implement` hide this in the normal flow. Either name the limit in both comments, or fall back to the `core.worktree` of the submodule's git directory instead of `--show-toplevel`. — `git/.config/git/worktree-tools/worktree-create:45-58`, `herdr/.config/herdr/scripts/hand-off-plan.sh:33-40` →
+
+### Security
+
+Nothing found. The new calls (`git -C <path> rev-parse --is-inside-work-tree`, `rev-parse --show-toplevel`) use argument arrays in Ruby and quoted arguments in the shell script. The path comes from git's own output.
+
+### Compliance
+
+Acceptance criteria against tests in the diff: same as round 5. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
+
+- [ ] Nit: 0937ab7f unwraps every paragraph in `implement/SKILL.md`. The plan asks for one change there (§5 passes the branch name). The other hunks are formatting only, and rule 21 says to revert hunks the task did not ask for. They also make the rebase harder: `origin/main` changed line 16 of the same file (`claude/.claude/skills/…/change-folder` became `~/.claude/skills/…/change-folder`), and `git merge-tree origin/main HEAD` reports a conflict in `implement/SKILL.md`. It also reports a conflict in `project-dictionary.txt`. Either move the unwrap to its own branch, or keep it and resolve the conflict during the rebase, keeping main's `~/.claude/` path. — `claude/.claude/skills/implement/SKILL.md:11-66` →
+
+Counts: 0 Important, 2 Nit.
