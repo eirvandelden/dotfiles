@@ -5,6 +5,7 @@
 # `agents.md` rule 26 asks agents to avoid. Always exits 0: this hook only ever informs.
 require "json"
 require "open3"
+require "shellwords"
 
 CONFIG_DIR = File.expand_path("~/.config/markdownlint")
 RULE_PATH = File.join(CONFIG_DIR, "no-hardwrap.cjs")
@@ -30,7 +31,7 @@ end
 def tell_claude(file_path, findings)
   lines = findings.map { |finding| "line #{finding['lineNumber']}: #{finding['errorDetail']}" }.join("; ")
   context = "#{file_path} hardwraps markdown (#{lines}). Join each paragraph onto one line, " \
-            "or run: #{FIX_COMMAND} #{file_path}"
+            "or run: #{FIX_COMMAND} #{file_path.shellescape}"
   puts({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: context } }.to_json)
 end
 

@@ -119,6 +119,17 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/error no-hardwrap/, out + err)
   end
 
+  def test_pre_commit_warns_about_a_wrapped_paragraph_in_a_markdown_extension_file
+    skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
+
+    setup_repo("trunk")
+    stub_real_lefthook
+    stage_file("notes.markdown", "This is line one\nand line two.\n")
+    out, err, status = git("commit", "-m", "notes")
+    assert(status.success?, "Expected a wrapped paragraph to warn, not block, the commit")
+    assert_match(/error no-hardwrap/, out + err)
+  end
+
   def test_pre_commit_prints_no_hardwrap_warning_for_one_line_paragraphs
     skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
 

@@ -110,6 +110,7 @@ restow
 ripgrep
 scrolloff
 semble
+shellescape
 shiftwidth
 showmanual
 signcolumn

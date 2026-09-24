@@ -46,7 +46,7 @@ pre-commit:
       run: yamllint {staged_files}
     no-hardwrap:
       tags: markdown linter
-      glob: "*.md"
+      glob: "*.{md,markdown}"
       run: |
         if ! command -v markdownlint >/dev/null 2>&1; then
           echo "no-hardwrap: markdownlint not found on PATH, skipping"

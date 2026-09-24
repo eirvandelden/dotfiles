@@ -188,6 +188,18 @@ class NoHardwrapRuleTest < Minitest::Test
     assert_equal("line one line two#{trailing_spaces}\nline three\n", File.read(file))
   end
 
+  def test_unwrapping_keeps_the_words_of_an_inline_html_comment
+    file = fix("x <!-- one\ntwo three --> y\n")
+
+    assert_equal("x <!-- one two three --> y\n", File.read(file))
+  end
+
+  def test_unwrapping_a_footnote_definition_drops_its_continuation_indentation
+    file = fix("[^1]: note one\n    note two\n")
+
+    assert_equal("[^1]: note one note two\n", File.read(file))
+  end
+
   def test_the_global_config_does_not_report_a_long_paragraph_line
     home = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(home, ".config"))

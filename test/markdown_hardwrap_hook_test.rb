@@ -71,6 +71,17 @@ class MarkdownHardwrapHookTest < Minitest::Test
     end
   end
 
+  def test_the_fix_command_quotes_a_path_with_a_space
+    skip(MISSING_MARKDOWNLINT_MESSAGE) unless MARKDOWNLINT_DIR
+
+    file = write_markdown("my notes.md", "This is line one\nand line two.\n")
+
+    stdout, _stderr, _status = run_hook(file)
+
+    context = JSON.parse(stdout).dig("hookSpecificOutput", "additionalContext")
+    assert_includes(context, "--fix #{file.gsub(' ', '\\ ')}")
+  end
+
   def test_a_non_markdown_file_is_not_checked
     file = write_markdown("notes.rb", "This is line one\nand line two.\n")
 

@@ -6,7 +6,9 @@
 // items and block quotes are covered without separate handling.
 
 const HARD_LINE_ENDING_TYPES = new Set([ "hardBreakEscape", "hardBreakTrailing" ]);
-const NOT_LINE_TEXT_TYPES = new Set([ "lineEnding", "linePrefix", "listItemIndent", "blockQuotePrefix", "whitespace" ]);
+const NOT_LINE_TEXT_TYPES = new Set([
+  "lineEnding", "linePrefix", "listItemIndent", "blockQuotePrefix", "gfmFootnoteDefinitionIndent", "whitespace"
+]);
 
 function collectParagraphs(tokens, found) {
   for (const token of tokens) {
@@ -71,13 +73,19 @@ function textOnLine(textTokens, line, sourceLine) {
   return columns.length > 0 ? sourceLine.slice(Math.min(...columns) - 1) : "";
 }
 
+// A continuation line as written, taken from the paragraph token rather than `params.lines`:
+// markdownlint masks the text of an HTML comment there, and joining that would lose its words.
+function sourceLineOf(paragraph, line) {
+  return paragraph.text.split(/\r?\n/)[line - paragraph.startLine];
+}
+
 // Trailing whitespace inside a run is dropped, but the run's last line keeps its own: two
 // trailing spaces there are the hard line break that ended the run.
-function joinedContinuation(continuationLines, textTokens, params) {
+function joinedContinuation(paragraph, continuationLines, textTokens) {
   const lastLine = continuationLines[continuationLines.length - 1];
   return continuationLines
     .map((line) => {
-      const text = textOnLine(textTokens, line, params.lines[line - 1]);
+      const text = textOnLine(textTokens, line, sourceLineOf(paragraph, line));
       return line === lastLine ? text : text.trimEnd();
     })
     .join(" ");
@@ -99,7 +107,7 @@ function unwrapParagraph(paragraph, params, onError) {
   for (const run of runsIn(paragraph)) {
     const [ firstLine, ...continuationLines ] = run;
     const detail = detailFor(run);
-    const continuationText = joinedContinuation(continuationLines, textTokens, params);
+    const continuationText = joinedContinuation(paragraph, continuationLines, textTokens);
     const firstSource = params.lines[firstLine - 1];
     const firstText = firstSource.trimEnd();
 
