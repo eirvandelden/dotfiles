@@ -150,6 +150,19 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/do not invoke worktree-first/i, handoff_prompt)
   end
 
+  def test_handing_off_with_a_worktree_name_that_already_exists_starts_the_worker_there
+    worktree_creatable!
+    worktree = File.join(@repo, ".worktrees", "some-branch")
+    git("worktree", "add", "--quiet", worktree, "-b", "some-branch", "origin/main")
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, plan_file, "some-branch")
+
+    assert(status.success?, stderr)
+    assert(File.directory?(worktree))
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd #{File.realpath(worktree)} --no-focus")
+  end
+
   def test_handing_off_from_a_worktree_sends_the_worker_to_the_main_checkout
     main_checkout = @repo
     @repo = linked_worktree

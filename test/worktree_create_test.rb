@@ -215,6 +215,20 @@ class WorktreeCreateTest < Minitest::Test
     assert_equal(File.join(File.realpath(@repo), ".worktrees", "feature"), stdout.strip)
   end
 
+  def test_reuses_an_existing_worktree_already_on_the_target_branch
+    add_worktree("feature", from: "origin/main")
+    existing = File.join(@repo, ".worktrees", "feature")
+
+    stdout, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    assert_equal(File.realpath(existing), stdout.strip)
+    assert_match(/reusing existing worktree/, stderr)
+    assert_empty(git_calls.grep(/\Aworktree add /))
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd #{File.realpath(existing)} --no-focus")
+  end
+
   def test_a_worktree_git_refuses_to_remove_prints_gits_error_and_continues
     add_worktree("merged-branch", from: "origin/main")
     merged = File.join(@repo, ".worktrees", "merged-branch")

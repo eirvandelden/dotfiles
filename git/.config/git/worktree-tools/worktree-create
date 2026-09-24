@@ -143,11 +143,26 @@ module WorktreeTools
     end
 
     def create_worktree(name, default_branch)
+      path = File.expand_path(".worktrees/#{name}")
+      return reuse_worktree(path) if worktree_on_branch?(path, name)
+
       _output, error, status = Open3.capture3("git", "worktree", "add", ".worktrees/#{name}", "-b", name,
                                                "origin/#{default_branch}")
       die("worktree-create: git worktree add failed: #{error.strip}") unless status.success?
 
-      File.expand_path(".worktrees/#{name}")
+      path
+    end
+
+    def worktree_on_branch?(path, name)
+      return false unless File.directory?(path)
+
+      output, status = git("-C", path, "rev-parse", "--abbrev-ref", "HEAD")
+      status.success? && output.strip == name
+    end
+
+    def reuse_worktree(path)
+      warn("worktree-create: reusing existing worktree")
+      path
     end
 
     def run_worktree_init(path)

@@ -40,6 +40,11 @@ Facts that shape the plan (verified 2026-09-23):
    --git-common-dir` instead of `--show-toplevel`, so running `worktree-create` from inside a
    linked worktree still creates and sweeps under the main checkout's `.worktrees/`, not a nested
    one.
+   Round 3 review decision: when `.worktrees/<name>` is already a registered worktree on branch
+   `<name>` (the `intent` skill creates it before `implement handoff` runs), skip the sweep and
+   the `git worktree add` for that one, print its existing path, and warn once on stderr that it
+   is being reused — the normal handoff flow otherwise dies on "a branch named '<name>' already
+   exists". A path on another branch, or a branch without a worktree, keeps the old failure.
 7. **RED** `test/herdr_worker_scripts_test.rb`: `run_script(HAND_OFF_PLAN, plan_file, "some-branch")` records a `pane split … --cwd <repo>/.worktrees/some-branch --no-focus` call and a prompt that says the worker is already in its worktree and must not run `worktree-first`; without the second argument the existing assertions hold unchanged (they already exist). Stub `worktree-create` on `PATH`? No — the script calls it by absolute installed path; in the test, point `WORKTREE_TOOLS_DIR` (new env var read by the script, default `~/.config/git/worktree-tools`) at the repo's `git/.config/git/worktree-tools/`.
 8. **GREEN** `hand-off-plan.sh`: `name="${2:-}"`; when set, `worktree=$("${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}/worktree-create" "$name")`, split with `--cwd "$worktree"`, rename the pane `<repo>/<name>`, and use the "already in your worktree" prompt variant; otherwise the current path. `set -euo pipefail` stays; a failing `worktree-create` aborts before any pane is split.
    Review round 1 departure (spec requirement 8 wins): `worktree-pane` gained a third command,

@@ -17,7 +17,7 @@ From `intent.md` (2026-09-23). Status: accepted (2026-09-23).
 6. The `implement` skill's `handoff` mode passes the change's branch name as that second argument.
 7. `start-review.sh` keeps splitting with `--cwd "$PWD"`; no change beyond confirming it.
 8. All herdr interaction lives in one script, `git/.config/git/worktree-tools/worktree-pane`, with two commands: `open <worktree-path>` and `close <worktree-path>`. `worktree-first`, the new `worktree-create` script and `hand-off-plan.sh` call it; nothing else calls `herdr pane` for worktrees.
-9. The sweep-and-create logic becomes `git/.config/git/worktree-tools/worktree-create <name>`: prunes, fetches the default branch, sweeps merged worktrees (calling `worktree-pane close` for each, then `worktree-remove`), creates `.worktrees/<name>` off `origin/<default>`, calls `worktree-pane open`, prints the worktree path. `worktree-first` Step 1 becomes "run `worktree-create <name>`" plus the skip conditions it has today.
+9. The sweep-and-create logic becomes `git/.config/git/worktree-tools/worktree-create <name>`: prunes, fetches the default branch, sweeps merged worktrees (calling `worktree-pane close` for each, then `worktree-remove`), creates `.worktrees/<name>` off `origin/<default>`, calls `worktree-pane open`, prints the worktree path. `worktree-first` Step 1 becomes "run `worktree-create <name>`" plus the skip conditions it has today. When `.worktrees/<name>` is already a registered worktree whose branch is `<name>` (the `intent` skill creates it before handoff time), `worktree-create` does not sweep it and does not run `git worktree add` again: it prints the existing path, still calls `worktree-pane open`, exits 0, and prints one stderr line naming the reuse. A path on another branch, or a branch that exists without a worktree, keeps today's failure.
 10. `claude/.claude/WORKTREES.md` states the pane behaviour in one sentence; the skill and its Codex link stay one file.
 
 ## Design decisions
@@ -51,7 +51,7 @@ From `intent.md` (2026-09-23). Status: accepted (2026-09-23).
 - `hand-off-plan.sh <plan> <name>` creates `.worktrees/<name>`, starts the worker in a pane whose working directory is that worktree, and the prompt it sends says the worker is already in its worktree.
 - `hand-off-plan.sh <plan>` without a name behaves exactly as before: worker pane in the main checkout, prompt tells the worker to invoke `worktree-first`.
 - `implement handoff` calls `hand-off-plan.sh` with the change's branch name.
-- `worktree-first` run twice for the same name inside herdr opens one pane, not two.
+- `worktree-first` run twice for the same name inside herdr opens one pane, not two: the second `worktree-create` reuses the existing worktree instead of failing, and `worktree-pane open` reuses the existing pane.
 - `WORKTREES.md` mentions the pane in one sentence.
 
 ---
