@@ -154,6 +154,16 @@ class WorktreePaneTest < Minitest::Test
     assert_equal(1, stderr.lines.count, stderr)
   end
 
+  def test_open_outside_any_git_repository_prints_one_line_and_exits_one
+    outside = Dir.mktmpdir
+    @extra_dirs << outside
+
+    _, stderr, status = run_script("open", outside)
+
+    assert_equal(1, status.exitstatus)
+    assert_equal(1, stderr.lines.count, stderr)
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end

@@ -22,10 +22,13 @@ module WorktreeTools
       return unless herdr_env?
       die(USAGE) if path.to_s.empty? || (command == "label" && pane_id.to_s.empty?)
 
+      target = realpath!(path)
+      die("worktree-pane: not inside a git repository: #{target}") unless git_common_dir(target)
+
       case command
-      when "open" then open(realpath!(path))
-      when "close" then close(realpath!(path))
-      when "label" then label(realpath!(path), pane_id)
+      when "open" then open(target)
+      when "close" then close(target)
+      when "label" then label(target, pane_id)
       else die(USAGE)
       end
     end
