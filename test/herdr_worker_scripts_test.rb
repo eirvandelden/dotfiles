@@ -174,6 +174,17 @@ class HerdrWorkerScriptsTest < Minitest::Test
                     "--cwd #{File.realpath(main_checkout)} --no-focus")
   end
 
+  def test_handing_off_from_a_submodule_sends_the_worker_to_the_submodule_checkout
+    submodule = add_submodule("child")
+    @repo = submodule
+
+    run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down " \
+                    "--cwd #{File.realpath(submodule)} --no-focus")
+  end
+
   def test_handing_off_outside_a_repository_is_refused_before_a_tab_is_opened
     @repo = Dir.mktmpdir
     @extra_dirs << @repo
@@ -325,6 +336,29 @@ class HerdrWorkerScriptsTest < Minitest::Test
     @extra_dirs << File.dirname(worktree)
     git("worktree", "add", "--quiet", worktree, "-b", "handed-over")
     worktree
+  end
+
+  def add_submodule(name)
+    child_origin = Dir.mktmpdir
+    @extra_dirs << child_origin
+    system("git", "init", "--quiet", "--bare", "--initial-branch=main", child_origin) ||
+      raise("git init --bare failed")
+
+    child_seed = Dir.mktmpdir
+    @extra_dirs << child_seed
+    system("git", "clone", "--quiet", child_origin, child_seed) || raise("git clone failed")
+    system("git", "-C", child_seed, "-c", "core.hooksPath=/dev/null",
+           "-c", "user.email=test@example.com", "-c", "user.name=Test",
+           "commit", "--quiet", "--allow-empty", "-m", "child initial") || raise("git commit failed")
+    system("git", "-C", child_seed, "push", "--quiet", "origin", "main") || raise("git push failed")
+
+    git("-c", "protocol.file.allow=always", "submodule", "add", "--quiet", child_origin, name)
+    git("commit", "--quiet", "-m", "add #{name} submodule")
+
+    submodule = File.join(@repo, name)
+    git_dir, = Open3.capture2("git", "-C", submodule, "rev-parse", "--absolute-git-dir")
+    File.write(File.join(git_dir.strip, "info", "exclude"), ".worktrees\n")
+    submodule
   end
 
   def repo_on(branch, inside: nil)

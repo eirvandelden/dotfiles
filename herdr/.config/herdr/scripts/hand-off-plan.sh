@@ -30,10 +30,14 @@ fi
 
 common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir)
 
-# git worktree list documents its first "worktree <path>" line as the main working tree, from
-# any linked worktree and inside a submodule alike — unlike the common git dir's parent, which
-# inside a submodule is the parent repository's .git/modules entry, not its checkout.
+# git worktree list's first "worktree <path>" line is the main working tree, except inside a
+# submodule, where git prints the submodule's git directory there instead (reproduced with git
+# 2.54.0). Fall back to --show-toplevel of the current directory when that line is not a working
+# tree.
 main_checkout=$(git worktree list --porcelain | awk '/^worktree /{print substr($0,10); exit}')
+if [ "$(git -C "$main_checkout" rev-parse --is-inside-work-tree 2>/dev/null)" != "true" ]; then
+  main_checkout=$(git rev-parse --show-toplevel)
+fi
 
 # Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
 # pane. A file in the shared git directory can be: it never shows up in the tree, and it outlives

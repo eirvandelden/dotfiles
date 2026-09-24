@@ -215,6 +215,15 @@ class WorktreeCreateTest < Minitest::Test
     assert_equal(File.join(File.realpath(@repo), ".worktrees", "feature"), stdout.strip)
   end
 
+  def test_creates_the_worktree_inside_a_submodule_checkout_not_its_git_directory
+    submodule = add_submodule("child")
+
+    stdout, stderr, status = run_script("feature", chdir: submodule, extra_args: [ "--no-pane" ])
+
+    assert(status.success?, stderr)
+    assert_equal(File.join(File.realpath(submodule), ".worktrees", "feature"), stdout.strip)
+  end
+
   def test_reuses_an_existing_worktree_already_on_the_target_branch
     add_worktree("feature", from: "origin/main")
     existing = File.join(@repo, ".worktrees", "feature")
@@ -302,6 +311,25 @@ class WorktreeCreateTest < Minitest::Test
 
   def add_worktree(name, from:, branch: name)
     git(@repo, "worktree", "add", "--quiet", File.join(".worktrees", name), "-b", branch, from)
+  end
+
+  def add_submodule(name)
+    child_origin = File.join(@enclosing, "#{name}.git")
+    FileUtils.mkdir_p(child_origin)
+    hookless_git(child_origin, "init", "--quiet", "--bare", "--initial-branch=main")
+
+    child_seed = File.join(@enclosing, "#{name}-seed")
+    hookless_git(@enclosing, "clone", "--quiet", child_origin, child_seed)
+    commit(child_seed, "#{name} initial")
+    hookless_git(child_seed, "push", "--quiet", "origin", "main")
+
+    git(@repo, "-c", "protocol.file.allow=always", "submodule", "add", "--quiet", child_origin, name)
+    commit(@repo, "add #{name} submodule")
+
+    submodule = File.join(@repo, name)
+    submodule_git_dir = git(submodule, "rev-parse", "--absolute-git-dir").strip
+    File.write(File.join(submodule_git_dir, "info", "exclude"), ".worktrees\n")
+    submodule
   end
 
   def branch?(repo, name)
