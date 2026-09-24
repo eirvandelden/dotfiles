@@ -13,13 +13,13 @@ From `intent.md` (2026-09-23). Status: accepted.
 
 1. **Rule in the playbook.** `agents.md` §7 states: markdown prose is one line per paragraph, list item and block quote; the renderer does the wrapping. Because `agents.md` is the playbook for both Claude and Codex, the rule applies in every repository.
 2. **Rule survives compaction.** `claude/.claude/core-values.yml` carries the same rule, so Claude gets it again on every session start and prompt.
-3. **Memory retired.** The Claude memory file `no-hardwrap-markdown.md` and its `MEMORY.md` line are removed, since the playbook now holds the rule.
+3. **Memory retired.** Every Claude memory file for the dotfiles project that holds this rule (first `no-hardwrap-markdown.md`, later also `feedback-no-markdown-hardwrap.md`) and its `MEMORY.md` line are removed, since the playbook now holds the rule.
 4. **Global markdownlint config.** A global markdownlint config turns off MD013 (line length). A long paragraph line is no longer reported. A repository's own markdownlint config still takes precedence.
 5. **Hardwrap rule.** A custom markdownlint rule, `no-hardwrap`, reports each paragraph, list item or block quote whose text runs over more than one line. It reports the first line of that block.
    - It does not report: code blocks, tables, headings, HTML blocks, front matter, or a line that ends in a hard line break (two trailing spaces or a backslash).
    - It offers a fix that joins the block's lines into one, with a single space between them and the list or quote indentation removed.
-6. **Commit warning.** The shared `lefthook.yml` runs the `no-hardwrap` rule on staged `.md` files at pre-commit. It prints each finding as `file:line`. The commit always goes through. If markdownlint is not installed, the check prints that and passes.
-7. **Edit warning in Claude.** After Claude writes or edits a `.md` file, a Claude Code hook runs the `no-hardwrap` rule on that file. If it finds anything, Claude is told which lines and how to fix them. Edits to other files are not checked. The edit itself is never undone.
+6. **Commit warning.** The shared `lefthook.yml` runs the `no-hardwrap` rule on staged `.md` and `.markdown` files at pre-commit. It prints each finding as `file:line`. The commit always goes through. If markdownlint is not installed, or the `markdownlint` package is not stowed, the check prints that and passes.
+7. **Edit warning in Claude.** After Claude writes or edits a `.md` or `.markdown` file (any case), a Claude Code hook runs the `no-hardwrap` rule on that file. If it finds anything, Claude is told which lines and how to fix them. Edits to other files are not checked. The edit itself is never undone.
 8. **Existing markdown unwrapped (separate pull request).** Every tracked `.md` file in the dotfiles repository that the dotfiles repository owns is unwrapped with the rule's fix. Vendored or third-party markdown is left alone. After this, `no-hardwrap` reports nothing on those files.
 
 ## Design decisions
@@ -48,7 +48,7 @@ From `intent.md` (2026-09-23). Status: accepted.
 
 1. The playbook tells every agent to write markdown prose as one line per paragraph, list item and block quote.
 2. A Claude session's reinjected core values include the one-line-per-paragraph rule.
-3. The dotfiles project memory no longer contains a `no-hardwrap-markdown` entry.
+3. The dotfiles project memory no longer contains a file or `MEMORY.md` line about hardwrapping.
 4. Linting a markdown file with a 300-character paragraph line and no project config reports no line-length error.
 5. A paragraph spread over three lines is reported once, at its first line.
 6. A list item whose text continues on an indented second line is reported.
@@ -57,9 +57,9 @@ From `intent.md` (2026-09-23). Status: accepted.
 9. Two lines joined by a hard line break (two trailing spaces, or a trailing backslash) are not reported.
 10. Fixing a three-line paragraph leaves one line with the words joined by single spaces.
 11. Fixing a wrapped list item leaves one bullet line, with the continuation indentation removed.
-12. Committing a staged `.md` file with a wrapped paragraph prints the file and line, and the commit succeeds.
-13. Committing a staged `.md` file with no wrapped paragraphs prints no warning.
-14. Committing when markdownlint is not installed prints that the check was skipped, and the commit succeeds.
+12. Committing a staged `.md` or `.markdown` file with a wrapped paragraph prints the file and line, and the commit succeeds.
+13. Committing a staged `.md` or `.markdown` file with no wrapped paragraphs prints no warning.
+14. Committing when markdownlint is not installed, or the `markdownlint` package is not stowed, prints that the check was skipped, and the commit succeeds.
 15. After Claude writes a `.md` file with a wrapped paragraph, Claude is told the file, the line, and how to unwrap it.
 16. After Claude writes a `.md` file without wrapped paragraphs, or any non-markdown file, Claude is told nothing.
 17. After the unwrap pull request, running `no-hardwrap` over every dotfiles-owned `.md` file reports nothing.
