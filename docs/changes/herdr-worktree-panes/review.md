@@ -178,3 +178,37 @@ deleted.
 - [x] Nit: `worktree-pane <unknown-command> <path>` now runs `realpath!` and the git check before it reaches `else die(USAGE)`. A typo'd command on a path outside a repository reports "not inside a git repository" instead of the usage line. — `git/.config/git/worktree-tools/worktree-pane:25` → fixed (fix(worktree-pane): reject an unknown command before touching the path)
 
 Counts: 1 Important, 5 Nit.
+
+## Round 5 — 2026-09-24T12:37Z — bb7eff75
+
+State at review: `test/worktree_pane_test.rb` (20 runs), `test/worktree_create_test.rb` (23 runs),
+`test/herdr_worker_scripts_test.rb` (31 runs), `test/skill_parity_test.rb` (6 runs) green
+locally; `rubocop` on the two scripts and three tests clean; `shellcheck -x -S warning` on
+`hand-off-plan.sh` clean. No uncommitted changes. All round 4 fixes hold except the submodule
+Nit below.
+
+### Bugs
+
+- [ ] Nit: the round 4 submodule fix does not work, and the new comments state a false fact. Inside a submodule, `git worktree list --porcelain` prints the submodule's git directory as its first `worktree` line, not its checkout. Reproduced with git 2.54.0: in `parent/child` (a submodule), the first line is `worktree …/parent/.git/modules/child`, while `git rev-parse --show-toplevel` gives `…/parent/child`. The same is true from a linked worktree of that submodule. So `repo_root!` still changes into `.git/modules/child` and stops with "`.worktrees` is not gitignored", and `hand-off-plan.sh` still gets the wrong `main_checkout`. The behaviour is the same as before round 4, but both comments now say git documents the opposite. Either drop the submodule claim from both comments and accept the limit, or handle it: when the first path is not a working tree (for example `git -C <path> rev-parse --is-inside-work-tree` fails), fall back to `--show-toplevel`. — `git/.config/git/worktree-tools/worktree-create:41-52`, `herdr/.config/herdr/scripts/hand-off-plan.sh:33-36` →
+
+### Security
+
+Nothing found. `git worktree list --porcelain` output is used only as a path argument or a
+`cd` target. The sweep skip compares strings and runs nothing new.
+
+### Compliance
+
+Acceptance criteria against tests in the diff: same as round 4. The one gap round 4 named is now
+covered:
+
+| Criterion | Test |
+| --- | --- |
+| Twice for the same name opens one pane (a reused worktree is not swept) | `worktree_create_test` `test_a_reused_worktree_is_not_swept_even_when_origin_moved_on`, `test_reuses_an_existing_worktree_already_on_the_target_branch`; `worktree_pane_test` `test_open_reuses_an_existing_pane_rooted_in_the_worktree` |
+
+Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or
+deleted. The round 4 closing note for the submodule Nit says "a submodule test is not required,
+per that documented guarantee". That guarantee does not exist (see Bugs), so that note is wrong.
+
+- [ ] Nit: `plan.md`'s "Files that change" still lists `worktree-pane` with `open <path>` and `close <path>` only. Step 8 records the `label` departure, and spec requirement 8 now names all three commands. — `docs/changes/herdr-worktree-panes/plan.md:21` →
+
+Counts: 0 Important, 2 Nit.
