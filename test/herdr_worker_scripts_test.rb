@@ -185,6 +185,20 @@ class HerdrWorkerScriptsTest < Minitest::Test
                     "--cwd #{File.realpath(submodule)} --no-focus")
   end
 
+  def test_handing_off_from_a_linked_worktree_of_a_submodule_sends_the_worker_to_its_checkout
+    submodule = add_submodule("child")
+    linked = File.join(submodule, ".worktrees", "one")
+    system("git", "-C", submodule, "worktree", "add", "--quiet", File.join(".worktrees", "one"), "-b", "one",
+           "origin/main") || raise("git worktree add failed")
+    @repo = linked
+
+    run_script(HAND_OFF_PLAN, plan_file)
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down " \
+                    "--cwd #{File.realpath(submodule)} --no-focus")
+  end
+
   def test_handing_off_outside_a_repository_is_refused_before_a_tab_is_opened
     @repo = Dir.mktmpdir
     @extra_dirs << @repo

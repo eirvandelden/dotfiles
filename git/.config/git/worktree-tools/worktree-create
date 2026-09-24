@@ -40,8 +40,9 @@ module WorktreeTools
 
     # git worktree list's first "worktree <path>" line is the main working tree, except inside
     # a submodule, where git prints the submodule's git directory there instead (reproduced with
-    # git 2.54.0). Fall back to --show-toplevel of the current directory when that line is not a
-    # working tree.
+    # git 2.54.0) — from the submodule's own checkout and from any linked worktree of it alike.
+    # That git directory's core.worktree points back at the submodule checkout, resolved
+    # relative to the git directory itself, so it works from both.
     def repo_root!
       output, status = git("worktree", "list", "--porcelain")
       die("worktree-create: not inside a git repository") unless status.success?
@@ -52,15 +53,29 @@ module WorktreeTools
       candidate = first_line.delete_prefix("worktree ").strip
       return candidate if working_tree?(candidate)
 
-      toplevel, status = git("rev-parse", "--show-toplevel")
-      die("worktree-create: not inside a git repository") unless status.success?
-
-      toplevel.strip
+      submodule_checkout(candidate) || toplevel!
     end
 
     def working_tree?(path)
       output, status = git("-C", path, "rev-parse", "--is-inside-work-tree")
       status.success? && output.strip == "true"
+    end
+
+    def submodule_checkout(git_dir)
+      output, status = git("-C", git_dir, "config", "--get", "core.worktree")
+      return nil unless status.success?
+
+      worktree = output.strip
+      return nil if worktree.empty?
+
+      File.expand_path(worktree, git_dir)
+    end
+
+    def toplevel!
+      toplevel, status = git("rev-parse", "--show-toplevel")
+      die("worktree-create: not inside a git repository") unless status.success?
+
+      toplevel.strip
     end
 
     def worktrees_ignored?

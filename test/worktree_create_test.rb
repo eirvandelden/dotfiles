@@ -224,6 +224,17 @@ class WorktreeCreateTest < Minitest::Test
     assert_equal(File.join(File.realpath(submodule), ".worktrees", "feature"), stdout.strip)
   end
 
+  def test_creates_the_worktree_inside_a_submodules_checkout_even_from_one_of_its_own_linked_worktrees
+    submodule = add_submodule("child")
+    linked = File.join(submodule, ".worktrees", "one")
+    git(submodule, "worktree", "add", "--quiet", File.join(".worktrees", "one"), "-b", "one", "origin/main")
+
+    stdout, stderr, status = run_script("feature", chdir: linked, extra_args: [ "--no-pane" ])
+
+    assert(status.success?, stderr)
+    assert_equal(File.join(File.realpath(submodule), ".worktrees", "feature"), stdout.strip)
+  end
+
   def test_reuses_an_existing_worktree_already_on_the_target_branch
     add_worktree("feature", from: "origin/main")
     existing = File.join(@repo, ".worktrees", "feature")
