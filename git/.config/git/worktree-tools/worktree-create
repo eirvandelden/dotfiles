@@ -1,5 +1,6 @@
-#!/usr/bin/env rv run ruby
+#!/usr/bin/env ruby
 # Sweep merged/gone worktrees, then create a fresh one off origin's default branch.
+# Plain ruby, not rv: CI has no rv, and hand-off-plan.sh invokes this script directly.
 $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 
 require "common"

@@ -56,7 +56,7 @@ Facts that shape the plan (verified 2026-09-23):
 
 ## Risks
 
-- **`rv run ruby` shebang in CI.** CI runners have no `rv`. The tests run the scripts as `ruby <script>`, as `remove_test.rb` does, so the shebang is not exercised in CI; on the machine `rv` exists. Same situation as `review-report-fresh` today. Accepted.
+- **`rv run ruby` shebang in CI.** Round 3 review: `hand-off-plan.sh` invokes `worktree-create` directly by path (not via `ruby <script>`), so its shebang is exercised for real, and CI has no `rv`. `worktree-pane` and `worktree-create` both use `#!/usr/bin/env ruby` instead — they need only the standard library. `worktree-remove` and `worktree-setup` keep `rv run ruby`; only `remove_test.rb`/`worktree-init` load `lib/` in a way `rv` resolves, and CI never runs them directly.
 - **Behaviour change in the sweep.** Moving Step 1 from prose to a script changes nothing intended, but the prose had subtle rules (fresh-worktree skip, `-D` only after `MERGED`). Each rule gets its own test case in step 5; the script is a port, not a redesign.
 - **Two agents creating worktrees at once.** `worktree-create` sweeps like the skill did; the fresh-worktree rule protects a concurrent brand-new worktree. Unchanged risk.
 - **Pane lookup by `cwd`.** A pane whose shell has `cd`'d elsewhere is not found at sweep time and stays open. Accepted: the label still names it; a later sweep finds nothing and exits 0.

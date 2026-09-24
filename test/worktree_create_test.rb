@@ -229,6 +229,10 @@ class WorktreeCreateTest < Minitest::Test
                     "pane split --current --direction down --cwd #{File.realpath(existing)} --no-focus")
   end
 
+  def test_the_shebang_does_not_depend_on_rv_being_on_path
+    assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
+  end
+
   def test_a_worktree_git_refuses_to_remove_prints_gits_error_and_continues
     add_worktree("merged-branch", from: "origin/main")
     merged = File.join(@repo, ".worktrees", "merged-branch")
