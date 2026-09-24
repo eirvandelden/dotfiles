@@ -229,6 +229,22 @@ class WorktreeCreateTest < Minitest::Test
                     "pane split --current --direction down --cwd #{File.realpath(existing)} --no-focus")
   end
 
+  def test_a_reused_worktree_is_not_swept_even_when_origin_moved_on
+    add_worktree("foo", from: "origin/main")
+    foo = File.join(@repo, ".worktrees", "foo")
+    original_head = git(foo, "rev-parse", "HEAD").strip
+    advance_origin_main
+
+    stdout, stderr, status = run_script("foo", extra_args: [ "--no-pane" ])
+
+    assert(status.success?, stderr)
+    assert_match(/reusing existing worktree/, stderr)
+    assert_equal(File.realpath(foo), stdout.strip)
+    assert_equal(original_head, git(foo, "rev-parse", "HEAD").strip)
+    assert_empty(git_calls.grep(/\Aworktree remove /))
+    assert_empty(herdr_calls.grep(/\Apane close /))
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end

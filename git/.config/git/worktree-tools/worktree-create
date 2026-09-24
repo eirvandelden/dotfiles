@@ -29,7 +29,7 @@ module WorktreeTools
 
       default_branch = default_branch!
       fetch(default_branch)
-      sweep(default_branch)
+      sweep(name, default_branch)
       path = create_worktree(name, default_branch)
       run_worktree_init(path)
       open_pane(path) unless no_pane
@@ -70,8 +70,12 @@ module WorktreeTools
       git("fetch", "origin", branch)
     end
 
-    def sweep(default_branch)
-      Dir.glob(".worktrees/*/").each { |dir| sweep_one(dir.chomp("/"), default_branch) }
+    def sweep(name, default_branch)
+      reused = ".worktrees/#{name}"
+      Dir.glob(".worktrees/*/").each do |dir|
+        trimmed = dir.chomp("/")
+        sweep_one(trimmed, default_branch) unless trimmed == reused
+      end
     end
 
     def sweep_one(dir, default_branch)
