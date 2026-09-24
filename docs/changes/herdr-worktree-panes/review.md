@@ -138,3 +138,43 @@ No existing test was weakened, skipped or deleted.
 - [x] Nit: `worktree-pane open|label` on an existing path outside any git repository raises `NoMethodError` (`git_common_dir` returns nil, then `.dirname`) instead of one line and exit 1, as the missing-path case now does. — `git/.config/git/worktree-tools/worktree-pane:105` → fixed (1d5617d7)
 
 Counts: 3 Important, 3 Nit.
+
+## Round 4 — 2026-09-24T09:58Z — d37234ef
+
+State at review: `test/worktree_pane_test.rb` (19 runs), `test/worktree_create_test.rb` (22 runs),
+`test/herdr_worker_scripts_test.rb` (31 runs) green locally; `rubocop` on the two scripts and
+three tests clean; `shellcheck -x -S warning` on `hand-off-plan.sh` clean. No uncommitted
+changes. No PR yet, so CI has not run on this branch. Both scripts also parse under macOS's
+`/usr/bin/ruby` 2.6, so the plain `ruby` shebang does not depend on which Ruby is first on
+`PATH`. All round 3 fixes hold except the one below the first Nit.
+
+### Bugs
+
+- [ ] Important: the sweep still removes the worktree that `worktree-create <name>` is about to reuse. `sweep` runs before `create_worktree` and does not skip `.worktrees/<name>`. Spec requirement 9 says a reused worktree is not swept. When that worktree is clean, has nothing committed, and `origin/main` has moved since it was made, `fresh?` is false and `ancestor?` is true. The sweep then closes its pane, runs `worktree-remove`, removes it and deletes the branch. After that, `create_worktree` makes a new worktree off the new `origin/main`, and the "reusing existing worktree" line is not printed. Any ignored files in the old worktree are gone: installed dependencies, `worktree-init` symlinks, local notes. Reproduced in a scratch repo: `git worktree add .worktrees/foo -b foo origin/main`, a second clone pushes one commit to `main`, `gh` is stubbed to fail, then `worktree-create foo --no-pane` exits 0. `.worktrees/foo` now sits on the new `origin/main` commit, and stderr has no reuse line. The reuse test passes only because its worktree is still at `origin/main`, where `fresh?` keeps it. Fix: exclude `.worktrees/<name>` from the sweep. Add a test where `origin/main` moves before the second call. — `git/.config/git/worktree-tools/worktree-create:32`, `test/worktree_create_test.rb:218`
+
+### Security
+
+Nothing found. The new calls (`rev-parse --git-common-dir`, `git -C <path> rev-parse`) use
+argument arrays as before. The branch name reaches `git` only as a single argument.
+
+### Compliance
+
+Acceptance criteria against tests in the diff: unchanged from round 3. The round 3 gaps are now
+covered:
+
+| Criterion | Test |
+| --- | --- |
+| `hand-off-plan.sh <plan> <name>` creates the worktree, worker rooted there, "already in worktree" prompt | `herdr_worker_scripts_test` `test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree`, `test_handing_off_with_a_worktree_name_that_already_exists_starts_the_worker_there` |
+| `implement handoff` passes the branch name | prose, `implement/SKILL.md:81-83` (see first Nit) |
+| Twice for the same name opens one pane | `worktree_create_test` `test_reuses_an_existing_worktree_already_on_the_target_branch`, `worktree_pane_test` `test_open_reuses_an_existing_pane_rooted_in_the_worktree` (the "not swept" half is untested; see Bugs) |
+
+Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or
+deleted.
+
+- [ ] Nit: the `implement/SKILL.md` handoff text says that reading the branch off `.worktrees/<slug>` handles a branch like `fix/foo`, but that case still fails. `worktree-create fix/foo` looks for `.worktrees/fix/foo`. The worktree lives at `.worktrees/foo`, so `worktree_on_branch?` is false, and `git worktree add -b fix/foo` stops with `fatal: a branch named 'fix/foo' already exists` (exit 1, reproduced). The `intent` naming rule ("no prefix") means the normal flow never hits this. Either drop the `fix/foo` sentence and the `rev-parse` line, or let `worktree-create` find an existing worktree by branch, not by path. The round 3 Nit this change fixed is therefore not really fixed. — `claude/.claude/skills/implement/SKILL.md:77-83`
+- [ ] Nit: `spec.md` is out of date in three places. The "Language" decision still names the `#!/usr/bin/env rv run ruby` shebang and tests under `git/.config/git/worktree-tools/test/`; the code uses `#!/usr/bin/env ruby`, and the tests are in `test/`. Requirement 4 still keys on "`agent_status` is not a running agent"; the "Running agents" decision replaced that with the `agent` field. Requirement 8 lists two commands and does not include `label`. — `docs/changes/herdr-worktree-panes/spec.md:14,17,29`
+- [ ] Nit: `plan.md` step 9 still says "`<branch>` is the change folder's slug", and step 4 still names `agent_status` values. Both contradict the code after rounds 2 and 3. — `docs/changes/herdr-worktree-panes/plan.md`
+- [ ] Nit: `repo_root!` (and `hand-off-plan.sh`'s `main_checkout`) takes the parent of `--git-common-dir`. Inside a submodule that parent is the parent repository's `.git/modules`, not the checkout. There `worktree-create` then stops with the misleading "`.worktrees` is not gitignored". Before round 3, `--show-toplevel` handled submodules. — `git/.config/git/worktree-tools/worktree-create:41`
+- [ ] Nit: `worktree-pane <unknown-command> <path>` now runs `realpath!` and the git check before it reaches `else die(USAGE)`. A typo'd command on a path outside a repository reports "not inside a git repository" instead of the usage line. — `git/.config/git/worktree-tools/worktree-pane:25`
+
+Counts: 1 Important, 5 Nit.
