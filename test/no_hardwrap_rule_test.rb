@@ -194,6 +194,13 @@ class NoHardwrapRuleTest < Minitest::Test
     assert_equal("x <!-- one two three --> y\n", File.read(file))
   end
 
+  def test_unwrapping_trims_trailing_spaces_inside_an_inline_html_comment
+    trailing_spaces = " " * 2
+    file = fix("x <!-- a#{trailing_spaces}\nb --> y\n")
+
+    assert_equal("x <!-- a b --> y\n", File.read(file))
+  end
+
   def test_unwrapping_a_footnote_definition_drops_its_continuation_indentation
     file = fix("[^1]: note one\n    note two\n")
 
