@@ -29,7 +29,7 @@ You review. You do not fix.
    - [ ] Nit: <finding> — `<file>:<line>` →
    ```
 
-   The `→` slot is left empty for whoever closes the finding later (`fixed (<sha>)` or
+   The `→` slot is left empty for whoever closes the finding later (`fixed (<commit subject>)` or
    `dismissed: <reason>`) — never fill it in yourself.
 7. Commit `<folder>/review.md` alone, message `Review round <n> for <slug>`. Stage and commit
    nothing else, ever — not a fix, not a formatting change, not an unrelated file.
