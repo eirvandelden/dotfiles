@@ -38,11 +38,17 @@ module WorktreeTools
 
     private
 
+    # git worktree list documents its first "worktree <path>" line as the main working tree,
+    # from any linked worktree and inside a submodule alike — unlike --git-common-dir, whose
+    # parent is the submodule's .git/modules entry rather than its checkout.
     def repo_root!
-      output, status = git("rev-parse", "--path-format=absolute", "--git-common-dir")
+      output, status = git("worktree", "list", "--porcelain")
       die("worktree-create: not inside a git repository") unless status.success?
 
-      File.dirname(output.strip)
+      first_line = output.lines.find { |line| line.start_with?("worktree ") }
+      die("worktree-create: not inside a git repository") unless first_line
+
+      first_line.delete_prefix("worktree ").strip
     end
 
     def worktrees_ignored?

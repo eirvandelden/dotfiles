@@ -29,7 +29,11 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir)
-main_checkout=$(dirname "$common_git_dir")
+
+# git worktree list documents its first "worktree <path>" line as the main working tree, from
+# any linked worktree and inside a submodule alike — unlike the common git dir's parent, which
+# inside a submodule is the parent repository's .git/modules entry, not its checkout.
+main_checkout=$(git worktree list --porcelain | awk '/^worktree /{print substr($0,10); exit}')
 
 # Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
 # pane. A file in the shared git directory can be: it never shows up in the tree, and it outlives
