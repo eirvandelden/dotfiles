@@ -69,7 +69,7 @@ Facts that shape the plan (verified 2026-09-23):
 - Outside herdr: no pane, no output, worktree exists → `test/worktree_pane_test.rb` `test_open_outside_herdr_does_nothing_and_exits_zero`
 - herdr refuses the split: worktree exists, exit 0, one warning → `test/worktree_pane_test.rb` `test_open_warns_once_and_exits_zero_when_herdr_refuses_the_split`
 - Sweeping a merged worktree closes its pane, then removes the worktree → `test/worktree_create_test.rb` `test_sweep_closes_the_pane_rooted_in_a_merged_worktree_before_removing_it`
-- Sweeping leaves a pane with a running agent open and names it → `test/worktree_pane_test.rb` `test_close_skips_a_pane_with_a_running_agent_and_names_it`
+- Sweeping leaves a pane with a running agent open and names it → `test/worktree_pane_test.rb` `test_close_skips_panes_with_an_agent_whatever_their_status_and_names_them`
 - Sweeping with no pane closes nothing → `test/worktree_pane_test.rb` `test_close_with_no_matching_pane_closes_nothing`
 - `hand-off-plan.sh <plan> <name>` creates the worktree and starts the worker in a pane rooted there with the "already in your worktree" prompt → `test/herdr_worker_scripts_test.rb` `test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree`
 - `hand-off-plan.sh <plan>` unchanged → existing `test_handing_off_splits_a_pane_below_here_without_taking_the_screen` and its siblings
