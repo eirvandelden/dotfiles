@@ -16,11 +16,13 @@ module WorktreeTools
     end
 
     USAGE = "Usage: worktree-pane open|close <path> | label <path> <pane-id>"
+    COMMANDS = %w[open close label].freeze
 
     def run!(argv)
       command, path, pane_id = argv
       return unless herdr_env?
-      die(USAGE) if path.to_s.empty? || (command == "label" && pane_id.to_s.empty?)
+      die(USAGE) if !COMMANDS.include?(command) || path.to_s.empty? ||
+                    (command == "label" && pane_id.to_s.empty?)
 
       target = realpath!(path)
       die("worktree-pane: not inside a git repository: #{target}") unless git_common_dir(target)
@@ -29,7 +31,6 @@ module WorktreeTools
       when "open" then open(target)
       when "close" then close(target)
       when "label" then label(target, pane_id)
-      else die(USAGE)
       end
     end
 

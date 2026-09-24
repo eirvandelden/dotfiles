@@ -164,6 +164,16 @@ class WorktreePaneTest < Minitest::Test
     assert_equal(1, stderr.lines.count, stderr)
   end
 
+  def test_an_unknown_command_prints_usage_before_any_path_or_git_check
+    outside = Dir.mktmpdir
+    @extra_dirs << outside
+
+    _, stderr, status = run_script("bogus", outside)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/Usage: worktree-pane/, stderr)
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end
