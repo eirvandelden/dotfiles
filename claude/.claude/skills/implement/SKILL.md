@@ -76,8 +76,7 @@ Send `plan.md` to a fresh Sonnet worker in a herdr pane instead of building here
 2. From the repository's main checkout (not a worktree — the worker branches off cleanly from
    there), passing the change's branch name as the worktree name so the worker starts already
    inside it. The `intent` skill already created `.worktrees/<slug>` on that branch, so read the
-   branch off it rather than assuming it matches the slug (a branch named `fix/foo` gives a slug
-   of `foo`):
+   branch off it when that worktree exists, otherwise use the slug itself:
    ```bash
    branch=$(git -C .worktrees/<slug> rev-parse --abbrev-ref HEAD 2>/dev/null || echo <slug>)
    ~/.config/herdr/scripts/hand-off-plan.sh <absolute path to plan.md> "$branch"
