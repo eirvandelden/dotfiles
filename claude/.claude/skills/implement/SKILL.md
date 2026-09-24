@@ -13,7 +13,7 @@ file and why.
 
 ## 1. Read
 
-Run `claude/.claude/skills/plan/scripts/change-folder` for the folder path. Read
+Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read
 `<folder>/intent.md` (for `Type:`), `<folder>/spec.md` (for acceptance criteria) and
 `<folder>/plan.md` (for `## Proof`). Refuse if `plan.md` is not `Status: accepted`.
 

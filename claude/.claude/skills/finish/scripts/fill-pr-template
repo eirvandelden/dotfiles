@@ -1,0 +1,150 @@
+#!/usr/bin/env ruby
+# Fills a PR template from intent.md and plan.md before finish opens it, in
+# either scope. A heading is matched by what it asks for, not by its exact
+# wording, so any repository's own template phrasing still gets filled. A
+# heading nothing matches, or whose body is a checkbox list, keeps its own
+# text. Any of the four categories that ends up with no heading filled —
+# no heading matched it, or the one that did is a checkbox list — is
+# appended at the end under its own heading; with no template at all, or
+# no matching heading anywhere, that means all four.
+CATEGORIES = [
+  [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
+  [ :why, /\bwhy|\bmotivation/i ],
+  [ :test, /\btest|\bverify/i ],
+  [ :implementation, /\bimplementation|\bhow|\bdetails/i ]
+].freeze
+
+APPEND_ORDER = [
+  [ :summary, "Summary" ],
+  [ :why, "Why" ],
+  [ :implementation, "Implementation" ],
+  [ :test, "Proof" ]
+].freeze
+
+TYPE_HEADING = /type/i
+CHOICE_LIST = /^-\s*\[[ xX]\]/.freeze
+
+HEADING = /^(#+\s+.*)$/.freeze
+FENCE = /^(`{3,}|~{3,})/.freeze
+
+def parse_sections(markdown)
+  preamble = ""
+  sections = []
+  current = nil
+  in_fence = false
+
+  markdown.each_line do |line|
+    in_fence = !in_fence if line.match?(FENCE)
+
+    if !in_fence && line.match?(HEADING)
+      current = { heading: line.chomp, title: line.sub(/^#+\s*/, "").strip, body: "\n" }
+      sections << current
+    elsif current
+      current[:body] << line
+    else
+      preamble << line
+    end
+  end
+
+  [ preamble, sections ]
+end
+
+def section_body(markdown, title)
+  _preamble, sections = parse_sections(markdown)
+  match = sections.find { |section| section[:title].casecmp?(title) }
+  match && match[:body].strip
+end
+
+def joined(*parts)
+  parts.compact.reject(&:empty?).join("\n\n")
+end
+
+def filler(intent, plan)
+  {
+    summary: joined(section_body(intent, "Problem"), section_body(intent, "Proposed outcome")),
+    why: section_body(intent, "Problem") || "",
+    implementation: joined(section_body(plan, "Files that change"), section_body(plan, "Order of work")),
+    test: section_body(plan, "Proof") || ""
+  }
+end
+
+def category_for(title)
+  CATEGORIES.find do |name, pattern|
+    next false if name == :summary && title.match?(TYPE_HEADING)
+
+    title.match?(pattern)
+  end&.first
+end
+
+def choice_list?(body)
+  body.match?(CHOICE_LIST)
+end
+
+def appended_sections(fill, filled_categories)
+  APPEND_ORDER
+    .reject { |category, _heading| filled_categories.include?(category) || fill[category].to_s.empty? }
+    .map { |category, heading| "## #{heading}\n\n#{fill[category]}" }
+    .join("\n\n")
+end
+
+def heading_level(heading)
+  heading[/^#+/].length
+end
+
+def category_for_section(section)
+  choice_list?(section[:body]) ? nil : category_for(section[:title])
+end
+
+def fill_template(template, fill)
+  preamble, sections = parse_sections(template)
+  categories = sections.map { |section| category_for_section(section) }
+
+  rebuilt = []
+  filled_categories = []
+  absorbed_until_level = nil
+  keep_verbatim_until_level = nil
+
+  sections.zip(categories).each do |section, category|
+    level = heading_level(section[:heading])
+
+    if keep_verbatim_until_level && level > keep_verbatim_until_level
+      rebuilt << "#{section[:heading]}#{section[:body]}"
+      next
+    end
+    keep_verbatim_until_level = nil
+
+    if absorbed_until_level && level > absorbed_until_level
+      if choice_list?(section[:body])
+        keep_verbatim_until_level = absorbed_until_level
+        rebuilt << "#{section[:heading]}#{section[:body]}"
+      end
+      next
+    end
+    absorbed_until_level = nil
+
+    if category && !filled_categories.include?(category)
+      rebuilt << "#{section[:heading]}\n\n#{fill[category]}\n\n"
+      filled_categories << category
+      absorbed_until_level = level
+    else
+      rebuilt << "#{section[:heading]}#{section[:body]}"
+    end
+  end
+
+  body = (preamble + rebuilt.join).strip
+  joined(body, appended_sections(fill, filled_categories))
+end
+
+template_path, intent_path, plan_path = ARGV
+unless intent_path && plan_path
+  warn("usage: fill-pr-template <template-path-or-empty> <intent.md> <plan.md>")
+  exit(1)
+end
+
+intent = File.read(intent_path)
+plan = File.read(plan_path)
+fill = filler(intent, plan)
+
+template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
+
+puts(fill_template(template, fill))

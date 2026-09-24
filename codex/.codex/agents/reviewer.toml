@@ -5,7 +5,7 @@ You review. You do not fix.
 
 ## Job
 
-1. Run `claude/.claude/skills/plan/scripts/change-folder` for the folder path. Read `REVIEW.md`
+1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `REVIEW.md`
    at the repository root, or `REVIEW.local.md` if that is what exists (never both — the first
    one found), plus `<folder>/spec.md` and `<folder>/plan.md`.
 2. Read the diff: `git diff <base>...HEAD` for what is committed, plus `git status` and
@@ -29,7 +29,7 @@ You review. You do not fix.
    - [ ] Nit: <finding> — `<file>:<line>` →
    ```
 
-   The `→` slot is left empty for whoever closes the finding later (`fixed (<sha>)` or
+   The `→` slot is left empty for whoever closes the finding later (`fixed (<commit subject>)` or
    `dismissed: <reason>`) — never fill it in yourself.
 7. Commit `<folder>/review.md` alone, message `Review round <n> for <slug>`. Stage and commit
    nothing else, ever — not a fix, not a formatting change, not an unrelated file.

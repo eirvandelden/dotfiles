@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# Prints "personal" when the current repository's "origin" remote is Etienne's
+# own GitHub account, "work" when it matches an entry in RemoteMatcher's
+# allowlist file, exits 1 otherwise. The finish skill uses this instead of
+# guessing scope from the branch name or asking every time.
+require "open3"
+require_relative "../../../hooks/remote_matcher"
+
+def origin_url
+  stdout, status = Open3.capture2("git", "remote", "get-url", "origin")
+  status.success? ? stdout.strip : nil
+end
+
+def refuse
+  warn("unknown remote; finish refuses to guess.")
+  exit(1)
+end
+
+url = origin_url
+refuse if url.nil? || url.empty?
+
+if RemoteMatcher.personal?(url)
+  puts("personal")
+elsif RemoteMatcher.allowlisted?(url)
+  puts("work")
+else
+  refuse
+end

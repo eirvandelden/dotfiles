@@ -1,0 +1,7 @@
+---
+interface:
+  display_name: "Finish"
+  short_description: "Closes a change once review is fresh — fills and opens the PR; work adds an ADR and reviewers"
+
+policy:
+  allow_implicit_invocation: false

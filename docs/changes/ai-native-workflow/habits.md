@@ -68,7 +68,7 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: personal — review closed, ready to merge. Work — ready for the team.
 
-**Habit**: `/finish`, in both scopes. Personal: it removes `docs/changes/<slug>/` (and `docs/changes/` itself when that was the last folder), commits, and stops; then merge. Work: check the PR body it wrote from the intent and plan, answer the ADR question honestly, then let it push, open the PR in your work browser profile and request reviewers; you set the review-board status on the page it opened. Never delete the folder by hand.
+**Habit**: `/finish`, in both scopes. Both: check the PR body it wrote from the intent and plan, removes `docs/changes/<slug>/` (and `docs/changes/` itself when that was the last folder), commits, pushes, and creates or updates the PR — ending with it open in the browser. Personal: merge from there. Work: answer the ADR question honestly before the delete, then confirm the reviewer list once it opens the PR in your work browser profile; you set the review-board status on that page. Never delete the folder by hand.
 
 **Backing**: the `finish` skill, scope detected from the remote; ADR prompt for cross-application changes at work.
 

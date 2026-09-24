@@ -13,7 +13,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 nothing is edited until the user accepts. Not already in plan mode: call `EnterPlanMode` before
 reading code (Codex: tell the user to run `/plan` first; there is no equivalent tool call).
 
-1. Run `claude/.claude/skills/plan/scripts/change-folder` for the folder path. Read
+1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read
    `<folder>/intent.md` and `<folder>/spec.md`; refuse and say why if either is not
    `Status: accepted`.
 2. Read the codebase enough to know which files change and in what order.
