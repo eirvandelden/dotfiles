@@ -18,7 +18,7 @@ Facts that shape the plan (verified 2026-09-23):
 
 ## Files that change
 
-- `git/.config/git/worktree-tools/worktree-pane` (new, Ruby): `open <path>` and `close <path>`; the only place that runs `herdr pane …` for worktrees.
+- `git/.config/git/worktree-tools/worktree-pane` (new, Ruby): `open <path>`, `close <path>` and `label <path> <pane-id>`; the only place that runs `herdr pane …` for worktrees.
 - `git/.config/git/worktree-tools/worktree-create` (new, Ruby): the sweep-and-create logic lifted from `worktree-first` Step 1, calling `worktree-pane close` per swept worktree and `worktree-pane open` for the new one; prints the new worktree's absolute path.
 - `test/worktree_pane_test.rb`, `test/worktree_create_test.rb` (new): stub `herdr` and stub `gh` on `PATH`, temp git repos with a fake `origin`.
 - `herdr/.config/herdr/scripts/hand-off-plan.sh`: optional second argument `<worktree-name>`; with it, `worktree-create` runs first and the worker pane splits with `--cwd <worktree>`; prompt tells the worker it is already in its worktree.
