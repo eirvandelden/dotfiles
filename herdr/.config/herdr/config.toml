@@ -48,7 +48,8 @@ command = "herdr-lazygit.open-tab"
 # Only mp3 plays — anything else falls back to the default sound without failing loudly.
 path         = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/ready-to-serve.mp3"
 request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.mp3"
-done_path    = "/Users/etienne.vandelden/Documents/Tones/Overlord/MinionVoiceData_ENGLISH/ForTheMaster02.mp3"
+done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
+# done_path    = "/Users/etienne.vandelden/Documents/Tones/Overlord/MinionVoiceData_ENGLISH/ForTheMaster02.mp3"
 
 [theme]
 # Take every color from the terminal's own palette. Ghostty already swaps solunized dark and
