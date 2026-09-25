@@ -171,3 +171,4 @@ prefix_rule(pattern=["test", "!", "-e", "docs/superpowers/plans/2026-09-16-fizzy
 prefix_rule(pattern=["git", "log", "--oneline", "-3"], decision="allow")
 prefix_rule(pattern=["ruby", "-c", "codex/.codex/skills/fizzy-sync/scripts/eyes_intake.rb"], decision="allow")
 prefix_rule(pattern=["sed", "-n", "1,12p"], decision="allow")
+prefix_rule(pattern=["git", "worktree", "remove"], decision="allow")

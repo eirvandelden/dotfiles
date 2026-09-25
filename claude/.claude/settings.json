@@ -1,44 +1,5 @@
 {
-  "model": "opusplan[1m]",
-  "showMessageTimestamps": true,
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline-command.rb"
-  },
-  "sandbox": {
-    "enabled": false,
-    "allowUnsandboxedCommands": false,
-    "failIfUnavailable": true,
-    "network": {
-      "allowedDomains": [
-        "github.com",
-        "gem.coop",
-        "rubygems.org",
-        "registry.yarnpkg.com",
-        "api.anthropic.com"
-      ]
-    },
-    "filesystem": {
-      "allowWrite": [
-        "~/.local/share/rv",
-        "~/.bundle",
-        "~/.cache",
-        "~/Library/Caches"
-      ]
-    },
-    "credentials": {
-      "files": [
-        { "path": "~/.ssh", "mode": "deny" },
-        { "path": "~/.aws/credentials", "mode": "deny" }
-      ],
-      "envVars": [
-        { "name": "GITHUB_TOKEN", "mode": "deny" },
-        { "name": "NPM_TOKEN", "mode": "deny" }
-      ]
-    }
-  },
   "permissions": {
-    "defaultMode": "auto",
     "deny": [
       "Bash(mise:*)",
       "Bash(asdf:*)",
@@ -58,8 +19,10 @@
       "Bash(*db:drop*)",
       "Bash(*db:reset*)",
       "Bash(*db:schema:load*)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -77,17 +40,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/etienne.vandelden/.claude/hooks/herdr-agent-state.sh' session",
+            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
             "timeout": 10
           }
         ]
       },
       {
-        "matcher": "*",
+        "matcher": "^(startup|resume|clear|compact|fork)$",
         "hooks": [
           {
             "type": "command",
-            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
+            "command": "bash '/Users/etienne.vandelden/.claude/hooks/herdr-agent-state.sh' session",
             "timeout": 10
           }
         ]
@@ -179,12 +142,17 @@
       }
     ]
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.rb"
+  },
   "enabledPlugins": {
     "github@claude-plugins-official": false,
     "caveman@caveman": true,
     "agile@agile": true,
     "superpowers-ruby@superpowers-ruby": true,
-    "ruby-lsp@claude-plugins-official": true
+    "ruby-lsp@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "caveman": {
@@ -204,10 +172,51 @@
         "source": "github",
         "repo": "lucianghinda/superpowers-ruby"
       }
+  },
+  "sandbox": {
+    "enabled": false,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "gem.coop",
+        "rubygems.org",
+        "registry.yarnpkg.com",
+        "api.anthropic.com"
+      ]
+    },
+    "filesystem": {
+      "allowWrite": [
+        "~/.local/share/rv",
+        "~/.bundle",
+        "~/.cache",
+        "~/Library/Caches"
+      ]
+    },
+    "credentials": {
+      "files": [
+        {
+          "path": "~/.ssh",
+          "mode": "deny"
+        },
+        {
+          "path": "~/.aws/credentials",
+          "mode": "deny"
+        }
+      ],
+      "envVars": [
+        {
+          "name": "GITHUB_TOKEN",
+          "mode": "deny"
+        },
+        {
+          "name": "NPM_TOKEN",
+          "mode": "deny"
+        }
+      ]
     }
   },
-  "effortLevel": "high",
-  "theme": "auto",
   "spinnerVerbs": {
     "mode": "replace",
     "verbs": [
@@ -327,5 +336,9 @@
       "Muk is oozing into the crawlspace",
       "Exeggutor is stretching its neck"
     ]
+  },
+  "effortLevel": "high",
+  "theme": "auto",
+  "showMessageTimestamps": true,
   }
 }
