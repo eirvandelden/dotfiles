@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# hand-off-plan.sh <plan-file>
+# hand-off-plan.sh <plan-file> [<worktree-name>]
 #
-# Hands a written plan to a fresh Claude worker in a pane below the caller.
+# Hands a written plan to a fresh Claude worker in a pane below the caller. With a worktree name,
+# the worktree is created first and the worker starts inside it, already past worktree-first.
 
 set -euo pipefail
 
@@ -11,9 +12,11 @@ if [ "${HERDR_ENV:-}" != "1" ] || [ -z "${HERDR_PANE_ID:-}" ]; then
 fi
 
 plan="${1:-}"
+name="${2:-}"
 
 if [ -z "$plan" ] || [ ! -f "$plan" ]; then
-  echo "Usage: hand-off-plan.sh <plan-file>. Write the plan first; the worker reads only that file." >&2
+  echo "Usage: hand-off-plan.sh <plan-file> [<worktree-name>]. Write the plan first; the worker \
+reads only that file." >&2
   exit 1
 fi
 
@@ -26,7 +29,21 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 common_git_dir=$(git rev-parse --path-format=absolute --git-common-dir)
-main_checkout=$(dirname "$common_git_dir")
+
+# git worktree list's first "worktree <path>" line is the main working tree, except inside a
+# submodule, where git prints the submodule's git directory there instead (reproduced with git
+# 2.54.0) — from the submodule's own checkout and from any linked worktree of it alike. That git
+# directory's core.worktree points back at the submodule checkout, resolved relative to the git
+# directory itself, so it works from both.
+main_checkout=$(git worktree list --porcelain | awk '/^worktree /{print substr($0,10); exit}')
+if [ "$(git -C "$main_checkout" rev-parse --is-inside-work-tree 2>/dev/null)" != "true" ]; then
+  submodule_worktree=$(git -C "$main_checkout" config --get core.worktree 2>/dev/null || true)
+  if [ -n "$submodule_worktree" ]; then
+    main_checkout=$(cd "$main_checkout" && cd "$submodule_worktree" && pwd)
+  else
+    main_checkout=$(git rev-parse --show-toplevel)
+  fi
+fi
 
 # Claude runs on the terminal's alternate screen, so the report cannot be read back out of the
 # pane. A file in the shared git directory can be: it never shows up in the tree, and it outlives
@@ -38,7 +55,16 @@ if ! mkdir -p "$report_directory"; then
   exit 1
 fi
 
-split=$(herdr pane split --current --direction down --cwd "$main_checkout" --no-focus)
+if [ -n "$name" ]; then
+  # --no-pane: this script splits the worker's own pane below, so worktree-create must not also
+  # open one, or the worktree ends up with two panes rooted in it.
+  worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
+  worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$name" --no-pane)
+else
+  worker_cwd="$main_checkout"
+fi
+
+split=$(herdr pane split --current --direction down --cwd "$worker_cwd" --no-focus)
 pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
@@ -52,19 +78,28 @@ worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 report="$report_directory/$worker.md"
 : >"$report"
 
+if [ -n "$name" ]; then
+  # worktree-pane is the only thing that calls `herdr pane` for a worktree; label reuses that
+  # instead of renaming the pane here directly.
+  "$worktree_tools/worktree-pane" label "$worker_cwd" "$pane" >/dev/null
+  intro="You are taking over a plan written by another agent. You are already inside your own git \
+worktree, at $worker_cwd; do not invoke worktree-first, and do not create another worktree."
+else
+  intro="You are taking over a plan written by another agent. Invoke the worktree-first skill \
+before writing anything, so all work happens in its own git worktree instead of the main checkout."
+fi
+
 herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev/null
 
 # No --wait: the caller hands the work over and carries on.
-herdr agent prompt "$worker" "You are taking over a plan written by another agent. Read $plan in \
-full; it is the only context you get. Invoke the worktree-first skill before writing anything, so \
-all work happens in its own git worktree instead of the main checkout. Read the applicable \
-agents.md and CLAUDE.md, then execute only that plan: do not widen the scope and do not hand the \
-work onward. Done means all tests green, all linters green, and a self-reviewed diff. Then write \
-what you did, and anything you could not finish, as Markdown to $report. Then report back to the \
-agent that handed this over, with herdr agent prompt, sending pane $HERDR_PANE_ID the single line \
-Handoff done: followed by that file path. Quote the path yourself. That call is rejected while the \
-initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
-again, at most twelve times. Then stop and say so in your own pane: the report is on disk and \
-its path was printed when you were started, so nothing is lost." >/dev/null
+herdr agent prompt "$worker" "$intro Read $plan in full; it is the only context you get. Read the \
+applicable agents.md and CLAUDE.md, then execute only that plan: do not widen the scope and do not \
+hand the work onward. Done means all tests green, all linters green, and a self-reviewed diff. Then \
+write what you did, and anything you could not finish, as Markdown to $report. Then report back to \
+the agent that handed this over, with herdr agent prompt, sending pane $HERDR_PANE_ID the single \
+line Handoff done: followed by that file path. Quote the path yourself. That call is rejected while \
+the initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
+again, at most twelve times. Then stop and say so in your own pane: the report is on disk and its \
+path was printed when you were started, so nothing is lost." >/dev/null
 
 echo "Handed $plan to $worker in a pane below. Its report will land in $report."

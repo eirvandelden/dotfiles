@@ -1,0 +1,221 @@
+#!/usr/bin/env ruby
+# Sweep merged/gone worktrees, then create a fresh one off origin's default branch.
+# Plain ruby, not rv: CI has no rv, and hand-off-plan.sh invokes this script directly.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "common"
+require "open3"
+require "rbconfig"
+
+module WorktreeTools
+  class Create
+    include Helpers
+
+    PANE = File.expand_path("worktree-pane", __dir__)
+    REMOVE = File.expand_path("worktree-remove", __dir__)
+
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    def run!(argv)
+      no_pane = !argv.delete("--no-pane").nil?
+      name = argv.shift
+      die("worktree-create: a branch name is required") if name.to_s.empty?
+
+      Dir.chdir(repo_root!)
+      die("worktree-create: .worktrees is not gitignored; add it to .git/info/exclude") unless worktrees_ignored?
+      git("worktree", "prune")
+
+      default_branch = default_branch!
+      fetch(default_branch)
+      sweep(name, default_branch)
+      path = create_worktree(name, default_branch)
+      run_worktree_init(path)
+      open_pane(path) unless no_pane
+      puts path
+    end
+
+    private
+
+    # git worktree list's first "worktree <path>" line is the main working tree, except inside
+    # a submodule, where git prints the submodule's git directory there instead (reproduced with
+    # git 2.54.0) — from the submodule's own checkout and from any linked worktree of it alike.
+    # That git directory's core.worktree points back at the submodule checkout, resolved
+    # relative to the git directory itself, so it works from both.
+    def repo_root!
+      output, status = git("worktree", "list", "--porcelain")
+      die("worktree-create: not inside a git repository") unless status.success?
+
+      first_line = output.lines.find { |line| line.start_with?("worktree ") }
+      die("worktree-create: not inside a git repository") unless first_line
+
+      candidate = first_line.delete_prefix("worktree ").strip
+      return candidate if working_tree?(candidate)
+
+      submodule_checkout(candidate) || toplevel!
+    end
+
+    def working_tree?(path)
+      output, status = git("-C", path, "rev-parse", "--is-inside-work-tree")
+      status.success? && output.strip == "true"
+    end
+
+    def submodule_checkout(git_dir)
+      output, status = git("-C", git_dir, "config", "--get", "core.worktree")
+      return nil unless status.success?
+
+      worktree = output.strip
+      return nil if worktree.empty?
+
+      File.expand_path(worktree, git_dir)
+    end
+
+    def toplevel!
+      toplevel, status = git("rev-parse", "--show-toplevel")
+      die("worktree-create: not inside a git repository") unless status.success?
+
+      toplevel.strip
+    end
+
+    def worktrees_ignored?
+      _, status = git("check-ignore", "-q", ".worktrees")
+      status.success?
+    end
+
+    def default_branch!
+      branch = symbolic_ref_default_branch || remote_show_default_branch
+      die("worktree-create: cannot determine default branch") if branch.to_s.empty? || branch == "(unknown)"
+      branch
+    end
+
+    def symbolic_ref_default_branch
+      output, status = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+      output.strip.delete_prefix("origin/") if status.success?
+    end
+
+    def remote_show_default_branch
+      output, = git("remote", "show", "origin")
+      output.lines.find { |line| line.include?("HEAD branch:") }&.split(":")&.last&.strip
+    end
+
+    def fetch(branch)
+      git("fetch", "origin", branch)
+    end
+
+    def sweep(name, default_branch)
+      reused = ".worktrees/#{name}"
+      Dir.glob(".worktrees/*/").each do |dir|
+        trimmed = dir.chomp("/")
+        sweep_one(trimmed, default_branch) unless trimmed == reused
+      end
+    end
+
+    def sweep_one(dir, default_branch)
+      return unless clean?(dir)
+
+      branch = worktree_branch(dir)
+      return warn("worktree-create: #{dir}: detached HEAD, left alone") if branch == "HEAD"
+
+      state = pr_state(branch)
+      return if fresh?(dir, branch, state, default_branch)
+
+      remove_worktree(dir, branch, state) if state == "MERGED" || ancestor?(dir, branch, default_branch)
+    end
+
+    def clean?(dir)
+      output, = git("-C", dir, "status", "--porcelain")
+      output.strip.empty?
+    end
+
+    def worktree_branch(dir)
+      output, = git("-C", dir, "rev-parse", "--abbrev-ref", "HEAD")
+      output.strip
+    end
+
+    def pr_state(branch)
+      output, status = Open3.capture2("gh", "pr", "view", branch, "--json", "state", "-q", ".state",
+                                       err: File::NULL)
+      output.strip if status.success?
+    rescue Errno::ENOENT
+      nil
+    end
+
+    def fresh?(dir, branch, state, default_branch)
+      return false unless state.to_s.empty?
+
+      branch_sha(dir, branch) == branch_sha(dir, "origin/#{default_branch}")
+    end
+
+    def branch_sha(dir, ref)
+      output, = git("-C", dir, "rev-parse", ref)
+      output.strip
+    end
+
+    def ancestor?(dir, branch, default_branch)
+      _, status = git("-C", dir, "merge-base", "--is-ancestor", branch, "origin/#{default_branch}")
+      status.success?
+    end
+
+    def remove_worktree(dir, branch, state)
+      close_pane(dir)
+      run_worktree_remove(dir)
+      git_showing_errors("worktree", "remove", dir)
+      git_showing_errors("branch", state == "MERGED" ? "-D" : "-d", branch)
+    end
+
+    def git_showing_errors(*arguments)
+      _output, error, status = Open3.capture3("git", *arguments)
+      $stderr.print(error) unless status.success?
+    end
+
+    def close_pane(dir)
+      _, stderr, = Open3.capture3(RbConfig.ruby, PANE, "close", dir)
+      $stderr.print(stderr) unless stderr.empty?
+    end
+
+    def run_worktree_remove(dir)
+      return unless File.executable?(REMOVE)
+
+      Open3.capture2(RbConfig.ruby, REMOVE, dir)
+    end
+
+    def create_worktree(name, default_branch)
+      path = File.expand_path(".worktrees/#{name}")
+      return reuse_worktree(path) if worktree_on_branch?(path, name)
+
+      _output, error, status = Open3.capture3("git", "worktree", "add", ".worktrees/#{name}", "-b", name,
+                                               "origin/#{default_branch}")
+      die("worktree-create: git worktree add failed: #{error.strip}") unless status.success?
+
+      path
+    end
+
+    def worktree_on_branch?(path, name)
+      return false unless File.directory?(path)
+
+      output, status = git("-C", path, "rev-parse", "--abbrev-ref", "HEAD")
+      status.success? && output.strip == name
+    end
+
+    def reuse_worktree(path)
+      warn("worktree-create: reusing existing worktree")
+      path
+    end
+
+    def run_worktree_init(path)
+      _, status = git("-C", path, "config", "--get", "alias.worktree-init")
+      Open3.capture2("git", "worktree-init", chdir: path) if status.success?
+    end
+
+    def open_pane(path)
+      Open3.capture2(RbConfig.ruby, PANE, "open", path)
+    end
+
+    def git(*arguments)
+      Open3.capture2("git", *arguments, err: File::NULL)
+    end
+  end
+end
+
+WorktreeTools::Create.run!(ARGV) if $PROGRAM_NAME == __FILE__

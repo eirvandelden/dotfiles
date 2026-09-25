@@ -25,90 +25,32 @@ alias (symlinks `.env`/`master.key`, wires puma-dev/Caddy) is also available —
 
 ## Step 1: sweep merged worktrees, then create the new one
 
-Run this as a single script — the shell variable it sets (`default_branch`) doesn't survive
-between separate commands.
+Branch naming: with a known GitHub issue, `<issue-number>-<issue-title-in-kebab-case>` — the same name GitHub's own "Create a branch" button generates. Without one, a kebab-case task slug. No prefix either way.
 
 ```bash
-git worktree prune
-
-default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
-[ -n "$default_branch" ] || default_branch=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
-[ -n "$default_branch" ] && [ "$default_branch" != "(unknown)" ] || { echo "cannot determine default branch"; exit 1; }
-git fetch origin "$default_branch"
-
-find .worktrees -mindepth 1 -maxdepth 1 -type d 2>/dev/null | while read -r dir; do
-  # Never touch a worktree with anything uncommitted, no matter what its PR/merge state says.
-  [ -z "$(git -C "$dir" status --porcelain)" ] || continue
-
-  branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD)
-  state=$(gh pr view "$branch" --json state -q '.state' 2>/dev/null)
-
-  # A worktree just created off origin/$default_branch, with nothing committed and no PR opened
-  # yet, is trivially its own ancestor — skip it, or a concurrent task's brand-new worktree gets
-  # swept from under it. Once it has a PR (any state, including MERGED), it's no longer "fresh"
-  # even if a fast-forward merge left its tip identical to origin/$default_branch again.
-  if [ -z "$state" ] && [ "$(git rev-parse "$branch")" = "$(git rev-parse "origin/$default_branch")" ]; then
-    continue
-  fi
-
-  ancestor=yes
-  git merge-base --is-ancestor "$branch" "origin/$default_branch" 2>/dev/null || ancestor=no
-
-  if [ "$state" = "MERGED" ] || [ "$ancestor" = "yes" ]; then
-    worktree_remove="${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-remove"
-    [ -x "$worktree_remove" ] && "$worktree_remove" "$dir"
-    git worktree remove "$dir"
-
-    # -D once GitHub itself confirms MERGED: a squash-merged branch is never an ancestor of
-    # main, so the safe -d refuses it and leaks the branch forever. Ancestor-confirmed branches
-    # (no PR, or a fast-forward merge) still go through -d.
-    if [ "$state" = "MERGED" ]; then
-      git branch -D "$branch" 2>/dev/null
-    else
-      git branch -d "$branch" 2>/dev/null
-    fi
-  fi
-done
-
-# Branch naming: with a known GitHub issue, "<issue-number>-<issue-title-in-kebab-case>" —
-# the same name GitHub's own "Create a branch" button generates. Without one, a kebab-case
-# task slug. No prefix either way.
-#
-#   title=$(gh issue view "$issue_number" --json title -q '.title')
-#   slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
-#   branch="${issue_number}-${slug}"
-#
-# otherwise:
-#   branch="<kebab-case-task-slug>"
-
-git worktree add ".worktrees/$branch" -b "$branch" "origin/$default_branch"
-cd ".worktrees/$branch" || exit
+if [ -n "$issue_number" ]; then
+  title=$(gh issue view "$issue_number" --json title -q '.title')
+  slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+  branch="${issue_number}-${slug}"
+else
+  branch="<kebab-case-task-slug>"
+fi
 ```
 
-If a worktree's PR/merge check errors (no PR yet, branch not pushed, detached HEAD) leave it —
-never guess, never remove unmerged work.
-
-The new worktree branches from `origin/$default_branch`, not the main checkout's current HEAD —
-deliberately different from the `spin()` shell function
-(`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout
-happens to have checked out. A fresh-from-remote base means the task never inherits a stale or
-dirty main checkout.
-
-`.worktrees/` is already gitignored globally on this machine (`~/.config/git/ignore.global`). On
-an unfamiliar machine or a fresh clone, check first (`git check-ignore -q .worktrees`); if it
-isn't ignored, add it to `.git/info/exclude` (local-only — never commit a `.gitignore` change
-into a repo you don't own without asking, per commit-scope-hygiene rules).
-
-## Step 2: set up the worktree
+Then run:
 
 ```bash
-git config --get alias.worktree-init >/dev/null 2>&1 && git worktree-init
+worktree_path=$(~/.config/git/worktree-tools/worktree-create "$branch") || exit 1
+cd "$worktree_path"
 ```
 
-Then install dependencies the same way you would after a fresh clone — `bundle install`, `npm
-install`/`yarn`, `cargo build`, `pip install`/`poetry install`, `go mod download`, whatever the
-project's manifest calls for. `git worktree-init` only handles symlinks and local-service
-wiring; it does not install dependencies.
+`worktree-create` prunes stale admin files, fetches `origin`'s default branch, sweeps worktrees that are merged, gone, or fast-forwarded into it — leaving anything dirty, with an open PR, or freshly branched with nothing committed yet — then branches the new worktree off `origin/<default>`, not the main checkout's current HEAD. That's deliberately different from the `spin()` shell function (`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout happens to have checked out: a fresh-from-remote base means the task never inherits a stale or dirty main checkout. It refuses if `.worktrees` isn't gitignored (`git check-ignore -q .worktrees` — already true on this machine via `~/.config/git/ignore.global`; on an unfamiliar machine or a fresh clone, add it to `.git/info/exclude` first, local-only) or if the name is empty. If a worktree's PR/merge check errors (no PR yet, branch not pushed, detached HEAD) it leaves it — never guessing, never removing unmerged work.
+
+Inside herdr, a pane rooted in the new worktree opens below; focus it for the file viewer.
+
+## Step 2: install dependencies
+
+`worktree-create` already ran `git worktree-init` (symlinks, local-service wiring) when the `worktree-init` alias exists. Install dependencies the same way you would after a fresh clone — `bundle install`, `npm install`/`yarn`, `cargo build`, `pip install`/`poetry install`, `go mod download`, whatever the project's manifest calls for.
 
 ## Step 3: work, commit, push — all from here
 

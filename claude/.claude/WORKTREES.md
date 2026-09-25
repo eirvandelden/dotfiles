@@ -9,7 +9,8 @@ it's already on.
 
 Mechanics: `worktree-first` skill. Explicitly invoke it yourself before starting any
 code-writing task — don't rely on it firing on its own. It skips itself when already inside a
-worktree or when the user asked to work in place.
+worktree or when the user asked to work in place. Inside herdr, a pane rooted in the new
+worktree opens below the caller's.
 
 ## Codex
 
