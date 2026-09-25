@@ -44,6 +44,21 @@ pre-commit:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {staged_files}
+    no-hardwrap:
+      tags: markdown linter
+      glob: "*.{md,markdown}"
+      run: |
+        if ! command -v markdownlint >/dev/null 2>&1; then
+          echo "no-hardwrap: markdownlint not found on PATH, skipping"
+          exit 0
+        fi
+        config="$HOME/.config/markdownlint"
+        if [ ! -f "$config/no-hardwrap.cjs" ]; then
+          echo "no-hardwrap: $config/no-hardwrap.cjs not found, skipping (stow the markdownlint package)"
+          exit 0
+        fi
+        markdownlint --config "$config/no-hardwrap.json" --rules "$config/no-hardwrap.cjs" {staged_files}
+        exit 0
     no-push-to-main:
       tags: branch-protection
       run: |

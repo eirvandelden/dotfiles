@@ -36,6 +36,8 @@ jobs:
         # Always the latest npm release; npm's own registry integrity check
         # covers it, so no separate checksum step is needed here.
         run: npm install -g cspell
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli@0.48.0
       - name: Run test/*_test.rb
         run: |
           set -o pipefail
