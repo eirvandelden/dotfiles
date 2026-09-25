@@ -60,6 +60,26 @@ class FillPrTemplateTest < Minitest::Test
     2. Add `#export_status`.
   MARKDOWN
 
+  PLAN_WITH_NESTED_PROOF = <<~MARKDOWN
+    # Plan: Claims status export
+
+    Status: accepted.
+
+    ## Files that change
+
+    `app/models/claim.rb`: adds `#export_status`.
+
+    ## Order of work
+
+    1. Write the acceptance test, watch it fail.
+    2. Add `#export_status`.
+
+    ## Proof
+
+    - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
+      - `app/models/claim.rb`: `#export_status` returns "running" while the export is in progress
+  MARKDOWN
+
   def setup
     @dir = Dir.mktmpdir
   end
@@ -339,7 +359,7 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/flag or migration to coordinate/, output)
   end
 
-  def test_a_template_with_no_matching_headings_gets_four_sections_appended
+  def test_a_template_with_no_matching_headings_gets_three_sections_appended
     output = run_fill(<<~MARKDOWN)
       ## Screenshots
 
@@ -348,22 +368,32 @@ class FillPrTemplateTest < Minitest::Test
 
     assert_match(/\A## Screenshots\n\n_attach screenshots here_/, output)
     assert_match(/## Summary/, output)
-    assert_match(/## Why/, output)
+    assert_no_match(/## Why/, output)
     assert_match(/## Implementation/, output)
     assert_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
   end
 
-  def test_no_template_produces_four_sections_from_intent_and_plan_alone
+  def test_no_template_produces_three_sections_from_intent_and_plan_alone
     output = run_fill(nil)
 
     assert_match(/\A## Summary/, output)
-    assert_match(/## Why/, output)
+    assert_no_match(/## Why/, output)
     assert_match(/## Implementation/, output)
     assert_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(%r{app/models/claim\.rb}, output)
     assert_match(/test_shows_export_status/, output)
+  end
+
+  def test_an_appended_proof_section_drops_a_nested_per_file_unit_test_list
+    output = run_fill(nil, plan: PLAN_WITH_NESTED_PROOF)
+
+    assert_match(/Claims adjusters see export status/, output)
+    assert_no_match(/returns "running" while the export is in progress/, output)
+    assert_no_match(/## Why/, output)
+    assert_no_match(/Write the acceptance test/, output)
+    assert_match(%r{app/models/claim\.rb}, output)
   end
 
   def test_a_how_to_test_sub_heading_that_gets_absorbed_still_gets_the_proof_appended
