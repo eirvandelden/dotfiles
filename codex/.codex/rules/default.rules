@@ -80,6 +80,7 @@ prefix_rule(pattern=["ruby", "-I", "test", "test/trek_mcp_test.rb"], decision="a
 prefix_rule(pattern=["git", "-C", "/Users/etienne.vandelden/.config/superpowers/worktrees/dotfiles/agent-trek-mcp", "commit", "-m", "feat: configure TREK MCP machine auth"], decision="allow")
 prefix_rule(pattern=["git", "-C", "/Users/etienne.vandelden/.config/superpowers/worktrees/dotfiles/agent-trek-mcp", "push", "-u", "origin", "agent/trek-mcp"], decision="allow")
 prefix_rule(pattern=["git", "-C", "/Users/etienne.vandelden/.config/superpowers/worktrees/dotfiles/agent-trek-mcp", "add", "docs/superpowers/plans/2026-08-17-trek-mcp-machine-client.md", "packages.conf", "test/trek_mcp_test.rb", "zsh/.config/zsh/aliases.zsh", "zsh/.config/zsh/functions/trek.zsh"], decision="allow")
+prefix_rule(pattern=["git", "-C", "/Users/etienne.vandelden/Developer/dotfiles-work", "diff", "--", ".gitignore"], decision="allow")
 prefix_rule(pattern=["op", "run", "--env-file=secrets/.config/secrets/1password.work.env", "--", "zsh", "-c"], decision="allow")
 prefix_rule(pattern=["git", "add", ".gitignore"], decision="allow")
 prefix_rule(pattern=["git", "add", "secrets/.config/secrets/1password.work.env"], decision="allow")
