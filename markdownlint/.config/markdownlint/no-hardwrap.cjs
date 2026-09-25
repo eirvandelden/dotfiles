@@ -46,6 +46,22 @@ function softLinesAfter(token, lines = new Set()) {
   return lines;
 }
 
+// Lines whose line ending sits inside a code span. Their trailing spaces are code, which the
+// renderer keeps next to the space that line ending becomes, so the join must keep them too.
+function linesEndingInCode(token, lines = new Set(), inCode = false) {
+  for (const child of token.children) {
+    if (inCode && child.type === "lineEnding") {
+      lines.add(child.startLine);
+    }
+    linesEndingInCode(child, lines, inCode || child.type === "codeText");
+  }
+  return lines;
+}
+
+function trimmedUnlessCode(text, line, codeLines) {
+  return codeLines.has(line) ? text : text.trimEnd();
+}
+
 // Splits a paragraph's lines into runs joined by soft line endings; a hard line break starts a
 // new run, since that line break was intentional rather than a wrap to undo.
 function runsIn(paragraph) {
@@ -88,10 +104,11 @@ function sourceLineOf(paragraph, line, params) {
 // trailing spaces there are the hard line break that ended the run.
 function joinedContinuation(paragraph, continuationLines, textTokens, params) {
   const lastLine = continuationLines[continuationLines.length - 1];
+  const codeLines = linesEndingInCode(paragraph);
   return continuationLines
     .map((line) => {
       const text = textOnLine(textTokens, line, sourceLineOf(paragraph, line, params));
-      return line === lastLine ? text : text.trimEnd();
+      return line === lastLine ? text : trimmedUnlessCode(text, line, codeLines);
     })
     .join(" ");
 }
@@ -114,7 +131,7 @@ function unwrapParagraph(paragraph, params, onError) {
     const detail = detailFor(run);
     const continuationText = joinedContinuation(paragraph, continuationLines, textTokens, params);
     const firstSource = sourceLineOf(paragraph, firstLine, params);
-    const firstText = firstSource.trimEnd();
+    const firstText = trimmedUnlessCode(firstSource, firstLine, linesEndingInCode(paragraph));
 
     onError({
       lineNumber: firstLine,

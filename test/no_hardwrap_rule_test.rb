@@ -201,6 +201,13 @@ class NoHardwrapRuleTest < Minitest::Test
     assert_equal("x <!-- a b --> y\n", File.read(file))
   end
 
+  def test_unwrapping_keeps_trailing_spaces_inside_a_wrapped_code_span
+    trailing_spaces = " " * 2
+    file = fix("`a#{trailing_spaces}\nb` c\nd\n")
+
+    assert_equal("`a#{trailing_spaces} b` c d\n", File.read(file))
+  end
+
   def test_unwrapping_a_footnote_definition_drops_its_continuation_indentation
     file = fix("[^1]: note one\n    note two\n")
 
