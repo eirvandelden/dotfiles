@@ -8,7 +8,9 @@ A public repository carries 17 recorded Codex approval rules naming the employer
 
 ## Files that change
 
-`codex/.codex/rules/default.rules` — 17 recorded `prefix_rule` lines removed, nothing else.
+`codex/.codex/rules/default.rules` — 22 recorded `prefix_rule` lines removed, nothing else.
+
+`project-dictionary.txt` — 11 words added. Not optional: cspell reads the whole staged file, not the diff, so the rules file's pre-existing vocabulary blocks the commit.
 
 ## Order of work
 
