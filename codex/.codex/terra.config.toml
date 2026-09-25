@@ -2,3 +2,6 @@
 # Layers over ~/.codex/config.toml, which stays on Luna for implementing.
 model = "gpt-5.6-terra"
 model_reasoning_effort = "xhigh"
+
+[tui]
+screen_reader_detection_done = true
