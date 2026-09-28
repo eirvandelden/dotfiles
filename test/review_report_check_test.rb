@@ -38,6 +38,15 @@ class ReviewReportCheckTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  def test_a_change_folder_passes_when_origin_head_is_dangling
+    git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
+
+    _, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   def test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point
     write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
     git("checkout", "--quiet", "main")

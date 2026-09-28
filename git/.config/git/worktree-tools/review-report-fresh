@@ -2,7 +2,8 @@
 # Pre-push backstop: refuses a push whose change folder has no review.md at least as new,
 # in commits, as the last change to anything outside the folder. Freshness is defined in git
 # terms, not mtime — see spec.md §4. Exits 0 when there is nothing to enforce yet (no change
-# folder in HEAD) or when the review is fresh; exits 1 with a message otherwise.
+# folder in HEAD, or the branch has no code commits of its own) or when the review is fresh;
+# exits 1 with a message otherwise.
 #
 # "Last change to anything outside the folder" is scoped to this branch's own commits — the
 # range past the merge-base with the base branch — so main's history before the branch point
@@ -45,14 +46,19 @@ end
 
 def resolved_base_branch
   stdout, _stderr, status = Open3.capture3("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
-  return stdout.strip if status.success?
+  candidate = stdout.strip if status.success?
+  return candidate if candidate && ref_exists?(candidate)
 
-  %w[main master].find { |candidate| local_branch?(candidate) }
+  %w[main master].find { |name| local_branch?(name) }
+end
+
+def ref_exists?(ref)
+  _, _stderr, status = Open3.capture3("git", "rev-parse", "--verify", "--quiet", ref)
+  status.success?
 end
 
 def local_branch?(name)
-  _, _stderr, status = Open3.capture3("git", "rev-parse", "--verify", "--quiet", "refs/heads/#{name}")
-  status.success?
+  ref_exists?("refs/heads/#{name}")
 end
 
 def own_commit_range(base_branch)
