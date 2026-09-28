@@ -33,7 +33,7 @@ Reproduction status: Round 1 review found the fixture did not match a real plan'
 - With no template, the PR body's Summary holds the Problem and the Proposed outcome → `test/fill_pr_template_test.rb` `test_no_template_produces_three_sections_from_intent_and_plan_alone` (renamed).
 - With no template, the PR body has no Why section → `test/fill_pr_template_test.rb` `test_no_template_produces_three_sections_from_intent_and_plan_alone`.
 - With no template, the PR body's Implementation section holds the file list only, not Order of work → `test/fill_pr_template_test.rb` `test_no_template_produces_three_sections_from_intent_and_plan_alone`.
-- With no template, the PR body's Proof section holds the acceptance-criteria lines only, not a nested per-file unit-test list → `test/fill_pr_template_test.rb` `test_an_appended_proof_section_drops_a_nested_per_file_unit_test_list` (new).
+- With no template, the PR body's Proof section holds the acceptance-criteria lines only, not a nested per-file unit-test list → `test/fill_pr_template_test.rb` `test_an_appended_proof_section_drops_the_per_file_unit_test_list_after_its_lead_in` (new).
 - With no template and a plan with no Proof section, the PR body has no Proof heading → `test/fill_pr_template_test.rb` `test_a_missing_proof_in_the_plan_is_not_appended_as_an_empty_heading` (existing, unchanged assertions — still proves the rule under the new code path).
 - With a template whose headings match Why, Implementation, and Test, each still gets today's full content → `test/fill_pr_template_test.rb` `test_a_plain_template_gets_its_matching_headings_filled` (existing, unchanged assertions — regression coverage for the categorized path).
 
