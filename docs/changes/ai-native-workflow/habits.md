@@ -20,11 +20,11 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: the intent is accepted.
 
-**Habit**: `/spec`, read it, and read the acceptance criteria twice. Each one is a sentence you would say to a colleague about what the system does, and each one becomes a test. A requirement without an example is not done; ask for the example before anything else. Fix what is wrong, then say "accepted".
+**Habit**: `/spec` opens a fresh Opus pane rooted in the change's worktree; the interview happens there, not in your coordinator session. Read the acceptance criteria twice. Each one is a sentence you would say to a colleague about what the system does, and each one becomes a test. A requirement without an example is not done; ask for the example before anything else. Fix what is wrong, then say "accepted" in that pane. It pushes, reports back, and closes itself.
 
-**Backing**: the `spec` skill refuses acceptance while a requirement has no example.
+**Backing**: the `spec` skill refuses acceptance while a requirement has no example; pane by default, `here` without herdr.
 
-**Replaces**: requirements that live in your head until the review finds the gap.
+**Replaces**: requirements that live in your head until the review finds the gap; steering the interview from a session that also carries the intent conversation.
 
 **Slip to watch**: accepting criteria that describe the solution ("uses a background job") instead of the behaviour ("the export arrives by mail within a minute").
 
@@ -32,9 +32,9 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: the spec is accepted.
 
-**Habit**: start plan mode, `/plan`. Check that Proof names a test for every criterion and that step 1 is a failing acceptance test. Interrogate it — "what could break?", "what is riskiest?", "what did you reject?" — until a new engineer could implement from `plan.md` alone. For anything non-trivial, let the other model critique it first ("critically review this plan"). Then say "accepted". Do not approve with "ok" or "looks fine"; the word is "accepted" so the agent flips the status line.
+**Habit**: `/plan` opens a fresh Opus pane, already in plan mode, rooted in the change's worktree; the interrogation happens there. Check that Proof names a test for every criterion and that step 1 is a failing acceptance test. Interrogate it — "what could break?", "what is riskiest?", "what did you reject?" — until a new engineer could implement from `plan.md` alone. For anything non-trivial, let the other model critique it first ("critically review this plan"). Then say "accepted" in that pane. Do not approve with "ok" or "looks fine"; the word is "accepted" so the agent flips the status line, pushes, reports back, and closes itself.
 
-**Backing**: `plan` skill; plan mode refuses edits until you accept.
+**Backing**: `plan` skill's Write role; pane by default, already `--permission-mode plan`; `here` without herdr.
 
 **Replaces**: agreeing to a plan in chat that never becomes a file; correcting course mid-build instead of in the document where correcting is cheap.
 
@@ -44,9 +44,9 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: the plan is accepted.
 
-**Habit**: `/implement`, or `/implement handoff` to give it to a worker pane and keep your session free. Watch the first thing it does: the acceptance test must fail before any production code exists. If it does not, stop it. When you want to change direction mid-build, edit `plan.md` and say so; do not steer with chat corrections the plan never records. Three or more acceptance criteria: let `split` mode run, and expect two reports (tests, then implementation).
+**Habit**: `/implement` hands the plan to a fresh Sonnet worker pane and keeps your session free; `/implement here` builds in this session instead, when you want to steer it directly. Watch the first thing it does: the acceptance test must fail before any production code exists. If it does not, stop it. When you want to change direction mid-build, edit `plan.md` and say so; do not steer with chat corrections the plan never records. Three or more acceptance criteria: let `split` mode run, and expect two reports (tests, then implementation). The worker commits but does not push — that waits for `/review`.
 
-**Backing**: `implement` skill with `single`, `split` and `handoff` modes; the `implementer` agent cannot write test files; `plan.md` is updated in the same commit when the work departs from it.
+**Backing**: `implement` skill, pane backend by default, `here` backend's `single`/`split` modes; the `implementer` agent cannot write test files; `plan.md` is updated in the same commit when the work departs from it.
 
 **Replaces**: "just build it" followed by a long chat of corrections that a second session cannot see.
 
