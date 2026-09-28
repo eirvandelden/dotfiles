@@ -110,7 +110,6 @@ restow
 ripgrep
 scrolloff
 semble
-setext
 shellescape
 shiftwidth
 showmanual
