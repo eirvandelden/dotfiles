@@ -58,7 +58,7 @@ Because Type is bugfix, all reproduction tests (steps 1, 2, 4, 6 and the step-8 
 - Criterion 6: a pull deleting the root `Gemfile` does not run `bundle install` → `test/lefthook_pull_hooks_test.rb` `test_pull_deleting_root_gemfile_does_not_bundle_install` (the deleting commit also changes `README.md`: a pull that only deletes files already skips `migrations` with "no files for inspection", because the outer `post-merge` drops deleted files)
 - Criterion 7: existing behaviour kept → `test/lefthook_pull_hooks_test.rb` `test_changed_gemfile_lock_triggers_rv_ci`, `test_new_migration_file_triggers_db_migrate`, `test_changed_schema_triggers_db_migrate`, `test_changed_yarn_lock_triggers_yarn_install`, `test_changed_package_lock_json_triggers_yarn_install`, `test_repo_with_own_lefthook_config_ignores_global_defaults`
 
-- Needs test-writer: `test/rv_ci_fallback_test.rb` `test_main_update_migration_hooks_pass_changed_files_to_nested_migration_hook` (lines 60 and 64) expects the nested `post-merge`/`post-rewrite` command without `-z`; update both expected strings to `git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin`.
+- Written: `test/rv_ci_fallback_test.rb` `test_main_update_migration_hooks_pass_changed_files_to_nested_migration_hook` (lines 60 and 64) expects the nested `post-merge`/`post-rewrite` command without `-z`; update both expected strings to `git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin`.
 
 Per changed file, the unit tests expected:
 - `lefthook.yml`: covered by the acceptance tests above; it is configuration, there is no smaller unit.
