@@ -3,10 +3,11 @@
 # either scope. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own template phrasing still gets filled. A
 # heading nothing matches, or whose body is a checkbox list, keeps its own
-# text. Any of the four categories that ends up with no heading filled —
-# no heading matched it, or the one that did is a checkbox list — is
-# appended at the end under its own heading; with no template at all, or
-# no matching heading anywhere, that means all four.
+# text. Any of the three appended categories (Summary, Implementation, Proof)
+# that ends up with no heading filled — no heading matched it, or the one
+# that did is a checkbox list — is appended at the end under its own
+# heading, with trimmed content; with no template at all, or no matching
+# heading anywhere, that means all three.
 CATEGORIES = [
   [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /\bwhy|\bmotivation/i ],
