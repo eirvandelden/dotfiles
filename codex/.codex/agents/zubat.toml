@@ -17,7 +17,5 @@ Locate the code the caller asked about. Report where it lives. Stop.
 
 ## Output
 
-A `file:line` list, one line each, with a few words on what lives there.
-Then two or three sentences answering the question that was asked.
-Nothing else.
+A `file:line` list, one line each, with a few words on what lives there. Then two or three sentences answering the question that was asked. Nothing else.
 '''
