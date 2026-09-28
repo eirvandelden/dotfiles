@@ -325,7 +325,15 @@ migrations:
     bundle:
       priority: 1
       glob: "Gemfile*"
-      run: "if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi # {files}"
+      # A deleted root Gemfile still reaches {files}, and "bundle install" without one fails.
+      run: |
+        if [ -f Gemfile.lock ]; then
+          rv ci
+        elif [ -f Gemfile ]; then
+          bundle install
+        else
+          echo "bundle: no Gemfile at the repository root, nothing to install"
+        fi # {files}
     migrate:
       priority: 2
       glob:

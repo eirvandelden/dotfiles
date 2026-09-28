@@ -34,7 +34,7 @@ Because Type is bugfix, all reproduction tests (steps 1, 2, 4, 6 and the step-8 
 4. Write `test_pull_touching_only_readme_runs_no_migrations` (criterion 4) and `test_pull_touching_only_nested_gemfile_does_not_bundle` (criterion 5). Run; red (all four commands logged).
 5. Add `{files}` to the three `migrations` commands. Pass the nested file list with `git diff-tree -z`. Run the pull test file: new tests and existing ones green. Commit.
 6. Write `test_pull_deleting_root_gemfile_does_not_bundle_install` (criterion 6: push a `Gemfile`, pull, clear the log, push its deletion, pull). Run; red (`bundle install` logged).
-7. Add the root-Gemfile guard to `bundle`. Green. Commit.
+7. Add the root-Gemfile guard to `bundle`, on the `bundle install` branch only: a root `Gemfile.lock` still runs `rv ci` first, as criterion 7's `test_changed_gemfile_lock_triggers_rv_ci` pushes a lock file without a `Gemfile`. Green. Commit.
 8. Refactor: remove `test_pull_does_not_overwrite_hook_scripts` (and the now-unused `digest` require / `hooks_checksums` helper if nothing else uses them); share nothing across test files unless a third copy appears. Commit.
 9. Full suite: `for f in test/*_test.rb; do ruby -Itest "$f" || break; done`. Linters on touched files: `yamllint lefthook.yml`, `rubocop test/lefthook_global_hooks_sync_test.rb test/lefthook_pull_hooks_test.rb`. Re-read the full diff.
 10. `review` skill, then push and open a PR against `origin` with the repo's PR template. Report: Etienne moves the four real files out of `~/.config/git/hooks/` and restows `git` (`stow -t "$HOME" -R --no-folding git`); name the residual risk (repositories with their own config) and the two ways to close it.
