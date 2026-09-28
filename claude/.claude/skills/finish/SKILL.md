@@ -40,7 +40,7 @@ Ask: "Does this change affect another application: API contract, published event
 
 ## 4. Both scopes: remove the change folder
 
-Before or alongside the removal below: `.worktrees/<slug>` exists and still has a stage pane open — its work done, report sent, but the pane itself never closed — run `~/.config/git/worktree-tools/worktree-pane close .worktrees/<slug>`. Same close-if-idle, leave-open-if-an-agent-is-running behaviour that command already implements elsewhere; a forgotten stage pane must not outlive the change folder it was reading.
+Before or alongside the removal below: run `~/.config/git/worktree-tools/worktree-pane close "$(git rev-parse --show-toplevel)"`. `/finish` runs inside this change's own worktree, so its toplevel is the path to close, not a `.worktrees/<slug>` lookup from elsewhere. Same close-if-idle, leave-open-if-an-agent-is-running behaviour that command already implements elsewhere; a forgotten stage pane must not outlive the change folder it was reading.
 
 `git rm -r docs/changes/<slug>`. When that leaves `docs/changes/` empty, remove the directory too — git does not track empty directories, so this is a plain `rmdir` on the working tree, not a git operation. Commit alone: `Remove change artifacts for <slug>`.
 
