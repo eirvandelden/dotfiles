@@ -46,3 +46,20 @@ Criteria to tests:
 - Categorized path unchanged: `test_a_plain_template_gets_its_matching_headings_filled`, `test_a_matched_testing_heading_still_gets_the_plans_whole_proof_section`.
 
 Existing tests: none weakened, skipped, or deleted. `ruby test/fill_pr_template_test.rb`: 27 runs, 0 failures. Rubocop on both touched Ruby files: no offenses.
+
+## Round 3 — 2026-09-28T12:00Z — 1969b136
+
+Bugs:
+
+- [ ] Important: The arrow filter keeps any per-file unit-test bullet that contains a `→` character anywhere, including inside backticks. This branch's own `plan.md` has one: its per-file bullet says "`acceptance_criteria` keeps only the Proof section's `→`-bearing bullets". To reproduce: run `claude/.claude/skills/finish/scripts/fill-pr-template "" docs/changes/fill-pr-template-no-template/intent.md docs/changes/fill-pr-template-no-template/plan.md`. The output's `## Proof` ends with the `` - `claude/.claude/skills/finish/scripts/fill-pr-template`: `summary_text` builds… `` bullet. This means requirement 4 fails on a real plan again. The `plan` skill's shape gives two stronger signals: an acceptance-criteria bullet has `→` followed by a backticked test file (`→ \``), and the per-file list always comes after the fixed lead-in "Per changed file, the unit tests expected". Either one would drop this bullet. Add a fixture per-file bullet that contains `→` to prove it. — `claude/.claude/skills/finish/scripts/fill-pr-template:77`
+
+Security: nothing found.
+
+Compliance:
+
+- [ ] Nit: `plan.md` and `spec.md` still describe the fixture and the rule by indentation. `spec.md` requirement 4 says "not any nested, more-indented per-file unit-test list underneath them". `plan.md` Files that change says the fixture has "a nested, more-indented per-file unit-test list under a Proof bullet", and Order of work step 1 says "a more-indented per-file unit-test bullet underneath it". The fixture `PLAN_WITH_NESTED_PROOF` and the code use a column-0 list after a lead-in, filtered by the arrow. — `docs/changes/fill-pr-template-no-template/plan.md:10`
+- [ ] Nit: `plan.md`'s Test setup says "no new fixtures beyond one `PLAN_WITH_NESTED_PROOF` heredoc constant". The diff also adds `PLAN_WITH_PROOF_WITHOUT_ARROWS` and an inline plan heredoc in `test_an_appended_proof_section_keeps_an_asterisk_bullet_with_an_arrow`. — `docs/changes/fill-pr-template-no-template/plan.md:44`
+
+Criteria to tests: unchanged from round 2. The no-arrow fallback (a spec design decision, not an acceptance criterion) is proved by `test_an_appended_proof_section_keeps_all_bullets_when_none_carry_an_arrow`.
+
+Existing tests: none weakened, skipped, or deleted since round 2. Working tree clean. `ruby test/fill_pr_template_test.rb`: 27 runs, 156 assertions, 0 failures. Rubocop on both touched Ruby files: no offenses.
