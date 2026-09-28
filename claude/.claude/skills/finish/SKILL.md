@@ -34,11 +34,13 @@ Ask: "Does this change affect another application: API contract, published event
 
 ## 3. Both scopes: the PR body
 
-1. Find the template: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, or `docs/pull_request_template.md`. None found: continue with an empty template path — the filler still appends `## Summary` (Problem + Proposed outcome), `## Implementation` (the plan's file list only), and `## Proof` (the plan's acceptance-criteria lines only) from `intent.md` and `plan.md` alone — no `## Why`, and no Order-of-work or per-file unit-test detail.
+1. Find the template: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, or `docs/pull_request_template.md`. None found: continue with an empty template path — the filler still produces the four `## Summary` / `## Why` / `## Implementation` / `## Proof` sections from `intent.md` and `plan.md` alone.
 2. Run `~/.claude/skills/finish/scripts/fill-pr-template <template-path-or-empty> <folder>/intent.md <folder>/plan.md`. Show the result to the user.
 3. On confirmation: write the filled body to a `mktemp` file outside the repository, and record the PR title — the text after `# Intent:` in `<folder>/intent.md` — for §5. `<folder>` is removed in §4, so both must be captured here, not read again later.
 
 ## 4. Both scopes: remove the change folder
+
+Before or alongside the removal below: `.worktrees/<slug>` exists and still has a stage pane open — its work done, report sent, but the pane itself never closed — run `~/.config/git/worktree-tools/worktree-pane close .worktrees/<slug>`. Same close-if-idle, leave-open-if-an-agent-is-running behaviour that command already implements elsewhere; a forgotten stage pane must not outlive the change folder it was reading.
 
 `git rm -r docs/changes/<slug>`. When that leaves `docs/changes/` empty, remove the directory too — git does not track empty directories, so this is a plain `rmdir` on the working tree, not a git operation. Commit alone: `Remove change artifacts for <slug>`.
 
