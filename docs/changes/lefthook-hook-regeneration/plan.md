@@ -61,6 +61,7 @@ Because Type is bugfix, all reproduction tests (steps 1, 2, 4, 6 and the step-8 
 - Written: `test/rv_ci_fallback_test.rb` `test_main_update_migration_hooks_pass_changed_files_to_nested_migration_hook` (lines 60 and 64) expects the nested `post-merge`/`post-rewrite` command without `-z`; update both expected strings to `git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin`.
 - Review round 1, security: a pulled file name holding a newline and a command does not run that command → `test/lefthook_pull_hooks_test.rb` `test_pulled_gemfile_name_with_a_command_on_a_new_line_does_not_run_it`, `test_pulled_migration_name_with_a_command_on_a_new_line_does_not_run_it`. Fix: `{files}` moves out of the trailing shell comment into the arguments of a no-op `:` command, where the quoted names stay literal.
 - Review round 1, nit: the sync tests also assert the after-pull hook ran (`assert_after_pull_hook_ran`, a `yarn.lock` change logs `yarn install`), so they cannot pass without running a hook.
+- Review round 2, nits: spec requirement 5 narrowed to `bundle install`; a `lefthook.yml` comment says a very long file list splits over several runs; the lefthook binary lookup moves from four test files into `test/lefthook_binary.rb` (refactor, the four files stay green).
 
 Per changed file, the unit tests expected:
 - `lefthook.yml`: covered by the acceptance tests above; it is configuration, there is no smaller unit.
