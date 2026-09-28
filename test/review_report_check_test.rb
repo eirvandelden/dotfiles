@@ -38,6 +38,17 @@ class ReviewReportCheckTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  def test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point
+    write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
+    git("checkout", "--quiet", "main")
+    write_and_commit("app/other.rb", "class Other; end\n", "advance main")
+    git("checkout", "--quiet", "claims-status")
+
+    _, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   def test_a_review_committed_after_the_last_code_commit_passes
     write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
     write_and_commit("app/claims.rb", "class Claims; end\n", "touch code")
@@ -80,6 +91,7 @@ class ReviewReportCheckTest < Minitest::Test
     assert_not(status.success?)
     assert_match(/touch code/, stderr)
     assert_match(/no review\.md/i, stderr)
+    assert_match(%r{/review}, stderr)
   end
 
   def test_an_uncommitted_edit_inside_the_folder_only_passes
