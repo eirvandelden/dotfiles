@@ -2,7 +2,7 @@
 
 From `intent.md` and `spec.md` (2026-09-25). Status: accepted.
 
-Reproduction: committed.
+Reproduction status: Round 1 review found the fixture did not match a real plan's shape, so `test/fill_pr_template_test.rb` is extended to match it — see `review.md`.
 
 ## Files that change
 
