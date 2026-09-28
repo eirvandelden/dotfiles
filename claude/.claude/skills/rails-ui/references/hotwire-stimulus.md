@@ -36,6 +36,5 @@
   - Stimulus is for "sprinkles", not frameworks.
   - Controllers must be small and single-purpose (ideally under ~50 LOC).
   - Prefer configuration via Stimulus values/classes/targets over hardcoding.
-  - Prefer Turbo over `fetch` for most interactions. If using `fetch`, include CSRF tokens and keep
-    it focused on UI affordances (not business logic).
+  - Prefer Turbo over `fetch` for most interactions. If using `fetch`, include CSRF tokens and keep it focused on UI affordances (not business logic).
   - Always clean up event listeners/timeouts/observers in `disconnect()`.

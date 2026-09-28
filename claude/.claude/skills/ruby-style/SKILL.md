@@ -5,9 +5,7 @@ description: Use when writing or changing Ruby method bodies, naming methods, ch
 
 # Ruby Method Style and Formatting
 
-Most of this is enforced mechanically by the `rubocop-eirvandelden` gem. The rules are written
-out here so an agent writes the code correctly the first time instead of relying on autocorrect,
-and so agents without a RuboCop run available still follow them.
+Most of this is enforced mechanically by the `rubocop-eirvandelden` gem. The rules are written out here so an agent writes the code correctly the first time instead of relying on autocorrect, and so agents without a RuboCop run available still follow them.
 
 ## Method shape
 
@@ -19,17 +17,14 @@ and so agents without a RuboCop run available still follow them.
 
 ## Naming
 
-- Bang methods (`!`) are unsafe — they mutate the receiver or behave more dangerously. There
-  should normally be a safe non-bang variant.
+- Bang methods (`!`) are unsafe — they mutate the receiver or behave more dangerously. There should normally be a safe non-bang variant.
 - Predicate methods (`?`) must always return a boolean, and never mutate or have side effects.
-- Prefer intention-revealing names. Short names are fine in hot paths, longer names in less-used
-  code.
+- Prefer intention-revealing names. Short names are fine in hot paths, longer names in less-used code.
 - Avoid abbreviations unless universal (`id`, `url`, `api`).
 
 ## Control flow
 
-- Personal projects: prefer guard clause style (`return x if y`) over `if/else/end` when the line
-  fits within 120 characters.
+- Personal projects: prefer guard clause style (`return x if y`) over `if/else/end` when the line fits within 120 characters.
 - A guard clause is followed by a blank line.
 - No one-line method definitions.
 - No inline variable assignment inside a guard condition.
@@ -50,8 +45,7 @@ and so agents without a RuboCop run available still follow them.
 
 ## Documentation comments
 
-- Work projects use YARD: short docs on classes always, on methods only when complex, never on
-  private methods, no giant `@example` blocks.
+- Work projects use YARD: short docs on classes always, on methods only when complex, never on private methods, no giant `@example` blocks.
 - Personal projects: no doc comments unless a non-obvious "why" needs recording.
 
 ## Examples
