@@ -34,7 +34,7 @@ Ask: "Does this change affect another application: API contract, published event
 
 ## 3. Both scopes: the PR body
 
-1. Find the template: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, or `docs/pull_request_template.md`. None found: continue with an empty template path — the filler still produces the four `## Summary` / `## Why` / `## Implementation` / `## Proof` sections from `intent.md` and `plan.md` alone.
+1. Find the template: `.github/PULL_REQUEST_TEMPLATE.md`, `.github/pull_request_template.md`, `PULL_REQUEST_TEMPLATE.md`, or `docs/pull_request_template.md`. None found: continue with an empty template path — the filler still appends `## Summary` (Problem + Proposed outcome), `## Implementation` (the plan's file list only), and `## Proof` (the plan's acceptance-criteria lines only) from `intent.md` and `plan.md` alone — no `## Why`, and no Order-of-work or per-file unit-test detail.
 2. Run `~/.claude/skills/finish/scripts/fill-pr-template <template-path-or-empty> <folder>/intent.md <folder>/plan.md`. Show the result to the user.
 3. On confirmation: write the filled body to a `mktemp` file outside the repository, and record the PR title — the text after `# Intent:` in `<folder>/intent.md` — for §5. `<folder>` is removed in §4, so both must be captured here, not read again later.
 
