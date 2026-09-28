@@ -80,7 +80,7 @@ class FillPrTemplateTest < Minitest::Test
     - Claims see export progress mid-run → `test/system/claim_export_test.rb` `test_shows_export_progress`
 
     Per changed file, the unit tests expected, named as behaviour:
-    - `app/models/claim.rb`: `#export_status` returns "running" while the export is in progress
+    - `app/models/claim.rb`: `#export_status` returns "running" while the export is in progress, echoing the Proof section's `→`-bearing bullets
 
     Test setup: no new fixtures beyond the existing claim factory.
   MARKDOWN

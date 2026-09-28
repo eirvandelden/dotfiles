@@ -73,8 +73,10 @@ def filler(intent, plan)
 end
 
 def acceptance_criteria(plan)
-  bullets = (section_body(plan, "Proof") || "").lines.grep(/^[-*]\s/)
-  with_arrows = bullets.grep(/→/)
+  proof_lines = (section_body(plan, "Proof") || "").lines
+  criteria_lines = proof_lines.take_while { |line| !line.match?(/^(?:Per changed file|Test setup)/) }
+  bullets = criteria_lines.grep(/^[-*]\s/)
+  with_arrows = bullets.grep(/→\s*`/)
 
   (with_arrows.empty? ? bullets : with_arrows).join.strip
 end
