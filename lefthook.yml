@@ -293,6 +293,7 @@ pre-push:
       fail_text: Run /review, then push again. --no-verify skips this if you must.
 
 # Run installs and migrations after pull
+# The nested runs pass the file list with -z: lefthook splits --files-from-stdin on NUL only.
 post-merge:
   parallel: true
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
@@ -300,7 +301,7 @@ post-merge:
     - rebase
   commands:
     migrations:
-      run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
+      run: git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
 
@@ -310,25 +311,28 @@ post-rewrite:
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
   commands:
     migrations:
-      run: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
+      run: git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
 
 # custom migrations command for running rails migrations
+# Lefthook applies `glob` only when `run` holds a file template (outside pre-commit/pre-push),
+# so each command names {files} in a trailing shell comment: the list filters, it never runs.
+# The quotes keep YAML from reading that `#` as its own comment and dropping the template.
 migrations:
   piped: true
   commands:
     bundle:
       priority: 1
       glob: "Gemfile*"
-      run: if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi
+      run: "if [ -f Gemfile.lock ]; then rv ci; else bundle install; fi # {files}"
     migrate:
       priority: 2
       glob:
         - "db/migrate/*"
         - "db/schema.rb"
-      run: rails db:migrate
+      run: "rails db:migrate # {files}"
     client-dependencies:
       priority: 3
       glob: "{yarn.lock,package-lock.json,package.json}"
-      run: yarn install
+      run: "yarn install # {files}"
