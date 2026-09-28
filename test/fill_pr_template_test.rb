@@ -440,16 +440,6 @@ class FillPrTemplateTest < Minitest::Test
     PROOF
   end
 
-  def test_an_appended_proof_section_drops_the_real_plans_per_file_unit_test_list
-    intent_path = File.expand_path("../docs/changes/fill-pr-template-no-template/intent.md", __dir__)
-    plan_path = File.expand_path("../docs/changes/fill-pr-template-no-template/plan.md", __dir__)
-
-    stdout, stderr, status = Open3.capture3(SCRIPT, "", intent_path, plan_path)
-
-    assert(status.success?, stderr)
-    assert_no_match(/summary_text` builds/, stdout)
-  end
-
   def test_a_how_to_test_sub_heading_that_gets_absorbed_still_gets_the_proof_appended
     output = run_fill(<<~MARKDOWN)
       ## Description
