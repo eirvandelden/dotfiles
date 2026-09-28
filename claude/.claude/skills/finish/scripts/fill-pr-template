@@ -3,10 +3,11 @@
 # either scope. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own template phrasing still gets filled. A
 # heading nothing matches, or whose body is a checkbox list, keeps its own
-# text. Any of the four categories that ends up with no heading filled —
-# no heading matched it, or the one that did is a checkbox list — is
-# appended at the end under its own heading; with no template at all, or
-# no matching heading anywhere, that means all four.
+# text. Any of the three appended categories (Summary, Implementation, Proof)
+# that ends up with no heading filled — no heading matched it, or the one
+# that did is a checkbox list — is appended at the end under its own
+# heading, with trimmed content; with no template at all, or no matching
+# heading anywhere, that means all three.
 CATEGORIES = [
   [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /\bwhy|\bmotivation/i ],
@@ -16,7 +17,6 @@ CATEGORIES = [
 
 APPEND_ORDER = [
   [ :summary, "Summary" ],
-  [ :why, "Why" ],
   [ :implementation, "Implementation" ],
   [ :test, "Proof" ]
 ].freeze
@@ -59,12 +59,33 @@ def joined(*parts)
   parts.compact.reject(&:empty?).join("\n\n")
 end
 
+def summary_text(intent)
+  joined(section_body(intent, "Problem"), section_body(intent, "Proposed outcome"))
+end
+
 def filler(intent, plan)
   {
-    summary: joined(section_body(intent, "Problem"), section_body(intent, "Proposed outcome")),
+    summary: summary_text(intent),
     why: section_body(intent, "Problem") || "",
     implementation: joined(section_body(plan, "Files that change"), section_body(plan, "Order of work")),
     test: section_body(plan, "Proof") || ""
+  }
+end
+
+def acceptance_criteria(plan)
+  proof_lines = (section_body(plan, "Proof") || "").lines
+  criteria_lines = proof_lines.take_while { |line| !line.match?(/^(?:Per changed file|Test setup)/) }
+  bullets = criteria_lines.grep(/^[-*]\s/)
+  with_arrows = bullets.grep(/→\s*`/)
+
+  (with_arrows.empty? ? bullets : with_arrows).join.strip
+end
+
+def appended_filler(intent, plan)
+  {
+    summary: summary_text(intent),
+    implementation: section_body(plan, "Files that change") || "",
+    test: acceptance_criteria(plan)
   }
 end
 
@@ -80,10 +101,10 @@ def choice_list?(body)
   body.match?(CHOICE_LIST)
 end
 
-def appended_sections(fill, filled_categories)
+def appended_sections(appended_fill, filled_categories)
   APPEND_ORDER
-    .reject { |category, _heading| filled_categories.include?(category) || fill[category].to_s.empty? }
-    .map { |category, heading| "## #{heading}\n\n#{fill[category]}" }
+    .reject { |category, _heading| filled_categories.include?(category) || appended_fill[category].to_s.empty? }
+    .map { |category, heading| "## #{heading}\n\n#{appended_fill[category]}" }
     .join("\n\n")
 end
 
@@ -95,7 +116,7 @@ def category_for_section(section)
   choice_list?(section[:body]) ? nil : category_for(section[:title])
 end
 
-def fill_template(template, fill)
+def fill_template(template, fill, appended_fill)
   preamble, sections = parse_sections(template)
   categories = sections.map { |section| category_for_section(section) }
 
@@ -132,7 +153,7 @@ def fill_template(template, fill)
   end
 
   body = (preamble + rebuilt.join).strip
-  joined(body, appended_sections(fill, filled_categories))
+  joined(body, appended_sections(appended_fill, filled_categories))
 end
 
 template_path, intent_path, plan_path = ARGV
@@ -144,7 +165,8 @@ end
 intent = File.read(intent_path)
 plan = File.read(plan_path)
 fill = filler(intent, plan)
+appended_fill = appended_filler(intent, plan)
 
 template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
 
-puts(fill_template(template, fill))
+puts(fill_template(template, fill, appended_fill))
