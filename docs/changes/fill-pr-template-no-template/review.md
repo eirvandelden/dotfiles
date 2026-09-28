@@ -63,3 +63,18 @@ Compliance:
 Criteria to tests: unchanged from round 2. The no-arrow fallback (a spec design decision, not an acceptance criterion) is proved by `test_an_appended_proof_section_keeps_all_bullets_when_none_carry_an_arrow`.
 
 Existing tests: none weakened, skipped, or deleted since round 2. Working tree clean. `ruby test/fill_pr_template_test.rb`: 27 runs, 156 assertions, 0 failures. Rubocop on both touched Ruby files: no offenses.
+
+## Round 4 — 2026-09-28T12:13Z — 840c50eb
+
+Bugs: nothing Important found. The script on this branch's own `intent.md` and `plan.md` now gives a `## Proof` with the six acceptance-criteria bullets only. The per-file bullet is gone.
+
+Security: nothing found.
+
+Compliance:
+
+- [ ] Nit: `spec.md`'s design decision says the lead-in cutoff and the arrow-plus-backtick shape are "two independent signals; either alone would drop that bullet". The second signal does not drop it. A quoted arrow is written `` `→` ``, so the closing backtick comes right after the arrow, and `/→\s*`/` matches. The fixture's per-file bullet (`` `→`-bearing ``) and this branch's `plan.md` per-file bullet (`` `→` is followed ``) both match it. Only the lead-in cutoff drops them. To reproduce: a plan whose Proof has `` - `lib/a.rb`: keeps only the `→`-bearing bullets `` and no "Per changed file" lead-in keeps that bullet. Real plans from the `plan` skill always have the lead-in, so requirement 4 holds. But the spec states a guarantee the code does not give, and no test proves the second signal by itself. Correct the spec sentence, or make the shape exclude a quoted arrow (for example `/(?<!`)→\s*`/`) and add a fixture without the lead-in. — `claude/.claude/skills/finish/scripts/fill-pr-template:80`
+- [ ] Nit: In the fallback path, a hard-wrapped Proof bullet loses its continuation lines, because `grep(/^[-*]\s/)` keeps only the first line of each bullet. `docs/changes/ghostty-shift-enter-newline-followup/plan.md` shows this: each appended bullet ends mid-sentence at "→". Round 1 raised this case. Playbook rule 26 forbids hard-wrapped markdown, so new plans do not have this problem. Older plans do. No decision in `spec.md` records that the loss is accepted. — `claude/.claude/skills/finish/scripts/fill-pr-template:79`
+
+Criteria to tests: unchanged from round 2. The fixture in `test_an_appended_proof_section_drops_the_per_file_unit_test_list_after_its_lead_in` proves the lead-in cutoff. It does not prove the arrow-plus-backtick shape (see the first nit).
+
+Existing tests: none weakened, skipped, or deleted since round 3. Working tree clean. `ruby test/fill_pr_template_test.rb`: 27 runs, 156 assertions, 0 failures. Rubocop on both touched Ruby files: no offenses. `SKILL.md` §3 and `04-finish.md` step 1 match the code.
