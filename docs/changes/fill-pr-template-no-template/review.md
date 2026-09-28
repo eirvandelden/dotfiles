@@ -19,3 +19,30 @@ Compliance:
 - [x] Nit: A Proof bullet that wraps onto an indented second line loses its continuation, because the column-0 filter drops the second line with the nested list. A Proof written with `*` bullets loses every line, and then the Proof heading disappears. The no-hardwrap rule makes the first case rare, but the column-0 rule has no test for either case. — `claude/.claude/skills/finish/scripts/fill-pr-template:78` → fixed (Filter fill-pr-template's Proof by arrow, not indentation)
 
 Existing tests: none weakened, skipped, or deleted. The two renamed tests changed `assert_match(/## Why/)` to `assert_no_match`, as the spec requires. `ruby test/fill_pr_template_test.rb`: 27 runs, 0 failures.
+
+## Round 2 — 2026-09-28T11:40Z — f41c7197
+
+Bugs:
+
+- [ ] Important: `test_an_appended_proof_section_drops_the_real_plans_per_file_unit_test_list` reads `docs/changes/fill-pr-template-no-template/intent.md` and `plan.md`. The `finish` skill runs `git rm -r docs/changes/<slug>` before it pushes, so after `finish` these files do not exist. The script then fails on `File.read`, `status.success?` is false, and the test fails. `.github/workflows/dotfiles-tests.yml:42` runs every `test/*_test.rb`, so CI goes red on the PR and on `main` after merge. `test_an_appended_proof_section_drops_the_per_file_unit_test_list_after_its_lead_in` already proves the same behaviour with the `PLAN_WITH_NESTED_PROOF` fixture, which has the real plan's shape. — `test/fill_pr_template_test.rb:443` →
+
+Security: nothing found.
+
+Compliance:
+
+- [ ] Important: `plan.md`'s Proof maps the "Proof section holds the acceptance-criteria lines only" criterion to `test_an_appended_proof_section_drops_a_nested_per_file_unit_test_list`. No test has that name. The test that proves the criterion is `test_an_appended_proof_section_drops_the_per_file_unit_test_list_after_its_lead_in`. — `docs/changes/fill-pr-template-no-template/plan.md:36` →
+- [ ] Nit: `plan.md` still describes the column-0 rule that round 1 replaced. Order of work step 3 says "keep only lines matching `/^-\s/`". Risks says the per-file list "is written more indented specifically so a column-0-only match is sufficient". The per-file note under Proof says `acceptance_criteria` "drops indented lines". The code and `spec.md` now use the `→` arrow filter. — `docs/changes/fill-pr-template-no-template/plan.md:18` →
+- [ ] Nit: The script's header comment still says "Any of the four categories" and "that means all four". The appended set has three categories now, and it uses trimmed content. — `claude/.claude/skills/finish/scripts/fill-pr-template:6` →
+- [ ] Nit: `04-finish.md` step 1 says the appended Proof holds "the plan's top-level acceptance-criteria lines, not any nested per-file unit-test list". The code keeps bullets that contain `→` and ignores indentation, so a real plan's column-0 per-file list is dropped because it has no arrow, not because it is nested. `SKILL.md` §3 says "acceptance-criteria lines only", which is correct. — `docs/changes/ai-native-workflow/phases/04-finish.md:21` →
+- [ ] Nit: A plan whose Proof bullets have no `→` (older plans, or a hand-written plan) now gets no `## Proof` heading at all, with no warning. The categorized path would still include that Proof. No test covers this case. It may be acceptable, but nothing states the decision. — `claude/.claude/skills/finish/scripts/fill-pr-template:74` →
+
+Criteria to tests:
+
+- Summary holds Problem and Proposed outcome: `test_no_template_produces_three_sections_from_intent_and_plan_alone`.
+- No Why section: `test_no_template_produces_three_sections_from_intent_and_plan_alone`, `test_a_template_with_no_matching_headings_gets_three_sections_appended`.
+- Implementation holds the file list only: `test_no_template_produces_three_sections_from_intent_and_plan_alone`.
+- Proof holds criteria lines only: `test_an_appended_proof_section_drops_the_per_file_unit_test_list_after_its_lead_in`, `test_an_appended_proof_section_keeps_an_asterisk_bullet_with_an_arrow`.
+- No plan Proof means no Proof heading: `test_a_missing_proof_in_the_plan_is_not_appended_as_an_empty_heading`.
+- Categorized path unchanged: `test_a_plain_template_gets_its_matching_headings_filled`, `test_a_matched_testing_heading_still_gets_the_plans_whole_proof_section`.
+
+Existing tests: none weakened, skipped, or deleted. `ruby test/fill_pr_template_test.rb`: 27 runs, 0 failures. Rubocop on both touched Ruby files: no offenses.
