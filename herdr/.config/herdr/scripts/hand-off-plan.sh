@@ -15,24 +15,31 @@ fi
 stage="${1:-}"
 slug="${2:-}"
 
+accepted_then_push="Once Etienne says the literal word \"accepted\" and the skill has committed \
+the artifact, push the branch."
+
 case "$stage" in
   spec)
     model="opus"
     ready_word="Spec ready:"
-    role_instruction="Invoke the spec skill for docs/changes/$slug."
-    acceptance_instruction="Once the skill is done, push the branch."
+    role_instruction="Invoke the spec skill's here backend for docs/changes/$slug; it reads \
+docs/changes/$slug/intent.md, the only context you get."
+    acceptance_instruction="$accepted_then_push"
     ;;
   plan)
     model="opus"
     ready_word="Plan ready:"
-    role_instruction="Invoke the plan skill's Write role for docs/changes/$slug."
-    acceptance_instruction="Once the skill is done, push the branch."
+    role_instruction="Invoke the plan skill's Write role, here backend, for docs/changes/$slug; \
+it reads docs/changes/$slug/intent.md and docs/changes/$slug/spec.md, the only context you get."
+    acceptance_instruction="$accepted_then_push"
     ;;
   implement)
     model="sonnet"
     ready_word="Handoff done:"
-    role_instruction="Invoke the implement skill in here mode for docs/changes/$slug; you are \
-already inside the worktree, so no further pane split is needed."
+    role_instruction="Invoke the implement skill's here backend for docs/changes/$slug; you are \
+already inside the worktree, so no further pane split is needed. It reads \
+docs/changes/$slug/plan.md. Done means all tests green, all linters green, and a self-reviewed \
+diff."
     acceptance_instruction="Once the skill is done, stop there and leave the branch for the \
 review pane and /finish to send onward."
     ;;
@@ -99,7 +106,7 @@ worker="${stage}-${pane//:/-}"
 worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 
 # Pane ids are recycled across sessions, so the file is emptied before the worker can write to it:
-# an initiator must never read a report left by an earlier worker as if it were this one.
+# a coordinator must never read a report left by an earlier worker as if it were this one.
 report="$report_directory/$worker.md"
 : >"$report"
 
@@ -122,14 +129,14 @@ already created at $worker_cwd. Do not invoke worktree-first, and do not create 
 
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
-CLAUDE.md first. Done means all tests green, all linters green, and a self-reviewed diff. Then \
-write what you did, and anything you could not finish, as Markdown to $report. \
-$acceptance_instruction Then report back to the agent that handed this over, with herdr agent \
-prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that file path. \
-Quote the path yourself. That call is rejected while the initiator is blocked on a prompt of its \
-own, so if it fails, wait a few seconds and send it again, at most twelve times. Whether that \
-report line gets through or not, then run herdr pane close \$HERDR_PANE_ID to close your own \
-pane; the report is on disk regardless, so nothing is lost." >/dev/null
+CLAUDE.md first. Then write what you did, and anything you could not finish, as Markdown to \
+$report. $acceptance_instruction Then report back to the agent that handed this over, with \
+herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that \
+file path. Quote the path yourself. That call is rejected while the coordinator is blocked on a \
+prompt of its own, so if it fails, wait a few seconds and send it again, at most twelve times. \
+Whether that report line gets through or not, then run herdr pane close \$HERDR_PANE_ID (your \
+own pane's id from your shell, not the coordinator's id above) to close your own pane; the \
+report is on disk regardless, so nothing is lost." >/dev/null
 
 echo "Handed the $stage stage of docs/changes/$slug to $worker in a pane below. Its report will \
 land in $report."
