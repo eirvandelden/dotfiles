@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# hand-off-plan.sh <plan-file> [<worktree-name>]
+# hand-off-plan.sh <stage> <change-slug>
 #
-# Hands a written plan to a fresh Claude worker in a pane below the caller. With a worktree name,
-# the worktree is created first and the worker starts inside it, already past worktree-first.
+# Hands a stage (spec, plan, or implement) of docs/changes/<change-slug> to a fresh Claude worker
+# in a pane below the caller. The worktree is created first and the worker starts inside it,
+# already past worktree-first.
 
 set -euo pipefail
 
@@ -11,18 +12,46 @@ if [ "${HERDR_ENV:-}" != "1" ] || [ -z "${HERDR_PANE_ID:-}" ]; then
   exit 1
 fi
 
-plan="${1:-}"
-name="${2:-}"
+stage="${1:-}"
+slug="${2:-}"
 
-if [ -z "$plan" ] || [ ! -f "$plan" ]; then
-  echo "Usage: hand-off-plan.sh <plan-file> [<worktree-name>]. Write the plan first; the worker \
-reads only that file." >&2
+case "$stage" in
+  spec)
+    model="opus"
+    ready_word="Spec ready:"
+    role_instruction="Invoke the spec skill for docs/changes/$slug."
+    acceptance_instruction="Once the skill is done, push the branch."
+    ;;
+  plan)
+    model="opus"
+    ready_word="Plan ready:"
+    role_instruction="Invoke the plan skill's Write role for docs/changes/$slug."
+    acceptance_instruction="Once the skill is done, push the branch."
+    ;;
+  implement)
+    model="sonnet"
+    ready_word="Handoff done:"
+    role_instruction="Invoke the implement skill in here mode for docs/changes/$slug; you are \
+already inside the worktree, so no further pane split is needed."
+    acceptance_instruction="Once the skill is done, stop there and leave the branch for the \
+review pane and /finish to send onward."
+    ;;
+  *)
+    echo "Usage: hand-off-plan.sh <stage> <change-slug>. <stage> must be one of spec, plan, \
+implement." >&2
+    exit 1
+    ;;
+esac
+
+if [ -z "$slug" ]; then
+  echo "Usage: hand-off-plan.sh <stage> <change-slug>. The change slug names both the change \
+folder and the worktree." >&2
   exit 1
 fi
 
-# The worker starts in the main checkout, not in the caller's worktree: worktree-first skips
-# itself when it is already inside a linked worktree, which would put a second agent on the
-# caller's own branch and directory.
+# The worker starts in its own worktree off the main checkout, not the caller's worktree:
+# worktree-first skips itself when it is already inside a linked worktree, which would put a
+# second agent on the caller's own branch and directory.
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   echo "Not inside a git repository: the worker has nowhere to create its worktree." >&2
   exit 1
@@ -55,14 +84,10 @@ if ! mkdir -p "$report_directory"; then
   exit 1
 fi
 
-if [ -n "$name" ]; then
-  # --no-pane: this script splits the worker's own pane below, so worktree-create must not also
-  # open one, or the worktree ends up with two panes rooted in it.
-  worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
-  worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$name" --no-pane)
-else
-  worker_cwd="$main_checkout"
-fi
+# --no-pane: this script splits the worker's own pane below, so worktree-create must not also
+# open one, or the worktree ends up with two panes rooted in it.
+worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
+worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$slug" --no-pane)
 
 split=$(herdr pane split --current --direction down --cwd "$worker_cwd" --no-focus)
 pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
@@ -70,7 +95,7 @@ pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
 # uppercase letters (w1:pV), which Herdr's agent names may not, hence the lowercasing. Two ids
 # differing only in case would collide, and Herdr would refuse the duplicate name outright.
-worker="handoff-${pane//:/-}"
+worker="${stage}-${pane//:/-}"
 worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 
 # Pane ids are recycled across sessions, so the file is emptied before the worker can write to it:
@@ -78,28 +103,33 @@ worker=$(printf '%s' "$worker" | tr '[:upper:]' '[:lower:]')
 report="$report_directory/$worker.md"
 : >"$report"
 
-if [ -n "$name" ]; then
-  # worktree-pane is the only thing that calls `herdr pane` for a worktree; label reuses that
-  # instead of renaming the pane here directly.
-  "$worktree_tools/worktree-pane" label "$worker_cwd" "$pane" >/dev/null
-  intro="You are taking over a plan written by another agent. You are already inside your own git \
-worktree, at $worker_cwd; do not invoke worktree-first, and do not create another worktree."
-else
-  intro="You are taking over a plan written by another agent. Invoke the worktree-first skill \
-before writing anything, so all work happens in its own git worktree instead of the main checkout."
-fi
+# worktree-pane is the only thing that calls `herdr pane` for a worktree; label reuses that
+# instead of renaming the pane here directly.
+"$worktree_tools/worktree-pane" label "$worker_cwd" "$pane" >/dev/null
 
-herdr agent start "$worker" --kind claude --pane "$pane" -- --model sonnet >/dev/null
+case "$stage" in
+  plan)
+    herdr agent start "$worker" --kind claude --pane "$pane" -- --model "$model" \
+      --permission-mode plan >/dev/null
+    ;;
+  *)
+    herdr agent start "$worker" --kind claude --pane "$pane" -- --model "$model" >/dev/null
+    ;;
+esac
+
+intro="You are taking over the $stage stage of docs/changes/$slug, in your own git worktree, \
+already created at $worker_cwd. Do not invoke worktree-first, and do not create another worktree."
 
 # No --wait: the caller hands the work over and carries on.
-herdr agent prompt "$worker" "$intro Read $plan in full; it is the only context you get. Read the \
-applicable agents.md and CLAUDE.md, then execute only that plan: do not widen the scope and do not \
-hand the work onward. Done means all tests green, all linters green, and a self-reviewed diff. Then \
-write what you did, and anything you could not finish, as Markdown to $report. Then report back to \
-the agent that handed this over, with herdr agent prompt, sending pane $HERDR_PANE_ID the single \
-line Handoff done: followed by that file path. Quote the path yourself. That call is rejected while \
-the initiator is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
-again, at most twelve times. Then stop and say so in your own pane: the report is on disk and its \
-path was printed when you were started, so nothing is lost." >/dev/null
+herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
+CLAUDE.md first. Done means all tests green, all linters green, and a self-reviewed diff. Then \
+write what you did, and anything you could not finish, as Markdown to $report. \
+$acceptance_instruction Then report back to the agent that handed this over, with herdr agent \
+prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that file path. \
+Quote the path yourself. That call is rejected while the initiator is blocked on a prompt of its \
+own, so if it fails, wait a few seconds and send it again, at most twelve times. Whether that \
+report line gets through or not, then run herdr pane close \$HERDR_PANE_ID to close your own \
+pane; the report is on disk regardless, so nothing is lost." >/dev/null
 
-echo "Handed $plan to $worker in a pane below. Its report will land in $report."
+echo "Handed the $stage stage of docs/changes/$slug to $worker in a pane below. Its report will \
+land in $report."
