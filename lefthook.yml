@@ -319,6 +319,7 @@ post-rewrite:
 # Lefthook applies `glob` only when `run` holds a file template (outside pre-commit/pre-push),
 # so each command passes {files} to the no-op `:`: the list filters, it never runs.
 # Not in a shell comment: a file name ending in a newline would end the comment and run the next line.
+# A very long list (thousands of migrations) is split over several runs; the later runs have nothing left to do.
 migrations:
   piped: true
   commands:
