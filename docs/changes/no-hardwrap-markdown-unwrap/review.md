@@ -17,4 +17,4 @@ Compliance:
 - AC5 Suite green: every `test/*_test.rb` passes, including `test/codex_agent_generation_test.rb`.
 - Proof list: all five commands and the extra structure check were run; none is missing. No existing test was weakened, skipped or deleted. cspell over the 46 changed files reports 0 issues.
 
-- [ ] Nit: `setext` was added to the dictionary, but its only use is `plan.md` in this change folder, which `/finish` removes. After the merge the word has no use in the repository. Consider removing it in the `/finish` commit, or keep it deliberately for later markdown work — `project-dictionary.txt:113` →
+- [x] Nit: `setext` was added to the dictionary, but its only use is `plan.md` in this change folder, which `/finish` removes. After the merge the word has no use in the repository. Consider removing it in the `/finish` commit, or keep it deliberately for later markdown work — `project-dictionary.txt:113` → fixed (Drop the setext dictionary word with the change folder) — lands right after the change-folder removal in `/finish`, because this file and `plan.md` use the word until then
