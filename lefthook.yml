@@ -1,4 +1,7 @@
 ---
+# Without this, `lefthook run` re-syncs hooks into the global core.hooksPath directory and replaces the stowed links.
+no_auto_install: true
+
 pre-commit:
   parallel: true
   commands:
