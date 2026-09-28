@@ -16,7 +16,6 @@ CATEGORIES = [
 
 APPEND_ORDER = [
   [ :summary, "Summary" ],
-  [ :why, "Why" ],
   [ :implementation, "Implementation" ],
   [ :test, "Proof" ]
 ].freeze
@@ -75,7 +74,7 @@ end
 def acceptance_criteria(plan)
   (section_body(plan, "Proof") || "")
     .lines
-    .grep(/^-\s/)
+    .grep(/^[-*]\s.*→/)
     .join
     .strip
 end
@@ -83,7 +82,6 @@ end
 def appended_filler(intent, plan)
   {
     summary: summary_text(intent),
-    why: "",
     implementation: section_body(plan, "Files that change") || "",
     test: acceptance_criteria(plan)
   }

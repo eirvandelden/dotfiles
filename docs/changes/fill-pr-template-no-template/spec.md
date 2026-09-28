@@ -14,7 +14,7 @@ From `intent.md` (2026-09-25). Status: accepted.
 ## Design decisions
 
 - The appended set and the categorized set now source different content for the same three categories (why, implementation, test), so the script computes two separate fill hashes: `fill` (today's full values, used wherever a template heading matches a category) and `appended_fill` (the trimmed values above, used only by `appended_sections`). `appended_filler` builds the second hash directly from `intent`/`plan`, sharing a `summary_text` helper with `filler` so the Summary computation isn't duplicated (ruby-style: extract on the second repetition, target ~5-line methods, one purpose per method).
-- Acceptance-criteria extraction (requirement 4) is line-based: keep only lines from the plan's Proof section that start with `-` at column 0 (no leading whitespace); a nested per-file unit-test list is written more indented and is dropped by the same rule, with no separate "is this indented" case to hand-write.
+- Acceptance-criteria extraction (requirement 4) is content-based, not indentation-based: keep only top-level (column 0) bullet lines from the plan's Proof section that contain a `→` arrow; the bullet marker may be `-` or `*`. A real plan's Proof section (the `plan` skill's own shape) carries a "Per changed file, the unit tests expected, named as behaviour:" lead-in and its per-file bullets, plus a "Test setup:" paragraph, all at column 0 alongside the acceptance-criteria bullets — so a column-0-only filter keeps them too. The arrow is the actual signal; indentation is not.
 - `appended_sections` takes the new `appended_fill` hash in place of the general `fill` hash it reads today; `fill_template`'s categorized replacement keeps reading `fill` unchanged.
 
 ## Integration points
