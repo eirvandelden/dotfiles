@@ -22,3 +22,17 @@ Compliance:
 - Every test in the plan's `## Proof` exists. `test_pull_does_not_overwrite_hook_scripts` was deleted; the plan names this removal and why (it passed on a layout where lefthook refuses by itself), and the three sync tests cover the same behaviour on the real layout, so it is not reported as a weakened test. The `rv_ci_fallback_test.rb` expected strings changed as the plan's Proof says. No unplanned files changed.
 
 - [x] Nit: The three sync tests only assert that the hooks are still links. They also pass if no hook ran at all, for example if the `lefthook` stub or the shim's binary lookup breaks later. An assertion that the hook ran (a stub command in the log, or the puller's `.git/info/lefthook.checksum` state) would keep them from passing without testing anything. — `test/lefthook_global_hooks_sync_test.rb:51` → fixed (Tests: a pulled file name cannot run a command, and the sync tests prove a hook ran)
+
+## Round 2 — 2026-09-28T12:10Z — 1aa21a21
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes from `claude/.claude/skills/new-repo-setup/references/REVIEW.md` were used. State before review: `test/lefthook_*_test.rb` and `test/rv_ci_fallback_test.rb` green on lefthook 2.1.12; `yamllint lefthook.yml` clean. No uncommitted changes.
+
+Security: nothing found. The Round 1 fix holds: `{files}` is now an argument of `:`, and lefthook quotes each name. Probed with lefthook 2.1.12 against `run: ": {files}; echo migrate-ran"` using names that hold `'$(touch P1)'`, a backtick command, `";touch P3;"` and a leading `-e`: no file was created, and the command ran once. The two new tests cover the newline case.
+
+Bugs: nothing Important.
+
+Compliance: every criterion and every test in the plan's `## Proof` still maps as in Round 1; the two Round 1 security tests and `assert_after_pull_hook_ran` exist. No unplanned files changed.
+
+- [ ] Nit: Spec requirement 5 says `bundle` runs only when a root `Gemfile` exists, but the guard sits on the `bundle install` branch only. A pull that deletes `Gemfile` and keeps `Gemfile.lock` still runs `rv ci`. The plan (step 7) chose this on purpose to keep `test_changed_gemfile_lock_triggers_rv_ci` green, so the behaviour is planned; the spec's wording is now wider than what was built. Either narrow requirement 5 to "`bundle install` runs only when …" or note the exception there. — `lefthook.yml:333`
+- [ ] Nit: The lefthook binary lookup (`RV_LEFTHOOK_GLOB`, `env_lefthook_bin`, `path_lefthook_bin`, `locate_native_lefthook`, the skip message) now exists in four test files. Plan step 8 says to share it once a third copy appears. Extract it to a helper under `test/` (separate change is fine). — `test/lefthook_global_hooks_sync_test.rb:10`
+- [ ] Nit: With `{files}` in `run`, lefthook splits a very long file list into several runs of the same command. Probed: 3000 migration names ran `rails db:migrate` once, 6000 ran it twice. The second run is a no-op migrate, so the effect is only time; worth one line in the `lefthook.yml` comment so nobody is surprised. — `lefthook.yml:343`
