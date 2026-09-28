@@ -27,3 +27,27 @@ Nothing found. `$stage` goes through a closed `case`. `$slug` is always quoted w
 - [x] Nit: the self-close instruction puts a literal `$HERDR_PANE_ID` two sentences after the prompt names the coordinator's pane id (`pane w1:p1`). An agent that substitutes the one id it has seen closes the coordinator's pane. Tell it to read its own environment variable, for example "run `herdr pane close "$HERDR_PANE_ID"` in your shell (your own pane's id, not the one above)". — `herdr/.config/herdr/scripts/hand-off-plan.sh:131` → fixed (hand-off-plan.sh: tell each stage pane to invoke its skill's here backend)
 - [x] Nit: "Done means all tests green, all linters green, and a self-reviewed diff" goes to the spec and plan panes too, and they change no code. The line belongs to implement's stage text only. — `herdr/.config/herdr/scripts/hand-off-plan.sh:125` → fixed (hand-off-plan.sh: tell each stage pane to invoke its skill's here backend)
 - [x] Nit: the prompt still calls the coordinator "the initiator" ("rejected while the initiator is blocked"), but the rest of the change, and the ported test name, say "coordinator". — `herdr/.config/herdr/scripts/hand-off-plan.sh:129` → fixed (hand-off-plan.sh: tell each stage pane to invoke its skill's here backend)
+
+## Round 2 — 2026-09-28T14:06Z — d5bd03a3
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; used the defaults from `claude/.claude/skills/new-repo-setup/references/REVIEW.md`. Suite state: `ruby -Itest test/herdr_worker_scripts_test.rb` 44 runs, 0 failures; `test/worktree_pane_test.rb` 20 runs, 0 failures; shellcheck clean. Working tree clean, no uncommitted changes. All round 1 fixes checked against the script and tests: the `here` backend, commit-then-push, self-close wording and restored tests all landed as described.
+
+### Bugs
+
+- [ ] Important: `/finish` step 4 never closes the pane it was written for. A stage pane that "never closed" still has Claude running in it, so herdr lists it with `agent: "claude"` (status `idle` or `done`). `worktree-pane close` skips every pane with a non-nil `agent`, whatever its status — `test_close_skips_panes_with_an_agent_whatever_their_status_and_names_them` proves this. So the step only closes panes where Claude has already exited, and the acceptance criterion "`/finish` … closes that [idle stage] pane" is not met. The spec's own wording ("the same close-if-idle, leave-open-if-an-agent-is-running behavior `worktree-pane close` already implements") contradicts that criterion: `worktree-pane close` has no "idle agent" case. Either the criterion changes to "a pane with no agent left in it", or `worktree-pane close` needs an idle/done case, which the spec ruled out ("no change to the script itself"). — `claude/.claude/skills/finish/SKILL.md:43`
+- [ ] Important: the same step closes panes that are not stage panes. `worktree-pane close "$(git rev-parse --show-toplevel)"` closes every pane in the workspace whose `cwd` is the worktree and that has no agent — for example an editor (nvim) or lazygit pane the user opened in that worktree. `herdr pane close` on an editor with unsaved buffers loses that work. Before this change `finish` closed no panes at all. Limit the close to panes this change's stages opened (for example by the `<stage>-<pane>` name or label `hand-off-plan.sh` gives them), or ask before closing. — `claude/.claude/skills/finish/SKILL.md:43`
+
+### Security
+
+Nothing found. `$stage` goes through a closed `case`; `$slug` is quoted everywhere it reaches `worktree-create`, `herdr` and `worktree-pane`.
+
+### Compliance
+
+- [ ] Important: acceptance criterion "`/finish` on a change that still has an idle stage pane open … closes that pane" has no test and, per the first bug above, is not met. The plan accepted prose-only proof for requirement 10, so the gap was not caught. — `docs/changes/stage-handoffs/spec.md`
+
+### Nits
+
+- [ ] Nit: `plan.md` still says `finish` runs `worktree-pane close .worktrees/<slug>` "if that worktree exists"; commit 2837a4be changed it to `$(git rev-parse --show-toplevel)` without editing `plan.md` in the same commit, as the `implement` skill requires for a departure. — `docs/changes/stage-handoffs/plan.md:11`
+- [ ] Nit: `implement` pane backend step 2 still says "From the repository's main checkout (not a worktree — the worker branches off cleanly from there)". The script now resolves the main checkout itself and reuses `.worktrees/<slug>`, so the reason no longer holds; `spec` and `plan` say the same "run it from the main checkout" without a reason. — `claude/.claude/skills/implement/SKILL.md:19`
+- [ ] Nit: the prompt says only "push the branch". Spec requirement 6 names `git push -u origin <branch>`; a branch `worktree-create` just made has no upstream, so a bare `git push` fails and the agent has to recover. Say `git push -u origin HEAD`. — `herdr/.config/herdr/scripts/hand-off-plan.sh:18`
+- [ ] Nit: spec requirement 6 asks the report to say "what it decided, anything Etienne deferred"; the shared prompt asks for "what you did, and anything you could not finish", which is implement's wording. For spec and plan the decisions and deferrals are the useful part. — `herdr/.config/herdr/scripts/hand-off-plan.sh:132`
