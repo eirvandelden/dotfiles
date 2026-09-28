@@ -4,9 +4,9 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 
-# Two scripts spawn a Claude worker inside the running Herdr session: one hands a
-# plan to a fresh worker in a new tab, one asks a reviewer to look at this branch
-# in a pane beside the caller. A stub `herdr` records the commands they issue.
+# Two scripts spawn a Claude worker inside the running Herdr session: one starts a stage
+# (spec, plan, or implement) in a fresh worker in a new pane, one asks a reviewer to look at
+# this branch in a pane beside the caller. A stub `herdr` records the commands they issue.
 class HerdrWorkerScriptsTest < Minitest::Test
   SCRIPTS = File.expand_path("../herdr/.config/herdr/scripts", __dir__)
   HAND_OFF_PLAN = File.join(SCRIPTS, "hand-off-plan.sh")
@@ -25,47 +25,231 @@ class HerdrWorkerScriptsTest < Minitest::Test
   end
 
   def test_handing_off_outside_herdr_is_refused
-    _, stderr, status = run_script(HAND_OFF_PLAN, plan_file, herdr_env: nil)
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change", herdr_env: nil)
 
     assert_equal(1, status.exitstatus)
     assert_match(/herdr/i, stderr)
   end
 
-  def test_handing_off_a_plan_that_is_not_there_is_refused
-    _, stderr, status = run_script(HAND_OFF_PLAN, File.join(@repo, "missing.md"))
+  def test_an_unrecognized_stage_name_is_refused
+    _, stderr, status = run_script(HAND_OFF_PLAN, "bogus-stage", "some-change")
 
     assert_equal(1, status.exitstatus)
-    assert_match(/plan/i, stderr)
+    assert_match(/stage/i, stderr)
+    assert_empty(herdr_calls)
   end
 
-  def test_handing_off_splits_a_pane_below_here_without_taking_the_screen
-    run_script(HAND_OFF_PLAN, plan_file)
+  def test_refuses_a_missing_change_slug
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/slug|change/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_handing_off_takes_a_stage_and_a_change_slug
+    worktree_creatable!
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert(status.success?, stderr)
+    assert_not_empty(herdr_calls)
+  end
+
+  def test_handing_off_a_spec_stage_splits_a_pane_below_here
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd #{File.realpath(@repo)} --no-focus")
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
   end
 
-  def test_handing_off_starts_claude_on_sonnet_in_the_new_tab
-    run_script(HAND_OFF_PLAN, plan_file)
+  def test_handing_off_a_plan_stage_splits_a_pane_below_here
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
 
     assert_includes(herdr_calls,
-                    "agent start handoff-w1-pv --kind claude --pane w1:pV -- --model sonnet")
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
   end
 
-  def test_the_worker_is_told_to_read_the_plan_and_work_in_its_own_worktree
-    plan = plan_file
+  def test_handing_off_an_implement_stage_splits_a_pane_below_here
+    worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, plan)
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_includes(handoff_prompt, plan)
-    assert_match(/worktree/i, handoff_prompt)
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
   end
 
-  def test_handing_off_reports_where_the_work_went_and_where_its_report_lands
-    stdout, = run_script(HAND_OFF_PLAN, plan_file)
+  def test_the_spec_stage_starts_claude_on_opus
+    worktree_creatable!
 
-    assert_equal(1, stdout.lines.count, stdout)
-    assert_match(/handoff-w1-pv/, stdout)
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(herdr_calls, "agent start spec-w1-pv --kind claude --pane w1:pV -- --model opus")
+  end
+
+  def test_the_plan_stage_starts_claude_on_opus_in_plan_mode
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_includes(herdr_calls,
+                    "agent start plan-w1-pv --kind claude --pane w1:pV -- --model opus " \
+                    "--permission-mode plan")
+  end
+
+  def test_the_implement_stage_starts_claude_on_sonnet
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert_includes(herdr_calls, "agent start implement-w1-pv --kind claude --pane w1:pV -- --model sonnet")
+  end
+
+  def test_names_the_worker_stage_dash_pane
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert(herdr_calls.any? { |call| call.start_with?("agent prompt implement-w1-pv ") },
+           "expected a prompt sent to a worker named implement-w1-pv")
+    assert_includes(herdr_calls, "agent start implement-w1-pv --kind claude --pane w1:pV -- --model sonnet")
+  end
+
+  def test_the_spec_worker_is_told_to_push_after_acceptance
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_match(/skill/i, worker_prompt("spec"))
+    assert_match(/spec/i, worker_prompt("spec"))
+    assert_match(/push/i, worker_prompt("spec"))
+  end
+
+  def test_the_plan_worker_is_told_to_push_after_acceptance
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_match(/skill/i, worker_prompt("plan"))
+    assert_match(/write/i, worker_prompt("plan"))
+    assert_match(/push/i, worker_prompt("plan"))
+  end
+
+  def test_the_implement_worker_is_told_not_to_push
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert_match(/skill/i, worker_prompt("implement"))
+    assert_match(/\bhere\b/i, worker_prompt("implement"))
+    assert_no_match(/push/i, worker_prompt("implement"))
+  end
+
+  def test_the_worker_is_told_to_close_its_own_pane_after_reporting
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(worker_prompt("spec"), "herdr pane close $HERDR_PANE_ID")
+  end
+
+  def test_the_worker_is_told_where_to_report_and_who_to_tell
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(worker_prompt("spec"), report_path("spec-w1-pv"))
+    assert_includes(worker_prompt("spec"), "pane w1:p1")
+    assert(File.directory?(File.dirname(report_path("spec-w1-pv"))),
+           "the worker cannot write a report into a directory that is not there")
+  end
+
+  def test_each_stage_worker_retries_a_busy_coordinator_but_gives_up_eventually
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(worker_prompt("spec"), "at most twelve times")
+  end
+
+  def test_still_resolves_the_caller_to_the_main_checkout_from_a_linked_worktree
+    worktree_creatable!
+    main_checkout = @repo
+    @repo = linked_worktree
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change', checkout: main_checkout)} --no-focus")
+  end
+
+  def test_still_resolves_the_caller_to_the_submodule_checkout
+    worktree_creatable!
+    submodule = add_submodule("child")
+    @repo = submodule
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change', checkout: submodule)} --no-focus")
+  end
+
+  def test_still_resolves_the_caller_to_the_submodules_linked_worktree_checkout
+    worktree_creatable!
+    submodule = add_submodule("child")
+    linked = File.join(submodule, ".worktrees", "one")
+    system("git", "-C", submodule, "worktree", "add", "--quiet", File.join(".worktrees", "one"), "-b", "one",
+           "origin/main") || raise("git worktree add failed")
+    @repo = linked
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change', checkout: submodule)} --no-focus")
+  end
+
+  def test_survives_an_awkward_repository_path_intact
+    @repo = repo_on("main", inside: "o'brien's work files")
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_path_survived(worker_prompt("spec"), report_path("spec-w1-pv"))
+  end
+
+  def test_clears_a_stale_report_left_by_an_earlier_session
+    worktree_creatable!
+    stale = report_path("spec-w1-pv")
+    FileUtils.mkdir_p(File.dirname(stale))
+    File.write(stale, "an earlier worker's notes\n")
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(report_state_at_agent_start, "spec-w1-pv empty")
+  end
+
+  def test_stops_before_spawning_anything_when_the_report_directory_cant_be_created
+    worktree_creatable!
+    git_directory = File.join(@repo, ".git")
+    FileUtils.chmod(0o500, git_directory)
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/report/i, stderr)
+    assert_empty(herdr_calls)
+  ensure
+    FileUtils.chmod(0o700, git_directory)
   end
 
   def test_reviewing_outside_herdr_is_refused
@@ -134,82 +318,6 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
-  def test_handing_off_with_a_worktree_name_starts_the_worker_inside_that_worktree
-    worktree_creatable!
-    worktree = File.join(@repo, ".worktrees", "some-branch")
-
-    run_script(HAND_OFF_PLAN, plan_file, "some-branch")
-
-    assert(File.directory?(worktree), "expected worktree-create to have created #{worktree}")
-    assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd #{File.realpath(worktree)} --no-focus")
-    assert_equal(1, herdr_calls.grep(/\Apane split/).size,
-                 "worktree-create should not have opened a second pane of its own (--no-pane)")
-    assert_includes(herdr_calls, "pane rename w1:pV #{File.basename(@repo)}/some-branch")
-    assert_match(/already/i, handoff_prompt)
-    assert_match(/do not invoke worktree-first/i, handoff_prompt)
-  end
-
-  def test_handing_off_with_a_worktree_name_that_already_exists_starts_the_worker_there
-    worktree_creatable!
-    worktree = File.join(@repo, ".worktrees", "some-branch")
-    git("worktree", "add", "--quiet", worktree, "-b", "some-branch", "origin/main")
-
-    _, stderr, status = run_script(HAND_OFF_PLAN, plan_file, "some-branch")
-
-    assert(status.success?, stderr)
-    assert(File.directory?(worktree))
-    assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd #{File.realpath(worktree)} --no-focus")
-  end
-
-  def test_handing_off_from_a_worktree_sends_the_worker_to_the_main_checkout
-    main_checkout = @repo
-    @repo = linked_worktree
-
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_includes(herdr_calls,
-                    "pane split --current --direction down " \
-                    "--cwd #{File.realpath(main_checkout)} --no-focus")
-  end
-
-  def test_handing_off_from_a_submodule_sends_the_worker_to_the_submodule_checkout
-    submodule = add_submodule("child")
-    @repo = submodule
-
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_includes(herdr_calls,
-                    "pane split --current --direction down " \
-                    "--cwd #{File.realpath(submodule)} --no-focus")
-  end
-
-  def test_handing_off_from_a_linked_worktree_of_a_submodule_sends_the_worker_to_its_checkout
-    submodule = add_submodule("child")
-    linked = File.join(submodule, ".worktrees", "one")
-    system("git", "-C", submodule, "worktree", "add", "--quiet", File.join(".worktrees", "one"), "-b", "one",
-           "origin/main") || raise("git worktree add failed")
-    @repo = linked
-
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_includes(herdr_calls,
-                    "pane split --current --direction down " \
-                    "--cwd #{File.realpath(submodule)} --no-focus")
-  end
-
-  def test_handing_off_outside_a_repository_is_refused_before_a_tab_is_opened
-    @repo = Dir.mktmpdir
-    @extra_dirs << @repo
-
-    _, stderr, status = run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_equal(1, status.exitstatus)
-    assert_match(/repository/i, stderr)
-    assert_empty(herdr_calls)
-  end
-
   def test_reviewing_never_reaches_the_network_itself
     track_origin_head_on("main")
 
@@ -242,15 +350,6 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(stdout, "review.md")
   end
 
-  def test_the_worker_is_told_where_to_report_and_who_to_tell
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_includes(handoff_prompt, report_path("handoff-w1-pv"))
-    assert_includes(handoff_prompt, "pane w1:p1")
-    assert(File.directory?(File.dirname(report_path("handoff-w1-pv"))),
-           "the worker cannot write a report into a directory that is not there")
-  end
-
   def test_reviewing_from_a_worktree_still_reviews_that_branch
     @repo = linked_worktree
 
@@ -268,55 +367,11 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
-  def test_handing_off_without_a_caller_to_report_to_is_refused_before_a_tab_is_opened
-    _, stderr, status = run_script(HAND_OFF_PLAN, plan_file, caller_pane: nil)
-
-    assert_equal(1, status.exitstatus)
-    assert_match(/herdr/i, stderr)
-    assert_empty(herdr_calls)
-  end
-
   def test_the_reviewer_retries_a_busy_caller_but_gives_up_eventually
     run_script(START_REVIEW)
 
     assert_match(/blocked/i, reviewer_prompt)
     assert_includes(reviewer_prompt, "at most twelve times")
-  end
-
-  def test_the_worker_retries_a_busy_initiator_but_gives_up_eventually
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_includes(handoff_prompt, "at most twelve times")
-  end
-
-  def test_an_awkward_repository_path_still_reaches_the_worker_intact
-    @repo = repo_on("main", inside: "o'brien's work files")
-
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_path_survived(handoff_prompt, report_path("handoff-w1-pv"))
-  end
-
-  def test_a_report_left_by_an_earlier_session_is_cleared_before_the_worker_can_write
-    stale = report_path("handoff-w1-pv")
-    FileUtils.mkdir_p(File.dirname(stale))
-    File.write(stale, "an earlier worker's notes\n")
-
-    run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_includes(report_state_at_agent_start, "handoff-w1-pv empty")
-  end
-
-  def test_a_report_directory_that_cannot_be_created_stops_the_handoff_before_anything_is_spawned
-    git_directory = File.join(@repo, ".git")
-    FileUtils.chmod(0o500, git_directory)
-
-    _, _, status = run_script(HAND_OFF_PLAN, plan_file)
-
-    assert_equal(1, status.exitstatus)
-    assert_empty(herdr_calls)
-  ensure
-    FileUtils.chmod(0o700, git_directory)
   end
 
   private
@@ -391,12 +446,6 @@ class HerdrWorkerScriptsTest < Minitest::Test
       raise("git #{arguments.join(' ')} failed")
   end
 
-  def plan_file
-    path = File.join(@repo, "plan.md")
-    File.write(path, "# Plan\n\nDo the thing.\n")
-    path
-  end
-
   # Records what the scripts ask git to do, then hands the call to the real git.
   def install_git_recorder
     recorder = File.join(@stub_bin, "git")
@@ -455,8 +504,31 @@ class HerdrWorkerScriptsTest < Minitest::Test
     @call_log ||= File.join(@stub_bin, "calls.log")
   end
 
-  def handoff_prompt
-    herdr_calls.find { |call| call.start_with?("agent prompt handoff-w1-pv ") }
+  # All three stages split a pane downward, so they share the same pane id from the stub
+  # (w1:pV), and thus the same worker-name pattern: "<stage>-w1-pv".
+  def worker_name(stage)
+    "#{stage}-w1-pv"
+  end
+
+  def worker_prompt(stage)
+    herdr_calls.find { |call| call.start_with?("agent prompt #{worker_name(stage)} ") }
+  end
+
+  def worktree_path(slug, checkout: @repo)
+    path = File.join(checkout, ".worktrees", slug)
+    File.directory?(path) ? File.realpath(path) : path
+  end
+
+  def assert_not(value, message = nil)
+    assert_equal(false, !!value, message)
+  end
+
+  def assert_not_empty(collection, message = nil)
+    assert_not(collection.empty?, message || "expected #{collection.inspect} not to be empty")
+  end
+
+  def assert_no_match(pattern, value, message = nil)
+    assert_not(pattern.match?(value), message || "expected #{value.inspect} not to match #{pattern.inspect}")
   end
 
   def assert_path_survived(prompt, path)
