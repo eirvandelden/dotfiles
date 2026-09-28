@@ -1,7 +1,6 @@
 # Object-Oriented Design — Examples
 
-Illustrated in Ruby for brevity, but framework-free — no Rails/ActiveRecord calls. The same shapes
-apply in any OOP language.
+Illustrated in Ruby for brevity, but framework-free — no Rails/ActiveRecord calls. The same shapes apply in any OOP language.
 
 ## Rich object over anemic model + service layer
 

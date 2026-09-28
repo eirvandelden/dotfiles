@@ -5,22 +5,16 @@ description: Use before writing, generating, or editing code for any new task in
 
 # Worktree First
 
-Never write code or push commits directly from the main checkout open in the current pane.
-Every new coding task gets its own git worktree under `.worktrees/`.
+Never write code or push commits directly from the main checkout open in the current pane. Every new coding task gets its own git worktree under `.worktrees/`.
 
-That means never `git checkout -b`/`git switch -c` a feature branch in the main checkout either
-— that's just working directly on main's disk with extra steps. The main checkout stays on
-whatever branch it's already on; every other branch lives in a worktree.
+That means never `git checkout -b`/`git switch -c` a feature branch in the main checkout either — that's just working directly on main's disk with extra steps. The main checkout stays on whatever branch it's already on; every other branch lives in a worktree.
 
-This skill only handles the git worktree itself. On this machine, a global `git worktree-init`
-alias (symlinks `.env`/`master.key`, wires puma-dev/Caddy) is also available — see Step 2.
+This skill only handles the git worktree itself. On this machine, a global `git worktree-init` alias (symlinks `.env`/`master.key`, wires puma-dev/Caddy) is also available — see Step 2.
 
 ## Skip when
 
 - The task is read-only: answering questions, reviewing a diff, exploring code.
-- Already inside a linked worktree — `[ "$(git rev-parse --git-dir)" != "$(git rev-parse
-  --git-common-dir)" ]` is true. Checking for a literal `.worktrees/` path in the cwd misses
-  worktrees kept elsewhere (e.g. `~/.config/superpowers/worktrees/`).
+- Already inside a linked worktree — `[ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]` is true. Checking for a literal `.worktrees/` path in the cwd misses worktrees kept elsewhere (e.g. `~/.config/superpowers/worktrees/`).
 - The user explicitly asked to work in the main checkout.
 
 ## Step 1: sweep merged worktrees, then create the new one
@@ -54,13 +48,8 @@ Inside herdr, a pane rooted in the new worktree opens below; focus it for the fi
 
 ## Step 3: work, commit, push — all from here
 
-Edits, commits, `git push`, `gh pr create` all run with the worktree as `cwd`. Never `cd` back
-to the main checkout to commit or push. The worktree stays in place until a future task's Step 1
-sweeps it, once its PR merges.
+Edits, commits, `git push`, `gh pr create` all run with the worktree as `cwd`. Never `cd` back to the main checkout to commit or push. The worktree stays in place until a future task's Step 1 sweeps it, once its PR merges.
 
 ## Rails + SQLite projects (Claude Code only)
 
-Also invoke the `using-sqlite-worktrees` skill (superpowers-ruby plugin) after dependency
-install, before running tests — it copies the main checkout's dev/test databases into the new
-worktree. Its script resolves paths via `${CLAUDE_PLUGIN_ROOT}`, so it only works under Claude
-Code even though the plugin files also exist in Codex's cache.
+Also invoke the `using-sqlite-worktrees` skill (superpowers-ruby plugin) after dependency install, before running tests — it copies the main checkout's dev/test databases into the new worktree. Its script resolves paths via `${CLAUDE_PLUGIN_ROOT}`, so it only works under Claude Code even though the plugin files also exist in Codex's cache.

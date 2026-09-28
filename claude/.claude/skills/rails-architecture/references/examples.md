@@ -1,8 +1,6 @@
 # Rails Architecture — Examples
 
-General OOP examples (Tell Don't Ask, Dependency Injection, Composition over Inheritance, Law of
-Demeter) moved to the `object-oriented-design` skill — they aren't Rails-specific. What's below is
-Rails/ActiveRecord-specific mechanics only.
+General OOP examples (Tell Don't Ask, Dependency Injection, Composition over Inheritance, Law of Demeter) moved to the `object-oriented-design` skill — they aren't Rails-specific. What's below is Rails/ActiveRecord-specific mechanics only.
 
 ## Avoid service objects, prefer rich models
 
@@ -159,5 +157,4 @@ def create
 end
 ```
 
-On work projects, the prose line above the tags is optional for a simple action like this — the
-tags alone are enough. Keep the prose line when the action does something non-obvious.
+On work projects, the prose line above the tags is optional for a simple action like this — the tags alone are enough. Keep the prose line when the action does something non-obvious.

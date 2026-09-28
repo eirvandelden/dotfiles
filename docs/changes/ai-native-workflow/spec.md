@@ -37,12 +37,7 @@ Each stage is a fresh session or a fresh context. No stage relies on chat histor
 
 The folder is deleted in its own commit, the last one before the change is handed on. When it was the last folder under `docs/changes/`, that directory goes too — the repository carries no trace of the convention between changes:
 
-- **Both**: by the same `finish` skill (§2). Review complete and nothing open, then the folder is
-  removed, the PR body filled from the artifacts, and the branch pushed with its PR created or
-  updated and opened in the browser — personal then merges from there; at work, colleagues only
-  see the PR once it is flagged for the team, after the artifacts are gone. Team reviewers see
-  the artifacts only through git history. Anyone who looks at the PR earlier sees them; that is
-  accepted.
+- **Both**: by the same `finish` skill (§2). Review complete and nothing open, then the folder is removed, the PR body filled from the artifacts, and the branch pushed with its PR created or updated and opened in the browser — personal then merges from there; at work, colleagues only see the PR once it is flagged for the team, after the artifacts are gone. Team reviewers see the artifacts only through git history. Anyone who looks at the PR earlier sees them; that is accepted.
 
 Kept permanently only as an ADR, and only at work, and only for changes that affect another application (API contracts, published events, shared schemas, anything another team consumes). The finishing skill asks "does this change affect another application?" and, on yes, distils `intent.md` + `spec.md` into an ADR at `docs/adr/NNNN-<slug>.md` in the work repository (Context / Decision / Consequences; numbered sequentially; the folder is created on first use) before deleting the folder.
 

@@ -5,8 +5,7 @@ description: Use when adding, removing, or upgrading a gem, npm package, or any 
 
 # Dependencies and Versioning
 
-Approval comes first: never add or remove a dependency without asking, and the request must
-explain why it is needed and what it does (core playbook, rule 11).
+Approval comes first: never add or remove a dependency without asking, and the request must explain why it is needed and what it does (core playbook, rule 11).
 
 ## Sources
 
@@ -27,8 +26,7 @@ Reference personal gems from GitHub without a version restriction:
 gem "mvpa-css", github: "eirvandelden/mvpa.css"
 ```
 
-They are versioned by git SHA, not semver tags. The same applies to
-`rubocop-eirvandelden`.
+They are versioned by git SHA, not semver tags. The same applies to `rubocop-eirvandelden`.
 
 ## Dependabot
 
@@ -38,5 +36,4 @@ Minimal config, all ecosystems, all update types, cooldown of 1 week.
 
 - Never skip major versions. Rails 6 → 7 → 8, step by step.
 - Fix deprecation warnings as part of the work instead of leaving them behind.
-- Never run `bundle update` for all gems without explicit instruction. Prefer
-  `bundle update <specific-gem>`.
+- Never run `bundle update` for all gems without explicit instruction. Prefer `bundle update <specific-gem>`.
