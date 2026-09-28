@@ -14,7 +14,7 @@ class ReviewReportCheckTest < Minitest::Test
   def setup
     @repo = Dir.mktmpdir
     git("init", "--quiet", "--initial-branch=main")
-    git("commit", "--quiet", "--allow-empty", "-m", "initial")
+    write_and_commit("app/existing.rb", "class Existing; end\n", "initial")
     git("checkout", "--quiet", "-b", "claims-status")
   end
 
@@ -30,15 +30,12 @@ class ReviewReportCheckTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
-  def test_a_change_folder_with_no_review_fails
+  def test_a_change_folder_with_no_code_commits_of_its_own_passes
     write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
 
     _, stderr, status = run_script
 
-    assert_not(status.success?)
-    assert_match(/claims-status/, stderr)
-    assert_match(/no review\.md/i, stderr)
-    assert_match(%r{/review}, stderr)
+    assert(status.success?, stderr)
   end
 
   def test_a_review_committed_after_the_last_code_commit_passes
