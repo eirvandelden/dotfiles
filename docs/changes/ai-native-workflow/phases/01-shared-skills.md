@@ -26,15 +26,13 @@ Later phases add six skills that must exist on both sides. This phase builds the
    - The set of skill names under `agents/.agents/skills/` equals the set under `claude/.claude/skills/`, minus two explicit constants `CLAUDE_ONLY` and `CODEX_ONLY` (both empty to start; adding a name needs a reason in a comment above it).
    - A skill whose Claude frontmatter has `disable-model-invocation: true` has `allow_implicit_invocation: false` in `claude/.claude/skills/<name>/agents/openai.yaml`, and vice versa.
    - `codex/.codex/WORKTREES.md` resolves to `claude/.claude/WORKTREES.md`.
-   - `packages.conf` lists `agents` in both `STOW` and `STOW_SHARED`.
-   Run it; it fails on every count. That is the gap.
+   - `packages.conf` lists `agents` in both `STOW` and `STOW_SHARED`. Run it; it fails on every count. That is the gap.
 
 2. **GREEN — the `agents` package and the three existing skills.** For each of `worktree-first`, `handoff`, `review` (`handoff` is absorbed into `implement` in phase 2 and `review` is rewritten in phase 3; converting them here still proves the mechanism on real files):
    - Diff the Codex `SKILL.md` against the Claude one. Fold any Codex-only sentence into the Claude file under a short `## Codex` heading (the Codex `worktree-first` note about `allow_implicit_invocation: false` is the known case).
    - Move `codex/.codex/skills/<name>/agents/openai.yaml` to `claude/.claude/skills/<name>/agents/openai.yaml` (Claude ignores `agents/`).
    - Create `agents/.agents/skills/<name>` as a relative symlink to `../../../claude/.claude/skills/<name>` (`ln -s`, `git add`); `git rm -r codex/.codex/skills/<name>`.
-   - Do `worktree-first` first: it has no Codex `SKILL.md`, so it is the smallest step. Run the test after each skill. One commit per skill.
-   Then add `agents` to `STOW` (alphabetically, after `1password`) and to `STOW_SHARED` in `packages.conf`; check `install/tasks/50_stow_all.sh` needs no change (it iterates the arrays). Confirm `codex/.codex/skills/` is gone. One commit.
+   - Do `worktree-first` first: it has no Codex `SKILL.md`, so it is the smallest step. Run the test after each skill. One commit per skill. Then add `agents` to `STOW` (alphabetically, after `1password`) and to `STOW_SHARED` in `packages.conf`; check `install/tasks/50_stow_all.sh` needs no change (it iterates the arrays). Confirm `codex/.codex/skills/` is gone. One commit.
 
 3. **GREEN — shared docs.** Merge the Codex-specific paragraph of `codex/.codex/WORKTREES.md` into `claude/.claude/WORKTREES.md` under `## Codex`, then make the Codex file a symlink. `HEADROOM.md`: the two files differ in commands, not intent; make one file with `## Claude` and `## Codex` sections in `claude/.claude/HEADROOM.md` and link the Codex side to it. `codex/.codex/WORKTREES.md` names the old skill path (`codex/.codex/skills/worktree-first/`); the merged text names `agents/.agents/skills/`. Update `codex/.codex/AGENTS.md` only if a path changes (it should not — `~/.codex/HEADROOM.md` still exists after stow).
 
