@@ -14,7 +14,7 @@ class ReviewReportCheckTest < Minitest::Test
   def setup
     @repo = Dir.mktmpdir
     git("init", "--quiet", "--initial-branch=main")
-    git("commit", "--quiet", "--allow-empty", "-m", "initial")
+    write_and_commit("app/existing.rb", "class Existing; end\n", "initial")
     git("checkout", "--quiet", "-b", "claims-status")
   end
 
@@ -30,15 +30,32 @@ class ReviewReportCheckTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
-  def test_a_change_folder_with_no_review_fails
+  def test_a_change_folder_with_no_code_commits_of_its_own_passes
     write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
 
     _, stderr, status = run_script
 
-    assert_not(status.success?)
-    assert_match(/claims-status/, stderr)
-    assert_match(/no review\.md/i, stderr)
-    assert_match(%r{/review}, stderr)
+    assert(status.success?, stderr)
+  end
+
+  def test_a_change_folder_passes_when_origin_head_is_dangling
+    git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
+
+    _, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
+  def test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point
+    write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
+    git("checkout", "--quiet", "main")
+    write_and_commit("app/other.rb", "class Other; end\n", "advance main")
+    git("checkout", "--quiet", "claims-status")
+
+    _, stderr, status = run_script
+
+    assert(status.success?, stderr)
   end
 
   def test_a_review_committed_after_the_last_code_commit_passes
@@ -72,6 +89,18 @@ class ReviewReportCheckTest < Minitest::Test
 
     assert_not(status.success?)
     assert_match(%r{app/claims\.rb}, stderr)
+  end
+
+  def test_a_code_commit_on_the_branch_itself_still_requires_a_review
+    write_and_commit("docs/changes/claims-status/intent.md", "# Intent\n", "add intent")
+    write_and_commit("app/claims.rb", "class Claims; end\n", "touch code")
+
+    _, stderr, status = run_script
+
+    assert_not(status.success?)
+    assert_match(/touch code/, stderr)
+    assert_match(/no review\.md/i, stderr)
+    assert_match(%r{/review}, stderr)
   end
 
   def test_an_uncommitted_edit_inside_the_folder_only_passes
