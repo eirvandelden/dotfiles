@@ -85,6 +85,26 @@ class FillPrTemplateTest < Minitest::Test
     Test setup: no new fixtures beyond the existing claim factory.
   MARKDOWN
 
+  PLAN_WITH_PROOF_WITHOUT_ARROWS = <<~MARKDOWN
+    # Plan: Claims status export
+
+    Status: accepted.
+
+    ## Files that change
+
+    `app/models/claim.rb`: adds `#export_status`.
+
+    ## Order of work
+
+    1. Write the acceptance test, watch it fail.
+    2. Add `#export_status`.
+
+    ## Proof
+
+    - Claims adjusters see export status
+    - Claims see export progress mid-run
+  MARKDOWN
+
   def setup
     @dir = Dir.mktmpdir
   end
@@ -437,6 +457,16 @@ class FillPrTemplateTest < Minitest::Test
     assert_equal(<<~PROOF.strip, proof)
       - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
       - Claims see export progress mid-run → `test/system/claim_export_test.rb` `test_shows_export_progress`
+    PROOF
+  end
+
+  def test_an_appended_proof_section_keeps_all_bullets_when_none_carry_an_arrow
+    output = run_fill(nil, plan: PLAN_WITH_PROOF_WITHOUT_ARROWS)
+
+    proof = output[/## Proof\n\n(.*)\z/m, 1]&.strip
+    assert_equal(<<~PROOF.strip, proof)
+      - Claims adjusters see export status
+      - Claims see export progress mid-run
     PROOF
   end
 
