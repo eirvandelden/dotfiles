@@ -51,23 +51,26 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
 
   def test_pull_in_dotfiles_repo_keeps_global_hooks_linked
     setup_git_repos(own_config: true)
-    push_file("README.md", "changed")
+    push_file("yarn.lock", "# yarn lockfile v1\n")
     pull_in_puller
+    assert_after_pull_hook_ran
     assert_global_hooks_linked
   end
 
   def test_rebase_in_dotfiles_repo_keeps_global_hooks_linked
     setup_git_repos(own_config: true)
     commit_locally_in_puller("local.rb", "# local\n")
-    push_file("README.md", "changed")
+    push_file("yarn.lock", "# yarn lockfile v1\n")
     pull_in_puller
+    assert_after_pull_hook_ran
     assert_global_hooks_linked
   end
 
   def test_pull_in_repo_without_own_config_keeps_global_hooks_linked
     setup_git_repos(own_config: false)
-    push_file("README.md", "changed")
+    push_file("yarn.lock", "# yarn lockfile v1\n")
     pull_in_puller
+    assert_after_pull_hook_ran
     assert_global_hooks_linked
   end
 
@@ -166,6 +169,11 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
       "LEFTHOOK_VERBOSE" => nil,
       "LEFTHOOK_BIN" => NATIVE_LEFTHOOK.to_s
     }
+  end
+
+  def assert_after_pull_hook_ran
+    log = File.exist?(@log_file) ? File.read(@log_file) : ""
+    assert_match(/yarn install/, log, "The after-pull hook did not run, so the hooks were never put at risk")
   end
 
   def assert_global_hooks_linked

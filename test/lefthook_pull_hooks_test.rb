@@ -123,6 +123,18 @@ class LefthookPullHooksTest < Minitest::Test
     refute_command_ran("rv ci")
   end
 
+  def test_pulled_gemfile_name_with_a_command_on_a_new_line_does_not_run_it
+    push_file("Gemfile\ntouch PWNED\n", "")
+    pull_in_puller
+    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
+  end
+
+  def test_pulled_migration_name_with_a_command_on_a_new_line_does_not_run_it
+    push_file("db/migrate/a\ntouch PWNED\n", "")
+    pull_in_puller
+    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
+  end
+
   def test_pull_deleting_root_gemfile_does_not_bundle_install
     push_file("Gemfile", "source \"https://rubygems.org\"\n")
     pull_in_puller
