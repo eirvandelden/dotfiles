@@ -22,6 +22,11 @@ From `intent.md` (2026-09-25). Status: accepted.
 - Resolve the base branch once, at the top of the script, the same way `folder` and
   `folder_in_head?` already gate early exits — a missing base branch is not fatal to the whole
   script.
+- Base resolution mirrors `start-review.sh`'s own order: local `origin/HEAD` first, then local
+  `main`, then local `master`.
+- A stale `origin/<default>` (not fetched since a rebase onto a newer local `main`), or a
+  stacked branch resolving against `origin/HEAD` instead of its parent branch, both make the
+  check more conservative — extra refusals, never a missed one.
 
 ## Integration points
 
@@ -36,9 +41,12 @@ From `intent.md` (2026-09-25). Status: accepted.
   gaining a further commit after the branch point, passes with no `review.md`.
 - The same branch, once it adds a code commit of its own with no `review.md`, fails.
 - The same branch, once `review.md` is added after that code commit, passes.
-- The six existing cases in `test/review_report_check_test.rb` stay green (they use a single
-  branch off `main` with no further `main` commits, so the merge-base and `HEAD` history
-  coincide there).
+- Five of the six existing cases in `test/review_report_check_test.rb` stay green unchanged
+  (they use a single branch off `main` with no further `main` commits, so the merge-base and
+  `HEAD` history coincide there). The sixth, `test_a_change_folder_with_no_review_fails`,
+  asserted the exact bug this change fixes; renamed to
+  `test_a_change_folder_with_no_code_commits_of_its_own_passes` and its assertion inverted to
+  success, confirmed with the user before changing it.
 
 ---
 Domain skills applied: None (dotfiles tooling, not Rails/Ruby-on-Rails domain code).
