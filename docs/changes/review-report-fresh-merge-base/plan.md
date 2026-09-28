@@ -2,8 +2,6 @@
 
 From `intent.md` and `spec.md` (2026-09-28). Status: accepted.
 
-Reproduction: committed.
-
 ## Context
 
 `git/.config/git/worktree-tools/review-report-fresh` (the `lefthook.yml` pre-push hook) refuses

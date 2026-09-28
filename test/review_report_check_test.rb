@@ -71,6 +71,17 @@ class ReviewReportCheckTest < Minitest::Test
     assert_match(%r{app/claims\.rb}, stderr)
   end
 
+  def test_a_code_commit_on_the_branch_itself_still_requires_a_review
+    write_and_commit("docs/changes/claims-status/intent.md", "# Intent\n", "add intent")
+    write_and_commit("app/claims.rb", "class Claims; end\n", "touch code")
+
+    _, stderr, status = run_script
+
+    assert_not(status.success?)
+    assert_match(/touch code/, stderr)
+    assert_match(/no review\.md/i, stderr)
+  end
+
   def test_an_uncommitted_edit_inside_the_folder_only_passes
     write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
     write_and_commit("app/claims.rb", "class Claims; end\n", "touch code")
