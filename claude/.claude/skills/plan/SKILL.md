@@ -9,6 +9,23 @@ Three roles. Do only the one asked for.
 
 ## Write
 
+### Choosing a backend
+
+- No argument, `HERDR_ENV` set: pane backend. A fresh agent with an empty context reads only the committed `intent.md` and `spec.md` — no chat history from the coordinator crosses into the interrogation.
+- `here`, or `HERDR_ENV` unset: run in this session instead. Outside herdr this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
+
+### Pane backend
+
+```bash
+~/.config/herdr/scripts/hand-off-plan.sh plan <slug>
+```
+
+Run it from the repository's main checkout. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there already in plan mode (`--permission-mode plan`), rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>`. Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
+
+The pane writes `plan.md`, and once Etienne says "accepted", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Plan ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
+
+### `here` backend
+
 Must run in plan mode — this is where the codebase gets read and the approach gets decided, so nothing is edited until the user accepts. Not already in plan mode: call `EnterPlanMode` before reading code (Codex: tell the user to run `/plan` first; there is no equivalent tool call).
 
 1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<folder>/intent.md` and `<folder>/spec.md`; refuse and say why if either is not `Status: accepted`.
@@ -47,7 +64,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
    ```
 
    `## Proof` is structured, not prose: one line per acceptance criterion naming the test file and test name that proves it, then per changed file the unit tests expected. Step 1 of `## Order of work` is always the first failing acceptance test, run, watched fail — the walking skeleton.
-4. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, `implement handoff`, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
+4. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, a fresh worker pane, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
 5. Before offering acceptance, ask the user at least one interrogation question — "what could break", "what did you reject", "what's riskiest" — so the plan gets challenged before it is frozen.
 6. For anything non-trivial, offer a second-model critique (below) before acceptance.
 7. `Status: accepted` only on the user's literal word "accepted" — never on "looks fine" or "ok". Writing a plan is not permission to implement it; deliver the plan and stop.
@@ -68,4 +85,4 @@ This role exists for a plan handed over outside the artifact chain (a plan paste
 
 ## Codex
 
-Same three roles. `plan` role needs Codex's own plan mode (`/plan`); `critique` role is what `codex -p terra` is for.
+Same three roles. `plan` role needs Codex's own plan mode (`/plan`); `here` is the only backend, since Codex has no herdr pane of its own. `critique` role is what `codex -p terra` is for.
