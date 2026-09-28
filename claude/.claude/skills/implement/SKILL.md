@@ -24,7 +24,7 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
    ~/.config/herdr/scripts/hand-off-plan.sh implement <slug>
    ```
 
-   The script creates `.worktrees/<slug>` if it does not exist yet — the `intent` skill usually already has — splits a pane below the caller, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`.
+   The script creates `.worktrees/<slug>` if it does not exist yet — the `intent` skill usually already has — splits a pane below the caller, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 3. Tell the user which worker took it and where its report will land. The work is now theirs: do not start on it, and do not check up on it unless asked.
 
 ### When the worker finishes

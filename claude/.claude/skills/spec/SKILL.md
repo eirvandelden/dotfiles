@@ -23,6 +23,8 @@ Turns an accepted `intent.md` into requirements a plan can be built from. Reads 
 
 Run it from the repository's main checkout. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. Tell the user which worker took the spec stage and where its report will land, then carry on: the interview that follows is that pane's own.
 
+`<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
+
 The pane writes `spec.md`, and once Etienne says "accepted", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Spec ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
 
 ## `here` backend
@@ -73,7 +75,7 @@ Flag conflicts your domain skills raise against each other or against the playbo
 
 ### 4. Accept
 
-Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's "accepted", flip it.
+Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted", flip it, then commit `spec.md` alone: `docs: spec for <slug>`.
 
 ## Codex
 
