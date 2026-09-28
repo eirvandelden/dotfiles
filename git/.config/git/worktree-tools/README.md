@@ -135,10 +135,8 @@ stow:
    - `worktree-setup` - Main orchestration (detect → config → stow → puma-dev)
    - `worktree-setup-all` - Bulk setup for all worktrees
    - `worktree-remove` - Cleanup (remove puma-dev, unstow packages)
-   - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>`
-     off `origin`'s default branch; prints its path
-   - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or
-     rename the herdr pane rooted in a worktree
+   - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>` off `origin`'s default branch; prints its path
+   - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or rename the herdr pane rooted in a worktree
 
 3. **Explicit Git Command**
    - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path
@@ -313,18 +311,14 @@ git worktree remove feature-auth
 
 ### URL Naming Pattern
 
-- **Every worktree of a project:** `https://myproject.localhost` — one URL per project, shared
-  by the main worktree and every linked worktree. Whichever worktree's puma-dev entry was
-  written most recently is what the URL proxies to.
+- **Every worktree of a project:** `https://myproject.localhost` — one URL per project, shared by the main worktree and every linked worktree. Whichever worktree's puma-dev entry was written most recently is what the URL proxies to.
 - **Conductor personal AI workspace:** `https://ai.myproject.localhost`
 
 ### Port Assignment
 
 - **Conductor personal AI scripts:** Fixed port `3010`
 - **Main worktree:** Uses base port from config (default: 3000)
-- **Feature worktrees:** Uses hash-based stable port offset (base + hash % 1000) — this stays
-  per-worktree even though the URL doesn't, so multiple worktrees' dev servers can still run
-  concurrently on distinct ports without clashing.
+- **Feature worktrees:** Uses hash-based stable port offset (base + hash % 1000) — this stays per-worktree even though the URL doesn't, so multiple worktrees' dev servers can still run concurrently on distinct ports without clashing.
 
 ### How It Works
 
