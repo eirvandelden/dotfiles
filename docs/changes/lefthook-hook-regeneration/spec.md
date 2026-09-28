@@ -13,7 +13,7 @@ From `intent.md` (2026-09-25). Status: accepted.
 2. After a pull or a rebase, each hook in the global hooks directory is still the link that stow made, and the file it points to is unchanged.
 3. The tests reproduce the real machine layout that let lefthook write: `core.hooksPath` set in `~/.config/git/config`, a separate `~/.gitconfig` present, and the hooks as links to tracked shims. Without the fix, the regression tests fail on that layout.
 4. Each `migrations` command runs only when a pulled or rebased file matches its glob.
-5. `bundle` runs only when a `Gemfile` exists at the repository root, the same way `brakeman` already checks for `config/application.rb`. This covers a pull that deletes the Gemfile.
+5. `bundle install` runs only when a `Gemfile` exists at the repository root, the same way `brakeman` already checks for `config/application.rb`. This covers a pull that deletes the Gemfile. A root `Gemfile.lock` still runs `rv ci` without a `Gemfile`, as `test_changed_gemfile_lock_triggers_rv_ci` expects.
 6. Everything that already works keeps working: a changed `Gemfile.lock` still runs `rv ci`, a new migration or changed `db/schema.rb` still runs `rails db:migrate`, a changed `yarn.lock` or `package-lock.json` still runs `yarn install`, and a repository with its own lefthook config still ignores the global defaults.
 
 ## Design decisions
