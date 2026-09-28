@@ -126,38 +126,56 @@ class HerdrWorkerScriptsTest < Minitest::Test
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
+    prompt = worker_prompt("spec")
 
-    assert_match(/skill/i, worker_prompt("spec"))
-    assert_match(/spec/i, worker_prompt("spec"))
-    assert_match(/push/i, worker_prompt("spec"))
+    assert_includes(prompt, "spec skill's here backend")
+    assert_includes(prompt, "docs/changes/some-change/intent.md")
+    assert_told_accepted_then_committed_then_pushed(prompt)
   end
 
   def test_the_plan_worker_is_told_to_push_after_acceptance
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
+    prompt = worker_prompt("plan")
 
-    assert_match(/skill/i, worker_prompt("plan"))
-    assert_match(/write/i, worker_prompt("plan"))
-    assert_match(/push/i, worker_prompt("plan"))
+    assert_includes(prompt, "plan skill's Write role, here backend")
+    assert_includes(prompt, "docs/changes/some-change/intent.md")
+    assert_includes(prompt, "docs/changes/some-change/spec.md")
+    assert_told_accepted_then_committed_then_pushed(prompt)
   end
 
   def test_the_implement_worker_is_told_not_to_push
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "implement", "some-change")
+    prompt = worker_prompt("implement")
 
-    assert_match(/skill/i, worker_prompt("implement"))
-    assert_match(/\bhere\b/i, worker_prompt("implement"))
-    assert_no_match(/push/i, worker_prompt("implement"))
+    assert_includes(prompt, "implement skill's here backend")
+    assert_includes(prompt, "docs/changes/some-change/plan.md")
+    assert_no_match(/push/i, prompt)
+  end
+
+  def test_done_means_wording_is_only_in_the_implement_stage
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert_no_match(/done means/i, worker_prompt("spec"))
+    assert_no_match(/done means/i, worker_prompt("plan"))
+    assert_match(/done means/i, worker_prompt("implement"))
   end
 
   def test_the_worker_is_told_to_close_its_own_pane_after_reporting
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
+    prompt = worker_prompt("spec")
 
-    assert_includes(worker_prompt("spec"), "herdr pane close $HERDR_PANE_ID")
+    assert_includes(prompt, "herdr pane close $HERDR_PANE_ID")
+    assert_includes(prompt, "not the coordinator's id above")
   end
 
   def test_the_worker_is_told_where_to_report_and_who_to_tell
@@ -175,8 +193,11 @@ class HerdrWorkerScriptsTest < Minitest::Test
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
+    prompt = worker_prompt("spec")
 
-    assert_includes(worker_prompt("spec"), "at most twelve times")
+    assert_includes(prompt, "at most twelve times")
+    assert_includes(prompt, "coordinator")
+    assert_no_match(/initiator/i, prompt)
   end
 
   def test_still_resolves_the_caller_to_the_main_checkout_from_a_linked_worktree
@@ -250,6 +271,60 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   ensure
     FileUtils.chmod(0o700, git_directory)
+  end
+
+  def test_handing_off_outside_a_repository_is_refused_before_a_pane_is_opened
+    @repo = Dir.mktmpdir
+    @extra_dirs << @repo
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/repository/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_handing_off_without_a_caller_to_report_to_is_refused_before_a_pane_is_opened
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change", caller_pane: nil)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/herdr/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_handing_off_reuses_an_existing_worktree_on_the_matching_branch
+    worktree_creatable!
+    worktree = File.join(@repo, ".worktrees", "some-change")
+    git("worktree", "add", "--quiet", worktree, "-b", "some-change", "origin/main")
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert(status.success?, stderr)
+    assert(File.directory?(worktree))
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd " \
+                    "#{File.realpath(worktree)} --no-focus")
+  end
+
+  def test_handing_off_refuses_when_the_worktree_exists_on_a_different_branch
+    worktree_creatable!
+    worktree = File.join(@repo, ".worktrees", "some-change")
+    git("worktree", "add", "--quiet", worktree, "-b", "unrelated-branch", "origin/main")
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/some-change/, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_handing_off_reports_where_the_work_went_and_where_its_report_lands
+    worktree_creatable!
+
+    stdout, = run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_equal(1, stdout.lines.count, stdout)
+    assert_match(/spec-w1-pv/, stdout)
   end
 
   def test_reviewing_outside_herdr_is_refused
@@ -529,6 +604,17 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   def assert_no_match(pattern, value, message = nil)
     assert_not(pattern.match?(value), message || "expected #{value.inspect} not to match #{pattern.inspect}")
+  end
+
+  def assert_told_accepted_then_committed_then_pushed(prompt)
+    accepted_at = prompt =~ /accepted/i
+    committed_at = prompt =~ /commit/i
+    pushed_at = prompt =~ /push/i
+
+    assert(accepted_at && committed_at && pushed_at,
+           "expected \"accepted\", \"commit\" and \"push\" all in #{prompt.inspect}")
+    assert(accepted_at < committed_at && committed_at < pushed_at,
+           "expected accepted, then commit, then push, in that order, in #{prompt.inspect}")
   end
 
   def assert_path_survived(prompt, path)
