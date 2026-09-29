@@ -36,7 +36,7 @@ class RubocopFallbackTest < Minitest::Test
   RUBY
 
   def setup
-    skip(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
+    skip_unless_ci(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
 
     @project = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(@project, "test"))
@@ -68,6 +68,10 @@ class RubocopFallbackTest < Minitest::Test
     File.join(@project, FIXTURE_PATH)
   end
 
+  def skip_unless_ci(message)
+    ENV["CI"] ? flunk(message) : skip(message)
+  end
+
   def inspected_paths(report)
     report.fetch("files").map { |file| file.fetch("path") }
   end
@@ -77,13 +81,14 @@ class RubocopFallbackTest < Minitest::Test
   end
 
   # Exit status 1 means offenses were found, which is the behaviour under test and must never
-  # skip. Only status 2, RuboCop failing to load the config or its plugins, skips. Anything on
-  # stderr otherwise, such as a cop crashing, fails.
+  # skip. Only status 2, RuboCop failing to load the config or its plugins, skips, and only
+  # outside CI, since CI installs RuboCop and its plugins. Anything on stderr otherwise, such as a
+  # cop crashing, fails.
   def run_fallback(*options)
     stdout, stderr, status = Open3.capture3(
       RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, FIXTURE_PATH, chdir: @project
     )
-    skip("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
+    skip_unless_ci("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
 
     assert_empty(stderr)
     JSON.parse(stdout)
