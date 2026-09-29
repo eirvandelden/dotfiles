@@ -44,7 +44,7 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
 
 - The worktree has no root `.rubocop.yml`, so RuboCop uses `~/.rubocop.yml`, which links to the main checkout's `rubocop/.rubocop.yml`. Until this branch merges, that config still has both cops on. Run every commit and push in the worktree with `RUBOCOP_OPTS="-c /Users/etienne.vandelden/Developer/dotfiles/.worktrees/rubocop-refute-methods/rubocop/.rubocop.yml"`. Without it, pre-commit rewrites `refute` into `assert_not` again. Checked on 2026-09-29: `RUBOCOP_OPTS="-c <file>"` overrides the config.
 - The reproduction test is committed before the fix. So `test/rubocop_fallback_test.rb` itself must not call `refute`, `refute_*` or `assert !`. The fixture code lives in a string, which RuboCop does not lint.
-- `intent.md` is `Type: bugfix`. After the reproduction commit, `plan.md` carries `Reproduction: committed` and the test guard refuses every edit under `test/`. The helper cleanup (order-of-work steps 3-4) edits 13 test files, so it runs as a second `test-writer` pass after the config fix is green. It needs Etienne's approval to remove the `Reproduction: committed` line first.
+- `intent.md` is `Type: bugfix`. After the reproduction commit, `plan.md` ends with the reproduction marker line, and the test guard refuses every edit under `test/`. The helper cleanup (order-of-work steps 3-4) edits 13 test files, so it runs as a second `test-writer` pass after the config fix is green. It needs Etienne's approval to remove that marker line first.
 
 ## Risks
 
