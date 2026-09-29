@@ -34,7 +34,7 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
    3. Run `rubocop <file>` and confirm it is clean, which also proves the fallback no longer rewrites it.
    4. Commit on green, one small commit per file or per few files.
 4. `editor_test.rb` and `lefthook_pull_hooks_test.rb`: rewrite the domain helper bodies too. Check that each helper can still fail, once, by hand:
-   1. Temporarily change one `assert_not_logged(/neovide/)` pattern to one the log does match (for example `/nvim/`), For `refute_command_ran`, the only call (line 111) is in a test where no command runs, so change `assert_command_ran("rails db:migrate")` at line 56 to `refute_command_ran` instead.
+   1. Temporarily change one `assert_not_logged(/neovide/)` pattern to one the log does match (for example `/nvim/`). For `refute_command_ran`, the only call (line 111) is in a test where no command runs, so change `assert_command_ran("rails db:migrate")` at line 56 to `refute_command_ran` instead.
    2. Watch each test fail.
    3. Revert. Never commit the change.
 5. Run the full suite as CI does: `for f in test/*_test.rb; do ruby -Itest "$f" || break; done`. Run `rubocop` on every touched `.rb` file. Re-read the full diff against `origin/main`.
