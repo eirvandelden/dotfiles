@@ -237,8 +237,11 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "intent", "some-change")
 
-    assert_includes(worker_prompt("intent"),
-                    "HERDR_PANE_ID=w1:p1 ~/.config/herdr/scripts/hand-off-plan.sh spec some-change")
+    prompt = worker_prompt("intent")
+
+    assert_no_match(/hand-off-plan\.sh/, prompt)
+    assert_includes(prompt, "Your coordinator's pane id is w1:p1")
+    assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
 
   def test_the_spec_worker_is_told_to_start_the_plan_stage_after_accepting
@@ -246,8 +249,11 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
-    assert_includes(worker_prompt("spec"),
-                    "HERDR_PANE_ID=w1:p1 ~/.config/herdr/scripts/hand-off-plan.sh plan some-change")
+    prompt = worker_prompt("spec")
+
+    assert_no_match(/hand-off-plan\.sh/, prompt)
+    assert_includes(prompt, "Your coordinator's pane id is w1:p1")
+    assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
 
   def test_the_plan_worker_is_told_to_start_the_implement_stage_after_accepting
@@ -255,8 +261,11 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_includes(worker_prompt("plan"),
-                    "HERDR_PANE_ID=w1:p1 ~/.config/herdr/scripts/hand-off-plan.sh implement some-change")
+    prompt = worker_prompt("plan")
+
+    assert_no_match(/hand-off-plan\.sh/, prompt)
+    assert_includes(prompt, "Your coordinator's pane id is w1:p1")
+    assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
 
   def test_the_implement_worker_is_not_told_to_start_a_next_stage
@@ -264,7 +273,10 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_no_match(/hand-off-plan\.sh/, worker_prompt("implement"))
+    prompt = worker_prompt("implement")
+
+    assert_no_match(/hand-off-plan\.sh/, prompt)
+    assert_no_match(/coordinator's pane id/, prompt)
   end
 
   def test_the_spec_worker_is_told_to_note_a_failed_chain_call_in_its_report
@@ -273,7 +285,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, "spec", "some-change")
     prompt = worker_prompt("spec")
 
-    assert_match(/if that command fails/i, prompt)
+    assert_match(/if starting the next stage fails/i, prompt)
     assert_includes(prompt, "your own report file")
   end
 

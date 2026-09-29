@@ -117,7 +117,7 @@ if ! mkdir -p "$report_directory"; then
   exit 1
 fi
 
-# --no-pane: this script splits the worker's own pane below, so worktree-create must not also
+# --no-pane: this script splits the worker's own pane, so worktree-create must not also
 # open one, or the worktree ends up with two panes rooted in it.
 worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
 worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$slug" --no-pane)
@@ -145,15 +145,13 @@ herdr agent start "$worker" --kind claude --pane "$pane" -- --model "$model" >/d
 intro="You are taking over the $stage stage of docs/changes/$slug, in your own git worktree, \
 already created at $worker_cwd. Do not invoke worktree-first, and do not create another worktree."
 
-# Reuses the same $HERDR_PANE_ID already captured for the report-to instruction below: the
-# chained stage must report to the coordinator, not to this pane, which closes itself right
-# after starting it.
+# The skill's Accept step owns the chain, so the prompt only names the coordinator: the chained
+# stage must report to it, not to this pane, which closes itself right after starting that stage.
 chain_instruction=""
 if [ -n "$next_stage" ]; then
-  chain_instruction=" Once accepted and pushed, before you report back, start the next stage \
-yourself: run HERDR_PANE_ID=$HERDR_PANE_ID ~/.config/herdr/scripts/hand-off-plan.sh $next_stage \
-$slug. If that command fails, add one line to your own report file saying so and why, before \
-sending the report line below."
+  chain_instruction=" Your coordinator's pane id is $HERDR_PANE_ID; the skill's Accept step starts \
+the next stage with HERDR_PANE_ID set to that id. If starting the next stage fails, add one line \
+to your own report file saying so and why, before sending the report line below."
 fi
 
 # No --wait: the caller hands the work over and carries on.
