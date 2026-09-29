@@ -70,7 +70,7 @@ active_row_bg = "#d5d2c8"
 overlay0      = "#d5d2c8"
 
 [ui.toast]
-delivery = "system"
+delivery = "terminal"
 
 [ui.sidebar.agents]
 # The tab and agent tokens are drawn with overlay0, which the pane borders use too — so overlay0
