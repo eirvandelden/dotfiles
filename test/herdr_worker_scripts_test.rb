@@ -131,6 +131,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "spec skill's here backend")
     assert_includes(prompt, "docs/changes/some-change/intent.md")
     assert_told_accepted_then_committed_then_pushed(prompt)
+    assert_includes(prompt, "git push -u origin HEAD")
   end
 
   def test_the_plan_worker_is_told_to_push_after_acceptance
@@ -143,6 +144,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "docs/changes/some-change/intent.md")
     assert_includes(prompt, "docs/changes/some-change/spec.md")
     assert_told_accepted_then_committed_then_pushed(prompt)
+    assert_includes(prompt, "git push -u origin HEAD")
   end
 
   def test_the_implement_worker_is_told_not_to_push
@@ -154,6 +156,24 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "implement skill's here backend")
     assert_includes(prompt, "docs/changes/some-change/plan.md")
     assert_no_match(/push/i, prompt)
+  end
+
+  def test_the_spec_and_plan_workers_report_what_was_decided_and_deferred
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_includes(worker_prompt("spec"), "what spec.md decided and anything Etienne deferred")
+    assert_includes(worker_prompt("plan"), "what plan.md decided and anything Etienne deferred")
+  end
+
+  def test_the_implement_worker_keeps_the_what_you_did_wording
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert_includes(worker_prompt("implement"), "what you did, and anything you could not finish")
   end
 
   def test_done_means_wording_is_only_in_the_implement_stage

@@ -16,7 +16,7 @@ stage="${1:-}"
 slug="${2:-}"
 
 accepted_then_push="Once Etienne says the literal word \"accepted\" and the skill has committed \
-the artifact, push the branch."
+the artifact, push the branch (git push -u origin HEAD)."
 
 case "$stage" in
   spec)
@@ -25,6 +25,8 @@ case "$stage" in
     role_instruction="Invoke the spec skill's here backend for docs/changes/$slug; it reads \
 docs/changes/$slug/intent.md, the only context you get."
     acceptance_instruction="$accepted_then_push"
+    report_instruction="Then write what spec.md decided and anything Etienne deferred, as \
+Markdown to"
     ;;
   plan)
     model="opus"
@@ -32,6 +34,8 @@ docs/changes/$slug/intent.md, the only context you get."
     role_instruction="Invoke the plan skill's Write role, here backend, for docs/changes/$slug; \
 it reads docs/changes/$slug/intent.md and docs/changes/$slug/spec.md, the only context you get."
     acceptance_instruction="$accepted_then_push"
+    report_instruction="Then write what plan.md decided and anything Etienne deferred, as \
+Markdown to"
     ;;
   implement)
     model="sonnet"
@@ -42,6 +46,8 @@ docs/changes/$slug/plan.md. Done means all tests green, all linters green, and a
 diff."
     acceptance_instruction="Once the skill is done, stop there and leave the branch for the \
 review pane and /finish to send onward."
+    report_instruction="Then write what you did, and anything you could not finish, as Markdown \
+to"
     ;;
   *)
     echo "Usage: hand-off-plan.sh <stage> <change-slug>. <stage> must be one of spec, plan, \
@@ -129,8 +135,8 @@ already created at $worker_cwd. Do not invoke worktree-first, and do not create 
 
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
-CLAUDE.md first. Then write what you did, and anything you could not finish, as Markdown to \
-$report. $acceptance_instruction Then report back to the agent that handed this over, with \
+CLAUDE.md first. $report_instruction $report. $acceptance_instruction Then report back to the \
+agent that handed this over, with \
 herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that \
 file path. Quote the path yourself. That call is rejected while the coordinator is blocked on a \
 prompt of its own, so if it fails, wait a few seconds and send it again, at most twelve times. \
