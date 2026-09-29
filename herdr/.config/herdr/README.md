@@ -77,4 +77,4 @@ Either way, the files only exist at these paths once the `herdr` package is stow
 
 ## Worker scripts
 
-`scripts/hand-off-plan.sh <stage> <change-slug>` starts a named stage (`spec`, `plan`, or `implement`) of a change in a fresh Claude worker, in a pane below the caller, rooted in the change's worktree. `scripts/start-review.sh` asks a reviewer to look at the current branch in a pane beside it. Both refuse to run outside a herdr pane. They are covered by `test/herdr_worker_scripts_test.rb`.
+`scripts/hand-off-plan.sh <stage> <change-slug>` starts a named stage (`intent`, `spec`, `plan`, or `implement`) of a change in a fresh Claude worker, in a pane split from the caller — below, except `spec`, which splits to the right — rooted in the change's worktree. Every stage but `implement` starts the next one itself once its artifact is accepted. `scripts/start-review.sh` asks a reviewer to look at the current branch in a pane beside it. Both refuse to run outside a herdr pane. They are covered by `test/herdr_worker_scripts_test.rb`.

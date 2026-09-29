@@ -20,7 +20,7 @@ Three roles. Do only the one asked for.
 ~/.config/herdr/scripts/hand-off-plan.sh plan <slug>
 ```
 
-Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there already in plan mode (`--permission-mode plan`), rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>`. Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
+Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>` — and, in the same prompt, to write `plan.md` and touch nothing else in that worktree until Etienne says the literal word "accepted." Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 
@@ -69,7 +69,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 4. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, a fresh worker pane, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
 5. Before offering acceptance, ask the user at least one interrogation question — "what could break", "what did you reject", "what's riskiest" — so the plan gets challenged before it is frozen.
 6. For anything non-trivial, offer a second-model critique (below) before acceptance.
-7. `Status: accepted` only on the user's literal word "accepted" — never on "looks fine" or "ok". On that word, commit `plan.md` alone: `docs: plan for <slug>`. Writing a plan is not permission to implement it; deliver the plan and stop.
+7. `Status: accepted` only on the user's literal word "accepted" — never on "looks fine" or "ok". On that word, commit `plan.md` alone: `docs: plan for <slug>`. Inside herdr (`HERDR_ENV` set), also start the implement stage yourself, in its own fresh pane: `~/.config/herdr/scripts/hand-off-plan.sh implement <slug>`; if that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop here. Either way, writing a plan is not permission for *this session* to implement it — deliver the plan and stop; the implementing, if it happens, happens in that other pane.
 
 ## Critique
 

@@ -3,7 +3,7 @@ name: spec
 description: Use once intent.md is accepted, before any plan or code — turns the accepted intent into requirements, design decisions and testable acceptance criteria at docs/changes/<slug>/spec.md, in a fresh pane by default.
 arguments:
   - name: backend
-    description: "(default) a fresh Opus pane rooted in the change's worktree via hand-off-plan.sh; \"here\": interview and write in this session instead."
+    description: "(default) a fresh Sonnet pane to the right of the change's worktree via hand-off-plan.sh; \"here\": interview and write in this session instead."
 ---
 
 # Spec
@@ -21,7 +21,7 @@ Turns an accepted `intent.md` into requirements a plan can be built from. Reads 
 ~/.config/herdr/scripts/hand-off-plan.sh spec <slug>
 ```
 
-Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. Tell the user which worker took the spec stage and where its report will land, then carry on: the interview that follows is that pane's own.
+Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane to the right of the caller, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. Tell the user which worker took the spec stage and where its report will land, then carry on: the interview that follows is that pane's own.
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 
@@ -75,7 +75,7 @@ Flag conflicts your domain skills raise against each other or against the playbo
 
 ### 4. Accept
 
-Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted", flip it, then commit `spec.md` alone: `docs: spec for <slug>`.
+Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted", flip it, then commit `spec.md` alone: `docs: spec for <slug>`. Inside herdr (`HERDR_ENV` set), also start the plan stage yourself: `~/.config/herdr/scripts/hand-off-plan.sh plan <slug>`; if that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop here.
 
 ## Codex
 
