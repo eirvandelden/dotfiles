@@ -48,7 +48,7 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
 
 ## Risks
 
-- **CI never runs the new test.** `.github/workflows/dotfiles-tests.yml` installs only `minitest`, so the test skips there. You accepted this in the spec (flagged concern 2). The skip message must say why, so a skip is never read as a pass.
+- **CI plugin versions float.** `.github/workflows/dotfiles-tests.yml` installs the latest RuboCop and plugins (added 2026-09-29 on Etienne's instruction), the same as `install/tasks/40_install_default_ruby_gems.sh` does on every machine. A new plugin release can change results in CI before it reaches a local machine. The test still skips on exit status 2, so a plugin that fails to load shows as a skip in the CI log, not a pass.
 - **Skip check too loose.** If the test skips on any non-zero exit, a real offense (exit status 1) could turn into a skip. Only exit status 2 (RuboCop could not load the config) or a missing binary may skip. Exit status 1 must fail.
 - **Behaviour change in the rewrite.** The local `assert_not(v)` is `assert_equal(false, !!v)`, which fails in exactly the cases where `refute(v)` fails. The only difference is the failure message. Accepted.
 - **Ruby version.** CI runs Ruby 3.4, locally 4.0. Plain Minitest `refute` / `refute_match` behave the same on both.
@@ -57,7 +57,6 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
 ## Out of scope
 
 - `rubocop-eirvandelden` (separate repo) and the `dotfiles-work` repo.
-- The CI workflow.
 - `Rails/IndexBy`, `Rails/IndexWith` and any other Rails cop.
 - Running stow again, which is not needed: `~/.rubocop.yml` already links to the source file.
 

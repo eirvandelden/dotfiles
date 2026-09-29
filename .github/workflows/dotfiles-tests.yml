@@ -16,6 +16,11 @@ jobs:
         with:
           ruby-version: "3.4"
       - run: gem install minitest --no-document
+      # rubocop_fallback_test.rb runs RuboCop with rubocop/.rubocop.yml, which loads these plugins.
+      # Latest releases, as install/tasks/40_install_default_ruby_gems.sh installs on every machine.
+      - run: >-
+          gem install --no-document rubocop rubocop-rails-omakase rubocop-capybara rubocop-minitest
+          rubocop-obsession rubocop-packaging rubocop-performance rubocop-rails rubocop-rspec rubocop-yard
       # editor_test.rb, rv_ci_fallback_test.rb and secrets_loader_test.rb source zsh scripts.
       - run: sudo apt-get update && sudo apt-get install -y zsh
       - name: Install lefthook
