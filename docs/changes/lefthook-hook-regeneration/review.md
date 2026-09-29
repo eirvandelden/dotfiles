@@ -58,3 +58,15 @@ Security: nothing found. `{files}` is still only an argument of `:` in the three
 Compliance: every criterion and every Proof test still maps as in Round 1; no unplanned files changed.
 
 - [x] Nit: The lefthook on this machine, the one the tests found (`~/.local/share/rv/gems/ruby/4.0.0/bin/lefthook`), reports version `2.1.2`, but `spec.md`, `plan.md` and Rounds 1–3 say the tests ran on 2.1.12. The spec also says CI "pins" that version; `.github/workflows/dotfiles-tests.yml` fetches `releases/latest` (the plan's Risks section says so correctly). Correct the version number and change "the version CI pins" to "CI installs the latest release" in the spec, so the PR report names the version the tests were red and green on. — `docs/changes/lefthook-hook-regeneration/spec.md` (Integration points) → fixed (Spec: name both lefthook versions the tests ran on, and that CI installs the latest)
+
+## Round 5 — 2026-09-29T13:04Z — cb211819
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes from `claude/.claude/skills/new-repo-setup/references/REVIEW.md` were used. Scope: the full branch diff against `origin/main`; new since Round 4 is `cb211819` (spec wording and the Round 4 checkbox only). State before review: `test/lefthook_*_test.rb` and `test/rv_ci_fallback_test.rb` green (41 runs, 0 failures, 0 skips) on lefthook 2.1.2 from `which lefthook`; `yamllint lefthook.yml` clean. No 2.1.12 binary is on this machine and `LEFTHOOK_BIN` is unset, so the spec's 2.1.12 red/green claim was not re-run here. No uncommitted changes. `origin/main` moved to `30cf94dd` (branch base still `d3eada23`); it changed only `herdr/.config/herdr/config.toml` and `test/herdr_config_test.rb`, no file this branch touches, so a rebase before push has no conflict to expect.
+
+Bugs: nothing found.
+
+Security: nothing found. `{files}` is still only an argument of `:` in the three `migrations` commands.
+
+Compliance: the Round 4 nit is closed as reported: the spec now names 2.1.12 and 2.1.2 and says CI installs the latest release, which matches `.github/workflows/dotfiles-tests.yml`. Every criterion and every Proof test still maps as in Round 1; no unplanned files changed.
+
+- [ ] Nit: `plan.md` still describes the `{files}`-in-a-shell-comment form that Round 1 found unsafe. The Risks section says "In a trailing shell comment they are never executed", which is the claim Round 1 disproved, and Context ends with "YAML also reads an unquoted trailing ` # {files}` as its own comment, so those `run` values are quoted". The code and the Round 1 Proof line use `: {files}`. Update both sentences so the plan does not state the unsafe form as safe. — `docs/changes/lefthook-hook-regeneration/plan.md:47`, `docs/changes/lefthook-hook-regeneration/plan.md:17`
