@@ -8,7 +8,7 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: you are about to type a request that would change code — a bug, a feature, a refactor, a config change. Personal or work.
 
-**Habit**: say `/intent` first (or "write the intent") and answer the questions, one at a time. Give the issue number if there is one. Do not describe the solution; describe what someone cannot do today and what better looks like. Accept the file before anything else happens. Small change? Still an intent — three lines is a valid intent. `/intent handoff <slug-or-issue>` moves the interview to a fresh Opus pane below instead, when you would rather keep this session free. Either way, saying "accepted" also starts the spec stage on its own — no separate `/spec` needed.
+**Habit**: say `/intent` first (or "write the intent") and answer the questions, one at a time. Give the issue number if there is one. Do not describe the solution; describe what someone cannot do today and what better looks like. Accept the file before anything else happens. Small change? Still an intent — three lines is a valid intent. `/intent handoff <slug-or-issue>` moves the interview to a fresh Opus pane below instead, when you would rather keep this session free. Either way, inside herdr, saying "accepted" also starts the spec stage on its own — no separate `/spec` needed.
 
 **Backing**: the `intent` skill creates the worktree through `worktree-first` when needed and writes `docs/changes/<branch-slug>/intent.md`. Playbook §7.17 says "no code before an accepted intent and plan".
 
@@ -109,9 +109,9 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Cue**: two independent tasks, both planned.
 
-**Habit**: two worktrees, two sessions, each from its own `plan.md`, each through `implement handoff`. Not three until two feels boring. Review capacity, not agent capacity, is the limit.
+**Habit**: two worktrees, two sessions, each from its own `plan.md`, each through `/implement`. Not three until two feels boring. Review capacity, not agent capacity, is the limit.
 
-**Backing**: `worktree-first`, `implement handoff` sending each plan to its own pane, herdr panes.
+**Backing**: `worktree-first`, `/implement` sending each plan to its own pane, herdr panes.
 
 **Replaces**: one long session doing everything in sequence, or five sessions you cannot follow.
 
