@@ -21,7 +21,7 @@ Turns an accepted `intent.md` into requirements a plan can be built from. Reads 
 ~/.config/herdr/scripts/hand-off-plan.sh spec <slug>
 ```
 
-Run it from the repository's main checkout. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. Tell the user which worker took the spec stage and where its report will land, then carry on: the interview that follows is that pane's own.
+Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. Tell the user which worker took the spec stage and where its report will land, then carry on: the interview that follows is that pane's own.
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 

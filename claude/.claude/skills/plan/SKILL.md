@@ -20,7 +20,7 @@ Three roles. Do only the one asked for.
 ~/.config/herdr/scripts/hand-off-plan.sh plan <slug>
 ```
 
-Run it from the repository's main checkout. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there already in plan mode (`--permission-mode plan`), rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>`. Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
+Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there already in plan mode (`--permission-mode plan`), rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>`. Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 

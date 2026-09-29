@@ -18,7 +18,7 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
 ## Pane backend
 
 1. `plan.md` must be `Status: accepted`; if it is not, or the folder does not exist yet, say "run `/plan` first" and stop.
-2. From the repository's main checkout (not a worktree — the worker branches off cleanly from there):
+2. Run it from anywhere inside the repository:
 
    ```bash
    ~/.config/herdr/scripts/hand-off-plan.sh implement <slug>
