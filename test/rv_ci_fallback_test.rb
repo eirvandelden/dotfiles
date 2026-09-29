@@ -115,7 +115,7 @@ class RvCiFallbackTest < Minitest::Test
       SH
     )
 
-    assert_no_match(/chnode_auto/, output)
+    refute_match(/chnode_auto/, output)
   end
 
   def test_paths_registers_directory_hooks_without_startup_errors
@@ -324,14 +324,6 @@ class RvCiFallbackTest < Minitest::Test
         right_value
       end
     end
-  end
-
-  def assert_no_match(pattern, value)
-    assert_not(pattern.match?(value), "Expected #{value.inspect} to not match #{pattern.inspect}")
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 
   def write_stub_homebrew_command(name, body)

@@ -137,7 +137,7 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(%r{app/models/claim\.rb}, output)
     assert_match(/Write the acceptance test/, output)
     assert_match(/test_shows_export_status/, output)
-    assert_no_match(/_describe what this changes_/, output)
+    refute_match(/_describe what this changes_/, output)
   end
 
   def test_a_checkbox_style_templates_prose_headings_get_filled_but_its_checkboxes_stay
@@ -234,7 +234,7 @@ class FillPrTemplateTest < Minitest::Test
     MARKDOWN
 
     assert_match(/test_shows_export_status/, output)
-    assert_no_match(/prose to absorb/, output)
+    refute_match(/prose to absorb/, output)
     assert_match(/### Type of change/, output)
     assert_match(/- \[ \] Bug fix/, output)
     assert_match(/- \[ \] Feature/, output)
@@ -297,7 +297,7 @@ class FillPrTemplateTest < Minitest::Test
 
     filled_section = output[/## How has this been tested\?\n\n(.*?)\n\n##/m, 1]
     assert_match(/test_shows_export_status/, filled_section)
-    assert_no_match(%r{app/models/claim\.rb}, filled_section)
+    refute_match(%r{app/models/claim\.rb}, filled_section)
   end
 
   def test_a_filled_section_ends_with_a_blank_line_before_the_next_heading
@@ -392,7 +392,7 @@ class FillPrTemplateTest < Minitest::Test
       _flag or migration to coordinate_
     MARKDOWN
 
-    assert_no_match(/# run this\necho hello/, output)
+    refute_match(/# run this\necho hello/, output)
     assert_match(/flag or migration to coordinate/, output)
   end
 
@@ -405,7 +405,7 @@ class FillPrTemplateTest < Minitest::Test
 
     assert_match(/\A## Screenshots\n\n_attach screenshots here_/, output)
     assert_match(/## Summary/, output)
-    assert_no_match(/## Why/, output)
+    refute_match(/## Why/, output)
     assert_match(/## Implementation/, output)
     assert_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
@@ -415,12 +415,12 @@ class FillPrTemplateTest < Minitest::Test
     output = run_fill(nil)
 
     assert_match(/\A## Summary/, output)
-    assert_no_match(/## Why/, output)
+    refute_match(/## Why/, output)
     assert_match(/## Implementation/, output)
     assert_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(/export status appears on the claim page/, output)
-    assert_no_match(/Write the acceptance test/, output)
+    refute_match(/Write the acceptance test/, output)
     assert_match(%r{app/models/claim\.rb}, output)
     assert_match(/test_shows_export_status/, output)
   end
@@ -532,7 +532,7 @@ class FillPrTemplateTest < Minitest::Test
     MARKDOWN
 
     assert_match(/## Implementation/, output)
-    assert_no_match(/## Proof/, output)
+    refute_match(/## Proof/, output)
   end
 
   private
@@ -551,13 +551,5 @@ class FillPrTemplateTest < Minitest::Test
     path = File.join(@dir, name)
     File.write(path, content)
     path
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
-  end
-
-  def assert_no_match(pattern, value, message = nil)
-    assert_not(pattern.match?(value), message || "Expected #{value.inspect} not to match #{pattern.inspect}")
   end
 end

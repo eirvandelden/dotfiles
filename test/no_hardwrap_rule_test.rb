@@ -172,7 +172,7 @@ class NoHardwrapRuleTest < Minitest::Test
     _stdout, stderr, _status = check("line one\\\nline two\nline three\n")
 
     assert_match(/:2 .*no-hardwrap.*join lines 2–3 into one line/, stderr)
-    assert_no_match(/join lines 1–/, stderr)
+    refute_match(/join lines 1–/, stderr)
   end
 
   def test_unwrapping_does_not_leave_a_double_space_after_trailing_whitespace
@@ -222,7 +222,7 @@ class NoHardwrapRuleTest < Minitest::Test
 
     _stdout, stderr, _status = Open3.capture3({ "HOME" => home }, MARKDOWNLINT, file)
 
-    assert_no_match(/MD013/, stderr)
+    refute_match(/MD013/, stderr)
   ensure
     FileUtils.rm_rf(home)
   end
@@ -244,13 +244,5 @@ class NoHardwrapRuleTest < Minitest::Test
     file = write_markdown(content)
     Open3.capture3(MARKDOWNLINT, "--config", UNWRAP_CONFIG_PATH, "--rules", RULE_PATH, "--fix", file)
     file
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
-  end
-
-  def assert_no_match(pattern, value, message = nil)
-    assert_not(pattern.match?(value), message || "Expected #{value.inspect} not to match #{pattern.inspect}")
   end
 end
