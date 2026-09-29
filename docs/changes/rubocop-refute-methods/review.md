@@ -24,3 +24,26 @@ Findings:
 - [ ] Nit: the offense test can pass without RuboCop ever inspecting the fixture. `run_fallback` only skips on exit status 2 and discards stderr otherwise, so a RuboCop run that prints nothing to stdout for any other reason (a cop crash reported on stderr, the file being excluded) gives an empty offense list and a green test. The RED step showed it failing before the fix, so it works today; an assertion that the fixture was inspected would keep it from going vacuous later — `test/rubocop_fallback_test.rb:68` →
 - [ ] Nit: the autocorrect test compares the whole fixture file, so any other fallback cop that autocorrects the fixture in the future (for example a frozen-string-literal or style cop) fails it with a message that looks like the Rails assertion bug coming back — `test/rubocop_fallback_test.rb:54` →
 - [ ] Nit: sentence break typo in plan step 4.1: "(for example `/nvim/`), For `refute_command_ran`" — `docs/changes/rubocop-refute-methods/plan.md:37` →
+
+## Round 2 — 2026-09-29T15:05Z — 4a5e1a36
+
+Suite state: every `test/*_test.rb` green except the known local-only failures in `test/lefthook_pull_hooks_test.rb`. `test/rubocop_fallback_test.rb`: 2 runs, 13 assertions, 0 skips. `rubocop -c rubocop/.rubocop.yml test/rubocop_fallback_test.rb`: no offenses.
+
+Round 1 nits:
+
+- Nit 1 (vacuous offense test) resolved by `2b3b9943`: the JSON report must list exactly `test/sample_test.rb` as inspected, and stderr must be empty, so an excluded file or a cop crash now fails the test.
+- Nit 2 (whole-file comparison) resolved by `2b3b9943`: the autocorrect test checks only that the three assertion lines survive.
+- Nit 3 (plan typo) resolved by `b39aa867`.
+
+CI step (`4a5e1a36`): the `gem install` line covers everything `rubocop/.rubocop.yml` loads — `inherit_gem: rubocop-rails-omakase` (whose own `plugins:` are `rubocop-performance` and `rubocop-rails`, both installed too) and all eight entries under `plugins:`. Nothing missing.
+
+Bugs: nothing found beyond the findings below.
+
+Security: nothing found. The new step installs gems from rubygems.org without version pins, which the plan records as an accepted risk.
+
+Compliance: the acceptance criteria and `## Proof` tests are unchanged from round 1 and still pass. Spec concern 2 and the plan's Risks and Out of scope sections are updated to match the workflow change. No test weakened, skipped or deleted.
+
+Findings:
+
+- [ ] Nit: the workflow comment says the list matches what `install/tasks/40_install_default_ruby_gems.sh` installs on every machine, but `RUBY_GEMS` in `packages.conf` has no `rubocop-minitest` (and has `rubocop-factory_bot` and `rubocop-rspec_rails`, which CI does not install). The CI list is the correct one for the fallback; the comment is not accurate. The missing `rubocop-minitest` in `packages.conf` means a fresh machine cannot load the fallback, which is a separate change for another branch — `.github/workflows/dotfiles-tests.yml:20` →
+- [ ] Nit: now that CI installs the plugins, the exit-status-2 skip means a plugin that fails to load in CI leaves the job green with only a skip line in the log, so CI stops checking the fallback without anyone seeing it. The plan records this as accepted; noting it because the tradeoff changed when the workflow step was added — `test/rubocop_fallback_test.rb:86` →
