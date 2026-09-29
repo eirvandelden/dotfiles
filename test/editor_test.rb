@@ -116,7 +116,7 @@ class EditorTest < Minitest::Test
 
     result = run_script(@editor, "file.txt", env: no_editor_env)
 
-    assert_not result[:status].success?
+    refute result[:status].success?
     assert_match(/neither neovide nor nvim found/, result[:stderr])
   end
 
@@ -125,7 +125,7 @@ class EditorTest < Minitest::Test
 
     result = run_script(@editor_wait, "file.txt", env: no_editor_env)
 
-    assert_not result[:status].success?
+    refute result[:status].success?
     assert_match(/neither neovide nor nvim found/, result[:stderr])
   end
 
@@ -146,8 +146,8 @@ class EditorTest < Minitest::Test
 
     assert_match(/^export EDITOR='editor'/, content)
     assert_match(/^export VISUAL='editor'/, content)
-    assert_no_match(/EDITOR='e'/, content)
-    assert_no_match(/VISUAL='nano'/, content)
+    refute_match(/EDITOR='e'/, content)
+    refute_match(/VISUAL='nano'/, content)
   end
 
   # 9. Git config uses the stowed editor-wait executable for core and rebase sequencing.
@@ -181,7 +181,7 @@ class EditorTest < Minitest::Test
 
     result = run_hosts
 
-    assert_not result[:status].success?
+    refute result[:status].success?
     assert_equal 2, log_contents.lines.count
   end
 
@@ -196,7 +196,7 @@ class EditorTest < Minitest::Test
 
     result = run_hosts
 
-    assert_not result[:status].success?
+    refute result[:status].success?
     assert_equal 1, log_contents.lines.count
   end
 
@@ -208,7 +208,7 @@ class EditorTest < Minitest::Test
     run_hosts
 
     temporary_copy = log_contents.lines.first.split.last
-    assert_not File.exist?(temporary_copy)
+    refute File.exist?(temporary_copy)
   ensure
     FileUtils.rm_f(temporary_copy) if temporary_copy
   end
@@ -299,15 +299,7 @@ class EditorTest < Minitest::Test
   end
 
   def assert_not_logged(pattern)
-    assert_no_match(pattern, log_contents,
+    refute_match(pattern, log_contents,
       "Expected log NOT to match #{pattern.inspect}. Log:\n#{log_contents}")
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
-  end
-
-  def assert_no_match(pattern, value, message = nil)
-    assert_not(pattern.match?(value), message || "Expected #{value.inspect} not to match #{pattern.inspect}")
   end
 end
