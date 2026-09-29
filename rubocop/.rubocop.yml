@@ -74,12 +74,13 @@ Performance/StringReplacement:
 Performance/UnfreezeString:
   Enabled: true
 
-Rails/AssertNot: # Prefer assert_not over assert !
-  Include:
-    - '**/test/**/*'
-Rails/RefuteMethods: # Prefer assert_not_x over refute_x
-  Include:
-    - '**/test/**/*'
+# rubocop-rails-omakase turns these on for test/**/*, and they rewrite plain Minitest
+# refute / assert ! into ActiveSupport-only assert_not / assert_no_match. Rails projects
+# get them from rubocop-eirvandelden's config/rails.yml.
+Rails/AssertNot:
+  Enabled: false
+Rails/RefuteMethods:
+  Enabled: false
 Rails/IndexBy:
   Enabled: true
 Rails/IndexWith:
