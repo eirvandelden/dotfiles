@@ -56,13 +56,23 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_not_empty(herdr_calls)
   end
 
-  def test_handing_off_a_spec_stage_splits_a_pane_below_here
+  def test_handing_off_an_intent_stage_splits_a_pane_below_here
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction down --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
+  end
+
+  def test_handing_off_a_spec_stage_splits_a_pane_to_the_right
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change')} --no-focus")
   end
 
@@ -86,22 +96,29 @@ class HerdrWorkerScriptsTest < Minitest::Test
                     "#{worktree_path('some-change')} --no-focus")
   end
 
-  def test_the_spec_stage_starts_claude_on_opus
+  def test_the_intent_stage_starts_claude_on_opus
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+
+    assert_includes(herdr_calls, "agent start intent-w1-pv --kind claude --pane w1:pV -- --model opus")
+  end
+
+  def test_the_spec_stage_starts_claude_on_sonnet_to_the_right
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
-    assert_includes(herdr_calls, "agent start spec-w1-pv --kind claude --pane w1:pV -- --model opus")
+    assert_includes(herdr_calls, "agent start spec-w1-pw --kind claude --pane w1:pW -- --model sonnet")
   end
 
-  def test_the_plan_stage_starts_claude_on_opus_in_plan_mode
+  def test_the_plan_stage_no_longer_starts_in_plan_mode
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_includes(herdr_calls,
-                    "agent start plan-w1-pv --kind claude --pane w1:pV -- --model opus " \
-                    "--permission-mode plan")
+    assert_includes(herdr_calls, "agent start plan-w1-pv --kind claude --pane w1:pV -- --model opus")
+    assert_empty(herdr_calls.grep(/permission-mode/))
   end
 
   def test_the_implement_stage_starts_claude_on_sonnet
@@ -120,6 +137,33 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert(herdr_calls.any? { |call| call.start_with?("agent prompt implement-w1-pv ") },
            "expected a prompt sent to a worker named implement-w1-pv")
     assert_includes(herdr_calls, "agent start implement-w1-pv --kind claude --pane w1:pV -- --model sonnet")
+  end
+
+  def test_the_intent_worker_is_told_to_push_after_acceptance
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+    prompt = worker_prompt("intent")
+
+    assert_includes(prompt, "intent skill")
+    assert_told_accepted_then_committed_then_pushed(prompt)
+    assert_includes(prompt, "git push -u origin HEAD")
+  end
+
+  def test_the_intent_worker_is_told_to_invoke_the_intent_skill_with_no_upstream_artifact
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+
+    assert_includes(worker_prompt("intent"), "no upstream artifact")
+  end
+
+  def test_the_plan_worker_is_told_to_write_plan_md_and_touch_nothing_else
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_includes(worker_prompt("plan"), "touch nothing else")
   end
 
   def test_the_spec_worker_is_told_to_push_after_acceptance
@@ -188,6 +232,51 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/done means/i, worker_prompt("implement"))
   end
 
+  def test_the_intent_worker_is_told_to_start_the_spec_stage_after_accepting
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+
+    assert_includes(worker_prompt("intent"),
+                    "HERDR_PANE_ID=w1:p1 ~/.config/herdr/scripts/hand-off-plan.sh spec some-change")
+  end
+
+  def test_the_spec_worker_is_told_to_start_the_plan_stage_after_accepting
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    assert_includes(worker_prompt("spec"),
+                    "HERDR_PANE_ID=w1:p1 ~/.config/herdr/scripts/hand-off-plan.sh plan some-change")
+  end
+
+  def test_the_plan_worker_is_told_to_start_the_implement_stage_after_accepting
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_includes(worker_prompt("plan"),
+                    "HERDR_PANE_ID=w1:p1 ~/.config/herdr/scripts/hand-off-plan.sh implement some-change")
+  end
+
+  def test_the_implement_worker_is_not_told_to_start_a_next_stage
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert_no_match(/hand-off-plan\.sh/, worker_prompt("implement"))
+  end
+
+  def test_the_spec_worker_is_told_to_note_a_failed_chain_call_in_its_report
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    prompt = worker_prompt("spec")
+
+    assert_match(/if that command fails/i, prompt)
+    assert_includes(prompt, "your own report file")
+  end
+
   def test_the_worker_is_told_to_close_its_own_pane_after_reporting
     worktree_creatable!
 
@@ -203,9 +292,9 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
-    assert_includes(worker_prompt("spec"), report_path("spec-w1-pv"))
+    assert_includes(worker_prompt("spec"), report_path("spec-w1-pw"))
     assert_includes(worker_prompt("spec"), "pane w1:p1")
-    assert(File.directory?(File.dirname(report_path("spec-w1-pv"))),
+    assert(File.directory?(File.dirname(report_path("spec-w1-pw"))),
            "the worker cannot write a report into a directory that is not there")
   end
 
@@ -228,7 +317,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change', checkout: main_checkout)} --no-focus")
   end
 
@@ -240,7 +329,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change', checkout: submodule)} --no-focus")
   end
 
@@ -255,7 +344,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change', checkout: submodule)} --no-focus")
   end
 
@@ -265,18 +354,18 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
-    assert_path_survived(worker_prompt("spec"), report_path("spec-w1-pv"))
+    assert_path_survived(worker_prompt("spec"), report_path("spec-w1-pw"))
   end
 
   def test_clears_a_stale_report_left_by_an_earlier_session
     worktree_creatable!
-    stale = report_path("spec-w1-pv")
+    stale = report_path("spec-w1-pw")
     FileUtils.mkdir_p(File.dirname(stale))
     File.write(stale, "an earlier worker's notes\n")
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
 
-    assert_includes(report_state_at_agent_start, "spec-w1-pv empty")
+    assert_includes(report_state_at_agent_start, "spec-w1-pw empty")
   end
 
   def test_stops_before_spawning_anything_when_the_report_directory_cant_be_created
@@ -322,7 +411,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert(status.success?, stderr)
     assert(File.directory?(worktree))
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{File.realpath(worktree)} --no-focus")
   end
 
@@ -344,7 +433,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     stdout, = run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert_equal(1, stdout.lines.count, stdout)
-    assert_match(/spec-w1-pv/, stdout)
+    assert_match(/spec-w1-pw/, stdout)
   end
 
   def test_reviewing_outside_herdr_is_refused
@@ -599,10 +688,13 @@ class HerdrWorkerScriptsTest < Minitest::Test
     @call_log ||= File.join(@stub_bin, "calls.log")
   end
 
-  # All three stages split a pane downward, so they share the same pane id from the stub
-  # (w1:pV), and thus the same worker-name pattern: "<stage>-w1-pv".
+  # intent, plan and implement split their pane downward, sharing one stubbed pane id (w1:pV);
+  # spec splits to the right and gets a different one (w1:pW) from the same stub.
+  RIGHT_SPLIT_STAGES = %w[spec].freeze
+
   def worker_name(stage)
-    "#{stage}-w1-pv"
+    pane = RIGHT_SPLIT_STAGES.include?(stage) ? "w1-pw" : "w1-pv"
+    "#{stage}-#{pane}"
   end
 
   def worker_prompt(stage)
