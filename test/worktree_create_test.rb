@@ -56,8 +56,8 @@ class WorktreeCreateTest < Minitest::Test
 
     run_script("feature", pane_cwd: File.realpath(merged))
 
-    assert_not(File.directory?(File.join(@repo, ".worktrees", "merged-branch")))
-    assert_not(branch?(@repo, "merged-branch"))
+    refute(File.directory?(File.join(@repo, ".worktrees", "merged-branch")))
+    refute(branch?(@repo, "merged-branch"))
     assert_includes(herdr_calls, "pane close w1:pQ")
 
     close_index = order_calls.index("herdr: pane close w1:pQ")
@@ -102,7 +102,7 @@ class WorktreeCreateTest < Minitest::Test
 
     stdout, stderr, status = run_script("feature")
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_empty(stdout)
     assert_match(/already exists|worktree add/i, stderr)
   end
@@ -149,7 +149,7 @@ class WorktreeCreateTest < Minitest::Test
   def test_refuses_an_empty_name
     _, stderr, status = run_script("")
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/name/i, stderr)
   end
 
@@ -159,7 +159,7 @@ class WorktreeCreateTest < Minitest::Test
 
     _, stderr, status = run_script("feature")
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/\.worktrees/, stderr)
   end
 
@@ -180,7 +180,7 @@ class WorktreeCreateTest < Minitest::Test
   def test_runs_nothing_when_the_alias_is_absent
     run_script("feature")
 
-    assert_not(File.exist?(File.join(@enclosing, "worktree-init-ran-in.txt")))
+    refute(File.exist?(File.join(@enclosing, "worktree-init-ran-in.txt")))
   end
 
   def test_a_clean_worktree_on_a_detached_head_survives_the_sweep_even_when_origin_moved_on
@@ -464,9 +464,5 @@ class WorktreeCreateTest < Minitest::Test
   # directly; both stubs also append here, in the order the script actually invoked them.
   def order_calls
     File.exist?(order_log) ? File.readlines(order_log, chomp: true) : []
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end

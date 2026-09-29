@@ -56,7 +56,7 @@ class ChangeFolderTest < Minitest::Test
   def test_main_refuses
     _stdout, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/main/i, stderr)
   end
 
@@ -65,7 +65,7 @@ class ChangeFolderTest < Minitest::Test
 
     _stdout, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/master/i, stderr)
   end
 
@@ -74,7 +74,7 @@ class ChangeFolderTest < Minitest::Test
 
     _stdout, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/detached/i, stderr)
   end
 
@@ -87,9 +87,5 @@ class ChangeFolderTest < Minitest::Test
 
   def run_script
     Open3.capture3(SCRIPT, chdir: @repo)
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end
