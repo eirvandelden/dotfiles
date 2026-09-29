@@ -12,3 +12,9 @@ Compliance:
 - [ ] Nit: `toast_delivery` returns nil or raises `NoMethodError` on nil when the file formats the key any other way (`delivery="terminal"`, extra spaces, a trailing comment, a `[ui.toast]` header with a comment), so a valid config can fail with an error message that does not explain the problem. Consider a clear failure message when the section or key is not found — `test/herdr_config_test.rb:24` →
 - [ ] Nit: `assert_equal("config: ok", output.strip)` depends on herdr's exact success wording, which a herdr upgrade can change even though the config is still valid. The exit status assertion on the line above already proves the config is accepted — `test/herdr_config_test.rb:18` →
 - [ ] Nit: the second acceptance criterion (notification appears, session keeps taking input) has no recorded result. Record the manual post-merge check before `finish`, so the spec has evidence for it — `docs/changes/herdr-terminal-notifications/plan.md:12` →
+
+## Round 2 — 2026-09-29T12:36:44Z — a821efeb
+
+Scope: round 1 commit d5db728a to a821efeb ("Make the herdr config test explain a missing setting"). No uncommitted changes. `ruby test/herdr_config_test.rb`: 2 runs, 0 failures. `rubocop`: no offenses. Removing the `config: ok` assertion does not weaken the test: `herdr config check` exits 1 for a non-fatal diagnostic too (an unknown key under `[ui.toast]` gave "issues found", exit 1), so `status.success?` still proves the config has no diagnostics. The new `flunk` messages name the missing section or key, and the key match now accepts other spacing and a comment after the section header. Compliance is unchanged from round 1. The round 1 third Nit (recording the manual check after merge) is still open.
+
+Nothing new found.
