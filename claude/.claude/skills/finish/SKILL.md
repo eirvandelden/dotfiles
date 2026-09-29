@@ -40,7 +40,12 @@ Ask: "Does this change affect another application: API contract, published event
 
 ## 4. Both scopes: remove the change folder
 
-Before or alongside the removal below: run `~/.config/git/worktree-tools/worktree-pane close "$(git rev-parse --show-toplevel)"`. `/finish` runs inside this change's own worktree, so its toplevel is the path to close, not a `.worktrees/<slug>` lookup from elsewhere. Same close-if-idle, leave-open-if-an-agent-is-running behaviour that command already implements elsewhere; a forgotten stage pane must not outlive the change folder it was reading.
+Before or alongside the removal below, close this change's own leftover stage panes. Outside herdr (`HERDR_ENV` unset): skip this step entirely.
+
+1. `herdr pane list --workspace "$HERDR_WORKSPACE_ID"`. Select the panes whose `cwd` equals `$(git rev-parse --show-toplevel)` — `/finish` runs inside this change's own worktree, so its toplevel is the path to match, not a `.worktrees/<slug>` lookup from elsewhere — and whose `agent` is non-null and whose `agent_status` is `idle` or `done`. A pane with `agent: null` (an editor, a shell) is never a candidate, and neither is one with `agent_status: working`.
+2. None match: continue silently. Some match: show them (pane id, title) and ask Etienne which to close — `AskUserQuestion`, every listed pane selected by default (Codex: a numbered list, same default). Close only the confirmed panes: `herdr pane close <id>` per pane.
+
+`worktree-pane` stays as it is; this step talks to `herdr pane` directly instead, because `worktree-pane close` leaves any pane with an agent alone whatever its status, and would also reach panes this change never opened — an editor or a shell sharing the worktree's `cwd`.
 
 `git rm -r docs/changes/<slug>`. When that leaves `docs/changes/` empty, remove the directory too — git does not track empty directories, so this is a plain `rmdir` on the working tree, not a git operation. Commit alone: `Remove change artifacts for <slug>`.
 

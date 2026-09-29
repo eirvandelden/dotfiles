@@ -43,10 +43,7 @@ From `intent.md` (2026-09-25). Status: accepted.
    rooted in the worktree, fresh Sonnet — what `handoff` mode does today. `here` keeps today's
    choice between `single` and `split` (three-or-more-criteria threshold), built in this session
    instead of a pane.
-10. `finish` closes any of the change's stage panes still open when it runs, using
-    `worktree-pane close` against the change's worktree path (the same close-if-idle,
-    leave-open-if-an-agent-is-running behavior `worktree-pane close` already implements) — so a
-    forgotten stage pane does not outlive the change folder it was reading.
+10. `finish` closes any of the change's stage panes still open when it runs: it lists the workspace's panes itself (`herdr pane list`), narrows to the ones rooted in the change's worktree with an idle or done agent, offers to close them, and closes the confirmed ones — so a forgotten stage pane does not outlive the change folder it was reading. Panes without an agent are never touched.
 11. Outside herdr, every stage falls back to the current session with a one-line notice, exactly
     as `review here` does today. Codex has no herdr pane of its own, so this is its only path;
     a Codex coordinator may still start Claude stage panes through the same script, as
