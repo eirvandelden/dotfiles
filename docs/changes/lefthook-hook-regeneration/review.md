@@ -46,3 +46,15 @@ Bugs: nothing found. `test/lefthook_binary.rb` keeps the same three-step lookup 
 Security: nothing found. The Round 2 changes touch only comments, spec wording and test setup; the `{files}` argument form from Round 1 is unchanged.
 
 Compliance: the three Round 2 nits are closed as the plan's Proof says (requirement 5 narrowed to `bundle install`, the long-list comment at `lefthook.yml` above `migrations`, the shared helper). Every criterion and every Proof test still maps as in Round 1. No unplanned files changed.
+
+## Round 4 — 2026-09-29T09:00Z — ba2032c6
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes from `claude/.claude/skills/new-repo-setup/references/REVIEW.md` were used. Scope: the full branch diff against `origin/main` (`d3eada23`), now the branch base after a rebase. `git range-diff` shows every code and doc commit identical to the ones reviewed in Round 3; only the Round 3 report commit is new. State before review: `test/lefthook_*_test.rb` and `test/rv_ci_fallback_test.rb` green (41 runs, 0 failures, 0 skips); `yamllint lefthook.yml` clean; `rubocop` on `test/lefthook_binary.rb` and the four lefthook test files: no offenses (the Round 3 load error does not occur now). No uncommitted changes.
+
+Bugs: nothing found.
+
+Security: nothing found. `{files}` is still only an argument of `:` in the three `migrations` commands, and the two newline-name tests are green.
+
+Compliance: every criterion and every Proof test still maps as in Round 1; no unplanned files changed.
+
+- [ ] Nit: The lefthook on this machine, the one the tests found (`~/.local/share/rv/gems/ruby/4.0.0/bin/lefthook`), reports version `2.1.2`, but `spec.md`, `plan.md` and Rounds 1–3 say the tests ran on 2.1.12. The spec also says CI "pins" that version; `.github/workflows/dotfiles-tests.yml` fetches `releases/latest` (the plan's Risks section says so correctly). Correct the version number and change "the version CI pins" to "CI installs the latest release" in the spec, so the PR report names the version the tests were red and green on. — `docs/changes/lefthook-hook-regeneration/spec.md` (Integration points)
