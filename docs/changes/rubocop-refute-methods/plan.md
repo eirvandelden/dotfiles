@@ -48,7 +48,7 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
 
 ## Risks
 
-- **CI plugin versions float.** `.github/workflows/dotfiles-tests.yml` installs the latest RuboCop and plugins (added 2026-09-29 on Etienne's instruction), the same as `install/tasks/40_install_default_ruby_gems.sh` does on every machine. A new plugin release can change results in CI before it reaches a local machine. In CI (`ENV["CI"]` set) a missing `rubocop` or exit status 2 fails the test instead of skipping it, so a plugin that fails to load turns the job red. Locally it still skips.
+- **CI plugin versions float.** `.github/workflows/dotfiles-tests.yml` installs the latest RuboCop and the plugins the fallback loads (added 2026-09-29 on Etienne's instruction), unpinned like the `RUBY_GEMS` list in `packages.conf`. A new plugin release can change results in CI before it reaches a local machine. In CI (`ENV["CI"]` set) a missing `rubocop` or exit status 2 fails the test instead of skipping it, so a plugin that fails to load turns the job red. Locally it still skips.
 - **Skip check too loose.** If the test skips on any non-zero exit, a real offense (exit status 1) could turn into a skip. Only exit status 2 (RuboCop could not load the config) or a missing binary may skip. Exit status 1 must fail.
 - **Behaviour change in the rewrite.** The local `assert_not(v)` is `assert_equal(false, !!v)`, which fails in exactly the cases where `refute(v)` fails. The only difference is the failure message. Accepted.
 - **Ruby version.** CI runs Ruby 3.4, locally 4.0. Plain Minitest `refute` / `refute_match` behave the same on both.
