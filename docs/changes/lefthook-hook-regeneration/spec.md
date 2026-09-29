@@ -30,7 +30,7 @@ From `intent.md` (2026-09-25). Status: accepted.
 - `lefthook.yml` (repository root): `no_auto_install: true`, the three `migrations` commands, the `bundle` guard.
 - `test/lefthook_pull_hooks_test.rb`: the test pattern to extend. Today it sets `GIT_CONFIG_GLOBAL` to a file that holds `core.hooksPath`, so lefthook's own refusal applies and the existing `test_pull_does_not_overwrite_hook_scripts` passes without the fix. The regression tests need the real layout (requirement 3) instead.
 - `git/.config/git/hooks/*`: read only. The tests link to them; no change.
-- lefthook 2.1.12, the version CI pins in `.github/workflows/dotfiles-tests.yml`. No workflow change.
+- lefthook versions: the reproduction and fix were proven red and green on 2.1.12 (the native binary, through `LEFTHOOK_BIN`); the same tests also pass on 2.1.2, which `which lefthook` finds on this machine since Ruby 4.0.7. `.github/workflows/dotfiles-tests.yml` installs the latest lefthook release, not a pinned version. No workflow change.
 - After merge: Etienne restows `git` once (`stow -t "$HOME" -R --no-folding git`) after he moves the four real files in `~/.config/git/hooks/` aside.
 
 ## Acceptance criteria
