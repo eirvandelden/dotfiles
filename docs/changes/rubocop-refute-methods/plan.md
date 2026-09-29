@@ -34,7 +34,7 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
    3. Run `rubocop <file>` and confirm it is clean, which also proves the fallback no longer rewrites it.
    4. Commit on green, one small commit per file or per few files.
 4. `editor_test.rb` and `lefthook_pull_hooks_test.rb`: rewrite the domain helper bodies too. Check that each helper can still fail, once, by hand:
-   1. Temporarily change one `assert_not_logged(/neovide/)` pattern to one the log does match (for example `/nvim/`), and do the same for one `refute_command_ran`.
+   1. Temporarily change one `assert_not_logged(/neovide/)` pattern to one the log does match (for example `/nvim/`), For `refute_command_ran`, the only call (line 111) is in a test where no command runs, so change `assert_command_ran("rails db:migrate")` at line 56 to `refute_command_ran` instead.
    2. Watch each test fail.
    3. Revert. Never commit the change.
 5. Run the full suite as CI does: `for f in test/*_test.rb; do ruby -Itest "$f" || break; done`. Run `rubocop` on every touched `.rb` file. Re-read the full diff against `origin/main`.
@@ -67,7 +67,7 @@ Checked on 2026-09-28: deleting the two sections from the fallback does not help
 - Autocorrect leaves those calls unchanged: `test/rubocop_fallback_test.rb` `test_fallback_autocorrect_leaves_refute_and_assert_bang_unchanged`.
 - No test file defines its own `assert_not` / `assert_no_match`, and the suite passes: order-of-work step 6 (`git grep` prints nothing), plus the full `test/*_test.rb` run green.
 - `assert_not_logged` still fails on a matching log line and passes on a non-matching one: `test/editor_test.rb` existing tests (`test_non_interactive_macos_selects_neovide_with_reuse_instance`, `test_headless_linux_falls_back_to_nvim`, and the others that call it) cover the passing case. The one-time mutation check in step 4 covers the failing case.
-- `refute_command_ran` still fails when the command ran and passes when it didn't: `test/lefthook_pull_hooks_test.rb` existing test at line 111 covers the passing case. The mutation check in step 4 covers the failing case.
+- `refute_command_ran` still fails when the command ran and passes when it didn't: `test/lefthook_pull_hooks_test.rb` existing test at line 111 covers the passing case. The mutation check in step 4 (line 56 swapped to `refute_command_ran`) covers the failing case.
 - A Rails project with `rubocop-eirvandelden`'s `config/rails.yml` still gets both cops: not an automated test (the spec accepted this). `rails.yml` still sets `Enabled: true` for both, and this change doesn't touch the gem.
 
 Per changed file, the unit tests expected:
