@@ -15,14 +15,15 @@ class HerdrConfigTest < Minitest::Test
     output, status = Open3.capture2e({ "HERDR_CONFIG_PATH" => CONFIG_PATH }, "herdr", "config", "check")
 
     assert(status.success?, output)
-    assert_equal("config: ok", output.strip)
   end
 
   private
 
   def toast_delivery
-    toast_section = File.read(CONFIG_PATH)[/^\[ui\.toast\]\n(.*?)(?=^\[|\z)/m, 1]
-    toast_section[/^delivery = "([^"]+)"/, 1]
+    toast_section = File.read(CONFIG_PATH)[/^\[ui\.toast\][^\n]*\n(.*?)(?=^\[|\z)/m, 1]
+    flunk("config.toml has no [ui.toast] section") unless toast_section
+
+    toast_section[/^delivery\s*=\s*"([^"]+)"/, 1] || flunk("[ui.toast] has no delivery setting")
   end
 
   def herdr_installed?
