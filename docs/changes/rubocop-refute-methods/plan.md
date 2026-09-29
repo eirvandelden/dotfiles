@@ -76,5 +76,3 @@ Per changed file, the unit tests expected:
 - The 13 rewritten test files: no new tests. Their existing tests must stay green.
 
 Test setup: `Dir.mktmpdir` with a `test/sample_test.rb` fixture calling `refute(false)`, `refute_match(/a/, "b")`, `assert !false`. Run `Open3.capture3("rubocop", "-c", <repo>/rubocop/.rubocop.yml, "--format", "emacs", path)`. For autocorrect, add `-a` and compare file contents before and after.
-
-Reproduction: committed
