@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "fileutils"
+require "json"
 require "open3"
 require "tmpdir"
 
@@ -11,7 +12,8 @@ require "tmpdir"
 class RubocopFallbackTest < Minitest::Test
   FALLBACK_CONFIG = File.expand_path("../rubocop/.rubocop.yml", __dir__)
   FIXTURE_PATH = "test/sample_test.rb".freeze
-  RAILS_ASSERTION_COPS = %r{Rails/(RefuteMethods|AssertNot)}
+  RAILS_ASSERTION_COPS = [ "Rails/RefuteMethods", "Rails/AssertNot" ].freeze
+  PLAIN_ASSERTIONS = [ "refute(false)", "refute_match(/a/, \"b\")", "assert !false" ].freeze
 
   def self.locate_rubocop
     found = `which rubocop 2>/dev/null`.strip
@@ -46,15 +48,18 @@ class RubocopFallbackTest < Minitest::Test
   end
 
   def test_fallback_reports_no_rails_assertion_offense_in_a_plain_minitest_file
-    offenses = run_fallback.lines.grep(RAILS_ASSERTION_COPS)
+    report = run_fallback
 
-    assert_empty(offenses)
+    assert_equal([ FIXTURE_PATH ], inspected_paths(report))
+    assert_empty(cop_names(report) & RAILS_ASSERTION_COPS)
   end
 
   def test_fallback_autocorrect_leaves_refute_and_assert_bang_unchanged
     run_fallback("-a")
 
-    assert_equal(PLAIN_MINITEST_FIXTURE, File.read(fixture_file))
+    corrected_lines = File.readlines(fixture_file, chomp: true).map(&:strip)
+
+    PLAIN_ASSERTIONS.each { |assertion| assert_includes(corrected_lines, assertion) }
   end
 
   private
@@ -63,14 +68,24 @@ class RubocopFallbackTest < Minitest::Test
     File.join(@project, FIXTURE_PATH)
   end
 
+  def inspected_paths(report)
+    report.fetch("files").map { |file| file.fetch("path") }
+  end
+
+  def cop_names(report)
+    report.fetch("files").flat_map { |file| file.fetch("offenses") }.map { |offense| offense.fetch("cop_name") }
+  end
+
   # Exit status 1 means offenses were found, which is the behaviour under test and must never
-  # skip. Only status 2, RuboCop failing to load the config or its plugins, skips.
+  # skip. Only status 2, RuboCop failing to load the config or its plugins, skips. Anything on
+  # stderr otherwise, such as a cop crashing, fails.
   def run_fallback(*options)
     stdout, stderr, status = Open3.capture3(
-      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "emacs", *options, FIXTURE_PATH, chdir: @project
+      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, FIXTURE_PATH, chdir: @project
     )
     skip("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
 
-    stdout
+    assert_empty(stderr)
+    JSON.parse(stdout)
   end
 end

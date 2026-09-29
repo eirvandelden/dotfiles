@@ -75,4 +75,4 @@ Per changed file, the unit tests expected:
 - `test/rubocop_fallback_test.rb`: the two tests above.
 - The 13 rewritten test files: no new tests. Their existing tests must stay green.
 
-Test setup: `Dir.mktmpdir` with a `test/sample_test.rb` fixture calling `refute(false)`, `refute_match(/a/, "b")`, `assert !false`. Run `Open3.capture3("rubocop", "-c", <repo>/rubocop/.rubocop.yml, "--format", "emacs", path)`. For autocorrect, add `-a` and compare file contents before and after.
+Test setup: `Dir.mktmpdir` with a `test/sample_test.rb` fixture calling `refute(false)`, `refute_match(/a/, "b")`, `assert !false`. Run `Open3.capture3("rubocop", "-c", <repo>/rubocop/.rubocop.yml, "--format", "json", path)`. The offense test also checks that the sample file was the one file inspected, and that stderr is empty, so a crash or an exclusion cannot pass as "no offenses". The autocorrect test adds `-a` and checks that the three assertion lines are still present, so another cop changing the file does not look like this bug.
