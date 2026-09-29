@@ -75,7 +75,7 @@ Flag conflicts your domain skills raise against each other or against the playbo
 
 ### 4. Accept
 
-Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted", flip it, then commit `spec.md` alone: `docs: spec for <slug>`. Inside herdr (`HERDR_ENV` set), also start the plan stage yourself: `~/.config/herdr/scripts/hand-off-plan.sh plan <slug>`; if that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop here.
+Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted", flip it, then commit `spec.md` alone: `docs: spec for <slug>`, then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop after the push.
 
 ## Codex
 

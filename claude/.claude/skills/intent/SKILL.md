@@ -103,12 +103,12 @@ Author: <name>. Status: draft.
 
 Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
 
-Create the folder (`mkdir -p`) if it does not exist. Write the file. Do not `git add` it — the user or the `implement` skill commits.
+Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
 ## 4. Accept
 
-On the words "accepted" or "accept the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`. Inside herdr (`HERDR_ENV` set), also start the spec stage yourself: `~/.config/herdr/scripts/hand-off-plan.sh spec <slug>`; if that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop here.
+On the words "accepted" or "accept the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the spec stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh spec '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop after the push.
 
 ## Codex
 
-Same interview and template. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. `here` is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `spec`/`plan`/`implement` do today.
+Same interview and template. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `spec`/`plan`/`implement` do today.
