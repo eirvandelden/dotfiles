@@ -47,3 +47,24 @@ Findings:
 
 - [ ] Nit: the workflow comment says the list matches what `install/tasks/40_install_default_ruby_gems.sh` installs on every machine, but `RUBY_GEMS` in `packages.conf` has no `rubocop-minitest` (and has `rubocop-factory_bot` and `rubocop-rspec_rails`, which CI does not install). The CI list is the correct one for the fallback; the comment is not accurate. The missing `rubocop-minitest` in `packages.conf` means a fresh machine cannot load the fallback, which is a separate change for another branch — `.github/workflows/dotfiles-tests.yml:20` →
 - [ ] Nit: now that CI installs the plugins, the exit-status-2 skip means a plugin that fails to load in CI leaves the job green with only a skip line in the log, so CI stops checking the fallback without anyone seeing it. The plan records this as accepted; noting it because the tradeoff changed when the workflow step was added — `test/rubocop_fallback_test.rb:86` →
+
+## Round 3 — 2026-09-29T15:20Z — ff44e337
+
+Fetch from origin failed (SSH `Permission denied (publickey)`), so the comparison uses the local `origin/main` at `30cf94dd`, which is also the merge base.
+
+Suite state: every `test/*_test.rb` green except the known local-only failures in `test/lefthook_pull_hooks_test.rb`. `test/rubocop_fallback_test.rb`: 2 runs, 13 assertions, 0 skips, with and without `CI=true`. `rubocop -c rubocop/.rubocop.yml test/rubocop_fallback_test.rb`: no offenses.
+
+Round 2 nits:
+
+- Nit 1 (workflow comment claims parity with the installer) resolved by `8cfc1fdc`: the comment now says only that the gems are latest releases, unpinned like `RUBY_GEMS` in `packages.conf`.
+- Nit 2 (exit-status-2 skip hides a broken CI run) resolved by `ff44e337`: `skip_unless_ci` flunks when `ENV["CI"]` is set, both for a missing `rubocop` in `setup` and for exit status 2 in `run_fallback`. A flunk in `setup` leaves `@project` nil, and `teardown` already guards on it, so no second error. Exit status 1 still never skips.
+
+Bugs: nothing found beyond the finding below.
+
+Security: nothing found.
+
+Compliance: acceptance criteria and `## Proof` tests unchanged from round 1 and still pass. No test weakened, skipped or deleted; the change makes the skip stricter in CI.
+
+Findings:
+
+- [ ] Nit: the plan's risk line still says CI installs the plugins "the same as `install/tasks/40_install_default_ruby_gems.sh` does on every machine" — the parity claim `8cfc1fdc` removed from the workflow comment, and still not accurate while `packages.conf` lacks `rubocop-minitest` — `docs/changes/rubocop-refute-methods/plan.md:51` →
