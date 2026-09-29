@@ -17,7 +17,7 @@ jobs:
           ruby-version: "3.4"
       - run: gem install minitest --no-document
       # rubocop_fallback_test.rb runs RuboCop with rubocop/.rubocop.yml, which loads these plugins.
-      # Latest releases, as install/tasks/40_install_default_ruby_gems.sh installs on every machine.
+      # Latest releases, unpinned like the RUBY_GEMS list in packages.conf.
       - run: >-
           gem install --no-document rubocop rubocop-rails-omakase rubocop-capybara rubocop-minitest
           rubocop-obsession rubocop-packaging rubocop-performance rubocop-rails rubocop-rspec rubocop-yard
