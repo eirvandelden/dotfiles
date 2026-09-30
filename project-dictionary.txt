@@ -37,6 +37,7 @@ DBus
 dedup
 depts
 devbox
+Dockerized
 edge
 Edge
 eirvandelden
@@ -65,6 +66,7 @@ herdr
 Herdr
 herdrdev
 heredocs
+Honeybadger
 hypr
 hyprctl
 hypridle
@@ -103,6 +105,7 @@ NOCOMMIT
 oldfiles
 omarchy
 Omarchy
+omniauth
 opencode
 opusplan
 pacman
@@ -113,17 +116,21 @@ POODR
 precmd
 Procfile
 procs
+pstore
 pumadev
 pytest
 ractors
 Ractors
+railsdiff
 reachingforthejack
 reflag
 refspec
 relativenumber
+remediations
 repr
 restow
 ripgrep
+Rollbar
 samen
 Schedulable
 schrijven
@@ -191,6 +198,8 @@ ZDOTDIR
 zed
 Zed
 zeroheight
+zjit
+ZJIT
 zsh
 zubat
 zzqxklmnop

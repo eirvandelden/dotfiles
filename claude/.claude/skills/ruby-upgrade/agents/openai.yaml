@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Ruby Upgrade"
+  short_description: "Upgrade the Ruby interpreter of a Bundler or Rails app, Ruby 4 risks"
