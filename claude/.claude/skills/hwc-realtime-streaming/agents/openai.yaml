@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Hotwire Streaming"
+  short_description: "Turbo Streams over WebSocket or SSE and live list updates"

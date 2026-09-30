@@ -57,6 +57,7 @@ Contentful
 cooldown
 creds
 csjones
+currentyoutubeid
 cursorline
 CWBW
 cword
@@ -128,6 +129,7 @@ keybind
 keybinds
 keytest
 killactive
+Kuloc
 laststatus
 launchable
 Lazt
@@ -146,6 +148,7 @@ magick
 mako
 Mdnj
 metaprogramming
+microinteractions
 millis
 morphdom
 mvpa
@@ -155,6 +158,7 @@ myrepo
 neovide
 neovim
 Neovim
+nextyoutubeid
 nocommit
 NOCOMMIT
 offkayax
@@ -178,6 +182,7 @@ POODR
 postcraftstudio
 precmd
 presidentbeef
+previousyoutubeid
 Procfile
 procs
 pstore
@@ -254,6 +259,8 @@ unstow
 updatetime
 uwsm
 vandelden
+videochange
+videochanged
 videoid
 vimdoc
 wavesurfer
@@ -277,6 +284,7 @@ xhigh
 xwayland
 XWayland
 yay
+youtubeid
 ZDOTDIR
 zed
 Zed
