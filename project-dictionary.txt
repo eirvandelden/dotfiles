@@ -80,6 +80,7 @@ Eventable
 evilmartians
 expandtab
 exploitability
+favorited
 flathub
 flatpak
 Flatpak
@@ -250,6 +251,7 @@ typeprof
 Ultrathink
 Unassigning
 undofile
+unfavorited
 unflags
 unfuzzed
 Unfuzzed

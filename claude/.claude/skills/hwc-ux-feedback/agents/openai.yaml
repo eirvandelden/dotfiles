@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Hotwire UX Feedback"
+  short_description: "Loading states, progress bars, optimistic UI and page transitions"
