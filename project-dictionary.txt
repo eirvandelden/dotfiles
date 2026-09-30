@@ -1,5 +1,6 @@
 1password
 aasm
+Aayayj
 actionables
 actioncable
 actionmailbox
@@ -23,6 +24,10 @@ bdelete
 betterspecs
 binstub
 binstubs
+blurhash
+Blurhash
+blurhashes
+Blurhashes
 brakemanscanner
 brew
 brewfile
@@ -48,10 +53,12 @@ codesign
 compinit
 conductor
 consentable
+Contentful
 cooldown
 creds
 csjones
 cursorline
+CWBW
 cword
 Cárdenas
 dapui
@@ -61,10 +68,12 @@ dedup
 depts
 devbox
 Dockerized
+domchristie
 dotenvs
 edge
 Edge
 eirvandelden
+enterpictureinpicture
 enumerables
 Eventable
 evilmartians
@@ -119,7 +128,10 @@ keytest
 killactive
 laststatus
 launchable
+Lazt
+leavepictureinpicture
 lefthook
+LEHV
 libexec
 libvips
 linuxbrew
@@ -130,6 +142,7 @@ lspconfig
 macos
 magick
 mako
+Mdnj
 metaprogramming
 millis
 mvpa
@@ -141,6 +154,8 @@ neovim
 Neovim
 nocommit
 NOCOMMIT
+offkayax
+ofofj
 oldfiles
 omarchy
 Omarchy
@@ -154,6 +169,7 @@ pagy
 pathspec
 pgcrypto
 pkgconfig
+playlabel
 polkit
 POODR
 postcraftstudio
@@ -213,6 +229,7 @@ taak
 termguicolors
 termios
 thoughtbot
+timecode
 timeoutlen
 TINYSKY
 tkareine
@@ -234,7 +251,11 @@ unstow
 updatetime
 uwsm
 vandelden
+videoid
 vimdoc
+wavesurfer
+Wavesurfer
+Wavesurfer's
 wayland
 Wayland
 WCAG
