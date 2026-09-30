@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "37signals Style"
+  short_description: "Rails patterns from 37signals' Fizzy codebase"
