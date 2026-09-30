@@ -3,7 +3,9 @@
 # Plain ruby, not rv: CI has no rv, and hand-off-plan.sh invokes this script directly.
 $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 
+require "agent_worktree"
 require "common"
+require "json"
 require "open3"
 require "rbconfig"
 
@@ -31,6 +33,7 @@ module WorktreeTools
       fetch(default_branch)
       sweep(name, default_branch)
       path = create_worktree(name, default_branch)
+      record_for_herdr_pane(path)
       run_worktree_init(path)
       open_pane(path) unless no_pane
       puts path
@@ -201,6 +204,21 @@ module WorktreeTools
     def reuse_worktree(path)
       warn("worktree-create: reusing existing worktree")
       path
+    end
+
+    def record_for_herdr_pane(path)
+      pane_id = ENV["HERDR_PANE_ID"].to_s
+      return if pane_id.empty?
+
+      terminal_id = terminal_id_of(pane_id)
+      AgentWorktree.new.record(pane_id, terminal_id, path) if terminal_id
+    end
+
+    def terminal_id_of(pane_id)
+      output, status = Open3.capture2("herdr", "pane", "get", pane_id, err: File::NULL)
+      JSON.parse(output).dig("result", "pane", "terminal_id") if status.success?
+    rescue Errno::ENOENT, JSON::ParserError
+      nil
     end
 
     def run_worktree_init(path)
