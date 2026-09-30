@@ -17,20 +17,23 @@ focus_pane_down = "prefix+down"
 focus_pane_up = "prefix+up"
 focus_pane_right = "prefix+right"
 
+# Opens the file viewer beside the focused pane. worktree-viewer roots it at the worktree the
+# pane's agent created with worktree-create, and hands over to the plugin's own action otherwise.
 [[keys.command]]
 key = "prefix+f"
-type = "plugin_action"
-command = "herdr-file-viewer.open-file-viewer"
+type = "shell"
+command = '"$HOME/.config/git/worktree-tools/worktree-viewer" split'
 
 # The same viewer in its own tab instead of a split, for when reading a file is the task rather
 # than a glance beside the work: prose gets the whole terminal instead of a column the tree takes
 # a share of. Idempotent — it switches to an existing viewer tab rather than opening a second, and
 # toggles off when already there. Shift+f is free: herdr's defaults take shift with r, n, g, w, d,
-# t, x, p and Tab, and this file takes prefix+shift+1..9 for workspaces.
+# t, x, p and Tab, and this file takes prefix+shift+1..9 for workspaces. Like prefix+f it runs
+# worktree-viewer, which hands over to the plugin's own tab action when it has no worktree to use.
 [[keys.command]]
 key = "prefix+shift+f"
-type = "plugin_action"
-command = "herdr-file-viewer.open-file-viewer-tab"
+type = "shell"
+command = '"$HOME/.config/git/worktree-tools/worktree-viewer" tab'
 
 [[keys.command]]
 key = "prefix+g"
