@@ -3,6 +3,7 @@ Comeau
 Delden
 Etienne
 Finalize
+Haije
 Hotwire
 Kamal
 Lefthook
