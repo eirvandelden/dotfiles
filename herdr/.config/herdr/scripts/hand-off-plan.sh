@@ -23,7 +23,6 @@ case "$stage" in
   intent)
     model="opus"
     direction="down"
-    next_stage="spec"
     ready_word="Intent ready:"
     role_instruction="Invoke the intent skill for docs/changes/$slug; there is no upstream \
 artifact yet — this interview is what creates intent.md."
@@ -34,7 +33,6 @@ Markdown to"
   spec)
     model="sonnet"
     direction="right"
-    next_stage="plan"
     ready_word="Spec ready:"
     role_instruction="Invoke the spec skill's here backend for docs/changes/$slug; it reads \
 docs/changes/$slug/intent.md, the only context you get."
@@ -45,7 +43,6 @@ Markdown to"
   plan)
     model="opus"
     direction="down"
-    next_stage="implement"
     ready_word="Plan ready:"
     role_instruction="Invoke the plan skill's Write role, here backend, for docs/changes/$slug; \
 it reads docs/changes/$slug/intent.md and docs/changes/$slug/spec.md, the only context you get. \
@@ -58,7 +55,6 @@ Markdown to"
   implement)
     model="sonnet"
     direction="down"
-    next_stage=""
     ready_word="Handoff done:"
     role_instruction="Invoke the implement skill's here backend for docs/changes/$slug; you are \
 already inside the worktree, so no further pane split is needed. It reads \
@@ -147,16 +143,17 @@ already created at $worker_cwd. Do not invoke worktree-first, and do not create 
 
 # The skill's Accept step owns the chain, so the prompt only names the coordinator: the chained
 # stage must report to it, not to this pane, which closes itself right after starting that stage.
+# implement has no accepted status line to flip, so it is the one stage that chains nowhere.
 chain_instruction=""
-if [ -n "$next_stage" ]; then
+if [ "$stage" != "implement" ]; then
   chain_instruction=" Your coordinator's pane id is $HERDR_PANE_ID; the skill's Accept step starts \
-the next stage with HERDR_PANE_ID set to that id. If starting the next stage fails, add one line \
-to your own report file saying so and why, before sending the report line below."
+the next stage with HERDR_PANE_ID set to that id. If starting the next stage fails, do not retry: \
+add one line to your own report file, named next, saying so and why."
 fi
 
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
-CLAUDE.md first. $report_instruction $report. $acceptance_instruction$chain_instruction Then \
+CLAUDE.md first. $acceptance_instruction$chain_instruction $report_instruction $report. Then \
 report back to the agent that handed this over, with \
 herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that \
 file path. Quote the path yourself. That call is rejected while the coordinator is blocked on a \
