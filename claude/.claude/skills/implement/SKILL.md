@@ -1,26 +1,50 @@
 ---
 name: implement
-description: Use once plan.md is accepted — builds it through the acceptance test then red/green/refactor per its Proof list, in single, split, or handoff mode.
+description: Use once plan.md is accepted — builds it through the acceptance test then red/green/refactor per its Proof list, by default in a fresh Sonnet worker pane, or here in single/split mode.
 arguments:
-  - name: mode
-    description: "single (default for small plans), split (two agents, default when spec.md has 3+ acceptance criteria), or handoff (send the plan to a worker pane instead of building here)."
+  - name: backend
+    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan.sh; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override)."
 ---
 
 # Implement
 
 Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted` — say which file and why.
 
-## 1. Read
+## Choosing a backend
+
+- No argument, `HERDR_ENV` set: pane backend — hands the plan to a fresh Sonnet worker pane, the same as today's `handoff` mode did.
+- `here`, or `HERDR_ENV` unset: build in this session instead — see the `here` backend below for `single`/`split`. Outside herdr this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
+
+## Pane backend
+
+1. `plan.md` must be `Status: accepted`; if it is not, or the folder does not exist yet, say "run `/plan` first" and stop.
+2. Run it from anywhere inside the repository:
+
+   ```bash
+   ~/.config/herdr/scripts/hand-off-plan.sh implement <slug>
+   ```
+
+   The script creates `.worktrees/<slug>` if it does not exist yet — the `intent` skill usually already has — splits a pane below the caller, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
+3. Tell the user which worker took it and where its report will land. The work is now theirs: do not start on it, and do not check up on it unless asked.
+
+### When the worker finishes
+
+Unlike `spec` and `plan`, the implement pane does not push once done — pushing unreviewed code would fail the pre-push freshness check, so the pane only commits and leaves the push to `/review` and `/finish`. The worker writes what it did, and anything it could not finish, to a Markdown file inside the repository's shared git directory, then sends one line: `Handoff done: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while this session is busy — but the report is never lost either way, since the script printed the path when it started.
+
+Read the file and tell the user what came back. Do not pick up the leftovers unless asked. Reports pile up in that directory over time; nothing prunes it — that is the user's to clear.
+
+## `here` backend
+
+### 1. Read
 
 Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<folder>/intent.md` (for `Type:`), `<folder>/spec.md` (for acceptance criteria) and `<folder>/plan.md` (for `## Proof`). Refuse if `plan.md` is not `Status: accepted`.
 
-## 2. Pick a mode
+### 2. Pick a mode
 
-- No `mode` argument: `single`, unless `spec.md` lists three or more acceptance criteria, in which case default to `split`. The user can always say `single` to override.
-- `handoff`: skip building here entirely — see §5.
+- No mode named after `here`: `single`, unless `spec.md` lists three or more acceptance criteria, in which case default to `split`. The user can always say `here single` to override.
 - `split` needs `~/.claude/hooks/test-guard.rb` to exist (phase 3 wires it up). If it is not there yet, say "split mode needs the test guard from phase 3" and fall back to `single`.
 
-## 3. Single-session build
+### 3. Single-session build
 
 Outer loop, once per acceptance criterion in `## Proof`: write the failing acceptance test, run it, confirm it fails for the reason the criterion implies — a test green on first run is broken.
 
@@ -32,7 +56,7 @@ A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same co
 
 Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file.
 
-## 4. Split mode (two agents)
+### 4. Split mode (two agents)
 
 Same worktree, sequential, never both at once:
 
@@ -43,24 +67,6 @@ Same worktree, sequential, never both at once:
 
 Not per-unit alternation — each hand-off is a fresh context; the inner loop stays inside the one agent running it.
 
-## 5. Handoff mode
-
-Send `plan.md` to a fresh Sonnet worker in a herdr pane instead of building here:
-
-1. `plan.md` must be `Status: accepted`; if it is not, or the folder does not exist yet, say "run `/plan` first" and stop.
-2. From the repository's main checkout (not a worktree — the worker branches off cleanly from there), passing the change's branch name as the worktree name so the worker starts already inside it. The `intent` skill already created `.worktrees/<slug>` on that branch, so read the branch off it when that worktree exists, otherwise use the slug itself:
-   ```bash
-   branch=$(git -C .worktrees/<slug> rev-parse --abbrev-ref HEAD 2>/dev/null || echo <slug>)
-   ~/.config/herdr/scripts/hand-off-plan.sh <absolute path to plan.md> "$branch"
-   ```
-3. Tell the user which worker took it (the name the script printed) and where its report will land. The work is now theirs: do not start on it, and do not check up on it unless asked.
-
-### When the worker finishes
-
-The worker writes what it did, and anything it could not finish, to a Markdown file inside the repository's shared git directory, then sends one line: `Handoff done: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while this session is busy — but the report is never lost either way, since the script printed the path when it started.
-
-Read the file and tell the user what came back. Do not pick up the leftovers unless asked. Reports pile up in that directory over time; nothing prunes it — that is the user's to clear.
-
 ## Codex
 
-Same modes. `handoff` still spawns a Claude pane, as today — Codex has no herdr worker of its own. `split` mode's `implementer` restriction comes from the generated `codex/.codex/agents/` TOML plus its `developer_instructions` sentence (phase 3), not a per-path hook — Codex agents cannot carry one.
+Same backends. Pane backend still spawns a Claude pane, as today — Codex has no herdr worker of its own. `here` backend's `split` mode's `implementer` restriction comes from the generated `codex/.codex/agents/` TOML plus its `developer_instructions` sentence (phase 3), not a per-path hook — Codex agents cannot carry one.
