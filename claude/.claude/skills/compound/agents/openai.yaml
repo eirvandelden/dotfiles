@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Compound"
+  short_description: "Capture a just-verified fix as a searchable doc under docs/solutions/"
