@@ -103,7 +103,10 @@ Hyprland
 hyprlock
 hyprpaper
 hyprsunset
+idiomorph
+Idiomorph
 IHDR
+ILIKE
 Interactor
 interprocedural
 inversing
