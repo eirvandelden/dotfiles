@@ -107,7 +107,7 @@ Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
 ## 4. Accept
 
-On the words "accepted" or "accept the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the spec stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh spec '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and stop there instead of leaving it silent. Outside herdr, stop after the push.
+On the words "accepted" or "accept the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the spec stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh spec '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
 
 ## Codex
 
