@@ -57,11 +57,11 @@ class RvCiFallbackTest < Minitest::Test
 
   def test_main_update_migration_hooks_pass_changed_files_to_nested_migration_hook
     assert_equal(
-      "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin",
+      "git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin",
       migration_hook_command("post-merge")
     )
     assert_equal(
-      "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin",
+      "git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin",
       migration_hook_command("post-rewrite")
     )
     assert_nil(lefthook_config["post-checkout"])

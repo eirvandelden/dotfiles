@@ -1,33 +1,14 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
-require "digest"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "lefthook_binary"
 
 class LefthookPullHooksTest < Minitest::Test
   TRUNK = "trunk"
-  RV_LEFTHOOK_GLOB = File.join(
-    Dir.home, ".local/share/rv/rubies/*/lib/ruby/gems/*/gems/lefthook-*/libexec/lefthook-darwin-arm64/lefthook"
-  )
-
-  def self.env_lefthook_bin
-    ENV["LEFTHOOK_BIN"] if ENV["LEFTHOOK_BIN"] && File.executable?(ENV["LEFTHOOK_BIN"])
-  end
-
-  def self.path_lefthook_bin
-    found = `which lefthook 2>/dev/null`.strip
-    found unless found.empty?
-  end
-
-  def self.locate_native_lefthook
-    env_lefthook_bin || path_lefthook_bin || Dir.glob(RV_LEFTHOOK_GLOB).find { |f| File.executable?(f) }
-  end
-
-  NATIVE_LEFTHOOK = locate_native_lefthook
-  MISSING_LEFTHOOK_MESSAGE =
-    "lefthook not found: not on PATH (checked LEFTHOOK_BIN and `which lefthook`) " \
-    "and no rv install matched #{RV_LEFTHOOK_GLOB}"
+  NATIVE_LEFTHOOK = LefthookBinary.locate
+  MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
@@ -111,11 +92,38 @@ class LefthookPullHooksTest < Minitest::Test
     refute_command_ran("rails db:migrate")
   end
 
-  def test_pull_does_not_overwrite_hook_scripts
-    before = hooks_checksums
-    push_file("db/migrate/20260731000004_add_thing.rb", "# migration")
+  def test_pull_touching_only_readme_runs_no_migrations
+    push_file("README.md", "changed")
     pull_in_puller
-    assert_equal(before, hooks_checksums, "Hook scripts were modified by auto-install")
+    [ "bundle", "rv ci", "rails db:migrate", "yarn install" ].each { |cmd| refute_command_ran(cmd) }
+  end
+
+  def test_pull_touching_only_nested_gemfile_does_not_bundle
+    push_file("bundler/Gemfile", "source \"https://rubygems.org\"\n")
+    pull_in_puller
+    refute_command_ran("bundle")
+    refute_command_ran("rv ci")
+  end
+
+  def test_pulled_gemfile_name_with_a_command_on_a_new_line_does_not_run_it
+    push_file("Gemfile\ntouch PWNED\n", "")
+    pull_in_puller
+    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
+  end
+
+  def test_pulled_migration_name_with_a_command_on_a_new_line_does_not_run_it
+    push_file("db/migrate/a\ntouch PWNED\n", "")
+    pull_in_puller
+    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
+  end
+
+  def test_pull_deleting_root_gemfile_does_not_bundle_install
+    push_file("Gemfile", "source \"https://rubygems.org\"\n")
+    pull_in_puller
+    FileUtils.rm_f(@log_file)
+    push_deletion_with_readme_change("Gemfile")
+    pull_in_puller
+    refute_command_ran("bundle install")
   end
 
   private
@@ -188,6 +196,14 @@ class LefthookPullHooksTest < Minitest::Test
     run_git("-C", @pusher_dir, "push", "origin", TRUNK)
   end
 
+  def push_deletion_with_readme_change(relative_path)
+    run_git("-C", @pusher_dir, "rm", "--quiet", relative_path)
+    File.write(File.join(@pusher_dir, "README.md"), "changed")
+    run_git("-C", @pusher_dir, "add", "README.md")
+    run_git("-C", @pusher_dir, "commit", "-m", "remove #{File.basename(relative_path)}")
+    run_git("-C", @pusher_dir, "push", "origin", TRUNK)
+  end
+
   def pull_in_puller
     stdout, stderr, status = Open3.capture3(pull_env, "sh", "-c", "git pull --quiet", chdir: @puller_dir)
     return if status.success?
@@ -255,11 +271,5 @@ class LefthookPullHooksTest < Minitest::Test
 
   def assert_not(value, message = nil)
     assert_equal(false, !!value, message)
-  end
-
-  def hooks_checksums
-    Dir.glob(File.join(@hooks_dir, "*")).sort.to_h do |f|
-      [ File.basename(f), Digest::SHA256.hexdigest(File.read(f)) ]
-    end
   end
 end

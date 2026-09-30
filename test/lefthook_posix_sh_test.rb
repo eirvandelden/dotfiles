@@ -3,35 +3,17 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "lefthook_binary"
 
 class LefthookPosixShTest < Minitest::Test
-  RV_LEFTHOOK_GLOB = File.join(
-    Dir.home, ".local/share/rv/rubies/*/lib/ruby/gems/*/gems/lefthook-*/libexec/lefthook-darwin-arm64/lefthook"
-  )
-
-  def self.env_lefthook_bin
-    ENV["LEFTHOOK_BIN"] if ENV["LEFTHOOK_BIN"] && File.executable?(ENV["LEFTHOOK_BIN"])
-  end
-
-  def self.path_lefthook_bin
-    found = `which lefthook 2>/dev/null`.strip
-    found unless found.empty?
-  end
-
-  def self.locate_native_lefthook
-    env_lefthook_bin || path_lefthook_bin || Dir.glob(RV_LEFTHOOK_GLOB).find { |f| File.executable?(f) }
-  end
-
   def self.locate_dash
     found = `which dash 2>/dev/null`.strip
     found unless found.empty?
   end
 
-  NATIVE_LEFTHOOK = locate_native_lefthook
+  NATIVE_LEFTHOOK = LefthookBinary.locate
   DASH_BIN = locate_dash
-  MISSING_LEFTHOOK_MESSAGE =
-    "lefthook not found: not on PATH (checked LEFTHOOK_BIN and `which lefthook`) " \
-    "and no rv install matched #{RV_LEFTHOOK_GLOB}"
+  MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
