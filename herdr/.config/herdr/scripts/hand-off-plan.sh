@@ -148,7 +148,7 @@ chain_instruction=""
 if [ "$stage" != "implement" ]; then
   chain_instruction=" Your coordinator's pane id is $HERDR_PANE_ID; the skill's Accept step starts \
 the next stage with HERDR_PANE_ID set to that id. If starting the next stage fails, do not retry: \
-add one line to your own report file, named next, saying so and why."
+include one line in your own report file, named next, saying so and why."
 fi
 
 # No --wait: the caller hands the work over and carries on.

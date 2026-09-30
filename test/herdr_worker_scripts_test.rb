@@ -304,8 +304,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
       skill = File.read(File.join(SKILLS_DIR, stage, "SKILL.md"))
       chain = "HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh #{next_stage} '<slug>'"
 
-      assert_equal(1, skill.scan(chain).size, "#{stage}/SKILL.md must chain to #{next_stage} exactly once")
-      assert_match(/hand-off-plan\.sh #{next_stage}/, skill)
+      assert_equal(1, skill.scan(chain).size, "#{stage}/SKILL.md must chain to #{next_stage} with the coordinator id")
+      assert_equal(1, skill.scan("hand-off-plan.sh #{next_stage}").size, "#{stage}/SKILL.md must chain to #{next_stage} exactly once")
     end
   end
 
