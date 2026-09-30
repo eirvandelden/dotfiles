@@ -75,7 +75,7 @@ class ReviewReportCheckTest < Minitest::Test
 
     _, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/touch code again/, stderr)
     assert_match(/add review/, stderr)
   end
@@ -87,7 +87,7 @@ class ReviewReportCheckTest < Minitest::Test
 
     _, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(%r{app/claims\.rb}, stderr)
   end
 
@@ -97,7 +97,7 @@ class ReviewReportCheckTest < Minitest::Test
 
     _, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/touch code/, stderr)
     assert_match(/no review\.md/i, stderr)
     assert_match(%r{/review}, stderr)
@@ -135,9 +135,5 @@ class ReviewReportCheckTest < Minitest::Test
 
   def run_script
     Open3.capture3(SCRIPT, chdir: @repo)
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end

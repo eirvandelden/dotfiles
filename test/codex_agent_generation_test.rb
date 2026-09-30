@@ -46,7 +46,7 @@ class CodexAgentGenerationTest < Minitest::Test
 
     toml = File.read(File.join(codex_dir, "implementer.toml"))
 
-    assert_not(toml.include?("sandbox_mode"))
+    refute(toml.include?("sandbox_mode"))
   end
 
   def test_the_developer_instructions_carry_the_full_markdown_body
@@ -78,7 +78,7 @@ class CodexAgentGenerationTest < Minitest::Test
 
     toml = File.read(File.join(codex_dir, "implementer.toml"))
 
-    assert_not(toml.include?("hooks"))
+    refute(toml.include?("hooks"))
     assert_includes(toml, "the `review` skill's compliance check")
   end
 
@@ -115,9 +115,5 @@ class CodexAgentGenerationTest < Minitest::Test
   def run_generator(claude_dir, codex_dir)
     _, stderr, status = Open3.capture3(GENERATOR, claude_dir, codex_dir)
     assert(status.success?, stderr)
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end

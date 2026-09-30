@@ -258,18 +258,10 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   def refute_command_ran(cmd)
-    assert_no_match(
+    refute_match(
       /#{Regexp.escape(cmd)}/,
       command_log,
       "Expected '#{cmd}' not to have run. Log:\n#{command_log}"
     )
-  end
-
-  def assert_no_match(pattern, value, message = nil)
-    assert_not(pattern.match?(value), message)
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end

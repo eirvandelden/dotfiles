@@ -49,14 +49,14 @@ class ChangeScopeTest < Minitest::Test
 
     _stdout, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/unknown remote/i, stderr)
   end
 
   def test_no_remote_configured_is_refused
     _stdout, stderr, status = run_script
 
-    assert_not(status.success?)
+    refute(status.success?)
     assert_match(/unknown remote/i, stderr)
   end
 
@@ -72,9 +72,5 @@ class ChangeScopeTest < Minitest::Test
 
   def run_script
     Open3.capture3({ "HOME" => @home }, SCRIPT, chdir: @repo)
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end

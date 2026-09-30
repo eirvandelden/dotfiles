@@ -1,5 +1,8 @@
 1password
 actionables
+actionmailbox
+actionpack
+actiontext
 archlinux
 AUR
 autorun

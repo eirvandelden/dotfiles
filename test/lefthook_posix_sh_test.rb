@@ -39,14 +39,10 @@ class LefthookPosixShTest < Minitest::Test
     stub_dash_as_sh
     commit_file("todo.txt", "hello\n")
     _out, _err, status = push
-    assert_not(status.success?, "Expected a push from main to be rejected by no-push-to-main under dash")
+    refute(status.success?, "Expected a push from main to be rejected by no-push-to-main under dash")
   end
 
   private
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
-  end
 
   def setup_dotfiles_home
     dotfiles_dir = File.join(@tmpdir, "Developer", "dotfiles")

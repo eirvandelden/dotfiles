@@ -48,7 +48,7 @@ class LefthookLocalHooksTest < Minitest::Test
     stub_real_lefthook
     stage_file("conflict.txt", conflict_markers)
     _out, _err, status = git("commit", "-m", "conflict")
-    assert_not(status.success?, "Expected a commit with conflict markers to be rejected by the global fallback")
+    refute(status.success?, "Expected a commit with conflict markers to be rejected by the global fallback")
   end
 
   def test_pre_commit_calls_lefthook_with_no_auto_install
@@ -64,7 +64,7 @@ class LefthookLocalHooksTest < Minitest::Test
     stub_real_lefthook
     commit_file("todo.txt", "FIX" + "ME: something\n")
     _out, _err, status = push
-    assert_not(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
+    refute(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
   end
 
   def test_pre_push_calls_lefthook_with_no_auto_install
@@ -79,7 +79,7 @@ class LefthookLocalHooksTest < Minitest::Test
     stub_real_lefthook
     stage_file("notes.txt", "zzqxklmnop is not a real word\n")
     _out, _err, status = git("commit", "-m", "notes")
-    assert_not(status.success?, "Expected an unknown word outside js/rb/md to be rejected by the global fallback")
+    refute(status.success?, "Expected an unknown word outside js/rb/md to be rejected by the global fallback")
   end
 
   def test_pre_commit_still_commits_a_binary_only_change
@@ -120,7 +120,7 @@ class LefthookLocalHooksTest < Minitest::Test
     stage_file("notes.md", "One line paragraph.\n")
     out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected a clean commit to succeed")
-    assert_no_match(/error no-hardwrap/, out + err)
+    refute_match(/error no-hardwrap/, out + err)
   end
 
   def test_pre_commit_skips_the_hardwrap_check_without_markdownlint
@@ -142,22 +142,14 @@ class LefthookLocalHooksTest < Minitest::Test
     out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected the commit to succeed when the package is not stowed")
     assert_match(/no-hardwrap: .*no-hardwrap\.cjs not found, skipping/, out + err)
-    assert_no_match(/Cannot load custom rule/, out + err)
+    refute_match(/Cannot load custom rule/, out + err)
   end
 
   private
 
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
-  end
-
-  def assert_no_match(pattern, value, message = nil)
-    assert_not(pattern.match?(value), message || "Expected #{value.inspect} not to match #{pattern.inspect}")
-  end
-
   def hook_invocation(hook_name)
     invocation = File.readlines(@log_file, chomp: true).find { |line| line.start_with?("run #{hook_name}") }
-    assert_not(invocation.nil?, "Expected #{hook_name} to invoke lefthook. Log:\n#{File.read(@log_file)}")
+    refute(invocation.nil?, "Expected #{hook_name} to invoke lefthook. Log:\n#{File.read(@log_file)}")
     invocation
   end
 

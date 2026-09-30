@@ -54,7 +54,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "some-change")
 
     assert(status.success?, stderr)
-    assert_not_empty(herdr_calls)
+    refute_empty(herdr_calls)
   end
 
   def test_handing_off_an_intent_stage_splits_a_pane_below_here
@@ -200,7 +200,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_includes(prompt, "implement skill's here backend")
     assert_includes(prompt, "docs/changes/some-change/plan.md")
-    assert_no_match(/push/i, prompt)
+    refute_match(/push/i, prompt)
   end
 
   def test_the_spec_and_plan_workers_report_what_was_decided_and_deferred
@@ -228,8 +228,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, "plan", "some-change")
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_no_match(/done means/i, worker_prompt("spec"))
-    assert_no_match(/done means/i, worker_prompt("plan"))
+    refute_match(/done means/i, worker_prompt("spec"))
+    refute_match(/done means/i, worker_prompt("plan"))
     assert_match(/done means/i, worker_prompt("implement"))
   end
 
@@ -240,7 +240,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     prompt = worker_prompt("intent")
 
-    assert_no_match(/hand-off-plan\.sh/, prompt)
+    refute_match(/hand-off-plan\.sh/, prompt)
     assert_includes(prompt, "Your coordinator's pane id is w1:p1")
     assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
@@ -252,7 +252,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     prompt = worker_prompt("spec")
 
-    assert_no_match(/hand-off-plan\.sh/, prompt)
+    refute_match(/hand-off-plan\.sh/, prompt)
     assert_includes(prompt, "Your coordinator's pane id is w1:p1")
     assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
@@ -264,7 +264,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     prompt = worker_prompt("plan")
 
-    assert_no_match(/hand-off-plan\.sh/, prompt)
+    refute_match(/hand-off-plan\.sh/, prompt)
     assert_includes(prompt, "Your coordinator's pane id is w1:p1")
     assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
@@ -276,8 +276,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     prompt = worker_prompt("implement")
 
-    assert_no_match(/hand-off-plan\.sh/, prompt)
-    assert_no_match(/coordinator's pane id/, prompt)
+    refute_match(/hand-off-plan\.sh/, prompt)
+    refute_match(/coordinator's pane id/, prompt)
   end
 
   def test_the_spec_worker_is_told_to_note_a_failed_chain_call_in_its_report
@@ -338,7 +338,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_includes(prompt, "at most twelve times")
     assert_includes(prompt, "coordinator")
-    assert_no_match(/initiator/i, prompt)
+    refute_match(/initiator/i, prompt)
   end
 
   def test_still_resolves_the_caller_to_the_main_checkout_from_a_linked_worktree
@@ -736,18 +736,6 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def worktree_path(slug, checkout: @repo)
     path = File.join(checkout, ".worktrees", slug)
     File.directory?(path) ? File.realpath(path) : path
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
-  end
-
-  def assert_not_empty(collection, message = nil)
-    assert_not(collection.empty?, message || "expected #{collection.inspect} not to be empty")
-  end
-
-  def assert_no_match(pattern, value, message = nil)
-    assert_not(pattern.match?(value), message || "expected #{value.inspect} not to match #{pattern.inspect}")
   end
 
   def assert_told_accepted_then_committed_then_pushed(prompt)

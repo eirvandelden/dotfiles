@@ -49,7 +49,7 @@ class SkillParityTest < Minitest::Test
   end
 
   def test_codex_skills_directory_is_gone
-    assert_not(Dir.exist?(CODEX_SKILLS), "#{CODEX_SKILLS} still exists; Codex does not read it")
+    refute(Dir.exist?(CODEX_SKILLS), "#{CODEX_SKILLS} still exists; Codex does not read it")
   end
 
   def test_shared_skill_names_match_on_both_sides
@@ -96,7 +96,7 @@ class SkillParityTest < Minitest::Test
       next if REPO_LAYOUT_SKILLS.include?(File.basename(File.dirname(path)))
 
       body = File.read(path).gsub(/<!--.*?-->/m, "")
-      assert_not(pattern.match?(body), "#{path} names a repo-relative path where the installed one belongs")
+      refute(pattern.match?(body), "#{path} names a repo-relative path where the installed one belongs")
     end
   end
 
@@ -122,9 +122,5 @@ class SkillParityTest < Minitest::Test
     raise stderr unless status.success?
 
     stdout.split("\n")
-  end
-
-  def assert_not(value, message = nil)
-    assert_equal(false, !!value, message)
   end
 end
