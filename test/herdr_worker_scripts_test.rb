@@ -11,6 +11,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
   SCRIPTS = File.expand_path("../herdr/.config/herdr/scripts", __dir__)
   HAND_OFF_PLAN = File.join(SCRIPTS, "hand-off-plan.sh")
   START_REVIEW = File.join(SCRIPTS, "start-review.sh")
+  SKILLS_DIR = File.expand_path("../claude/.claude/skills", __dir__)
 
   def setup
     @stub_bin = Dir.mktmpdir
@@ -232,7 +233,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/done means/i, worker_prompt("implement"))
   end
 
-  def test_the_intent_worker_is_told_to_start_the_spec_stage_after_accepting
+  def test_the_intent_worker_is_given_the_coordinator_pane_id
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "intent", "some-change")
@@ -244,7 +245,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
 
-  def test_the_spec_worker_is_told_to_start_the_plan_stage_after_accepting
+  def test_the_spec_worker_is_given_the_coordinator_pane_id
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
@@ -256,7 +257,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "HERDR_PANE_ID set to that id")
   end
 
-  def test_the_plan_worker_is_told_to_start_the_implement_stage_after_accepting
+  def test_the_plan_worker_is_given_the_coordinator_pane_id
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
@@ -287,6 +288,25 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_match(/if starting the next stage fails/i, prompt)
     assert_includes(prompt, "your own report file")
+  end
+
+  def test_the_worker_writes_its_report_after_acceptance_not_before
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    prompt = worker_prompt("spec")
+
+    assert_operator(prompt.index("\"accepted\""), :<, prompt.index("write what spec.md decided"))
+  end
+
+  def test_each_accepting_skill_chains_once_to_its_next_stage_with_the_coordinator_id
+    { "intent" => "spec", "spec" => "plan", "plan" => "implement" }.each do |stage, next_stage|
+      skill = File.read(File.join(SKILLS_DIR, stage, "SKILL.md"))
+      chain = "HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh #{next_stage} '<slug>'"
+
+      assert_equal(1, skill.scan(chain).size, "#{stage}/SKILL.md must chain to #{next_stage} exactly once")
+      assert_match(/hand-off-plan\.sh #{next_stage}/, skill)
+    end
   end
 
   def test_the_worker_is_told_to_close_its_own_pane_after_reporting
