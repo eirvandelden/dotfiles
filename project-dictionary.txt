@@ -36,6 +36,9 @@ callsites
 cancancan
 carrierwave
 chartkick
+checkpointed
+Checkpointed
+checkpointing
 chnode
 chpwd
 Chávez
@@ -149,6 +152,7 @@ pgcrypto
 pkgconfig
 polkit
 POODR
+postcraftstudio
 precmd
 presidentbeef
 Procfile
