@@ -99,3 +99,25 @@ Nothing found. The skill-level chain command quotes the slug (`'<slug>'`). `$sta
 - [x] Nit: the skill and the prompt give a stage pane two different instructions for a failed chain call. The three Accept steps say "say so and stop there". The prompt says add one line to the report file, then send the report line and close the pane. A pane that follows the skill literally stops before reporting and never closes. Word the skill clause as "say so (in a stage pane: in your report file, as your prompt says) and do not retry". — `claude/.claude/skills/spec/SKILL.md:78`, `claude/.claude/skills/plan/SKILL.md:72`, `claude/.claude/skills/intent/SKILL.md:110` → fixed (skills: a failed chain call is noted, not retried, in the pane's report)
 - [x] Nit: `plan.md` was not updated with commit 7796aa29. Its "Files that change" bullets for `intent/SKILL.md`, `spec/SKILL.md` and `plan/SKILL.md` still describe the Accept step as "start the next stage", with no commit for intent and no push for any of the three. The skills now commit, push, then chain, also in the coordinator's own session and outside herdr. The `implement` skill requires a departure to be written into `plan.md` in the same commit. — `docs/changes/stage-handoffs/plan.md:123` → fixed (docs: plan describes the tested chain, the commit-push-chain Accept steps)
 - [x] Nit: in the prompt the report instruction ("Then write what spec.md decided … as Markdown to <file>.") comes before the acceptance instruction ("Once Etienne says … "accepted" … push"). Read in order, the pane writes its report before acceptance, and the chain-failure sentence ("add one line to your own report file … before sending the report line") assumes the report is written after the chain. Move `$report_instruction $report.` after `$acceptance_instruction$chain_instruction`. — `herdr/.config/herdr/scripts/hand-off-plan.sh:159` → fixed (hand-off-plan.sh: drop the dead next_stage column, write the report after acceptance)
+
+## Round 5 — 2026-09-30T07:07Z — e94d8c31
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; used the defaults from `claude/.claude/skills/new-repo-setup/references/REVIEW.md`. Suite state: `ruby -Itest test/herdr_worker_scripts_test.rb` 58 runs, 0 failures; shellcheck clean; markdownlint not run. Working tree clean, no uncommitted changes. Scope: the round 4 fixes (256de325..e94d8c31). All four round 4 findings are fixed as described: the coordinator-id tests carry names that match what they check, a new test reads each SKILL.md Accept step for its chain line, `next_stage` is gone, the report instruction now follows the acceptance instruction, and `plan.md` describes the commit-push-chain Accept steps. Every test named in `plan.md`'s Proof exists.
+
+### Bugs
+
+Nothing found.
+
+### Security
+
+Nothing found. `$stage` still goes through a closed `case`; the skill-level chain command quotes the slug.
+
+### Compliance
+
+Nothing found. Each acceptance criterion touched by this round now has a test: the chain itself (`test_each_accepting_skill_chains_once_to_its_next_stage_with_the_coordinator_id`), the coordinator id in the prompt (`test_the_{intent,spec,plan}_worker_is_given_the_coordinator_pane_id`), and the report order (`test_the_worker_writes_its_report_after_acceptance_not_before`).
+
+### Nits
+
+- [ ] Nit: the branch is 61 commits behind `origin/main` and does not rebase cleanly. `git merge-tree` reports content conflicts in `claude/.claude/skills/finish/SKILL.md`, `plan/SKILL.md` and `spec/SKILL.md`: main unwrapped the same hard-wrapped prose this branch also unwrapped (round 1's dismissed nit). Rule 20 asks for a rebase before the next push. Two of the three files hold the Accept steps the new chain test reads, so rerun that test after resolving. — `claude/.claude/skills/spec/SKILL.md:78` →
+- [ ] Nit: a failed chain call can be lost from the report. The prompt now says, in order, "add one line to your own report file, named next, saying so and why", then "write what spec.md decided … as Markdown to <file>". A pane that follows the two sentences in order writes the failure line first and then writes the report over it (Claude's Write tool replaces the file). Say "include one line in your report saying so and why" instead of adding a line to the file before it is written. — `herdr/.config/herdr/scripts/hand-off-plan.sh:151` →
+- [ ] Nit: `test_each_accepting_skill_chains_once_to_its_next_stage_with_the_coordinator_id` counts only the exact `HERDR_PANE_ID=<coordinator> … hand-off-plan.sh <next> '<slug>'` string. A second, unprefixed chain call (the round 3 double-chain bug) would pass: the second assertion, `assert_match(/hand-off-plan\.sh #{next_stage}/, skill)`, is already implied by the first and does not count. To prove "once", count every `hand-off-plan.sh <next_stage>` in the file and expect one. — `test/herdr_worker_scripts_test.rb:302` →
