@@ -44,6 +44,7 @@ chpwd
 Chávez
 clinerules
 codeclimate
+codesign
 compinit
 conductor
 consentable
@@ -218,6 +219,7 @@ toplevel
 trix
 Trix
 typeprof
+Ultrathink
 Unassigning
 undofile
 unflags
