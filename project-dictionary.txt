@@ -70,6 +70,7 @@ hyprlock
 hyprpaper
 hyprsunset
 IHDR
+Interactor
 janky
 Kabisa
 keybind
@@ -103,6 +104,7 @@ pacman
 pathspec
 pkgconfig
 polkit
+POODR
 precmd
 Procfile
 pumadev
