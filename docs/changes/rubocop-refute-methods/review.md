@@ -68,3 +68,21 @@ Compliance: acceptance criteria and `## Proof` tests unchanged from round 1 and 
 Findings:
 
 - [ ] Nit: the plan's risk line still says CI installs the plugins "the same as `install/tasks/40_install_default_ruby_gems.sh` does on every machine" — the parity claim `8cfc1fdc` removed from the workflow comment, and still not accurate while `packages.conf` lacks `rubocop-minitest` — `docs/changes/rubocop-refute-methods/plan.md:51` →
+
+## Round 4 — 2026-09-29T15:40Z — 8951035c
+
+Fetch from origin succeeded; `origin/main` is `30cf94dd`, which is also the merge base. No uncommitted changes.
+
+Suite state: `test/rubocop_fallback_test.rb` 2 runs, 13 assertions, 0 skips, with and without `CI=true`. `rubocop -c rubocop/.rubocop.yml` on the 14 touched `.rb` files: no offenses. The known local-only failures in `test/lefthook_pull_hooks_test.rb` remain. In this pane `test/worktree_create_test.rb`, `test/worktree_pane_test.rb` and `test/herdr_worker_scripts_test.rb` also error in `setup`: `git commit` in their temporary repos fails with `error: 1Password: agent returned an error`, because commit signing through the 1Password agent is unavailable here. A bare `git init` plus `git commit --allow-empty` outside the suite fails the same way, so this is the environment, not the branch. The two `worktree_create_test.rb` call sites this branch rewrote were green in rounds 1-3.
+
+Round 3 nit:
+
+- Nit 1 (plan risk line claims parity with the installer) resolved by `8951035c`: the line now says the plugins are the ones the fallback loads, unpinned like `RUBY_GEMS` in `packages.conf`.
+
+Bugs: nothing found. The fallback config sets `Enabled: false` for both cops, the comment gives the reason, and `git grep` finds no `assert_not` / `assert_no_match` definitions or calls left under `test/`.
+
+Security: nothing found. The CI step installs unpinned gems from rubygems.org, an accepted risk in the plan.
+
+Compliance: acceptance criteria and `## Proof` tests unchanged from round 1 and still pass. Spec, plan and workflow comment now agree on how the CI gems relate to `packages.conf`. No test weakened, skipped or deleted.
+
+Findings: none.
