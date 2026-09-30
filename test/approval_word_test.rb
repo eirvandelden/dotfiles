@@ -20,6 +20,26 @@ class ApprovalWordTest < Minitest::Test
     assert_includes(skill, "Treating \"sounds right\" as \"accepted\" — only the literal word \"accepted\" or \"agreed\" flips the status.")
   end
 
+  def test_the_spec_skill_flips_status_to_accepted_when_agreed
+    accept = section("spec", "### 4. Accept")
+
+    assert_includes(accept, "literal word \"accepted\" or \"agreed\", flip it")
+    assert_includes(accept, "`accepted`")
+  end
+
+  def test_the_plan_skill_flips_status_to_accepted_when_agreed
+    step = skill_text("plan")[/^7\. .*$/] || flunk("no step 7 in plan")
+
+    assert_includes(step, "`Status: accepted` only on the user's literal word \"accepted\" or \"agreed\"")
+    assert_includes(step, "On either word")
+  end
+
+  def test_the_playbook_names_accepted_first_and_agreed_as_the_alternative
+    rule = File.read(File.join(REPO_ROOT, "agents.md"))[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
+
+    assert_operator(rule.index("\"accepted\""), :<, rule.index("\"agreed\"") || flunk("no \"agreed\" in rule 17"))
+  end
+
   private
 
   def skill_text(name)
