@@ -3,8 +3,10 @@ actionables
 actionmailbox
 actionpack
 actiontext
+appkit
 archlinux
 AUR
+automatisering
 autorun
 backticked
 bdelete
@@ -45,6 +47,7 @@ flatpak
 Flatpak
 gamemode
 gamescope
+geplande
 ghostty
 Ghostty
 glsl
@@ -111,6 +114,8 @@ relativenumber
 repr
 restow
 ripgrep
+samen
+schrijven
 scrolloff
 semble
 shellescape
@@ -132,11 +137,14 @@ steamos
 SteamOS
 stow
 symlinker
+taak
 termguicolors
 termios
 thoughtbot
 timeoutlen
+TINYSKY
 tkareine
+toen
 tofi
 toplevel
 Unassigning
@@ -160,6 +168,7 @@ xdg
 XDG
 xdg-desktop-portal
 xdg-desktop-portal-hyprland
+xhigh
 xwayland
 XWayland
 yay

@@ -39,7 +39,7 @@ enabled = true
 enabled = true
 
 [plugins."superpowers-ruby@superpowers-ruby"]
-enabled = true
+enabled = false
 
 [plugins."unified-computer-use@openai-bundled"]
 enabled = true
