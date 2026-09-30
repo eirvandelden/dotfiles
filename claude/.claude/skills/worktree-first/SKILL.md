@@ -50,6 +50,6 @@ Inside herdr, a pane rooted in the new worktree opens below; focus it for the fi
 
 Edits, commits, `git push`, `gh pr create` all run with the worktree as `cwd`. Never `cd` back to the main checkout to commit or push. The worktree stays in place until a future task's Step 1 sweeps it, once its PR merges.
 
-## Rails + SQLite projects (Claude Code only)
+## Rails + SQLite projects
 
-Also invoke the `using-sqlite-worktrees` skill (superpowers-ruby plugin) after dependency install, before running tests — it copies the main checkout's dev/test databases into the new worktree. Its script resolves paths via `${CLAUDE_PLUGIN_ROOT}`, so it only works under Claude Code even though the plugin files also exist in Codex's cache.
+Also invoke the `using-sqlite-worktrees` skill after dependency install, before running tests — it copies the main checkout's dev/test databases into the new worktree.
