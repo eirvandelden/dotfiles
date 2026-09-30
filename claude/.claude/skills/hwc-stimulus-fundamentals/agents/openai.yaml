@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Stimulus Fundamentals"
+  short_description: "Stimulus lifecycle, values, targets, outlets and controller design"
