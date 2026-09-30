@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Rails Upgrade"
+  short_description: "Plan and run a Rails version upgrade, one major at a time"
