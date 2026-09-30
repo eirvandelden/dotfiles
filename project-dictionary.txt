@@ -23,6 +23,7 @@ bdelete
 betterspecs
 binstub
 binstubs
+brakemanscanner
 brew
 brewfile
 brewfiles
@@ -39,6 +40,7 @@ chnode
 chpwd
 Chávez
 clinerules
+codeclimate
 compinit
 conductor
 consentable
@@ -63,6 +65,7 @@ enumerables
 Eventable
 evilmartians
 expandtab
+exploitability
 flathub
 flatpak
 Flatpak
@@ -87,6 +90,7 @@ Herdr
 herdrdev
 heredocs
 Honeybadger
+httponly
 hypr
 hyprctl
 hypridle
@@ -97,6 +101,7 @@ hyprpaper
 hyprsunset
 IHDR
 Interactor
+interprocedural
 inversing
 janky
 jsbundling
@@ -121,7 +126,9 @@ mako
 metaprogramming
 millis
 mvpa
+myorg
 myproject
+myrepo
 neovide
 neovim
 Neovim
@@ -133,6 +140,7 @@ Omarchy
 Ombu
 omniauth
 opencode
+optparse
 opusplan
 pacman
 pagy
@@ -142,11 +150,13 @@ pkgconfig
 polkit
 POODR
 precmd
+presidentbeef
 Procfile
 procs
 pstore
 pumadev
 pytest
+Qube
 ractors
 Ractors
 railsdiff
