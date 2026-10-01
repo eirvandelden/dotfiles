@@ -53,3 +53,12 @@ Current keys in `claude/.claude/settings.json`: `"caveman@caveman"`, `"agile@agi
 ## Out of scope
 
 Uninstalling plugins or marketplaces. `~/.codex/superpowers/`, `~/.claude/plugins/` contents. Codex `[projects.*]`/`[hooks.state]` churn (phase 7). Rewriting the playbook beyond the listed sections.
+
+## Departures recorded by the executor (2026-10-01)
+
+- Decisions from the talk-first items: all sixteen candidates vendored (plus `using-sqlite-worktrees`), committed model `opus`, no caveman agents added.
+- `systematic-debugging`: the TypeScript waiting example is left out. Nothing links to it, and this repository has no JavaScript tooling for the eslint hook.
+- `compound`: the `compound-refresh` step is replaced by one sentence (ask before updating an older doc), because `compound-refresh` is not vendored. References to `test-driven-development` and `verification-before-completion` point at playbook rules 3 and 22.
+- Vendored scripts got the fixes linters asked for: one shellcheck SC2155 split, rubocop autocorrect. `ruby-upgrade`'s description became a folded YAML scalar so its frontmatter parses.
+- `37signals-style` and `rails-guides` were committed with `LEFTHOOK_EXCLUDE=no-fixme`: their prose documents the annotation that check looks for.
+- Step 1 and step 8 (`/audit-token`) need a fresh interactive session; the PR records `wc -c` figures and leaves "After" to Etienne.
