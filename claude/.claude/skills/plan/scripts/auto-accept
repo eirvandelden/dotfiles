@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+# auto-accept <artifact.md>
+#
+# The one mechanical gate of autonomous delivery. Rewrites "Status: draft" to
+# "Status: accepted" in a spec.md or plan.md, and nothing else, when:
+#   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
+#   - the artifact has a "## Critique" section with at least one "### Round",
+#   - no finding line under it ends in an empty "→" slot.
+# Exits 1 with a reason otherwise. It never commits.
+require "open3"
+require_relative "../../../hooks/remote_matcher"
+
+def refuse(reason)
+  warn("auto-accept refused: #{reason}")
+  exit(1)
+end
+
+def origin_url
+  stdout, status = Open3.capture2("git", "remote", "get-url", "origin", err: File::NULL)
+  status.success? ? stdout.strip : nil
+end
+
+def critique_section(text)
+  text[/^## Critique\s*$.*?(?=^## |\z)/m]
+end
+
+def open_findings(critique)
+  critique.lines.select { |line| line.match?(/→\s*\z/) }
+end
+
+path = ARGV.first
+refuse("usage: auto-accept <artifact.md>") if path.nil? || !File.file?(path)
+
+url = origin_url
+refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
+
+text = File.read(path)
+refuse("the status line is not draft") unless text.match?(/Status: draft\b/)
+
+critique = critique_section(text)
+refuse("no Critique section") unless critique
+refuse("the Critique section has no Round heading") unless critique.match?(/^### Round/)
+refuse("open critique findings remain: #{open_findings(critique).join.strip}") if open_findings(critique).any?
+
+File.write(path, text.sub(/Status: draft\b/, "Status: accepted"))
