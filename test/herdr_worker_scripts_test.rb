@@ -216,8 +216,10 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
     prompt = worker_prompt("spec")
+    agreed_at = prompt.index("\"agreed\"") || flunk("no \"agreed\" in #{prompt.inspect}")
+    report_at = prompt.index("write what spec.md decided") || flunk("no report sentence in #{prompt.inspect}")
 
-    assert_operator(prompt.index("\"agreed\""), :<, prompt.index("write what spec.md decided"))
+    assert_operator(agreed_at, :<, report_at)
   end
 
   def test_the_implement_worker_is_told_not_to_push
