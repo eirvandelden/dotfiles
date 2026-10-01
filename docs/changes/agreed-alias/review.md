@@ -26,3 +26,18 @@ Compliance: every acceptance criterion has a proving test; every test named in `
 - [x] Nit: `test_the_worker_writes_its_report_after_agreed_not_before` checks only the spec prompt. For the plan prompt the same check would pass trivially, because `role_instruction` already names "agreed" before the acceptance sentence; intent is not checked. Acceptable as is, but the test name claims more than the spec stage — `test/herdr_worker_scripts_test.rb:214` → fixed (Name the "agreed" report-order test after the spec stage it checks)
 
 Counts: Important 0, Nit 4.
+
+## Round 2 — 2026-10-01 — 78242d26
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; used the default policy from `claude/.claude/skills/new-repo-setup/references/REVIEW.md`.
+
+State at review: `test/approval_word_test.rb` (6 runs) and `test/herdr_worker_scripts_test.rb` (61 runs, 0 skips) green; `rubocop` on both test files clean; `shellcheck -x -S warning` on `hand-off-plan.sh` clean. No uncommitted changes. The branch is behind `origin/main` (PR #173 merged since). `git merge-tree` shows no conflicts, and both test files stay green on the merged tree.
+
+Bugs: none found. Security: none found (prose and quoted prompt strings only; no new input handling).
+
+Compliance: all four round 1 fixes hold. Every acceptance criterion keeps its proving test; every test named in `## Proof` exists, with `test_the_worker_writes_its_report_after_agreed_not_before` renamed to `test_the_spec_worker_writes_its_report_after_agreed_not_before` by the round 1 fix. `test_the_playbook_names_the_intent_phrases_too` is new and not in `## Proof`; it backs the round 1 rule 17 fix, so it adds coverage and weakens nothing. No existing test was changed or removed. No other approval-word sites on the branch or on `origin/main` outside the planned files.
+
+- [ ] Nit: Plan step 11 checks requirement 7 with `git diff --quiet main -- docs/changes/ai-native-workflow` (two dots). Against the current `origin/main` it exits 1, because PR #173 edited `phases/05-plugins-and-playbook.md` on main. The branch does not touch the folder: `git diff --quiet origin/main...HEAD -- docs/changes/ai-native-workflow` exits 0. Requirement 7 holds; use the three-dot form when re-verifying, or rebase first — `docs/changes/agreed-alias/plan.md:33`
+- [ ] Nit: `prompt.index(...)` has no guard, so a missing `"agreed"` or report sentence raises `ArgumentError` (comparison of nil) instead of a readable failure. Same shape as the round 1 rule 17 nit; the neighbouring existing test at line 327 has it too, so it is consistent as is — `test/herdr_worker_scripts_test.rb:220`
+
+Counts: Important 0, Nit 2.
