@@ -98,6 +98,25 @@ hooks = true
 js_repl = false
 memories = true
 
+# The same guard scripts Claude runs (claude/.claude/hooks/). herdr owns ~/.codex/hooks.json;
+# Codex merges that file with this table. Shell commands arrive as tool_name "Bash", file
+# edits as "apply_patch".
+[[hooks.PreToolUse]]
+matcher = "^Bash$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = '"$HOME/.claude/hooks/consent-guard.rb"'
+timeout = 10
+
+[[hooks.PreToolUse]]
+matcher = "^apply_patch$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = '"$HOME/.claude/hooks/test-guard.rb"'
+timeout = 10
+
 [mcp_servers.super-mcp]
 url = "https://api.super.work/mcp"
 

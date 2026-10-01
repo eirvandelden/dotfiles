@@ -11,6 +11,8 @@ require "json"
 class GuardParityTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   RULES = File.join(REPO_ROOT, "codex/.codex/rules/default.rules")
+  CODEX_CONFIG = File.join(REPO_ROOT, "codex/.codex/config.toml")
+  CLAUDE_SETTINGS = File.join(REPO_ROOT, "claude/.claude/settings.json")
 
   GUARDED_COMMANDS = [
     %w[git push --force], %w[git commit --no-verify], %w[git push --no-verify],
@@ -49,6 +51,14 @@ class GuardParityTest < Minitest::Test
     assert_empty(leaking, "rules name a machine path")
   end
 
+  def test_codex_runs_the_consent_guard_claude_runs_on_shell_commands
+    assert_equal(claude_hook("Bash", "consent-guard.rb"), codex_hook("^Bash$"))
+  end
+
+  def test_codex_runs_the_test_guard_claude_runs_on_file_edits
+    assert_equal(claude_hook("Edit|Write|MultiEdit", "test-guard.rb"), codex_hook("^apply_patch$"))
+  end
+
   private
 
   # Every prefix_rule as { pattern:, decision: }. The rules language is not JSON, but its rules only use
@@ -56,5 +66,18 @@ class GuardParityTest < Minitest::Test
   def rules
     @rules ||= File.read(RULES).scan(/prefix_rule\(\s*pattern\s*=\s*(\[.*?\])\s*,\s*decision\s*=\s*"(\w+)"/m)
                    .map { |pattern, decision| { pattern: JSON.parse(pattern), decision: decision } }
+  end
+
+  def claude_hook(matcher, script)
+    entry = JSON.parse(File.read(CLAUDE_SETTINGS)).dig("hooks", "PreToolUse").find { |hook| hook["matcher"] == matcher }
+    entry.fetch("hooks").map { |hook| hook["command"] }.find { |command| command.include?(script) }
+  end
+
+  # The command of the inline [[hooks.PreToolUse]] entry with this matcher. Codex runs it through
+  # a shell, so the same "$HOME/..." string Claude uses expands the same way.
+  def codex_hook(matcher)
+    entries = File.read(CODEX_CONFIG).split(/^\[\[hooks\.PreToolUse\]\]\n/).drop(1)
+    entry = entries.find { |text| text[/^matcher = "(.*)"$/, 1] == matcher }
+    entry && entry[/^command = '(.*)'$/, 1]
   end
 end
