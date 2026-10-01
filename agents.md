@@ -162,7 +162,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Stacked branches: rebase onto the explicitly named base branch and target the PR at it.
     - Resolve each conflicted file on its own merits; never blindly discard one side.
     - After a rebase, push with `--force-with-lease` only. NEVER use plain `--force`.
-    - The consent guard refuses plain `--force` in both Claude and Codex. Codex's `rules/default.rules` also forbids it.
+    - The consent guard refuses plain `--force` in both Claude and Codex. Codex's `rules/default.rules` also forbids it when the flag follows `push` directly; the hook catches every other position.
     - Full workflow: `sync` skill (`claude/.claude/skills/sync/SKILL.md`).
 21. Commit scope hygiene:
     - Before committing, re-read the full diff. Every hunk must be required by the task. Revert unrelated changes: whitespace, quote style, comments, renamed test strings, lint configs, `.github/` files.
