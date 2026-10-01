@@ -5,7 +5,7 @@ From `intent.md` (2026-10-01). Status: accepted.
 ## Flagged concerns
 
 - Playbook rule 17 says an accepted `plan.md` needs Etienne's literal word "accepted". Autonomous mode replaces that word with the two-model critique below, for personal repos only. Work repos keep rule 17 unchanged. Rule 17 and its `core-values.yml` mirror need a personal-scope carve-out.
-- Etienne's escalation answers listed only "stuck after 3 attempts" and "review disagreement". The intent also returns material behaviour changes and permission needs to him. This spec keeps all four, because the intent is the accepted source and the permission rules (8, 9, 11, 12, 13) stay in force.
+- Etienne's escalation answers listed only "stuck after 3 attempts" and "review disagreement". The intent also returns material behaviour changes and permission needs to him. This spec keeps all four, because the intent is the accepted source and the permission rules (8, 9, 11, 12, 13) stay in force. Etienne confirmed all four on 2026-10-01.
 - Playbook rule 6 forbids posting GitHub comments as Etienne without approval. Opening the PR is allowed (rule 5). Replying to human reviewers on it stays forbidden.
 - Autonomy must not weaken checks. A hook cannot prove "no weakened test", so the independent review round is the control.
 
