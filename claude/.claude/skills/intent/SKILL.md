@@ -65,6 +65,13 @@ One question at a time; prefer multiple choice (use `AskUserQuestion` where avai
 
 The interview ends when every template section can be filled without guessing. Until then, keep asking.
 
+**Delivery mode.** Run `~/.claude/skills/finish/scripts/change-scope`. Offer autonomous delivery only when it prints `personal`; on `work`, or when it exits 1, skip this step and use the step-by-step flow. On `personal`, ask:
+
+1. Which permissions will the change need? List gems or packages, system tools, migrations that drop or remove, and deploy files (playbook rules 8, 9, 11, 12, 13). Each one is approved now, or becomes a stop-and-ask later.
+2. Autonomous delivery (playbook §7a: agents carry the change to a verified PR; you approve the intent and the merge) or step-by-step (you accept the plan too)?
+
+Autonomous adds a `Delivery: autonomous` line next to `Status:` in `intent.md`, with the approved permissions under `## Constraints`.
+
 Batch independent multiple-choice questions (up to 4) only when none of them would change another's answer; otherwise ask one at a time.
 
 **Persist as you go**: write the draft `intent.md` as soon as the problem and outcome are clear enough to state, then refine it as remaining questions are answered. A dropped session resumes from the file, not from chat history.
@@ -122,7 +129,7 @@ Author: <name>. Status: draft.
 <anything unresolved — or "None.">
 ```
 
-Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
+Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` (and, for autonomous delivery, `Delivery: autonomous`) — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
 
 Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
@@ -134,7 +141,26 @@ Refuse to flip `Status:` to `accepted` while any of these holds, and name what i
 - `## Open questions` holds anything but "None.".
 - A flagged concern names no chosen side.
 
-Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
+Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`).
+
+- `intent.md` has `Delivery: autonomous`: do not chain to the plan stage by hand. Follow "Autonomous delivery" below.
+- Otherwise, inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
+
+## Autonomous delivery
+
+Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes only on a `personal` origin. This session is the coordinator. Etienne's "accepted" on the intent was the last approval before the PR, except the escalations below.
+
+1. `HERDR_PANE_ID=<own pane id> ~/.config/herdr/scripts/hand-off-plan.sh plan <slug> --auto`. Wait for `Plan ready:`, then read the report.
+2. Same for `implement`: `hand-off-plan.sh implement <slug> --auto`. Read its report before going on.
+3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
+4. Exercise the behaviour as a human would, and record the evidence.
+5. Review. Run `~/.config/herdr/scripts/start-review.sh` and `codex review --base <base>`. Transcribe the Codex output as its own round in `docs/changes/<slug>/review.md`, in the reviewer's format (see the `review` skill), and commit it alone. Fix findings through `code-review`. Repeat until no finding is open.
+6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
+7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
+
+Escalation: stop and ask Etienne one concrete question when a choice changes the agreed behaviour, a step needs a permission he has not approved, one problem fails three times, or a finding is still disputed after two rounds. A `Decision needed:` line in a stage report is how a pane raises one of these.
+
+Outside herdr, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
 
 ## Codex
 
