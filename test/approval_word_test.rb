@@ -42,6 +42,13 @@ class ApprovalWordTest < Minitest::Test
     assert_operator(accepted_at, :<, agreed_at)
   end
 
+  def test_the_playbook_names_the_intent_phrases_too
+    rule = rule_17
+
+    assert_includes(rule, "\"accept the intent\"")
+    assert_includes(rule, "\"agree the intent\"")
+  end
+
   private
 
   def rule_17
