@@ -259,6 +259,68 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/done means/i, worker_prompt("implement"))
   end
 
+  def test_an_auto_worker_is_told_to_invoke_the_skill_in_auto_mode
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change", "--auto")
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto")
+
+    %w[spec plan implement].each do |stage|
+      assert_match(/with the auto argument/, worker_prompt(stage), stage)
+    end
+  end
+
+  def test_an_auto_worker_is_not_told_to_wait_for_accepted
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change", "--auto")
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    %w[spec plan].each do |stage|
+      refute_includes(worker_prompt(stage), "literal word", stage)
+      assert_match(/do not wait for .*accepted/i, worker_prompt(stage), stage)
+    end
+  end
+
+  def test_an_auto_worker_is_not_told_to_chain_the_next_stage
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change", "--auto")
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    %w[spec plan].each do |stage|
+      refute_includes(worker_prompt(stage), "starts the next stage", stage)
+      assert_includes(worker_prompt(stage), "Do not start the next stage", stage)
+    end
+  end
+
+  def test_an_auto_worker_reports_open_decisions
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto")
+
+    assert_includes(worker_prompt("implement"), "Decision needed:")
+  end
+
+  def test_auto_is_refused_for_the_intent_stage
+    _, stderr, status = run_script(HAND_OFF_PLAN, "intent", "some-change", "--auto")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/auto/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_without_auto_the_prompt_is_unchanged
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    refute_includes(worker_prompt("spec"), "auto argument")
+    refute_includes(worker_prompt("spec"), "Decision needed:")
+    assert_includes(worker_prompt("spec"), "literal word")
+  end
+
   def test_the_intent_worker_is_given_the_coordinator_pane_id
     worktree_creatable!
 
