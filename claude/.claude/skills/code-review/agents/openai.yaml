@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Code Review"
+  short_description: "Review a pull request, or implement and re-review the fixes it asks for"

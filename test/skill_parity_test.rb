@@ -19,7 +19,7 @@ class SkillParityTest < Minitest::Test
   # Process and domain skills not yet vendored onto the shared mechanism — a later
   # phase decides, skill by skill, whether each is worth linking into Codex too.
   CLAUDE_ONLY = %w[
-    code-review dependencies dotfiles-maintenance new-repo-setup object-oriented-design
+    dependencies dotfiles-maintenance new-repo-setup object-oriented-design
     rails-api-design rails-architecture rails-ops rails-testing rails-ui
     ruby-style sync
   ].freeze
