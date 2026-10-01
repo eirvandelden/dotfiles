@@ -27,3 +27,19 @@ Per item: `test/` green; lint on touched files; for items 3–5 a written recomm
 ## Out of scope
 
 Anything herdr wrote in `~/.claude/hooks/` or `~/.codex/`. `~/.claude/plugins/`, `~/.codex/superpowers/`, sqlite state under `~/.codex/`. Running `stow`.
+
+## Departures recorded by the executor (2026-10-01)
+
+One branch, one commit per item, one PR, instead of one worktree per item. Etienne chose speed.
+
+Item 1: done. Nothing in `install/` or `packages.conf` stows `claude/.config/`. The file is removed.
+
+Item 2: the log is not tracked, so there is nothing to `git rm`. No `.gitignore` line is added. Etienne deletes the file from the main checkout by hand.
+
+Item 4: already satisfied on the public side. The committed `claude/.claude/settings.json` has no `autoMode` key and a case-insensitive `git grep` for the employer names is empty. The text exists only in an uncommitted working tree. The private repository moves it to project-local files in parallel. No public change.
+
+Item 5: done in #168 (`lefthook.yml` and its tests). This branch does not touch lefthook.
+
+Item 6: done. `docs/handoffs/` is gitignored and Etienne deleted `_archive/` by hand.
+
+Items 3, 7 and 8: report only. See the PR body. Nothing changes in `codex/.codex/config.toml`, `$HOME` or `~/.claude/plans/`.
