@@ -63,7 +63,9 @@ prefix_rule(
 
 # A second layer under the consent guard hook (claude/.claude/hooks/consent-guard.rb, wired
 # in config.toml's [hooks]). The hook is what refuses; these rules make Codex ask, or refuse,
-# even if the hook cannot run.
+# for plain --force, --no-verify, posting on GitHub and deploys even if the hook cannot run.
+# The hook's remote check (pushes only to your own repositories) has no rule equivalent, so
+# the push allows below name `origin` only; any other remote prompts.
 
 prefix_rule(
     pattern = ["git", "push", "--force"],
@@ -126,7 +128,8 @@ prefix_rule(pattern=["git", "diff", "--cached"], decision="allow")
 prefix_rule(pattern=["git", "diff", "--check"], decision="allow")
 prefix_rule(pattern=["git", "fetch", "origin", "main"], decision="allow")
 prefix_rule(pattern=["git", "log", "--oneline"], decision="allow")
-prefix_rule(pattern=["git", "push"], decision="allow")
+prefix_rule(pattern=["git", "push", "origin"], decision="allow")
+prefix_rule(pattern=["git", "push", "-u", "origin"], decision="allow")
 prefix_rule(pattern=["git", "rebase", "origin/main"], decision="allow")
 prefix_rule(pattern=["git", "rev-parse", "HEAD"], decision="allow")
 prefix_rule(pattern=["git", "status", "--short"], decision="allow")
@@ -150,5 +153,4 @@ prefix_rule(pattern=["herdr", "pane", "send-keys"], decision="allow")
 prefix_rule(pattern=["herdr", "pane", "split"], decision="allow")
 prefix_rule(pattern=["herdr", "worktree", "create"], decision="allow")
 prefix_rule(pattern=["mkdir", "-p"], decision="allow")
-prefix_rule(pattern=["sed", "-n", "1,12p"], decision="allow")
 prefix_rule(pattern=["curl", "--silent", "--show-error", "--location"], decision="allow")
