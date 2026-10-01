@@ -150,8 +150,8 @@ Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the 
 
 Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes only on a `personal` origin. This session is the coordinator. Etienne's "accepted" on the intent was the last approval before the PR, except the escalations below.
 
-1. `HERDR_PANE_ID=<own pane id> ~/.config/herdr/scripts/hand-off-plan.sh plan <slug> --auto`. Wait for `Plan ready:`, then read the report.
-2. Same for `implement`: `hand-off-plan.sh implement <slug> --auto`. Read its report before going on.
+1. For each stage in order — `plan`, then `implement` — run `HERDR_PANE_ID=<own pane id> ~/.config/herdr/scripts/hand-off-plan.sh <stage> <slug> --auto`. Wait for that stage's `Plan ready:` or `Handoff done:` line, then read its report before starting the next stage.
+2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
 5. Review. Run `~/.config/herdr/scripts/start-review.sh` and `codex review --base <base>`. Transcribe the Codex output as its own round in `docs/changes/<slug>/review.md`, in the reviewer's format (see the `review` skill), and commit it alone. Fix findings through `code-review`. Repeat until no finding is open.

@@ -53,9 +53,8 @@ class AutonomyContractTest < Minitest::Test
   def test_intent_accept_starts_the_coordinator_loop
     section = section_of(skill("intent"), "## Autonomous delivery")
 
-    assert_includes(section, "hand-off-plan.sh spec <slug> --auto")
-    assert_includes(section, "hand-off-plan.sh plan <slug> --auto")
-    assert_includes(section, "hand-off-plan.sh implement <slug> --auto")
+    assert_includes(section, "hand-off-plan.sh <stage> <slug> --auto")
+    assert_match(/`spec`, then `plan`, then `implement`/, section)
     assert_match(/not .*chain/i, skill("intent")[/^## 4\. Accept.*?(?=^## )/m])
   end
 
