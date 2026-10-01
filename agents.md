@@ -156,11 +156,13 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Agents may push without asking to repos owned by the `eirvandelden` GitHub user, and to any remote listed in `~/.claude/consent-guard-allowed-remotes.txt` (supplied by `dotfiles-work`; the same file the consent guard reads).
     - Pushing to any other remote or repository requires explicit permission first.
     - Force-push rules (rule 20: `--force-with-lease` only, never plain `--force`) still apply regardless of target repo.
+    - The consent guard enforces this rule in both tools. Claude runs it from `settings.json`, Codex from the inline `[hooks]` table in `config.toml`.
 20. Branch sync (rebase workflow):
     - When starting work on an existing branch and before any approved push or PR update, fetch the latest main and rebase the feature branch on top of it. Rebase, never merge main into the branch.
     - Stacked branches: rebase onto the explicitly named base branch and target the PR at it.
     - Resolve each conflicted file on its own merits; never blindly discard one side.
     - After a rebase, push with `--force-with-lease` only. NEVER use plain `--force`.
+    - The consent guard refuses plain `--force` in both Claude and Codex. Codex's `rules/default.rules` also forbids it.
     - Full workflow: `sync` skill (`claude/.claude/skills/sync/SKILL.md`).
 21. Commit scope hygiene:
     - Before committing, re-read the full diff. Every hunk must be required by the task. Revert unrelated changes: whitespace, quote style, comments, renamed test strings, lint configs, `.github/` files.

@@ -103,7 +103,7 @@ The playbook's own rule for tuning applies to this file too: when the same slip 
 
 **Replaces**: re-explaining the task in the second tool; Codex and Claude having different habits.
 
-**Slip to watch**: pushing or opening a PR from Codex before phase 6 lands. Until then its guard is a prompt, not a block; push from Claude.
+**Slip to watch**: obsolete since phase 6: the consent guard now blocks in Codex too, so a push from Codex is as safe as one from Claude. Watch instead for an `allow` rule that Codex appends to `default.rules` on a guarded command; the parity test refuses it at commit time.
 
 ## 9. Parallel only as wide as you can review
 
