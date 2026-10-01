@@ -212,6 +212,25 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/consent-guard-allowed-remotes\.txt/, stderr)
   end
 
+  # Codex sends the same contract with more fields around it (probed 2026-10-01, codex-cli 0.159.3):
+  # tool_name "Bash", the command in tool_input.command, plus session, turn and model fields.
+  def test_a_codex_payload_is_refused_with_the_same_message_as_a_claude_payload
+    [ "git push --force origin x", "git push --no-verify origin x", "gh pr comment 12 --body hi",
+      "kamal deploy" ].each do |command|
+      _, claude_stderr, claude_status = run_guard(command)
+      _, codex_stderr, codex_status = run_codex_guard(command)
+
+      assert_equal(2, codex_status.exitstatus, command)
+      assert_equal([ claude_status.exitstatus, claude_stderr ], [ codex_status.exitstatus, codex_stderr ], command)
+    end
+  end
+
+  def test_a_codex_payload_lets_force_with_lease_through
+    _, stderr, status = run_codex_guard("git push --force-with-lease origin x")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   private
 
   def allow_remotes(*entries)
@@ -224,6 +243,13 @@ class ConsentGuardTest < Minitest::Test
 
   def run_guard(command)
     payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: @repo })
+    Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
+  end
+
+  def run_codex_guard(command)
+    payload = JSON.generate({ session_id: "s", turn_id: "t", hook_event_name: "PreToolUse", model: "gpt",
+                              permission_mode: "default", tool_name: "Bash", tool_input: { command: command },
+                              tool_use_id: "exec-1", cwd: @repo })
     Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
   end
 end
