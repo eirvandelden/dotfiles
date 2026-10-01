@@ -17,7 +17,7 @@ class ApprovalWordTest < Minitest::Test
     skill = skill_text("intent")
 
     assert_includes(accept, "not \"looks good\", not \"ok\"")
-    assert_includes(skill, "Treating \"sounds right\" as \"accepted\" — only the literal word \"accepted\" or \"agreed\" flips the status.")
+    assert_includes(skill, "Treating \"sounds right\" as \"accepted\" — only the words listed in step 4 flip the status.")
   end
 
   def test_the_spec_skill_flips_status_to_accepted_when_agreed

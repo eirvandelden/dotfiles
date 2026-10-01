@@ -69,7 +69,7 @@ Batch independent multiple-choice questions (up to 4) only when none of them wou
 
 - About to write `intent.md` with no questions asked yet.
 - The draft describes a solution ("add a background job") instead of a problem or outcome ("the export arrives by mail within a minute").
-- Treating "sounds right" as "accepted" — only the literal word "accepted" or "agreed" flips the status.
+- Treating "sounds right" as "accepted" — only the words listed in step 4 flip the status.
 
 ## 3. Write `intent.md`
 
