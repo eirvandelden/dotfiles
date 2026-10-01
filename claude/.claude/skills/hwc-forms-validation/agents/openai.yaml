@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Hotwire Forms"
+  short_description: "Hotwire form submission, inline editing, validation errors and modal forms"

@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Ruby"
+  short_description: "Idiomatic modern Ruby patterns, error handling and performance idioms"

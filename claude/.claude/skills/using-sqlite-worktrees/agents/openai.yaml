@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "SQLite Worktrees"
+  short_description: "Copy a Rails app's SQLite dev databases into a new git worktree"

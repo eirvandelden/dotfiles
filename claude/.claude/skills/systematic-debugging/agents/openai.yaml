@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Systematic Debugging"
+  short_description: "Find the root cause of a bug or test failure before proposing a fix"

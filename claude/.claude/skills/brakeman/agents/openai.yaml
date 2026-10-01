@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Brakeman"
+  short_description: "Run and configure Brakeman security scans for Rails apps"

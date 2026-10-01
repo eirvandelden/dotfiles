@@ -58,7 +58,7 @@ Full policy — sources, constraint style, personal gems, Dependabot, upgrade st
 
 ## 5. Detailed Guidance
 
-Topic-specific guidance — object-oriented design, Rails architecture, Ruby style, testing, UI, API design, dependencies, ops, git workflow, code review, dotfiles — is not repeated here.
+Topic-specific guidance — object-oriented design, Rails architecture, Ruby style, testing, UI, API design, dependencies, ops, git workflow, code review, dotfiles — is not repeated here. Neither is the guidance vendored from superpowers-ruby: Rails guides, Rails and Ruby upgrades, the Hotwire set, 37signals style, Sandi Metz rules, Ruby idioms, Brakeman, systematic debugging, compound, and SQLite worktrees.
 
 Claude Code loads those skills automatically by relevance. Any other agent has no loader and should read the index, then the matching skill file: `SKILLS-INDEX.md`.
 
@@ -75,8 +75,11 @@ The rules in sections 0–6 (plus the skills in §5) are the full ruleset. This 
 Claude Code: a subset of the workflow, verification, and consent rules below is also mirrored in `claude/.claude/core-values.yml`, which a hook reinjects every session and prompt so it survives context compaction. Editing a mirrored rule here means editing it there too — see the `dotfiles-maintenance` skill.
 
 1. Keep output concise:
-   - Brief and to the point; plans scannable but complete. Never add unsolicited verbosity, caveats, or filler.
-   - Default to a `lite` caveman style: drop filler, hedging, and pleasantries; keep articles and full sentences; prefer short direct words; keep technical terms, code blocks, and error text exact. Pattern: `[thing] [action] [reason]. [next step].`
+   - Be terse: no filler, hedging, pleasantries, or unsolicited caveats; plans scannable but complete. Code, commands, error text, and commit messages stay exact.
+   - Write Simplified Technical English (ASD-STE100 principles): sentences of at most 20 words, active voice, present tense, one instruction per sentence, one meaning per word, simple words over jargon. Keep the articles.
+   - Before: "It might be worth considering that the migration could possibly have been skipped." After: "The migration did not run."
+   - Before: "The config file should be checked and the server should then be restarted." After: "Check the config file. Then restart the server."
+   - No plugin enforces this; the rule is the rule.
 2. Lint all generated code before finishing:
    - Run linters on every file touched.
    - Fix all issues before considering the task done.
@@ -174,7 +177,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Stop at the first failure instead of dumping output: `-f`/`--fail-fast` (Minitest, RSpec), `--bail` (Jest), `-x --tb=short` (pytest). `tail -20` is a fallback and needs `set -o pipefail`, or it reports `tail`'s exit status instead of the runner's.
     - NEVER re-run an identical failing command more than twice; change it — narrower scope, more diagnostics, a different flag. (Rule 14 caps the whole stuck problem at 3 attempts.)
 24. Model selection:
-    - Claude Code: Opus for planning and research, Sonnet for implementing. The `opusplan` alias does the switch automatically — Opus while in plan mode, Sonnet once execution starts — so `claude/.claude/settings.json` sets `"model": "opusplan[1m]"` and no manual switch is needed. Pick a plain `opus` or `sonnet` session only when a task is entirely research or entirely mechanical.
+    - Claude Code: `claude/.claude/settings.json` sets `"model": "opus"`, so a session you start runs on Opus. The herdr stage panes set their own model in `hand-off-plan.sh`: Opus for `intent` and `plan`, Sonnet for `spec` and `implement`. Start a `sonnet` session by hand only for a task that is entirely mechanical.
     - Codex: Terra for planning and research, Luna for implementing. Luna is the base default in `codex/.codex/config.toml`; start a planning session with `codex -p terra`, which layers `~/.codex/terra.config.toml` over that base.
     - Haiku belongs in subagents, never in the main session. Delegate to it for direct commands that need no interpretation — running a known command, listing files, a mechanical rename, a fixed-format lookup. Pass `model: "haiku"` on the individual Agent call rather than setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
     - Anything requiring judgement — reading a diff for correctness, choosing between designs, writing tests — stays on Opus or Sonnet.
@@ -184,3 +187,9 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Applies to personal and work projects both.
 26. Markdown prose:
     - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
+
+## 8. Things agents get wrong here
+
+Same mistake twice → one line here. Ten lines at most. Remove a line when its mistake has not come back in three months.
+
+No entries yet.

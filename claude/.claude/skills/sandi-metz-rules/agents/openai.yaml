@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Sandi Metz Rules"
+  short_description: "Apply Sandi Metz's four rules to Ruby code reviews and refactors"

@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Rails Guides"
+  short_description: "Official Rails documentation for any Rails-specific topic"

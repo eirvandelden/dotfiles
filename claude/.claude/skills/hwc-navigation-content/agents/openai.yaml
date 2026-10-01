@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Hotwire Navigation"
+  short_description: "Turbo Frame pagination, tabs, lazy loading, filtering and history"
