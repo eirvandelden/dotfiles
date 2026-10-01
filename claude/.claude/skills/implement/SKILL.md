@@ -67,6 +67,15 @@ Same worktree, sequential, never both at once:
 
 Not per-unit alternation — each hand-off is a fresh context; the inner loop stays inside the one agent running it.
 
+## Auto mode
+
+Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh implement <slug> --auto`. Ask Etienne nothing.
+
+- Three failed attempts at one problem: stop and report a `Decision needed:` line that states the problem, what was tried and the choice to make.
+- A new dependency (gem, package, system tool) is never added. Report a `Decision needed:` line that names it and why it is needed.
+- A choice that would change the behaviour agreed in `intent.md` is a `Decision needed:` line, not a guess.
+- Fix failing tests in production code. Never skip a test, add a linter disable comment or edit a linter config.
+
 ## Codex
 
 Same backends. Pane backend still spawns a Claude pane, as today — Codex has no herdr worker of its own. `here` backend's `split` mode's `implementer` restriction comes from the generated `codex/.codex/agents/` TOML plus its `developer_instructions` sentence (phase 3), not a per-path hook — Codex agents cannot carry one.
