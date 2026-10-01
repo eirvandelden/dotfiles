@@ -69,3 +69,14 @@ pre-push:
       fail_text: |
         A Claude skill and its Codex link have drifted. See the failure above and fix it,
         or use --no-verify to skip.
+    guard-parity:
+      tags: skills
+      glob:
+        - "codex/.codex/rules/default.rules"
+        - "codex/.codex/config.toml"
+        - "claude/.claude/settings.json"
+        - "claude/.claude/hooks/*.rb"
+      run: ruby -Itest test/guard_parity_test.rb
+      fail_text: |
+        The Codex rules or hooks have drifted from the consent guard. See the failure above
+        and fix it, or use --no-verify to skip.
