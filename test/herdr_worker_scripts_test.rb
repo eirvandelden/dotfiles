@@ -211,7 +211,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
                                            "the literal word \"accepted\" or \"agreed\"")
   end
 
-  def test_the_worker_writes_its_report_after_agreed_not_before
+  def test_the_spec_worker_writes_its_report_after_agreed_not_before
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "spec", "some-change")
