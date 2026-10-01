@@ -1,6 +1,6 @@
 ---
 name: finish
-description: Closes a change once review is fresh — fills the PR body, asks about an ADR (work only), removes the change folder, pushes, and creates or updates the PR in both scopes; work also requests reviewers. Scope comes from the origin remote, not from asking.
+description: Closes a change once review is fresh — fills the PR body, asks about an ADR (work only), removes the change folder, pushes, and creates or updates the PR in both scopes; work also requests reviewers. Scope comes from the origin remote, not from asking. A coordinator may run it in auto mode on a personal repository.
 disable-model-invocation: true
 arguments:
   - name: dry-run
@@ -74,6 +74,14 @@ Supplied by `dotfiles-work` through its `claude` stow package (`STOW_SHARED`, fi
 - `~/.claude/finish/adr-location` — one line, the repo-relative ADR path pattern used in §2.
 - `~/.claude/finish/reviewers` (optional) — one GitHub handle per line, the default reviewer list offered first in §6.
 - `~/.claude/finish/last-reviewers` — one GitHub handle per line, written by this skill after every confirmed reviewer request; not supplied by `dotfiles-work`.
+
+## Auto mode
+
+Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`). A `work` scope refuses auto mode and uses the steps above unchanged. Differences:
+
+- §3 step 2: do not wait for confirmation of the PR body.
+- §4: close every matching idle or done stage pane without asking.
+- Never merge, and never comment on the PR.
 
 ## Codex
 
