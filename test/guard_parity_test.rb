@@ -51,15 +51,21 @@ class GuardParityTest < Minitest::Test
     assert_empty(leaking, "rules name a machine path")
   end
 
-  def test_codex_runs_the_consent_guard_claude_runs_on_shell_commands
-    assert_equal(claude_hook("Bash", "consent-guard.rb"), codex_hook("^Bash$"))
+  def test_codex_runs_the_same_consent_guard_command_as_claude_for_shell_commands
+    assert_same_hook(claude_hook("Bash", "consent-guard.rb"), codex_hook("^Bash$"), "^Bash$")
   end
 
-  def test_codex_runs_the_test_guard_claude_runs_on_file_edits
-    assert_equal(claude_hook("Edit|Write|MultiEdit", "test-guard.rb"), codex_hook("^apply_patch$"))
+  def test_codex_runs_the_same_test_guard_command_as_claude_for_file_edits
+    assert_same_hook(claude_hook("Edit|Write|MultiEdit", "test-guard.rb"), codex_hook("^apply_patch$"), "^apply_patch$")
   end
 
   private
+
+  def assert_same_hook(claude_command, codex_command, matcher)
+    refute_nil(claude_command, "claude/.claude/settings.json has no PreToolUse hook for that script")
+    refute_nil(codex_command, "codex/.codex/config.toml has no [[hooks.PreToolUse]] entry with matcher #{matcher}")
+    assert_equal(claude_command, codex_command)
+  end
 
   # Every prefix_rule as { pattern:, decision: }. The rules language is not JSON, but its rules only use
   # string lists, which read as JSON.

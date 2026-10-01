@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Claude Code PreToolUse hook (same stdin/exit contract as consent-guard.rb): while a bugfix's
+# PreToolUse hook for Claude Code and Codex (same stdin/exit contract as consent-guard.rb): while a bugfix's
 # reproduction test is committed — this branch's plan.md carries "Reproduction: committed" —
 # an edit to a test path is refused. The playbook's "fix the code, not the tests" for a
 # bugfix, enforced rather than advised (spec.md §1.4).
@@ -67,7 +67,7 @@ end
 
 call = JSON.parse($stdin.read)
 cwd = call["cwd"] || Dir.pwd
-relative_paths = edited_paths(call.fetch("tool_input", {})).map { |path| relative_to_repo(path, cwd) }
+relative_paths = edited_paths(call["tool_input"] || {}).map { |path| relative_to_repo(path, cwd) }
 
 exit 0 if relative_paths.none? { |path| test_path?(path) }
 
