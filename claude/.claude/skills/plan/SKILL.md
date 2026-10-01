@@ -82,6 +82,18 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 6. For anything non-trivial, offer a second-model critique (below) before acceptance.
 7. `Status: accepted` only on the user's literal word "accepted" or "agreed" — never on "looks fine" or "ok". On either word, commit `plan.md` alone: `docs: plan for <slug>`. Then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the implement stage, in its own fresh pane: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh implement '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push. Either way, writing a plan is not permission for *this session* to implement it — deliver the plan and stop; the implementing, if it happens, happens in that other pane.
 
+## Auto mode
+
+Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh plan <slug> --auto`. It never asks Etienne anything and never starts the next stage; the coordinator does. A choice that would change the behaviour agreed in `intent.md` becomes a `Decision needed:` line in the report, not a guess.
+
+1. Write `plan.md` as usual, with `Status: draft`.
+2. Run the critique with the other model family's local CLI. A Claude author uses Codex: `codex exec -p terra -s read-only -o <findings-file> "<prompt>"`. A Codex author uses Claude: `claude -p --model opus --permission-mode plan "<prompt>"`. The prompt asks it to read `plan.md` and the code it names, and to list disagreements with reasons.
+3. Record the result in `plan.md` under `## Critique`, as `### Round 1 (<critic>)` with one finding per list item, written `- <finding> → fixed (<what changed>)` or `- <finding> → dismissed: <reason>`. Fix the artifact for every `fixed` item.
+4. Run `~/.claude/skills/plan/scripts/auto-accept plan.md`. It flips `Status: draft` to `Status: accepted` only on a personal origin with a closed critique. If it refuses, fix what it names; do not edit the status line by hand.
+5. Commit `plan.md` alone (`docs: plan for <slug>`), push (`git push -u origin HEAD`) and report. Plan mode does not apply: the pane has no human to accept the plan. The `## Proof` structure still applies.
+
+A critique CLI that fails or is missing is a blocker: put it in the report as a `Decision needed:` line. Never skip the critique.
+
 ## Critique
 
 Read the plan, then read the actual code it touches. Be critical: does the approach hold? Can it be done better? Verify the plan's claims against the code — a file it says exists, a pattern it says is already used, a test level it assumes. Report disagreements with reasons and propose the better alternative. Meant for a second model: `codex -p terra` reviewing a Claude-written plan, or an Opus session reviewing one Sonnet wrote.
@@ -98,4 +110,4 @@ This role exists for a plan handed over outside the artifact chain (a plan paste
 
 ## Codex
 
-Same three roles. `plan` role needs Codex's own plan mode (`/plan`); `here` is the only backend, since Codex has no herdr pane of its own. `critique` role is what `codex -p terra` is for.
+Same three roles. `plan` role needs Codex's own plan mode (`/plan`); `here` is the only backend, since Codex has no herdr pane of its own. `critique` role is what `codex -p terra` is for. In auto mode a Codex author runs the critique with Claude: `claude -p --model opus --permission-mode plan "<prompt>"`.
