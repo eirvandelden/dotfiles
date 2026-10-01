@@ -35,12 +35,18 @@ class ApprovalWordTest < Minitest::Test
   end
 
   def test_the_playbook_names_accepted_first_and_agreed_as_the_alternative
-    rule = File.read(File.join(REPO_ROOT, "agents.md"))[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
+    rule = rule_17
+    accepted_at = rule.index("\"accepted\"") || flunk("no \"accepted\" in rule 17")
+    agreed_at = rule.index("\"agreed\"") || flunk("no \"agreed\" in rule 17")
 
-    assert_operator(rule.index("\"accepted\""), :<, rule.index("\"agreed\"") || flunk("no \"agreed\" in rule 17"))
+    assert_operator(accepted_at, :<, agreed_at)
   end
 
   private
+
+  def rule_17
+    File.read(File.join(REPO_ROOT, "agents.md"))[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
+  end
 
   def skill_text(name)
     File.read(File.join(REPO_ROOT, "claude/.claude/skills/#{name}/SKILL.md"))
