@@ -172,6 +172,7 @@
         "source": "github",
         "repo": "lucianghinda/superpowers-ruby"
       }
+    }
   },
   "sandbox": {
     "enabled": false,
@@ -339,6 +340,5 @@
   },
   "effortLevel": "high",
   "theme": "auto",
-  "showMessageTimestamps": true,
-  }
+  "showMessageTimestamps": true
 }
