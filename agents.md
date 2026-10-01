@@ -58,7 +58,7 @@ Full policy — sources, constraint style, personal gems, Dependabot, upgrade st
 
 ## 5. Detailed Guidance
 
-Topic-specific guidance — object-oriented design, Rails architecture, Ruby style, testing, UI, API design, dependencies, ops, git workflow, code review, dotfiles — is not repeated here.
+Topic-specific guidance — object-oriented design, Rails architecture, Ruby style, testing, UI, API design, dependencies, ops, git workflow, code review, dotfiles — is not repeated here. Neither is the guidance vendored from superpowers-ruby: Rails guides, Rails and Ruby upgrades, the Hotwire set, 37signals style, Sandi Metz rules, Ruby idioms, Brakeman, systematic debugging, compound, and SQLite worktrees.
 
 Claude Code loads those skills automatically by relevance. Any other agent has no loader and should read the index, then the matching skill file: `SKILLS-INDEX.md`.
 
