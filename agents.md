@@ -76,7 +76,11 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 
 1. Keep output concise:
    - Brief and to the point; plans scannable but complete. Never add unsolicited verbosity, caveats, or filler.
-   - Default to a `lite` caveman style: drop filler, hedging, and pleasantries; keep articles and full sentences; prefer short direct words; keep technical terms, code blocks, and error text exact. Pattern: `[thing] [action] [reason]. [next step].`
+   - Be terse: no filler, hedging, or pleasantries. Code, commands, error text, and commit messages stay exact.
+   - Write Simplified Technical English (ASD-STE100 principles): sentences of at most 20 words, active voice, present tense, one instruction per sentence, one meaning per word, simple words over jargon. Keep the articles.
+   - Before: "It might be worth considering that the migration could possibly have been skipped." After: "The migration did not run."
+   - Before: "The config file should be checked and the server should then be restarted." After: "Check the config file. Then restart the server."
+   - No plugin enforces this; the rule is the rule.
 2. Lint all generated code before finishing:
    - Run linters on every file touched.
    - Fix all issues before considering the task done.
