@@ -3,7 +3,7 @@ name: hwc-forms-validation
 description: >-
   Handle Hotwire form workflows: form submission lifecycle, inline editing, validation errors, typeahead/autocomplete, modal forms, and external form controls. Prefer this skill when the core problem is correctness and UX of form interaction. Use hwc-navigation-content for pagination/tabs/filter navigation, hwc-realtime-streaming for WebSocket/Turbo Stream broadcasting, hwc-media-content for image/video/audio behavior, hwc-ux-feedback for generic loading/transition polish, and hwc-stimulus-fundamentals for framework-level Stimulus APIs not tied to forms.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-forms-validation — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-forms-validation — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Forms & Validation
 

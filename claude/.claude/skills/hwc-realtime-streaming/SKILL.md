@@ -3,7 +3,7 @@ name: hwc-realtime-streaming
 description: >-
   Implement real-time Hotwire behavior: Turbo Streams over WebSocket/SSE, custom stream actions, inline stream tags, live list updates, and cross-tab state synchronization. Prefer this skill when the core problem is push-based updates or stream action orchestration. Use hwc-navigation-content for pull-based pagination/tab/lazy-navigation flows, hwc-forms-validation for form lifecycle and validation, hwc-media-content for media upload/playback behavior, hwc-ux-feedback for generic loading/progress/transitions, and hwc-stimulus-fundamentals for non-stream Stimulus fundamentals.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-realtime-streaming — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-realtime-streaming — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Real-Time & Streaming
 

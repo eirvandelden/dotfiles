@@ -2,7 +2,7 @@
 name: rails-guides
 description: Official Rails documentation. Use when asked about any Rails-specific topic including ActiveRecord, routing, controllers, views, mailers, jobs, Action Cable, Action Text, Active Storage, migrations, validations, callbacks, associations, caching, security, or internals.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/rails-guides — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/rails-guides — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Rails Guides
 

@@ -2,7 +2,7 @@
 name: rails-upgrade
 description: Use when upgrading a Rails application from one version to another, assessing upgrade readiness, planning a multi-hop upgrade path, or investigating breaking changes, deprecation warnings, gem compatibility issues, or config.load_defaults transitions between any Rails versions from 5.2 through the latest release.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/rails-upgrade — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/rails-upgrade — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Rails Upgrade
 
@@ -126,7 +126,7 @@ Categorize results into:
 2. For each pattern, use the Grep tool directly: search for the pattern in the specified paths
 3. Collect findings with file:line references and matching content
 4. Read `references/gem-compatibility.md` — check `Gemfile.lock` for gems with known issues
-5. Cross-reference with `skills/rails-guides/references/upgrading_ruby_on_rails.md` for the relevant "Upgrading from X to Y" section
+5. Cross-reference with `~/.claude/skills/rails-guides/references/upgrading_ruby_on_rails.md` for the relevant "Upgrading from X to Y" section
 6. Run searches in parallel where possible (multiple Grep calls in one message)
 7. Compile findings:
    - Must fix before upgrade
@@ -258,7 +258,7 @@ When a user asks about 8.2, say it is unreleased, then use the references to lis
 To refresh the 8.2 picture:
 
 ```bash
-./scripts/fetch-changelogs.sh main ./changelogs
+~/.claude/skills/rails-upgrade/scripts/fetch-changelogs.sh main ./changelogs
 ```
 
 See `references/dual-boot-guide.md` for setup.
@@ -276,10 +276,10 @@ See `references/dual-boot-guide.md` for setup.
 | `references/detection-patterns.md` | Grep/Glob patterns for code-level detection, organized by version pair |
 | `references/dual-boot-guide.md` | next_rails dual-boot setup, NextRails.next? patterns, CI config |
 | `references/troubleshooting.md` | Common upgrade errors and their solutions |
-| `scripts/fetch-changelogs.sh` | Fetches component CHANGELOGs from GitHub for any version or `main` |
+| `~/.claude/skills/rails-upgrade/scripts/fetch-changelogs.sh` | Fetches component CHANGELOGs from GitHub for any version or `main` |
 
 Also cross-references:
-- `skills/rails-guides/references/upgrading_ruby_on_rails.md` — Official Rails upgrading guide (3,000+ lines)
+- `~/.claude/skills/rails-guides/references/upgrading_ruby_on_rails.md` — Official Rails upgrading guide (3,000+ lines)
 
 ---
 

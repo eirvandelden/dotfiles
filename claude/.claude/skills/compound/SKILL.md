@@ -2,7 +2,7 @@
 name: compound
 description: Use when a problem has just been solved and verified working — the fix is fresh, the investigation is in recent history, and the solution is non-trivial enough to capture for future reference
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/compound — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/compound — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Compound
 

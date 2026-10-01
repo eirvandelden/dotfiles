@@ -2,7 +2,7 @@
 name: systematic-debugging
 description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/systematic-debugging — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/systematic-debugging — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Systematic Debugging
 

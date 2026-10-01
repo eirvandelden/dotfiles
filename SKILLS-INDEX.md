@@ -2,7 +2,7 @@
 
 Topic-specific guidance that the core playbook (`agents.md`) deliberately does not repeat.
 
-Sixteen skills are vendored from `lucianghinda/superpowers-ruby` 7.5.0 (MIT); each `SKILL.md` names its upstream path for re-sync.
+Sixteen skills are vendored from `lucianghinda/superpowers-ruby` 7.5.0 under its MIT licence; the licence text, and the CC BY-SA 4.0 notice for the Rails Guides inside `rails-guides/references/`, are in `VENDORED-LICENSES.md`. Each `SKILL.md` names its upstream path and the re-sync steps.
 
 Claude Code loads these automatically by relevance and does not need this list. Any other agent (Codex, ChatGPT, etc.) has no automatic loader: read the matching file below before starting work that matches its trigger.
 

@@ -3,7 +3,7 @@ name: hwc-navigation-content
 description: >-
   Build Hotwire navigation and content-discovery flows: Turbo Frame pagination, tabbed navigation, lazy loading, faceted filtering/search, cache lifecycle, scroll restoration, and visit/render control. Prefer this skill when the core problem is request/response navigation state and browser history behavior. Use hwc-forms-validation for form validation and inline edit flows, hwc-realtime-streaming for WebSocket/Turbo Stream push updates, hwc-media-content for image/video/audio features, hwc-ux-feedback for generic loading/progress/transition polish, and hwc-stimulus-fundamentals for Stimulus APIs not centered on navigation.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-navigation-content — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-navigation-content — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Navigation & Content Display
 

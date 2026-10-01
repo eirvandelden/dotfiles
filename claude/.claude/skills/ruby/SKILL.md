@@ -2,7 +2,7 @@
 name: ruby
 description: Use when writing, reviewing, or debugging pure Ruby code — idiomatic patterns, modern 3.x+ features (pattern matching, Data.define, endless methods), error handling conventions (raise vs fail, result objects), memoization, and performance idioms. For Rails use rails-guides. For testing use minitest. For code style use sandi-metz-rules.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/ruby — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/ruby — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Ruby Language Skill
 

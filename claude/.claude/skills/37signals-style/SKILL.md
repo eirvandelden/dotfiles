@@ -2,7 +2,7 @@
 name: 37signals-style
 description: Rails coding patterns derived from analysis of 37signals' Fizzy codebase. Use when writing Rails code in 37signals/Basecamp style or when asked to follow 37signals patterns. Covers controllers, models, views, Hotwire, testing, database, security, and team philosophy.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/37signals-style — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/37signals-style — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # 37signals Style Guide
 

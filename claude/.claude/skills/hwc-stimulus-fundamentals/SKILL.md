@@ -3,7 +3,7 @@ name: hwc-stimulus-fundamentals
 description: >-
   Cover Stimulus controller fundamentals: lifecycle hooks, values and valueChanged callbacks, targets and target callbacks, outlets, action parameters, keyboard events, and controller architecture patterns. Prefer this skill when the request is primarily about Stimulus APIs and controller design independent of a specific Hotwire domain. Use hwc-forms-validation for form-specific workflows, hwc-navigation-content for Turbo navigation concerns, hwc-realtime-streaming for Turbo Streams/WebSocket patterns, hwc-media-content for media integrations, and hwc-ux-feedback for loading/progress/transition UX patterns.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-stimulus-fundamentals — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/hwc-stimulus-fundamentals — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Stimulus Fundamentals
 

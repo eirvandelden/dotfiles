@@ -3,7 +3,7 @@ name: ruby-upgrade
 description: >-
   Use when upgrading the Ruby interpreter version of a Bundler/Rails app — especially "upgrade to Ruby 4", "bump Ruby to 4.0", "audit Ruby 4 compatibility", "what breaks on Ruby 4", or a specific target like "Ruby 4.0.5". Triggers on Ruby-major risk symptoms: CGI.parse/CGI::Cookie removal, Net::HTTP implicit Content-Type dropped, demoted default gems (ostruct/logger/benchmark/irb), SortedSet, Set#inspect changes, native-extension recompile crashes, openssl 4 pins, and error-tracker fingerprint drift. Also fires on ".ruby-version bump" and "ruby major upgrade". For Rails framework version bumps (6.x/7.x/8.x, config.load_defaults) use the rails-upgrade skill instead.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/ruby-upgrade — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/ruby-upgrade — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Ruby Upgrade
 
@@ -73,7 +73,7 @@ Sections:
 
 1. **TL;DR** — verdict (LOW / MEDIUM / HIGH risk), estimated effort, top 3 blockers.
 2. **Current state** — the Phase 1 table.
-3. **Risk matrix** — one row per `references/ruby-4-0-changes.md` entry: `# | change | exposure (counts + file:line) | risk | action`, each linking back to the inventory anchor (e.g. `(./../../skills/ruby-upgrade/references/ruby-4-0-changes.md#change-01)` or by change number).
+3. **Risk matrix** — one row per `references/ruby-4-0-changes.md` entry: `# | change | exposure (counts + file:line) | risk | action`, each linking back to the inventory anchor (e.g. `(references/ruby-4-0-changes.md#change-01)` or by change number).
 4. **Phased checklist** — pre-filled boxes for Phase 4.
 5. **Surprises** — repo-specific findings (vendored gems, monkey-patches in `config/initializers/`, lock already on a newer Bundler, etc.).
 6. **Open questions for the team** — type-checker (Sorbet/Steep) Ruby-4 support, internal Docker-registry mirroring of the target image, monitoring owner for fingerprint drift, gems known to lag Ruby majors (e.g. grpc).

@@ -2,7 +2,7 @@
 name: brakeman
 description: Static analysis security vulnerability scanner for Ruby on Rails applications. Use when analyzing Rails code for security issues, running security audits, reviewing code for vulnerabilities, setting up security scanning in CI/CD, managing security warnings, or investigating specific vulnerability types (SQL injection, XSS, command injection, etc.). Also use when configuring Brakeman, reducing false positives, or integrating with automated workflows.
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/brakeman — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/brakeman — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Brakeman Security Scanner
 

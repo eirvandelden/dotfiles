@@ -2,7 +2,7 @@
 name: using-sqlite-worktrees
 description: Use when creating a git worktree for a Rails project that uses SQLite - copies the main working tree's development SQLite databases (including Rails 8 Solid Queue/Cache/Cable) into the worktree's storage/ directory with proper WAL checkpointing, so the new worktree has real dev data without re-seeding or re-migrating
 ---
-<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/using-sqlite-worktrees — re-sync by diffing -->
+<!-- upstream: lucianghinda/superpowers-ruby@7.5.0 skills/using-sqlite-worktrees — re-sync: unwrap the upstream copy first (markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix), then diff -->
 
 # Using SQLite Worktrees
 

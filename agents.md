@@ -75,8 +75,7 @@ The rules in sections 0–6 (plus the skills in §5) are the full ruleset. This 
 Claude Code: a subset of the workflow, verification, and consent rules below is also mirrored in `claude/.claude/core-values.yml`, which a hook reinjects every session and prompt so it survives context compaction. Editing a mirrored rule here means editing it there too — see the `dotfiles-maintenance` skill.
 
 1. Keep output concise:
-   - Brief and to the point; plans scannable but complete. Never add unsolicited verbosity, caveats, or filler.
-   - Be terse: no filler, hedging, or pleasantries. Code, commands, error text, and commit messages stay exact.
+   - Be terse: no filler, hedging, pleasantries, or unsolicited caveats; plans scannable but complete. Code, commands, error text, and commit messages stay exact.
    - Write Simplified Technical English (ASD-STE100 principles): sentences of at most 20 words, active voice, present tense, one instruction per sentence, one meaning per word, simple words over jargon. Keep the articles.
    - Before: "It might be worth considering that the migration could possibly have been skipped." After: "The migration did not run."
    - Before: "The config file should be checked and the server should then be restarted." After: "Check the config file. Then restart the server."

@@ -62,3 +62,8 @@ Uninstalling plugins or marketplaces. `~/.codex/superpowers/`, `~/.claude/plugin
 - Vendored scripts got the fixes linters asked for: one shellcheck SC2155 split, rubocop autocorrect. `ruby-upgrade`'s description became a folded YAML scalar so its frontmatter parses.
 - `37signals-style` and `rails-guides` were committed with `LEFTHOOK_EXCLUDE=no-fixme`: their prose documents the annotation that check looks for.
 - Step 1 and step 8 (`/audit-token`) need a fresh interactive session; the PR records `wc -c` figures and leaves "After" to Etienne.
+- Every vendored markdown file was reflowed from hard-wrapped to one line per paragraph by the `no-hardwrap` hook's `--fix`. Diffing against upstream therefore needs the upstream copy unwrapped first; each `SKILL.md`'s upstream marker names the command.
+- Upstream's MIT text and the Rails Guides' CC BY-SA 4.0 notice are recorded in `VENDORED-LICENSES.md` at the repository root, linked from `SKILLS-INDEX.md`.
+- `systematic-debugging`'s upstream authoring artifacts (`CREATION-LOG.md`, `test-academic.md`, `test-pressure-{1,2,3}.md`), which its `SKILL.md` never links and which reference the upstream tree, are not vendored.
+- `HEADROOM.md` is unchanged: nothing in it is covered by a skill.
+- `docs/handoffs/` is gitignored and untracked; nothing to `git rm`. Files present in the main checkout's `docs/handoffs/_archive/` for Etienne to delete by hand: `2026-09-04-main.md`, `2026-09-07-main.md`, `2026-09-16-main.md`, `2026-09-29-update-default-ruby.md`, `2026-10-01-main.md`.
