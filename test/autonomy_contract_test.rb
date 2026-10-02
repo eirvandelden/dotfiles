@@ -73,6 +73,14 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section, "Delivery done:")
   end
 
+  def test_implement_and_plan_frontmatter_name_the_auto_argument
+    %w[implement plan].each do |name|
+      frontmatter = skill(name)[/\A---\n.*?\n---\n/m]
+
+      assert_match(/\bauto\b/, frontmatter, name)
+    end
+  end
+
   def test_spec_and_plan_keep_the_literal_accepted_outside_auto
     %w[spec plan].each do |name|
       text = skill(name)

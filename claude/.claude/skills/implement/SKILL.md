@@ -3,7 +3,7 @@ name: implement
 description: Use once plan.md is accepted — builds it through the acceptance test then red/green/refactor per its Proof list, by default in a fresh Sonnet worker pane, or here in single/split mode.
 arguments:
   - name: backend
-    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan.sh; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override)."
+    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan.sh; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override); \"here auto\": build without asking Etienne anything on a personal autonomous change."
 ---
 
 # Implement

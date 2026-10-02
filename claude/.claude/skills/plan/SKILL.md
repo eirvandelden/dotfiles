@@ -1,6 +1,9 @@
 ---
 name: plan
 description: Use once intent.md is accepted, before any code — writes docs/changes/<slug>/plan.md in plan mode, critically reviews an existing plan, or absorbs a plan another agent should execute.
+arguments:
+  - name: backend
+    description: "(default) a fresh Opus pane below via hand-off-plan.sh; \"here\": write in this session instead; \"here auto\": write, critique and accept without Etienne on a personal autonomous change."
 ---
 
 # Plan
