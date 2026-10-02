@@ -116,6 +116,22 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/open/i)
   end
 
+  def test_refuses_a_finding_that_quotes_a_closed_slot_but_ends_open
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- \"→ fixed (x)\" is the wrong format →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_accepts_a_closed_finding_with_an_explaining_sub_bullet
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "#{CLOSED_CRITIQUE}  - The rollback runs before the migration\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   def test_refuses_an_accepted_artifact_whose_body_quotes_a_draft_status
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE, status: "accepted", body: "The old line read Status: draft.")

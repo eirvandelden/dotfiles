@@ -6,7 +6,7 @@
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
 #   - the first "Status:" line, the status line, says draft,
 #   - the artifact has a "## Critique" section with at least one "### Round",
-#   - every finding under it is closed: "→ fixed (<subject>)" or "→ dismissed: <reason>".
+#   - every top-level finding under it ends in "→ fixed (<subject>)" or "→ dismissed: <reason>".
 # Exits 1 with a reason otherwise. It never commits.
 require "open3"
 require_relative "../../../hooks/remote_matcher"
@@ -25,10 +25,12 @@ def critique_section(text)
   text[/^## Critique\s*$.*?(?=^## |\z)/m]
 end
 
-CLOSED_FINDING = /→\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S)/
+# The slot is the text after a finding's last arrow; anything earlier is the finding itself.
+CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
 
+# Top-level list items are findings; indented sub-bullets only explain one.
 def open_findings(critique)
-  critique.lines.grep(/^\s*[-*] /).grep_v(CLOSED_FINDING)
+  critique.lines.grep(/^[-*] /).reject { |line| line.include?("→") && line.split("→").last.match?(CLOSED_SLOT) }
 end
 
 def status_line(text)
