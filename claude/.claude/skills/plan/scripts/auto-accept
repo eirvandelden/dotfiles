@@ -6,8 +6,9 @@
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
 #   - the first "Status:" line, the status line, says draft,
 #   - the artifact has a "## Critique" section with at least one "### Round",
-#   - every top-level list item under it ends in "→ fixed (<subject>)" or "→ dismissed: <reason>",
-#     and every indented item sits under such a closed finding.
+#   - every round holds "No findings." alone, or findings written "- <finding> → fixed (<subject>)"
+#     or "- <finding> → dismissed: <reason>", each optionally explained by indented items;
+#     any other non-blank line under "## Critique" is refused.
 # Exits 1 with a reason otherwise. It never commits.
 require "open3"
 require_relative "../../../hooks/remote_matcher"
@@ -29,23 +30,43 @@ end
 # The slot is the text after a finding's last arrow; anything earlier is the finding itself.
 CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
 
-LIST_ITEM = /^(\s*)(?:[-*+]|\d+[.)])\s/
+ROUND = /^### Round\b/
+FINDING = /^[-*] /
+EXPLANATION = /^\s+(?:[-*+]|\d+[.)])\s/
+NO_FINDINGS = /^No findings\.\s*$/
 
 def closed?(line)
   line.include?("→") && line.split("→").last.match?(CLOSED_SLOT)
 end
 
-# Every top-level list item, of any marker, is a finding. An indented item only explains the
-# finding above it, so it counts as open unless that finding is closed: unknown shapes fail closed.
-def open_findings(critique)
-  parent_closed = false
-  critique.lines.select do |line|
-    indent = line[LIST_ITEM, 1]
-    next false unless indent
+# The non-blank lines after the "## Critique" heading, one group per round. A group that does
+# not start with a Round heading is text before the first round.
+def rounds(critique)
+  critique.lines.drop(1).reject { |line| line.strip.empty? }.slice_before { |line| line.match?(ROUND) }
+end
 
-    parent_closed = closed?(line) if indent.empty?
-    !parent_closed
+def round_problems(group)
+  return group unless group.first.match?(ROUND)
+
+  entries = group.drop(1)
+  return [ "#{group.first.strip} has no finding and no \"No findings.\" line\n" ] if entries.empty?
+  return [] if entries.one? && entries.first.match?(NO_FINDINGS)
+
+  unreadable_entries(entries)
+end
+
+# An allow-list, so any shape this script does not know fails closed: a closed top-level finding,
+# or an indented item explaining the closed finding above it. Anything else is reported.
+def unreadable_entries(entries)
+  parent_closed = false
+  entries.reject do |line|
+    parent_closed = closed?(line) if line.match?(FINDING)
+    parent_closed && (line.match?(FINDING) || line.match?(EXPLANATION))
   end
+end
+
+def open_findings(critique)
+  rounds(critique).flat_map { |group| round_problems(group) }
 end
 
 def status_line(text)

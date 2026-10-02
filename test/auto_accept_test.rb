@@ -153,6 +153,43 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/open/i)
   end
 
+  def test_refuses_an_open_finding_written_as_a_paragraph
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\nMissing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_an_open_finding_in_a_block_quote
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n> - Missing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_a_round_without_any_finding
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_a_finding_hidden_behind_a_fenced_heading
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- Naming → fixed (renamed)\n\n```\n## Notes\n```\n\n- Missing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_accepts_a_round_that_states_no_findings
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\nNo findings.\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   def test_refuses_an_accepted_artifact_whose_body_quotes_a_draft_status
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE, status: "accepted", body: "The old line read Status: draft.")
