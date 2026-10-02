@@ -158,7 +158,7 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
 7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
 
-A stage pane started by `hand-off-plan.sh intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the account, as the single line `Delivery done: <account path>`, sent once the delivery ends.
+A stage pane started by `hand-off-plan.sh intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the account, as the single line `Delivery done: <account path>`, sent once the delivery ends; the account path also goes into the report file the starting prompt names.
 
 Escalation: stop and ask Etienne one concrete question when a choice changes the agreed behaviour, a step needs a permission he has not approved, one problem fails three times, or a finding is still disputed after two rounds. A `Decision needed:` line in a stage report is how a pane raises one of these.
 

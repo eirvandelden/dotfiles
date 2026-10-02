@@ -192,19 +192,22 @@ include one line in your own report file, named next, saying so and why."
 fi
 
 # Autonomous delivery: the intent session itself coordinates the stages, so its stage panes report
-# to it, and the pane that started it hears only the final account.
+# to it, and the pane that started it hears only the final account. The condition comes before the
+# report-and-close steps, so the last instruction the worker reads never closes a coordinator.
+intent_branch=""
 if [ "$stage" = "intent" ]; then
-  chain_instruction="$chain_instruction Exception: if intent.md records Delivery: autonomous, follow \
-the intent skill's Autonomous delivery section instead. You coordinate that delivery yourself: pass \
-your own pane id (\$HERDR_PANE_ID in your shell) to every stage, never the coordinator's id above. \
-Do not send Intent ready: and do not close your pane after the intent. When the delivery ends, \
-send pane $HERDR_PANE_ID the single line Delivery done: followed by the account file path, then \
-close your own pane."
+  intent_branch=" If intent.md records Delivery: autonomous, follow the intent skill's Autonomous \
+delivery section instead of the chain above and the report steps below. You coordinate that \
+delivery yourself: pass your own pane id (\$HERDR_PANE_ID in your shell) to every stage, never the \
+coordinator's id above, and keep your pane open after the intent. When the delivery ends, write \
+the account file path into $report, send pane $HERDR_PANE_ID the single line Delivery done: \
+followed by the account file path, then close your own pane. Unless intent.md records Delivery: \
+autonomous, do the following."
 fi
 
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
-CLAUDE.md first. $acceptance_instruction$chain_instruction$auto_instruction $report_instruction $report. Then \
+CLAUDE.md first. $acceptance_instruction$chain_instruction$auto_instruction$intent_branch $report_instruction $report. Then \
 report back to the agent that handed this over, with \
 herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that \
 file path. Quote the path yourself. That call is rejected while the coordinator is blocked on a \

@@ -330,6 +330,26 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "Delivery done:")
   end
 
+  def test_the_intent_worker_closes_its_pane_after_the_intent_only_without_autonomous_delivery
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+    prompt = worker_prompt("intent")
+    condition = prompt.index("Unless intent.md records Delivery: autonomous")
+
+    refute_nil(condition)
+    assert_operator(condition, :<, prompt.index("Intent ready:"))
+    assert_operator(condition, :<, prompt.index("herdr pane close"))
+  end
+
+  def test_the_autonomous_intent_worker_writes_the_account_path_into_its_report_file
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+
+    assert_match(%r{account file path into \S*/herdr/intent-\S+\.md}, worker_prompt("intent"))
+  end
+
   def test_only_the_intent_worker_hears_about_autonomous_delivery
     worktree_creatable!
 
