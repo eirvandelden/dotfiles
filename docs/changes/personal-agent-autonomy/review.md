@@ -62,3 +62,14 @@ Compliance: both round 4 findings are closed in commit `ec639386`, and each has 
 Security: nothing found. The branch diff has no employer name or credential.
 
 Suite: `auto_accept_test.rb` (23 runs), `autonomy_contract_test.rb` (20), `herdr_worker_scripts_test.rb` (69) and `skill_parity_test.rb` (7) pass. Shellcheck and RuboCop are clean on the touched files.
+
+## Round 6 — 2026-10-02T09:03Z — 02c6bf6f
+
+- [ ] Nit: `closed?` takes the slot from `line.split("→").last`, and `String#split` drops trailing empty fields. A finding whose closed slot has a bare `→` after it (`- Missing a test → fixed (added) →`) counts as closed when it is the file's last line with no final newline. Reproduced in a temp repo with a personal origin: exit 0, `Status: accepted`. With a final newline it is refused. The critique is now the last thing in the file, so its last finding is often the last line. Use `line.split("→", -1).last` and add a test for the no-newline case. — `claude/.claude/skills/plan/scripts/auto-accept:41`
+- [ ] Nit: `test_refuses_a_second_critique_section` puts `## Notes` and an open finding between the two `## Critique` headings, so either one alone makes the script refuse. It does not prove that a second `## Critique` heading alone is refused. Probed by hand: two closed rounds under two adjacent `## Critique` headings are refused on the second heading line, as intended. Drop the `## Notes` section and the open finding from the test, so only the second heading triggers the refusal. — `test/auto_accept_test.rb:184`
+
+Compliance: all round 5 findings are closed in commits `8eebd045` and `e6524393`. Each has a test: `test_refuses_a_second_critique_section`, `test_refuses_a_section_after_the_critique` and `test_refuses_a_finding_without_text`. `test_spec_and_plan_forbid_an_arrow_inside_a_closure` asserts the new "last thing in the file" and "further `### Round` heading" text in both skills. Probes that fail closed as intended: two adjacent `## Critique` sections, and a `**Status:** draft` status line. The mid-line status (`From … Status: draft.`) in the spec and plan templates flips correctly. Every acceptance criterion still maps to its Proof test, and every Proof test exists. No existing test was weakened, skipped or deleted. The repository root has no `REVIEW.md` or `REVIEW.local.md`; this round used the passes from `claude/.claude/skills/new-repo-setup/references/REVIEW.md`.
+
+Security: nothing found. The branch diff has no employer name or credential.
+
+Suite: `auto_accept_test.rb` (26 runs), `autonomy_contract_test.rb` (20), `herdr_worker_scripts_test.rb` (69) and `skill_parity_test.rb` (7) pass. Shellcheck and RuboCop are clean on the touched files.
