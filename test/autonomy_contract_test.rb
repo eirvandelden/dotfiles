@@ -138,6 +138,7 @@ class AutonomyContractTest < Minitest::Test
   def test_spec_and_plan_forbid_an_arrow_inside_a_closure
     %w[spec plan].each do |name|
       assert_match(/may not contain `→`/, section_of(skill(name), "## Auto mode"), name)
+      assert_includes(section_of(skill(name), "## Auto mode"), "`No findings.`", name)
     end
   end
 
