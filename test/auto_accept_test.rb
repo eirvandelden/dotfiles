@@ -183,7 +183,7 @@ class AutoAcceptTest < Minitest::Test
 
   def test_refuses_a_second_critique_section
     add_remote("git@github.com:eirvandelden/dotfiles.git")
-    write_artifact(critique: "#{CLOSED_CRITIQUE}\n## Notes\n\nLater.\n\n## Critique\n\n### Round 2 (codex)\n\n- Missing a test →\n")
+    write_artifact(critique: "#{CLOSED_CRITIQUE}\n## Critique\n\n### Round 2 (codex)\n\n- Naming → fixed (renamed)\n")
 
     assert_refused(/open/i)
   end
