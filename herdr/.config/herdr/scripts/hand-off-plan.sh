@@ -191,6 +191,17 @@ the next stage with HERDR_PANE_ID set to that id. If starting the next stage fai
 include one line in your own report file, named next, saying so and why."
 fi
 
+# Autonomous delivery: the intent session itself coordinates the stages, so its stage panes report
+# to it, and the pane that started it hears only the final account.
+if [ "$stage" = "intent" ]; then
+  chain_instruction="$chain_instruction Exception: if intent.md records Delivery: autonomous, follow \
+the intent skill's Autonomous delivery section instead. You coordinate that delivery yourself: pass \
+your own pane id (\$HERDR_PANE_ID in your shell) to every stage, never the coordinator's id above. \
+Do not send Intent ready: and do not close your pane after the intent. When the delivery ends, \
+send pane $HERDR_PANE_ID the single line Delivery done: followed by the account file path, then \
+close your own pane."
+fi
+
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
 CLAUDE.md first. $acceptance_instruction$chain_instruction$auto_instruction $report_instruction $report. Then \

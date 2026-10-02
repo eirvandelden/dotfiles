@@ -319,6 +319,25 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
+  def test_the_intent_worker_coordinates_an_autonomous_delivery_itself
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+    prompt = worker_prompt("intent")
+
+    assert_includes(prompt, "Delivery: autonomous")
+    assert_match(/your own pane id/i, prompt)
+    assert_includes(prompt, "Delivery done:")
+  end
+
+  def test_only_the_intent_worker_hears_about_autonomous_delivery
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+
+    refute_includes(worker_prompt("spec"), "Delivery done:")
+  end
+
   def test_without_auto_the_prompt_is_unchanged
     worktree_creatable!
 

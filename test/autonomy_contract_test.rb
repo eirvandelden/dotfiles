@@ -66,6 +66,13 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section, "Decision needed:")
   end
 
+  def test_an_intent_session_started_by_a_pane_coordinates_and_sends_only_the_account
+    section = section_of(skill("intent"), "## Autonomous delivery")
+
+    assert_match(/starting prompt/i, section)
+    assert_includes(section, "Delivery done:")
+  end
+
   def test_spec_and_plan_keep_the_literal_accepted_outside_auto
     %w[spec plan].each do |name|
       text = skill(name)
