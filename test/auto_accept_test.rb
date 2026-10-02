@@ -132,6 +132,27 @@ class AutoAcceptTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  def test_refuses_an_indented_finding_without_a_closed_parent
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n  - Missing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_an_open_numbered_finding
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n1. Missing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_an_open_plus_finding
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n+ Missing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
   def test_refuses_an_accepted_artifact_whose_body_quotes_a_draft_status
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE, status: "accepted", body: "The old line read Status: draft.")

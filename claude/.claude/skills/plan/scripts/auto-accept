@@ -6,7 +6,8 @@
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
 #   - the first "Status:" line, the status line, says draft,
 #   - the artifact has a "## Critique" section with at least one "### Round",
-#   - every top-level finding under it ends in "→ fixed (<subject>)" or "→ dismissed: <reason>".
+#   - every top-level list item under it ends in "→ fixed (<subject>)" or "→ dismissed: <reason>",
+#     and every indented item sits under such a closed finding.
 # Exits 1 with a reason otherwise. It never commits.
 require "open3"
 require_relative "../../../hooks/remote_matcher"
@@ -28,9 +29,23 @@ end
 # The slot is the text after a finding's last arrow; anything earlier is the finding itself.
 CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
 
-# Top-level list items are findings; indented sub-bullets only explain one.
+LIST_ITEM = /^(\s*)(?:[-*+]|\d+[.)])\s/
+
+def closed?(line)
+  line.include?("→") && line.split("→").last.match?(CLOSED_SLOT)
+end
+
+# Every top-level list item, of any marker, is a finding. An indented item only explains the
+# finding above it, so it counts as open unless that finding is closed: unknown shapes fail closed.
 def open_findings(critique)
-  critique.lines.grep(/^[-*] /).reject { |line| line.include?("→") && line.split("→").last.match?(CLOSED_SLOT) }
+  parent_closed = false
+  critique.lines.select do |line|
+    indent = line[LIST_ITEM, 1]
+    next false unless indent
+
+    parent_closed = closed?(line) if indent.empty?
+    !parent_closed
+  end
 end
 
 def status_line(text)
