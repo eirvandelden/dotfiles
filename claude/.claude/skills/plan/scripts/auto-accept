@@ -38,7 +38,7 @@ EXPLANATION = /^\s+(?:[-*+]|\d+[.)])\s/
 NO_FINDINGS = /^No findings\.\s*$/
 
 def closed?(line)
-  line.include?("→") && line.split("→").last.match?(CLOSED_SLOT)
+  line.include?("→") && line.split("→", -1).last.match?(CLOSED_SLOT)
 end
 
 # The non-blank lines after the "## Critique" heading, one group per round. A group that does

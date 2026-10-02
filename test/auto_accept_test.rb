@@ -202,6 +202,13 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/open/i)
   end
 
+  def test_refuses_a_trailing_bare_arrow_on_the_last_line_without_a_newline
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- Missing a test → fixed (added) →")
+
+    assert_refused(/open/i)
+  end
+
   def test_accepts_a_round_that_states_no_findings
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\nNo findings.\n")
