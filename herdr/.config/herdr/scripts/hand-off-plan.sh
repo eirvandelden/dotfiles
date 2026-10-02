@@ -112,6 +112,12 @@ folder and the worktree." >&2
   exit 1
 fi
 
+# "spec --auto" with the slug forgotten would otherwise run a non-auto worker on a folder named --auto.
+if [[ "$slug" == --* ]]; then
+  echo "The change slug \"$slug\" looks like an option: give the slug before --auto." >&2
+  exit 1
+fi
+
 # The worker starts in its own worktree off the main checkout, not the caller's worktree:
 # worktree-first skips itself when it is already inside a linked worktree, which would put a
 # second agent on the caller's own branch and directory.

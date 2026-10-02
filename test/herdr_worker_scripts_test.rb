@@ -311,6 +311,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
+  def test_refuses_a_slug_that_looks_like_an_option
+    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "--auto")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/slug/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
   def test_without_auto_the_prompt_is_unchanged
     worktree_creatable!
 
