@@ -25,6 +25,12 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/never merge/i, CORE_VALUES)
   end
 
+  def test_core_values_scope_never_merge_to_autonomous_delivery
+    line = CORE_VALUES.lines.find { |entry| entry.match?(/never merge/i) }
+
+    assert_match(/autonomous delivery/i, line)
+  end
+
   def test_playbook_autonomy_keeps_checks_strict
     section = autonomy_section
 
