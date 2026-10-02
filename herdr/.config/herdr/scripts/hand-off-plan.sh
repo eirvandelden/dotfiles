@@ -16,7 +16,7 @@ fi
 stage="${1:-}"
 slug="${2:-}"
 
-accepted_then_push="Once Etienne says the literal word \"accepted\" and the skill has committed \
+accepted_then_push="Once Etienne says the literal word \"accepted\" or \"agreed\" and the skill has committed \
 the artifact, push the branch (git push -u origin HEAD)."
 
 case "$stage" in
@@ -47,7 +47,7 @@ Markdown to"
     role_instruction="Invoke the plan skill's Write role, here backend, for docs/changes/$slug; \
 it reads docs/changes/$slug/intent.md and docs/changes/$slug/spec.md, the only context you get. \
 Write docs/changes/$slug/plan.md and touch nothing else in this worktree until Etienne says the \
-literal word \"accepted\"."
+literal word \"accepted\" or \"agreed\"."
     acceptance_instruction="$accepted_then_push"
     report_instruction="Then write what plan.md decided and anything Etienne deferred, as \
 Markdown to"

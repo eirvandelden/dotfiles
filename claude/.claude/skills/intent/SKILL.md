@@ -35,7 +35,7 @@ Resolve `<slug-or-issue>` into the final branch/folder slug the same way step 1 
 
 The script creates `.worktrees/<slug>`, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill for `docs/changes/<slug>` — there is no upstream artifact yet, so its interview is what creates `intent.md`. Tell the user which worker took it and where its report will land, then carry on: the interview that follows is that pane's own.
 
-The pane writes `intent.md`, and once Etienne says "accepted", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Intent ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
+The pane writes `intent.md`, and once Etienne says "accepted" or "agreed", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Intent ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
 
 ## Anti-pattern: "this one is too simple to need an intent"
 
@@ -69,7 +69,7 @@ Batch independent multiple-choice questions (up to 4) only when none of them wou
 
 - About to write `intent.md` with no questions asked yet.
 - The draft describes a solution ("add a background job") instead of a problem or outcome ("the export arrives by mail within a minute").
-- Treating "sounds right" as "accepted" — only the literal word "accepted" flips the status.
+- Treating "sounds right" as "accepted" — only the words listed in step 4 flip the status.
 
 ## 3. Write `intent.md`
 
@@ -107,7 +107,7 @@ Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
 ## 4. Accept
 
-On the words "accepted" or "accept the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the spec stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh spec '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
+On the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the spec stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh spec '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
 
 ## Codex
 

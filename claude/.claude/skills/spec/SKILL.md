@@ -25,7 +25,7 @@ Run it from anywhere inside the repository. The script creates `.worktrees/<slug
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 
-The pane writes `spec.md`, and once Etienne says "accepted", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Spec ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
+The pane writes `spec.md`, and once Etienne says "accepted" or "agreed", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Spec ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
 
 ## `here` backend
 
@@ -75,7 +75,7 @@ Flag conflicts your domain skills raise against each other or against the playbo
 
 ### 4. Accept
 
-Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted", flip it, then commit `spec.md` alone: `docs: spec for <slug>`, then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
+Refuse to flip `Status:` to `accepted` while any requirement has no matching acceptance criterion — name which one is missing. Otherwise, on the user's literal word "accepted" or "agreed", flip it, then commit `spec.md` alone: `docs: spec for <slug>`, then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
 
 ## Codex
 

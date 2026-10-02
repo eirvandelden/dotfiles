@@ -192,6 +192,36 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "git push -u origin HEAD")
   end
 
+  def test_the_intent_spec_and_plan_workers_are_told_accepted_or_agreed
+    worktree_creatable!
+
+    %w[intent spec plan].each do |stage|
+      run_script(HAND_OFF_PLAN, stage, "some-change")
+
+      assert_includes(worker_prompt(stage), "\"accepted\" or \"agreed\"", stage)
+    end
+  end
+
+  def test_the_plan_worker_is_told_to_touch_nothing_else_until_accepted_or_agreed
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_includes(worker_prompt("plan"), "touch nothing else in this worktree until Etienne says " \
+                                           "the literal word \"accepted\" or \"agreed\"")
+  end
+
+  def test_the_spec_worker_writes_its_report_after_agreed_not_before
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    prompt = worker_prompt("spec")
+    agreed_at = prompt.index("\"agreed\"") || flunk("no \"agreed\" in #{prompt.inspect}")
+    report_at = prompt.index("write what spec.md decided") || flunk("no report sentence in #{prompt.inspect}")
+
+    assert_operator(agreed_at, :<, report_at)
+  end
+
   def test_the_implement_worker_is_told_not_to_push
     worktree_creatable!
 
