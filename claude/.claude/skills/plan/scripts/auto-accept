@@ -5,7 +5,7 @@
 # "Status: accepted" in a spec.md or plan.md, and nothing else, when:
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
 #   - the first "Status:" line, the status line, says draft,
-#   - the artifact has a "## Critique" section with at least one "### Round",
+#   - the artifact ends in one "## Critique" section with at least one "### Round",
 #   - every round holds "No findings." alone, or findings written "- <finding> → fixed (<subject>)"
 #     or "- <finding> → dismissed: <reason>", each optionally explained by indented items;
 #     any other non-blank line under "## Critique" is refused.
@@ -23,15 +23,17 @@ def origin_url
   status.success? ? stdout.strip : nil
 end
 
+# The critique is the last thing in the file and runs to its end, so a second "## Critique", a
+# later section or a footer after it is a line the allow-list below refuses, never a blind spot.
 def critique_section(text)
-  text[/^## Critique\s*$.*?(?=^## |\z)/m]
+  text[/^## Critique\s*$.*\z/m]
 end
 
 # The slot is the text after a finding's last arrow; anything earlier is the finding itself.
 CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
 
 ROUND = /^### Round\b/
-FINDING = /^[-*] /
+FINDING = /^[-*] +[^\s→]/
 EXPLANATION = /^\s+(?:[-*+]|\d+[.)])\s/
 NO_FINDINGS = /^No findings\.\s*$/
 

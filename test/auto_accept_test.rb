@@ -181,6 +181,27 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/open/i)
   end
 
+  def test_refuses_a_second_critique_section
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "#{CLOSED_CRITIQUE}\n## Notes\n\nLater.\n\n## Critique\n\n### Round 2 (codex)\n\n- Missing a test →\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_a_section_after_the_critique
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "#{CLOSED_CRITIQUE}\n---\nDomain skills applied: None.\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_a_finding_without_text
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- → fixed (renamed)\n")
+
+    assert_refused(/open/i)
+  end
+
   def test_accepts_a_round_that_states_no_findings
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\nNo findings.\n")
