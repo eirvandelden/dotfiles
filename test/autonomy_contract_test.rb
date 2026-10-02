@@ -135,6 +135,12 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/work.*refuses/i, section)
   end
 
+  def test_spec_and_plan_forbid_an_arrow_inside_a_closure
+    %w[spec plan].each do |name|
+      assert_match(/may not contain `→`/, section_of(skill(name), "## Auto mode"), name)
+    end
+  end
+
   def test_every_auto_skill_names_the_claude_critique_in_its_codex_section
     %w[spec plan].each do |name|
       codex = section_of(skill(name), "## Codex")

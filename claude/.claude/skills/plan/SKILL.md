@@ -91,7 +91,7 @@ Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say
 
 1. Write `plan.md` as usual, with `Status: draft`.
 2. Run the critique with the other model family's local CLI. A Claude author uses Codex: `codex exec -p terra -s read-only -o <findings-file> "<prompt>"`. A Codex author uses Claude: `claude -p --model opus --permission-mode plan "<prompt>"`. The prompt asks it to read `plan.md` and the code it names, and to list disagreements with reasons.
-3. Record the result in `plan.md` under `## Critique`, as `### Round 1 (<critic>)` with one finding per list item, written `- <finding> → fixed (<what changed>)` or `- <finding> → dismissed: <reason>`. Fix the artifact for every `fixed` item.
+3. Record the result in `plan.md` under `## Critique`, as `### Round 1 (<critic>)` with one finding per list item, written `- <finding> → fixed (<what changed>)` or `- <finding> → dismissed: <reason>`. The closure is the text after the line's last arrow, so a reason or subject may not contain `→`. Indented sub-bullets may explain a closed finding. Fix the artifact for every `fixed` item.
 4. Run `~/.claude/skills/plan/scripts/auto-accept plan.md`. It flips `Status: draft` to `Status: accepted` only on a personal origin with a closed critique. If it refuses, fix what it names; do not edit the status line by hand.
 5. Commit `plan.md` alone (`docs: plan for <slug>`), push (`git push -u origin HEAD`) and report. Plan mode does not apply: the pane has no human to accept the plan. The `## Proof` structure still applies.
 
