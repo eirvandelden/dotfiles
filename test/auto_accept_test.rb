@@ -95,6 +95,44 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/draft/i)
   end
 
+  def test_refuses_a_finding_without_a_closure_slot
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- Missing a test\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_a_dismissal_without_a_reason
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- Naming is vague → dismissed:\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_a_fix_without_a_subject
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\n- Missing a test → fixed ()\n")
+
+    assert_refused(/open/i)
+  end
+
+  def test_refuses_an_accepted_artifact_whose_body_quotes_a_draft_status
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE, status: "accepted", body: "The old line read Status: draft.")
+
+    assert_refused(/draft/i)
+  end
+
+  def test_leaves_a_quoted_draft_status_in_the_body_alone
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE, body: "The old line read Status: draft.")
+
+    run_script
+
+    assert_includes(File.read(@artifact), "Status: accepted\n")
+    assert_includes(File.read(@artifact), "The old line read Status: draft.")
+  end
+
   private
 
   def assert_refused(pattern)
@@ -106,8 +144,8 @@ class AutoAcceptTest < Minitest::Test
     assert_equal(before, File.read(@artifact))
   end
 
-  def write_artifact(critique:, status: "draft")
-    File.write(@artifact, "# Spec: x\n\nFrom intent.md. Status: #{status}\n\nBody text.\n\n#{critique}")
+  def write_artifact(critique:, status: "draft", body: "Body text.")
+    File.write(@artifact, "# Spec: x\n\nFrom intent.md. Status: #{status}\n\n#{body}\n\n#{critique}")
   end
 
   def allow_remotes(*entries)

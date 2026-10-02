@@ -4,8 +4,9 @@
 # The one mechanical gate of autonomous delivery. Rewrites "Status: draft" to
 # "Status: accepted" in a spec.md or plan.md, and nothing else, when:
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
+#   - the first "Status:" line, the status line, says draft,
 #   - the artifact has a "## Critique" section with at least one "### Round",
-#   - no finding line under it ends in an empty "→" slot.
+#   - every finding under it is closed: "→ fixed (<subject>)" or "→ dismissed: <reason>".
 # Exits 1 with a reason otherwise. It never commits.
 require "open3"
 require_relative "../../../hooks/remote_matcher"
@@ -24,8 +25,14 @@ def critique_section(text)
   text[/^## Critique\s*$.*?(?=^## |\z)/m]
 end
 
+CLOSED_FINDING = /→\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S)/
+
 def open_findings(critique)
-  critique.lines.select { |line| line.match?(/→\s*\z/) }
+  critique.lines.grep(/^\s*[-*] /).grep_v(CLOSED_FINDING)
+end
+
+def status_line(text)
+  text[/^.*Status:.*$/]
 end
 
 path = ARGV.first
@@ -35,11 +42,12 @@ url = origin_url
 refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
 
 text = File.read(path)
-refuse("the status line is not draft") unless text.match?(/Status: draft\b/)
+status = status_line(text)
+refuse("the status line is not draft") unless status&.match?(/Status: draft\b/)
 
 critique = critique_section(text)
 refuse("no Critique section") unless critique
 refuse("the Critique section has no Round heading") unless critique.match?(/^### Round/)
 refuse("open critique findings remain: #{open_findings(critique).join.strip}") if open_findings(critique).any?
 
-File.write(path, text.sub(/Status: draft\b/, "Status: accepted"))
+File.write(path, text.sub(status, status.sub(/Status: draft\b/, "Status: accepted")))
