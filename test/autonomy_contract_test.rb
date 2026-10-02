@@ -139,6 +139,8 @@ class AutonomyContractTest < Minitest::Test
     %w[spec plan].each do |name|
       assert_match(/may not contain `→`/, section_of(skill(name), "## Auto mode"), name)
       assert_includes(section_of(skill(name), "## Auto mode"), "`No findings.`", name)
+      assert_match(/last thing in the file/, section_of(skill(name), "## Auto mode"), name)
+      assert_match(/further `### Round` heading/, section_of(skill(name), "## Auto mode"), name)
     end
   end
 
