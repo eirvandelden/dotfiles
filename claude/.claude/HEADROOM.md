@@ -42,6 +42,18 @@ claude mcp add --scope user --transport http fizzy http://fizzy-mcp.home.arpa/mc
   --header 'Authorization: Bearer ${FIZZY_PAT}'
 ```
 
+### TREK MCP server
+
+TREK (trips.vandelden.family) logs in through OAuth, so there is no token and no header.
+
+One-time registration, with no Claude session running (a live session rewrites `~/.claude.json` and drops the change):
+
+```bash
+claude mcp add --scope user --transport http trek https://trips.vandelden.family/mcp
+```
+
+Then start `claude`, run `/mcp`, and log in once on TREK's consent screen.
+
 ## Codex
 
 ### Launch
@@ -58,4 +70,12 @@ headroom unwrap codex                   # remove durable wrapping
 headroom stats                          # token savings
 headroom update                         # self-update
 headroom learn                          # mine session learnings
+```
+
+### TREK MCP login
+
+One-time login. Pick the scopes on TREK's consent screen. The config is in `codex/.codex/config.toml`.
+
+```bash
+codex mcp login trek
 ```
