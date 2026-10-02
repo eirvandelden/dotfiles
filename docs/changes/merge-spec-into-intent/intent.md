@@ -8,6 +8,8 @@ Every change passes through four stages: intent, spec, plan, implement. The spec
 
 Separately, a bug: running intent in the current session inside herdr opens an empty pane below. Intent creates the change's worktree, and that worktree gets a pane of its own. Nothing ever starts in that pane, so Etienne has to close it by hand.
 
+A second bug: a review pane delivers its report to the agent that asked, then stays open with nothing left to do. Etienne has to close it by hand too.
+
 ## Proposed outcome
 
 The workflow is intent → plan → implement. The spec stage no longer exists.
@@ -33,6 +35,7 @@ Intent interviews deeper. There is no fixed question count: it keeps asking unti
 - The intent pane stays on Opus.
 - Plan absorbs design decisions, integration points and domain skills.
 - Intent run in the current session no longer opens a pane. Other callers of worktree creation keep today's behaviour.
+- A review pane closes itself once its report reaches the agent that asked.
 - The `spec` skill is deleted, for Claude and Codex both. No redirect stub remains.
 - Every live reference to the spec stage is removed or redirected to intent.
 
@@ -40,6 +43,7 @@ Intent interviews deeper. There is no fixed question count: it keeps asking unti
 
 - Rewriting or migrating existing `spec.md` files in past change folders.
 - Pane behaviour of plan, implement, or a plain worktree setup outside intent.
+- The in-session reviewer subagent, which has no pane.
 
 ## Acceptance criteria
 
@@ -48,6 +52,8 @@ Intent interviews deeper. There is no fixed question count: it keeps asking unti
 - Invoking `spec` finds no skill.
 - Running intent in the current session inside herdr creates the worktree and opens no new pane.
 - Intent's `handoff` backend still opens exactly one pane, with the agent in it.
+- A review pane closes itself after its report reaches the caller, on the first try or a retry.
+- A review pane whose report never gets through stays open.
 - An accepted intent hands off straight to plan; no spec pane starts.
 - Plan refuses to start without an accepted intent, and never asks for a spec.
 - The reviewer and test-writer read acceptance criteria from intent, not spec.
