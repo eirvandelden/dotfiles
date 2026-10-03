@@ -27,8 +27,8 @@ module WorktreeTools
     # Sets up a regular (non-bare) git repo with a linked worktree:
     #   repo/          <- main repo (has .git/)
     #   repo/mobile/   <- linked worktree
-    def setup_regular_repo_with_worktree
-      repo = File.join(@tmpdir, "repo")
+    def setup_regular_repo_with_worktree(repo_name: "repo")
+      repo = File.join(@tmpdir, repo_name)
       FileUtils.mkdir_p(repo)
       run_command("git", "-C", repo, "init", "-q")
       run_command("git", "-C", repo, "config", "user.name", "Test User")
@@ -361,6 +361,50 @@ module WorktreeTools
         config = load_config(worktree)
         assert config.puma_dev_enabled?, "explicit puma_dev: true should override Conductor default"
         assert_not config.caddy_enabled?, "explicit caddy: false should override Conductor default"
+      end
+    end
+
+    # --- Project names that aren't valid hostnames ---
+
+    def test_project_name_with_underscore_becomes_a_usable_hostname
+      repo, worktree = setup_regular_repo_with_worktree(repo_name: "journal_administration")
+      rails_structure(worktree)
+
+      config = load_config(worktree)
+
+      assert_equal "journal-administration", config.puma_dev_name
+    end
+
+    def test_loading_configuration_no_longer_refuses_such_a_project
+      repo, worktree = setup_regular_repo_with_worktree(repo_name: "journal_administration")
+      rails_structure(worktree)
+
+      assert load_config(worktree)
+    end
+
+    def test_hand_written_puma_dev_name_is_still_validated
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+      worktree_yml(worktree, <<~YAML)
+        puma_dev:
+          name: journal_administration
+      YAML
+
+      assert_raises(ConfigError) { load_config(worktree) }
+    end
+
+    def test_caddy_name_with_underscore_becomes_a_usable_hostname
+      repo, worktree = setup_regular_repo_with_worktree
+      rails_structure(worktree)
+
+      with_conductor_env(
+        "CONDUCTOR_ROOT_PATH" => @tmpdir,
+        "CONDUCTOR_PORT" => "3000",
+        "CONDUCTOR_WORKSPACE_NAME" => "journal_workspace",
+        "CONDUCTOR_WORKSPACE_PATH" => worktree
+      ) do
+        config = load_config(worktree)
+        assert_equal "journal-workspace", config.caddy_name
       end
     end
   end

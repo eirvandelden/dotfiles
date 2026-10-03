@@ -211,7 +211,7 @@ module WorktreeTools
 
     def build_puma_dev_name
       # Every worktree of a project shares one puma-dev name/URL: <project>.localhost.
-      project_root_name(@path) || @detector.project_info[:name]
+      sanitize_hostname_label(project_root_name(@path) || @detector.project_info[:name])
     end
 
     # The name of the project shared by every worktree, regular or bare.
@@ -229,11 +229,22 @@ module WorktreeTools
     end
 
     def build_caddy_name
-      if in_conductor?
+      name = if in_conductor?
         conductor_workspace_name || @detector.project_info[:name]
       else
         @detector.project_info[:name]
       end
+
+      sanitize_hostname_label(name)
+    end
+
+    # Derived project/workspace names may contain characters (like underscores) that are
+    # legal in a directory name but not in a hostname label. A name written by hand in
+    # `.worktree.yml` is not passed through this: `validate!` still rejects it as-is.
+    def sanitize_hostname_label(name)
+      return name if name.nil?
+
+      name.downcase.gsub(/[^a-z0-9.-]+/, "-").gsub(/\A-+|-+\z/, "")
     end
 
     def expand_paths!
