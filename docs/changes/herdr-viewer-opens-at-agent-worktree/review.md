@@ -71,3 +71,15 @@ Compliance: no Important findings. The fixes since round 4 stay inside the plann
 
 - [x] Nit: five commits (`b08b4b05`…`d9de078d`, e.g. `Document that the file viewer opens at the agent's worktree`) put `Co-Authored-By:` on line 2 with no blank line after the subject. Git reads it as part of the subject, not as a trailer (`git log --format='%(trailers)'` prints nothing), so `git log --oneline` and GitHub show it in the title and drop the co-author credit. Reword them with a blank line before the trailer before the PR — `docs/changes/herdr-viewer-opens-at-agent-worktree/plan.md:1` → fixed (Reworded the five subjects with a blank line before the trailer during a rebase; recorded in Record the commit message trailer fix in the review)
 - [x] Nit: the comment above `prefix+f` says the launcher roots the viewer "at the worktree the pane's agent created with worktree-create". It also uses a worktree the agent reused; the README says "created or reused" — `herdr/.config/herdr/config.toml:20` → fixed (Say created or reused in the prefix+f comment)
+
+## Round 6 — 2026-10-05T15:20Z — c67070b5
+
+State at review: rebased on `origin/main` `1c912dce` (fetched; no newer main). `test/agent_worktree_test.rb` (8 runs), `test/worktree_create_test.rb` (30 runs) and `test/worktree_viewer_test.rb` (22 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. Both round-5 nits are fixed: all 26 commits now carry a parsed `Co-Authored-By:` trailer, and the `prefix+f` comment says "created or reused". The only code change since round 5 is that comment in `herdr/.config/herdr/config.toml`.
+
+Bugs: no Important findings.
+
+Security: no findings.
+
+Compliance: no Important findings. Every acceptance criterion 1–18 still has its named test; no test was weakened.
+
+- [ ] Nit: `usable_for` assumes the record parses to a JSON object. A record that parses to an array, a string or `null` raises `TypeError` at `stored["terminal_id"]` (checked: a record holding `[]` crashes with "no implicit conversion of String into Integer"), and a record without `path` raises at `File.directory?(nil)`. Only `worktree-create` writes the file, so this needs a hand-edited or foreign file; `read` could return the parsed value only when it is a `Hash` with a `String` path — `git/.config/git/worktree-tools/lib/agent_worktree.rb:18`
