@@ -52,7 +52,7 @@ Inner loop, per unit test named under the file being changed: red, green, refact
 
 A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same commit as the code that needed it. Anywhere else reality departs from the plan: edit `plan.md` in the same commit as the departing code, never after.
 
-**`Type: bugfix`** (from `intent.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit. Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`§4` of the spec); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
+**`Type: bugfix`** (from `intent.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit. Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`docs/changes/ai-native-workflow/spec.md §4`); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
 
 Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file.
 
