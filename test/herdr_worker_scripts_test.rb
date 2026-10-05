@@ -304,6 +304,14 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(prompt, "your own report file")
   end
 
+  def test_the_plan_worker_reports_what_was_decided_and_deferred
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    assert_includes(worker_prompt("plan"), "what plan.md decided and anything Etienne deferred")
+  end
+
   def test_the_worker_writes_its_report_after_acceptance_not_before
     worktree_creatable!
 

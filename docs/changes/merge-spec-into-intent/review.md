@@ -30,7 +30,7 @@ Acceptance criteria from `intent.md` against tests:
 
 Every test named in `plan.md`'s `## Proof` exists.
 
-- [ ] Important: Deleting `test_the_spec_and_plan_workers_report_what_was_decided_and_deferred` also dropped its plan half. Nothing now asserts that the plan worker's report covers "anything Etienne deferred"; the surviving check only locates "write what plan.md decided". Keep the plan assertion as its own test. — `test/herdr_worker_scripts_test.rb:313` →
+- [ ] Important: Deleting `test_the_spec_and_plan_workers_report_what_was_decided_and_deferred` also dropped its plan half. Nothing now asserts that the plan worker's report covers "anything Etienne deferred"; the surviving check only locates "write what plan.md decided". Keep the plan assertion as its own test. — `test/herdr_worker_scripts_test.rb:313` → fixed (Test that the plan worker reports what was decided and deferred)
 - [ ] Nit: "`§4` of the spec" still reads as a stage reference. The plan made the other old-design citations explicit (`docs/changes/ai-native-workflow/spec.md §N`); this one was missed, and the stage-shaped regexes do not catch it. — `claude/.claude/skills/implement/SKILL.md:55` →
 - [ ] Nit: `test/approval_word_test.rb` changed but `plan.md`'s "Files that change" does not list it. The change is needed (it tested the deleted skill); the plan is just incomplete. — `test/approval_word_test.rb` →
 - [ ] Nit: The review-pane close test does not assert the "on the first try or a retry" wording, which the acceptance criterion names explicitly. — `test/herdr_worker_scripts_test.rb` →
