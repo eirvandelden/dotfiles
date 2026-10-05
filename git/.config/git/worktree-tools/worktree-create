@@ -212,6 +212,8 @@ module WorktreeTools
 
       terminal_id = terminal_id_of(pane_id)
       AgentWorktree.new.record(pane_id, terminal_id, path) if terminal_id
+    rescue SystemCallError => error
+      warn("worktree-create: could not record the worktree for pane #{pane_id} (#{error.message})")
     end
 
     def terminal_id_of(pane_id)

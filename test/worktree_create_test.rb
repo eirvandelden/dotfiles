@@ -65,6 +65,16 @@ class WorktreeCreateTest < Minitest::Test
     assert_equal({ "terminal_id" => "term_elsewhere", "path" => stdout.strip }, recorded("w1_pA"))
   end
 
+  def test_a_record_that_cannot_be_written_still_prints_the_worktree_path_with_a_warning
+    FileUtils.mkdir_p(File.join(@state_home, "worktree-tools", "agent-worktrees", "w1_pA"))
+
+    stdout, stderr, status = run_script("feature", herdr_pane_id: "w1:pA")
+
+    assert(status.success?, stderr)
+    assert_equal(File.realpath(File.join(@repo, ".worktrees", "feature")), File.realpath(stdout.strip))
+    assert_match(/worktree-create: .*record/, stderr)
+  end
+
   def test_reusing_a_worktree_replaces_the_panes_record
     run_script("first", herdr_pane_id: "w1:pA")
     add_worktree("feature", from: "origin/main")
