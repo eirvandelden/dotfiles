@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # Pre-push backstop: refuses a push whose change folder has no review.md at least as new,
 # in commits, as the last change to anything outside the folder. Freshness is defined in git
-# terms, not mtime — see spec.md §4. Exits 0 when there is nothing to enforce yet (no change
+# terms, not mtime — see docs/changes/ai-native-workflow/spec.md §4. Exits 0 when there is nothing to enforce yet (no change
 # folder in HEAD, or the branch has no code commits of its own) or when the review is fresh;
 # exits 1 with a message otherwise.
 #

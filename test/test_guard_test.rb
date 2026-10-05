@@ -7,7 +7,7 @@ require "tmpdir"
 
 # Claude Code PreToolUse hook (same stdin/exit contract as consent-guard.rb): while a bugfix's
 # reproduction test is committed (plan.md carries "Reproduction: committed"), an edit to a test
-# path is refused — "fix the code, not the tests", enforced rather than advised (spec.md §1.4).
+# path is refused — "fix the code, not the tests", enforced rather than advised (docs/changes/ai-native-workflow/spec.md §1.4).
 # With --always, every write to a test path is refused unconditionally, regardless of plan.md —
 # the implementer agent's whole job is production code, so it never has a reason to touch one.
 class TestGuardTest < Minitest::Test
