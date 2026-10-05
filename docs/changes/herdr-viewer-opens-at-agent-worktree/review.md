@@ -107,3 +107,15 @@ Security: no findings.
 Compliance: no Important findings. The fix stays inside `lib/agent_worktree.rb` and its test file. No test was weakened.
 
 - [x] Nit: the writer side of the round-7 case still crashes, and it crashes the main tool. `record` raises `Errno::EISDIR` when a folder sits at the record path (checked: `record("w1:pA", …)` with a folder at `agent-worktrees/w1_pA` raises "Is a directory"), and `Errno::EACCES` when the state folder is not writable. `worktree-create` calls `record_for_herdr_pane` after `create_worktree` but before `run_worktree_init`, `open_pane` and `puts path`, so the worktree exists but the caller (e.g. `hand-off-plan.sh`) gets no path and a backtrace. Recording is a side feature; rescuing `SystemCallError` around the write (with a warning) keeps `worktree-create` working — `git/.config/git/worktree-tools/worktree-create:209` → fixed (Keep worktree-create working when its record cannot be written)
+
+## Round 9 — 2026-10-05T13:51Z — 5c9db8a3
+
+State at review: rebased on `origin/main` `1c912dce` (fetched; no newer main). `test/agent_worktree_test.rb` (10 runs), `test/worktree_create_test.rb` (31 runs) and `test/worktree_viewer_test.rb` (22 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. The round-8 nit is fixed: `record_for_herdr_pane` rescues `SystemCallError` with a warning, and `test_a_record_that_cannot_be_written_still_prints_the_worktree_path_with_a_warning` covers a folder at the record path. All 32 commits carry a parsed `Co-Authored-By:` trailer.
+
+Bugs: no Important findings. The method-level rescue also catches a `SystemCallError` from `terminal_id_of` other than `Errno::ENOENT`; that case now warns instead of aborting, which matches the intent of the fix.
+
+Security: no findings.
+
+Compliance: no Important findings. The fix stays inside `worktree-create` and its test file. No test was weakened.
+
+- [ ] Nit: `show_viewer` ignores the exit status of `pane rename` and `pane run`. When `pane run` fails, a plain shell pane stays open, and when only `pane rename` succeeds it carries the `Files` label, so the plugin's `--launch-decision` treats it as a viewer: the next `prefix+f` focuses or closes it instead of opening one. Low risk, since `pane split` just succeeded on the same server; checking the status and closing the pane (or abandoning with a warning) would close it — `git/.config/git/worktree-tools/worktree-viewer:61` →
