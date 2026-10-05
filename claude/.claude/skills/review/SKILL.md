@@ -9,7 +9,7 @@ arguments:
 
 # Review
 
-Get this branch reviewed. Report-only: the reviewer reads `REVIEW.md` (or `REVIEW.local.md`), `docs/changes/<slug>/spec.md` and `plan.md`, and the diff — branch vs base plus the uncommitted changes on top — and appends a dated round to `docs/changes/<slug>/review.md`, which it commits alone. It never edits code.
+Get this branch reviewed. Report-only: the reviewer reads `REVIEW.md` (or `REVIEW.local.md`), `docs/changes/<slug>/intent.md` and `plan.md`, and the diff — branch vs base plus the uncommitted changes on top — and appends a dated round to `docs/changes/<slug>/review.md`, which it commits alone. It never edits code.
 
 ## Choosing a backend
 
@@ -38,4 +38,4 @@ A round left with an open finding and no newer round means the review is not clo
 
 ## Codex
 
-Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `spec.md`, `plan.md`, the diff, write the round, commit it — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr pane of its own.
+Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `intent.md`, `plan.md`, the diff, write the round, commit it — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr pane of its own.

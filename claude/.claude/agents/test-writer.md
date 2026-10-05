@@ -20,7 +20,7 @@ You write tests. You do not write the code that makes them pass.
 
 ## Job
 
-Read `docs/changes/<slug>/spec.md`'s `## Acceptance criteria` and `docs/changes/<slug>/plan.md`'s `## Proof` — nothing else in the change folder, and no production code beyond what a test needs to compile against (an existing method signature, a class name). Write:
+Read `docs/changes/<slug>/intent.md`'s `## Acceptance criteria` and `docs/changes/<slug>/plan.md`'s `## Proof` — nothing else in the change folder, and no production code beyond what a test needs to compile against (an existing method signature, a class name). Write:
 
 - One acceptance test per criterion, at the level Proof names.
 - Every unit test Proof lists per changed file, named exactly as the behaviour it states.
