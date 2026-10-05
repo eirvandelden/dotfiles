@@ -83,3 +83,15 @@ Security: no findings.
 Compliance: no Important findings. Every acceptance criterion 1–18 still has its named test; no test was weakened.
 
 - [x] Nit: `usable_for` assumes the record parses to a JSON object. A record that parses to an array, a string or `null` raises `TypeError` at `stored["terminal_id"]` (checked: a record holding `[]` crashes with "no implicit conversion of String into Integer"), and a record without `path` raises at `File.directory?(nil)`. Only `worktree-create` writes the file, so this needs a hand-edited or foreign file; `read` could return the parsed value only when it is a `Hash` with a `String` path — `git/.config/git/worktree-tools/lib/agent_worktree.rb:18` → fixed (Ignore a worktree record that is not an object with a path)
+
+## Round 7 — 2026-10-05T13:39Z — af42f279
+
+State at review: rebased on `origin/main` `1c912dce` (fetched; no newer main). `test/agent_worktree_test.rb` (9 runs), `test/worktree_create_test.rb` (30 runs) and `test/worktree_viewer_test.rb` (22 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. The round-6 nit is fixed: `read` now returns the record only when it is a `Hash` with a `String` path, and `test_usable_for_ignores_a_record_that_is_not_an_object` covers an array, a string, `null`, a missing path and a non-string path. The fix commit carries a parsed `Co-Authored-By:` trailer.
+
+Bugs: no Important findings.
+
+Security: no findings.
+
+Compliance: no Important findings. The fix stays inside `lib/agent_worktree.rb` and its test file. No test was weakened.
+
+- [ ] Nit: `read` rescues only `Errno::ENOENT` and `JSON::ParserError`. A record path that is a folder raises `Errno::EISDIR` (checked: a folder at `agent-worktrees/w1_pA` crashes `usable_for` with "Is a directory"), and an unreadable file raises `Errno::EACCES`. Same hand-edited-file class as the round-6 nit; rescuing `SystemCallError` closes it — `git/.config/git/worktree-tools/lib/agent_worktree.rb:30`
