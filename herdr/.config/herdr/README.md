@@ -31,13 +31,11 @@ There is no `herdr plugin update` — re-running the install is the update. The 
 
 **Without a worktree, the picker shows.** When the agent has no usable record and sits in the main checkout, the viewer opens at the pane's folder and then opens the `W` worktree picker. An agent pane that is already in a worktree opens there without the picker. A pane without an agent, or a viewer already open in the tab, is handled by the plugin's own actions as before.
 
-The viewer still follows the pane's folder, not an agent's own `cd`. A worktree created with `git worktree add` is never opened as a herdr workspace, and it is not recorded, so no pane is in one — `W` reaches those worktrees.
-
-After merging, run `stow -t "$HOME" git` once so `worktree-viewer` appears in `~/.config/git/worktree-tools/`, then `herdr server reload-config` so the new key bindings load.
-
-**Press `W` to fix it.** It opens a picker of the repository's git worktrees, marks the current one, and pre-selects the one with an active herdr agent. `↑`/`↓` move, `Enter` switches, `Esc` cancels. It re-roots the viewer only; it never checks out a branch or touches a file.
+**Any other worktree: press `W`.** The keys only know worktrees made with `worktree-create`. A worktree an agent made with plain `git worktree add`, or entered with its own `cd`, has no record, so the viewer opens at the pane's folder instead. `W` opens a picker of the repository's git worktrees, marks the current one, and pre-selects the one with an active herdr agent. `↑`/`↓` move, `Enter` switches, `Esc` cancels. It re-roots the viewer only; it never checks out a branch or touches a file.
 
 Reach a worktree that way rather than browsing into `.worktrees/`. The viewer computes git status, the diff baseline, and the changed-file filters against the root it opened, so walking in through the folder gives a plain tree with the wrong baseline. It is also why `.worktrees/` is absent from the tree at all: `~/.config/git/ignore.global` ignores it, and the viewer hides gitignored entries. The `i` key reveals them, at the cost of also showing every dependency and build directory.
+
+**Setting it up.** After merging, run `stow -t "$HOME" git` once so `worktree-viewer` appears in `~/.config/git/worktree-tools/`, then `herdr server reload-config` so the new key bindings load.
 
 ### Keys worth knowing
 
