@@ -48,7 +48,7 @@ class WorktreeViewerTest < Minitest::Test
   def test_an_open_viewer_in_the_tab_hands_over_to_the_plugins_own_launcher
     record_worktree
     split_result = run_launcher("split", decision: "FOCUS w1:pF")
-    tab_result = run_launcher("tab", decision: "SWITCH_TAB w1:t9")
+    tab_result = run_launcher("tab", decision: "SWITCHTAB w1:t9")
 
     assert(split_result.last.success? && tab_result.last.success?, split_result[1] + tab_result[1])
     assert_equal([ "open-file-viewer.sh", "open-file-viewer-tab.sh" ], script_runs)
