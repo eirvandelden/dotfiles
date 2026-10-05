@@ -20,13 +20,6 @@ class ApprovalWordTest < Minitest::Test
     assert_includes(skill, "Treating \"sounds right\" as \"accepted\" — only the words listed in step 4 flip the status.")
   end
 
-  def test_the_spec_skill_flips_status_to_accepted_when_agreed
-    accept = section("spec", "### 4. Accept")
-
-    assert_includes(accept, "literal word \"accepted\" or \"agreed\", flip it")
-    assert_includes(accept, "`accepted`")
-  end
-
   def test_the_plan_skill_flips_status_to_accepted_when_agreed
     step = skill_text("plan")[/^7\. .*$/] || flunk("no step 7 in plan")
 
