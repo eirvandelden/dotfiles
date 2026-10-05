@@ -37,6 +37,12 @@ class AgentWorktreeTest < Minitest::Test
     end
   end
 
+  def test_usable_for_ignores_a_record_path_that_cannot_be_read
+    FileUtils.mkdir_p(record_file("w1_pA"))
+
+    assert_nil(@records.usable_for("w1:pA", "term_A", beside: @main))
+  end
+
   def test_usable_for_refuses_a_record_from_another_terminal
     @records.record("w1:pA", "term_old", @worktree)
 

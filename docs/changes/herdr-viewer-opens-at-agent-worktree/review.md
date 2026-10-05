@@ -94,4 +94,4 @@ Security: no findings.
 
 Compliance: no Important findings. The fix stays inside `lib/agent_worktree.rb` and its test file. No test was weakened.
 
-- [ ] Nit: `read` rescues only `Errno::ENOENT` and `JSON::ParserError`. A record path that is a folder raises `Errno::EISDIR` (checked: a folder at `agent-worktrees/w1_pA` crashes `usable_for` with "Is a directory"), and an unreadable file raises `Errno::EACCES`. Same hand-edited-file class as the round-6 nit; rescuing `SystemCallError` closes it — `git/.config/git/worktree-tools/lib/agent_worktree.rb:30`
+- [x] Nit: `read` rescues only `Errno::ENOENT` and `JSON::ParserError`. A record path that is a folder raises `Errno::EISDIR` (checked: a folder at `agent-worktrees/w1_pA` crashes `usable_for` with "Is a directory"), and an unreadable file raises `Errno::EACCES`. Same hand-edited-file class as the round-6 nit; rescuing `SystemCallError` closes it — `git/.config/git/worktree-tools/lib/agent_worktree.rb:30` → fixed (Ignore a worktree record the launcher cannot read)
