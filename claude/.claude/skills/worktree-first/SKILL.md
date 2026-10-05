@@ -14,7 +14,7 @@ This skill only handles the git worktree itself. On this machine, a global `git 
 ## Skip when
 
 - The task is read-only: answering questions, reviewing a diff, exploring code.
-- Already inside a linked worktree — `[ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]` is true. Checking for a literal `.worktrees/` path in the cwd misses worktrees kept elsewhere (e.g. `~/.config/superpowers/worktrees/`).
+- The session is already in `<main checkout>/.worktrees/<branch>` for this task's branch. The Step 1 snippet checks this and reuses that worktree. Any other worktree, including another one under `.worktrees/`, is not a reason to skip.
 - The user explicitly asked to work in the main checkout.
 
 ## Step 1: sweep merged worktrees, then create the new one
@@ -34,9 +34,19 @@ fi
 Then run:
 
 ```bash
-worktree_path=$(~/.config/git/worktree-tools/worktree-create "$branch") || exit 1
-cd "$worktree_path"
+top=$(cd "$(git rev-parse --show-toplevel)" && pwd -P)
+parent=$(cd "$top/../.." 2>/dev/null && pwd -P)
+if [ "$(git rev-parse --abbrev-ref HEAD)" = "$branch" ] \
+  && [ -n "$parent" ] && [ "$top" = "$parent/.worktrees/$branch" ] \
+  && [ "$(git -C "$parent" rev-parse --git-dir)" = "$(git -C "$parent" rev-parse --git-common-dir)" ]; then
+  : # already in this task's worktree under the main checkout
+else
+  worktree_path=$(~/.config/git/worktree-tools/worktree-create "$branch") || exit 1
+  cd "$worktree_path"
+fi
 ```
+
+Never type `git worktree add` yourself; use `worktree-create`. A hook refuses a `git worktree add` whose target is outside `<main checkout>/.worktrees/`.
 
 `worktree-create` prunes stale admin files, fetches `origin`'s default branch, sweeps worktrees that are merged, gone, or fast-forwarded into it — leaving anything dirty, with an open PR, or freshly branched with nothing committed yet — then branches the new worktree off `origin/<default>`, not the main checkout's current HEAD. That's deliberately different from the `spin()` shell function (`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout happens to have checked out: a fresh-from-remote base means the task never inherits a stale or dirty main checkout. It refuses if `.worktrees` isn't gitignored (`git check-ignore -q .worktrees` — already true on this machine via `~/.config/git/ignore.global`; on an unfamiliar machine or a fresh clone, add it to `.git/info/exclude` first, local-only) or if the name is empty. If a worktree's PR/merge check errors (no PR yet, branch not pushed, detached HEAD) it leaves it — never guessing, never removing unmerged work.
 
