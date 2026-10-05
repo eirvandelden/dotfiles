@@ -1,0 +1,18 @@
+---
+pager:
+  diff: delta
+
+keybindings:
+  prs:
+    - key: C
+      name: deep review (octo.nvim)
+      command: >
+        tmux new-window -c {{.RepoPath}} '
+        nvim -c ":silent Octo pr edit {{.PrNumber}}"
+        '
+    - key: R
+      name: review with claude
+      command: >
+        cd {{.RepoPath}} && gh pr diff {{.PrNumber}} | claude -p
+        "Review this diff for correctness, security issues and code quality.
+        Be concise." --model opus
