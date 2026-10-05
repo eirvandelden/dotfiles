@@ -58,14 +58,16 @@ herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origi
 comparison is against current work, then read git diff $base...HEAD for what is committed, and \
 git status plus git diff for the uncommitted changes on top of it. Run \
 claude/.claude/skills/plan/scripts/change-folder for this branch's change folder, then read \
-REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's spec.md and plan.md. \
+REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's intent.md and plan.md. \
 Run the Bugs, Security and Compliance passes REVIEW.md describes, worst first; rank Important \
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \
 first round) and commit that file alone — change no code, stage nothing else. Then report back \
 to the agent that asked, with herdr agent prompt, sending pane $HERDR_PANE_ID the single line \
 Review ready: followed by that file's path. Quote the path yourself. That call is rejected while \
 the caller is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
-again, at most twelve times. Then stop and say so in your own pane: the report is committed on \
-the branch, so nothing is lost." >/dev/null
+again, at most twelve times. Once the line gets through, on the first try or a retry, run herdr \
+pane close \$HERDR_PANE_ID (your own pane's id from your shell, not the caller's id above) to \
+close your own pane. If all twelve attempts fail, leave your pane open and say so there: the \
+report is committed on the branch, so nothing is lost." >/dev/null
 
 echo "Asked $reviewer to review this branch against $base. Findings will land in this branch's docs/changes/<slug>/review.md."
