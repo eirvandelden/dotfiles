@@ -18,9 +18,9 @@ focus_pane_up = "prefix+up"
 focus_pane_right = "prefix+right"
 
 # Opens the file viewer beside the focused pane. worktree-viewer roots it at the worktree the
-# pane's agent created with worktree-create; without one it opens at the pane's folder, with the
-# worktree picker in the main checkout. Panes without an agent, and a viewer already open in the
-# tab, go to the plugin's own action.
+# pane's agent created or reused with worktree-create; without one it opens at the pane's
+# folder, with the worktree picker in the main checkout. Panes without an agent, and a viewer
+# already open in the tab, go to the plugin's own action.
 [[keys.command]]
 key = "prefix+f"
 type = "shell"
