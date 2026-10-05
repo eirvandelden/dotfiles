@@ -200,9 +200,11 @@ class WorktreeViewerTest < Minitest::Test
   end
 
   def test_without_herdr_the_launcher_exits_with_a_warning_instead_of_a_crash
-    FileUtils.rm(File.join(@stub_bin, "herdr"))
+    ruby_only = File.join(@root, "ruby-only")
+    FileUtils.mkdir_p(ruby_only)
+    File.symlink(RbConfig.ruby, File.join(ruby_only, "ruby"))
 
-    _stdout, stderr, status = run_launcher("split", path: File.dirname(RbConfig.ruby))
+    _stdout, stderr, status = run_launcher("split", path: ruby_only)
 
     refute(status.success?)
     assert_match(/worktree-viewer: .*herdr/, stderr)
