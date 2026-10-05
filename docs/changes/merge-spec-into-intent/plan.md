@@ -39,6 +39,7 @@ Comments that list the chain as `intent/spec/plan/implement` — drop `spec`: `c
 Tests:
 - New `test/artifact_chain_skills_test.rb` — the acceptance tests below.
 - `test/herdr_worker_scripts_test.rb` — spec-stage tests removed; tests that used `spec` as the generic stage switch to `plan` (worker `plan-w1-pv`); `RIGHT_SPLIT_STAGES` and the right-split branch of `worker_name` go; the chain test becomes `{ "intent" => "plan", "plan" => "implement" }`; new review-pane close tests.
+- `test/approval_word_test.rb` — `test_the_spec_skill_flips_status_to_accepted_when_agreed` removed, because the spec skill is gone; the intent equivalent stays (added during implement, missed by this plan).
 
 ## Order of work
 
