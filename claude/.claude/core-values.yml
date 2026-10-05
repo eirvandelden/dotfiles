@@ -7,6 +7,7 @@ sections:
     - "Never write or modify code before presenting a plan and getting explicit go-ahead."
     - "Personal repos in autonomous delivery (playbook §7a): a recorded critique replaces accepted on the plan."
     - "New code goes in its own git worktree, never the main checkout or a feature branch checked out there."
+    - "Never type `git worktree add` yourself; use `worktree-create`."
     - "Re-read the full diff before committing; revert any hunk the task didn't ask for."
     - "Always target origin (fork or own repo) for PRs — never open a PR against upstream without explicit instruction."
     - "One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it."

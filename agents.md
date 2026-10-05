@@ -107,6 +107,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
    - New code goes in its own git worktree under `.worktrees/`, never the main checkout and never a feature branch checked out in it — `worktree-first` skill, `WORKTREES.md`.
+   - Never type `git worktree add` yourself; use `worktree-create`.
 8. Hands off system tooling:
    - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other system-level tools without explicit instruction.
    - The Ruby version manager is `rv`. Do not assume or use any other version manager (mise, asdf, rbenv, rvm, chruby, etc.).
