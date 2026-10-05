@@ -624,6 +624,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_includes(reviewer_prompt, "herdr pane close")
     assert_operator(reviewer_prompt.index("herdr pane close"), :>, reviewer_prompt.index("Review ready:"))
+    assert_includes(reviewer_prompt, "on the first try or a retry")
   end
 
   def test_the_reviewer_closes_its_own_pane_id_not_the_callers
