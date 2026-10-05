@@ -31,3 +31,16 @@ Compliance: no Important findings. The fixes since round 1 stay inside the plann
 - [x] Nit: the README paragraph order no longer reads. `**Press W to fix it.**` now follows the stow paragraph, so "it" has no referent. The paragraph before it says "no pane is in one", but the paragraph above that describes agent panes that are in a worktree. Move the stow note to the end of the section and reword the `cd` paragraph as the case `W` covers — `herdr/.config/herdr/README.md:38` → fixed (Put the W paragraph after the cases it covers in the herdr README)
 - [x] Nit: `test_without_herdr_the_launcher_exits_with_a_warning_instead_of_a_crash` sets `PATH` to the ruby binary's folder. With a Homebrew ruby in `/opt/homebrew/bin`, the folder that also holds `herdr`, the test finds the real `herdr` and talks to the live server. It passes here only because ruby comes from `rv`. Use a folder holding only a `ruby` symlink — `test/worktree_viewer_test.rb:205` → fixed (Run the no-herdr test with a PATH that holds only ruby)
 - [x] Nit: `worktree-create` still calls `herdr` from `PATH` for `pane get`, while the launcher now honours `HERDR_BIN_PATH`. The failure is harmless: it records nothing. But the two tools now find herdr differently — `git/.config/git/worktree-tools/worktree-create:218` → fixed (Let worktree-create find herdr the way the launcher does)
+
+## Round 3 — 2026-10-05T13:30Z — b0d23876
+
+State at review: `test/agent_worktree_test.rb` (8 runs), `test/worktree_create_test.rb` (30 runs) and `test/worktree_viewer_test.rb` (21 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. All three round-2 nits are fixed; the `HERDR_BIN_PATH` fix in `worktree-create` has its own test, `test_the_terminal_id_comes_from_the_herdr_named_in_herdr_bin_path`.
+
+Bugs: no Important findings. The README section now reads in order: the record case, the picker case, then `W` for everything else, then setup.
+
+Security: no findings. `herdr_bin` moved to `lib/common.rb` unchanged; every herdr call still uses array form.
+
+Compliance: no Important findings. The fixes stay inside the planned files. No test was weakened.
+
+- [ ] Nit: `test_the_terminal_id_comes_from_the_herdr_named_in_herdr_bin_path` and its body sit at column 0 instead of the class's two-space indent. Rubocop does not flag it here, so nothing will catch it later — `test/worktree_create_test.rb:53`
+- [ ] Nit: the comment on `herdr_bin` says "the worktree tools match them", but `worktree-pane` still calls `herdr` from `PATH` (`command_exists?("herdr")` and `Open3.capture3("herdr", …)`), and `worktree-create` opens its pane through it. Either narrow the comment to the two tools that use it, or move `worktree-pane` over on a separate branch, since it is outside this plan — `git/.config/git/worktree-tools/lib/common.rb:129`
