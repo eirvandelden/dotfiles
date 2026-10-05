@@ -28,6 +28,15 @@ class AgentWorktreeTest < Minitest::Test
     assert_nil(@records.usable_for("w1:pA", "term_A", beside: @main))
   end
 
+  def test_usable_for_ignores_a_record_that_is_not_an_object
+    [ "[]", %("text"), "null", %({"terminal_id": "term_A"}), %({"terminal_id": "term_A", "path": 7}) ].each do |content|
+      FileUtils.mkdir_p(File.dirname(record_file("w1_pA")))
+      File.write(record_file("w1_pA"), content)
+
+      assert_nil(@records.usable_for("w1:pA", "term_A", beside: @main), content)
+    end
+  end
+
   def test_usable_for_refuses_a_record_from_another_terminal
     @records.record("w1:pA", "term_old", @worktree)
 

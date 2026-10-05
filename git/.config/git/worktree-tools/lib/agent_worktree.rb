@@ -24,7 +24,8 @@ module WorktreeTools
     private
 
     def read(pane_id)
-      JSON.parse(File.read(record_file(pane_id)))
+      stored = JSON.parse(File.read(record_file(pane_id)))
+      stored if stored.is_a?(Hash) && stored["path"].is_a?(String)
     rescue Errno::ENOENT, JSON::ParserError
       nil
     end
