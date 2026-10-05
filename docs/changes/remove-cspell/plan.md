@@ -57,7 +57,7 @@ Out of scope: the other repositories with cspell (appkit, happiness, clocky, ddi
 - `~/.config/cspell` does not exist and is not a broken link → `test ! -e ~/.config/cspell && test ! -L ~/.config/cspell` after step 10.
 
 Per changed file, the unit tests expected:
-- `test/lefthook_local_hooks_test.rb`: `pre-commit commits an unknown word through the global fallback`; all existing tests unchanged in behaviour.
+- `test/lefthook_local_hooks_test.rb`: `test_pre_commit_uses_global_fallback_and_commits_an_unknown_word`; all existing tests unchanged in behaviour.
 - `lefthook.yml`, `packages.conf`, workflow, skill text, deleted files: no unit tests; covered by the tests above and the verification greps.
 
 Test setup: unchanged temp HOME, temp repo, fallback hooks copied from `git/.config/git/hooks`, real lefthook via a stub. Only difference: `node` is symlinked into the markdownlint-only bin directory instead of a cspell-only one.
