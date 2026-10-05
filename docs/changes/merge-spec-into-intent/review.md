@@ -38,3 +38,23 @@ Every test named in `plan.md`'s `## Proof` exists.
 ### Notes
 
 - `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point` errors: `git commit --quiet -m advance main failed`. The test commits on `main` in a temp repo, and the global hooks refuse it. This branch does not touch that test or the script under it, so it is pre-existing and unrelated. Per playbook rule 25, fix it on a separate branch.
+
+## Round 2 — 2026-10-05T14:50Z — 6ccab867
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the passes again use the reviewer's defaults. Branch is rebased on current `origin/main`; the working tree is clean. This round checks the four round 1 fixes and re-reads the core diffs (`intent/SKILL.md`, `plan/SKILL.md`, `worktree-first/SKILL.md`, `hand-off-plan.sh`, `start-review.sh`). Green: `herdr_worker_scripts_test.rb` (65 runs), `artifact_chain_skills_test.rb`, `approval_word_test.rb`, `codex_agent_generation_test.rb`, `skill_parity_test.rb`.
+
+### Bugs
+
+Nothing found. All four round 1 fixes hold: the plan worker's "decided and deferred" report has its own test, the close test asserts "on the first try or a retry", `implement/SKILL.md` cites `docs/changes/ai-native-workflow/spec.md §4` by path, and `plan.md` lists the `approval_word_test.rb` change.
+
+### Security
+
+Nothing found.
+
+### Compliance
+
+Every acceptance criterion in `intent.md` maps to a test named in `plan.md`'s `## Proof`, and each test exists and passes. No new findings.
+
+### Notes
+
+- The pre-existing `test/review_report_check_test.rb` failure from round 1 still belongs on a separate branch (playbook rule 25).
