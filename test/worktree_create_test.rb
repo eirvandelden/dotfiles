@@ -50,6 +50,21 @@ class WorktreeCreateTest < Minitest::Test
     assert_equal({ "terminal_id" => "term_stub", "path" => stdout.strip }, recorded("w1_pA"))
   end
 
+def test_the_terminal_id_comes_from_the_herdr_named_in_herdr_bin_path
+  elsewhere = File.join(@enclosing, "elsewhere-herdr")
+  File.write(elsewhere, <<~'STUB')
+    #!/usr/bin/env ruby
+    require "json"
+    puts JSON.generate({ result: { pane: { terminal_id: "term_elsewhere" } } }) if ARGV[0..1] == [ "pane", "get" ]
+  STUB
+  FileUtils.chmod(0o755, elsewhere)
+
+  stdout, stderr, status = run_script("feature", herdr_pane_id: "w1:pA", herdr_bin_path: elsewhere)
+
+  assert(status.success?, stderr)
+  assert_equal({ "terminal_id" => "term_elsewhere", "path" => stdout.strip }, recorded("w1_pA"))
+end
+
   def test_reusing_a_worktree_replaces_the_panes_record
     run_script("first", herdr_pane_id: "w1:pA")
     add_worktree("feature", from: "origin/main")
@@ -452,10 +467,11 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", pane_agent: nil, chdir: @repo,
-                 name_after_flag: false, without_gh: false, herdr_pane_id: nil)
+                 name_after_flag: false, without_gh: false, herdr_pane_id: nil, herdr_bin_path: nil)
     environment = {
       "XDG_STATE_HOME" => @state_home,
       "HERDR_PANE_ID" => herdr_pane_id,
+      "HERDR_BIN_PATH" => herdr_bin_path,
       "PATH" => without_gh ? path_without_gh : "#{@stub_bin}:#{@gh_stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GH_STUB_STATES" => gh_states_file,

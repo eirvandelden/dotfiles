@@ -168,10 +168,6 @@ module WorktreeTools
     rescue SystemCallError => error
       abandon("cannot run herdr (#{error.message})")
     end
-
-    def herdr_bin
-      ENV["HERDR_BIN_PATH"].to_s.empty? ? "herdr" : ENV["HERDR_BIN_PATH"]
-    end
   end
 end
 

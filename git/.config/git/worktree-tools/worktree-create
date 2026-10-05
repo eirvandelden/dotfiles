@@ -215,7 +215,7 @@ module WorktreeTools
     end
 
     def terminal_id_of(pane_id)
-      output, status = Open3.capture2("herdr", "pane", "get", pane_id, err: File::NULL)
+      output, status = Open3.capture2(herdr_bin, "pane", "get", pane_id, err: File::NULL)
       JSON.parse(output).dig("result", "pane", "terminal_id") if status.success?
     rescue Errno::ENOENT, JSON::ParserError
       nil
