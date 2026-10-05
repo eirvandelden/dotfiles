@@ -110,6 +110,11 @@ type = "command"
 command = '"$HOME/.claude/hooks/consent-guard.rb"'
 timeout = 10
 
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = '"$HOME/.claude/hooks/worktree-guard.rb"'
+timeout = 10
+
 [[hooks.PreToolUse]]
 matcher = "^apply_patch$"
 

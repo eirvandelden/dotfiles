@@ -84,6 +84,11 @@
             "type": "command",
             "command": "\"$HOME/.claude/hooks/consent-guard.rb\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "\"$HOME/.claude/hooks/worktree-guard.rb\"",
+            "timeout": 10
           }
         ]
       },
