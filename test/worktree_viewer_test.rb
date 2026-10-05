@@ -180,6 +180,13 @@ class WorktreeViewerTest < Minitest::Test
     assert_empty(herdr_calls_matching("pane", "split"))
   end
 
+  def test_an_unexpected_open_direction_answer_opens_the_split_to_the_right
+    _stdout, stderr, status = run_launcher("split", direction: "sideways")
+
+    assert(status.success?, stderr)
+    assert_equal("right", option(first_call("pane", "split"), "--direction"))
+  end
+
   def test_hands_over_to_the_plugins_own_launcher_with_a_warning_when_open_direction_fails
     _stdout, stderr, _status = run_launcher("split", direction_fails: true)
 
@@ -220,9 +227,10 @@ class WorktreeViewerTest < Minitest::Test
   end
 
   def run_launcher(argument, decision: "OPEN", wait_status: "0", direction_fails: false,
-                   plugin_installed: true)
+                   plugin_installed: true, direction: nil)
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
+      "PLUGIN_STUB_DIRECTION" => direction,
       "HOME" => @root,
       "XDG_STATE_HOME" => @state_home,
       "HERDR_PANE_ID" => nil,
@@ -336,6 +344,10 @@ class WorktreeViewerTest < Minitest::Test
         puts ENV.fetch("PLUGIN_STUB_DECISION")
       when "--open-direction"
         exit(1) if ENV["PLUGIN_STUB_DIRECTION_FAILS"]
+        if ENV["PLUGIN_STUB_DIRECTION"]
+          puts ENV["PLUGIN_STUB_DIRECTION"]
+          exit
+        end
         settings = File.join(ENV.fetch("HERDR_PLUGIN_CONFIG_DIR"), "config.toml")
         down = File.exist?(settings) && File.read(settings).match?(/open_direction\s*=\s*"down"/)
         puts(down ? "down" : "right")

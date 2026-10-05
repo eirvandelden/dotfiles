@@ -99,7 +99,7 @@ module WorktreeTools
       output, status = Open3.capture2(plugin_environment, program, "--open-direction", err: File::NULL)
       hand_over("#{File.basename(program)} --open-direction failed") unless status.success?
 
-      output.strip
+      output.strip == "down" ? "down" : "right"
     rescue SystemCallError
       hand_over("#{program} cannot run")
     end
