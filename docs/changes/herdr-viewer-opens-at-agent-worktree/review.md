@@ -44,3 +44,17 @@ Compliance: no Important findings. The fixes stay inside the planned files. No t
 
 - [x] Nit: `test_the_terminal_id_comes_from_the_herdr_named_in_herdr_bin_path` and its body sit at column 0 instead of the class's two-space indent. Rubocop does not flag it here, so nothing will catch it later — `test/worktree_create_test.rb:53` → fixed (Indent the HERDR_BIN_PATH test inside its class)
 - [x] Nit: the comment on `herdr_bin` says "the worktree tools match them", but `worktree-pane` still calls `herdr` from `PATH` (`command_exists?("herdr")` and `Open3.capture3("herdr", …)`), and `worktree-create` opens its pane through it. Either narrow the comment to the two tools that use it, or move `worktree-pane` over on a separate branch, since it is outside this plan — `git/.config/git/worktree-tools/lib/common.rb:129` → fixed (Name the two tools that read HERDR_BIN_PATH)
+
+## Round 4 — 2026-10-05T13:06Z — 2d91028b
+
+State at review: `test/agent_worktree_test.rb` (8 runs), `test/worktree_create_test.rb` (30 runs) and `test/worktree_viewer_test.rb` (21 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. Both round-3 nits are fixed. `origin/main` is at `1c912dce`, ahead of this branch's base `64200d2b`.
+
+Bugs: no Important findings. Main since the base deletes the `assert_not` helper from `test/worktree_create_test.rb` and switches its callers to `refute`; none of the five tests this branch adds there uses `assert_not`, so the auto-merge stays green.
+
+Security: no findings beyond the nit below.
+
+Compliance: no Important findings. The two fixes stay inside the planned files. No test was weakened.
+
+- [ ] Nit: the branch needs a rebase before push (playbook rule 20), and it does not apply cleanly. `git merge-tree origin/main HEAD` conflicts in `project-dictionary.txt`: main sorted the whole file, and this branch adds `SWITCHTAB` after `stow`. Resolve by keeping main's sorted list and putting `SWITCHTAB` in sorted order. `README.md`, `config.toml` and `test/worktree_create_test.rb` auto-merge — `project-dictionary.txt:131`
+- [ ] Nit: the comment above `prefix+f` says the launcher "hands over to the plugin's own action otherwise". It does not: an agent pane without a usable record gets the launcher's own viewer at the pane's folder, with the picker in the main checkout. Hand-over happens only without an agent or with a viewer already open. The `prefix+shift+f` comment ("when it has no worktree to use") has the same flaw — `herdr/.config/herdr/config.toml:21`
+- [ ] Nit: `pane run` builds `exec '#{program}'` by plain interpolation. A `plugin_root` holding a single quote breaks the command, and the rest of the path then runs as shell. The path comes from `herdr plugin list`, so the risk is low; `Shellwords.escape(program)` closes it — `git/.config/git/worktree-tools/worktree-viewer:62`
