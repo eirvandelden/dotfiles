@@ -17,3 +17,17 @@ Compliance: every file the plan names changed as described; nothing unplanned. A
 - [x] Nit: the tab hand-over test feeds `SWITCH_TAB w1:t9`, but the token the plugin prints has no underscore (see its `scripts/open-file-viewer-tab.sh`). The test still passes because any non-`OPEN` answer hands over, but it does not exercise the real token — `test/worktree_viewer_test.rb:51` → fixed (Feed the tab hand-over test the token the plugin prints)
 - [x] Nit: `intent.md`, `spec.md` and `plan.md` are untracked; earlier changes committed their change folder, and `finish` removes it by commit. After this round the folder on the branch holds only `review.md` — `docs/changes/herdr-viewer-opens-at-agent-worktree/plan.md:1` → fixed (Add intent, spec and plan for herdr-viewer-opens-at-agent-worktree)
 - [x] Nit: no commit or note records the plan's order-of-work step 8 (real herdr check of root, label, placement, picker and `q` closing the pane), which criterion 16's proof relies on. Confirm it ran before the PR — `docs/changes/herdr-viewer-opens-at-agent-worktree/plan.md:44` → fixed (Record the real herdr check in the plan)
+
+## Round 2 — 2026-10-05T12:41Z — 0e2df098
+
+State at review: `test/agent_worktree_test.rb` (8 runs), `test/worktree_create_test.rb` (29 runs) and `test/worktree_viewer_test.rb` (21 runs) are green. `rubocop` on the six touched Ruby files reports no offenses. Uncommitted: nothing. All five round-1 nits are fixed; each fix has a test (`test_an_unexpected_open_direction_answer_opens_the_split_to_the_right`, `test_the_launcher_calls_the_herdr_named_in_herdr_bin_path`, `test_without_herdr_the_launcher_exits_with_a_warning_instead_of_a_crash`, the `SWITCHTAB` token).
+
+Bugs: no Important findings.
+
+Security: no findings. The new `HERDR_BIN_PATH` value is passed in array form, never through a shell.
+
+Compliance: no Important findings. The fixes since round 1 stay inside the planned files, plus `SWITCHTAB` in `project-dictionary.txt` for cspell. No test was weakened.
+
+- [ ] Nit: the README paragraph order no longer reads. `**Press W to fix it.**` now follows the stow paragraph, so "it" has no referent. The paragraph before it says "no pane is in one", but the paragraph above that describes agent panes that are in a worktree. Move the stow note to the end of the section and reword the `cd` paragraph as the case `W` covers — `herdr/.config/herdr/README.md:38`
+- [ ] Nit: `test_without_herdr_the_launcher_exits_with_a_warning_instead_of_a_crash` sets `PATH` to the ruby binary's folder. With a Homebrew ruby in `/opt/homebrew/bin`, the folder that also holds `herdr`, the test finds the real `herdr` and talks to the live server. It passes here only because ruby comes from `rv`. Use a folder holding only a `ruby` symlink — `test/worktree_viewer_test.rb:205`
+- [ ] Nit: `worktree-create` still calls `herdr` from `PATH` for `pane get`, while the launcher now honours `HERDR_BIN_PATH`. The failure is harmless: it records nothing. But the two tools now find herdr differently — `git/.config/git/worktree-tools/worktree-create:218`
