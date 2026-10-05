@@ -21,8 +21,6 @@ pre-commit:
       tags: javascript linter
       glob: "*.{js,ts,jsx,tsx}"
       run: yarn eslint {staged_files}
-    spelling:
-      run: cspell --no-must-find-files {staged_files}
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"
@@ -77,7 +75,6 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -89,7 +86,6 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -125,13 +121,6 @@ pre-commit:
           --extended-regexp \
           '(^|[^.])\bdebugger\b|console\.log' "{staged_files}"
       fail_text: "Staged JS/TS files contain debugger statements or console.log calls. Remove before committing."
-
-# TODO: fix loading of extra words
-# commit-msg:
-#   parallel: true
-#   commands:
-#     spell-check:
-#       run: cspell --no-summary {1}
 
 pre-push:
   parallel: true
@@ -269,7 +258,6 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -281,7 +269,6 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \

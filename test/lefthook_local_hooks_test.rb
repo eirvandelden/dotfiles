@@ -9,13 +9,6 @@ class LefthookLocalHooksTest < Minitest::Test
   NATIVE_LEFTHOOK = LefthookBinary.locate
   MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
 
-  def self.locate_cspell_dir
-    found = `which cspell 2>/dev/null`.strip
-    File.dirname(found) unless found.empty?
-  end
-
-  CSPELL_DIR = locate_cspell_dir
-
   def self.locate_markdownlint_dir
     found = `which markdownlint 2>/dev/null`.strip
     File.dirname(found) unless found.empty?
@@ -25,7 +18,6 @@ class LefthookLocalHooksTest < Minitest::Test
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
-    skip("cspell not found on PATH") unless CSPELL_DIR
 
     @repo_root = File.expand_path("..", __dir__)
     @tmpdir = Dir.mktmpdir
@@ -74,12 +66,12 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
-  def test_pre_commit_uses_global_fallback_and_rejects_an_unknown_word_outside_js_rb_md
+  def test_pre_commit_uses_global_fallback_and_commits_an_unknown_word
     setup_repo("trunk")
     stub_real_lefthook
     stage_file("notes.txt", "zzqxklmnop is not a real word\n")
     _out, _err, status = git("commit", "-m", "notes")
-    refute(status.success?, "Expected an unknown word outside js/rb/md to be rejected by the global fallback")
+    assert(status.success?, "Expected an unknown word to be committed through the global fallback")
   end
 
   def test_pre_commit_still_commits_a_binary_only_change
@@ -164,21 +156,16 @@ class LefthookLocalHooksTest < Minitest::Test
     )
   end
 
-  # cspell and markdownlint live in the same npm bin directory on this machine (and both need
-  # node on PATH via their `#!/usr/bin/env node` shebang), so excluding markdownlint from PATH
-  # means symlinking each binary it doesn't need into its own directory rather than excluding
-  # the shared one wholesale.
+  # markdownlint lives in an npm bin directory with other binaries and needs node on PATH via its
+  # `#!/usr/bin/env node` shebang, so excluding markdownlint from PATH means symlinking markdownlint
+  # and node into their own directory rather than including the shared one wholesale.
   def setup_lint_bin_dirs
-    @cspell_only_dir = File.join(@tmpdir, "cspell-bin")
-    FileUtils.mkdir_p(@cspell_only_dir)
-    File.symlink(File.join(CSPELL_DIR, "cspell"), File.join(@cspell_only_dir, "cspell"))
-    File.symlink(`which node`.strip, File.join(@cspell_only_dir, "node"))
-
     return unless MARKDOWNLINT_DIR
 
     @markdownlint_only_dir = File.join(@tmpdir, "markdownlint-bin")
     FileUtils.mkdir_p(@markdownlint_only_dir)
     File.symlink(File.join(MARKDOWNLINT_DIR, "markdownlint"), File.join(@markdownlint_only_dir, "markdownlint"))
+    File.symlink(`which node`.strip, File.join(@markdownlint_only_dir, "node"))
   end
 
   def setup_repo(branch)
@@ -229,7 +216,7 @@ class LefthookLocalHooksTest < Minitest::Test
   end
 
   def repo_env(markdownlint: true)
-    path_dirs = [ @bin_dir, @cspell_only_dir ]
+    path_dirs = [ @bin_dir ]
     path_dirs << @markdownlint_only_dir if markdownlint && @markdownlint_only_dir
     {
       "HOME" => @tmpdir,
