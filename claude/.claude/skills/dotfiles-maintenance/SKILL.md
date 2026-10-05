@@ -15,7 +15,7 @@ All configuration is managed through a dotfiles repository at `~/Developer/dotfi
 ## Ruby, linters, CI
 
 - Ruby version manager is `rv` (spinel-coop/rv) — no RVM/rbenv/chruby. Use `rv ruby run -- COMMAND` to run a command in the correct Ruby context on a version mismatch, rather than installing or switching versions.
-- Use RuboCop for Ruby, `scss-lint` for legacy SCSS, Herb and cspell where they add value. Never add linter disable comments; if a file already has them, no need to remove them just for that.
+- Use RuboCop for Ruby, `scss-lint` for legacy SCSS, and Herb where it adds value. Never add linter disable comments; if a file already has them, no need to remove them just for that.
 - Run Bundler Audit and Brakeman before pushing; CI runs the full test suite.
 
 ## Shell, packages, Node, git signing
