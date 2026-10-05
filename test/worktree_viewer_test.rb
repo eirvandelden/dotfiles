@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "json"
 require "open3"
+require "shellwords"
 require "tmpdir"
 
 # worktree-viewer opens the herdr-file-viewer plugin's program at the worktree an agent works in.
@@ -167,7 +168,20 @@ class WorktreeViewerTest < Minitest::Test
     run_launcher("split")
 
     program = File.join(@plugin_root, "target", "release", "herdr-file-viewer")
-    assert_includes(herdr_calls, [ "pane", "run", "w1:pV", "exec '#{program}'" ])
+    assert_includes(herdr_calls, [ "pane", "run", "w1:pV", "exec #{Shellwords.escape(program)}" ])
+  end
+
+  def test_a_plugin_folder_with_a_quote_in_its_name_still_runs_the_viewer_program
+    quoted_root = File.join(@root, "it's plugin")
+    FileUtils.mv(@plugin_root, quoted_root)
+    @plugin_root = quoted_root
+    record_worktree
+
+    run_launcher("split")
+
+    command = herdr_calls.find { |call| call[0..1] == [ "pane", "run" ] }.last
+    program = File.join(quoted_root, "target", "release", "herdr-file-viewer")
+    assert_equal([ "exec", program ], Shellwords.split(command))
   end
 
   def test_hands_over_to_the_plugins_own_launcher_with_a_warning_when_the_viewer_program_is_missing
