@@ -54,11 +54,15 @@ class GuardParityTest < Minitest::Test
   end
 
   def test_codex_runs_the_same_consent_guard_command_as_claude_for_shell_commands
-    assert_same_hook(claude_hook("Bash", "consent-guard.rb"), codex_hook("^Bash$"), "^Bash$")
+    assert_same_hook(claude_hook("Bash", "consent-guard.rb"), codex_hook("^Bash$", "consent-guard.rb"), "^Bash$")
   end
 
   def test_codex_runs_the_same_test_guard_command_as_claude_for_file_edits
-    assert_same_hook(claude_hook("Edit|Write|MultiEdit", "test-guard.rb"), codex_hook("^apply_patch$"), "^apply_patch$")
+    assert_same_hook(claude_hook("Edit|Write|MultiEdit", "test-guard.rb"), codex_hook("^apply_patch$", "test-guard.rb"), "^apply_patch$")
+  end
+
+  def test_codex_runs_the_same_worktree_guard_command_as_claude_for_shell_commands
+    assert_same_hook(claude_hook("Bash", "worktree-guard.rb"), codex_hook("^Bash$", "worktree-guard.rb"), "^Bash$")
   end
 
   def test_codex_routes_approvals_to_the_automatic_reviewer
@@ -100,12 +104,12 @@ class GuardParityTest < Minitest::Test
     entry.fetch("hooks").map { |hook| hook["command"] }.find { |command| command.include?(script) }
   end
 
-  # The command of the inline [[hooks.PreToolUse]] entry with this matcher. Codex runs it through
-  # a shell, so the same "$HOME/..." string Claude uses expands the same way.
-  def codex_hook(matcher)
+  # The command naming this script in the inline [[hooks.PreToolUse]] entry with this matcher. The entry can hold
+  # several commands. Codex runs it through a shell, so the same "$HOME/..." string Claude uses expands the same way.
+  def codex_hook(matcher, script)
     entries = File.read(CODEX_CONFIG).split(/^\[\[hooks\.PreToolUse\]\]\n/).drop(1)
     entry = entries.find { |text| text[/^matcher = "(.*)"$/, 1] == matcher }
-    entry && entry[/^command = '(.*)'$/, 1]
+    entry && entry.scan(/^command = '(.*)'$/).flatten.find { |command| command.include?(script) }
   end
 
   def codex_setting(key)
