@@ -75,7 +75,6 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -87,7 +86,6 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -260,7 +258,6 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -272,7 +269,6 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
-          --exclude="project-dictionary.txt" \
           --line-number \
           --with-filename \
           --fixed-strings \
