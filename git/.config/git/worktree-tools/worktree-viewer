@@ -164,7 +164,13 @@ module WorktreeTools
     end
 
     def herdr(*arguments)
-      Open3.capture3("herdr", *arguments)
+      Open3.capture3(herdr_bin, *arguments)
+    rescue SystemCallError => error
+      abandon("cannot run herdr (#{error.message})")
+    end
+
+    def herdr_bin
+      ENV["HERDR_BIN_PATH"].to_s.empty? ? "herdr" : ENV["HERDR_BIN_PATH"]
     end
   end
 end

@@ -187,6 +187,28 @@ class WorktreeViewerTest < Minitest::Test
     assert_equal("right", option(first_call("pane", "split"), "--direction"))
   end
 
+  def test_the_launcher_calls_the_herdr_named_in_herdr_bin_path
+    elsewhere = File.join(@root, "elsewhere")
+    FileUtils.mkdir_p(elsewhere)
+    FileUtils.mv(File.join(@stub_bin, "herdr"), File.join(elsewhere, "herdr"))
+    record_worktree
+
+    _stdout, stderr, status = run_launcher("split", herdr_bin_path: File.join(elsewhere, "herdr"))
+
+    assert(status.success?, stderr)
+    assert_equal(@worktree, option(first_call("pane", "split"), "--cwd"))
+  end
+
+  def test_without_herdr_the_launcher_exits_with_a_warning_instead_of_a_crash
+    FileUtils.rm(File.join(@stub_bin, "herdr"))
+
+    _stdout, stderr, status = run_launcher("split", path: File.dirname(RbConfig.ruby))
+
+    refute(status.success?)
+    assert_match(/worktree-viewer: .*herdr/, stderr)
+    refute_match(/\.rb:\d+:in /, stderr)
+  end
+
   def test_hands_over_to_the_plugins_own_launcher_with_a_warning_when_open_direction_fails
     _stdout, stderr, _status = run_launcher("split", direction_fails: true)
 
@@ -227,9 +249,10 @@ class WorktreeViewerTest < Minitest::Test
   end
 
   def run_launcher(argument, decision: "OPEN", wait_status: "0", direction_fails: false,
-                   plugin_installed: true, direction: nil)
+                   plugin_installed: true, direction: nil, herdr_bin_path: nil, path: nil)
     environment = {
-      "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
+      "PATH" => path || "#{@stub_bin}:#{ENV.fetch('PATH')}",
+      "HERDR_BIN_PATH" => herdr_bin_path,
       "PLUGIN_STUB_DIRECTION" => direction,
       "HOME" => @root,
       "XDG_STATE_HOME" => @state_home,
