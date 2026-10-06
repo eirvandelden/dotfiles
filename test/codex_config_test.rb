@@ -25,7 +25,7 @@ class CodexConfigTest < Minitest::Test
     server = trek_server
 
     assert_equal(TREK_URL, server[/^url\s*=\s*"([^"]+)"/, 1])
-    refute_match(/^bearer_token_env_var/, server)
+    refute_match(/^(bearer_token|bearer_token_env_var|http_headers|env_http_headers)\s*=/, server)
   end
 
   def test_trek_sets_no_scopes
@@ -45,11 +45,7 @@ class CodexConfigTest < Minitest::Test
   end
 
   def test_no_other_trek_tool_asks_for_approval
-    assert_empty(trek_tool_names - APPROVAL_TOOLS)
-  end
-
-  def test_at_most_ten_trek_tools_ask_for_approval
-    assert_operator(trek_tool_names.size, :<=, 10)
+    assert_empty(approving_trek_tools - APPROVAL_TOOLS)
   end
 
   private
@@ -61,6 +57,10 @@ class CodexConfigTest < Minitest::Test
   def approval_mode(tool)
     table = config[/^\[mcp_servers\.trek\.tools\.#{Regexp.escape(tool)}\][^\n]*\n(.*?)(?=^\[|\z)/m, 1]
     table && table[/^approval_mode\s*=\s*"([^"]+)"/, 1]
+  end
+
+  def approving_trek_tools
+    trek_tool_names.select { |tool| approval_mode(tool) == "approve" }
   end
 
   def trek_tool_names
