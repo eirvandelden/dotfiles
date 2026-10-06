@@ -132,3 +132,15 @@ Compliance: no Important findings. The fix stays inside `worktree-viewer` and it
 
 - [x] Nit: the two new tests, `test_a_viewer_pane_herdr_cannot_rename_is_closed_with_a_warning` and `test_a_viewer_pane_herdr_cannot_start_the_viewer_in_is_closed_with_a_warning`, sit at column 0 instead of the class's two-space indent. Same slip as the round-3 nit; rubocop does not flag it here — `test/worktree_viewer_test.rb:187` → fixed (Indent the pane-preparation tests inside their class)
 - [x] Nit: `prepare_pane` ignores the status of `pane close` and always warns "closed the new pane". When herdr refuses the rename or run because the pane or server is gone, it likely refuses the close too, and the warning then claims a cleanup that did not happen. Say "closed" only when `pane close` succeeds — `git/.config/git/worktree-tools/worktree-viewer:72` → fixed (Say the viewer pane was closed only when herdr closed it)
+
+## Round 11 — 2026-10-06T19:39Z — 2551be05
+
+State at review: rebased on `origin/main` `58dab0a3` (fetched; no newer main). `test/agent_worktree_test.rb` (10 runs), `test/worktree_create_test.rb` (31 runs) and `test/worktree_viewer_test.rb` (25 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. Both round-10 nits are fixed: the two pane-preparation tests sit at the class's indent, and `discard_pane` says "closed the new pane" only when `pane close` succeeds, else "could not close pane <id>". The new test `test_the_warning_does_not_claim_a_close_herdr_refused` covers the refused close; the stub now accepts a comma-separated list in `HERDR_STUB_FAIL`, and an unset value still fails nothing. All 37 commits carry a parsed `Co-Authored-By:` trailer.
+
+Bugs: no findings.
+
+Security: no findings. `pane close` still takes the pane id from herdr's JSON in array form.
+
+Compliance: no findings. The fixes since round 10 stay inside `worktree-viewer` and its test file. Acceptance criteria 1–18 (in `spec.md`) still each have the test `plan.md`'s `## Proof` names, and every named unit test exists. No test was weakened, skipped or deleted.
+
+Nothing found.
