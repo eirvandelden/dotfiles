@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "json"
+require_relative "../claude/.claude/hooks/remote_matcher"
 
 # The consent guard and the test guard run in both tools from one script each under
 # claude/.claude/hooks/. Claude calls them from settings.json, Codex from the inline [hooks]
@@ -59,6 +60,25 @@ class GuardParityTest < Minitest::Test
     assert_same_hook(claude_hook("Edit|Write|MultiEdit", "test-guard.rb"), codex_hook("^apply_patch$"), "^apply_patch$")
   end
 
+  def test_codex_routes_approvals_to_the_automatic_reviewer
+    assert_equal("auto_review", codex_setting("approvals_reviewer"))
+  end
+
+  def test_codex_still_approves_on_request_in_the_workspace_write_sandbox
+    assert_equal("on-request", codex_setting("approval_policy"))
+    assert_equal("workspace-write", codex_setting("sandbox_mode"))
+  end
+
+  # Reads the private allowlist that dotfiles-work installs. Without that file the list is empty and
+  # this passes vacuously, so it only proves something on a machine that has the file.
+  def test_codex_config_and_rules_name_no_work_owner
+    committed = [ CODEX_CONFIG, RULES ].map { |path| File.read(path).downcase }.join("\n")
+
+    allowlist_owners.each do |owner|
+      refute_includes(committed, owner, "the Codex config or rules name the work owner #{owner}")
+    end
+  end
+
   private
 
   def assert_same_hook(claude_command, codex_command, matcher)
@@ -85,5 +105,17 @@ class GuardParityTest < Minitest::Test
     entries = File.read(CODEX_CONFIG).split(/^\[\[hooks\.PreToolUse\]\]\n/).drop(1)
     entry = entries.find { |text| text[/^matcher = "(.*)"$/, 1] == matcher }
     entry && entry[/^command = '(.*)'$/, 1]
+  end
+
+  def codex_setting(key)
+    File.read(CODEX_CONFIG)[/^#{key} = "(.*)"$/, 1]
+  end
+
+  def allowlist_owners
+    path = File.expand_path(RemoteMatcher::ALLOWLIST_FILE)
+    return [] unless File.exist?(path)
+
+    File.readlines(path, chomp: true).map(&:strip).reject { |line| line.empty? || line.start_with?("#") }
+        .map { |entry| entry.split("/").first.downcase }
   end
 end
