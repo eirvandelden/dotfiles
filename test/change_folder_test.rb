@@ -5,7 +5,7 @@ require "open3"
 require "tmpdir"
 
 # Every change gets a folder named after its branch: docs/changes/<slug>/. This
-# script is the one place that derivation happens — the intent, spec, plan and
+# script is the one place that derivation happens — the intent, plan and
 # implement skills all shell out to it instead of re-deriving the slug.
 class ChangeFolderTest < Minitest::Test
   SCRIPT = File.expand_path("../claude/.claude/skills/plan/scripts/change-folder", __dir__)

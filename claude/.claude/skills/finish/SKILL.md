@@ -29,7 +29,7 @@ Stop at the first failure and say why:
 
 Ask: "Does this change affect another application: API contract, published event, shared schema, anything another team consumes?"
 
-- **Yes**: distil `<folder>/intent.md` and `<folder>/spec.md` into an ADR — sections Context / Decision / Consequences — at the path pattern `~/.claude/finish/adr-location` names (one line, repo-relative, e.g. `docs/adr/NNNN-<slug>.md`), numbered one past the highest existing ADR. Commit it alone: `Add ADR NNNN: <title>`. That file is absent: ask where the ADR belongs before continuing — never guess a path.
+- **Yes**: distil `<folder>/intent.md` and `<folder>/plan.md` into an ADR — sections Context / Decision / Consequences — at the path pattern `~/.claude/finish/adr-location` names (one line, repo-relative, e.g. `docs/adr/NNNN-<slug>.md`), numbered one past the highest existing ADR. Commit it alone: `Add ADR NNNN: <title>`. That file is absent: ask where the ADR belongs before continuing — never guess a path.
 - **No**: continue. Nothing else survives once the folder is removed.
 
 ## 3. Both scopes: the PR body

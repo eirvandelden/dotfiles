@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # hand-off-plan.sh <stage> <change-slug>
 #
-# Hands a stage (intent, spec, plan, or implement) of docs/changes/<change-slug> to a fresh
-# Claude worker in a pane split from the caller (below, except spec, which splits to the right).
+# Hands a stage (intent, plan, or implement) of docs/changes/<change-slug> to a fresh
+# Claude worker in a pane split below the caller.
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
 
@@ -22,7 +22,6 @@ the artifact, push the branch (git push -u origin HEAD)."
 case "$stage" in
   intent)
     model="opus"
-    direction="down"
     ready_word="Intent ready:"
     role_instruction="Invoke the intent skill for docs/changes/$slug; there is no upstream \
 artifact yet — this interview is what creates intent.md."
@@ -30,22 +29,11 @@ artifact yet — this interview is what creates intent.md."
     report_instruction="Then write what intent.md decided and anything Etienne deferred, as \
 Markdown to"
     ;;
-  spec)
-    model="sonnet"
-    direction="right"
-    ready_word="Spec ready:"
-    role_instruction="Invoke the spec skill's here backend for docs/changes/$slug; it reads \
-docs/changes/$slug/intent.md, the only context you get."
-    acceptance_instruction="$accepted_then_push"
-    report_instruction="Then write what spec.md decided and anything Etienne deferred, as \
-Markdown to"
-    ;;
   plan)
     model="opus"
-    direction="down"
     ready_word="Plan ready:"
     role_instruction="Invoke the plan skill's Write role, here backend, for docs/changes/$slug; \
-it reads docs/changes/$slug/intent.md and docs/changes/$slug/spec.md, the only context you get. \
+it reads docs/changes/$slug/intent.md, the only context you get. \
 Write docs/changes/$slug/plan.md and touch nothing else in this worktree until Etienne says the \
 literal word \"accepted\" or \"agreed\"."
     acceptance_instruction="$accepted_then_push"
@@ -54,7 +42,6 @@ Markdown to"
     ;;
   implement)
     model="sonnet"
-    direction="down"
     ready_word="Handoff done:"
     role_instruction="Invoke the implement skill's here backend for docs/changes/$slug; you are \
 already inside the worktree, so no further pane split is needed. It reads \
@@ -66,7 +53,7 @@ review pane and /finish to send onward."
 to"
     ;;
   *)
-    echo "Usage: hand-off-plan.sh <stage> <change-slug>. <stage> must be one of intent, spec, \
+    echo "Usage: hand-off-plan.sh <stage> <change-slug>. <stage> must be one of intent, \
 plan, implement." >&2
     exit 1
     ;;
@@ -118,7 +105,7 @@ fi
 worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
 worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$slug" --no-pane)
 
-split=$(herdr pane split --current --direction "$direction" --cwd "$worker_cwd" --no-focus)
+split=$(herdr pane split --current --direction down --cwd "$worker_cwd" --no-focus)
 pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
 
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
@@ -162,8 +149,5 @@ Whether that report line gets through or not, then run herdr pane close \$HERDR_
 own pane's id from your shell, not the coordinator's id above) to close your own pane; the \
 report is on disk regardless, so nothing is lost." >/dev/null
 
-direction_word="below"
-[ "$direction" = "right" ] && direction_word="to the right"
-
-echo "Handed the $stage stage of docs/changes/$slug to $worker in a pane $direction_word. Its \
+echo "Handed the $stage stage of docs/changes/$slug to $worker in a pane below. Its \
 report will land in $report."

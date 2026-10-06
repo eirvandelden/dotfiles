@@ -62,7 +62,7 @@ Topic-specific guidance — object-oriented design, Rails architecture, Ruby sty
 
 Claude Code loads those skills automatically by relevance. Any other agent has no loader and should read the index, then the matching skill file: `SKILLS-INDEX.md`.
 
-Every change moves through the `intent`, `spec`, `plan` and `implement` skills, in that order — see rule 17 below.
+Every change moves through the `intent`, `plan` and `implement` skills, in that order — see rule 17 below.
 
 ## 6. Open Questions
 
@@ -146,7 +146,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Full apply-fixes / re-review workflow: `code-review` skill.
     - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder.
 17. Plan before implementing:
-    - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` and `spec.md` in the same folder. The `intent`, `spec`, `plan` and `implement` skills produce and consume that chain in order.
+    - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
     - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
     - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them.
 18. Commits:
@@ -180,7 +180,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Stop at the first failure instead of dumping output: `-f`/`--fail-fast` (Minitest, RSpec), `--bail` (Jest), `-x --tb=short` (pytest). `tail -20` is a fallback and needs `set -o pipefail`, or it reports `tail`'s exit status instead of the runner's.
     - NEVER re-run an identical failing command more than twice; change it — narrower scope, more diagnostics, a different flag. (Rule 14 caps the whole stuck problem at 3 attempts.)
 24. Model selection:
-    - Claude Code: `claude/.claude/settings.json` sets `"model": "opus"`, so a session you start runs on Opus. The herdr stage panes set their own model in `hand-off-plan.sh`: Opus for `intent` and `plan`, Sonnet for `spec` and `implement`. Start a `sonnet` session by hand only for a task that is entirely mechanical.
+    - Claude Code: `claude/.claude/settings.json` sets `"model": "opus"`, so a session you start runs on Opus. The herdr stage panes set their own model in `hand-off-plan.sh`: Opus for `intent` and `plan`, Sonnet for `implement`. Start a `sonnet` session by hand only for a task that is entirely mechanical.
     - Codex: Terra for planning and research, Luna for implementing. Luna is the base default in `codex/.codex/config.toml`; start a planning session with `codex -p terra`, which layers `~/.codex/terra.config.toml` over that base.
     - Haiku belongs in subagents, never in the main session. Delegate to it for direct commands that need no interpretation — running a known command, listing files, a mechanical rename, a fixed-format lookup. Pass `model: "haiku"` on the individual Agent call rather than setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
     - Anything requiring judgement — reading a diff for correctness, choosing between designs, writing tests — stays on Opus or Sonnet.

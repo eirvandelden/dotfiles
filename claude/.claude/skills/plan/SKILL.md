@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Use once spec.md is accepted, before any code — writes docs/changes/<slug>/plan.md in plan mode, critically reviews an existing plan, or absorbs a plan another agent should execute.
+description: Use once intent.md is accepted, before any code — writes docs/changes/<slug>/plan.md in plan mode, critically reviews an existing plan, or absorbs a plan another agent should execute.
 ---
 
 # Plan
@@ -11,7 +11,7 @@ Three roles. Do only the one asked for.
 
 ### Choosing a backend
 
-- No argument, `HERDR_ENV` set: pane backend. A fresh agent with an empty context reads only the committed `intent.md` and `spec.md` — no chat history from the coordinator crosses into the interrogation.
+- No argument, `HERDR_ENV` set: pane backend. A fresh agent with an empty context reads only the committed `intent.md` — no chat history from the coordinator crosses into the interrogation.
 - `here`, or `HERDR_ENV` unset: run in this session instead. Outside herdr this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
 
 ### Pane backend
@@ -30,14 +30,22 @@ The pane writes `plan.md`, and once Etienne says "accepted" or "agreed", commits
 
 Must run in plan mode — this is where the codebase gets read and the approach gets decided, so nothing is edited until the user accepts. Not already in plan mode: call `EnterPlanMode` before reading code (Codex: tell the user to run `/plan` first; there is no equivalent tool call).
 
-1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<folder>/intent.md` and `<folder>/spec.md`; refuse and say why if either is not `Status: accepted`.
-2. Read the codebase enough to know which files change and in what order.
+1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Refuse and say why unless `<folder>/intent.md` exists and is `Status: accepted`; then read it.
+2. Read the codebase enough to know which files change and in what order. Apply the domain skills that match the work (Rails architecture, API design, UI, dependencies, and so on). Flag conflicts they raise against each other or against the playbook in the plan, rather than silently picking a side.
 3. Write `<folder>/plan.md`:
 
    ```markdown
    # Plan: <title>
 
-   From `intent.md` and `spec.md` (<date>). Status: draft.
+   From `intent.md` (<date>). Status: draft.
+
+   ## Design decisions
+
+   <choices made and why, only where intent left them open>
+
+   ## Integration points
+
+   <other systems, APIs, or code this touches>
 
    ## Files that change
 
@@ -63,9 +71,12 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 
    Test setup: <fixtures, test data, faked boundaries — short; if this paragraph grows long,
    the change is too big and should be split>
+
+   ---
+   Domain skills applied: <list, or "None">.
    ```
 
-   `## Proof` is structured, not prose: one line per acceptance criterion naming the test file and test name that proves it, then per changed file the unit tests expected. Step 1 of `## Order of work` is always the first failing acceptance test, run, watched fail — the walking skeleton.
+   `## Proof` is structured, not prose: one line per acceptance criterion from `intent.md` naming the test file and test name that proves it, then per changed file the unit tests expected. Step 1 of `## Order of work` is always the first failing acceptance test, run, watched fail — the walking skeleton.
 4. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, a fresh worker pane, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
 5. Before offering acceptance, ask the user at least one interrogation question — "what could break", "what did you reject", "what's riskiest" — so the plan gets challenged before it is frozen.
 6. For anything non-trivial, offer a second-model critique (below) before acceptance.

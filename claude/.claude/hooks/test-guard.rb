@@ -2,7 +2,7 @@
 # PreToolUse hook for Claude Code and Codex (same stdin/exit contract as consent-guard.rb): while a bugfix's
 # reproduction test is committed — this branch's plan.md carries "Reproduction: committed" —
 # an edit to a test path is refused. The playbook's "fix the code, not the tests" for a
-# bugfix, enforced rather than advised (spec.md §1.4).
+# bugfix, enforced rather than advised (docs/changes/ai-native-workflow/spec.md §1.4).
 #
 # `--always` skips the plan.md lookup and refuses every write to a test path unconditionally:
 # used as a per-agent hook on the `implementer` agent, whose whole job is production code, so

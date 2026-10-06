@@ -47,8 +47,7 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 
 ## Planning and setup
 
-- Starting any change — interview for the problem and proposed outcome, write `docs/changes/<slug>/intent.md`: `claude/.claude/skills/intent/SKILL.md`
-- Turning an accepted intent into requirements and testable acceptance criteria: `claude/.claude/skills/spec/SKILL.md`
+- Starting any change — interview for the problem, outcome, scope and acceptance criteria, write `docs/changes/<slug>/intent.md`: `claude/.claude/skills/intent/SKILL.md`
 - Writing `plan.md` in plan mode, critiquing a plan, or executing a handed-over one: `claude/.claude/skills/plan/SKILL.md`
 - Building an accepted plan — single session, split across a test-writer/implementer pair, or handed to a worker pane: `claude/.claude/skills/implement/SKILL.md`
 - Setting up a new personal repository — repo context file, rv, lefthook, CI, Dependabot, deploy: `claude/.claude/skills/new-repo-setup/SKILL.md`

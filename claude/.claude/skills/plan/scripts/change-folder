@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # Prints docs/changes/<slug> for the current git branch. <slug> is the branch
-# name with any single leading "<prefix>/" removed, so intent/spec/plan/implement
+# name with any single leading "<prefix>/" removed, so intent/plan/implement
 # all land in the same folder regardless of how the branch was named. Other
 # skills call this script rather than re-deriving the slug themselves.
 require "open3"

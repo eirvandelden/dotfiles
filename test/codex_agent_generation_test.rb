@@ -6,7 +6,7 @@ require "tmpdir"
 
 # Codex has no shared agent-definition format with Claude, so each Claude agent under
 # claude/.claude/agents/<name>.md is compiled into a Codex codex/.codex/agents/<name>.toml —
-# one source, a generated adapter (spec.md §3). This is the drift guard: every committed
+# one source, a generated adapter (docs/changes/ai-native-workflow/spec.md §3). This is the drift guard: every committed
 # Codex agent must equal what the generator produces from the Claude source right now.
 class CodexAgentGenerationTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)

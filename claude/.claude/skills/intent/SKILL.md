@@ -1,6 +1,6 @@
 ---
 name: intent
-description: Use when a request would change code — a bug, a feature, a refactor, a config change — before any code, spec, or plan exists. Interviews for the problem and proposed outcome, then writes docs/changes/<slug>/intent.md.
+description: Use when a request would change code — a bug, a feature, a refactor, a config change — before any code or plan exists. Interviews until nothing is ambiguous about the problem, outcome, scope and acceptance criteria, then writes docs/changes/<slug>/intent.md.
 arguments:
   - name: backend
     description: "(default) interview in this session, unchanged; \"handoff <slug-or-issue>\": start a fresh Opus pane below instead, rooted in a new worktree."
@@ -11,14 +11,14 @@ Interview technique adapted from the superpowers-ruby `brainstorming` skill
 (~/.claude/plugins/cache/superpowers-ruby/superpowers-ruby/7.5.0/skills/brainstorming/SKILL.md,
 2026-09 vendored version): one question at a time, multiple choice where possible, problem
 before solution, the "too simple to need this" anti-pattern, the red-flags list, persist the
-draft as you go. Left out: the design/architecture exploration (that is the `spec` skill), the
+draft as you go. Left out: the design/architecture exploration (that is the `plan` skill), the
 hand-off to `writing-plans` (that is the `plan` skill), and the visual companion. Re-sync against
 upstream by diffing this file's interview section against that one.
 -->
 
 # Intent
 
-Every change that touches code starts here — a bug, a feature, a refactor, a config change. Personal or work, trivial or not. This skill interviews for the problem and the proposed outcome, then writes `docs/changes/<slug>/intent.md`. It never proposes a solution; that is `spec`'s job.
+Every change that touches code starts here — a bug, a feature, a refactor, a config change. Personal or work, trivial or not. This skill interviews for the problem, the proposed outcome, the scope boundaries and the acceptance criteria, then writes `docs/changes/<slug>/intent.md`. It never proposes a solution; that is `plan`'s job.
 
 ## Choosing a backend
 
@@ -48,18 +48,22 @@ Every change gets one. A three-line intent for a one-line fix is still an intent
 - Derive the branch/folder name the same way `worktree-first` does: with an issue, `<issue-number>-<issue-title-in-kebab-case>`, the name GitHub's "Create a branch" button would generate; without one, the kebab-case slug. No prefix either way.
 - Check where this session already is:
   - Inside a linked worktree whose branch already matches that name: write here.
-  - Anywhere else (the main checkout, or a worktree on a different branch): invoke `worktree-first` with the derived name before writing anything. It creates `.worktrees/<name>` off `origin/main` and this skill continues inside it.
+  - Anywhere else (the main checkout, or a worktree on a different branch): invoke `worktree-first` in its no-pane mode (`--no-pane`) with the derived name before writing anything. It creates `.worktrees/<name>` off `origin/main`, opens no pane, and this skill continues inside it. The pane backend is the only intent path that opens a pane.
 - Never create the branch or the folder from the main checkout.
 
 ## 2. Interview
 
-One question at a time; prefer multiple choice (use `AskUserQuestion` where available). Explore the problem before any solution — if an answer describes a fix rather than a symptom, ask what a user or system cannot do today instead. Three to five questions is typical:
+One question at a time; prefer multiple choice (use `AskUserQuestion` where available). Explore the problem before any solution — if an answer describes a fix rather than a symptom, ask what a user or system cannot do today instead. There is no fixed question count: keep asking until every template section below can be filled without guessing. Cover:
 
 1. What can someone not do today? (the problem, in the domain's words, not the fix)
 2. What does better look like once this ships?
 3. Who and what systems are affected?
-4. What constrains the change (policy, compatibility, a deadline)?
-5. What does success look like — how would you know it worked?
+4. What constrains the change (policy, compatibility, a deadline)? Where two constraints conflict, name the tradeoff and ask which side wins.
+5. What is in scope?
+6. What is explicitly out of scope?
+7. What are the acceptance criteria — one concrete example per behaviour, in the domain's words, as a sentence a domain expert would agree with ("Paying empties the basket", not "calls Basket#pay")? A criterion that cannot be written as an example is not clear enough yet: ask for the example.
+
+The interview ends when every template section can be filled without guessing. Until then, keep asking.
 
 Batch independent multiple-choice questions (up to 4) only when none of them would change another's answer; otherwise ask one at a time.
 
@@ -68,6 +72,7 @@ Batch independent multiple-choice questions (up to 4) only when none of them wou
 ## Red flags — stop and return to the interview
 
 - About to write `intent.md` with no questions asked yet.
+- About to write the file with no in-scope or out-of-scope question asked.
 - The draft describes a solution ("add a background job") instead of a problem or outcome ("the export arrives by mail within a minute").
 - Treating "sounds right" as "accepted" — only the words listed in step 4 flip the status.
 
@@ -96,6 +101,22 @@ Author: <name>. Status: draft.
 
 <policy, compatibility, deadlines>
 
+## In scope
+
+<what the change must contain>
+
+## Out of scope
+
+<what it explicitly does not touch>
+
+## Acceptance criteria
+
+- <one concrete example per behaviour, in the domain's words>
+
+## Flagged concerns
+
+<constraints that conflict, with the tradeoff named and the side chosen — omit the section if there are none>
+
 ## Open questions
 
 <anything unresolved — or "None.">
@@ -107,8 +128,14 @@ Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
 ## 4. Accept
 
-On the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the spec stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh spec '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
+Refuse to flip `Status:` to `accepted` while any of these holds, and name what is missing:
+
+- `## Acceptance criteria` is missing or empty.
+- `## Open questions` holds anything but "None.".
+- A flagged concern names no chosen side.
+
+Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
 
 ## Codex
 
-Same interview and template. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `spec`/`plan`/`implement` do today.
+Same interview and template. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `plan` and `implement` do today.
