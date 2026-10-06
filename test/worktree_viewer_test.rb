@@ -205,6 +205,16 @@ class WorktreeViewerTest < Minitest::Test
     assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
   end
 
+  def test_the_warning_does_not_claim_a_close_herdr_refused
+    record_worktree
+
+    _stdout, stderr, status = run_launcher("split", failing: "pane rename,pane close")
+
+    refute(status.success?)
+    refute_match(/closed the new pane/, stderr)
+    assert_match(/could not close pane w1:pV/, stderr)
+  end
+
   def test_hands_over_to_the_plugins_own_launcher_with_a_warning_when_the_viewer_program_is_missing
     FileUtils.rm(File.join(@plugin_root, "target", "release", "herdr-file-viewer"))
 
@@ -374,7 +384,7 @@ class WorktreeViewerTest < Minitest::Test
       require "json"
 
       File.open(ENV.fetch("HERDR_STUB_CALLS"), "a") { |file| file.puts(JSON.generate(ARGV)) }
-      if ENV["HERDR_STUB_FAIL"] == ARGV[0..1].join(" ")
+      if ENV["HERDR_STUB_FAIL"].to_s.split(",").include?(ARGV[0..1].join(" "))
         warn("stub: #{ARGV[0..1].join(' ')} refused")
         exit(1)
       end

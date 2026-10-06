@@ -69,8 +69,12 @@ module WorktreeTools
       _output, error, status = herdr("pane", command, pane_id, argument)
       return if status.success?
 
-      herdr("pane", "close", pane_id)
-      abandon("herdr pane #{command} failed (#{error.strip}); closed the new pane")
+      abandon("herdr pane #{command} failed (#{error.strip}); #{discard_pane(pane_id)}")
+    end
+
+    def discard_pane(pane_id)
+      _output, _error, status = herdr("pane", "close", pane_id)
+      status.success? ? "closed the new pane" : "could not close pane #{pane_id}"
     end
 
     def open_picker(pane_id)
