@@ -59,9 +59,18 @@ module WorktreeTools
     end
 
     def show_viewer(pane_id, picker:)
-      herdr("pane", "rename", pane_id, LABEL)
-      herdr("pane", "run", pane_id, "exec #{Shellwords.escape(program)}")
+      prepare_pane(pane_id, "rename", LABEL)
+      prepare_pane(pane_id, "run", "exec #{Shellwords.escape(program)}")
       open_picker(pane_id) if picker
+    end
+
+    # A pane left half-prepared is a stray shell, or one labelled Files that the plugin then takes for a viewer.
+    def prepare_pane(pane_id, command, argument)
+      _output, error, status = herdr("pane", command, pane_id, argument)
+      return if status.success?
+
+      herdr("pane", "close", pane_id)
+      abandon("herdr pane #{command} failed (#{error.strip}); closed the new pane")
     end
 
     def open_picker(pane_id)

@@ -184,6 +184,27 @@ class WorktreeViewerTest < Minitest::Test
     assert_equal([ "exec", program ], Shellwords.split(command))
   end
 
+def test_a_viewer_pane_herdr_cannot_rename_is_closed_with_a_warning
+  record_worktree
+
+  _stdout, stderr, status = run_launcher("split", failing: "pane rename")
+
+  refute(status.success?)
+  assert_match(/worktree-viewer: .*rename/, stderr)
+  assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
+  assert_empty(herdr_calls_matching("pane", "run"))
+end
+
+def test_a_viewer_pane_herdr_cannot_start_the_viewer_in_is_closed_with_a_warning
+  record_worktree
+
+  _stdout, stderr, status = run_launcher("split", failing: "pane run")
+
+  refute(status.success?)
+  assert_match(/worktree-viewer: .*run/, stderr)
+  assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
+end
+
   def test_hands_over_to_the_plugins_own_launcher_with_a_warning_when_the_viewer_program_is_missing
     FileUtils.rm(File.join(@plugin_root, "target", "release", "herdr-file-viewer"))
 
@@ -265,7 +286,7 @@ class WorktreeViewerTest < Minitest::Test
   end
 
   def run_launcher(argument, decision: "OPEN", wait_status: "0", direction_fails: false,
-                   plugin_installed: true, direction: nil, herdr_bin_path: nil, path: nil)
+                   plugin_installed: true, direction: nil, herdr_bin_path: nil, path: nil, failing: nil)
     environment = {
       "PATH" => path || "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_BIN_PATH" => herdr_bin_path,
@@ -278,6 +299,7 @@ class WorktreeViewerTest < Minitest::Test
       "HERDR_STUB_PLUGIN_ROOT" => (plugin_installed ? @plugin_root : ""),
       "HERDR_STUB_CONFIG_DIR" => @config_dir,
       "HERDR_STUB_WAIT_STATUS" => wait_status,
+      "HERDR_STUB_FAIL" => failing,
       "PLUGIN_STUB_DECISION" => decision,
       "PLUGIN_STUB_DIRECTION_FAILS" => (direction_fails ? "1" : nil),
       "PLUGIN_STUB_SCRIPT_LOG" => script_log
@@ -352,6 +374,10 @@ class WorktreeViewerTest < Minitest::Test
       require "json"
 
       File.open(ENV.fetch("HERDR_STUB_CALLS"), "a") { |file| file.puts(JSON.generate(ARGV)) }
+      if ENV["HERDR_STUB_FAIL"] == ARGV[0..1].join(" ")
+        warn("stub: #{ARGV[0..1].join(' ')} refused")
+        exit(1)
+      end
 
       case ARGV[0..1]
       when [ "pane", "list" ]
