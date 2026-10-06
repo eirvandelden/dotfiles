@@ -10,8 +10,7 @@ Claude Code and Codex cannot reach TREK (`https://trips.vandelden.family/mcp`). 
 
 - `test/codex_config_test.rb` — new. Minitest, same shape as `test/herdr_config_test.rb`: reads `codex/.codex/config.toml` as text with regexes (Ruby has no stdlib TOML), and shells out to `codex` when it is installed. CI runs every `test/*_test.rb` with `ruby -Itest` (`.github/workflows/dotfiles-tests.yml`); CI has no `codex`, so the CLI test skips there.
 - `codex/.codex/config.toml` — new `[mcp_servers.trek]` block after the fizzy block (before `[mcp_servers.node_repl]`): `url = "https://trips.vandelden.family/mcp"`, no `bearer_token_env_var`, no `scopes`. Then one `[mcp_servers.trek.tools.<name>]` table with `approval_mode = "approve"` per tool in the approval list below, in wiki order, same layout as the fizzy tool tables.
-- `claude/.claude/HEADROOM.md` — under `## Claude`, a new `### TREK MCP server` section after `### Home MCP servers (email, fizzy)`: the `claude mcp add --scope user --transport http trek https://trips.vandelden.family/mcp` command, the rule that no Claude session may be running (a live session rewrites `~/.claude.json` and drops the change), and that login happens once through `/mcp` on TREK's consent screen. No header and no token. Under `## Codex`, a new `### TREK MCP server` section: `codex mcp login trek` once, scopes picked on the consent screen. One line per paragraph (playbook rule 26).
-- `project-dictionary.txt` — add `TREK` (and any other word cspell flags, e.g. `vacay`, `dawarich`, `roadtrip`) only if cspell rejects it on the touched files.
+- `claude/.claude/HEADROOM.md` — under `## Claude`, a new `### TREK MCP server` section after `### Home MCP servers (email, fizzy)`: the `claude mcp add --scope user --transport http trek https://trips.vandelden.family/mcp` command, the rule that no Claude session may be running (a live session rewrites `~/.claude.json` and drops the change), and that login happens once through `/mcp` on TREK's consent screen. No header and no token. Under `## Codex`, a new `### TREK MCP login` section (named differently from the Claude one so markdownlint's MD024 duplicate-heading rule passes): `codex mcp login trek` once, scopes picked on the consent screen. One line per paragraph (playbook rule 26).
 
 ### Approval list (10 tools)
 
@@ -29,7 +28,7 @@ Every other TREK tool, including the other delete and remove tools, runs without
 4. Add the `[mcp_servers.trek]` block to `config.toml`. Run the test file; the URL and CLI tests pass.
 5. Add the 10 tool tables. Run; all tests pass.
 6. Write the two `HEADROOM.md` sections.
-7. Lint: `cspell --no-must-find-files` and `markdownlint` on the touched files, `rubocop` and `ruby -c` on the test. Run the whole `test/*_test.rb` loop as CI does.
+7. Lint: `markdownlint` on the touched files, `rubocop` and `ruby -c` on the test. Run the whole `test/*_test.rb` loop as CI does.
 8. Commit in small steps (test + config; docs). Push.
 9. Live check, by Etienne (needs a browser and, for Claude, no Claude session open): `codex mcp login trek`, then in Codex list trips and ask to delete a test trip — it must ask for approval (decline it). Run the HEADROOM.md Claude command from a plain shell, log in through `/mcp`, list trips. Then check each of the 10 names against Codex's live TREK tool list: a name the server lacks is renamed to its live equivalent or removed, in both the test constant and `config.toml`. Do not add tools; the list stays at 10 at most. Commit that reconciliation separately if anything changes.
 
@@ -44,7 +43,7 @@ Every other TREK tool, including the other delete and remove tools, runs without
 
 ## Proof
 
-- Codex's config points `trek` at `https://trips.vandelden.family/mcp` with no bearer token → `test/codex_config_test.rb` `test_trek_points_at_the_trek_url_with_no_bearer_token`
+- Codex's config points `trek` at `https://trips.vandelden.family/mcp` with no bearer token or auth header → `test/codex_config_test.rb` `test_trek_points_at_the_trek_url_with_no_bearer_token`
 - Codex accepts the config and shows the TREK URL → `test/codex_config_test.rb` `test_codex_accepts_the_config_and_shows_the_trek_url` (copies `config.toml` into a tmp `CODEX_HOME`, runs `codex mcp get trek --json`, asserts `transport.url`; skips when `codex` is missing)
 - Deleting a trip asks for approval; so do the other 9 listed tools (narrowed from the spec's "every delete or remove tool", see Approval list) → `test/codex_config_test.rb` `test_every_listed_trek_tool_asks_for_approval`, plus step 9's manual delete-a-trip check
 - After `codex mcp login trek`, Codex lists trips → manual, step 9 (needs Etienne's browser login)
@@ -52,7 +51,7 @@ Every other TREK tool, including the other delete and remove tools, runs without
 
 Per changed file, the unit tests expected:
 
-- `test/codex_config_test.rb`: `test_trek_points_at_the_trek_url_with_no_bearer_token`, `test_codex_accepts_the_config_and_shows_the_trek_url`, `test_every_listed_trek_tool_asks_for_approval`, `test_no_other_trek_tool_asks_for_approval`, `test_at_most_ten_trek_tools_ask_for_approval` (reads and other writes run freely), `test_trek_sets_no_scopes`.
+- `test/codex_config_test.rb`: `test_trek_points_at_the_trek_url_with_no_bearer_token`, `test_codex_accepts_the_config_and_shows_the_trek_url`, `test_every_listed_trek_tool_asks_for_approval`, `test_no_other_trek_tool_asks_for_approval` (reads and other writes run freely; counts only tables with `approval_mode = "approve"`), `test_trek_sets_no_scopes`.
 
 Test setup: the approval list lives as a frozen constant in the test (the source of truth reviewed in step 2). The CLI test uses `Dir.mktmpdir` as `CODEX_HOME` with a copy of `config.toml`; it never touches `~/.codex`. No network.
 
