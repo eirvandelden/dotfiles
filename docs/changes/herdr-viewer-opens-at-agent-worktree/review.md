@@ -119,3 +119,16 @@ Security: no findings.
 Compliance: no Important findings. The fix stays inside `worktree-create` and its test file. No test was weakened.
 
 - [x] Nit: `show_viewer` ignores the exit status of `pane rename` and `pane run`. When `pane run` fails, a plain shell pane stays open, and when only `pane rename` succeeds it carries the `Files` label, so the plugin's `--launch-decision` treats it as a viewer: the next `prefix+f` focuses or closes it instead of opening one. Low risk, since `pane split` just succeeded on the same server; checking the status and closing the pane (or abandoning with a warning) would close it — `git/.config/git/worktree-tools/worktree-viewer:61` → fixed (Close the viewer pane when herdr cannot prepare it)
+
+## Round 10 — 2026-10-06T19:34Z — 1f477e7a
+
+State at review: rebased on `origin/main` `58dab0a3` (fetched; it now holds the cspell removal and the two-stage intent/plan chain). `test/agent_worktree_test.rb` (10 runs), `test/worktree_create_test.rb` (31 runs) and `test/worktree_viewer_test.rb` (24 runs) are green. `rubocop` on the seven touched Ruby files reports no offenses. Uncommitted: nothing. The round-9 nit is fixed: `prepare_pane` checks `pane rename` and `pane run`, closes the pane and exits with a warning on failure, and two new tests cover each command. All 34 commits carry a parsed `Co-Authored-By:` trailer. The rebase dropped the `SWITCHTAB` line together with `project-dictionary.txt`, which main deleted.
+
+Bugs: no Important findings.
+
+Security: no findings. `pane close` takes the pane id from herdr's JSON in array form.
+
+Compliance: no Important findings. The fix stays inside `worktree-viewer` and its test file. No test was weakened. Acceptance criteria 1–18 still live in `spec.md`, not `intent.md`, which the rebased reviewer and `finish` read; nothing breaks, because `fill-pr-template` takes the criteria from `plan.md`'s `## Proof` and `finish` removes the whole folder.
+
+- [ ] Nit: the two new tests, `test_a_viewer_pane_herdr_cannot_rename_is_closed_with_a_warning` and `test_a_viewer_pane_herdr_cannot_start_the_viewer_in_is_closed_with_a_warning`, sit at column 0 instead of the class's two-space indent. Same slip as the round-3 nit; rubocop does not flag it here — `test/worktree_viewer_test.rb:187` →
+- [ ] Nit: `prepare_pane` ignores the status of `pane close` and always warns "closed the new pane". When herdr refuses the rename or run because the pane or server is gone, it likely refuses the close too, and the warning then claims a cleanup that did not happen. Say "closed" only when `pane close` succeeds — `git/.config/git/worktree-tools/worktree-viewer:72` →
