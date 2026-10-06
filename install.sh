@@ -110,6 +110,7 @@ main() {
   run_task "22_install_apt_packages.sh" "$root"
   run_task "23_install_flatpak_packages.sh" "$root"
   run_task "24_configure_launchd_path.sh" "$root"
+  run_task "25_install_gh_extensions.sh" "$root"
   run_task "30_install_default_ruby.sh" "$root"
   run_task "31_install_default_node.sh" "$root"
   run_task "40_install_default_ruby_gems.sh" "$root"
