@@ -48,6 +48,9 @@ def consentable_reason(words, working_directory)
 
   return "deploy commands need the user's explicit approval (playbook rule 13)." if deploys?(words)
 
+  return "destructive database commands need the user's explicit approval (playbook rule 9)." \
+    if destroys_database?(words)
+
   unnamed_remote = disallowed_remote(words, working_directory)
   return nil unless unnamed_remote
 
@@ -66,6 +69,10 @@ def deploys?(words)
   return true if words.include?("kamal") && (words.include?("deploy") || words.include?("exec"))
 
   words.include?("cap") && words.include?("deploy")
+end
+
+def destroys_database?(words)
+  words.any? { |word| word.match?(/\Adb:(drop|reset|schema:load)(:\w+)?\z/) }
 end
 
 # The remote a push names, when it is one this repository may not be pushed to

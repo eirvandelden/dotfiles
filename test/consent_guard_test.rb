@@ -120,6 +120,36 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_destructive_database_commands_are_blocked_without_user_consent
+    [ "bin/rails db:drop", "rails db:reset", "bundle exec rails db:schema:load", "bin/rails db:drop:all" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_match(/rule 9/, stderr)
+    end
+  end
+
+  def test_destructive_database_commands_run_once_the_user_has_consented
+    _, stderr, status = run_guard("I_HAVE_USER_CONSENT=1 bin/rails db:drop")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_routine_database_commands_are_allowed
+    [ "bin/rails db:migrate", "bin/rails db:migrate:status", "bin/rails db:prepare",
+      "bin/rails db:migrate:down VERSION=1" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_commit_message_naming_db_drop_is_allowed
+    _, stderr, status = run_guard("git commit -m 'never run rails db:drop here'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_pushing_to_an_allowed_remote_is_allowed
     _, stderr, status = run_guard("git push origin my-branch")
 
