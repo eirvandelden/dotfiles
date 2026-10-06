@@ -75,17 +75,32 @@ def destroys_database?(words)
   words.any? { |word| word.match?(/\Adb:(drop|reset|schema:load)(:\w+)?\z/) }
 end
 
-# The remote a push names, when it is one this repository may not be pushed to
-# unattended. Only a configured remote can be resolved, so an unknown name is
-# reported as-is rather than guessed at.
+# The target a push names, when it is not one this repository may be pushed to
+# unattended: a URL or configured remote outside the allowlist, or a name that
+# is neither. A bare `git push` names no target and goes to the branch's
+# configured remote, so it passes.
 def disallowed_remote(words, working_directory)
   return nil unless words.include?("git") && words.include?("push")
 
-  candidates = words.drop(words.index("push") + 1).reject { |word| word.start_with?("-") }
-  candidates.find do |candidate|
-    url = `git -C #{Shellwords.escape(working_directory)} remote get-url #{Shellwords.escape(candidate)} 2>/dev/null`.strip
-    !url.empty? && RemoteMatcher.allowed_remotes.none? { |pattern| url.match?(pattern) }
-  end
+  target = push_target(words)
+  return nil unless target
+
+  url = url_like?(target) ? target : remote_url(target, working_directory)
+  target unless RemoteMatcher.allowed_remotes.any? { |pattern| url.match?(pattern) }
+end
+
+# The first word after `push` that is not a flag. A flag that takes a separate
+# value shifts the target onto that value, which is not a remote, so it asks.
+def push_target(words)
+  words.drop(words.index("push") + 1).find { |word| !word.start_with?("-") }
+end
+
+def url_like?(target)
+  target.include?("://") || target.match?(/\A[^\s\/]+@[^\s:]+:/) || target.start_with?("/", "./", "../")
+end
+
+def remote_url(name, working_directory)
+  `git -C #{Shellwords.escape(working_directory)} remote get-url #{Shellwords.escape(name)} 2>/dev/null`.strip
 end
 
 call = JSON.parse($stdin.read)

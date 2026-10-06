@@ -165,8 +165,30 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/upstream/, stderr)
   end
 
-  def test_a_remote_that_is_not_configured_is_left_alone
+  def test_pushing_to_a_target_that_is_not_a_remote_needs_consent
     _, stderr, status = run_guard("git push some-typo my-branch")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/some-typo/, stderr)
+  end
+
+  def test_pushing_to_a_url_outside_the_allowlist_needs_consent
+    [ "git@github.com:someone-else/dotfiles.git", "https://github.com/someone-else/dotfiles.git" ].each do |url|
+      _, stderr, status = run_guard("git push #{url} my-branch")
+
+      assert_equal(2, status.exitstatus, url)
+      assert_match(/someone-else/, stderr)
+    end
+  end
+
+  def test_pushing_to_an_allowed_url_is_allowed
+    _, stderr, status = run_guard("git push git@github.com:eirvandelden/dotfiles.git my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_with_no_target_is_allowed
+    _, stderr, status = run_guard("git push")
 
     assert_equal(0, status.exitstatus, stderr)
   end
