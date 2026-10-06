@@ -184,26 +184,26 @@ class WorktreeViewerTest < Minitest::Test
     assert_equal([ "exec", program ], Shellwords.split(command))
   end
 
-def test_a_viewer_pane_herdr_cannot_rename_is_closed_with_a_warning
-  record_worktree
+  def test_a_viewer_pane_herdr_cannot_rename_is_closed_with_a_warning
+    record_worktree
 
-  _stdout, stderr, status = run_launcher("split", failing: "pane rename")
+    _stdout, stderr, status = run_launcher("split", failing: "pane rename")
 
-  refute(status.success?)
-  assert_match(/worktree-viewer: .*rename/, stderr)
-  assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
-  assert_empty(herdr_calls_matching("pane", "run"))
-end
+    refute(status.success?)
+    assert_match(/worktree-viewer: .*rename/, stderr)
+    assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
+    assert_empty(herdr_calls_matching("pane", "run"))
+  end
 
-def test_a_viewer_pane_herdr_cannot_start_the_viewer_in_is_closed_with_a_warning
-  record_worktree
+  def test_a_viewer_pane_herdr_cannot_start_the_viewer_in_is_closed_with_a_warning
+    record_worktree
 
-  _stdout, stderr, status = run_launcher("split", failing: "pane run")
+    _stdout, stderr, status = run_launcher("split", failing: "pane run")
 
-  refute(status.success?)
-  assert_match(/worktree-viewer: .*run/, stderr)
-  assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
-end
+    refute(status.success?)
+    assert_match(/worktree-viewer: .*run/, stderr)
+    assert_includes(herdr_calls, [ "pane", "close", "w1:pV" ])
+  end
 
   def test_hands_over_to_the_plugins_own_launcher_with_a_warning_when_the_viewer_program_is_missing
     FileUtils.rm(File.join(@plugin_root, "target", "release", "herdr-file-viewer"))
