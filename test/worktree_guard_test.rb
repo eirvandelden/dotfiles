@@ -7,7 +7,7 @@ require "tmpdir"
 
 # The worktree guard is a PreToolUse hook for Claude Code and Codex. It reads the tool call as
 # JSON on stdin and exits 2 (block, reason on stderr) when a hand-typed `git worktree add`
-# targets a path outside <main checkout>/.worktrees/, 0 for everything else. worktree-create
+# does not target <main checkout>/.worktrees/<name>, 0 for everything else. worktree-create
 # runs git as its own subprocess, so the hook never sees it.
 class WorktreeGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/worktree-guard.rb", __dir__)
@@ -69,6 +69,18 @@ class WorktreeGuardTest < Minitest::Test
     _, stderr, status = run_guard("git worktree add .worktrees/baz -b baz")
 
     assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_worktree_nested_inside_a_linked_worktree_is_blocked
+    _, _, status = run_guard("git worktree add .claude/worktrees/x -b x", cwd: @foo)
+
+    assert_equal(2, status.exitstatus)
+  end
+
+  def test_a_target_deeper_than_one_level_under_dot_worktrees_is_blocked
+    _, _, status = run_guard("git worktree add .worktrees/a/b -b x")
+
+    assert_equal(2, status.exitstatus)
   end
 
   def test_other_git_commands_are_allowed

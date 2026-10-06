@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # PreToolUse hook for Claude Code and Codex: blocks a hand-typed `git worktree add` whose
-# target is outside <main checkout>/.worktrees/. Exit 2 blocks the call and feeds stderr back
+# target is not <main checkout>/.worktrees/<name>. Exit 2 blocks the call and feeds stderr back
 # to the agent; exit 0 lets it run. `worktree-create` runs git as its own subprocess, so this
 # hook never sees it.
 #
@@ -18,7 +18,7 @@ SEGMENT_SEPARATOR = /&&|\|\||[;|\n]/
 GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace].freeze
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
 BLOCK_MESSAGE = <<~MESSAGE.freeze
-  Blocked: this `git worktree add` targets a path outside <main checkout>/.worktrees/.
+  Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
 MESSAGE
 
@@ -107,11 +107,11 @@ def real_target(target, directory)
   end
 end
 
-def outside_worktrees?(directory, target)
+def misplaced_worktree?(directory, target)
   root = main_checkout(directory)
   return false unless root
 
-  !real_target(target, directory).start_with?("#{File.realpath(root)}/.worktrees/")
+  File.dirname(real_target(target, directory)) != "#{File.realpath(root)}/.worktrees"
 end
 
 def blocked?(command, directory)
@@ -123,7 +123,7 @@ def blocked?(command, directory)
     end
 
     found_directory, target = worktree_add(segment_words, directory)
-    target && File.directory?(found_directory) && outside_worktrees?(found_directory, target)
+    target && File.directory?(found_directory) && misplaced_worktree?(found_directory, target)
   end
 end
 
