@@ -113,7 +113,7 @@ Verification: the published branch passes all 30 test files and all changed-file
 
 ## Round 10 — 2026-10-07T11:32Z — b7251d17 (claude)
 
-- [ ] Nit: H1 and setext body headings remain inside the intent header. Restrict metadata to its first paragraph. — `claude/.claude/skills/plan/scripts/auto-accept:80` →
+- [x] Nit: H1 and setext body headings remain inside the intent header. Restrict metadata to its first paragraph. — `claude/.claude/skills/plan/scripts/auto-accept:80` → fixed (auto-accept: read only the intent metadata paragraph)
 - [ ] Nit: The coordinator's review step must route Codex through the read-only Claude CLI backend. — `claude/.claude/skills/intent/SKILL.md:157` →
 - [ ] Nit: Explicitly replace the reviewer agent's fetch, write, commit and output instructions in the read-only CLI prompt. — `claude/.claude/skills/review/SKILL.md:50` →
 

@@ -289,6 +289,32 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/intent/i)
   end
 
+  def test_refuses_a_delivery_line_after_a_second_title_heading
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: nil)
+    File.write(File.join(@repo, "intent.md"), "\n# Notes\n\nDelivery: autonomous\n", mode: "a")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_refuses_a_delivery_line_after_a_setext_heading
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: nil)
+    File.write(File.join(@repo, "intent.md"), "\nConstraints\n-----------\n\nDelivery: autonomous\n", mode: "a")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_refuses_an_empty_intent_with_a_reason
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "")
+
+    assert_refused(/intent.md is not accepted/i)
+  end
+
   def test_names_a_missing_artifact
     add_remote("git@github.com:eirvandelden/dotfiles.git")
 

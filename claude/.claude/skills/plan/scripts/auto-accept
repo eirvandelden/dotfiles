@@ -77,7 +77,8 @@ def status_line(text)
 end
 
 def intent_header(text)
-  text.split(/^ {0,3}(?:\#{2,6}\s|`{3,}|~{3,})/, 2).first
+  metadata = text.lines.drop(1).drop_while { |line| line.strip.empty? }
+  metadata.take_while { |line| !line.match?(/\A(?:\s*$| {0,3}(?:#|`{3,}|~{3,}|[=-]+\s*$))/) }.join
 end
 
 path = ARGV.first
@@ -88,8 +89,8 @@ url = origin_url
 refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
 
 # Autonomy is Etienne's choice on the intent, not the artifact's: the sibling intent.md must be
-# accepted and record Delivery: autonomous in its header metadata. Body sections and fenced
-# examples never grant autonomy, even when they contain standalone Status: or Delivery: lines.
+# accepted and record Delivery: autonomous in the first metadata paragraph after its title.
+# Body sections and fenced examples never grant autonomy, even with standalone metadata lines.
 intent_path = File.join(File.dirname(path), "intent.md")
 refuse("no intent.md beside #{path}") unless File.file?(intent_path)
 intent = intent_header(File.read(intent_path))
