@@ -262,11 +262,10 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_an_auto_worker_is_told_to_invoke_the_skill_in_auto_mode
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "spec", "some-change", "--auto")
     run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
     run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto")
 
-    %w[spec plan implement].each do |stage|
+    %w[plan implement].each do |stage|
       assert_match(/with the auto argument/, worker_prompt(stage), stage)
     end
   end
@@ -274,10 +273,9 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_an_auto_worker_is_not_told_to_wait_for_accepted
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "spec", "some-change", "--auto")
     run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
 
-    %w[spec plan].each do |stage|
+    %w[plan].each do |stage|
       refute_includes(worker_prompt(stage), "literal word", stage)
       assert_match(/do not wait for .*accepted/i, worker_prompt(stage), stage)
     end
@@ -286,13 +284,21 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_an_auto_worker_is_not_told_to_chain_the_next_stage
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "spec", "some-change", "--auto")
     run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
 
-    %w[spec plan].each do |stage|
+    %w[plan].each do |stage|
       refute_includes(worker_prompt(stage), "starts the next stage", stage)
       assert_includes(worker_prompt(stage), "Do not start the next stage", stage)
     end
+  end
+
+  def test_an_auto_plan_worker_reads_only_the_intent
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    assert_includes(worker_prompt("plan"), "docs/changes/some-change/intent.md, the only context")
+    refute_includes(worker_prompt("plan"), "spec.md")
   end
 
   def test_an_auto_worker_reports_open_decisions
@@ -312,7 +318,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
   end
 
   def test_refuses_a_slug_that_looks_like_an_option
-    _, stderr, status = run_script(HAND_OFF_PLAN, "spec", "--auto")
+    _, stderr, status = run_script(HAND_OFF_PLAN, "plan", "--auto")
 
     assert_equal(1, status.exitstatus)
     assert_match(/slug/i, stderr)
@@ -353,19 +359,19 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_only_the_intent_worker_hears_about_autonomous_delivery
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    refute_includes(worker_prompt("spec"), "Delivery done:")
+    refute_includes(worker_prompt("plan"), "Delivery done:")
   end
 
   def test_without_auto_the_prompt_is_unchanged
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "spec", "some-change")
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    refute_includes(worker_prompt("spec"), "auto argument")
-    refute_includes(worker_prompt("spec"), "Decision needed:")
-    assert_includes(worker_prompt("spec"), "literal word")
+    refute_includes(worker_prompt("plan"), "auto argument")
+    refute_includes(worker_prompt("plan"), "Decision needed:")
+    assert_includes(worker_prompt("plan"), "literal word")
   end
 
   def test_the_intent_worker_is_given_the_coordinator_pane_id

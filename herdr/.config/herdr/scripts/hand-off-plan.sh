@@ -5,7 +5,7 @@
 # Claude worker in a pane split below the caller.
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
-# --auto (spec, plan, implement; autonomous delivery on a personal repository): the worker runs the
+# --auto (plan, implement; autonomous delivery on a personal repository): the worker runs the
 # skill in its auto mode, never waits for Etienne's word "accepted", never starts the next stage
 # (the coordinator does), and puts open decisions in its report as "Decision needed:" lines.
 
@@ -83,14 +83,9 @@ if [ "$auto" = 1 ]; then
   auto_instruction=" Put every open decision, one per line, in your report as a line starting \
 \"Decision needed:\"; never ask Etienne anything yourself."
   case "$stage" in
-    spec)
-      role_instruction="Invoke the spec skill's here backend with the auto argument for \
-docs/changes/$slug; it reads docs/changes/$slug/intent.md, the only context you get."
-      ;;
     plan)
       role_instruction="Invoke the plan skill's Write role, here backend, with the auto argument \
-for docs/changes/$slug; it reads docs/changes/$slug/intent.md and docs/changes/$slug/spec.md, the \
-only context you get. Write docs/changes/$slug/plan.md and touch nothing else in this worktree."
+for docs/changes/$slug; it reads docs/changes/$slug/intent.md, the only context you get. Write docs/changes/$slug/plan.md and touch nothing else in this worktree."
       ;;
     implement)
       role_instruction="Invoke the implement skill's here backend with the auto argument for \
@@ -112,7 +107,7 @@ folder and the worktree." >&2
   exit 1
 fi
 
-# "spec --auto" with the slug forgotten would otherwise run a non-auto worker on a folder named --auto.
+# "plan --auto" with the slug forgotten would otherwise run a non-auto worker on a folder named --auto.
 if [[ "$slug" == --* ]]; then
   echo "The change slug \"$slug\" looks like an option: give the slug before --auto." >&2
   exit 1
