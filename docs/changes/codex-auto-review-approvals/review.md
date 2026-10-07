@@ -84,3 +84,40 @@ Findings:
 - [ ] Important: With unknown names passing again, `url_like?` is the only stop for a push to a URL typed in the command, and it misses git's scp-like form without a user. `git push github.com:someone-else/x.git b` exits 0: git reads a colon before the first slash as `host:path` over ssh. A `url.<base>.insteadOf` alias passes the same way. Round 2's code asked for both. Under the automatic reviewer no human prompt backs this up, and the plan's Risks section says steps 8 and 9 close exactly this gap. — `claude/.claude/hooks/consent-guard.rb:107` →
 - [ ] Nit: Every word after `push` spawns one `git remote get-url` per directory, flags included (`git remote get-url -m`). A long command after a push costs one process per word on every hook call. The consent guard test file now takes about 19 s. Skip words that start with `-` or cannot be a remote name. — `claude/.claude/hooks/consent-guard.rb:100` →
 - [ ] Nit: The comment above `disallowed_remote` says a word that is neither a URL nor a remote "is a local path to git". But `url_like?` classifies `/`, `./` and `../` paths as URLs and asks for them. The two statements contradict each other; settle which one holds and make the comment match. — `claude/.claude/hooks/consent-guard.rb:85` →
+
+## Round 4 — 2026-10-07T18:46Z — 9b7d9b2b
+
+Suite: `test/consent_guard_test.rb` 43 runs green (about 15 s), `test/guard_parity_test.rb` 9 runs green, rubocop clean on the three touched Ruby files. Commit 665b1a1f adds four tests and removes or weakens none. Every test named in `plan.md` `## Proof` exists, including the four new push tests. The amended plan no longer names the deleted `test_pushing_to_a_target_that_is_not_a_remote_needs_consent`, so its absence is now correct.
+
+Earlier findings (verified by running the branch guard and the origin/main guard on the same commands in a scratch repository, with an empty allowlist file):
+
+- R3 reversal without an amended plan: fixed. Commit 9b7d9b2b adds the amendment, marks step 9 superseded, and records Etienne's 2026-10-07 sign-off. Not re-raised.
+- R3 paths after a push read as URLs: fixed. `git push 2>&1 | tee /tmp/push.log`, `git push > /tmp/out`, `git push origin a && cd ../other`, `git push origin a && ls /etc`, `git stash push -- ./file.rb` and `git stash push -m 'wip' -- /abs/path.rb` all exit 0, as on origin/main. `test_local_paths_after_a_push_are_allowed` covers four of them.
+- R3 scp-like URL without a user, and `insteadOf` aliases: fixed for hosts with a dot. `git push github.com:someone-else/x.git b` and an `insteadOf` alias exit 2. A host without a dot still passes; see the second finding.
+- R3 Nit one process per word: partly fixed. Flags and duplicates are skipped, but every other word still spawns one `git ls-remote` per directory.
+- R3 Nit comment contradicts `url_like?`: fixed. The comments above `disallowed_remote` and `remote_url_like?` agree with the code.
+- R2 Nit port `:443`: still open. `https://github.com:443/eirvandelden/x.git` and the `ssh://` form still ask, and no comment names it. Safe direction.
+- R2 Nit `bash -c` and `--git-dir` to another repository: recorded as known gaps in the plan's Risks section. Closed by that record.
+- R1 probe 1 needed a prompt to escalate: still open. `probe.md` is unchanged since 2abd804c.
+- R1 probes 3 and 4 not run: still open, not blocking. Etienne runs them by hand.
+
+Regression sweep: the compound, `;`, glued `&&`, `env`, `sudo`, subshell, `--git-dir .git` and `-C` forms exit 2 as in round 3. `git push --force-with-lease; gh pr create --fill`, the `&&` form, all `git stash push` forms, refspecs without a dot, `-u origin HEAD`, `HEAD:refs/heads/b`, tags and `file://` or local-path targets exit 0. A configured remote with a local URL (`git push backup b`) exits 2 on both.
+
+Acceptance criteria:
+
+- Reviewer selected → `test_codex_routes_approvals_to_the_automatic_reviewer`
+- On-request and workspace-write kept → `test_codex_still_approves_on_request_in_the_workspace_write_sandbox`
+- Blocked commit runs after escalation, no prompt → `probe.md` probe 1 (passed only with a prompt to escalate)
+- Plain `--force` refused → `test_plain_force_push_is_blocked_with_force_with_lease_advice`, `test_a_codex_payload_is_refused_with_the_same_message_as_a_claude_payload`, `test_a_plain_force_push_is_forbidden_rather_than_prompted`
+- Push to a foreign remote stopped → `test_pushing_to_a_remote_outside_the_allowlist_needs_consent`, `test_pushing_to_a_url_outside_the_allowlist_needs_consent`, `test_every_push_in_a_compound_command_is_checked`, `test_a_push_hidden_behind_shell_syntax_is_still_checked`, `test_a_scp_like_url_without_a_user_needs_consent`, `test_an_insteadof_alias_is_resolved_before_matching`, `test_a_url_that_only_contains_an_allowed_path_needs_consent` (see the second finding)
+- GitHub comments and reviews need consent → `test_github_comments_and_reviews_as_the_user_are_blocked`; `probe.md` probe 3 open, run by hand, not blocking
+- Reviewer denial reaches the model, no prompt → `probe.md` probe 4 open, run by hand, not blocking
+- Deploys and destructive database commands need consent → `test_deploys_are_blocked_without_user_consent`, `test_destructive_database_commands_are_blocked_without_user_consent`
+- No work names in Codex config and rules → `test_codex_config_and_rules_name_no_work_owner`, `test_no_rule_names_a_machine_path`
+
+Findings:
+
+- [ ] Important: False positive on URL-shaped words in a later command. `remote_url_like?` runs on every word after `push` to the end of the command, so a link or a `file:line` after the push is read as a push URL. `git push origin b && open https://example.com/pr/1`, `git push origin b && curl -s https://api.example.com/x`, `git push origin b && open https://github.com/someone-else/x/pull/1`, `git push origin b && bin/rails test foo_test.rb:12` and `git push origin b && echo see x.rb:12` all exit 2 with "pushing to remote '<word>'". origin/main exits 0 for each. This is round 3's path finding again, for the URL shape instead of the path shape: the refusal names a web link as a remote and teaches the agent to reach for `I_HAVE_USER_CONSENT=1`. No test has a URL or `file:line` word after the push target. — `claude/.claude/hooks/consent-guard.rb:99` →
+- [ ] Important: A scp-like target whose host has no dot still leaves the machine unchecked. Git reads any colon before the first slash as `host:path` over ssh, with or without a dot. So `git push myhost:someone-else/x.git b` and `git push localhost:x.git b` exit 0; an ssh config alias such as `<alias>:<owner>/<repo>.git` is the common real case. origin/main also exits 0, so this is not a regression, and the unknown-name reversal is not re-raised. But the amendment's premise — "git reads it as a local path, so nothing leaves the machine" (`plan.md` Risks) — is false for this shape, and the comment on `remote_url_like?` says the dot is what separates a host from a refspec. Under the automatic reviewer no human prompt backs this up. Either close it (for example, ask when the part before the colon is a host that `ssh -G` or `/etc/hosts` knows), or correct the Risks line and the comment so the gap is recorded honestly. — `claude/.claude/hooks/consent-guard.rb:111` →
+- [ ] Nit: A refspec whose source has a dot is read as a scp-like URL. `git push origin release-1.2:release-1.2` and `git push origin v1.2.3:v1.2.3` exit 2; origin/main exits 0. Safe direction, but the comment says the dot keeps refspecs out, which holds only for dotless refs. Note it in the comment or accept it. — `claude/.claude/hooks/consent-guard.rb:106` →
+- [ ] Nit: `git ls-remote --get-url` returns the fetch URL and applies `insteadOf`, not `pushurl` or `pushInsteadOf`. A remote whose fetch URL is allowed but whose `remote.<name>.pushurl` points elsewhere passes (`git push origin b` exits 0 on both), as does a `pushInsteadOf` alias. Pre-existing on origin/main; record it next to the `bash -c` gap in the plan's Risks, or resolve with `git remote get-url --push` for configured remotes. — `claude/.claude/hooks/consent-guard.rb:117` →
