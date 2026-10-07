@@ -74,7 +74,7 @@ class CodexConfigTest < Minitest::Test
   end
 
   def approving_trek_tools
-    trek_tool_names.select { |tool| approval_mode(tool) == "prompt" }
+    trek_tool_names.select { |tool| approval_mode(tool) && approval_mode(tool) != "approve" }
   end
 
   def trek_tool_names
