@@ -1,0 +1,22 @@
+---
+# Pinned snapshots of third-party skills. One entry per snapshot folder under claude/.claude/skills/.
+# Each folder keeps the upstream licence file. The superpowers-ruby skills follow their own convention
+# (see VENDORED-LICENSES.md) and are not listed here.
+- skill: mobilebuildmcp
+  upstream: https://github.com/getsentry/MobileBuildMCP
+  tag: v2.7.1
+  commit: d13ff0c707b0681769cf31da0eb42c4f94ceafff
+  licence: MIT
+  snapshot_date: 2026-10-07
+  paths:
+    - skills/mobilebuildmcp/SKILL.md
+    - LICENSE
+- skill: android-intent-security
+  upstream: https://github.com/android/skills
+  tag: v1.0.13
+  commit: 42dc2270e96032bd860bb94511e440aa00a43125
+  licence: Apache-2.0
+  snapshot_date: 2026-10-07
+  paths:
+    - security/android-intent-security/SKILL.md
+    - LICENSE.txt
