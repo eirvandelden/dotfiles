@@ -56,6 +56,10 @@ A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same co
 
 Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file.
 
+Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+
+A `## Proof` line of the form `→ check: <command or manual step>` is run after the code it covers, and its output is pasted. It is not written as a test. A check that needs Etienne (a device, an install) is listed as pending, never marked done.
+
 ### 4. Split mode (two agents)
 
 Same worktree, sequential, never both at once:

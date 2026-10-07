@@ -86,6 +86,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - NEVER add linter disable comments.
 3. Test-driven development:
    - Write the test first; never generate code without a corresponding test.
+   - Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
    - Run tests after every change and fix failures before finishing.
    - A task is only done when all tests are green, all linters are green, and you have re-read your own diff and adjusted.
 4. Ask for clarification when the playbook does not cover something.
