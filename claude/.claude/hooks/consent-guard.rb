@@ -113,15 +113,17 @@ def window(words)
   end
 end
 
-# Git reads the first argument as the repository: a remote, an alias, or a
-# location, where a colon before any slash means an ssh host. Later arguments are
-# refspecs, so only what git resolves to a remote, or a `://` URL, counts there.
+# Git reads the first argument, or else `--repo`, as the repository, so both are
+# checked: a remote, an alias, or a location, where a colon before any slash
+# means an ssh host. Later arguments are refspecs, so only what git resolves to a
+# remote, or a `://` URL, counts there.
 def disallowed_in(window, directories)
   arguments = positional(window)
-  repository = repo_option(window) || arguments.first
-  return repository if repository && remote_location?(repository) && !allowed_url?(repository)
+  repositories = [ repo_option(window), arguments.first ].compact.uniq
+  foreign = repositories.find { |word| remote_location?(word) && !allowed_url?(word) }
+  return foreign if foreign
 
-  ([ repository ].compact + arguments).uniq.find do |word|
+  (repositories + arguments).uniq.find do |word|
     (url_with_scheme?(word) && !allowed_url?(word)) || foreign_push_url?(word, directories)
   end
 end
@@ -141,7 +143,7 @@ def repo_option(window)
 end
 
 def remote_location?(word)
-  return false if word.start_with?("file:")
+  return false if word.start_with?("file://")
 
   url_with_scheme?(word) || word.match?(/\A[^\/\s:]+:/)
 end

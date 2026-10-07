@@ -322,7 +322,10 @@ class ConsentGuardTest < Minitest::Test
       "git push --push-option ci.skip git@github.com:someone-else/x.git b",
       "git push --receive-pack git-receive-pack git@github.com:someone-else/x.git b",
       "git push -o ci.skip myhost:x.git b", "git push --repo=git@github.com:someone-else/x.git b",
-      "git push --repo git@github.com:someone-else/x.git b" ].each do |command|
+      "git push --repo git@github.com:someone-else/x.git b",
+      "git push --repo=origin git@github.com:someone-else/x.git b",
+      "git push --repo origin git@github.com:someone-else/x.git b",
+      "git push file:/tmp/x b" ].each do |command|
       _, _, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)
