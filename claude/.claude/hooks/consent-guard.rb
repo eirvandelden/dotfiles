@@ -9,6 +9,8 @@
 # pushing to main are enforced where they cannot be argued with instead: by
 # lefthook locally, and by the "protect main" ruleset on GitHub.
 #
+# Installing gems is refused outright: bi is the one way to do it (playbook rule 11).
+#
 # What is left needs no understanding of the command, only whether a word is
 # present. Every check errs towards asking: a false question costs a moment, a
 # missed one costs the user's name on something they did not send.
@@ -109,8 +111,43 @@ def copy_quoted(character, characters, result, quote)
   quote unless character == quote
 end
 
-# Rule 20 says never, so no consent marker unlocks this one.
+GEM_INSTALL_REASON = "install gems with bi, not bundle install. " \
+                     "bi resolves the lockfile with Bundler and installs with rv (playbook rule 11).".freeze
+BUNDLER_INFO_FLAGS = %w[-v --version -h --help].freeze
+COMMAND_SEPARATORS = /(?:&&|\|\||\||;)\z/
+ENV_ASSIGNMENT = /\A\w+=/
+
+# A bundle word in command position (first word, or after a separator, skipping
+# VAR=value words) with no next word, an install word, or a flag that is not
+# -v/--version/-h/--help. `bundle exec`, `bundle update` and the like run.
+def installs_gems?(words)
+  at_command = true
+  words.each_with_index do |word, index|
+    bare = word.sub(/\A\(+/, "")
+    if at_command && File.basename(bare) == "bundle"
+      return true if gem_install_argument?(words[index + 1])
+    end
+    at_command = starts_command?(word, bare, at_command)
+  end
+  false
+end
+
+def gem_install_argument?(argument)
+  return true if argument.nil?
+
+  argument = argument.sub(/[);]+\z/, "")
+  %w[install i].include?(argument) || (argument.start_with?("-") && !BUNDLER_INFO_FLAGS.include?(argument))
+end
+
+def starts_command?(word, bare, at_command)
+  return true if word.match?(COMMAND_SEPARATORS) || bare.empty?
+
+  at_command && bare.match?(ENV_ASSIGNMENT)
+end
+
+# Rules 11 and 20 say never, so no consent marker unlocks these.
 def never_allowed_reason(words, working_directory)
+  return GEM_INSTALL_REASON if installs_gems?(words)
   return "plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)." \
     if words.include?("--force") && !words.include?("--force-with-lease")
 
