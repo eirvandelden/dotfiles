@@ -13,9 +13,9 @@ class VendoredSkillsTest < Minitest::Test
   NEW_MOBILE_SKILLS = %w[hotwire-native mobilebuildmcp android-intent-security].freeze
 
   def test_every_snapshot_folder_has_a_complete_manifest_entry
-    entries = manifest.index_by { |entry| entry["skill"] }
+    entries = manifest.group_by { |entry| entry["skill"] }
     snapshot_names.each do |name|
-      entry = entries[name]
+      entry = entries[name]&.first
       assert(entry, "#{name} has no entry in VENDORED-SKILLS.yml")
       REQUIRED_KEYS.each { |key| assert(entry[key].to_s != "", "#{name} entry lacks #{key}") }
     end
