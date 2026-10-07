@@ -9,12 +9,18 @@
   trust = "!mkdir -p .git/safe" # Mark a repo as trusted
   undo = reset --soft HEAD^
   worktree-init = "!f() { \"${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-init\" \"$@\"; }; f"
+  # Git's credential helper for GitHub; see [credential "https://github.com"].
+  credential-1password = "!f() { [ \"$1\" = get ] || exit 0; token=$(op read op://Familie/Github/token --account vandelden) || { echo quit=1; exit 0; }; echo username=x-access-token; echo \"password=$token\"; }; f"
 [apply]
   whitespace = nowarn
 [credential]
   # An empty helper clears every helper set before this file, Xcode's
   # osxkeychain included, so no credential comes from the Keychain.
   helper =
+[credential "https://github.com"]
+  helper = 1password
+[credential "https://gist.github.com"]
+  helper = 1password
 [color]
   ui = true
   status = true
