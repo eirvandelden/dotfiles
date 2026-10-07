@@ -1,0 +1,32 @@
+#!/bin/sh
+# bi: install the gems of the project in the current directory.
+# Bundler resolves the lockfile; rv installs the gems. See docs/changes/bi-uses-rv-ci/plan.md.
+set -eu
+
+gemfile="${BUNDLE_GEMFILE:-Gemfile}"
+
+if [ ! -f "$gemfile" ]; then
+  echo "bi: no Gemfile in $PWD, nothing to install"
+  exit 0
+fi
+
+if ! command -v rv >/dev/null 2>&1; then
+  echo "bi: rv is missing. Install rv, then run bi again." >&2
+  exit 1
+fi
+
+bundle lock
+
+if ! MAKE="make --jobs $(getconf _NPROCESSORS_ONLN)" rv ci; then
+  echo "bi: rv ci failed, installing with bundle install instead" >&2
+  bundle install
+fi
+
+if [ -x bin/rails ]; then
+  yes n | bin/rails app:update:bin
+  if command -v solargraph >/dev/null 2>&1; then
+    solargraph gems
+  else
+    echo "bi: solargraph not found, skipping"
+  fi
+fi
