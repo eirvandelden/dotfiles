@@ -47,7 +47,9 @@ Fix every finding through `code-review`, then run both reviewers again. Repeat u
 
 ### Read-only Claude CLI backend
 
-Run `claude -p --model opus --permission-mode plan "<review prompt>"` from the worktree being reviewed. Pass the resolved base and the accepted intent and plan paths. Tell Claude to read the `reviewer` agent instructions and the repository's review rules. It must review the branch diff and uncommitted changes using all three passes. Request findings with severity and file locations, or `No findings.`. State that it must only report, never edit files, commit, or request plan approval.
+Run `claude -p --model opus --permission-mode plan "<review prompt>"` from the worktree being reviewed. Pass the resolved base and the accepted intent and plan paths. Tell Claude to read the `reviewer` agent instructions and the repository's review rules. It must review the branch diff and uncommitted changes using all three passes.
+
+State that this prompt replaces the reviewer's fetch step, write step, commit step and Output section. Do not fetch; diff against the passed base. Return findings to stdout in the round's line format, or `No findings.`. Never edit files, commit, or request plan approval. The coordinator writes and commits the report instead.
 
 The coordinator transcribes the output into `review.md`, using the round format above with `(claude)` after the heading. Commit that file alone. If Claude is unavailable or the review does not complete, report `Decision needed:`. Keep delivery blocked until both model families complete their reviews.
 

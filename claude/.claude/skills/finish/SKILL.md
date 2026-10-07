@@ -79,7 +79,7 @@ Supplied by `dotfiles-work` through its `claude` stow package (`STOW_SHARED`, fi
 
 Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`). A `work` scope refuses auto mode and uses the steps above unchanged. Differences:
 
-- §3 step 2: do not wait for confirmation of the PR body.
+- §3 step 3: capture the PR body and title without waiting for confirmation. Show the body in step 2 as usual.
 - §4: close every matching idle or done stage pane without asking.
 - Never merge, and never comment on the PR.
 
