@@ -36,6 +36,15 @@ Read `docs/changes/<slug>/review.md`, summarise the round worst first, and stop 
 
 A round left with an open finding and no newer round means the review is not closed; this skill reports that plainly. The pre-push freshness check does not enforce closure, only recency — that part is the habit, not the tool.
 
+## Auto mode
+
+Only valid when `intent.md` has `Delivery: autonomous`; the coordinator runs this, and "stop, do not start fixing" under "After either backend" does not apply. Two independent reviewers look at the diff:
+
+1. The Claude `reviewer` agent, through either backend above. Its round lands in `review.md` as usual.
+2. The Codex CLI: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as `- [ ] Important: <finding> — `<file>:<line>` →` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Commit that file alone.
+
+Fix every finding through `code-review`, then run both reviewers again. Repeat until a round of each leaves no open finding. A finding disputed for two rounds goes to Etienne (see `code-review`).
+
 ## Codex
 
 Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `intent.md`, `plan.md`, the diff, write the round, commit it — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr pane of its own.

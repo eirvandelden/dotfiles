@@ -149,6 +149,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
     - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
     - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them.
+    - Personal repositories only: in autonomous delivery a recorded cross-model critique replaces the word "accepted" on `plan.md`. See §7a. Every other repository keeps this rule unchanged.
 18. Commits:
     - Agents may create commits without asking first.
     - Each commit must be small and contain exactly one logical change. Split unrelated concerns into separate commits.
@@ -190,6 +191,20 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Applies to personal and work projects both.
 26. Markdown prose:
     - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
+
+## 7a. Autonomous delivery (Personal)
+
+Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
+
+- Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
+- One coordinator drives plan, implement, review, fixes and the pull request. Stage panes work in `auto` mode and never wait for Etienne.
+- A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -p terra`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
+- Independent review: the Claude `reviewer` agent and the Codex CLI each review the diff. No open finding may remain before the pull request.
+- Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
+- Verify behaviour as a human would (rule 22) and record the evidence.
+- Stop and ask Etienne one concrete question when: a choice changes the agreed behaviour; a step needs permission under rules 8, 9, 11, 12 or 13; the coordinator makes three failed attempts at one problem; a review finding stays disputed after two rounds.
+- Rules 6, 8, 9, 11, 12 and 13 stay in force. Opening the pull request is allowed; replying on it as Etienne is not.
+- The coordinator ends with a short account: behaviour delivered, evidence, check results, review outcome, pull request URL.
 
 ## 8. Things agents get wrong here
 

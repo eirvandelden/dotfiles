@@ -1,0 +1,105 @@
+#!/usr/bin/env ruby
+# auto-accept <artifact.md>
+#
+# The one mechanical gate of autonomous delivery. Rewrites "Status: draft" to
+# "Status: accepted" in a plan.md, and nothing else, when:
+#   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
+#   - the intent.md beside it is accepted and records "Delivery: autonomous",
+#   - the first "Status:" line, the status line, says draft,
+#   - the artifact ends in one "## Critique" section with at least one "### Round",
+#   - every round holds "No findings." alone, or findings written "- <finding> → fixed (<subject>)"
+#     or "- <finding> → dismissed: <reason>", each optionally explained by indented items;
+#     any other non-blank line under "## Critique" is refused.
+# Exits 1 with a reason otherwise. It never commits.
+require "open3"
+require_relative "../../../hooks/remote_matcher"
+
+def refuse(reason)
+  warn("auto-accept refused: #{reason}")
+  exit(1)
+end
+
+def origin_url
+  stdout, status = Open3.capture2("git", "remote", "get-url", "origin", err: File::NULL)
+  status.success? ? stdout.strip : nil
+end
+
+# The critique is the last thing in the file and runs to its end, so a second "## Critique", a
+# later section or a footer after it is a line the allow-list below refuses, never a blind spot.
+def critique_section(text)
+  text[/^## Critique\s*$.*\z/m]
+end
+
+# The slot is the text after a finding's last arrow; anything earlier is the finding itself.
+CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
+
+ROUND = /^### Round\b/
+FINDING = /^[-*] +[^\s→]/
+EXPLANATION = /^\s+(?:[-*+]|\d+[.)])\s/
+NO_FINDINGS = /^No findings\.\s*$/
+
+def closed?(line)
+  line.include?("→") && line.split("→", -1).last.match?(CLOSED_SLOT)
+end
+
+# The non-blank lines after the "## Critique" heading, one group per round. A group that does
+# not start with a Round heading is text before the first round.
+def rounds(critique)
+  critique.lines.drop(1).reject { |line| line.strip.empty? }.slice_before { |line| line.match?(ROUND) }
+end
+
+def round_problems(group)
+  return group unless group.first.match?(ROUND)
+
+  entries = group.drop(1)
+  return [ "#{group.first.strip} has no finding and no \"No findings.\" line\n" ] if entries.empty?
+  return [] if entries.one? && entries.first.match?(NO_FINDINGS)
+
+  unreadable_entries(entries)
+end
+
+# An allow-list, so any shape this script does not know fails closed: a closed top-level finding,
+# or an indented item explaining the closed finding above it. Anything else is reported.
+def unreadable_entries(entries)
+  parent_closed = false
+  entries.reject do |line|
+    parent_closed = closed?(line) if line.match?(FINDING)
+    parent_closed && (line.match?(FINDING) || line.match?(EXPLANATION))
+  end
+end
+
+def open_findings(critique)
+  rounds(critique).flat_map { |group| round_problems(group) }
+end
+
+def status_line(text)
+  text[/^.*Status:.*$/]
+end
+
+path = ARGV.first
+refuse("usage: auto-accept <artifact.md>") if path.nil?
+refuse("no such file: #{path}") unless File.file?(path)
+
+url = origin_url
+refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
+
+# Autonomy is Etienne's choice on the intent, not the artifact's: the sibling intent.md must be
+# accepted and record Delivery: autonomous on its status line or a Delivery: line of its own, or a
+# step-by-step change, or one that only quotes the phrase, would be accepted here.
+intent_path = File.join(File.dirname(path), "intent.md")
+refuse("no intent.md beside #{path}") unless File.file?(intent_path)
+intent = File.read(intent_path)
+refuse("intent.md is not accepted") unless status_line(intent)&.match?(/Status: accepted\b/)
+delivery = [ status_line(intent), intent[/^Delivery:.*$/] ].compact.join(" ")
+refuse("intent.md does not record Delivery: autonomous") unless delivery.match?(/Delivery: autonomous\b/)
+
+text = File.read(path)
+status = status_line(text)
+refuse("the status line is not draft") unless status&.match?(/Status: draft\b/)
+
+critique = critique_section(text)
+refuse("no Critique section") unless critique
+refuse("the Critique section has no Round heading") unless critique.match?(/^### Round/)
+refuse("open critique findings remain: #{open_findings(critique).join.strip}") if open_findings(critique).any?
+
+File.write(path, text.sub(status, status.sub(/Status: draft\b/, "Status: accepted")))

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# hand-off-plan.sh <stage> <change-slug>
+# hand-off-plan.sh <stage> <change-slug> [--auto]
 #
 # Hands a stage (intent, plan, or implement) of docs/changes/<change-slug> to a fresh
 # Claude worker in a pane split below the caller.
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
+# --auto (plan, implement; autonomous delivery on a personal repository): the worker runs the
+# skill in its auto mode, never waits for Etienne's word "accepted", never starts the next stage
+# (the coordinator does), and puts open decisions in its report as "Decision needed:" lines.
 
 set -euo pipefail
 
@@ -15,6 +18,15 @@ fi
 
 stage="${1:-}"
 slug="${2:-}"
+auto=0
+case "${3:-}" in
+  "") ;;
+  --auto) auto=1 ;;
+  *)
+    echo "Usage: hand-off-plan.sh <stage> <change-slug> [--auto]. The only option is --auto." >&2
+    exit 1
+    ;;
+esac
 
 accepted_then_push="Once Etienne says the literal word \"accepted\" or \"agreed\" and the skill has committed \
 the artifact, push the branch (git push -u origin HEAD)."
@@ -59,9 +71,45 @@ plan, implement." >&2
     ;;
 esac
 
+if [ "$auto" = 1 ] && [ "$stage" = "intent" ]; then
+  echo "--auto is not valid for the intent stage: the intent interview is the human gate." >&2
+  exit 1
+fi
+
+# Autonomous delivery: the skill's auto mode replaces Etienne's "accepted" with a recorded
+# critique, and the coordinator, not the worker, starts the next stage.
+auto_instruction=""
+if [ "$auto" = 1 ]; then
+  auto_instruction=" Put every open decision, one per line, in your report as a line starting \
+\"Decision needed:\"; never ask Etienne anything yourself."
+  case "$stage" in
+    plan)
+      role_instruction="Invoke the plan skill's Write role, here backend, with the auto argument \
+for docs/changes/$slug; it reads docs/changes/$slug/intent.md, the only context you get. Write docs/changes/$slug/plan.md and touch nothing else in this worktree."
+      ;;
+    implement)
+      role_instruction="Invoke the implement skill's here backend with the auto argument for \
+docs/changes/$slug; you are already inside the worktree, so no further pane split is needed. It \
+reads docs/changes/$slug/plan.md. Done means all tests green, all linters green, and a \
+self-reviewed diff."
+      ;;
+  esac
+  if [ "$stage" != "implement" ]; then
+    acceptance_instruction="Do not wait for Etienne's word \"accepted\": the skill's auto mode \
+accepts the artifact itself after its recorded critique. Once the skill has committed the \
+artifact, push the branch (git push -u origin HEAD). Do not start the next stage."
+  fi
+fi
+
 if [ -z "$slug" ]; then
   echo "Usage: hand-off-plan.sh <stage> <change-slug>. The change slug names both the change \
 folder and the worktree." >&2
+  exit 1
+fi
+
+# "plan --auto" with the slug forgotten would otherwise run a non-auto worker on a folder named --auto.
+if [[ "$slug" == --* ]]; then
+  echo "The change slug \"$slug\" looks like an option: give the slug before --auto." >&2
   exit 1
 fi
 
@@ -132,15 +180,29 @@ already created at $worker_cwd. Do not invoke worktree-first, and do not create 
 # stage must report to it, not to this pane, which closes itself right after starting that stage.
 # implement has no accepted status line to flip, so it is the one stage that chains nowhere.
 chain_instruction=""
-if [ "$stage" != "implement" ]; then
+if [ "$stage" != "implement" ] && [ "$auto" = 0 ]; then
   chain_instruction=" Your coordinator's pane id is $HERDR_PANE_ID; the skill's Accept step starts \
 the next stage with HERDR_PANE_ID set to that id. If starting the next stage fails, do not retry: \
 include one line in your own report file, named next, saying so and why."
 fi
 
+# Autonomous delivery: the intent session itself coordinates the stages, so its stage panes report
+# to it, and the pane that started it hears only the final account. The condition comes before the
+# report-and-close steps, so the last instruction the worker reads never closes a coordinator.
+intent_branch=""
+if [ "$stage" = "intent" ]; then
+  intent_branch=" If intent.md records Delivery: autonomous, follow the intent skill's Autonomous \
+delivery section instead of the chain above and the report steps below. You coordinate that \
+delivery yourself: pass your own pane id (\$HERDR_PANE_ID in your shell) to every stage, never the \
+coordinator's id above, and keep your pane open after the intent. When the delivery ends, write \
+the account file path into $report, send pane $HERDR_PANE_ID the single line Delivery done: \
+followed by the account file path, then close your own pane. Unless intent.md records Delivery: \
+autonomous, do the following."
+fi
+
 # No --wait: the caller hands the work over and carries on.
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
-CLAUDE.md first. $acceptance_instruction$chain_instruction $report_instruction $report. Then \
+CLAUDE.md first. $acceptance_instruction$chain_instruction$auto_instruction$intent_branch $report_instruction $report. Then \
 report back to the agent that handed this over, with \
 herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that \
 file path. Quote the path yourself. That call is rejected while the coordinator is blocked on a \

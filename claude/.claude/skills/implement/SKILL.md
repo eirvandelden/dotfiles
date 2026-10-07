@@ -3,7 +3,7 @@ name: implement
 description: Use once plan.md is accepted — builds it through the acceptance test then red/green/refactor per its Proof list, by default in a fresh Sonnet worker pane, or here in single/split mode.
 arguments:
   - name: backend
-    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan.sh; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override)."
+    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan.sh; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override); \"here auto\": build without asking Etienne anything on a personal autonomous change."
 ---
 
 # Implement
@@ -66,6 +66,15 @@ Same worktree, sequential, never both at once:
 4. Run the full suite here and read both reports. If the implementer's report lists tests it needed but couldn't write, run `test-writer` again for those, then `implementer` again.
 
 Not per-unit alternation — each hand-off is a fresh context; the inner loop stays inside the one agent running it.
+
+## Auto mode
+
+Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh implement <slug> --auto`. Ask Etienne nothing.
+
+- Three failed attempts at one problem: stop and report a `Decision needed:` line that states the problem, what was tried and the choice to make.
+- A new dependency (gem, package, system tool) is never added. Report a `Decision needed:` line that names it and why it is needed.
+- A choice that would change the behaviour agreed in `intent.md` is a `Decision needed:` line, not a guess.
+- Fix failing tests in production code. Never skip a test, add a linter disable comment or edit a linter config.
 
 ## Codex
 

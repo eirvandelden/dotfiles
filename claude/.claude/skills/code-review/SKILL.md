@@ -18,3 +18,11 @@ When asked to implement fixes for issues found during a review (e.g. "implement 
 7. Loop verify → fix → lint → test → re-review until the review is clean or you are in a deadlock. On deadlock, stop and explain the remaining findings instead of making speculative changes.
 
 After a push (pushing itself needs explicit approval): wait for CI to finish, inspect the results, fix any failure, and repeat until all checks are green.
+
+## Auto mode
+
+In autonomous delivery (`intent.md` has `Delivery: autonomous`) the coordinator applies this skill's fix loop without being asked. A finding still disputed after two rounds goes to Etienne with one concrete decision to make. The coordinator never dismisses it alone. Fixes never add a skipped test, a linter disable comment or a linter config edit.
+
+## Codex
+
+Same loop. Invoked as `$code-review`. A Codex coordinator uses it to fix findings from the Claude `reviewer` agent and from `codex review --base <base>`.

@@ -259,6 +259,121 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/done means/i, worker_prompt("implement"))
   end
 
+  def test_an_auto_worker_is_told_to_invoke_the_skill_in_auto_mode
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto")
+
+    %w[plan implement].each do |stage|
+      assert_match(/with the auto argument/, worker_prompt(stage), stage)
+    end
+  end
+
+  def test_an_auto_worker_is_not_told_to_wait_for_accepted
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    %w[plan].each do |stage|
+      refute_includes(worker_prompt(stage), "literal word", stage)
+      assert_match(/do not wait for .*accepted/i, worker_prompt(stage), stage)
+    end
+  end
+
+  def test_an_auto_worker_is_not_told_to_chain_the_next_stage
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    %w[plan].each do |stage|
+      refute_includes(worker_prompt(stage), "starts the next stage", stage)
+      assert_includes(worker_prompt(stage), "Do not start the next stage", stage)
+    end
+  end
+
+  def test_an_auto_plan_worker_reads_only_the_intent
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    assert_includes(worker_prompt("plan"), "docs/changes/some-change/intent.md, the only context")
+    refute_includes(worker_prompt("plan"), "spec.md")
+  end
+
+  def test_an_auto_worker_reports_open_decisions
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto")
+
+    assert_includes(worker_prompt("implement"), "Decision needed:")
+  end
+
+  def test_auto_is_refused_for_the_intent_stage
+    _, stderr, status = run_script(HAND_OFF_PLAN, "intent", "some-change", "--auto")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/auto/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_refuses_a_slug_that_looks_like_an_option
+    _, stderr, status = run_script(HAND_OFF_PLAN, "plan", "--auto")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/slug/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_the_intent_worker_coordinates_an_autonomous_delivery_itself
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+    prompt = worker_prompt("intent")
+
+    assert_includes(prompt, "Delivery: autonomous")
+    assert_match(/your own pane id/i, prompt)
+    assert_includes(prompt, "Delivery done:")
+  end
+
+  def test_the_intent_worker_closes_its_pane_after_the_intent_only_without_autonomous_delivery
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+    prompt = worker_prompt("intent")
+    condition = prompt.index("Unless intent.md records Delivery: autonomous")
+
+    refute_nil(condition)
+    assert_operator(condition, :<, prompt.index("Intent ready:"))
+    assert_operator(condition, :<, prompt.index("herdr pane close"))
+  end
+
+  def test_the_autonomous_intent_worker_writes_the_account_path_into_its_report_file
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change")
+
+    assert_match(%r{account file path into \S*/herdr/intent-\S+\.md}, worker_prompt("intent"))
+  end
+
+  def test_only_the_intent_worker_hears_about_autonomous_delivery
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    refute_includes(worker_prompt("plan"), "Delivery done:")
+  end
+
+  def test_without_auto_the_prompt_is_unchanged
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+
+    refute_includes(worker_prompt("plan"), "auto argument")
+    refute_includes(worker_prompt("plan"), "Decision needed:")
+    assert_includes(worker_prompt("plan"), "literal word")
+  end
+
   def test_the_intent_worker_is_given_the_coordinator_pane_id
     worktree_creatable!
 
