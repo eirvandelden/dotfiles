@@ -165,11 +165,12 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/upstream/, stderr)
   end
 
-  def test_pushing_to_a_target_that_is_not_a_remote_needs_consent
+  # A word that is neither a configured remote nor a URL is a local path to git,
+  # so the push stays on this machine.
+  def test_a_remote_that_is_not_configured_is_left_alone
     _, stderr, status = run_guard("git push some-typo my-branch")
 
-    assert_equal(2, status.exitstatus)
-    assert_match(/some-typo/, stderr)
+    assert_equal(0, status.exitstatus, stderr)
   end
 
   def test_pushing_to_a_url_outside_the_allowlist_needs_consent
@@ -202,9 +203,12 @@ class ConsentGuardTest < Minitest::Test
   end
 
   def test_a_push_followed_by_another_command_is_allowed
-    _, stderr, status = run_guard("git push --force-with-lease && gh pr create --fill")
+    [ "git push --force-with-lease && gh pr create --fill", "git push --force-with-lease; gh pr create --fill" ]
+      .each do |command|
+        _, stderr, status = run_guard(command)
 
-    assert_equal(0, status.exitstatus, stderr)
+        assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+      end
   end
 
   def test_every_push_in_a_compound_command_is_checked
@@ -214,6 +218,19 @@ class ConsentGuardTest < Minitest::Test
 
     assert_equal(2, status.exitstatus)
     assert_match(/upstream/, stderr)
+  end
+
+  def test_a_push_hidden_behind_shell_syntax_is_still_checked
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    [ "git push origin a; git push upstream b", "true&&git push upstream b", "git push origin a\ngit push upstream b",
+      "env FOO=1 git push upstream b", "sudo git push upstream b", "/usr/bin/git push upstream b",
+      "git --git-dir .git push upstream b", "{ git push upstream b; }" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_match(/upstream/, stderr)
+    end
   end
 
   def test_a_url_that_only_contains_an_allowed_path_needs_consent
