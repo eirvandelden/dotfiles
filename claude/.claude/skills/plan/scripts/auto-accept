@@ -4,6 +4,7 @@
 # The one mechanical gate of autonomous delivery. Rewrites "Status: draft" to
 # "Status: accepted" in a plan.md, and nothing else, when:
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
+#   - the intent.md beside it is accepted and records "Delivery: autonomous",
 #   - the first "Status:" line, the status line, says draft,
 #   - the artifact ends in one "## Critique" section with at least one "### Round",
 #   - every round holds "No findings." alone, or findings written "- <finding> → fixed (<subject>)"
@@ -76,10 +77,19 @@ def status_line(text)
 end
 
 path = ARGV.first
-refuse("usage: auto-accept <artifact.md>") if path.nil? || !File.file?(path)
+refuse("usage: auto-accept <artifact.md>") if path.nil?
+refuse("no such file: #{path}") unless File.file?(path)
 
 url = origin_url
 refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
+
+# Autonomy is Etienne's choice on the intent, not the artifact's: the sibling intent.md must be
+# accepted and record Delivery: autonomous, or a step-by-step change would be accepted here.
+intent_path = File.join(File.dirname(path), "intent.md")
+refuse("no intent.md beside #{path}") unless File.file?(intent_path)
+intent = File.read(intent_path)
+refuse("intent.md is not accepted") unless status_line(intent)&.match?(/Status: accepted\b/)
+refuse("intent.md does not record Delivery: autonomous") unless intent.match?(/Delivery: autonomous\b/)
 
 text = File.read(path)
 status = status_line(text)

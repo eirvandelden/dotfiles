@@ -26,6 +26,7 @@ class AutoAcceptTest < Minitest::Test
     @home = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(@home, ".claude"))
     @artifact = File.join(@repo, "plan.md")
+    write_intent
   end
 
   def teardown
@@ -209,6 +210,39 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/open/i)
   end
 
+  def test_refuses_without_an_intent_beside_the_plan
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.delete(File.join(@repo, "intent.md"))
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_while_the_intent_is_still_draft
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(status: "draft")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_a_step_by_step_intent
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: nil)
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_names_a_missing_artifact
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+
+    _stdout, stderr, status = run_script
+
+    refute(status.success?)
+    assert_match(/no such file/i, stderr)
+  end
+
   def test_accepts_a_round_that_states_no_findings
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: "## Critique\n\n### Round 1 (codex)\n\nNo findings.\n")
@@ -244,6 +278,11 @@ class AutoAcceptTest < Minitest::Test
     refute(status.success?)
     assert_match(pattern, stderr)
     assert_equal(before, File.read(@artifact))
+  end
+
+  def write_intent(status: "accepted (2026-10-07)", delivery: "autonomous")
+    delivery_line = delivery ? " Delivery: #{delivery}." : ""
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nAuthor: E. Status: #{status}. Type: feature.#{delivery_line}\n")
   end
 
   def write_artifact(critique:, status: "draft", body: "Body text.")
