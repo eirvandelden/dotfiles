@@ -126,3 +126,19 @@ Compliance: each retained acceptance criterion and named Proof test has coverage
 - [x] Nit: The accepted rework drops spec, but the plan's file list still includes it. Correct those entries before generating the PR body. — `docs/changes/personal-agent-autonomy-hardening/plan.md:38` → fixed (Carry accepted artifacts into autonomy hardening follow-up)
 
 Baseline: all 30 local test files pass on `b7251d17`. PR #182 merged as `f4adcd4e`; follow-up commits are rebased onto it. Only accepted artifact paths change during the move to this follow-up worktree.
+
+## Round 12 — 2026-10-07T11:53Z — 5b2531ae (claude)
+
+- [x] Important: The generated PR body and title describe the full merged feature. Scope the intent and plan to this follow-up. — `docs/changes/personal-agent-autonomy-hardening/plan.md:102` → fixed (Scope delivery artifacts to the autonomy hardening follow-up)
+- [ ] Important: Finish auto mode requires only a personal origin, allowing step-by-step changes to skip confirmation. Require an accepted autonomous intent. — `claude/.claude/skills/finish/SKILL.md:80` →
+- [ ] Nit: Blank lines hide heading and fence checks from the tests. Exercise those shapes directly below the status line. — `test/auto_accept_test.rb:275` →
+- [ ] Nit: Specify that Delivery belongs in the same paragraph as Status. — `claude/.claude/skills/intent/SKILL.md:73` →
+- [ ] Nit: The finish overview forbids coordinator invocation despite its auto mode. Align the overview with its eligibility rules. — `claude/.claude/skills/finish/SKILL.md:12` →
+
+Compliance: all round 9–11 findings are closed. The targeted suites pass and no existing test is weakened. A real `fill-pr-template` run reproduces the artifact scope mismatch.
+
+## Round 13 — 2026-10-07T11:53Z — 5b2531ae (codex)
+
+- [ ] Important: A blockquote or indented-code line after the title is still trusted as accepted autonomous metadata. Parse expected metadata fields rather than Markdown body text. — `claude/.claude/skills/plan/scripts/auto-accept:81` →
+
+Local suite: one temporary fixture unexpectedly inherits the machine's main-branch hook. It fails at the simulated `advance main` commit. The narrow case passes with normal configuration and with `GIT_CONFIG_GLOBAL=/dev/null`; the isolated nine-case file also passes. Final suite runs use isolated global Git configuration, matching CI. Project linters and commit/push hooks remain enabled in their separate commands.
