@@ -154,7 +154,7 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
-5. Review. Run `~/.config/herdr/scripts/start-review.sh` and `codex review --base <base>`. Transcribe the Codex output as its own round in `docs/changes/<slug>/review.md`, in the reviewer's format (see the `review` skill), and commit it alone. Fix findings through `code-review`. Repeat until no finding is open.
+5. Review. Run `~/.config/herdr/scripts/start-review.sh` and `codex review --base <base>`. Transcribe the Codex output as its own round in `docs/changes/<slug>/review.md`, in the reviewer's format (see the `review` skill), and commit it alone. Fix findings through `code-review`, then run both reviewers again, as the `review` skill's auto mode says. Repeat until a round of each reviewer leaves no open finding.
 6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
 7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
 

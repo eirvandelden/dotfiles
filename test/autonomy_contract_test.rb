@@ -109,6 +109,13 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section_of(skill("plan"), "## Auto mode"), "auto-accept <folder>/plan.md")
   end
 
+  def test_coordinator_reviews_again_until_both_reviewers_are_clean
+    section = section_of(skill("intent"), "## Autonomous delivery")
+
+    assert_match(/run both reviewers again/i, section)
+    assert_match(/a round of each .*no open finding/i, section)
+  end
+
   def test_plan_auto_mode_runs_the_other_family_critique
     assert_critique_contract(section_of(skill("plan"), "## Auto mode"))
   end
