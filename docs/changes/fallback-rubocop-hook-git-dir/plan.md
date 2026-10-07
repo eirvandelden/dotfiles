@@ -22,7 +22,7 @@ The pre-commit and pre-push `rubocop` jobs in the dotfiles `lefthook.yml` fail w
 
 **The fixture gem mirrors mvpa-css.** A local git repository `house-style` holds the gem. Its `lib/house_style/version.rb` builds the version with `git -C __dir__ rev-parse --short HEAD`, as mvpa-css does. Its gemspec lists files with `git ls-files -z`, as the `bundle gem` template does. Its `config/default.yml` holds the RuboCop config: `AllCops: DisabledByDefault: true`, `SuggestExtensions: false`, `Style/StringLiterals` with `EnforcedStyle: double_quotes`, and `Naming/MethodName`. RuboCop's default is single quotes, so an autocorrect to double quotes proves that the gem config loaded. `Naming/MethodName` has no autocorrect, so it gives the offense that RuboCop cannot fix.
 
-**Offline.** The project's `Gemfile` holds only `gem "house-style", git: "<tmpdir>/house-style"`, with no rubygems.org source. `bundle install` clones from the local path. `BUNDLE_PATH` points into the tmpdir, so nothing lands in the real gem home. The gem has no dependencies.
+**Offline.** The project's `Gemfile` holds only `gem "house-style", git: "<tmpdir>/house-style"`, with no rubygems.org source. `bundle install` clones from the local path. `BUNDLE_PATH` points into the tmpdir, so nothing lands in the real gem home. The gem has no dependencies. `bundle install` replaces a git gem's gemspec with a static copy, which hides the bug because the gem's own git call never runs again. `rv ci`, which Etienne's repositories use, leaves the gemspec as it is. After `bundle install`, the test writes the original dynamic gemspec back into the gem's checkout under `BUNDLE_PATH`. Checked on 2026-10-07: without this step the canary test passes. The gem repository and the bundle are built once per test run, and each test builds its own project, origin and worktree.
 
 **Hooks run in a linked worktree.** Commits and pushes run in a linked worktree on branch `feature`. There git exports an absolute `GIT_DIR`, as in the intent's repro and in Etienne's daily work under `.worktrees/`. In a main checkout git exports a relative `.git`, which also breaks the gem's version. The test does not cover the main checkout; Etienne chose this on 2026-10-07.
 
@@ -127,3 +127,5 @@ Test setup: one tmpdir per test, with `home/` as `HOME`, a copy of `lefthook.yml
 
 ---
 Domain skills applied: dotfiles-maintenance (never `lefthook install`; the global hook route), rails-testing (plain Minitest, no Rails assertions), ruby-style (test code shape).
+
+Reproduction: committed
