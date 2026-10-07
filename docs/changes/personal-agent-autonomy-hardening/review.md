@@ -130,10 +130,10 @@ Baseline: all 30 local test files pass on `b7251d17`. PR #182 merged as `f4adcd4
 ## Round 12 — 2026-10-07T11:53Z — 5b2531ae (claude)
 
 - [x] Important: The generated PR body and title describe the full merged feature. Scope the intent and plan to this follow-up. — `docs/changes/personal-agent-autonomy-hardening/plan.md:102` → fixed (Scope delivery artifacts to the autonomy hardening follow-up)
-- [ ] Important: Finish auto mode requires only a personal origin, allowing step-by-step changes to skip confirmation. Require an accepted autonomous intent. — `claude/.claude/skills/finish/SKILL.md:80` →
+- [x] Important: Finish auto mode requires only a personal origin, allowing step-by-step changes to skip confirmation. Require an accepted autonomous intent. — `claude/.claude/skills/finish/SKILL.md:80` → fixed (Require explicit autonomous intent for coordinator finish)
 - [x] Nit: Blank lines hide heading and fence checks from the tests. Exercise those shapes directly below the status line. — `test/auto_accept_test.rb:275` → fixed (auto-accept: parse declared metadata values)
 - [x] Nit: Specify that Delivery belongs in the same paragraph as Status. — `claude/.claude/skills/intent/SKILL.md:73` → fixed (auto-accept: parse declared metadata values)
-- [ ] Nit: The finish overview forbids coordinator invocation despite its auto mode. Align the overview with its eligibility rules. — `claude/.claude/skills/finish/SKILL.md:12` →
+- [x] Nit: The finish overview forbids coordinator invocation despite its auto mode. Align the overview with its eligibility rules. — `claude/.claude/skills/finish/SKILL.md:12` → fixed (Require explicit autonomous intent for coordinator finish)
 
 Compliance: all round 9–11 findings are closed. The targeted suites pass and no existing test is weakened. A real `fill-pr-template` run reproduces the artifact scope mismatch.
 

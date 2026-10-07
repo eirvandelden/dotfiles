@@ -54,6 +54,7 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(text, "finish/scripts/change-scope")
     assert_includes(text, "Delivery: autonomous")
     assert_match(/only when .*`personal`/i, text)
+    assert_match(/same paragraph as `Status:`/, text)
   end
 
   def test_intent_accept_starts_the_coordinator_loop
@@ -182,6 +183,20 @@ class AutonomyContractTest < Minitest::Test
 
     assert_includes(section, "§3 step 3")
     assert_match(/capture.*body.*without waiting for confirmation/i, section)
+  end
+
+  def test_finish_auto_mode_requires_an_accepted_autonomous_intent
+    section = section_of(skill("finish"), "## Auto mode")
+
+    assert_match(/accepted `intent.md`/, section)
+    assert_includes(section, "`Delivery: autonomous`")
+    assert_match(/step-by-step.*steps above unchanged/i, section)
+  end
+
+  def test_finish_overview_allows_the_autonomous_coordinator
+    overview = skill("finish").split("## 1.").first
+
+    assert_includes(overview, "or by the autonomous coordinator")
   end
 
   def test_plan_forbids_an_arrow_inside_a_closure
