@@ -129,6 +129,17 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/transcribe/i, section)
   end
 
+  def test_codex_auto_review_uses_a_read_only_claude_cli_backend
+    section = section_of(skill("review"), "## Auto mode")
+
+    assert_includes(section, "claude -p --model opus --permission-mode plan")
+    assert_match(/Codex coordinator/i, section)
+    assert_match(/read-only/i, section)
+    assert_includes(section, "(claude)")
+    assert_match(/unavailable.*Decision needed:/i, section)
+    assert_includes(section_of(skill("review"), "## Codex"), "Auto mode")
+  end
+
   def test_implement_auto_reports_a_decision_instead_of_adding_a_dependency
     section = section_of(skill("implement"), "## Auto mode")
 
