@@ -1,0 +1,188 @@
+#!/usr/bin/env ruby
+# Open the herdr-file-viewer at the worktree the focused pane's agent works in.
+# Plain ruby, not rv: herdr runs it from a key binding, where rv may not be set up.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "agent_worktree"
+require "common"
+require "json"
+require "open3"
+require "shellwords"
+
+module WorktreeTools
+  class Viewer
+    include Helpers
+
+    USAGE = "Usage: worktree-viewer split|tab".freeze
+    PLUGIN_ID = "herdr-file-viewer".freeze
+    LABEL = "Files".freeze
+    DRAW_TIMEOUT_MS = "5000".freeze
+    SCRIPTS = { "split" => "open-file-viewer.sh", "tab" => "open-file-viewer-tab.sh" }.freeze
+    DECISION_FLAGS = { "split" => "--launch-decision", "tab" => "--launch-decision-tab" }.freeze
+
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    def run!(argv)
+      @mode = argv.first
+      die(USAGE) unless SCRIPTS.key?(@mode)
+
+      @plugin_root = plugin_root
+      abandon("the #{PLUGIN_ID} plugin is not installed or has no launcher scripts") unless launchers_present?
+      open_viewer
+    end
+
+    private
+
+    def open_viewer
+      panes_output = herdr_output("pane", "list") || hand_over("herdr pane list failed")
+      agent_pane = focused_agent_pane(panes_output)
+      return hand_over unless agent_pane
+
+      @config_dir = config_dir
+      return hand_over unless open_decision?(panes_output)
+
+      start_viewer(agent_pane)
+    end
+
+    def config_dir
+      folder = herdr_output("plugin", "config-dir", PLUGIN_ID).to_s.strip
+      folder.empty? ? hand_over("cannot find the #{PLUGIN_ID} config folder") : folder
+    end
+
+    def start_viewer(agent_pane)
+      root = usable_record(agent_pane)
+      direction = open_direction if @mode == "split"
+      pane_id = create_pane(agent_pane, root || agent_pane["cwd"], direction)
+      show_viewer(pane_id, picker: root.nil? && main_worktree?(agent_pane["cwd"]))
+    end
+
+    def show_viewer(pane_id, picker:)
+      prepare_pane(pane_id, "rename", LABEL)
+      prepare_pane(pane_id, "run", "exec #{Shellwords.escape(program)}")
+      open_picker(pane_id) if picker
+    end
+
+    # A pane left half-prepared is a stray shell, or one labelled Files that the plugin then takes for a viewer.
+    def prepare_pane(pane_id, command, argument)
+      _output, error, status = herdr("pane", command, pane_id, argument)
+      return if status.success?
+
+      abandon("herdr pane #{command} failed (#{error.strip}); #{discard_pane(pane_id)}")
+    end
+
+    def discard_pane(pane_id)
+      _output, _error, status = herdr("pane", "close", pane_id)
+      status.success? ? "closed the new pane" : "could not close pane #{pane_id}"
+    end
+
+    def open_picker(pane_id)
+      _output, _error, status = herdr("pane", "wait-output", pane_id, "--regex", "┌", "--source", "visible",
+                                      "--timeout", DRAW_TIMEOUT_MS)
+      herdr("pane", "send-keys", pane_id, "W") if status.success?
+    end
+
+    def create_pane(agent_pane, root, direction)
+      output, error, status = herdr(*creation_arguments(agent_pane, root, direction))
+      abandon("herdr could not open the viewer pane (#{error.strip})") unless status.success?
+
+      pane_id_from(output) || abandon("herdr returned no pane id for the viewer")
+    end
+
+    def creation_arguments(agent_pane, root, direction)
+      environment = [ "--env", "HERDR_PLUGIN_CONFIG_DIR=#{@config_dir}", "--focus" ]
+      return [ "pane", "split", "--pane", agent_pane["pane_id"], "--direction", direction, "--cwd", root,
+               *environment ] if @mode == "split"
+
+      [ "tab", "create", "--cwd", root, "--label", LABEL, *environment ]
+    end
+
+    def pane_id_from(output)
+      result = JSON.parse(output).fetch("result")
+      (result["root_pane"] || result["pane"])&.fetch("pane_id")
+    rescue JSON::ParserError, KeyError
+      nil
+    end
+
+    def usable_record(agent_pane)
+      AgentWorktree.new.usable_for(agent_pane["pane_id"], agent_pane["terminal_id"], beside: agent_pane["cwd"])
+    end
+
+    def open_direction
+      output, status = Open3.capture2(plugin_environment, program, "--open-direction", err: File::NULL)
+      hand_over("#{File.basename(program)} --open-direction failed") unless status.success?
+
+      output.strip == "down" ? "down" : "right"
+    rescue SystemCallError
+      hand_over("#{program} cannot run")
+    end
+
+    def open_decision?(panes_output)
+      hand_over("#{program} is missing") unless File.executable?(program)
+
+      decision, status = Open3.capture2(plugin_environment, program, DECISION_FLAGS.fetch(@mode),
+                                        stdin_data: panes_output, err: File::NULL)
+      hand_over("#{File.basename(program)} #{DECISION_FLAGS.fetch(@mode)} failed") unless status.success?
+
+      decision.strip == "OPEN"
+    rescue SystemCallError
+      hand_over("#{program} cannot run")
+    end
+
+    def plugin_environment
+      { "HERDR_PLUGIN_CONFIG_DIR" => @config_dir }
+    end
+
+    def focused_agent_pane(panes_output)
+      panes = JSON.parse(panes_output).dig("result", "panes").to_a
+      pane = panes.find { |candidate| candidate["focused"] }
+      pane if pane && pane["agent"]
+    rescue JSON::ParserError
+      nil
+    end
+
+    def plugin_root
+      output = herdr_output("plugin", "list", "--json")
+      plugins = JSON.parse(output.to_s).dig("result", "plugins").to_a
+      plugins.find { |plugin| plugin["plugin_id"] == PLUGIN_ID }&.fetch("plugin_root", nil)
+    rescue JSON::ParserError
+      nil
+    end
+
+    def launchers_present?
+      !@plugin_root.to_s.empty? && SCRIPTS.each_value.all? { |name| File.file?(script_path(name)) }
+    end
+
+    def program
+      File.join(@plugin_root, "target", "release", "herdr-file-viewer")
+    end
+
+    def script_path(name)
+      File.join(@plugin_root, "scripts", name)
+    end
+
+    def hand_over(reason = nil)
+      warn("worktree-viewer: #{reason}; using the plugin's own launcher") if reason
+      exec("bash", script_path(SCRIPTS.fetch(@mode)))
+    end
+
+    def abandon(reason)
+      warn("worktree-viewer: #{reason}")
+      exit(EXIT_ERROR)
+    end
+
+    def herdr_output(*arguments)
+      output, _error, status = herdr(*arguments)
+      output if status.success?
+    end
+
+    def herdr(*arguments)
+      Open3.capture3(herdr_bin, *arguments)
+    rescue SystemCallError => error
+      abandon("cannot run herdr (#{error.message})")
+    end
+  end
+end
+
+WorktreeTools::Viewer.run!(ARGV) if $PROGRAM_NAME == __FILE__

@@ -27,11 +27,15 @@ There is no `herdr plugin update` — re-running the install is the update. The 
 
 ### Reading a file an agent wrote
 
-**The viewer opens where the focused pane is.** It does not follow an agent's own `cd`. A worktree created with `git worktree add` is never opened as a herdr workspace, so no pane is ever in one — sitting in the main checkout, that is what you get. The viewer can still reach those worktrees; nothing puts you in one for it.
+**The keys open the viewer at the agent's worktree.** `prefix+f` and `prefix+shift+f` run `worktree-viewer` from the `git` package. When the focused pane has an agent that created or reused a worktree with `worktree-create`, the viewer opens there: beside the agent for `prefix+f`, in its own tab for `prefix+shift+f`. `worktree-create` records the worktree per herdr pane, also with `--no-pane`. A record is ignored once its folder is gone or belongs to another repository.
 
-**Press `W` to fix it.** It opens a picker of the repository's git worktrees, marks the current one, and pre-selects the one with an active herdr agent. `↑`/`↓` move, `Enter` switches, `Esc` cancels. It re-roots the viewer only; it never checks out a branch or touches a file.
+**Without a worktree, the picker shows.** When the agent has no usable record and sits in the main checkout, the viewer opens at the pane's folder and then opens the `W` worktree picker. An agent pane that is already in a worktree opens there without the picker. A pane without an agent, or a viewer already open in the tab, is handled by the plugin's own actions as before.
+
+**Any other worktree: press `W`.** The keys only know worktrees made with `worktree-create`. A worktree an agent made with plain `git worktree add`, or entered with its own `cd`, has no record, so the viewer opens at the pane's folder instead. `W` opens a picker of the repository's git worktrees, marks the current one, and pre-selects the one with an active herdr agent. `↑`/`↓` move, `Enter` switches, `Esc` cancels. It re-roots the viewer only; it never checks out a branch or touches a file.
 
 Reach a worktree that way rather than browsing into `.worktrees/`. The viewer computes git status, the diff baseline, and the changed-file filters against the root it opened, so walking in through the folder gives a plain tree with the wrong baseline. It is also why `.worktrees/` is absent from the tree at all: `~/.config/git/ignore.global` ignores it, and the viewer hides gitignored entries. The `i` key reveals them, at the cost of also showing every dependency and build directory.
+
+**Setting it up.** After merging, run `stow -t "$HOME" git` once so `worktree-viewer` appears in `~/.config/git/worktree-tools/`, then `herdr server reload-config` so the new key bindings load.
 
 ### Keys worth knowing
 

@@ -126,6 +126,11 @@ module WorktreeTools
       status.success?
     end
 
+    # The herdr plugin scripts prefer HERDR_BIN_PATH over PATH; worktree-create and worktree-viewer match them.
+    def herdr_bin
+      ENV["HERDR_BIN_PATH"].to_s.empty? ? "herdr" : ENV["HERDR_BIN_PATH"]
+    end
+
     def require_command(command, error_message = nil)
       return true if command_exists?(command)
 

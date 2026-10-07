@@ -13,6 +13,7 @@ class WorktreeCreateTest < Minitest::Test
   def setup
     @enclosing = Dir.mktmpdir
     @stub_bin = Dir.mktmpdir
+    @state_home = Dir.mktmpdir
     @gh_stub_bin = Dir.mktmpdir
     install_gh_stub
     install_herdr_stub
@@ -21,7 +22,7 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_rf([ @enclosing, @stub_bin, @gh_stub_bin ])
+    FileUtils.rm_rf([ @enclosing, @stub_bin, @gh_stub_bin, @state_home ])
   end
 
   def test_creates_a_worktree_off_the_default_branch_and_prints_its_path
@@ -40,6 +41,63 @@ class WorktreeCreateTest < Minitest::Test
     path = File.join(@repo, ".worktrees", "feature")
     assert_includes(herdr_calls,
                     "pane split --current --direction down --cwd #{File.realpath(path)} --no-focus")
+  end
+
+  def test_inside_herdr_it_records_the_new_worktree_for_the_calling_pane
+    stdout, stderr, status = run_script("feature", herdr_pane_id: "w1:pA")
+
+    assert(status.success?, stderr)
+    assert_equal({ "terminal_id" => "term_stub", "path" => stdout.strip }, recorded("w1_pA"))
+  end
+
+  def test_the_terminal_id_comes_from_the_herdr_named_in_herdr_bin_path
+    elsewhere = File.join(@enclosing, "elsewhere-herdr")
+    File.write(elsewhere, <<~'STUB')
+      #!/usr/bin/env ruby
+      require "json"
+      puts JSON.generate({ result: { pane: { terminal_id: "term_elsewhere" } } }) if ARGV[0..1] == [ "pane", "get" ]
+    STUB
+    FileUtils.chmod(0o755, elsewhere)
+
+    stdout, stderr, status = run_script("feature", herdr_pane_id: "w1:pA", herdr_bin_path: elsewhere)
+
+    assert(status.success?, stderr)
+    assert_equal({ "terminal_id" => "term_elsewhere", "path" => stdout.strip }, recorded("w1_pA"))
+  end
+
+  def test_a_record_that_cannot_be_written_still_prints_the_worktree_path_with_a_warning
+    FileUtils.mkdir_p(File.join(@state_home, "worktree-tools", "agent-worktrees", "w1_pA"))
+
+    stdout, stderr, status = run_script("feature", herdr_pane_id: "w1:pA")
+
+    assert(status.success?, stderr)
+    assert_equal(File.realpath(File.join(@repo, ".worktrees", "feature")), File.realpath(stdout.strip))
+    assert_match(/worktree-create: .*record/, stderr)
+  end
+
+  def test_reusing_a_worktree_replaces_the_panes_record
+    run_script("first", herdr_pane_id: "w1:pA")
+    add_worktree("feature", from: "origin/main")
+
+    stdout, stderr, status = run_script("feature", herdr_pane_id: "w1:pA")
+
+    assert(status.success?, stderr)
+    assert_equal(File.realpath(File.join(@repo, ".worktrees", "feature")), stdout.strip)
+    assert_equal(stdout.strip, recorded("w1_pA").fetch("path"))
+  end
+
+  def test_no_pane_flag_still_records_the_worktree
+    stdout, stderr, status = run_script("feature", extra_args: [ "--no-pane" ], herdr_pane_id: "w1:pA")
+
+    assert(status.success?, stderr)
+    assert_equal(stdout.strip, recorded("w1_pA").fetch("path"))
+  end
+
+  def test_outside_herdr_nothing_is_recorded
+    _stdout, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    assert_empty(Dir.glob(File.join(@state_home, "**", "*")).select { |entry| File.file?(entry) })
   end
 
   def test_no_pane_flag_skips_opening_a_pane
@@ -409,6 +467,8 @@ class WorktreeCreateTest < Minitest::Test
         puts JSON.generate({ result: { panes: panes } })
       when [ "pane", "split" ]
         puts JSON.generate({ result: { pane: { pane_id: "w1:pV" } } })
+      when [ "pane", "get" ]
+        puts JSON.generate({ result: { pane: { pane_id: ARGV[2], terminal_id: "term_stub" } } })
       else
         puts JSON.generate({ result: {} })
       end
@@ -417,8 +477,11 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", pane_agent: nil, chdir: @repo,
-                 name_after_flag: false, without_gh: false)
+                 name_after_flag: false, without_gh: false, herdr_pane_id: nil, herdr_bin_path: nil)
     environment = {
+      "XDG_STATE_HOME" => @state_home,
+      "HERDR_PANE_ID" => herdr_pane_id,
+      "HERDR_BIN_PATH" => herdr_bin_path,
       "PATH" => without_gh ? path_without_gh : "#{@stub_bin}:#{@gh_stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GH_STUB_STATES" => gh_states_file,
@@ -432,6 +495,12 @@ class WorktreeCreateTest < Minitest::Test
     environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
     arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
     Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  def recorded(pane_file_name)
+    file = File.join(@state_home, "worktree-tools", "agent-worktrees", pane_file_name)
+    assert(File.file?(file), "no record at #{file}")
+    JSON.parse(File.read(file))
   end
 
   def path_without_gh
