@@ -159,3 +159,37 @@ Findings:
 - [ ] Nit: A shell comment is not a window boundary. `git push origin b # see https://example.com` exits 2; origin/main exits 0. Safe direction and rare in agent commands. Add `#` as a boundary or accept it. — `claude/.claude/hooks/consent-guard.rb:80` →
 - [ ] Nit: `)` and backticks are not window boundaries. `(cd . && git push upstream)`, `git push upstream)` and `` `git push upstream` `` exit 0 because the word is `upstream)` or `` upstream` ``, which resolves to nothing. origin/main also exits 0. With a refspec after the remote (`(git push upstream b)`) it exits 2. Record it next to the `bash -c` gap in Risks, or strip a trailing `)` or backtick from a window word. — `claude/.claude/hooks/consent-guard.rb:80` →
 - [ ] Nit: Port `:443` (round 2) still open. `git push https://github.com:443/eirvandelden/x.git b` exits 2, and no comment names it. Safe direction. — `claude/.claude/hooks/consent-guard.rb:78` →
+
+## Round 6 — 2026-10-07T19:21Z — c949d5a8
+
+Suite: `test/consent_guard_test.rb` 50 runs green (about 54 s), `test/guard_parity_test.rb` 9 runs green, rubocop clean on the two touched Ruby files. Commit c949d5a8 adds two tests and removes or weakens none. Every test named in `plan.md` `## Proof` exists. The working tree is clean.
+
+Earlier findings (verified by running the branch guard and the origin/main guard on the same commands in a scratch repository, with an empty allowlist file):
+
+- R5 Important `word:` stash message read as a host: fixed. `git stash push -m "feat: add x"`, `git stash push -m "WIP: x" -- a.rb` and `git push -o "note: x" origin b` exit 0, as on origin/main. `git stash push && git push upstream b` and `git stash; git push upstream b` still exit 2. `git stash push -m x && git push git@github.com:someone-else/x.git b` exits 2 (origin/main 0).
+- R5 Important option value hides the target: fixed for the listed forms. `-o ci.skip`, `--push-option ci.skip`, `--receive-pack x`, `--exec x`, `-oci.skip` and `--exec=x` before a foreign scp-like URL, `-o ci.skip myhost:x.git`, `--repo=<url>` and `--repo <url>` exit 2 (origin/main 0). `-o ci.skip origin b` exits 0. See the first finding for `--repo` together with a positional repository.
+- R5 Nit `file:` target: fixed as asked. `git push file:///tmp/x b` and `git push file:/tmp/x b` exit 0, as on origin/main. See the second finding.
+- R5 Nits `#`, `)` and backtick not ending a window, port `:443`: still open, signed off as known limits. Not re-raised.
+- R1 probe 1 needed a prompt to escalate: still open. Probes 3 and 4 not run: still open, run by hand, not blocking.
+
+Known, signed-off limits, not re-raised: unknown names pass, two lines share a window, `bash -c`, a foreign `--git-dir`, `)`/backtick/`#` not ending a window, `:443`.
+
+Regression sweep: `git push`, `-u origin HEAD`, `--force-with-lease origin b`, `release-1.2:release-1.2`, `git push origin b && open https://…` and plain `git stash push` exit 0. `upstream b`, `--repo upstream b`, `--repo=upstream b`, `--repo=origin upstream b`, `-o x upstream b`, `--push-option=ci.skip upstream b`, `--receive-pack=x upstream b`, `-C .`, `env`, `--set-upstream`, `--all`, a scp-like URL and `myhost:x.git` exit 2. No case that exited 2 in round 5 now exits 0.
+
+Acceptance criteria:
+
+- Reviewer selected → `test_codex_routes_approvals_to_the_automatic_reviewer`
+- On-request and workspace-write kept → `test_codex_still_approves_on_request_in_the_workspace_write_sandbox`
+- Blocked commit runs after escalation, no prompt → `probe.md` probe 1 (passed only with a prompt to escalate)
+- Plain `--force` refused → `test_plain_force_push_is_blocked_with_force_with_lease_advice`, `test_a_codex_payload_is_refused_with_the_same_message_as_a_claude_payload`, `test_a_plain_force_push_is_forbidden_rather_than_prompted`
+- Push to a foreign remote stopped → `test_pushing_to_a_remote_outside_the_allowlist_needs_consent`, `test_pushing_to_a_url_outside_the_allowlist_needs_consent`, `test_every_push_in_a_compound_command_is_checked`, `test_a_push_hidden_behind_shell_syntax_is_still_checked`, `test_a_scp_like_url_without_a_user_needs_consent`, `test_an_insteadof_alias_is_resolved_before_matching`, `test_a_url_that_only_contains_an_allowed_path_needs_consent`, `test_a_host_and_path_target_without_a_dot_needs_consent`, `test_a_remote_push_url_outside_the_allowlist_needs_consent`, `test_a_remote_after_a_flag_value_is_still_checked`, `test_an_option_value_does_not_hide_the_repository` (see the first finding)
+- GitHub comments and reviews need consent → `test_github_comments_and_reviews_as_the_user_are_blocked`; `probe.md` probe 3 open, run by hand, not blocking
+- Reviewer denial reaches the model, no prompt → `probe.md` probe 4 open, run by hand, not blocking
+- Deploys and destructive database commands need consent → `test_deploys_are_blocked_without_user_consent`, `test_destructive_database_commands_are_blocked_without_user_consent`
+- No work names in Codex config and rules → `test_codex_config_and_rules_name_no_work_owner`, `test_no_rule_names_a_machine_path`
+
+Findings:
+
+- [ ] Important: `--repo` takes precedence over the positional repository, the reverse of git. `git help push` says of `--repo`: "If both are specified, the command-line argument takes precedence." `git push --repo=origin git@github.com:someone-else/x.git b`, `git push --repo origin git@github.com:someone-else/x.git b` and `git push --repo=git@github.com:eirvandelden/x.git git@github.com:someone-else/x.git b` exit 0. Git pushes to the foreign URL (confirmed with a stub `GIT_SSH_COMMAND`, which git invoked). The guard checks `origin` as the repository, and later words are checked only for `://` or a resolvable name. origin/main also exits 0, so this is not a regression, and an agent rarely writes both. But the commit claims "--repo names the repository", and it is the same shape as R5's second Important. Prefer `arguments.first || repo_option(window)`, and add one of these commands to `test_an_option_value_does_not_hide_the_repository`. — `claude/.claude/hooks/consent-guard.rb:121` →
+- [ ] Nit: `file:/tmp/x` with a single slash is a ssh host to git, not a local path. Git treats only `file://` as the file scheme; `git push file:/tmp/x main` invoked the stub `GIT_SSH_COMMAND` with host `file`. The guard now passes it, as origin/main does. Nothing leaves the machine unless an ssh alias named `file` exists. Narrow the exclusion to `file://`, or accept it. — `claude/.claude/hooks/consent-guard.rb:144` →
+- [ ] Nit: A value option whose value is itself a value option shifts the repository. `git push -o -o git@github.com:someone-else/x.git b` exits 0 (origin/main 0); git reads the second `-o` as the value and pushes to the URL (confirmed with the stub). `positional` drops a word after any value option without checking that the option itself was a value. Contrived; accept it or record it. — `claude/.claude/hooks/consent-guard.rb:132` →
