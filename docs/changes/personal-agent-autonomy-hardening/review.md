@@ -110,3 +110,19 @@ Remote: `origin/main` is still `58dab0a3`, the branch base. `origin/personal-age
 - [x] Important: A Codex coordinator outside herdr runs two Codex reviewers. Provide a read-only Claude CLI backend for autonomous review. — `claude/.claude/skills/review/SKILL.md:43` → fixed (review: require a Claude CLI round for Codex autonomy)
 
 Verification: the published branch passes all 30 test files and all changed-file linters. The gate bypass reproduces in a temporary personal repository. PR #182 CI passes on `71bcdd77`.
+
+## Round 10 — 2026-10-07T11:32Z — b7251d17 (claude)
+
+- [ ] Nit: H1 and setext body headings remain inside the intent header. Restrict metadata to its first paragraph. — `claude/.claude/skills/plan/scripts/auto-accept:80` →
+- [ ] Nit: The coordinator's review step must route Codex through the read-only Claude CLI backend. — `claude/.claude/skills/intent/SKILL.md:157` →
+- [ ] Nit: Explicitly replace the reviewer agent's fetch, write, commit and output instructions in the read-only CLI prompt. — `claude/.claude/skills/review/SKILL.md:50` →
+
+Compliance: each retained acceptance criterion and named Proof test has coverage. Existing tests are not weakened. Claude confirms the revised backend requires independent Claude and Codex rounds. Its temporary probes confirm the two remaining header shapes.
+
+## Round 11 — 2026-10-07T11:32Z — b7251d17 (codex)
+
+- [ ] Important: Finish auto mode exempts §3 step 2, but the confirmation gate is in step 3. Skip that actual confirmation. — `claude/.claude/skills/finish/SKILL.md:82` →
+- [ ] Important: The coordinator directly calls a herdr-only review script. Route non-herdr review through the review skill's auto mode. — `claude/.claude/skills/intent/SKILL.md:157` →
+- [x] Nit: The accepted rework drops spec, but the plan's file list still includes it. Correct those entries before generating the PR body. — `docs/changes/personal-agent-autonomy-hardening/plan.md:38` → fixed (Carry accepted artifacts into autonomy hardening follow-up)
+
+Baseline: all 30 local test files pass on `b7251d17`. PR #182 merged as `f4adcd4e`; follow-up commits are rebased onto it. Only accepted artifact paths change during the move to this follow-up worktree.
