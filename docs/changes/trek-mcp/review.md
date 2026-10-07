@@ -101,3 +101,23 @@ Compliance, acceptance criteria (from `intent.md`) to proof:
 All seven tests named in `plan.md` `## Proof` exist. No existing test from main was weakened, skipped, or deleted. The diff matches the plan's file list. Round 4's four nits are closed and hold.
 
 - [x] Nit: the helper `approving_trek_tools` returns the tools whose mode is not `"approve"`, that is, the tools that ask. Its name reads as the opposite: the tools set to `"approve"`. Round 3's finding was exactly this `approve`/`prompt` inversion, so a name such as `asking_trek_tools` keeps the next reader from repeating it — `test/codex_config_test.rb:76` → fixed (Rename TREK test helper to asking_trek_tools)
+
+## Round 6 — 2026-10-07T05:51:47Z — ce34c25a
+
+Passes run with defaults (no `REVIEW.md` or `REVIEW.local.md` in the repo). Since round 5, the only code change is the helper rename `approving_trek_tools` → `asking_trek_tools` in `test/codex_config_test.rb`; the rest is the round 5 report and its closing note. The branch is rebased on `origin/main` (0 behind, 20 ahead). It still diverges from `origin/trek-mcp` (57 local, 5 remote commits), so the next push needs `--force-with-lease`. Current state: `test/codex_config_test.rb` passes (7 runs, 25 assertions, 0 skips, codex-cli 0.160.1 present). The full `test/*_test.rb` loop is green (29 files). rubocop and `ruby -c` are clean. markdownlint reports only the MD024 errors that already exist on main, and no-hardwrap is clean on `HEADROOM.md` and the change folder.
+
+Bugs: none found. The rename is complete; no reference to the old name remains. `codex mcp get trek --json` against a tmp `CODEX_HOME` writes nothing to stderr, also with a deprecated or unknown key added to the config, so the CLI tests' `capture2e` does not mix warnings into the JSON they parse. `codex mcp login --help` confirms the `HEADROOM.md` command and shows a `--no-browser` option.
+
+Security: none found. No token or header is in the repo, the URL is `https`, and the diff has no work references. `~/.codex` is a real directory with only `config.toml` and the doc files linked from dotfiles, so Codex's OAuth credentials for TREK land outside the repo.
+
+Compliance, acceptance criteria (from `intent.md`) to proof:
+
+- Codex points `trek` at the TREK URL with no bearer token or auth header → `test_trek_points_at_the_trek_url_with_no_bearer_token`, `test_codex_sends_no_credentials_to_trek`
+- Codex accepts the config and shows the TREK URL → `test_codex_accepts_the_config_and_shows_the_trek_url`, ran here against the real CLI
+- Deleting a trip asks for approval, and so do the other 9 listed tools → `test_every_listed_trek_tool_asks_for_approval`, `test_trek_tools_run_without_asking_by_default`, `test_no_other_trek_tool_asks_for_approval`. The manual delete-a-trip check (plan step 9) is still open.
+- After `codex mcp login trek`, Codex lists trips → manual, plan step 9, not yet done
+- After following `HEADROOM.md`, Claude Code lists trips → manual, plan step 9, not yet done
+
+All seven tests named in `plan.md` `## Proof` exist. No existing test from main was weakened, skipped, or deleted. The diff matches the plan's file list. Round 5's nit is closed and holds.
+
+Nothing found. Plan step 9 (Etienne's live login and tool-name check) is the only open item.
