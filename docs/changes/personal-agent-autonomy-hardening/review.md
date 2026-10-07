@@ -142,3 +142,10 @@ Compliance: all round 9–11 findings are closed. The targeted suites pass and n
 - [ ] Important: A blockquote or indented-code line after the title is still trusted as accepted autonomous metadata. Parse expected metadata fields rather than Markdown body text. — `claude/.claude/skills/plan/scripts/auto-accept:81` →
 
 Local suite: one temporary fixture unexpectedly inherits the machine's main-branch hook. It fails at the simulated `advance main` commit. The narrow case passes with normal configuration and with `GIT_CONFIG_GLOBAL=/dev/null`; the isolated nine-case file also passes. Final suite runs use isolated global Git configuration, matching CI. Project linters and commit/push hooks remain enabled in their separate commands.
+
+## Round 14 — 2026-10-07T18:50Z — d8f4251b plus working fixes (claude)
+
+- [ ] Important: An undated Status consumes its trailing period, so inline Delivery is missed. Valid accepted autonomous headers are refused, while an inline step-by-step choice can be overridden by a later autonomous line. Preserve supported layouts and refuse conflicting choices. — `claude/.claude/skills/plan/scripts/auto-accept:40` →
+- [ ] Nit: Delivery placement instructions allow layouts that the parser refuses. State the supported forms explicitly or support every documented form. — `claude/.claude/skills/intent/SKILL.md:73` →
+
+Compliance: Claude confirms the round 12–13 fixes in the working snapshot, the six-file PR scope, and unchanged permission boundaries. It reruns the existing targeted suites: 47 runs/174 assertions and 28/146 pass. The coordinator reproduces the Important finding with three new tests: both valid undated layouts fail, and the conflicting step-by-step layout incorrectly succeeds. These tests remain red. The preceding full snapshot passed all 30 test files with isolated global Git configuration. SSH authentication works after the user unlocks 1Password. Further parser changes await the structural-parser decision required after three unsuccessful metadata revisions.
