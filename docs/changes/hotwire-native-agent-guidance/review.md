@@ -23,3 +23,11 @@ The four new test files, skill parity, and Codex agent generation pass together:
 | Tooling builds and inspects the intended target without guesses | `mobile_tooling_test.rb` checks pinned version and telemetry parity; `hotwire_native_skill_test.rb` checks targeting instructions | Live MCP tool listing and representative targeting sessions remain pending |
 
 Every automated test named in the Proof list exists. The removed `spec` skill explains the seven-file implementation but needs the plan correction above. A18's four resolved links are recorded in the implementation report. Snapshot licences and manifest entries exist. No additional actionable bug or security finding is established by this review.
+
+### Supplemental A17 evidence — 2026-10-07T07:54:31Z — 6bbdbc62
+
+Etienne supplied the private denylist after Round 1. An independent case-insensitive scan finds zero matches in all added diff lines and all 19 readable new files. The denylist stays outside this committed report.
+
+Reviewed hostname, application-identifier, device, and signing candidates in the diff and new files. They contain public upstream documentation and licence URLs, generic example identifiers, placeholders, Android certificate-verification examples, and generic policy descriptions. No private host, actual app identifier, signing identity, credential, or device identifier is found. A17 now has the required privacy-audit evidence.
+
+The original Round 1 findings remain recorded above. Its A17 evidence gap is superseded by this supplement. A13's live MCP tool listing and A1/A2/A15 representative agent sessions remain pending.
