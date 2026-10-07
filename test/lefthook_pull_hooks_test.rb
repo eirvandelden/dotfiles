@@ -43,10 +43,13 @@ class LefthookPullHooksTest < Minitest::Test
     assert_command_ran("rails db:migrate")
   end
 
-  def test_changed_gemfile_lock_triggers_rv_ci
+  def test_changed_gemfile_lock_installs_through_bi
+    push_file("Gemfile", "source \"https://rubygems.org\"\n")
     push_file("Gemfile.lock", "GEM\n  specs:\n")
     pull_in_puller
+    assert_command_ran("bundle lock")
     assert_command_ran("rv ci")
+    refute_command_ran("bundle install")
   end
 
   def test_changed_yarn_lock_triggers_yarn_install
@@ -234,7 +237,7 @@ class LefthookPullHooksTest < Minitest::Test
   def pull_env
     {
       "HOME" => @tmpdir,
-      "PATH" => "#{@bin_dir}:/usr/bin:/bin",
+      "PATH" => "#{File.join(@repo_root, "ruby/.local/bin")}:#{@bin_dir}:/usr/bin:/bin",
       "GIT_CONFIG_GLOBAL" => global_gitconfig,
       "GIT_CONFIG_SYSTEM" => "/dev/null",
       "GIT_AUTHOR_NAME" => "Test",
