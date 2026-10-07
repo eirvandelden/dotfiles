@@ -77,45 +77,73 @@ end
 
 GITHUB_URL = %r{\A(?:(?:https|ssh|git)://(?:[^@/]+@)?|[^@/\s]+@)?github\.com[:/](?<path>.+)\z}
 
-# The first word after `push` that names somewhere this repository may not be
-# pushed to unattended: a remote URL, a remote configured here or in a `-C`
-# directory, or an `insteadOf` alias, outside the allowlist. Like the other
-# checks it reads words, not shell syntax, so a push behind `;`, `env`, a newline
-# or a second push is still seen. Words that resolve to nothing remote — a
-# local path, a refspec, a redirect target, `git stash push` arguments — pass.
+SHELL_OPERATOR = /(;|&&|\|\||\||(?<![<>])&(?!>))/
+
+# The first word, in any `push`, that names somewhere this repository may not be
+# pushed to unattended. Like the other checks it reads words, not shell syntax:
+# each `push` owns the words up to the next shell operator, glued to a word or
+# not, so a second push behind `;`, `env` or `sudo` is seen and a URL in a later
+# command is not mistaken for a target.
 def disallowed_remote(words, working_directory)
   return nil unless words.any? { |word| word.match?(/(?:\A|[\/;&|({])git\z/) } && words.include?("push")
 
   directories = [ working_directory ] + option_values(words, "-C", working_directory)
-  candidates = words.drop(words.index("push") + 1).reject { |word| word.start_with?("-") }.uniq
-  candidates.find { |word| disallowed_target?(word, directories) }
+  push_windows(words).filter_map { |window| disallowed_in(window, directories) }.first
 end
 
 def option_values(words, option, working_directory)
   words.each_cons(2).filter_map { |flag, value| File.expand_path(value, working_directory) if flag == option }
 end
 
-def disallowed_target?(word, directories)
-  return !allowed_url?(word) if remote_url_like?(word)
-
-  directories.map { |directory| resolved_url(word, directory) }
-             .any? { |url| url != word && !allowed_url?(url) }
+def push_windows(words)
+  words.each_index.filter_map { |index| window(words.drop(index + 1)) if words[index] == "push" }
 end
 
-# A URL that leaves this machine: one word with a scheme other than file://, or
-# scp-like `[user@]host.tld:path`. The dot in the host keeps a refspec such as
-# `main:main` out; a local path has neither shape.
-def remote_url_like?(word)
-  return false if word.match?(/\s/) || word.start_with?("file://")
-
-  word.include?("://") || word.match?(/\A(?:[^@\/:]+@)?[^@\/:]+\.[^@\/:]+:/)
+# The words up to the first shell operator, keeping the part of a word before a glued one.
+def window(words)
+  words.each_with_object([]) do |word, kept|
+    head, operator = word.split(SHELL_OPERATOR, 2)
+    kept << head unless head.to_s.empty?
+    break kept if operator
+  end
 end
 
-# What git would push to for this word: a configured remote's URL, an
-# `insteadOf` alias expanded, or the word itself when it is neither.
-def resolved_url(word, working_directory)
-  url = `git -C #{Shellwords.escape(working_directory)} ls-remote --get-url #{Shellwords.escape(word)} 2>/dev/null`
-  url.strip.empty? ? word : url.strip
+# Git reads the first argument as the repository: a remote, an alias, or a
+# location, where a colon before any slash means an ssh host. Later arguments are
+# refspecs, so only what git resolves to a remote, or a `://` URL, counts there.
+def disallowed_in(window, directories)
+  arguments = window.reject { |word| word.start_with?("-") }.uniq
+  repository = arguments.first
+  return repository if repository && remote_location?(repository) && !allowed_url?(repository)
+
+  arguments.find { |word| (url_with_scheme?(word) && !allowed_url?(word)) || foreign_push_url?(word, directories) }
+end
+
+def remote_location?(word)
+  url_with_scheme?(word) || word.match?(/\A[^\/\s:]+:/)
+end
+
+def url_with_scheme?(word)
+  word.include?("://") && !word.start_with?("file://")
+end
+
+def foreign_push_url?(word, directories)
+  directories.flat_map { |directory| push_urls(word, directory) }.any? { |url| !allowed_url?(url) }
+end
+
+# Where git would push for this word: a remote's push URLs (`pushurl` and
+# `pushInsteadOf` included), else an `insteadOf` alias expanded. Nothing when the
+# word is neither.
+def push_urls(word, directory)
+  urls = git_output(directory, "remote", "get-url", "--push", "--all", word).lines.map(&:strip)
+  return urls unless urls.empty?
+
+  alias_url = git_output(directory, "ls-remote", "--get-url", word).strip
+  alias_url.empty? || alias_url == word ? [] : [ alias_url ]
+end
+
+def git_output(directory, *arguments)
+  `git -C #{Shellwords.escape(directory)} #{arguments.map { |argument| Shellwords.escape(argument) }.join(" ")} 2>/dev/null`
 end
 
 # Matches the allowlist against the path on github.com only, from its start, so

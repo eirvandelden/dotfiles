@@ -264,6 +264,50 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_words_of_a_later_command_are_not_push_targets
+    [ "git push origin b && open https://example.com/pr/1", "git push origin b && curl -s https://api.example.com/x",
+      "git push origin b && bin/rails test foo_test.rb:12", "git push origin b; echo see x.rb:12" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_host_and_path_target_without_a_dot_needs_consent
+    [ "git push myhost:someone-else/x.git b", "git push localhost:x.git b" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
+  def test_a_refspec_with_a_dot_is_allowed
+    [ "git push origin release-1.2:release-1.2", "git push origin v1.2.3:v1.2.3" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_remote_push_url_outside_the_allowlist_needs_consent
+    add_remote("mirror", "git@github.com:eirvandelden/dotfiles.git")
+    system("git", "-C", @repo, "remote", "set-url", "--push", "mirror", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push mirror b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/mirror/, stderr)
+  end
+
+  def test_a_remote_after_a_flag_value_is_still_checked
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push -o ci.skip upstream b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
   def test_a_url_that_only_contains_an_allowed_path_needs_consent
     _, stderr, status = run_guard("git push https://evil.example/github.com/eirvandelden/x.git my-branch")
 
