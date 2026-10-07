@@ -136,6 +136,21 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus)
   end
 
+  def test_a_worktree_add_handed_to_another_shell_or_eval_is_still_checked
+    [ 'bash -c "git worktree add ../x -b x"', "sh -c 'git worktree add ../x -b x'",
+     'eval "git worktree add ../x -b x"' ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
+  def test_a_worktree_add_handed_to_another_shell_inside_dot_worktrees_is_allowed
+    _, stderr, status = run_guard('bash -c "git worktree add .worktrees/ok -b ok"')
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_the_path_after_dash_b_is_the_target_not_the_branch_name
     _, stderr, status = run_guard("git worktree add -b .worktrees/inside .worktrees/inside")
 

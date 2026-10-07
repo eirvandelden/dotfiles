@@ -42,7 +42,7 @@ Unchanged: `git/.config/git/worktree-tools/worktree-create`, `consent-guard.rb`,
 
 ## Risks
 
-- **Shell parsing is approximate.** The guard tokenises; it is not a shell. Variables (`$WT`), subshells and `eval` are not expanded. Such a target is taken literally and usually resolves outside `.worktrees/`, so it blocks. A `cd "$X" && git worktree add …` is resolved against the hook's `cwd`. The written rule and `worktree-create` are the way out, and the block message says so.
+- **Shell parsing is approximate.** The guard tokenises; it is not a shell. Quoted text and heredoc bodies are text, not commands. The command text given to `sh -c`, `bash -c`, `zsh -c` or `eval` is checked as a command of its own. Variables (`$WT`) and `$(…)` are not expanded. Such a target is taken literally and usually resolves outside `.worktrees/`, so it blocks. A `cd "$X" && git worktree add …` is resolved against the hook's `cwd`. The written rule and `worktree-create` are the way out, and the block message says so.
 - **False block on legitimate work.** Only a target outside `.worktrees/` blocks, so `worktree-create` (its own subprocess, never seen by the hook) and `git worktree add .worktrees/x` still run.
 - **Path comparison on macOS.** `/tmp` and `/var` are symlinks. Both sides are compared as real paths; the test fixtures use `Dir.mktmpdir`, which hits this case.
 - **Codex trust.** The Codex hook does not run until Etienne trusts it with `/hooks`. A dotfiles change cannot do that step.

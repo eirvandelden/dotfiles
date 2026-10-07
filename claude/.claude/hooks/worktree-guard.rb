@@ -5,8 +5,9 @@
 # hook never sees it.
 #
 # It tokenises the command; it is not a shell. Quoted text and heredoc bodies are text, so a
-# commit message or PR body that mentions `git worktree add` passes. Variables, subshells and
-# eval are not expanded, so such a target is taken literally and usually blocks. Everything else
+# commit message or PR body that mentions `git worktree add` passes. The command text given to
+# `sh -c`, `bash -c`, `zsh -c` or `eval` is checked as a command of its own. Variables and `$(…)`
+# are not expanded, so such a target is taken literally and usually blocks. Everything else
 # errs towards allowing:
 # a false block stops legitimate work, and the written rule covers the rest.
 #
@@ -29,6 +30,7 @@ TOKEN = /
 HEREDOC_START = /(?<!<)<<(?!<)-?\s*(['"]?)([A-Za-z_]\w*)\1/
 GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace].freeze
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
+SHELLS = %w[sh bash zsh].freeze
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
@@ -174,12 +176,24 @@ def misplaced_worktree?(directory, target)
   File.dirname(real_target(target, directory)) != "#{File.realpath(root)}/.worktrees"
 end
 
+# The command text a segment hands to another shell (`bash -c "<command>"`) or to `eval`.
+def handed_on_command(segment_words)
+  names = segment_words.map { |word| File.basename(word) }
+  eval_at = names.index("eval")
+  return segment_words.drop(eval_at + 1).join(" ") if eval_at
+
+  shell_at = names.index { |name| SHELLS.include?(name) }
+  segment_words[shell_at + 2] if shell_at && segment_words[shell_at + 1] == "-c"
+end
+
 def blocked?(command, directory)
   segments(command).any? do |segment_words|
     if segment_words.first == "cd" && segment_words[1]
       directory = File.expand_path(segment_words[1], directory)
       next false
     end
+    handed_on = handed_on_command(segment_words)
+    next blocked?(handed_on, directory) if handed_on
 
     found_directory, target = worktree_add(segment_words, directory)
     target && File.directory?(found_directory) && misplaced_worktree?(found_directory, target)
