@@ -73,16 +73,15 @@ Out of scope: picking and running the `journal_administration` trial; AI in GitH
 ## Proof
 
 - Personal origin offers autonomous delivery → `test/autonomy_contract_test.rb` `test_intent_offers_autonomy_only_on_a_personal_origin`
-- Other origin keeps "accepted" on spec and plan → `test/auto_accept_test.rb` `test_refuses_on_a_work_origin`, `test_refuses_without_an_origin`; `test/autonomy_contract_test.rb` `test_spec_and_plan_keep_the_literal_accepted_outside_auto`
+- Other origin keeps "accepted" on the plan → `test/auto_accept_test.rb` `test_refuses_on_a_work_origin`, `test_refuses_without_an_origin`; `test/autonomy_contract_test.rb` `test_plan_keeps_the_literal_accepted_outside_auto`
 - Accepted intent starts delivery with no further prompt → `test/herdr_worker_scripts_test.rb` `test_an_auto_worker_is_not_told_to_wait_for_accepted`; `test/autonomy_contract_test.rb` `test_intent_accept_starts_the_coordinator_loop`
-- Auto spec accepted only after a recorded critique → `test/auto_accept_test.rb` `test_refuses_without_a_critique_section`, `test_refuses_while_a_critique_finding_is_open`; `test/autonomy_contract_test.rb` `test_spec_auto_mode_runs_the_other_family_critique`
-- Auto plan accepted only after a critique → `test/autonomy_contract_test.rb` `test_plan_auto_mode_runs_the_other_family_critique`; `test/auto_accept_test.rb` `test_refuses_a_critique_section_without_a_round`
+- Auto plan accepted only after a recorded critique on an autonomous intent → `test/autonomy_contract_test.rb` `test_plan_auto_mode_runs_the_other_family_critique`; `test/auto_accept_test.rb` `test_refuses_without_a_critique_section`, `test_refuses_while_a_critique_finding_is_open`, `test_refuses_a_critique_section_without_a_round`, `test_refuses_a_step_by_step_intent`
 - PR only after the reviewer and Codex leave no open finding → `test/autonomy_contract_test.rb` `test_review_auto_mode_runs_claude_and_codex_reviewers`
 - Fixes in production code, no skipped test or disable comment → `test/autonomy_contract_test.rb` `test_playbook_autonomy_keeps_checks_strict`
 - Behaviour change, new gem, three failed attempts → `test/autonomy_contract_test.rb` `test_playbook_lists_the_four_escalation_triggers`, `test_implement_auto_reports_a_decision_instead_of_adding_a_dependency`
 - Finding disputed after two rounds goes to Etienne → `test/autonomy_contract_test.rb` `test_code_review_escalates_a_finding_disputed_for_two_rounds`
 - PR comes with an account and is never merged → `test/autonomy_contract_test.rb` `test_intent_coordinator_writes_the_account_and_never_merges`, `test_core_values_say_agents_never_merge`
-- Claude and Codex state the same boundaries → `test/autonomy_contract_test.rb` `test_every_auto_skill_names_the_claude_critique_in_its_codex_section`; `test/skill_parity_test.rb` (existing, with `code-review` now shared)
+- Claude and Codex state the same boundaries → `test/autonomy_contract_test.rb` `test_plan_names_the_claude_critique_in_its_codex_section`; `test/skill_parity_test.rb` (existing, with `code-review` now shared)
 - No employer name or credential → step 8 grep of the branch diff; a test cannot name the employer in this public repo.
 
 Per changed file, the unit tests expected:
