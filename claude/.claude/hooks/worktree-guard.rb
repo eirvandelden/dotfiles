@@ -28,7 +28,7 @@ TOKEN = /
   | (?<plain>[^\s;&|'"\\]+|&)
 /mx
 HEREDOC_START = /(?<!<)<<(?!<)-?\s*(['"]?)([A-Za-z_]\w*)\1/
-GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace].freeze
+GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace --config-env --attr-source].freeze
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
 SHELLS = %w[sh bash zsh].freeze
 BLOCK_MESSAGE = <<~MESSAGE.freeze

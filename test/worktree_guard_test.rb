@@ -151,6 +151,15 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_global_options_that_take_a_separate_value_are_skipped
+    [ "git --config-env a.b=HOME worktree add ../x -b x",
+     "git --attr-source HEAD worktree add ../x -b x" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_the_path_after_dash_b_is_the_target_not_the_branch_name
     _, stderr, status = run_guard("git worktree add -b .worktrees/inside .worktrees/inside")
 
