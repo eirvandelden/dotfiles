@@ -76,6 +76,10 @@ def status_line(text)
   text[/^.*Status:.*$/]
 end
 
+def intent_header(text)
+  text.split(/^ {0,3}(?:\#{2,6}\s|`{3,}|~{3,})/, 2).first
+end
+
 path = ARGV.first
 refuse("usage: auto-accept <artifact.md>") if path.nil?
 refuse("no such file: #{path}") unless File.file?(path)
@@ -84,11 +88,11 @@ url = origin_url
 refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
 
 # Autonomy is Etienne's choice on the intent, not the artifact's: the sibling intent.md must be
-# accepted and record Delivery: autonomous on its status line or a Delivery: line of its own, or a
-# step-by-step change, or one that only quotes the phrase, would be accepted here.
+# accepted and record Delivery: autonomous in its header metadata. Body sections and fenced
+# examples never grant autonomy, even when they contain standalone Status: or Delivery: lines.
 intent_path = File.join(File.dirname(path), "intent.md")
 refuse("no intent.md beside #{path}") unless File.file?(intent_path)
-intent = File.read(intent_path)
+intent = intent_header(File.read(intent_path))
 refuse("intent.md is not accepted") unless status_line(intent)&.match?(/Status: accepted\b/)
 delivery = [ status_line(intent), intent[/^Delivery:.*$/] ].compact.join(" ")
 refuse("intent.md does not record Delivery: autonomous") unless delivery.match?(/Delivery: autonomous\b/)

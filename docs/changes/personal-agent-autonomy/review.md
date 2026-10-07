@@ -106,7 +106,7 @@ Remote: `origin/main` is still `58dab0a3`, the branch base. `origin/personal-age
 
 ## Round 9 — 2026-10-07 — 71bcdd77 (codex)
 
-- [ ] Important: `auto-accept` reads a standalone Delivery line from any section. A fenced body example can enable autonomy. Read intent status and Delivery only from header metadata. — `claude/.claude/skills/plan/scripts/auto-accept:93` →
+- [x] Important: `auto-accept` reads a standalone Delivery line from any section. A fenced body example can enable autonomy. Read intent status and Delivery only from header metadata. — `claude/.claude/skills/plan/scripts/auto-accept:93` → fixed (auto-accept: restrict intent metadata to the header)
 - [ ] Important: A Codex coordinator outside herdr runs two Codex reviewers. Provide a read-only Claude CLI backend for autonomous review. — `claude/.claude/skills/review/SKILL.md:43` →
 
 Verification: the published branch passes all 30 test files and all changed-file linters. The gate bypass reproduces in a temporary personal repository. PR #182 CI passes on `71bcdd77`.
