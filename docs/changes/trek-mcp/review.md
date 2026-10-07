@@ -100,4 +100,4 @@ Compliance, acceptance criteria (from `intent.md`) to proof:
 
 All seven tests named in `plan.md` `## Proof` exist. No existing test from main was weakened, skipped, or deleted. The diff matches the plan's file list. Round 4's four nits are closed and hold.
 
-- [ ] Nit: the helper `approving_trek_tools` returns the tools whose mode is not `"approve"`, that is, the tools that ask. Its name reads as the opposite: the tools set to `"approve"`. Round 3's finding was exactly this `approve`/`prompt` inversion, so a name such as `asking_trek_tools` keeps the next reader from repeating it — `test/codex_config_test.rb:76` →
+- [x] Nit: the helper `approving_trek_tools` returns the tools whose mode is not `"approve"`, that is, the tools that ask. Its name reads as the opposite: the tools set to `"approve"`. Round 3's finding was exactly this `approve`/`prompt` inversion, so a name such as `asking_trek_tools` keeps the next reader from repeating it — `test/codex_config_test.rb:76` → fixed (Rename TREK test helper to asking_trek_tools)
