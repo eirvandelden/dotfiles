@@ -93,3 +93,7 @@ Per changed file, the unit tests expected:
 - skills: the Proof lines above
 
 Test setup: temp git repos with an `origin` remote and an isolated `HOME` holding an allowlist file, copied from `test/change_scope_test.rb`; the existing stub `herdr` in `test/herdr_worker_scripts_test.rb`; contract tests read repo files only.
+
+## Rework (2026-10-07)
+
+While this branch was in review, `main` removed the spec stage (`3d5aaf5c`, `da007c36`, `d2303f13`, `f8297596`). Etienne agreed to rework onto the two-stage chain. The rebase drops the spec skill's auto mode and `hand-off-plan.sh spec --auto`. The coordinator loop runs `plan`, then `implement`. The critique and `auto-accept` apply to `plan.md` only. The acceptance criterion "auto spec accepted only after a recorded critique" falls away; the plan critique carries the same guarantee.
