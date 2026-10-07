@@ -379,6 +379,38 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/intent.md is not accepted/i)
   end
 
+  def test_refuses_a_fenced_example_without_an_intent_title
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "```text\nStatus: accepted. Delivery: autonomous.\n```\n")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_a_blockquote_without_an_intent_title
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "> note\nStatus: accepted. Delivery: autonomous.\n")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_metadata_after_body_text_instead_of_an_intent_title
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "An example follows.\n\nStatus: accepted. Delivery: autonomous.\n")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_metadata_after_a_different_title_heading
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Example\n\nStatus: accepted. Delivery: autonomous.\n")
+
+    assert_refused(/intent/i)
+  end
+
   def test_refuses_quoted_metadata_in_a_blockquote
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)

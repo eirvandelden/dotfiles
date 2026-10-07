@@ -80,6 +80,8 @@ def status_line(text)
 end
 
 def intent_header(text)
+  return "" unless text.lines.first&.match?(/\A# Intent: \S/)
+
   metadata = text.lines.drop(1).drop_while { |line| line.strip.empty? }
   metadata.take_while { |line| line.match?(/\A(?:Author|Status|Type|Delivery): /) }.join
 end
