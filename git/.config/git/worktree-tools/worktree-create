@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 require "agent_worktree"
 require "common"
 require "json"
+require "repository"
 require "open3"
 require "rbconfig"
 
@@ -25,12 +26,13 @@ module WorktreeTools
       name = argv.shift
       die("worktree-create: a branch name is required") if name.to_s.empty?
 
-      Dir.chdir(repo_root!)
+      repository = Repository.new("worktree-create")
+      Dir.chdir(repository.root)
       die("worktree-create: .worktrees is not gitignored; add it to .git/info/exclude") unless worktrees_ignored?
       git("worktree", "prune")
 
-      default_branch = default_branch!
-      fetch(default_branch)
+      default_branch = repository.default_branch
+      repository.fetch_default_branch(default_branch)
       sweep(name, default_branch)
       path = create_worktree(name, default_branch)
       record_for_herdr_pane(path)
@@ -41,69 +43,9 @@ module WorktreeTools
 
     private
 
-    # git worktree list's first "worktree <path>" line is the main working tree, except inside
-    # a submodule, where git prints the submodule's git directory there instead (reproduced with
-    # git 2.54.0) — from the submodule's own checkout and from any linked worktree of it alike.
-    # That git directory's core.worktree points back at the submodule checkout, resolved
-    # relative to the git directory itself, so it works from both.
-    def repo_root!
-      output, status = git("worktree", "list", "--porcelain")
-      die("worktree-create: not inside a git repository") unless status.success?
-
-      first_line = output.lines.find { |line| line.start_with?("worktree ") }
-      die("worktree-create: not inside a git repository") unless first_line
-
-      candidate = first_line.delete_prefix("worktree ").strip
-      return candidate if working_tree?(candidate)
-
-      submodule_checkout(candidate) || toplevel!
-    end
-
-    def working_tree?(path)
-      output, status = git("-C", path, "rev-parse", "--is-inside-work-tree")
-      status.success? && output.strip == "true"
-    end
-
-    def submodule_checkout(git_dir)
-      output, status = git("-C", git_dir, "config", "--get", "core.worktree")
-      return nil unless status.success?
-
-      worktree = output.strip
-      return nil if worktree.empty?
-
-      File.expand_path(worktree, git_dir)
-    end
-
-    def toplevel!
-      toplevel, status = git("rev-parse", "--show-toplevel")
-      die("worktree-create: not inside a git repository") unless status.success?
-
-      toplevel.strip
-    end
-
     def worktrees_ignored?
       _, status = git("check-ignore", "-q", ".worktrees")
       status.success?
-    end
-
-    def default_branch!
-      branch = symbolic_ref_default_branch || remote_show_default_branch
-      die("worktree-create: cannot determine default branch") if branch.to_s.empty? || branch == "(unknown)"
-      branch
-    end
-
-    def symbolic_ref_default_branch
-      output, status = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")
-      output.strip.delete_prefix("origin/") if status.success?
-    end
-
-    def remote_show_default_branch
-      output, = git("remote", "show", "origin")
-      output.lines.find { |line| line.include?("HEAD branch:") }&.split(":")&.last&.strip
-    end
-
-    def fetch(branch)
-      git("fetch", "origin", branch)
     end
 
     def sweep(name, default_branch)
