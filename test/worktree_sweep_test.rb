@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "fileutils"
 require "open3"
+require "timeout"
 require "tmpdir"
 
 # worktree-sweep removes merged worktrees of the repository it runs in. It shells out to git, gh
@@ -174,7 +175,45 @@ class WorktreeSweepTest < Minitest::Test
     refute(File.directory?(merged))
   end
 
+  def test_with_detach_it_returns_before_the_sweep_finishes_and_prints_nothing
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_gh_states("merged-branch" => "MERGED")
+
+    with_lock_held do
+      stdout, stderr, status = Timeout.timeout(DEADLINE) { run_script("--detach") }
+
+      assert(status.success?, stderr)
+      assert_empty(stdout)
+      assert_empty(stderr)
+      assert(File.directory?(merged), "the detached sweep must still be waiting for the lock")
+    end
+
+    wait_until("the detached sweep to remove the worktree", deadline: 60) { !File.exist?(merged) }
+    wait_until("the detached sweep to release the lock") { lock_free? }
+    refute(branch?("merged-branch"))
+  end
+
+  def test_with_detach_it_creates_the_lock_file_before_returning
+    refute(File.exist?(lock_file))
+
+    _, stderr, status = Timeout.timeout(DEADLINE) { run_script("--detach") }
+
+    assert(status.success?, stderr)
+    assert(File.exist?(lock_file), "the lock file must exist as soon as the hook command returns")
+    wait_until("the detached sweep to release the lock", deadline: 60) { lock_free? }
+  end
+
   private
+
+  def lock_free?
+    File.open(lock_file, File::RDWR) do |file|
+      return false unless file.flock(File::LOCK_EX | File::LOCK_NB)
+
+      file.flock(File::LOCK_UN)
+      true
+    end
+  end
 
   def lock_file
     File.join(@repo, ".git", "worktree-sweep.lock")

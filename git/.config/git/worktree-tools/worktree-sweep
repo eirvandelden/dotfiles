@@ -17,16 +17,26 @@ module WorktreeTools
       new.run!(argv)
     end
 
-    def run!(_argv)
+    def run!(argv)
+      detach = !argv.delete("--detach").nil?
       HOOK_ENVIRONMENT.each { |name| ENV.delete(name) }
       ENV["GIT_TERMINAL_PROMPT"] = "0"
       repository = Repository.new("worktree-sweep")
       kept = [ current_worktree ].compact
       Dir.chdir(repository.root)
+      detach_from_caller(repository) if detach
       sweep(repository, kept)
     end
 
     private
+
+    # The hook command ends when the parent exits: a new session, and stdin, stdout and stderr on
+    # /dev/null, so lefthook has no pipe left to wait for. The lock file exists before the parent
+    # returns, so its presence right after a pull shows that a sweep started.
+    def detach_from_caller(repository)
+      repository.touch_lock
+      Process.daemon(true)
+    end
 
     def sweep(repository, kept)
       default_branch = repository.default_branch
