@@ -60,7 +60,8 @@ class AutonomyContractTest < Minitest::Test
     section = section_of(skill("intent"), "## Autonomous delivery")
 
     assert_includes(section, "hand-off-plan.sh <stage> <slug> --auto")
-    assert_match(/`spec`, then `plan`, then `implement`/, section)
+    assert_match(/`plan`, then `implement`/, section)
+    refute_match(/`spec`/, section)
     assert_match(/not .*chain/i, skill("intent")[/^## 4\. Accept.*?(?=^## )/m])
   end
 
@@ -87,17 +88,13 @@ class AutonomyContractTest < Minitest::Test
     end
   end
 
-  def test_spec_and_plan_keep_the_literal_accepted_outside_auto
-    %w[spec plan].each do |name|
+  def test_plan_keeps_the_literal_accepted_outside_auto
+    %w[plan].each do |name|
       text = skill(name)
 
       assert_includes(text, 'literal word "accepted"', name)
       assert_includes(text, "`Delivery: autonomous`", name)
     end
-  end
-
-  def test_spec_auto_mode_runs_the_other_family_critique
-    assert_critique_contract(section_of(skill("spec"), "## Auto mode"))
   end
 
   def test_plan_auto_mode_runs_the_other_family_critique
@@ -135,8 +132,8 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/work.*refuses/i, section)
   end
 
-  def test_spec_and_plan_forbid_an_arrow_inside_a_closure
-    %w[spec plan].each do |name|
+  def test_plan_forbids_an_arrow_inside_a_closure
+    %w[plan].each do |name|
       assert_match(/may not contain `→`/, section_of(skill(name), "## Auto mode"), name)
       assert_includes(section_of(skill(name), "## Auto mode"), "`No findings.`", name)
       assert_match(/last thing in the file/, section_of(skill(name), "## Auto mode"), name)
@@ -144,8 +141,8 @@ class AutonomyContractTest < Minitest::Test
     end
   end
 
-  def test_every_auto_skill_names_the_claude_critique_in_its_codex_section
-    %w[spec plan].each do |name|
+  def test_plan_names_the_claude_critique_in_its_codex_section
+    %w[plan].each do |name|
       codex = section_of(skill(name), "## Codex")
 
       assert_includes(codex, "claude -p", name)

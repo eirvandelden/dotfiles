@@ -5,7 +5,7 @@ require "open3"
 require "tmpdir"
 
 # In autonomous delivery a recorded critique replaces Etienne's word "accepted"
-# on spec.md and plan.md. auto-accept is the one mechanical gate: it flips the
+# on plan.md. auto-accept is the one mechanical gate: it flips the
 # status line only on a personal origin and only when every critique finding
 # is closed.
 class AutoAcceptTest < Minitest::Test
@@ -25,7 +25,7 @@ class AutoAcceptTest < Minitest::Test
     system("git", "-C", @repo, "init", "--quiet", "--initial-branch=main")
     @home = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(@home, ".claude"))
-    @artifact = File.join(@repo, "spec.md")
+    @artifact = File.join(@repo, "plan.md")
   end
 
   def teardown
@@ -247,7 +247,7 @@ class AutoAcceptTest < Minitest::Test
   end
 
   def write_artifact(critique:, status: "draft", body: "Body text.")
-    File.write(@artifact, "# Spec: x\n\nFrom intent.md. Status: #{status}\n\n#{body}\n\n#{critique}")
+    File.write(@artifact, "# Plan: x\n\nFrom intent.md. Status: #{status}\n\n#{body}\n\n#{critique}")
   end
 
   def allow_remotes(*entries)

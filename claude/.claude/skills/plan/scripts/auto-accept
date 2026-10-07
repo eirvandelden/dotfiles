@@ -2,7 +2,7 @@
 # auto-accept <artifact.md>
 #
 # The one mechanical gate of autonomous delivery. Rewrites "Status: draft" to
-# "Status: accepted" in a spec.md or plan.md, and nothing else, when:
+# "Status: accepted" in a plan.md, and nothing else, when:
 #   - origin is Etienne's own GitHub account (RemoteMatcher.personal?),
 #   - the first "Status:" line, the status line, says draft,
 #   - the artifact ends in one "## Critique" section with at least one "### Round",
