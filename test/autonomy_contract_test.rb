@@ -97,6 +97,18 @@ class AutonomyContractTest < Minitest::Test
     end
   end
 
+  def test_plan_auto_mode_rules_out_plan_mode_before_anything_else
+    section = section_of(skill("plan"), "## Auto mode")
+    first_step = section.index("\n1. ")
+
+    assert_operator(section.index("EnterPlanMode"), :<, first_step)
+    assert_operator(section.index("`/plan`"), :<, first_step)
+  end
+
+  def test_plan_auto_mode_passes_auto_accept_the_folder_path
+    assert_includes(section_of(skill("plan"), "## Auto mode"), "auto-accept <folder>/plan.md")
+  end
+
   def test_plan_auto_mode_runs_the_other_family_critique
     assert_critique_contract(section_of(skill("plan"), "## Auto mode"))
   end

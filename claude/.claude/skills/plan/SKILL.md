@@ -87,13 +87,15 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 
 ## Auto mode
 
+Plan mode does not apply: never call `EnterPlanMode` (Codex: never ask for `/plan`), because nobody is there to approve `ExitPlanMode`. This overrides the `here` backend's plan-mode step.
+
 Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh plan <slug> --auto`. It never asks Etienne anything and never starts the next stage; the coordinator does. A choice that would change the behaviour agreed in `intent.md` becomes a `Decision needed:` line in the report, not a guess.
 
 1. Write `plan.md` as usual, with `Status: draft`.
 2. Run the critique with the other model family's local CLI. A Claude author uses Codex: `codex exec -p terra -s read-only -o <findings-file> "<prompt>"`. A Codex author uses Claude: `claude -p --model opus --permission-mode plan "<prompt>"`. The prompt asks it to read `plan.md` and the code it names, and to list disagreements with reasons.
 3. Record the result in `plan.md` under `## Critique`, as `### Round 1 (<critic>)` with one finding per list item, written `- <finding> → fixed (<what changed>)` or `- <finding> → dismissed: <reason>`. The closure is the text after the line's last arrow, so a reason or subject may not contain `→`. Indented sub-bullets may explain a closed finding. A round with nothing to raise holds the single line `No findings.`. Any other line under `## Critique` — a paragraph, a quote, a fence — makes `auto-accept` refuse. `## Critique` is the last thing in the file, after any footer, and appears once: a later round goes in it as a further `### Round` heading. Fix the artifact for every `fixed` item.
-4. Run `~/.claude/skills/plan/scripts/auto-accept plan.md`. It flips `Status: draft` to `Status: accepted` only on a personal origin with a closed critique. If it refuses, fix what it names; do not edit the status line by hand.
-5. Commit `plan.md` alone (`docs: plan for <slug>`), push (`git push -u origin HEAD`) and report. Plan mode does not apply: the pane has no human to accept the plan. The `## Proof` structure still applies.
+4. Run `~/.claude/skills/plan/scripts/auto-accept <folder>/plan.md`, with `<folder>` from `~/.claude/skills/plan/scripts/change-folder`. It flips `Status: draft` to `Status: accepted` only on a personal origin, with an accepted autonomous `intent.md` beside it and a closed critique. If it refuses, fix what it names; do not edit the status line by hand.
+5. Commit `plan.md` alone (`docs: plan for <slug>`), push (`git push -u origin HEAD`) and report. The `## Proof` structure still applies.
 
 A critique CLI that fails or is missing is a blocker: put it in the report as a `Decision needed:` line. Never skip the critique.
 
