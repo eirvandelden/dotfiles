@@ -59,7 +59,7 @@ class CodexConfigTest < Minitest::Test
   end
 
   def test_no_other_trek_tool_asks_for_approval
-    assert_empty(approving_trek_tools - APPROVAL_TOOLS)
+    assert_empty(asking_trek_tools - APPROVAL_TOOLS)
   end
 
   private
@@ -73,7 +73,7 @@ class CodexConfigTest < Minitest::Test
     table && table[/^approval_mode\s*=\s*"([^"]+)"/, 1]
   end
 
-  def approving_trek_tools
+  def asking_trek_tools
     trek_tool_names.select { |tool| approval_mode(tool) && approval_mode(tool) != "approve" }
   end
 
