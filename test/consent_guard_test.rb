@@ -308,6 +308,27 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/upstream/, stderr)
   end
 
+  def test_a_stash_message_that_looks_like_a_host_is_allowed
+    [ "git stash push -m 'feat: add x'", "git stash push -m 'WIP: x' -- a.rb",
+      "git push -o 'note: x' origin b" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_an_option_value_does_not_hide_the_repository
+    [ "git push -o ci.skip git@github.com:someone-else/x.git b",
+      "git push --push-option ci.skip git@github.com:someone-else/x.git b",
+      "git push --receive-pack git-receive-pack git@github.com:someone-else/x.git b",
+      "git push -o ci.skip myhost:x.git b", "git push --repo=git@github.com:someone-else/x.git b",
+      "git push --repo git@github.com:someone-else/x.git b" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_a_url_that_only_contains_an_allowed_path_needs_consent
     _, stderr, status = run_guard("git push https://evil.example/github.com/eirvandelden/x.git my-branch")
 

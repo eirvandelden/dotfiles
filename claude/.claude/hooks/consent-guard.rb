@@ -77,6 +77,8 @@ end
 
 GITHUB_URL = %r{\A(?:(?:https|ssh|git)://(?:[^@/]+@)?|[^@/\s]+@)?github\.com[:/](?<path>.+)\z}
 
+VALUE_OPTIONS = %w[-o --push-option --receive-pack --exec --repo].freeze
+
 SHELL_OPERATOR = /(;|&&|\|\||\||(?<![<>])&(?!>))/
 
 # The first word, in any `push`, that names somewhere this repository may not be
@@ -95,8 +97,11 @@ def option_values(words, option, working_directory)
   words.each_cons(2).filter_map { |flag, value| File.expand_path(value, working_directory) if flag == option }
 end
 
+# One window per `git push`; `git stash push` takes a message and paths, not a remote.
 def push_windows(words)
-  words.each_index.filter_map { |index| window(words.drop(index + 1)) if words[index] == "push" }
+  words.each_index.filter_map do |index|
+    window(words.drop(index + 1)) if words[index] == "push" && (index.zero? || words[index - 1] != "stash")
+  end
 end
 
 # The words up to the first shell operator, keeping the part of a word before a glued one.
@@ -112,14 +117,32 @@ end
 # location, where a colon before any slash means an ssh host. Later arguments are
 # refspecs, so only what git resolves to a remote, or a `://` URL, counts there.
 def disallowed_in(window, directories)
-  arguments = window.reject { |word| word.start_with?("-") }.uniq
-  repository = arguments.first
+  arguments = positional(window)
+  repository = repo_option(window) || arguments.first
   return repository if repository && remote_location?(repository) && !allowed_url?(repository)
 
-  arguments.find { |word| (url_with_scheme?(word) && !allowed_url?(word)) || foreign_push_url?(word, directories) }
+  ([ repository ].compact + arguments).uniq.find do |word|
+    (url_with_scheme?(word) && !allowed_url?(word)) || foreign_push_url?(word, directories)
+  end
+end
+
+# The arguments that are not flags, nor the value of a flag that takes one.
+def positional(window)
+  window.each_with_index.filter_map do |word, index|
+    word unless word.start_with?("-") || (index.positive? && VALUE_OPTIONS.include?(window[index - 1]))
+  end
+end
+
+def repo_option(window)
+  equals = window.find { |word| word.start_with?("--repo=") }
+  return equals.delete_prefix("--repo=") if equals
+
+  window.each_cons(2).find { |flag, _| flag == "--repo" }&.last
 end
 
 def remote_location?(word)
+  return false if word.start_with?("file:")
+
   url_with_scheme?(word) || word.match?(/\A[^\/\s:]+:/)
 end
 
