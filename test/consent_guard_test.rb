@@ -233,6 +233,37 @@ class ConsentGuardTest < Minitest::Test
     end
   end
 
+  def test_local_paths_after_a_push_are_allowed
+    [ "git push 2>&1 | tee /tmp/push.log", "git push > /tmp/out", "git push origin a && cd ../other",
+      "git stash push -- ./file.rb" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_scp_like_url_without_a_user_needs_consent
+    _, stderr, status = run_guard("git push github.com:someone-else/x.git b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/someone-else/, stderr)
+  end
+
+  def test_an_insteadof_alias_is_resolved_before_matching
+    system("git", "-C", @repo, "config", "url.git@github.com:someone-else/.insteadOf", "evil:")
+
+    _, stderr, status = run_guard("git push evil:repo.git b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/evil:repo/, stderr)
+  end
+
+  def test_a_refspec_after_a_push_is_allowed
+    _, stderr, status = run_guard("git push origin main:main")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_a_url_that_only_contains_an_allowed_path_needs_consent
     _, stderr, status = run_guard("git push https://evil.example/github.com/eirvandelden/x.git my-branch")
 
