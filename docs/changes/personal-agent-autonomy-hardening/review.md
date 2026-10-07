@@ -157,3 +157,9 @@ Closure: Etienne approves the explicit field parser. Seven regressions first fai
 - [ ] Nit: The metadata parser drops line one without validating the intent title. Title-less fenced or quoted examples can therefore grant autonomy. Require the canonical title before reading header fields. — `claude/.claude/skills/plan/scripts/auto-accept:83` →
 
 Compliance: Claude verifies all round 12–14 closures, supported field layouts, conflicting-value refusals, personal-only finish, separate model reviews, the scoped generated PR body, and every named Proof test. Existing assertions are not weakened. Both targeted suites pass and RuboCop reports no offenses. All branch commits have good signatures. The coordinator verifies the rebased snapshot against origin/main at `9ec33c9a`: all 32 test files pass with isolated global Git configuration, and main's CI is green.
+
+## Round 16 — 2026-10-07T19:24Z — b8ff42a4 (codex)
+
+- [ ] Important: The parser assumes line one is the canonical intent title. Ordinary prose or an HTML comment followed by accepted autonomous metadata still grants autonomy. Validate the required `# Intent: <title>` boundary. — `claude/.claude/skills/plan/scripts/auto-accept:83` →
+
+The read-only Codex CLI reproduces the same missing-title boundary as Claude. It reports no other finding. The branch remains clean during both reviews.
