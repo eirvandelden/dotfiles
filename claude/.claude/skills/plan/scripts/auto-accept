@@ -37,6 +37,9 @@ ROUND = /^### Round\b/
 FINDING = /^[-*] +[^\s→]/
 EXPLANATION = /^\s+(?:[-*+]|\d+[.)])\s/
 NO_FINDINGS = /^No findings\.\s*$/
+INTENT_FIELD = /\A(Author|Status|Type|Delivery): (.*)\z/
+INTENT_SEPARATOR = /\. (?=(?:Author|Status|Type|Delivery): )/
+INTENT_ACCEPTED = /\Aaccepted(?: \(\d{4}-\d{2}-\d{2}\))?\z/
 
 def closed?(line)
   line.include?("→") && line.split("→", -1).last.match?(CLOSED_SLOT)
@@ -78,7 +81,16 @@ end
 
 def intent_header(text)
   metadata = text.lines.drop(1).drop_while { |line| line.strip.empty? }
-  metadata.take_while { |line| !line.match?(/\A(?:\s*$| {0,3}(?:#|`{3,}|~{3,}|[=-]+\s*$))/) }.join
+  metadata.take_while { |line| line.match?(/\A(?:Author|Status|Type|Delivery): /) }.join
+end
+
+def intent_fields(header)
+  fields = header.lines.flat_map { |line| line.chomp.split(INTENT_SEPARATOR) }
+  fields.filter_map { |field| field.match(INTENT_FIELD)&.captures }
+end
+
+def intent_values(fields, name)
+  fields.filter_map { |key, value| value.delete_suffix(".") if key == name }.uniq
 end
 
 path = ARGV.first
@@ -90,13 +102,13 @@ refuse("origin is not a personal repository") unless url && RemoteMatcher.person
 
 # Autonomy is Etienne's choice on the intent, not the artifact's: the sibling intent.md must be
 # accepted and record Delivery: autonomous in the first metadata paragraph after its title.
-# Body sections and fenced examples never grant autonomy, even with standalone metadata lines.
+# Only expected fields at column zero belong to that paragraph; Markdown examples never grant autonomy.
 intent_path = File.join(File.dirname(path), "intent.md")
 refuse("no intent.md beside #{path}") unless File.file?(intent_path)
-intent = intent_header(File.read(intent_path))
-refuse("intent.md is not accepted") unless status_line(intent)&.match?(/Status: accepted\b/)
-delivery = [ status_line(intent), intent[/^Delivery:.*$/] ].compact.join(" ")
-refuse("intent.md does not record Delivery: autonomous") unless delivery.match?(/Delivery: autonomous\b/)
+fields = intent_fields(intent_header(File.read(intent_path)))
+statuses = intent_values(fields, "Status")
+refuse("intent.md is not accepted") unless statuses.one? && statuses.first.match?(INTENT_ACCEPTED)
+refuse("intent.md does not record Delivery: autonomous") unless intent_values(fields, "Delivery") == [ "autonomous" ]
 
 text = File.read(path)
 status = status_line(text)

@@ -70,7 +70,9 @@ The interview ends when every template section can be filled without guessing. U
 1. Which permissions will the change need? List gems or packages, system tools, migrations that drop or remove, and deploy files (playbook rules 8, 9, 11, 12, 13). Each one is approved now, or becomes a stop-and-ask later.
 2. Autonomous delivery (playbook §7a: agents carry the change to a verified PR; you approve the intent and the merge) or step-by-step (you accept the plan too)?
 
-Autonomous adds a `Delivery: autonomous` line next to `Status:` in `intent.md`, with the approved permissions under `## Constraints`.
+Autonomous adds `Delivery: autonomous` in the same paragraph as `Status:` in `intent.md`. Put it on the status line or immediately below, without a blank line. Record approved permissions under `## Constraints`.
+
+Header fields are `Author:`, `Status:`, `Type:` and `Delivery:`. Start each line at column zero; separate inline fields with a period and a space. An accepted status is `accepted` or `accepted (YYYY-MM-DD)`. Delivery is `autonomous` or `step-by-step`. Conflicting Status or Delivery values refuse automatic acceptance.
 
 Batch independent multiple-choice questions (up to 4) only when none of them would change another's answer; otherwise ask one at a time.
 

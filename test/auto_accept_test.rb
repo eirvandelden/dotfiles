@@ -254,6 +254,70 @@ class AutoAcceptTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  def test_accepts_an_undated_status_followed_by_delivery
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nAuthor: E. Status: accepted. Delivery: autonomous.\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
+  def test_accepts_an_undated_status_followed_by_delivery_and_type
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nAuthor: E. Status: accepted. Delivery: autonomous. Type: feature.\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
+  def test_refuses_undated_step_by_step_with_a_later_autonomous_line
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nStatus: accepted. Delivery: step-by-step.\nDelivery: autonomous\n")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_accepts_delivery_after_type_on_its_own_metadata_line
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nStatus: accepted.\nType: feature. Delivery: autonomous.\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
+  def test_accepts_delivery_before_status_on_the_author_line
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nAuthor: E. Delivery: autonomous. Status: accepted.\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
+  def test_refuses_a_conflicting_delivery_line_before_an_inline_choice
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nDelivery: step-by-step.\nStatus: accepted. Type: feature. Delivery: autonomous.\n")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_refuses_a_conflicting_status_later_in_the_header
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nStatus: accepted. Type: feature. Delivery: autonomous.\nStatus: draft.\n")
+
+    assert_refused(/intent.md is not accepted/i)
+  end
+
   def test_refuses_a_delivery_line_in_a_body_section
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)
@@ -276,7 +340,7 @@ class AutoAcceptTest < Minitest::Test
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)
     write_intent(delivery: nil)
-    File.write(File.join(@repo, "intent.md"), "\n```text\nDelivery: autonomous\n```\n", mode: "a")
+    File.write(File.join(@repo, "intent.md"), "```text\nDelivery: autonomous\n```\n", mode: "a")
 
     assert_refused(/autonomous/i)
   end
@@ -293,7 +357,7 @@ class AutoAcceptTest < Minitest::Test
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)
     write_intent(delivery: nil)
-    File.write(File.join(@repo, "intent.md"), "\n# Notes\n\nDelivery: autonomous\n", mode: "a")
+    File.write(File.join(@repo, "intent.md"), "# Notes\nDelivery: autonomous\n", mode: "a")
 
     assert_refused(/autonomous/i)
   end
@@ -302,7 +366,7 @@ class AutoAcceptTest < Minitest::Test
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)
     write_intent(delivery: nil)
-    File.write(File.join(@repo, "intent.md"), "\nConstraints\n-----------\n\nDelivery: autonomous\n", mode: "a")
+    File.write(File.join(@repo, "intent.md"), "Constraints\n-----------\nDelivery: autonomous\n", mode: "a")
 
     assert_refused(/autonomous/i)
   end
@@ -313,6 +377,63 @@ class AutoAcceptTest < Minitest::Test
     File.write(File.join(@repo, "intent.md"), "")
 
     assert_refused(/intent.md is not accepted/i)
+  end
+
+  def test_refuses_quoted_metadata_in_a_blockquote
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\n> Status: accepted. Delivery: autonomous.\n")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_quoted_metadata_in_indented_code
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\n    Status: accepted. Delivery: autonomous.\n")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_a_delivery_line_after_body_text_without_a_blank_line
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: nil)
+    File.write(File.join(@repo, "intent.md"), "Examples follow:\nDelivery: autonomous\n", mode: "a")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_refuses_status_text_in_another_metadata_field
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nType: feature; example Status: accepted. Delivery: autonomous.\n")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_a_draft_status_that_quotes_an_accepted_status_later
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(status: "draft", delivery: "autonomous. Example Status: accepted")
+
+    assert_refused(/intent/i)
+  end
+
+  def test_refuses_a_delivery_choice_that_only_starts_with_autonomous
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: "autonomous-example")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_refuses_step_by_step_even_when_the_header_mentions_autonomous
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: "step-by-step. Previous Delivery: autonomous")
+
+    assert_refused(/autonomous/i)
   end
 
   def test_names_a_missing_artifact

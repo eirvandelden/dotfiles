@@ -8,11 +8,11 @@ PR #182 merged the original feature as `f4adcd4e` during final verification. Thi
 
 ## Files that change
 
-- `claude/.claude/skills/plan/scripts/auto-accept` — trust expected metadata fields at column zero and compare their actual status and delivery values.
+- `claude/.claude/skills/plan/scripts/auto-accept` — parse declared header fields, preserve supported layouts and refuse conflicting status or delivery values.
 - `claude/.claude/skills/intent/SKILL.md` — record Delivery in the status paragraph and route coordination through review auto mode.
 - `claude/.claude/skills/review/SKILL.md` — require a separate read-only Claude CLI round from Codex coordinators.
 - `claude/.claude/skills/finish/SKILL.md` — require an accepted personal autonomous intent, allow coordinator invocation and skip the actual confirmation step.
-- `test/auto_accept_test.rb` — add refusals for body examples, quoted metadata and empty intents; strengthen heading and fence cases.
+- `test/auto_accept_test.rb` — cover valid field layouts and conflicting values; add refusals for body examples, quoted metadata and empty intents.
 - `test/autonomy_contract_test.rb` — cover review routing, read-only prompt overrides, finish eligibility, coordinator invocation and metadata placement.
 
 ## Order of work
@@ -30,6 +30,7 @@ PR #182 merged the original feature as `f4adcd4e` during final verification. Thi
 - Body and quoted metadata cannot grant autonomy → `test/auto_accept_test.rb` `test_refuses_a_delivery_line_in_a_body_section`, `test_refuses_a_delivery_line_in_a_fenced_body_example`, `test_refuses_a_delivery_line_in_a_fenced_header_example`, `test_refuses_an_accepted_status_only_in_a_body_example`, `test_refuses_a_delivery_line_after_a_second_title_heading`, `test_refuses_a_delivery_line_after_a_setext_heading`, `test_refuses_quoted_metadata_in_a_blockquote`, `test_refuses_quoted_metadata_in_indented_code`, `test_refuses_a_delivery_line_after_body_text_without_a_blank_line`
 - Empty intents refuse with a reason; valid header forms still pass → `test/auto_accept_test.rb` `test_refuses_an_empty_intent_with_a_reason`, `test_accepts_a_personal_artifact_with_a_closed_critique`, `test_accepts_a_delivery_line_of_its_own`
 - Only actual status and delivery values grant autonomy → `test/auto_accept_test.rb` `test_refuses_status_text_in_another_metadata_field`, `test_refuses_a_draft_status_that_quotes_an_accepted_status_later`, `test_refuses_a_delivery_choice_that_only_starts_with_autonomous`, `test_refuses_step_by_step_even_when_the_header_mentions_autonomous`
+- Declared fields preserve supported layouts and refuse conflicting choices → `test/auto_accept_test.rb` `test_accepts_an_undated_status_followed_by_delivery`, `test_accepts_an_undated_status_followed_by_delivery_and_type`, `test_accepts_delivery_after_type_on_its_own_metadata_line`, `test_accepts_delivery_before_status_on_the_author_line`, `test_refuses_undated_step_by_step_with_a_later_autonomous_line`, `test_refuses_a_conflicting_delivery_line_before_an_inline_choice`, `test_refuses_a_conflicting_status_later_in_the_header`
 - Codex coordination obtains separate model families without herdr → `test/autonomy_contract_test.rb` `test_codex_coordinator_uses_the_claude_cli_review_backend`, `test_codex_auto_review_uses_a_read_only_claude_cli_backend`
 - The Claude prompt overrides the reviewer write and fetch steps → `test/autonomy_contract_test.rb` `test_claude_cli_review_replaces_the_reviewer_write_and_fetch_steps`
 - Finish skips only the opted-in personal confirmation gate → `test/autonomy_contract_test.rb` `test_finish_auto_mode_skips_the_actual_body_confirmation_step`, `test_finish_auto_mode_requires_an_accepted_autonomous_intent`, `test_finish_auto_mode_is_personal_only`
