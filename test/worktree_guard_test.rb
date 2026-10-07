@@ -110,6 +110,32 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus)
   end
 
+  def test_a_quoted_commit_message_that_mentions_worktree_add_is_allowed
+    _, stderr, status = run_guard('git commit -m "Refuse it; git worktree add /tmp/x is blocked"')
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_heredoc_body_that_mentions_worktree_add_is_allowed
+    command = "git commit -F - <<'EOF'\nGuard\n\n- git worktree add /tmp/x -b x is refused\nEOF"
+    _, stderr, status = run_guard(command)
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_pr_body_built_from_a_heredoc_that_mentions_worktree_add_is_allowed
+    command = "gh pr create --title t --body \"$(cat <<'EOF'\nBlocks git worktree add .claude/worktrees/x\nEOF\n)\""
+    _, stderr, status = run_guard(command)
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_worktree_add_after_a_heredoc_is_still_checked
+    _, _, status = run_guard("cat <<'EOF'\nhello\nEOF\ngit worktree add ../elsewhere -b x")
+
+    assert_equal(2, status.exitstatus)
+  end
+
   def test_the_path_after_dash_b_is_the_target_not_the_branch_name
     _, stderr, status = run_guard("git worktree add -b .worktrees/inside .worktrees/inside")
 

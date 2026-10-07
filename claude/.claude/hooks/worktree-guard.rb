@@ -4,8 +4,10 @@
 # to the agent; exit 0 lets it run. `worktree-create` runs git as its own subprocess, so this
 # hook never sees it.
 #
-# It tokenises the command; it is not a shell. Variables, subshells and eval are not expanded,
-# so such a target is taken literally and usually blocks. Everything else errs towards allowing:
+# It tokenises the command; it is not a shell. Quoted text and heredoc bodies are text, so a
+# commit message or PR body that mentions `git worktree add` passes. Variables, subshells and
+# eval are not expanded, so such a target is taken literally and usually blocks. Everything else
+# errs towards allowing:
 # a false block stops legitimate work, and the written rule covers the rest.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does not block
@@ -13,14 +15,72 @@
 require "json"
 require "open3"
 require "shellwords"
+require "strscan"
 
 SEGMENT_SEPARATOR = /&&|\|\||[;|\n]/
+TOKEN = /
+  (?<separator>#{SEGMENT_SEPARATOR})
+  | (?<space>[ \t]+)
+  | '(?<single>[^']*)'
+  | "(?<double>(?:\\.|[^"\\])*)"
+  | \\(?<escaped>.)
+  | (?<plain>[^\s;&|'"\\]+|&)
+/mx
+HEREDOC_START = /(?<!<)<<(?!<)-?\s*(['"]?)([A-Za-z_]\w*)\1/
 GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace].freeze
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
 MESSAGE
+
+# The words of each simple command. Separators inside quotes and heredoc bodies are text, not
+# commands. A quote left open falls back to splitting on every separator.
+def segments(command)
+  text = without_heredoc_bodies(command)
+  pieces = tokens(text)
+  return text.split(SEGMENT_SEPARATOR).map { |segment| words(segment) } unless pieces
+
+  pieces.slice_when { |before, after| [ before, after ].include?(:separator) }
+        .reject { |chunk| chunk == [ :separator ] }
+        .map { |chunk| join_words(chunk) }
+end
+
+def without_heredoc_bodies(command)
+  delimiters = []
+  command.lines.each_with_object(+"") do |line, kept|
+    if delimiters.empty?
+      kept << line
+      delimiters.concat(line.scan(HEREDOC_START).map(&:last))
+    elsif line.strip == delimiters.first
+      delimiters.shift
+    end
+  end
+end
+
+# Quoted text, escapes and plain text as strings; :space and :separator between them. Nil when
+# a quote is left open.
+def tokens(text)
+  scanner = StringScanner.new(text)
+  pieces = []
+  until scanner.eos?
+    return nil unless scanner.scan(TOKEN)
+
+    pieces << piece(scanner)
+  end
+  pieces
+end
+
+def piece(scanner)
+  return :separator if scanner[:separator]
+  return :space if scanner[:space]
+
+  scanner[:single] || scanner[:double] || scanner[:escaped] || scanner[:plain]
+end
+
+def join_words(pieces)
+  pieces.chunk { |piece| piece != :space }.filter_map { |is_word, parts| parts.join if is_word }
+end
 
 def words(segment)
   Shellwords.split(segment)
@@ -115,8 +175,7 @@ def misplaced_worktree?(directory, target)
 end
 
 def blocked?(command, directory)
-  command.split(SEGMENT_SEPARATOR).any? do |segment|
-    segment_words = words(segment)
+  segments(command).any? do |segment_words|
     if segment_words.first == "cd" && segment_words[1]
       directory = File.expand_path(segment_words[1], directory)
       next false
