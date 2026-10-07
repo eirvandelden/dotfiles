@@ -10,6 +10,7 @@ require "tmpdir"
 class WorktreeFirstSkillTest < Minitest::Test
   SKILL = File.expand_path("../claude/.claude/skills/worktree-first/SKILL.md", __dir__)
   CREATE = File.expand_path("../git/.config/git/worktree-tools/worktree-create", __dir__)
+  WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
   def setup
     @enclosing = Dir.mktmpdir
@@ -99,7 +100,7 @@ class WorktreeFirstSkillTest < Minitest::Test
   def environment
     path = ENV.fetch("PATH").split(File::PATH_SEPARATOR)
     { "HOME" => @home, "PATH" => path.reject { |dir| File.executable?(File.join(dir, "gh")) }.join(":"),
-      "HERDR_ENV" => nil, "CREATE_CALL_LOG" => create_call_log }
+      "HERDR_ENV" => nil, "GIT_CONFIG_GLOBAL" => "/dev/null", "CREATE_CALL_LOG" => create_call_log }
   end
 
   def install_create_wrapper
@@ -167,7 +168,7 @@ class WorktreeFirstSkillTest < Minitest::Test
   end
 
   def git(dir, *arguments)
-    output, status = Open3.capture2("git", "-C", dir, "-c", "core.hooksPath=/dev/null",
+    output, status = Open3.capture2(WITHOUT_GLOBAL_GIT_CONFIG, "git", "-C", dir, "-c", "core.hooksPath=/dev/null",
                                     "-c", "user.email=test@example.com", "-c", "user.name=Test",
                                     "-c", "protocol.file.allow=always", *arguments)
     raise("git #{arguments.join(' ')} failed: #{output}") unless status.success?

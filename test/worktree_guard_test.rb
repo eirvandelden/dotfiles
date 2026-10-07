@@ -11,6 +11,7 @@ require "tmpdir"
 # runs git as its own subprocess, so the hook never sees it.
 class WorktreeGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/worktree-guard.rb", __dir__)
+  WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
   def setup
     @enclosing = Dir.mktmpdir
@@ -214,7 +215,7 @@ class WorktreeGuardTest < Minitest::Test
   end
 
   def git(dir, *arguments)
-    output, status = Open3.capture2("git", "-C", dir, "-c", "core.hooksPath=/dev/null",
+    output, status = Open3.capture2(WITHOUT_GLOBAL_GIT_CONFIG, "git", "-C", dir, "-c", "core.hooksPath=/dev/null",
                                     "-c", "user.email=test@example.com", "-c", "user.name=Test",
                                     "-c", "protocol.file.allow=always", *arguments)
     raise("git #{arguments.join(' ')} failed: #{output}") unless status.success?
