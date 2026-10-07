@@ -33,9 +33,13 @@ module WorktreeTools
       state = pr_state(branch)
       return if fresh?(dir, branch, state, default_branch)
 
-      return remove_worktree(dir, branch, state) if state == "MERGED"
+      remove_worktree(dir, branch, state) if removable?(dir, branch, state, default_branch)
+    end
 
-      remove_worktree(dir, branch, state) if pushed_under_own_name?(dir, branch) && ancestor?(dir, branch, default_branch)
+    def removable?(dir, branch, state, default_branch)
+      return true if state == "MERGED"
+
+      pushed_under_own_name?(dir, branch) && ancestor?(dir, branch, default_branch)
     end
 
     # A branch that was never pushed under its own name has no merge to wait for: origin moving

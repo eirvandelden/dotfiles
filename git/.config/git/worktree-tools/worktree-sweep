@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# Sweep the merged worktrees of the repository this runs in. The lefthook pull hooks call it.
+# Plain ruby, not rv: CI has no rv, and the hooks run it with whatever ruby is on PATH.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "repository"
+require "sweep"
+require "open3"
+
+module WorktreeTools
+  class SweepCommand
+    # Git exports these to its hooks; with GIT_DIR set, `git -C .worktrees/x` reads the wrong repository.
+    HOOK_ENVIRONMENT = %w[GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
+                          GIT_OBJECT_DIRECTORY].freeze
+
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    def run!(_argv)
+      HOOK_ENVIRONMENT.each { |name| ENV.delete(name) }
+      ENV["GIT_TERMINAL_PROMPT"] = "0"
+      repository = Repository.new("worktree-sweep")
+      kept = [ current_worktree ].compact
+      Dir.chdir(repository.root)
+      sweep(repository, kept)
+    end
+
+    private
+
+    def sweep(repository, kept)
+      default_branch = repository.default_branch
+      repository.fetch_default_branch(default_branch)
+      Sweep.new("worktree-sweep").run(default_branch: default_branch, keep: kept)
+    end
+
+    def current_worktree
+      output, status = Open3.capture2("git", "rev-parse", "--show-toplevel", err: File::NULL)
+      output.strip if status.success?
+    end
+  end
+end
+
+WorktreeTools::SweepCommand.run!(ARGV) if $PROGRAM_NAME == __FILE__
