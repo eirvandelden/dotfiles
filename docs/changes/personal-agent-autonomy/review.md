@@ -91,3 +91,15 @@ Security: nothing found. The branch diff has no employer name or credential.
 Suite: All 30 `test/*_test.rb` files pass, including `auto_accept_test.rb` (27 runs), `autonomy_contract_test.rb` (19), `herdr_worker_scripts_test.rb` (77) and `skill_parity_test.rb` (7). Shellcheck and RuboCop are clean on the touched files. Markdownlint did not run: this worktree has no `node_modules`.
 
 Remote: the branch is rebased onto `origin/main` (`58dab0a3`). `origin/personal-agent-autonomy` still holds only the four pre-rebase docs commits, so the next push needs `--force-with-lease`.
+
+## Round 8 — 2026-10-07T08:32Z — 890b4eb9
+
+- [ ] Nit: `auto-accept` looks for `Delivery: autonomous` anywhere in `intent.md`, not on the status line where the `intent` skill writes it. A step-by-step intent whose body quotes the phrase passes the gate. Reproduced in a temp repo with a personal origin: an accepted intent with no Delivery line on its status line and `- Not \`Delivery: autonomous\`: Etienne accepts the plan too.` under `## Constraints` gives exit 0 and `Status: accepted`. The same happens when `## Problem` mentions the phrase, which is likely for a later change to this workflow. This is the round 1 status-line problem again, on the new intent check. Read the Delivery value from the intent's status line (or a line that starts with `Delivery:`), and add a test with the phrase only in the body. — `claude/.claude/skills/plan/scripts/auto-accept:92` →
+
+Compliance: all five round 7 findings are closed in commits `cdf1809c`, `b4d5c700`, `2a8ee0e0` and `436d24dc`. Each fix has a test: `test_refuses_without_an_intent_beside_the_plan`, `test_refuses_while_the_intent_is_still_draft`, `test_refuses_a_step_by_step_intent`, `test_names_a_missing_artifact`, `test_coordinator_reviews_again_until_both_reviewers_are_clean`, `test_plan_auto_mode_rules_out_plan_mode_before_anything_else` and `test_plan_auto_mode_passes_auto_accept_the_folder_path`. The Proof list now names the plan-only criteria, and all 30 tests it names exist. Every acceptance criterion in `spec.md` maps to a Proof test, except the spec-stage criterion that `## Rework` drops. The diff matches `## Files that change` minus the spec items. No existing test was weakened, skipped or deleted: `skill_parity_test.rb` only removes `code-review` from `CLAUDE_ONLY`, as planned. Probes that behave as intended: a draft intent, an intent with `Delivery: step-by-step`, and a `Delivery: autonomous` line of its own below the status line. The repository root has no `REVIEW.md` or `REVIEW.local.md`; this round used the passes from `claude/.claude/skills/new-repo-setup/references/REVIEW.md`.
+
+Security: nothing found. The branch diff has no employer name or credential.
+
+Suite: all 30 `test/*_test.rb` files pass, including `auto_accept_test.rb` (31 runs), `autonomy_contract_test.rb` (22), `herdr_worker_scripts_test.rb` (77) and `skill_parity_test.rb` (7). Shellcheck and RuboCop are clean on the touched files.
+
+Remote: `origin/main` is still `58dab0a3`, the branch base. `origin/personal-agent-autonomy` is `b1bfb7af`, so the next push still needs `--force-with-lease`.
