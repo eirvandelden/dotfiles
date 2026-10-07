@@ -12,7 +12,9 @@
 [apply]
   whitespace = nowarn
 [credential]
-  helper = osxkeychain
+  # An empty helper clears every helper set before this file, Xcode's
+  # osxkeychain included, so no credential comes from the Keychain.
+  helper =
 [color]
   ui = true
   status = true
