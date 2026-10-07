@@ -120,6 +120,36 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_destructive_database_commands_are_blocked_without_user_consent
+    [ "bin/rails db:drop", "rails db:reset", "bundle exec rails db:schema:load", "bin/rails db:drop:all" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_match(/rule 9/, stderr)
+    end
+  end
+
+  def test_destructive_database_commands_run_once_the_user_has_consented
+    _, stderr, status = run_guard("I_HAVE_USER_CONSENT=1 bin/rails db:drop")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_routine_database_commands_are_allowed
+    [ "bin/rails db:migrate", "bin/rails db:migrate:status", "bin/rails db:prepare",
+      "bin/rails db:migrate:down VERSION=1" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_commit_message_naming_db_drop_is_allowed
+    _, stderr, status = run_guard("git commit -m 'never run rails db:drop here'")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_pushing_to_an_allowed_remote_is_allowed
     _, stderr, status = run_guard("git push origin my-branch")
 
@@ -135,10 +165,190 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/upstream/, stderr)
   end
 
+  # A word that is neither a configured remote nor a URL is a local path to git,
+  # so the push stays on this machine.
   def test_a_remote_that_is_not_configured_is_left_alone
     _, stderr, status = run_guard("git push some-typo my-branch")
 
     assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_to_a_url_outside_the_allowlist_needs_consent
+    [ "git@github.com:someone-else/dotfiles.git", "https://github.com/someone-else/dotfiles.git" ].each do |url|
+      _, stderr, status = run_guard("git push #{url} my-branch")
+
+      assert_equal(2, status.exitstatus, url)
+      assert_match(/someone-else/, stderr)
+    end
+  end
+
+  def test_pushing_to_an_allowed_url_is_allowed
+    _, stderr, status = run_guard("git push git@github.com:eirvandelden/dotfiles.git my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_with_no_target_is_allowed
+    _, stderr, status = run_guard("git push")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_git_stash_push_is_not_a_push
+    [ "git stash push -u -m 'wip-tag'", "git stash push claude/.claude/settings.json" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_push_followed_by_another_command_is_allowed
+    [ "git push --force-with-lease && gh pr create --fill", "git push --force-with-lease; gh pr create --fill" ]
+      .each do |command|
+        _, stderr, status = run_guard(command)
+
+        assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+      end
+  end
+
+  def test_every_push_in_a_compound_command_is_checked
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push origin a && git push upstream b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
+  def test_a_push_hidden_behind_shell_syntax_is_still_checked
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    [ "git push origin a; git push upstream b", "true&&git push upstream b", "git push origin a\ngit push upstream b",
+      "env FOO=1 git push upstream b", "sudo git push upstream b", "/usr/bin/git push upstream b",
+      "git --git-dir .git push upstream b", "{ git push upstream b; }" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_match(/upstream/, stderr)
+    end
+  end
+
+  def test_local_paths_after_a_push_are_allowed
+    [ "git push 2>&1 | tee /tmp/push.log", "git push > /tmp/out", "git push origin a && cd ../other",
+      "git stash push -- ./file.rb" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_scp_like_url_without_a_user_needs_consent
+    _, stderr, status = run_guard("git push github.com:someone-else/x.git b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/someone-else/, stderr)
+  end
+
+  def test_an_insteadof_alias_is_resolved_before_matching
+    system("git", "-C", @repo, "config", "url.git@github.com:someone-else/.insteadOf", "evil:")
+
+    _, stderr, status = run_guard("git push evil:repo.git b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/evil:repo/, stderr)
+  end
+
+  def test_a_refspec_after_a_push_is_allowed
+    _, stderr, status = run_guard("git push origin main:main")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_words_of_a_later_command_are_not_push_targets
+    [ "git push origin b && open https://example.com/pr/1", "git push origin b && curl -s https://api.example.com/x",
+      "git push origin b && bin/rails test foo_test.rb:12", "git push origin b; echo see x.rb:12" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_host_and_path_target_without_a_dot_needs_consent
+    [ "git push myhost:someone-else/x.git b", "git push localhost:x.git b" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
+  def test_a_refspec_with_a_dot_is_allowed
+    [ "git push origin release-1.2:release-1.2", "git push origin v1.2.3:v1.2.3" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_remote_push_url_outside_the_allowlist_needs_consent
+    add_remote("mirror", "git@github.com:eirvandelden/dotfiles.git")
+    system("git", "-C", @repo, "remote", "set-url", "--push", "mirror", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push mirror b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/mirror/, stderr)
+  end
+
+  def test_a_remote_after_a_flag_value_is_still_checked
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push -o ci.skip upstream b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
+  def test_a_stash_message_that_looks_like_a_host_is_allowed
+    [ "git stash push -m 'feat: add x'", "git stash push -m 'WIP: x' -- a.rb",
+      "git push -o 'note: x' origin b" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_an_option_value_does_not_hide_the_repository
+    [ "git push -o ci.skip git@github.com:someone-else/x.git b",
+      "git push --push-option ci.skip git@github.com:someone-else/x.git b",
+      "git push --receive-pack git-receive-pack git@github.com:someone-else/x.git b",
+      "git push -o ci.skip myhost:x.git b", "git push --repo=git@github.com:someone-else/x.git b",
+      "git push --repo git@github.com:someone-else/x.git b",
+      "git push --repo=origin git@github.com:someone-else/x.git b",
+      "git push --repo origin git@github.com:someone-else/x.git b",
+      "git push file:/tmp/x b" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
+  def test_a_url_that_only_contains_an_allowed_path_needs_consent
+    _, stderr, status = run_guard("git push https://evil.example/github.com/eirvandelden/x.git my-branch")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/evil\.example/, stderr)
+  end
+
+  def test_a_push_with_dash_c_resolves_the_remote_in_that_repository
+    other = Dir.mktmpdir
+    system("git", "init", "--quiet", other)
+    system("git", "-C", other, "remote", "add", "fork", "git@github.com:eirvandelden/other.git")
+
+    _, stderr, status = run_guard("git -C #{other} push fork my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf(other)
   end
 
   # Quoted text arrives as one word, so a message describing a flag is not the flag.
