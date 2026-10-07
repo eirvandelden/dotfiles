@@ -234,6 +234,26 @@ class AutoAcceptTest < Minitest::Test
     assert_refused(/autonomous/i)
   end
 
+  def test_refuses_an_intent_that_quotes_autonomous_delivery_only_in_its_body
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: nil)
+    File.write(File.join(@repo, "intent.md"), "\n## Constraints\n\n- Not `Delivery: autonomous`: Etienne accepts the plan.\n", mode: "a")
+
+    assert_refused(/autonomous/i)
+  end
+
+  def test_accepts_a_delivery_line_of_its_own
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    write_intent(delivery: nil)
+    File.write(File.join(@repo, "intent.md"), "Delivery: autonomous\n", mode: "a")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   def test_names_a_missing_artifact
     add_remote("git@github.com:eirvandelden/dotfiles.git")
 

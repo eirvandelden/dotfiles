@@ -84,12 +84,14 @@ url = origin_url
 refuse("origin is not a personal repository") unless url && RemoteMatcher.personal?(url)
 
 # Autonomy is Etienne's choice on the intent, not the artifact's: the sibling intent.md must be
-# accepted and record Delivery: autonomous, or a step-by-step change would be accepted here.
+# accepted and record Delivery: autonomous on its status line or a Delivery: line of its own, or a
+# step-by-step change, or one that only quotes the phrase, would be accepted here.
 intent_path = File.join(File.dirname(path), "intent.md")
 refuse("no intent.md beside #{path}") unless File.file?(intent_path)
 intent = File.read(intent_path)
 refuse("intent.md is not accepted") unless status_line(intent)&.match?(/Status: accepted\b/)
-refuse("intent.md does not record Delivery: autonomous") unless intent.match?(/Delivery: autonomous\b/)
+delivery = [ status_line(intent), intent[/^Delivery:.*$/] ].compact.join(" ")
+refuse("intent.md does not record Delivery: autonomous") unless delivery.match?(/Delivery: autonomous\b/)
 
 text = File.read(path)
 status = status_line(text)
