@@ -96,3 +96,7 @@ Test setup: temp git repos with an `origin` remote and an isolated `HOME` holdin
 ## Rework (2026-10-07)
 
 While this branch was in review, `main` removed the spec stage (`3d5aaf5c`, `da007c36`, `d2303f13`, `f8297596`). Etienne agreed to rework onto the two-stage chain. The rebase drops the spec skill's auto mode and `hand-off-plan.sh spec --auto`. The coordinator loop runs `plan`, then `implement`. The critique and `auto-accept` apply to `plan.md` only. The acceptance criterion "auto spec accepted only after a recorded critique" falls away; the plan critique carries the same guarantee.
+
+## Follow-up scope (2026-10-07)
+
+PR #182 merged the original implementation as `f4adcd4e` during final verification. This follow-up preserves its accepted outcome and fixes the review findings. Its production diff contains only `auto-accept`, `intent/SKILL.md`, `review/SKILL.md` and `finish/SKILL.md`, plus regressions in `auto_accept_test.rb` and `autonomy_contract_test.rb`. The original Proof tests remain on main; this branch adds seven acceptance-gate regressions and four workflow contracts. Restored artifacts provide review context and leave through `finish` again. The PR body describes only this follow-up diff.
