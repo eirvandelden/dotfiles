@@ -38,9 +38,23 @@ class CodexConfigTest < Minitest::Test
     assert_equal(TREK_URL, codex_trek_config.dig("transport", "url"))
   end
 
+  def test_codex_sends_no_credentials_to_trek
+    skip("codex is not installed") unless codex_installed?
+
+    transport = codex_trek_config.fetch("transport")
+
+    %w[bearer_token_env_var http_headers env_http_headers http_headers_helper].each do |setting|
+      assert_nil(transport[setting], "#{setting} must not be set; TREK logs in through OAuth")
+    end
+  end
+
+  def test_trek_tools_run_without_asking_by_default
+    assert_equal("approve", trek_server[/^default_tools_approval_mode\s*=\s*"([^"]+)"/, 1])
+  end
+
   def test_every_listed_trek_tool_asks_for_approval
     APPROVAL_TOOLS.each do |tool|
-      assert_equal("approve", approval_mode(tool), "#{tool} must ask for approval")
+      assert_equal("prompt", approval_mode(tool), "#{tool} must ask for approval")
     end
   end
 
@@ -60,7 +74,7 @@ class CodexConfigTest < Minitest::Test
   end
 
   def approving_trek_tools
-    trek_tool_names.select { |tool| approval_mode(tool) == "approve" }
+    trek_tool_names.select { |tool| approval_mode(tool) == "prompt" }
   end
 
   def trek_tool_names

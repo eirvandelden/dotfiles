@@ -170,36 +170,37 @@ approval_mode = "approve"
 
 [mcp_servers.trek]
 url = "https://trips.vandelden.family/mcp"
+default_tools_approval_mode = "approve"
 
 [mcp_servers.trek.tools.delete_trip]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.bulk_delete_places]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.delete_journey]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.delete_collection]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.dissolve_vacay_plan]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.remove_trip_member]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.remove_collection_member]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.remove_journey_contributor]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.delete_trip_invite_link]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.trek.tools.delete_vacay_year]
-approval_mode = "approve"
+approval_mode = "prompt"
 
 [mcp_servers.node_repl]
 args = []
