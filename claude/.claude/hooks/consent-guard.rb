@@ -75,28 +75,67 @@ def destroys_database?(words)
   words.any? { |word| word.match?(/\Adb:(drop|reset|schema:load)(:\w+)?\z/) }
 end
 
-# The target a push names, when it is not one this repository may be pushed to
-# unattended: a URL or configured remote outside the allowlist, or a name that
-# is neither. A bare `git push` names no target and goes to the branch's
-# configured remote, so it passes.
+SHELL_OPERATORS = %w[&& || ; | &].freeze
+
+GITHUB_URL = %r{\A(?:(?:https|ssh|git)://(?:[^@/]+@)?|[^@/\s]+@)?github\.com[:/](?<path>.+)\z}
+
+# The first target, across every `git push` in the command, that this
+# repository may not be pushed to unattended: a URL or configured remote outside
+# the allowlist, or a name that is neither. A bare `git push` names no target
+# and goes to the branch's configured remote, so it passes.
 def disallowed_remote(words, working_directory)
-  return nil unless words.include?("git") && words.include?("push")
-
-  target = push_target(words)
-  return nil unless target
-
-  url = url_like?(target) ? target : remote_url(target, working_directory)
-  target unless RemoteMatcher.allowed_remotes.any? { |pattern| url.match?(pattern) }
+  segments(words).filter_map { |segment| push_arguments(segment, working_directory) }
+                 .filter_map { |directory, arguments| disallowed_target(arguments, directory) }
+                 .first
 end
 
-# The first word after `push` that is not a flag. A flag that takes a separate
-# value shifts the target onto that value, which is not a remote, so it asks.
-def push_target(words)
-  words.drop(words.index("push") + 1).find { |word| !word.start_with?("-") }
+# Each simple command of a compound one, split on the shell's control operators.
+def segments(words)
+  words.slice_when { |word, _| SHELL_OPERATORS.include?(word) }.map { |segment| segment - SHELL_OPERATORS }
+end
+
+# The repository directory and the arguments of a `git push`, or nil when the
+# segment runs anything else — `git stash push` included.
+def push_arguments(segment, working_directory)
+  command = segment.drop_while { |word| word.match?(/\A\w+=/) }
+  return nil unless command.first && File.basename(command.first) == "git"
+
+  directory, rest = after_git_options(command.drop(1), working_directory)
+  [ directory, rest.drop(1) ] if rest.first == "push"
+end
+
+# Skips git's global options before the subcommand, following -C into its directory.
+def after_git_options(words, directory)
+  option = words.first
+  return [ directory, words ] unless option&.start_with?("-")
+  return after_git_options(words.drop(2), File.expand_path(words[1].to_s, directory)) if option == "-C"
+  return after_git_options(words.drop(2), directory) if option == "-c"
+
+  after_git_options(words.drop(1), directory)
+end
+
+# The first argument that is not a flag. A flag that takes a separate value
+# shifts the target onto that value, which is not a remote, so it asks.
+def disallowed_target(arguments, directory)
+  target = arguments.find { |word| !word.start_with?("-") }
+  return nil unless target
+
+  url = url_like?(target) ? target : remote_url(target, directory)
+  target unless allowed_url?(url)
 end
 
 def url_like?(target)
   target.include?("://") || target.match?(/\A[^\s\/]+@[^\s:]+:/) || target.start_with?("/", "./", "../")
+end
+
+# Matches the allowlist against the path on github.com only, from its start, so
+# a URL on another host that merely contains an allowed path does not pass.
+def allowed_url?(url)
+  path = url[GITHUB_URL, :path]
+  return false unless path
+
+  canonical = "github.com/#{path}"
+  RemoteMatcher.allowed_remotes.any? { |pattern| pattern.match(canonical)&.begin(0)&.zero? }
 end
 
 def remote_url(name, working_directory)

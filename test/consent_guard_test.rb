@@ -193,6 +193,48 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_git_stash_push_is_not_a_push
+    [ "git stash push -u -m 'wip-tag'", "git stash push claude/.claude/settings.json" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_push_followed_by_another_command_is_allowed
+    _, stderr, status = run_guard("git push --force-with-lease && gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_every_push_in_a_compound_command_is_checked
+    add_remote("upstream", "git@github.com:someone-else/dotfiles.git")
+
+    _, stderr, status = run_guard("git push origin a && git push upstream b")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/upstream/, stderr)
+  end
+
+  def test_a_url_that_only_contains_an_allowed_path_needs_consent
+    _, stderr, status = run_guard("git push https://evil.example/github.com/eirvandelden/x.git my-branch")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/evil\.example/, stderr)
+  end
+
+  def test_a_push_with_dash_c_resolves_the_remote_in_that_repository
+    other = Dir.mktmpdir
+    system("git", "init", "--quiet", other)
+    system("git", "-C", other, "remote", "add", "fork", "git@github.com:eirvandelden/other.git")
+
+    _, stderr, status = run_guard("git -C #{other} push fork my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf(other)
+  end
+
   # Quoted text arrives as one word, so a message describing a flag is not the flag.
   def test_naming_a_guarded_flag_in_a_commit_message_is_allowed
     [ "git commit -m 'docs: explain why --force is banned'",
