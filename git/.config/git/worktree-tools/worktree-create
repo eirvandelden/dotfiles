@@ -31,17 +31,22 @@ module WorktreeTools
       die("worktree-create: .worktrees is not gitignored; add it to .git/info/exclude") unless worktrees_ignored?
       git("worktree", "prune")
 
+      path = repository.exclusively { prepare_worktree(repository, name) }
+      open_pane(path) unless no_pane
+      puts path
+    end
+
+    private
+
+    def prepare_worktree(repository, name)
       default_branch = repository.default_branch
       repository.fetch_default_branch(default_branch)
       Sweep.new("worktree-create").run(default_branch: default_branch, keep: kept_paths(name))
       path = create_worktree(name, default_branch)
       record_for_herdr_pane(path)
       run_worktree_init(path)
-      open_pane(path) unless no_pane
-      puts path
+      path
     end
-
-    private
 
     def kept_paths(name)
       path = ".worktrees/#{name}"

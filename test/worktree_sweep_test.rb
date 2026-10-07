@@ -154,7 +154,47 @@ class WorktreeSweepTest < Minitest::Test
     assert_match(/not inside a git repository/, stderr)
   end
 
+  def test_waits_for_a_running_sweep_to_release_the_lock
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_gh_states("merged-branch" => "MERGED")
+
+    with_lock_held do
+      stdin, stdout, stderr, waiter = Open3.popen3(script_environment, "ruby", SCRIPT, chdir: @repo)
+      [ stdin, stdout, stderr ].each(&:close)
+      @waiter = waiter
+      wait_until("the sweep to find the repository") { git_calls.any? { |call| call.start_with?("worktree list") } }
+      sleep 2
+      assert(waiter.alive?, "the sweep must still be waiting")
+      assert_empty(git_calls.grep(/\Afetch /), "the sweep must not fetch while the lock is held")
+      assert(File.directory?(merged), "the sweep must wait while the lock is held")
+    end
+
+    wait_until("the waiting sweep to finish", deadline: 60) { !@waiter.alive? }
+    refute(File.directory?(merged))
+  end
+
   private
+
+  def lock_file
+    File.join(@repo, ".git", "worktree-sweep.lock")
+  end
+
+  def with_lock_held
+    File.open(lock_file, File::RDWR | File::CREAT) do |file|
+      file.flock(File::LOCK_EX)
+      yield
+    end
+  end
+
+  def wait_until(what, deadline: DEADLINE)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
+    until yield
+      flunk("timed out waiting for #{what}") if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      sleep 0.05
+    end
+  end
 
   def advance_origin_main
     extra_clone = File.join(@enclosing, "advance-#{rand(1_000_000)}")
@@ -254,13 +294,16 @@ class WorktreeSweepTest < Minitest::Test
     File.exist?(log) ? File.readlines(log, chomp: true) : []
   end
 
-  def run_script(*arguments, chdir: @repo, extra_env: {})
-    environment = {
+  def script_environment(extra_env = {})
+    {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HOME" => @enclosing,
       "GH_STUB_STATES" => gh_states_file,
       "GIT_CALL_LOG" => File.join(@enclosing, "git-calls.log")
     }.merge(extra_env)
-    Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  def run_script(*arguments, chdir: @repo, extra_env: {})
+    Open3.capture3(script_environment(extra_env), "ruby", SCRIPT, *arguments, chdir: chdir)
   end
 end

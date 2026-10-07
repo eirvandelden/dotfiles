@@ -46,7 +46,24 @@ module WorktreeTools
       git("fetch", "origin", branch)
     end
 
+    # Creates the lock file, so its presence shows that a sweep started.
+    def touch_lock
+      File.open(lock_path, File::RDWR | File::CREAT) { nil }
+    end
+
+    # One sweep or create at a time per repository: another caller waits here.
+    def exclusively
+      File.open(lock_path, File::RDWR | File::CREAT) do |lock|
+        lock.flock(File::LOCK_EX)
+        yield
+      end
+    end
+
     private
+
+    def lock_path
+      File.join(common_dir, "worktree-sweep.lock")
+    end
 
     def working_tree?(path)
       output, status = git("-C", path, "rev-parse", "--is-inside-work-tree")

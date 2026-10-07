@@ -351,6 +351,28 @@ class WorktreeCreateTest < Minitest::Test
     refute(branch?(@repo, "pushed"))
   end
 
+  def test_waits_for_a_running_sweep_before_it_fetches_or_creates
+    lock = File.join(@repo, ".git", "worktree-sweep.lock")
+    File.open(lock, File::RDWR | File::CREAT) do |file|
+      file.flock(File::LOCK_EX)
+      stdin, stdout, stderr, waiter = Open3.popen3(create_environment, "ruby", SCRIPT, "feature", "--no-pane",
+                                                   chdir: @repo)
+      [ stdin, stdout, stderr ].each(&:close)
+      @waiter = waiter
+      deadline = Time.now + 20
+      sleep 0.05 until git_calls.any? { |call| call.start_with?("worktree prune") } || Time.now > deadline
+      sleep 2
+      assert(waiter.alive?, "worktree-create must wait while a sweep holds the lock")
+      refute(File.directory?(File.join(@repo, ".worktrees", "feature")))
+      assert_empty(git_calls.grep(/\Afetch /), "worktree-create must not fetch while a sweep holds the lock")
+    end
+
+    deadline = Time.now + 60
+    sleep 0.1 while @waiter.alive? && Time.now < deadline
+    refute(@waiter.alive?, "worktree-create did not finish after the lock was released")
+    assert(File.directory?(File.join(@repo, ".worktrees", "feature")))
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end
@@ -506,23 +528,30 @@ class WorktreeCreateTest < Minitest::Test
 
   def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", pane_agent: nil, chdir: @repo,
                  name_after_flag: false, without_gh: false, herdr_pane_id: nil, herdr_bin_path: nil)
-    environment = {
-      "XDG_STATE_HOME" => @state_home,
+    environment = create_environment(without_gh: without_gh).merge(
       "HERDR_PANE_ID" => herdr_pane_id,
       "HERDR_BIN_PATH" => herdr_bin_path,
+      "HERDR_STUB_PANE_STATUS" => pane_status
+    )
+    environment["HERDR_STUB_PANE_CWD"] = pane_cwd if pane_cwd
+    environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
+    arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
+    Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  def create_environment(without_gh: false)
+    {
+      "XDG_STATE_HOME" => @state_home,
+      "HERDR_PANE_ID" => nil,
+      "HERDR_BIN_PATH" => nil,
       "PATH" => without_gh ? path_without_gh : "#{@stub_bin}:#{@gh_stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GH_STUB_STATES" => gh_states_file,
       "HOME" => @enclosing,
       "HERDR_ENV" => "1",
-      "HERDR_STUB_PANE_STATUS" => pane_status,
       "GIT_CALL_LOG" => git_call_log,
       "ORDER_LOG" => order_log
     }
-    environment["HERDR_STUB_PANE_CWD"] = pane_cwd if pane_cwd
-    environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
-    arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
-    Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
   end
 
   def recorded(pane_file_name)

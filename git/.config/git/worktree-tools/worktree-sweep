@@ -30,8 +30,10 @@ module WorktreeTools
 
     def sweep(repository, kept)
       default_branch = repository.default_branch
-      repository.fetch_default_branch(default_branch)
-      Sweep.new("worktree-sweep").run(default_branch: default_branch, keep: kept)
+      repository.exclusively do
+        repository.fetch_default_branch(default_branch)
+        Sweep.new("worktree-sweep").run(default_branch: default_branch, keep: kept)
+      end
     end
 
     def current_worktree
