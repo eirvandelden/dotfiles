@@ -18,7 +18,7 @@ Claude Code and Codex on this machine. TREK on CT111.
 
 - OAuth, not TREK's static `trek_` token: that token is deprecated and has unrestricted access.
 - Claude's `mcpServers` cannot be managed from dotfiles; registration stays a documented one-time command, run with no Claude session open.
-- In Codex, every TREK tool that deletes or removes something asks for approval first, as fizzy's delete tools do. Reads and other writes run without asking.
+- In Codex, the 10 TREK tools listed in `plan.md` ask for approval first: they destroy a whole trip, journey, collection or plan, or end other people's access. Every other TREK tool, including the other delete tools, runs without asking. (Narrowed from "every delete or remove tool" on Etienne's instruction, 2026-10-01.)
 
 ## Acceptance criteria
 

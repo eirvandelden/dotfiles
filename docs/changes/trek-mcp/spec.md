@@ -1,6 +1,6 @@
 # Spec: Use TREK from Claude Code and Codex
 
-From `intent.md` (2026-09-29). Status: accepted.
+From `intent.md` (2026-09-29). Status: superseded — PR #181 merged the spec stage into `intent.md`. Its approval requirement is out of date: `intent.md` and `plan.md` are the source of truth.
 
 ## Requirements
 

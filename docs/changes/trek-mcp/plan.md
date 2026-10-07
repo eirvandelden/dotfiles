@@ -14,7 +14,7 @@ Claude Code and Codex cannot reach TREK (`https://trips.vandelden.family/mcp`). 
 
 ### Approval list (10 tools)
 
-Deviation from the spec, on Etienne's instruction (2026-10-01): `intent.md` and `spec.md` say every TREK tool that deletes or removes something asks for approval. That is about 50 tools, too many prompts for daily use. Only these 10 ask; they destroy a whole trip, journey, collection or plan, or end other people's access, so a mistake is hard to undo. `intent.md` and `spec.md` stay unchanged.
+Deviation from the spec, on Etienne's instruction (2026-10-01): `intent.md` and `spec.md` say every TREK tool that deletes or removes something asks for approval. That is about 50 tools, too many prompts for daily use. Only these 10 ask; they destroy a whole trip, journey, collection or plan, or end other people's access, so a mistake is hard to undo. `intent.md`'s constraint was later updated to match; `spec.md` is superseded.
 
 `delete_trip`, `bulk_delete_places`, `delete_journey`, `delete_collection`, `dissolve_vacay_plan`, `remove_trip_member`, `remove_collection_member`, `remove_journey_contributor`, `delete_trip_invite_link`, `delete_vacay_year`.
 
@@ -37,7 +37,7 @@ Every other TREK tool, including the other delete and remove tools, runs without
 - OAuth login fails (Etienne's top risk): dynamic client registration off, or `APP_URL` wrong on CT111, breaks the consent redirect for both clients. Not fixable in this repo; the homelab-iac change `trek-app-url` owns it. If step 9 fails there, stop and report — do not fall back to the deprecated `trek_` token.
 - Tool list drift: TREK renames one of the 10 tools, and Codex silently stops asking for it. The step 9 check catches it once; later drift is out of scope.
 - Narrow approval: about 40 delete and remove tools (single places, days, reservations, budget items, notes) run without asking. Accepted by Etienne as the price of fewer prompts.
-- Approval semantics, checked in the Codex source (`rust-v0.160.1`, `requires_mcp_tool_approval_for_mode`): `"prompt"` always asks, `"approve"` pre-approves and never asks, and the default `"auto"` asks for tools TREK marks `destructiveHint: true` (46 delete tools). The server default `"approve"` keeps the prompts to the 10 listed tools, as Etienne chose. The existing fizzy and email tables use `"approve"` and so do not ask; fixing them is a separate change. Step 9's delete-a-trip check proves the prompt for TREK.
+- Approval semantics, checked in the Codex source (`rust-v0.160.1`, `requires_mcp_tool_approval_for_mode`): `"prompt"` always asks, `"approve"` pre-approves and never asks, and the default `"auto"` asks for tools TREK marks `destructiveHint: true` (46 delete tools). The server default `"approve"` keeps the prompts to the 10 listed tools, as Etienne chose. The existing fizzy and email tables use `"approve"` and so do not ask. Codex writes exactly that value when the user picks "Always allow", so they are probably Etienne's own choices; any change there needs Etienne's say first. Step 9's delete-a-trip check proves the prompt for TREK.
 - `codex mcp get --json` does not show per-tool approval, so the approval tests read the TOML text. A regex that misreads a table could pass wrongly; the tests anchor on `^[mcp_servers.trek.tools.<name>]` and read only up to the next `[`.
 - Rejected: the static `trek_` token (deprecated, unrestricted); a `scopes` setting (scopes are chosen at consent); a `client_credentials` machine client (neither client can renew it); approving every write as fizzy does (intent says reads and other writes run freely); approving all ~50 delete and remove tools as the spec says (too many prompts).
 
@@ -51,7 +51,7 @@ Every other TREK tool, including the other delete and remove tools, runs without
 
 Per changed file, the unit tests expected:
 
-- `test/codex_config_test.rb`: `test_trek_points_at_the_trek_url_with_no_bearer_token`, `test_codex_accepts_the_config_and_shows_the_trek_url`, `test_codex_sends_no_credentials_to_trek` (reads the transport from `codex mcp get trek --json`), `test_trek_tools_run_without_asking_by_default`, `test_every_listed_trek_tool_asks_for_approval`, `test_no_other_trek_tool_asks_for_approval` (counts only tables with `approval_mode = "prompt"`), `test_trek_sets_no_scopes`.
+- `test/codex_config_test.rb`: `test_trek_points_at_the_trek_url_with_no_bearer_token`, `test_codex_accepts_the_config_and_shows_the_trek_url`, `test_codex_sends_no_credentials_to_trek` (reads the transport from `codex mcp get trek --json`), `test_trek_tools_run_without_asking_by_default`, `test_every_listed_trek_tool_asks_for_approval`, `test_no_other_trek_tool_asks_for_approval` (flags any table whose mode is not `"approve"`: `"prompt"`, `"auto"` and `"writes"` all ask), `test_trek_sets_no_scopes`.
 
 Test setup: the approval list lives as a frozen constant in the test (the source of truth reviewed in step 2). The CLI test uses `Dir.mktmpdir` as `CODEX_HOME` with a copy of `config.toml`; it never touches `~/.codex`. No network.
 
