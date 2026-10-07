@@ -324,6 +324,33 @@ class WorktreeCreateTest < Minitest::Test
     assert_empty(herdr_calls.grep(/\Apane close /))
   end
 
+  def test_a_never_pushed_worktree_survives_the_sweep_after_origin_moved_on
+    add_worktree("never-pushed", from: "origin/main")
+    never_pushed = File.join(@repo, ".worktrees", "never-pushed")
+    advance_origin_main
+
+    _, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    assert(File.directory?(never_pushed))
+    assert(branch?(@repo, "never-pushed"))
+  end
+
+  def test_a_branch_pushed_under_its_own_name_goes_once_origin_holds_its_work
+    add_worktree("pushed", from: "origin/main")
+    pushed = File.join(@repo, ".worktrees", "pushed")
+    commit(pushed, "pushed work")
+    git(pushed, "push", "--quiet", "-u", "origin", "pushed")
+    git(@repo, "push", "--quiet", "origin", "pushed:main")
+    advance_origin_main
+
+    _, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    refute(File.directory?(pushed))
+    refute(branch?(@repo, "pushed"))
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end
