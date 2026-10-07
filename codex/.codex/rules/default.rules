@@ -117,6 +117,40 @@ prefix_rule(
     match = [["kamal", "app", "exec", "rails console"]],
 )
 
+# Gems install through bi, never bundle install (playbook rule 11). A prefix rule cannot say
+# "no more words", so bare `bundle` and `bundle --jobs 4` are the shared hook's job, not these rules'.
+prefix_rule(
+    pattern = ["bundle", "install"],
+    decision = "forbidden",
+    justification = "install gems with bi, not bundle install (playbook rule 11)",
+    match = [["bundle", "install", "--jobs", "4"]],
+    not_match = [["bundle", "exec", "rake"], ["bundle", "update", "rails"]],
+)
+
+prefix_rule(
+    pattern = ["bundle", "i"],
+    decision = "forbidden",
+    justification = "install gems with bi, not bundle install (playbook rule 11)",
+    match = [["bundle", "i", "--jobs", "4"]],
+    not_match = [["bundle", "exec", "rake"], ["bundle", "update", "rails"]],
+)
+
+prefix_rule(
+    pattern = ["bin/bundle", "install"],
+    decision = "forbidden",
+    justification = "install gems with bi, not bundle install (playbook rule 11)",
+    match = [["bin/bundle", "install", "--jobs", "4"]],
+    not_match = [["bin/bundle", "exec", "rake"], ["bin/bundle", "update", "rails"]],
+)
+
+prefix_rule(
+    pattern = ["bin/bundle", "i"],
+    decision = "forbidden",
+    justification = "install gems with bi, not bundle install (playbook rule 11)",
+    match = [["bin/bundle", "i", "--jobs", "4"]],
+    not_match = [["bin/bundle", "exec", "rake"], ["bin/bundle", "update", "rails"]],
+)
+
 # Below this line: a short vetted list of generic, routine commands. Codex appends more
 # "always allow" rules here itself (codex-rs/core/src/exec_policy.rs,
 # blocking_append_allow_prefix_rule) on every such approval. The prompt and forbidden rules
@@ -140,7 +174,6 @@ prefix_rule(pattern=["gh", "pr", "create"], decision="allow")
 prefix_rule(pattern=["gh", "pr", "edit"], decision="allow")
 prefix_rule(pattern=["gh", "pr", "view"], decision="allow")
 prefix_rule(pattern=["bundle", "exec", "bundler-audit", "check", "--update"], decision="allow")
-prefix_rule(pattern=["bundle", "install"], decision="allow")
 prefix_rule(pattern=["bundle", "show"], decision="allow")
 prefix_rule(pattern=["rails", "test"], decision="allow")
 prefix_rule(pattern=["herdr", "agent", "list"], decision="allow")
