@@ -1,0 +1,56 @@
+---
+# The main/master guard, for repositories that load it from their own untracked `lefthook-local.yml`
+# with `extends: [/Users/etienne.vandelden/Developer/dotfiles/lefthook-branch-guard.yml]`.
+# lefthook.yml holds the same three commands for dotfiles itself and for every repository that falls back
+# to its config. A relative `extends:` there would resolve against each fallback repository's root, and
+# silently drop the guard. test/branch_guard_test.rb keeps the two copies equal.
+pre-commit:
+  commands:
+    no-push-to-main:
+      tags: branch-protection
+      run: |
+        # A commit that concludes a merge has MERGE_HEAD and two parents.
+        [ -e "$(git rev-parse --git-path MERGE_HEAD)" ] && exit 0
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+          echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
+          exit 1
+        fi
+      fail_text: Direct commits to main/master are blocked. Create a feature branch first.
+
+# lefthook skips every pre-commit command on an empty index, so an empty commit needs its own check.
+# `--no-verify` skips commit-msg too, which keeps the deliberate escape hatch.
+commit-msg:
+  commands:
+    no-push-to-main:
+      tags: branch-protection
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        [ "$branch" = "main" ] || [ "$branch" = "master" ] || exit 0
+        [ -e "$(git rev-parse --git-path MERGE_HEAD)" ] && exit 0
+        git rev-parse --verify -q HEAD >/dev/null || exit 0
+        git diff --cached --quiet HEAD -- || exit 0
+        echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
+        exit 1
+      fail_text: Direct commits to main/master are blocked. Create a feature branch first.
+
+pre-push:
+  commands:
+    no-push-to-main:
+      tags: branch-protection
+      use_stdin: true
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+          echo "Direct push to $branch is not allowed. Create a feature branch and open a PR."
+          exit 1
+        fi
+        while read -r _local_ref _local_sha remote_ref _remote_sha; do
+          case "$remote_ref" in
+            refs/heads/main | refs/heads/master)
+              echo "Pushing to ${remote_ref#refs/heads/} is not allowed. Push a feature branch and open a PR."
+              exit 1
+              ;;
+          esac
+        done
+      fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
