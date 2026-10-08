@@ -237,7 +237,85 @@ class BranchGuardTest < Minitest::Test
     assert_push_refused("origin", "feature:feature", "HEAD:main")
   end
 
+  def test_the_fallback_config_duplicates_the_guard_commands_exactly
+    fallback = YAML.safe_load_file(File.join(REPO_ROOT, "lefthook.yml"))
+    guard = YAML.safe_load_file(GUARD_FILE)
+    guard.each do |hook, section|
+      assert_equal(section["commands"]["no-push-to-main"], fallback.dig(hook, "commands", "no-push-to-main"), hook)
+    end
+  end
+
+  def test_the_fallback_config_refuses_an_empty_commit_on_main
+    setup_fallback_repo("main")
+    assert_empty_commit_refused
+  end
+
+  def test_the_fallback_config_refuses_an_empty_commit_on_master
+    setup_fallback_repo("master")
+    assert_empty_commit_refused
+  end
+
+  def test_the_fallback_config_allows_a_merge_commit_on_main
+    setup_fallback_repo("main")
+    diverge
+    _out, err, status = git("merge", "--no-ff", "-m", "merge", "feature")
+    assert(status.success?, "Expected a merge commit on main to go through:\n#{err}")
+  end
+
+  def test_the_fallback_config_allows_concluding_a_conflicted_merge_on_main
+    setup_fallback_repo("main")
+    assert_conflicted_merge_concludes(:main_checkout)
+  end
+
+  def test_the_fallback_config_refuses_an_amend_that_stages_a_change_on_main
+    setup_fallback_repo("main")
+    assert_amend_with_change_refused
+  end
+
+  def test_the_fallback_config_refuses_a_push_of_a_feature_branch_to_main
+    setup_fallback_repo("main")
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    assert_push_refused("origin", "feature:main")
+  end
+
+  def test_the_fallback_config_refuses_a_push_of_a_feature_branch_to_master
+    setup_fallback_repo("main")
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    assert_push_refused("origin", "feature:master")
+  end
+
+  def test_the_fallback_config_refuses_a_push_deleting_main
+    setup_fallback_repo("main")
+    publish_branch("main")
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    assert_push_refused("origin", "--delete", "main")
+  end
+
+  def test_the_fallback_config_refuses_a_push_deleting_master
+    setup_fallback_repo("main")
+    publish_branch("main:master")
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    assert_push_refused("origin", "--delete", "master")
+  end
+
+  def test_the_fallback_config_refuses_a_push_that_updates_main_among_other_refs
+    setup_fallback_repo("main")
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    assert_push_refused("origin", "feature:feature", "HEAD:main")
+  end
+
   private
+
+  def setup_fallback_repo(branch)
+    dotfiles = File.join(@tmpdir, "Developer", "dotfiles")
+    FileUtils.mkdir_p(dotfiles)
+    FileUtils.cp(File.join(REPO_ROOT, "lefthook.yml"), dotfiles)
+    stub = File.join(@tmpdir, ".config", "git", "worktree-tools", "review-report-fresh")
+    FileUtils.mkdir_p(File.dirname(stub))
+    File.write(stub, "#!/bin/sh\nexit 0\n")
+    FileUtils.chmod("+x", stub)
+    setup_repo(branch)
+  end
 
   def assert_push_refused(*args)
     out, err, status = git("push", *args)
