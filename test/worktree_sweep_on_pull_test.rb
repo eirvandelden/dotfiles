@@ -36,7 +36,7 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
   def test_a_pull_on_main_in_the_main_checkout_removes_a_merged_worktree_its_branch_and_its_pane
     foo = merged_worktree("foo")
-    @pane_cwd = foo
+    pane_cwd(foo)
 
     pull(@repo)
 
@@ -153,10 +153,9 @@ class WorktreeSweepOnPullTest < Minitest::Test
     File.write(gh_states_file, states.map { |branch, state| "#{branch}=#{state}" }.join("\n"))
   end
 
-  def pane_cwd=(path)
+  def pane_cwd(path)
     File.write(panes_file, "#{path}\n")
   end
-  alias_method :set_pane_cwd, :pane_cwd=
 
   # --- repositories ------------------------------------------------------------------------
 
