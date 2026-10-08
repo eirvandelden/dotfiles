@@ -35,6 +35,7 @@ Etienne and every agent working in a repository that uses the intent, plan, impl
 
 - A GitHub Actions or other CI check.
 - Merges from the GitHub UI; no local hook can see them.
+- `gh pr create --head OWNER:BRANCH` for a fork branch git cannot resolve locally. Etienne accepted this as a known limit.
 - Changing the review-freshness rule for the final push in `finish`.
 - Per-repository lefthook files in repositories other than dotfiles.
 
