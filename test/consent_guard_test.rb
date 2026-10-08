@@ -607,6 +607,44 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_creating_a_pull_request_from_a_subdirectory_is_refused
+    start_change("pr-only-via-finish")
+    FileUtils.mkdir_p(File.join(@repo, "sub"))
+
+    _, stderr, status = run_guard("gh pr create --fill", cwd: File.join(@repo, "sub"))
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_cd_after_the_merge_does_not_move_the_question
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "Tree")
+
+    _, stderr, status = run_guard("gh pr merge 186 && cd /tmp")
+
+    assert_equal(2, status.exitstatus, stderr)
+    refute_includes(File.read("#{@gh_log}.cwd"), "/tmp")
+  end
+
+  def test_gh_repo_in_the_environment_is_passed_on_to_the_question
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "absent")
+
+    run_guard("GH_REPO=eirvandelden/dotfiles gh pr merge 186")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "--repo eirvandelden/dotfiles")
+  end
+
+  def test_creating_a_pull_request_for_a_head_branch_that_holds_the_folder_is_refused
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "main")
+
+    _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
   private
 
   # A repository on <branch> whose working tree holds docs/changes/<branch>/.
@@ -635,6 +673,7 @@ class ConsentGuardTest < Minitest::Test
     File.write(script, <<~SH)
       #!/bin/sh
       echo "$@" >> #{@gh_log}
+      pwd -P >> #{@gh_log}.cwd
       #{fail ? 'exit 1' : ''}
       case "$1 $2" in
         "pr view") printf '%s\\n' '#{view}' ;;
