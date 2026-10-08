@@ -133,6 +133,12 @@ Per changed file, the unit tests expected:
 
 Test setup: plain Minitest, no Rails, as in `test/secrets_loader_test.rb`. Reuse its `op` stub, which answers any `op read` with a fixed value; add a failing variant for the failed-unlock test. A temporary `XDG_CONFIG_HOME` holds both mapping files, with made-up `op://Test/...` references for `FIZZY_PAT`, `NODE_AUTH_TOKEN` and `MCP_EMAIL_SERVER_AUTH_TOKEN`, and `SECRETS_WORK_OP_ACCOUNT` set. A fake real `codex` in a temporary `bin` writes one line per argument, plus `NAME=set` or `NAME=unset` for each mapped name, to a log, and exits with a status the test chooses. Shells run as `zsh -f -c` so no user startup file runs, with `ZDOTDIR` set to the checkout's `zsh/.config/zsh` and `PATH` set to the fake `bin`, the stub `bin`, `/usr/bin` and `/bin` only: the real Codex must never run in a test. The headroom test does what `_run_codex_wrap` does: it resolves `codex` with `command -v` (the `PATH` lookup `shutil.which` does), asserts that path is the shim, then runs that absolute path with `OPENAI_BASE_URL` set and the arguments `--config openai_base_url="http://127.0.0.1:8787/v1"`, and asserts the fake Codex got `--no-daemon` first, the headroom arguments unchanged after it, and the secrets.
 
+## Decisions (coordinator, 2026-10-08)
+
+- The implement worker runs every live probe it can reach, P1–P8 and P10, including the interactive TUI probes, by driving Codex in a pseudo-terminal. Etienne approves the 1Password prompts that `unlock` raises while the worker runs. A probe the worker cannot drive is reported in its report as `Decision needed:`, not skipped.
+- P9 runs before the pull request opens. Etienne drives ChatGPT.app; the coordinator asks him for it once the worker's probes pass, and records his result in `probe.md`.
+- After Etienne says the pull request merged, an agent runs `cd ~/Developer/dotfiles && stow -R -t "$HOME" zsh` on this Mac from the main checkout. Other Macs are Etienne's. The pull request body lists the command.
+
 ---
 Domain skills applied: dotfiles-maintenance (stow layout, public-repository hygiene), object-oriented-design (one owner per behaviour: `unlock` owns the shim, the shim owns the launch decision), rails-testing (Minitest conventions, behaviour-named tests).
 
