@@ -20,6 +20,7 @@ class ReviewReportCheckTest < Minitest::Test
 
   def teardown
     FileUtils.rm_rf(@repo)
+    FileUtils.rm_rf(@gh_bin) if @gh_bin
   end
 
   def test_a_branch_with_no_change_folder_passes
@@ -114,7 +115,83 @@ class ReviewReportCheckTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  # The pre-push hook passes --skip-without-pr: a work-in-progress push needs no review
+  # until a pull request exists. finish runs the script without it and stays strict.
+  def test_skip_without_pr_lets_a_stale_review_through_while_no_pull_request_is_open
+    stale_change_folder
+    stub_gh(open_pull_requests: "0")
+
+    _, stderr, status = run_script("--skip-without-pr")
+
+    assert(status.success?, stderr)
+    assert_match(/pr list --head claims-status --state open/, File.read(@gh_log))
+  end
+
+  def test_skip_without_pr_still_refuses_a_stale_review_once_a_pull_request_is_open
+    stale_change_folder
+    stub_gh(open_pull_requests: "1")
+
+    _, _, status = run_script("--skip-without-pr")
+
+    refute(status.success?)
+  end
+
+  def test_skip_without_pr_refuses_a_stale_review_when_gh_cannot_tell
+    stale_change_folder
+    stub_gh(fail: true)
+
+    _, stderr, status = run_script("--skip-without-pr")
+
+    refute(status.success?)
+    assert_match(/could not tell/i, stderr)
+  end
+
+  def test_skip_without_pr_never_calls_gh_without_a_change_folder
+    write_and_commit("app/claims.rb", "class Claims; end\n", "add claims")
+    stub_gh(open_pull_requests: "0")
+
+    _, stderr, status = run_script("--skip-without-pr")
+
+    assert(status.success?, stderr)
+    refute_path_exists(@gh_log)
+  end
+
+  def test_without_the_flag_gh_is_never_called
+    stale_change_folder
+    stub_gh(open_pull_requests: "0")
+
+    _, _, status = run_script
+
+    refute(status.success?)
+    refute_path_exists(@gh_log)
+  end
+
+  def test_the_pre_push_hook_runs_the_check_with_skip_without_pr
+    lefthook = File.read(File.expand_path("../lefthook.yml", __dir__))
+
+    assert_match(%r{run: ~/\.config/git/worktree-tools/review-report-fresh --skip-without-pr$}, lefthook)
+  end
+
   private
+
+  def stale_change_folder
+    write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
+    write_and_commit("docs/changes/claims-status/review.md", "# Round 1\n", "add review")
+    write_and_commit("app/claims.rb", "class Claims; end\n", "touch code again")
+  end
+
+  # A gh on PATH that logs its arguments and prints the open pull request count.
+  def stub_gh(open_pull_requests: nil, fail: false)
+    @gh_bin = Dir.mktmpdir
+    @gh_log = File.join(@gh_bin, "gh.log")
+    File.write(File.join(@gh_bin, "gh"), <<~SH)
+      #!/bin/sh
+      echo "$@" >> #{@gh_log}
+      #{fail ? 'exit 1' : ''}
+      echo '#{open_pull_requests}'
+    SH
+    FileUtils.chmod(0o755, File.join(@gh_bin, "gh"))
+  end
 
   def write(relative_path, content)
     path = File.join(@repo, relative_path)
@@ -133,7 +210,8 @@ class ReviewReportCheckTest < Minitest::Test
            "-c", "user.name=Test", *arguments) || raise("git #{arguments.join(' ')} failed")
   end
 
-  def run_script
-    Open3.capture3(SCRIPT, chdir: @repo)
+  def run_script(*arguments)
+    environment = @gh_bin ? { "PATH" => "#{@gh_bin}:#{ENV.fetch('PATH')}" } : {}
+    Open3.capture3(environment, SCRIPT, *arguments, chdir: @repo)
   end
 end
