@@ -59,8 +59,9 @@ Markdown to"
 already inside the worktree, so no further pane split is needed. It reads \
 docs/changes/$slug/plan.md. Done means all tests green, all linters green, and a self-reviewed \
 diff."
-    acceptance_instruction="Once the skill is done, stop there and leave the branch for the \
-review pane and /finish to send onward."
+    acceptance_instruction="Once the skill is done, push the branch (git push -u origin HEAD); if \
+the push is refused, say so in your report and never use --no-verify. Then stop there and leave \
+the branch for the review pane and /finish to send onward."
     report_instruction="Then write what you did, and anything you could not finish, as Markdown \
 to"
     ;;

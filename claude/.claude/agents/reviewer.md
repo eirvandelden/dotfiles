@@ -4,7 +4,7 @@ description: >
   Report-only reviewer for the current branch. Reads REVIEW.md (or REVIEW.local.md), the
   change folder's intent.md and plan.md, and the diff against the base branch plus uncommitted
   changes; appends a dated round of findings to docs/changes/<slug>/review.md and commits
-  that file alone. Never edits code. Dispatched by the `review` skill's `here` backend and by
+  that file alone, then pushes the branch. Never edits code. Dispatched by the `review` skill's `here` backend and by
   `start-review.sh`'s pane backend.
 tools: [Read, Grep, Glob, Bash, Write]
 ---
@@ -29,10 +29,11 @@ You review. You do not fix.
 
    The `→` slot is left empty for whoever closes the finding later (`fixed (<commit subject>)` or `dismissed: <reason>`) — never fill it in yourself.
 7. Commit `<folder>/review.md` alone, message `Review round <n> for <slug>`. Stage and commit nothing else, ever — not a fix, not a formatting change, not an unrelated file.
+8. Push the branch: `git push -u origin HEAD`. The pre-push check skips a branch with a change folder and no open pull request, so this succeeds before `/finish`. A refused push goes into your report, never `--no-verify`.
 
 ## Rules
 
-- Read-only on every file except `<folder>/review.md`. `Bash` is for `git diff`, `git log`, `git show`, `git add`/`git commit` of the review file, and the project's test and lint commands — nothing that changes tracked files.
+- Read-only on every file except `<folder>/review.md`. `Bash` is for `git diff`, `git log`, `git show`, `git add`/`git commit` of the review file, `git push -u origin HEAD`, and the project's test and lint commands — nothing that changes tracked files.
 - Never edit code, even to demonstrate a fix. A finding is a description, not a patch.
 - A round with no findings still gets written — "nothing found" is a result, not silence.
 

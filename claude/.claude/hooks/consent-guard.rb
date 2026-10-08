@@ -13,13 +13,20 @@
 # present. Every check errs towards asking: a false question costs a moment, a
 # missed one costs the user's name on something they did not send.
 #
+# Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
+# So `gh pr create` is refused while that folder exists in a checkout the command
+# runs in, and `gh pr merge` is refused while the pull request's head commit still
+# holds its own docs/changes/<slug>/. Neither is unlocked by the consent marker.
+#
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does
 # not block anything, so keep Ruby on PATH.
 require "json"
+require "open3"
 require "shellwords"
 require_relative "remote_matcher"
 
 CONSENT_MARKER = "I_HAVE_USER_CONSENT=1 ".freeze
+CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", __dir__)
 
 # The command as words. Quoted text arrives as one word, so prose that mentions
 # a flag is not mistaken for the flag itself. A command that cannot be
@@ -27,16 +34,174 @@ CONSENT_MARKER = "I_HAVE_USER_CONSENT=1 ".freeze
 # whitespace: cruder, and more likely to ask when it need not, which is the
 # direction to fail in.
 def words(command)
-  Shellwords.split(command)
+  Shellwords.split(command.gsub("\n", " ; "))
 rescue ArgumentError
   command.split
 end
 
 # Rule 20 says never, so no consent marker unlocks this one.
-def never_allowed_reason(words)
-  return nil unless words.include?("--force") && !words.include?("--force-with-lease")
+def never_allowed_reason(words, working_directory)
+  return "plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)." \
+    if words.include?("--force") && !words.include?("--force-with-lease")
 
-  "plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)."
+  pull_request_reason(pull_request_words(words), working_directory)
+end
+
+def pull_request_reason(words, working_directory)
+  return unless gh_command?(words, "create") || gh_command?(words, "merge")
+
+  create_reason(words, working_directory) || merge_reason(words, working_directory)
+end
+
+def create_reason(words, working_directory)
+  return unless gh_command?(words, "create")
+
+  directories = command_directories(words, working_directory)
+  head = head_branch(pr_window(words, "create"))
+  return unless directories.any? { |directory| change_folder?(directory) } ||
+                (head && directories.any? { |directory| branch_carries_change_folder?(directory, head) })
+
+  "only /finish opens a pull request, once it removed docs/changes/<slug>/. Run /finish."
+end
+
+def merge_reason(words, working_directory)
+  return unless gh_command?(words, "merge")
+
+  directory = command_directories(words.take(words.each_cons(2).find_index([ "pr", "merge" ]) || words.size),
+                                  working_directory).last
+  return unless merge_carries_change_folder?(words, directory)
+
+  "only /finish prepares a branch for merging: the pull request's branch still has its own docs/changes/<slug>/ " \
+    "folder. Run /finish first."
+end
+
+# The branch named by --head or -H, without a leading <owner>: part.
+def head_branch(words)
+  index = words.index { |word| %w[--head -H].include?(word) }
+  value = index ? words[index + 1] : words.filter_map { |word| head_value(word) }.first
+  value&.split(":", 2)&.last
+end
+
+def head_value(word)
+  return word.delete_prefix("--head=") if word.start_with?("--head=")
+
+  word.delete_prefix("-H") if word.start_with?("-H") && word.length > 2
+end
+
+# Reads the branch's own folder, locally or on origin. A branch git cannot resolve means "cannot tell".
+def branch_carries_change_folder?(directory, branch)
+  toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
+  folder = "docs/changes/#{change_slug(branch)}"
+  [ branch, "origin/#{branch}" ].any? do |ref|
+    !git_output(toplevel, "ls-tree", "--name-only", ref, "--", folder).strip.empty?
+  end
+end
+
+# The folder name for a branch, as plan/scripts/change-folder derives it.
+def change_slug(branch)
+  branch.sub(%r{\A[^/]+/}, "")
+end
+
+# The words, plus the words inside the script of any `sh -c`, `bash -c` or `zsh -c`.
+def pull_request_words(words)
+  words + words.each_with_index.flat_map { |word, index| nested_shell_words(word, words.drop(index + 1)) }
+end
+
+def nested_shell_words(word, rest)
+  return [] unless word.match?(%r{(?:\A|/)(?:ba|z)?sh\z}) && rest.include?("-c")
+
+  script = rest[rest.index("-c") + 1]
+  script ? words(script) : []
+end
+
+def gh_command?(words, action)
+  words.any? { |word| word.match?(/(?:\A|[\/;&|({])gh\z/) } && words.each_cons(2).include?([ "pr", action ])
+end
+
+# Where the command runs: the hook's directory, then each `cd` target.
+def command_directories(words, working_directory)
+  targets = words.each_cons(2).filter_map { |word, target| target.split(SHELL_OPERATOR, 2).first if word.match?(/\A\(?(?:cd|pushd)\z/) }
+  targets.reject(&:empty?).each_with_object([ working_directory ]) do |target, directories|
+    directories << File.expand_path(target, directories.last)
+  end
+end
+
+def change_folder?(directory)
+  folder, _, status = Open3.capture3(CHANGE_FOLDER_SCRIPT, chdir: directory)
+  return false unless status.success?
+
+  toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
+  folder = folder.strip
+  [ [ "ls-files", "--", folder ], [ "ls-tree", "--name-only", "HEAD", "--", folder ] ].any? do |arguments|
+    !git_output(toplevel, *arguments).strip.empty?
+  end
+rescue SystemCallError
+  false
+end
+
+MERGE_VALUE_OPTIONS = %w[-A --author-email -b --body -F --body-file -t --subject --match-head-commit -R --repo].freeze
+
+# Asks gh for the pull request's head commit, then whether that commit has a
+# docs/changes tree. A gh that fails or is missing means "cannot tell": not carried.
+def merge_carries_change_folder?(words, directory)
+  selector, repository = merge_arguments(words)
+  owner, name, oid, branch = head_commit(selector, repository, directory)
+  oid && gh_output(directory, "api", "graphql", *tree_query(owner, name, oid, branch)) == "Tree"
+rescue SystemCallError
+  false
+end
+
+def head_commit(selector, repository, directory)
+  jq = "[.headRepositoryOwner.login, .headRepository.name, .headRefOid, .headRefName] | @tsv"
+  fields = gh_output(directory, "pr", "view", *selector, *repository,
+                     "--json", "headRefOid,headRefName,headRepository,headRepositoryOwner", "--jq", jq)
+  fields&.split("\t")
+end
+
+def tree_query(owner, name, oid, branch)
+  query = "query($owner:String!,$name:String!,$expression:String!){" \
+          "repository(owner:$owner,name:$name){object(expression:$expression){__typename}}}"
+  [ "-f", "query=#{query}", "-f", "owner=#{owner}", "-f", "name=#{name}", "-f", "expression=#{oid}:docs/changes/#{change_slug(branch)}",
+    "--jq", '.data.repository.object.__typename // "absent"' ]
+end
+
+def gh_output(directory, *arguments)
+  output, _, status = Open3.capture3("gh", *arguments, chdir: directory)
+  output.strip if status.success?
+end
+
+# The first positional word after `pr merge` names the pull request; --repo is passed on.
+# Only the words up to the next shell operator belong to the merge.
+def merge_arguments(words)
+  rest = merge_window(words)
+  selector = rest.each_with_index.find do |word, index|
+    !word.start_with?("-") && !(index.positive? && MERGE_VALUE_OPTIONS.include?(rest[index - 1]))
+  end&.first
+  [ [ selector ].compact, repository_flag(rest, words) ]
+end
+
+def merge_window(words)
+  pr_window(words, "merge")
+end
+
+# The words after `pr <action>`, up to the next shell operator.
+def pr_window(words, action)
+  index = words.each_cons(2).find_index([ "pr", action ])
+  window(words.drop(index + 2))
+end
+
+def repository_flag(rest, words)
+  environment = words.find { |word| word.start_with?("GH_REPO=") }
+  return [ "--repo", environment.delete_prefix("GH_REPO=") ] if environment
+
+  equals = rest.find { |word| word.start_with?("--repo=") }
+  return [ equals ] if equals
+
+  glued = rest.find { |word| word.start_with?("-R") && word.length > 2 }
+  return [ glued ] if glued
+
+  index = rest.index { |word| %w[-R --repo].include?(word) }
+  index ? rest[index, 2] : []
 end
 
 def consentable_reason(words, working_directory)
@@ -107,6 +272,8 @@ end
 # The words up to the first shell operator, keeping the part of a word before a glued one.
 def window(words)
   words.each_with_object([]) do |word, kept|
+    break kept if word.start_with?("#")
+
     head, operator = word.split(SHELL_OPERATOR, 2)
     kept << head unless head.to_s.empty?
     break kept if operator
@@ -187,7 +354,7 @@ working_directory = call.fetch("cwd", "")
 
 command_words = words(command)
 
-refused = never_allowed_reason(command_words)
+refused = never_allowed_reason(command_words, working_directory)
 if refused
   warn "Blocked: #{refused}"
   exit 2

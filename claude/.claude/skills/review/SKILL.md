@@ -9,7 +9,7 @@ arguments:
 
 # Review
 
-Get this branch reviewed. Report-only: the reviewer reads `REVIEW.md` (or `REVIEW.local.md`), `docs/changes/<slug>/intent.md` and `plan.md`, and the diff — branch vs base plus the uncommitted changes on top — and appends a dated round to `docs/changes/<slug>/review.md`, which it commits alone. It never edits code.
+Get this branch reviewed. Report-only: the reviewer reads `REVIEW.md` (or `REVIEW.local.md`), `docs/changes/<slug>/intent.md` and `plan.md`, and the diff — branch vs base plus the uncommitted changes on top — and appends a dated round to `docs/changes/<slug>/review.md`, which it commits alone and pushes. It never edits code.
 
 ## Choosing a backend
 
@@ -24,7 +24,7 @@ Get this branch reviewed. Report-only: the reviewer reads `REVIEW.md` (or `REVIE
 
 Run it from the repository being reviewed: the reviewer inherits that directory. The script splits the current pane to the right, starts Claude on opus there, and points it at the `reviewer` agent's instructions — the single source both backends read, so a pane review and an in-session review ask the same questions. Tell the user which reviewer is looking at what, and where its report will land, then carry on with work outside this branch's files: the reviewer reads the uncommitted changes as they are now, so anything edited meanwhile makes its findings describe a state that no longer exists.
 
-The reviewer writes its round to `docs/changes/<slug>/review.md` and commits it, then sends one line back: `Review ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the reviewer started.
+The reviewer writes its round to `docs/changes/<slug>/review.md`, commits it and pushes the branch, then sends one line back: `Review ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the reviewer started.
 
 ## `here` backend
 
@@ -41,7 +41,7 @@ A round left with an open finding and no newer round means the review is not clo
 Only valid when `intent.md` has `Delivery: autonomous`; the coordinator runs this, and "stop, do not start fixing" under "After either backend" does not apply. Two independent reviewers look at the diff:
 
 1. The Claude `reviewer` agent, through either backend above. Its round lands in `review.md` as usual.
-2. The Codex CLI: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as `- [ ] Important: <finding> — `<file>:<line>` →` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Commit that file alone.
+2. The Codex CLI: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as `- [ ] Important: <finding> — `<file>:<line>` →` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Commit that file alone, then push the branch (`git push -u origin HEAD`).
 
 Fix every finding through `code-review`, then run both reviewers again. Repeat until a round of each leaves no open finding. A finding disputed for two rounds goes to Etienne (see `code-review`).
 

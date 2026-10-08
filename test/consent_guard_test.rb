@@ -441,7 +441,382 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  # Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
+  def test_creating_a_pull_request_while_the_change_folder_exists_is_refused_naming_finish
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(%r{/finish}, stderr)
+  end
+
+  def test_creating_a_pull_request_once_finish_removed_the_change_folder_is_allowed
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "rm", "-rfq", "--cached", "docs")
+    FileUtils.rm_rf(File.join(@repo, "docs"))
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_creating_a_pull_request_on_main_is_allowed
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_change_folder_in_a_cd_target_is_found
+    other, run_from = other_checkout
+
+    _, stderr, status = run_guard("cd #{other} && gh pr create", cwd: run_from)
+
+    assert_equal(2, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf([ other, run_from ].compact)
+  end
+
+  def test_a_cd_target_glued_to_a_semicolon_is_found
+    other, run_from = other_checkout
+
+    _, stderr, status = run_guard("cd #{other}; gh pr create", cwd: run_from)
+
+    assert_equal(2, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf([ other, run_from ].compact)
+  end
+
+  def test_a_cd_target_on_the_line_before_is_found
+    other, run_from = other_checkout
+
+    _, stderr, status = run_guard("cd #{other}\ngh pr create", cwd: run_from)
+
+    assert_equal(2, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf([ other, run_from ].compact)
+  end
+
+  def test_creating_a_pull_request_inside_bash_dash_c_is_refused
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard(%(bash -c "gh pr create --fill"))
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_consent_does_not_unlock_creating_a_pull_request_with_a_change_folder
+    start_change("pr-only-via-finish")
+
+    _, _, status = run_guard("I_HAVE_USER_CONSENT=1 gh pr create --fill")
+
+    assert_equal(2, status.exitstatus)
+  end
+
+  def test_a_quoted_message_naming_gh_pr_create_is_allowed
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard(%(git commit -m "finish runs gh pr create"))
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_codex_payload_creating_a_pull_request_with_a_change_folder_is_refused
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_codex_guard("gh pr create --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(%r{/finish}, stderr)
+  end
+
+  def test_merging_a_pull_request_whose_head_has_docs_changes_is_refused
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
+
+    _, stderr, status = run_guard("gh pr merge 186 --squash")
+
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(%r{/finish}, stderr)
+  end
+
+  def test_merging_a_pull_request_whose_head_has_no_docs_changes_is_allowed
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    _, stderr, status = run_guard("gh pr merge 185 --squash")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_merging_is_allowed_when_gh_cannot_tell
+    stub_gh(fail: true)
+
+    _, stderr, status = run_guard("gh pr merge 186")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_merging_asks_gh_about_the_named_pull_request_and_repository
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge --squash -t 'a title' 186 --repo eirvandelden/dotfiles")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186 --repo eirvandelden/dotfiles")
+  end
+
+  def test_merging_reads_only_the_words_of_the_merge_command
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge --squash && git checkout main")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "&&")
+    refute_includes(view, "checkout")
+  end
+
+  def test_a_git_merge_before_the_gh_merge_does_not_name_the_pull_request
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
+
+    _, stderr, status = run_guard("git merge origin/main && gh pr merge 186")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186")
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_trailing_value_flag_does_not_hide_the_selector
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge 186 --body")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186")
+  end
+
+  def test_leftover_untracked_files_do_not_keep_the_pull_request_refused
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "add", "docs")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "remove")
+    FileUtils.mkdir_p(File.join(@repo, "docs", "changes", "pr-only-via-finish"))
+    File.write(File.join(@repo, "docs", "changes", "pr-only-via-finish", ".DS_Store"), "x")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_creating_a_pull_request_from_a_subdirectory_is_refused
+    start_change("pr-only-via-finish")
+    FileUtils.mkdir_p(File.join(@repo, "sub"))
+
+    _, stderr, status = run_guard("gh pr create --fill", cwd: File.join(@repo, "sub"))
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_cd_after_the_merge_does_not_move_the_question
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
+
+    _, stderr, status = run_guard("gh pr merge 186 && cd /tmp")
+
+    assert_equal(2, status.exitstatus, stderr)
+    refute_includes(File.read("#{@gh_log}.cwd"), "/tmp")
+  end
+
+  def test_gh_repo_in_the_environment_is_passed_on_to_the_question
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("GH_REPO=eirvandelden/dotfiles gh pr merge 186")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "--repo eirvandelden/dotfiles")
+  end
+
+  def test_creating_a_pull_request_for_a_head_branch_that_holds_the_folder_is_refused
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "main")
+
+    _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_the_head_check_works_from_a_subdirectory
+    commit_change_then_leave_branch
+    FileUtils.mkdir_p(File.join(@repo, "sub"))
+
+    _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill", cwd: File.join(@repo, "sub"))
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_glued_short_head_flag_is_read
+    commit_change_then_leave_branch
+
+    _, stderr, status = run_guard("gh pr create -Hpr-only-via-finish --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_leftover_folder_of_another_slug_does_not_refuse_the_head_branch
+    commit_change_then_leave_branch
+    system("git", "-C", @repo, "checkout", "--quiet", "pr-only-via-finish")
+    system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
+    FileUtils.mkdir_p(File.join(@repo, "docs", "changes", "other"))
+    File.write(File.join(@repo, "docs", "changes", "other", "intent.md"), "x")
+    system("git", "-C", @repo, "add", "docs")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "finish")
+    system("git", "-C", @repo, "checkout", "--quiet", "main")
+
+    _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_subshell_cd_is_a_command_directory
+    start_change("pr-only-via-finish")
+    outside = Dir.mktmpdir
+
+    _, stderr, status = run_guard("(cd #{@repo} && gh pr create --fill)", cwd: outside)
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_pushd_is_a_command_directory
+    start_change("pr-only-via-finish")
+    outside = Dir.mktmpdir
+
+    _, stderr, status = run_guard("pushd #{@repo} && gh pr create --fill", cwd: outside)
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_merging_checks_the_folder_of_the_pull_requests_own_branch
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\t186-title", tree: "absent")
+
+    run_guard("gh pr merge 186")
+
+    tree = File.readlines(@gh_log).find { |line| line.start_with?("api graphql") }
+    assert_includes(tree, "expression=abc123:docs/changes/186-title")
+  end
+
+  def test_another_commands_dash_h_does_not_hide_the_head_flag
+    commit_change_then_leave_branch
+
+    _, stderr, status = run_guard("curl -H 'Accept: x' https://example.com; gh pr create --head pr-only-via-finish")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_newline_ends_the_merge_command
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
+
+    _, stderr, status = run_guard("gh pr merge 186 --squash\ngit checkout main")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_comment_ends_the_merge_command
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge --squash # then pull")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "#")
+  end
+
+  def test_chained_relative_cd_targets_expand_against_the_previous_directory
+    start_change("pr-only-via-finish")
+    FileUtils.mkdir_p(File.join(@repo, "sub"))
+    outside = File.dirname(@repo)
+
+    _, stderr, status = run_guard("cd #{File.basename(@repo)} && cd sub && gh pr create --fill", cwd: outside)
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_glued_short_repo_flag_is_passed_on
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge -Reirvandelden/dotfiles 186")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "-Reirvandelden/dotfiles")
+  end
+
+  def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_head_branch_that_exists_only_on_origin_is_read
+    commit_change_then_leave_branch
+    system("git", "-C", @repo, "update-ref", "refs/remotes/origin/pr-only-via-finish", "pr-only-via-finish")
+    system("git", "-C", @repo, "branch", "-q", "-D", "pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
   private
+
+  def commit_change_then_leave_branch
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "main")
+  end
+
+  # A repository on <branch> whose working tree holds docs/changes/<branch>/.
+  def start_change(branch, repo: @repo)
+    system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet",
+           "--allow-empty", "-m", "init")
+    system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "-b", branch)
+    FileUtils.mkdir_p(File.join(repo, "docs", "changes", branch))
+    File.write(File.join(repo, "docs", "changes", branch, "intent.md"), "intent")
+    system("git", "-C", repo, "add", "docs")
+  end
+
+  # A second repository with a change folder, and a directory to run the command from.
+  def other_checkout
+    other = Dir.mktmpdir
+    system("git", "init", "--quiet", "--initial-branch=main", other)
+    start_change("pr-only-via-finish", repo: other)
+    [ other, Dir.mktmpdir ]
+  end
+
+  # A gh on PATH that logs its arguments and answers from the given values.
+  def stub_gh(view: nil, tree: nil, fail: false)
+    bin = Dir.mktmpdir
+    @gh_log = File.join(bin, "gh.log")
+    script = File.join(bin, "gh")
+    File.write(script, <<~SH)
+      #!/bin/sh
+      echo "$@" >> #{@gh_log}
+      pwd -P >> #{@gh_log}.cwd
+      #{fail ? 'exit 1' : ''}
+      case "$1 $2" in
+        "pr view") printf '%s\\n' '#{view}' ;;
+        "api graphql") printf '%s\\n' '#{tree}' ;;
+      esac
+    SH
+    FileUtils.chmod(0o755, script)
+    @gh_bin = bin
+  end
 
   def allow_remotes(*entries)
     File.write(File.join(@home, ".claude", "consent-guard-allowed-remotes.txt"), entries.join("\n"))
@@ -451,15 +826,21 @@ class ConsentGuardTest < Minitest::Test
     system("git", "-C", @repo, "remote", "add", name, url)
   end
 
-  def run_guard(command)
-    payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: @repo })
-    Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
+  def run_guard(command, cwd: @repo)
+    payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: cwd })
+    Open3.capture3(guard_environment, GUARD, stdin_data: payload)
   end
 
   def run_codex_guard(command)
     payload = JSON.generate({ session_id: "s", turn_id: "t", hook_event_name: "PreToolUse", model: "gpt",
                               permission_mode: "default", tool_name: "Bash", tool_input: { command: command },
                               tool_use_id: "exec-1", cwd: @repo })
-    Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
+    Open3.capture3(guard_environment, GUARD, stdin_data: payload)
+  end
+
+  def guard_environment
+    environment = { "HOME" => @home }
+    environment["PATH"] = "#{@gh_bin}:#{ENV.fetch('PATH')}" if @gh_bin
+    environment
   end
 end
