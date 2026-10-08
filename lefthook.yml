@@ -65,7 +65,7 @@ pre-commit:
       run: |
         branch=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-          echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
+          echo "Direct commit to $branch is not allowed. Create a feature branch; /finish opens the PR."
           exit 1
         fi
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
@@ -248,7 +248,7 @@ pre-push:
       run: |
         branch=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-          echo "Direct push to $branch is not allowed. Create a feature branch and open a PR."
+          echo "Direct push to $branch is not allowed. Create a feature branch; /finish opens the PR."
           exit 1
         fi
       fail_text: Direct pushes to main/master are blocked. Create a feature branch first.

@@ -9,7 +9,7 @@ arguments:
 
 # Finish
 
-One skill, not two: personal and work do the same core thing — confirm the review is fresh, fill the PR body, remove `docs/changes/<slug>/`, commit, push, and open the PR — and differ only in the ADR question and the reviewer request, both work only. Runs only on explicit command (`/finish`), never on its own.
+One skill, not two: personal and work do the same core thing — confirm the review is fresh, fill the PR body, remove `docs/changes/<slug>/`, commit, push, and open the PR — and differ only in the ADR question and the reviewer request, both work only. Runs only on explicit command (`/finish`), never on its own. It is the only step that opens a pull request: the consent guard refuses `gh pr create` and `gh pr merge` while `docs/changes/` exists.
 
 `--dry-run`: print every step below with what it would do, then stop before doing anything — including no `gh pr create`. Etienne runs the first real use on a work PR this way and executes the printed steps by hand once; after that it is optional.
 
@@ -52,7 +52,7 @@ Before or alongside the removal below, close this change's own leftover stage pa
 ## 5. Both scopes: push and open the PR
 
 1. `git push -u origin <branch>`. The consent guard governs which remote this may run against unattended; `--force-with-lease` only if this run rebased the branch, never plain `--force`.
-2. `gh pr view --json number,url,isDraft` on this branch:
+2. `gh pr view --json number,url,isDraft` on this branch. §4 removed the change folder first, so the consent guard refuses `gh pr create` until it is gone:
    - **Exists**: `gh pr edit --body-file <the mktemp body file from §3>`.
    - **Missing**: `gh pr create --title "<the title recorded in §3>" --body-file <the mktemp body file from §3>`. Never `--draft`, in either scope — a personal repo has no board to hide the PR behind, and at work the team's board status is what governs visibility, not draft state.
 3. Delete the mktemp body file.
