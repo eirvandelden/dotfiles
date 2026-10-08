@@ -441,7 +441,164 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  # Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
+  def test_creating_a_pull_request_while_the_change_folder_exists_is_refused_naming_finish
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(%r{/finish}, stderr)
+  end
+
+  def test_creating_a_pull_request_once_finish_removed_the_change_folder_is_allowed
+    start_change("pr-only-via-finish")
+    FileUtils.rm_rf(File.join(@repo, "docs"))
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_creating_a_pull_request_on_main_is_allowed
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_change_folder_in_a_cd_target_is_found
+    other, run_from = other_checkout
+
+    _, stderr, status = run_guard("cd #{other} && gh pr create", cwd: run_from)
+
+    assert_equal(2, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf([ other, run_from ].compact)
+  end
+
+  def test_a_cd_target_glued_to_a_semicolon_is_found
+    other, run_from = other_checkout
+
+    _, stderr, status = run_guard("cd #{other}; gh pr create", cwd: run_from)
+
+    assert_equal(2, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf([ other, run_from ].compact)
+  end
+
+  def test_a_cd_target_on_the_line_before_is_found
+    other, run_from = other_checkout
+
+    _, stderr, status = run_guard("cd #{other}\ngh pr create", cwd: run_from)
+
+    assert_equal(2, status.exitstatus, stderr)
+  ensure
+    FileUtils.rm_rf([ other, run_from ].compact)
+  end
+
+  def test_creating_a_pull_request_inside_bash_dash_c_is_refused
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard(%(bash -c "gh pr create --fill"))
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_consent_does_not_unlock_creating_a_pull_request_with_a_change_folder
+    start_change("pr-only-via-finish")
+
+    _, _, status = run_guard("I_HAVE_USER_CONSENT=1 gh pr create --fill")
+
+    assert_equal(2, status.exitstatus)
+  end
+
+  def test_a_quoted_message_naming_gh_pr_create_is_allowed
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard(%(git commit -m "finish runs gh pr create"))
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_a_codex_payload_creating_a_pull_request_with_a_change_folder_is_refused
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_codex_guard("gh pr create --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(%r{/finish}, stderr)
+  end
+
+  def test_merging_a_pull_request_whose_head_has_docs_changes_is_refused
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "Tree")
+
+    _, stderr, status = run_guard("gh pr merge 186 --squash")
+
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(%r{/finish}, stderr)
+  end
+
+  def test_merging_a_pull_request_whose_head_has_no_docs_changes_is_allowed
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "absent")
+
+    _, stderr, status = run_guard("gh pr merge 185 --squash")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_merging_is_allowed_when_gh_cannot_tell
+    stub_gh(fail: true)
+
+    _, stderr, status = run_guard("gh pr merge 186")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_merging_asks_gh_about_the_named_pull_request_and_repository
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "absent")
+
+    run_guard("gh pr merge --squash -t 'a title' 186 --repo eirvandelden/dotfiles")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186 --repo eirvandelden/dotfiles")
+  end
+
   private
+
+  # A repository on <branch> whose working tree holds docs/changes/<branch>/.
+  def start_change(branch, repo: @repo)
+    system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet",
+           "--allow-empty", "-m", "init")
+    system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "-b", branch)
+    FileUtils.mkdir_p(File.join(repo, "docs", "changes", branch))
+    File.write(File.join(repo, "docs", "changes", branch, "intent.md"), "intent")
+  end
+
+  # A second repository with a change folder, and a directory to run the command from.
+  def other_checkout
+    other = Dir.mktmpdir
+    system("git", "init", "--quiet", "--initial-branch=main", other)
+    start_change("pr-only-via-finish", repo: other)
+    [ other, Dir.mktmpdir ]
+  end
+
+  # A gh on PATH that logs its arguments and answers from the given values.
+  def stub_gh(view: nil, tree: nil, fail: false)
+    bin = Dir.mktmpdir
+    @gh_log = File.join(bin, "gh.log")
+    script = File.join(bin, "gh")
+    File.write(script, <<~SH)
+      #!/bin/sh
+      echo "$@" >> #{@gh_log}
+      #{fail ? 'exit 1' : ''}
+      case "$1 $2" in
+        "pr view") printf '%s\\n' '#{view}' ;;
+        "api graphql") printf '%s\\n' '#{tree}' ;;
+      esac
+    SH
+    FileUtils.chmod(0o755, script)
+    @gh_bin = bin
+  end
 
   def allow_remotes(*entries)
     File.write(File.join(@home, ".claude", "consent-guard-allowed-remotes.txt"), entries.join("\n"))
@@ -451,15 +608,21 @@ class ConsentGuardTest < Minitest::Test
     system("git", "-C", @repo, "remote", "add", name, url)
   end
 
-  def run_guard(command)
-    payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: @repo })
-    Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
+  def run_guard(command, cwd: @repo)
+    payload = JSON.generate({ tool_name: "Bash", tool_input: { command: command }, cwd: cwd })
+    Open3.capture3(guard_environment, GUARD, stdin_data: payload)
   end
 
   def run_codex_guard(command)
     payload = JSON.generate({ session_id: "s", turn_id: "t", hook_event_name: "PreToolUse", model: "gpt",
                               permission_mode: "default", tool_name: "Bash", tool_input: { command: command },
                               tool_use_id: "exec-1", cwd: @repo })
-    Open3.capture3({ "HOME" => @home }, GUARD, stdin_data: payload)
+    Open3.capture3(guard_environment, GUARD, stdin_data: payload)
+  end
+
+  def guard_environment
+    environment = { "HOME" => @home }
+    environment["PATH"] = "#{@gh_bin}:#{ENV.fetch('PATH')}" if @gh_bin
+    environment
   end
 end
