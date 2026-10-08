@@ -48,12 +48,42 @@ def never_allowed_reason(words, working_directory)
 end
 
 def pull_request_reason(words, working_directory)
-  directories = command_directories(words, working_directory)
-  return "only /finish opens a pull request, once it removed docs/changes/<slug>/. Run /finish." \
-    if gh_command?(words, "create") && directories.any? { |directory| change_folder?(directory) }
+  return unless gh_command?(words, "create") || gh_command?(words, "merge")
 
-  "only /finish prepares a branch for merging: docs/changes still exists in the pull request's branch. " \
-    "Run /finish first." if gh_command?(words, "merge") && merge_carries_change_folder?(words, directories.last)
+  create_reason(words, working_directory) || merge_reason(words, working_directory)
+end
+
+def create_reason(words, working_directory)
+  return unless gh_command?(words, "create")
+
+  directories = command_directories(words, working_directory)
+  head = head_branch(words)
+  return unless directories.any? { |directory| change_folder?(directory) } ||
+                (head && directories.any? { |directory| branch_carries_change_folder?(directory, head) })
+
+  "only /finish opens a pull request, once it removed docs/changes/<slug>/. Run /finish."
+end
+
+def merge_reason(words, working_directory)
+  return unless gh_command?(words, "merge")
+
+  directory = command_directories(words.take(words.each_cons(2).find_index([ "pr", "merge" ]) || words.size),
+                                  working_directory).last
+  return unless merge_carries_change_folder?(words, directory)
+
+  "only /finish prepares a branch for merging: docs/changes still exists in the pull request's branch " \
+    "(or in its base branch). Run /finish first, or remove the folder."
+end
+
+# The branch named by --head or -H, without a leading <owner>: part.
+def head_branch(words)
+  index = words.index { |word| %w[--head -H].include?(word) }
+  value = index ? words[index + 1] : words.find { |word| word.start_with?("--head=") }&.delete_prefix("--head=")
+  value&.split(":", 2)&.last
+end
+
+def branch_carries_change_folder?(directory, branch)
+  !git_output(directory, "ls-tree", "--name-only", branch, "docs/changes/").strip.empty?
 end
 
 # The words, plus the words inside the script of any `sh -c`, `bash -c` or `zsh -c`.
@@ -82,7 +112,8 @@ def change_folder?(directory)
   folder, _, status = Open3.capture3(CHANGE_FOLDER_SCRIPT, chdir: directory)
   return false unless status.success?
 
-  !git_output(directory, "ls-files", "--", folder.strip).strip.empty?
+  toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
+  !git_output(toplevel, "ls-files", "--", folder.strip).strip.empty?
 rescue SystemCallError
   false
 end
@@ -125,7 +156,7 @@ def merge_arguments(words)
   selector = rest.each_with_index.find do |word, index|
     !word.start_with?("-") && !(index.positive? && MERGE_VALUE_OPTIONS.include?(rest[index - 1]))
   end&.first
-  [ [ selector ].compact, repository_flag(rest) ]
+  [ [ selector ].compact, repository_flag(rest, words) ]
 end
 
 def merge_window(words)
@@ -133,7 +164,10 @@ def merge_window(words)
   window(words.drop(index + 2))
 end
 
-def repository_flag(rest)
+def repository_flag(rest, words)
+  environment = words.find { |word| word.start_with?("GH_REPO=") }
+  return [ "--repo", environment.delete_prefix("GH_REPO=") ] if environment
+
   equals = rest.find { |word| word.start_with?("--repo=") }
   return [ equals ] if equals
 
