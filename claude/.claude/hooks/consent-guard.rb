@@ -16,7 +16,7 @@
 # Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
 # So `gh pr create` is refused while that folder exists in a checkout the command
 # runs in, and `gh pr merge` is refused while the pull request's head commit still
-# holds docs/changes. Neither is unlocked by the consent marker.
+# holds its own docs/changes/<slug>/. Neither is unlocked by the consent marker.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does
 # not block anything, so keep Ruby on PATH.
@@ -57,7 +57,7 @@ def create_reason(words, working_directory)
   return unless gh_command?(words, "create")
 
   directories = command_directories(words, working_directory)
-  head = head_branch(words)
+  head = head_branch(pr_window(words, "create"))
   return unless directories.any? { |directory| change_folder?(directory) } ||
                 (head && directories.any? { |directory| branch_carries_change_folder?(directory, head) })
 
@@ -179,7 +179,12 @@ def merge_arguments(words)
 end
 
 def merge_window(words)
-  index = words.each_cons(2).find_index([ "pr", "merge" ])
+  pr_window(words, "merge")
+end
+
+# The words after `pr <action>`, up to the next shell operator.
+def pr_window(words, action)
+  index = words.each_cons(2).find_index([ "pr", action ])
   window(words.drop(index + 2))
 end
 
