@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "json"
 require "open3"
+require "timeout"
 require "tmpdir"
 require_relative "lefthook_binary"
 
@@ -44,6 +45,117 @@ class WorktreeSweepOnPullTest < Minitest::Test
     wait_for_sweep_to_finish
     refute(branch?(@repo, "foo"), "the local branch foo should be gone")
     assert_includes(herdr_calls, "pane close w1:pQ")
+  end
+
+  def test_a_pull_that_rebases_a_feature_branch_inside_a_worktree_removes_another_merged_worktree
+    foo = merged_worktree("foo")
+    bar = pushed_worktree("bar")
+    write_gh_states(gh_states.merge("bar" => "OPEN"))
+    commit(bar, "local bar work")
+    push_from_elsewhere("bar", "remote bar work")
+
+    pull(bar)
+
+    wait_until("#{foo} to be removed") { !File.exist?(foo) }
+    assert(File.directory?(bar))
+  end
+
+  def test_the_pull_returns_while_the_sweep_is_still_running
+    foo = merged_worktree("foo")
+    FileUtils.touch(block_file)
+
+    Timeout.timeout(DEADLINE) { pull(@repo) }
+
+    assert(File.directory?(foo), "the sweep must still be waiting for gh")
+    FileUtils.touch(release_file)
+    wait_until("#{foo} to be removed") { !File.exist?(foo) }
+  end
+
+  def test_dirty_open_pr_never_pushed_and_detached_worktrees_survive_the_pull_sweep
+    foo = merged_worktree("foo")
+    dirty = pushed_worktree("dirty")
+    File.write(File.join(dirty, "scratch.txt"), "uncommitted")
+    open_pr = pushed_worktree("open-pr")
+    never_pushed = add_worktree("never-pushed")
+    detached = add_worktree("detached")
+    run_git(detached, "checkout", "--quiet", "--detach", "HEAD")
+    write_gh_states(gh_states.merge("dirty" => "MERGED", "open-pr" => "OPEN"))
+
+    pull(@repo)
+
+    wait_until("#{foo} to be removed") { !File.exist?(foo) }
+    wait_for_sweep_to_finish
+    [ dirty, open_pr, never_pushed, detached ].each { |path| assert(File.directory?(path), "#{path} was removed") }
+    assert(branch?(@repo, "never-pushed"))
+  end
+
+  def test_a_pull_inside_a_merged_worktree_keeps_that_worktree
+    foo = merged_worktree("foo")
+    baz = merged_worktree("baz")
+    push_from_elsewhere("foo", "more foo work")
+
+    pull(foo)
+
+    wait_until("#{baz} to be removed") { !File.exist?(baz) }
+    assert(File.directory?(foo), "the worktree that pulled must stay")
+  end
+
+  def test_a_pull_in_one_repository_leaves_another_repositorys_worktrees_alone
+    other_origin, other_repo = origin_and_clone(prefix: "other-")
+    foo = merged_worktree("foo")
+    foreign = merged_worktree("foreign", repo: other_repo, origin: other_origin)
+
+    pull(@repo)
+
+    wait_until("#{foo} to be removed") { !File.exist?(foo) }
+    wait_for_sweep_to_finish
+    assert(File.directory?(foreign))
+  end
+
+  def test_a_repository_with_its_own_config_and_no_reference_starts_no_sweep
+    foo = merged_worktree("foo")
+    File.write(File.join(@repo, "lefthook.yml"), "post-merge:\n  commands:\n    own:\n      run: echo own\n")
+
+    pull(@repo)
+
+    refute(File.exist?(lock_file(@repo)), "no sweep may start")
+    assert(File.directory?(foo))
+  end
+
+  def test_a_repository_that_references_the_global_config_through_remotes_sweeps_on_pull
+    foo = merged_worktree("foo")
+    install_remote_clone
+    File.write(File.join(@repo, "lefthook.yml"), <<~YAML)
+      remotes:
+        - git_url: #{File.join(@tmp, "dotfiles.git")}
+          configs:
+            - lefthook.yml
+    YAML
+
+    pull(@repo)
+
+    wait_until("#{foo} to be removed") { !File.exist?(foo) }
+  end
+
+  def test_a_repository_that_extends_the_global_config_sweeps_on_pull
+    foo = merged_worktree("foo")
+    File.write(File.join(@repo, "lefthook.yml"),
+               "extends:\n  - #{File.join(@home, 'Developer', 'dotfiles', 'lefthook.yml')}\n")
+
+    pull(@repo)
+
+    wait_until("#{foo} to be removed") { !File.exist?(foo) }
+  end
+
+  def test_with_gh_logged_out_the_pull_succeeds_and_prints_no_sweep_output
+    foo = merged_worktree("foo")
+    FileUtils.touch(logged_out_file)
+
+    stdout, stderr = pull(@repo)
+
+    wait_for_sweep_to_finish
+    refute_match(/gh:|not logged|error/i, stdout + stderr)
+    assert(File.directory?(foo))
   end
 
   private
@@ -159,14 +271,14 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
   # --- repositories ------------------------------------------------------------------------
 
-  def origin_and_clone
-    origin = File.join(@tmp, "origin.git")
+  def origin_and_clone(prefix: "")
+    origin = File.join(@tmp, "#{prefix}origin.git")
     run_git(@tmp, "init", "--quiet", "--bare", "--initial-branch=main", origin)
-    seed = File.join(@tmp, "seed")
+    seed = File.join(@tmp, "#{prefix}seed")
     run_git(@tmp, "clone", "--quiet", origin, seed)
     commit(seed, "initial")
     run_git(seed, "push", "--quiet", "origin", "main")
-    repo = File.join(@tmp, "repo")
+    repo = File.join(@tmp, "#{prefix}repo")
     run_git(@tmp, "clone", "--quiet", origin, repo)
     File.write(File.join(repo, ".git", "info", "exclude"), ".worktrees\n")
     [ origin, repo ]
@@ -174,24 +286,55 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
   # A worktree whose branch was pushed with -u, has a MERGED PR, and whose commit origin/main
   # now holds. The main checkout still has to pull to see it.
-  def merged_worktree(name, repo: @repo)
-    path = File.join(repo, ".worktrees", name)
+  def merged_worktree(name, repo: @repo, origin: @origin)
+    path = pushed_worktree(name, repo: repo)
+    merge_on_origin(name, origin: origin)
+    write_gh_states(gh_states.merge(name => "MERGED"))
+    path
+  end
+
+  def add_worktree(name, repo: @repo)
     run_git(repo, "worktree", "add", "--quiet", File.join(".worktrees", name), "-b", name, "origin/main")
+    File.realpath(File.join(repo, ".worktrees", name))
+  end
+
+  # A worktree with one commit, pushed with -u, that origin/main does not hold yet.
+  def pushed_worktree(name, repo: @repo)
+    path = add_worktree(name, repo: repo)
     commit(path, "work on #{name}")
     run_git(path, "push", "--quiet", "-u", "origin", name)
-    merge_on_origin(name)
-    write_gh_states(gh_states.merge(name => "MERGED"))
-    File.realpath(path)
+    path
+  end
+
+  def push_from_elsewhere(branch, message)
+    other = File.join(@tmp, "elsewhere-#{branch}")
+    run_git(@tmp, "clone", "--quiet", "--branch", branch, @origin, other)
+    commit(other, message)
+    run_git(other, "push", "--quiet", "origin", branch)
+  end
+
+  def install_remote_clone
+    bare = File.join(@tmp, "dotfiles.git")
+    run_git(@tmp, "init", "--quiet", "--bare", "--initial-branch=main", bare)
+    seed = File.join(@tmp, "dotfiles-seed")
+    run_git(@tmp, "clone", "--quiet", bare, seed)
+    FileUtils.cp(File.join(@home, "Developer", "dotfiles", "lefthook.yml"), seed)
+    run_git(seed, "add", "-A")
+    run_git(seed, "commit", "--quiet", "-m", "lefthook.yml")
+    run_git(seed, "push", "--quiet", "origin", "main")
+    clones = File.join(@repo, ".git", "info", "lefthook-remotes")
+    FileUtils.mkdir_p(clones)
+    run_git(@tmp, "clone", "--quiet", bare, File.join(clones, "dotfiles"))
   end
 
   def gh_states
     File.readlines(gh_states_file, chomp: true).to_h { |line| line.split("=", 2) }
   end
 
-  def merge_on_origin(branch)
+  def merge_on_origin(branch, origin: @origin)
     pusher = File.join(@tmp, "pusher-#{branch}")
-    run_git(@tmp, "clone", "--quiet", @origin, pusher)
-    run_git(pusher, "merge", "--quiet", "--ff-only", "origin/#{branch}")
+    run_git(@tmp, "clone", "--quiet", origin, pusher)
+    run_git(pusher, "merge", "--quiet", "--no-edit", "origin/#{branch}")
     run_git(pusher, "push", "--quiet", "origin", "main")
   end
 
