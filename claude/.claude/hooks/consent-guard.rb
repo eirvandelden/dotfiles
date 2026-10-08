@@ -71,8 +71,8 @@ def merge_reason(words, working_directory)
                                   working_directory).last
   return unless merge_carries_change_folder?(words, directory)
 
-  "only /finish prepares a branch for merging: docs/changes still exists in the pull request's branch " \
-    "(or in its base branch). Run /finish first, or remove the folder."
+  "only /finish prepares a branch for merging: the pull request's branch still has its own docs/changes/<slug>/ " \
+    "folder. Run /finish first."
 end
 
 # The branch named by --head or -H, without a leading <owner>: part.
@@ -82,13 +82,13 @@ def head_branch(words)
   value&.split(":", 2)&.last
 end
 
-# Reads the branch's own folder, locally or on origin. A branch git cannot resolve means "cannot tell".
 def head_value(word)
   return word.delete_prefix("--head=") if word.start_with?("--head=")
 
   word.delete_prefix("-H") if word.start_with?("-H") && word.length > 2
 end
 
+# Reads the branch's own folder, locally or on origin. A branch git cannot resolve means "cannot tell".
 def branch_carries_change_folder?(directory, branch)
   toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
   folder = "docs/changes/#{change_slug(branch)}"
@@ -129,7 +129,10 @@ def change_folder?(directory)
   return false unless status.success?
 
   toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
-  !git_output(toplevel, "ls-files", "--", folder.strip).strip.empty?
+  folder = folder.strip
+  [ [ "ls-files", "--", folder ], [ "ls-tree", "--name-only", "HEAD", "--", folder ] ].any? do |arguments|
+    !git_output(toplevel, *arguments).strip.empty?
+  end
 rescue SystemCallError
   false
 end
