@@ -88,7 +88,7 @@ class WorktreeSweepTest < Minitest::Test
     dirty = add_worktree("dirty-branch")
     commit(dirty, "more work")
     File.write(File.join(dirty, "scratch.txt"), "uncommitted")
-    write_gh_states("dirty-branch" => "MERGED")
+    write_gh_states("dirty-branch" => "MERGED", "main" => "MERGED")
     hook_environment = {
       "GIT_DIR" => File.join(@repo, ".git"),
       "GIT_INDEX_FILE" => File.join(@repo, ".git", "index"),
@@ -99,6 +99,7 @@ class WorktreeSweepTest < Minitest::Test
 
     assert(status.success?, stderr)
     assert(File.directory?(dirty), "a dirty worktree must survive; GIT_DIR made it look clean")
+    assert_empty(git_calls.grep(/\Aworktree remove /), "the sweep tried to remove a worktree")
   end
 
   def test_fetches_the_default_branch_before_it_sweeps
