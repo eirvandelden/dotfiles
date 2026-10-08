@@ -599,7 +599,11 @@ install_gh_extensions() {
       continue
     fi
 
-    log "gh extension: installing: $ext"
+    # gh_extension_is_installed needs `gh extension list`, which needs
+    # authentication. Unauthenticated, it always reports false, so this
+    # line does not claim "installing": `gh extension install` itself is
+    # a no-op with its own message when the extension is already there.
+    log "gh extension: ensuring installed: $ext"
     gh extension install "$ext"
   done
 }
