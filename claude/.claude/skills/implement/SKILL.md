@@ -29,7 +29,7 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
 
 ### When the worker finishes
 
-Unlike `intent` and `plan`, the implement pane does not push once done — pushing unreviewed code would fail the pre-push freshness check, so the pane only commits and leaves the push to `/review` and `/finish`. The worker writes what it did, and anything it could not finish, to a Markdown file inside the repository's shared git directory, then sends one line: `Handoff done: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while this session is busy — but the report is never lost either way, since the script printed the path when it started.
+Like `intent` and `plan`, the implement pane pushes once done: `git push -u origin HEAD`. The pre-push freshness check skips a branch that has a change folder and no open pull request, so this work-in-progress push succeeds. A refused push goes into the report, never `--no-verify`. `/review` and `/finish` send the branch onward. The worker writes what it did, and anything it could not finish, to a Markdown file inside the repository's shared git directory, then sends one line: `Handoff done: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while this session is busy — but the report is never lost either way, since the script printed the path when it started.
 
 Read the file and tell the user what came back. Do not pick up the leftovers unless asked. Reports pile up in that directory over time; nothing prunes it — that is the user's to clear.
 
@@ -54,7 +54,7 @@ A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same co
 
 **`Type: bugfix`** (from `intent.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit. Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`docs/changes/ai-native-workflow/spec.md §4`); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
 
-Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file.
+Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file; the branch pushed with `git push -u origin HEAD`. A refused push goes into the report, never `--no-verify`.
 
 ### 4. Split mode (two agents)
 
