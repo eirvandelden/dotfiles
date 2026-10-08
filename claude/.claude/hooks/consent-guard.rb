@@ -82,8 +82,7 @@ def change_folder?(directory)
   folder, _, status = Open3.capture3(CHANGE_FOLDER_SCRIPT, chdir: directory)
   return false unless status.success?
 
-  toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
-  File.directory?(File.join(toplevel, folder.strip))
+  !git_output(directory, "ls-files", "--", folder.strip).strip.empty?
 rescue SystemCallError
   false
 end
@@ -119,13 +118,19 @@ def gh_output(directory, *arguments)
   output.strip if status.success?
 end
 
-# The first positional word after `merge` names the pull request; --repo is passed on.
+# The first positional word after `pr merge` names the pull request; --repo is passed on.
+# Only the words up to the next shell operator belong to the merge.
 def merge_arguments(words)
-  rest = words.drop(words.index("merge") + 1)
+  rest = merge_window(words)
   selector = rest.each_with_index.find do |word, index|
-    !word.start_with?("-") && !MERGE_VALUE_OPTIONS.include?(rest[index - 1])
+    !word.start_with?("-") && !(index.positive? && MERGE_VALUE_OPTIONS.include?(rest[index - 1]))
   end&.first
   [ [ selector ].compact, repository_flag(rest) ]
+end
+
+def merge_window(words)
+  index = words.each_cons(2).find_index([ "pr", "merge" ])
+  window(words.drop(index + 2))
 end
 
 def repository_flag(rest)
