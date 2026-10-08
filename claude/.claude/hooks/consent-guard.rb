@@ -34,9 +34,52 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 # whitespace: cruder, and more likely to ask when it need not, which is the
 # direction to fail in.
 def words(command)
-  Shellwords.split(command.gsub("\n", " ; "))
+  Shellwords.split(command_lines_as_operators(command))
 rescue ArgumentError
   command.split
+end
+
+# Outside quotes, a newline ends a command like `;` does, a backslash-newline joins
+# the lines, and a comment is dropped. Quoted text is left as it is.
+def command_lines_as_operators(command)
+  characters = command.chars
+  result = +""
+  quote = nil
+  quote = next_character(characters, result, quote) until characters.empty?
+  result
+end
+
+# Moves one character from `characters` to `result`; returns the quote now open, or nil.
+def next_character(characters, result, quote)
+  character = characters.shift
+  return copy_quoted(character, characters, result, quote) if quote
+
+  case character
+  when "\\" then copy_escape(characters, result)
+  when "\n" then result << " ; "
+  when "#" then comment?(result) ? skip_comment(characters) : result << character
+  else result << character
+  end
+  character if %w[' "].include?(character)
+end
+
+def copy_escape(characters, result)
+  escaped = characters.shift
+  result << "\\#{escaped}" unless escaped == "\n"
+end
+
+def skip_comment(characters)
+  characters.shift until characters.empty? || characters.first == "\n"
+end
+
+def comment?(result)
+  result.empty? || result.end_with?(" ", "\t")
+end
+
+def copy_quoted(character, characters, result, quote)
+  result << character
+  result << characters.shift.to_s if character == "\\" && quote == '"'
+  quote unless character == quote
 end
 
 # Rule 20 says never, so no consent marker unlocks this one.
@@ -272,8 +315,6 @@ end
 # The words up to the first shell operator, keeping the part of a word before a glued one.
 def window(words)
   words.each_with_object([]) do |word, kept|
-    break kept if word.start_with?("#")
-
     head, operator = word.split(SHELL_OPERATOR, 2)
     kept << head unless head.to_s.empty?
     break kept if operator

