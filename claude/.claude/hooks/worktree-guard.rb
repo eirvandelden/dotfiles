@@ -19,6 +19,7 @@ require "shellwords"
 require "strscan"
 
 SEGMENT_SEPARATOR = /&&|\|\||[;|\n]/
+LINE_CONTINUATION = /\\\n/
 TOKEN = /
   (?<separator>#{SEGMENT_SEPARATOR})
   | (?<space>[ \t]+)
@@ -39,7 +40,7 @@ MESSAGE
 # The words of each simple command. Separators inside quotes and heredoc bodies are text, not
 # commands. A quote left open falls back to splitting on every separator.
 def segments(command)
-  text = without_heredoc_bodies(command)
+  text = without_heredoc_bodies(command).gsub(LINE_CONTINUATION, "")
   pieces = tokens(text)
   return text.split(SEGMENT_SEPARATOR).map { |segment| words(segment) } unless pieces
 

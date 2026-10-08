@@ -160,6 +160,14 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_a_command_wrapped_with_backslash_newline_reads_as_one_line
+    _, stderr, inside = run_guard("git worktree add \\\n  .worktrees/ok -b ok")
+    _, _, outside = run_guard("git \\\n  worktree add ../x -b x")
+
+    assert_equal(0, inside.exitstatus, stderr)
+    assert_equal(2, outside.exitstatus)
+  end
+
   def test_the_path_after_dash_b_is_the_target_not_the_branch_name
     _, stderr, status = run_guard("git worktree add -b .worktrees/inside .worktrees/inside")
 
