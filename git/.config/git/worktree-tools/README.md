@@ -130,16 +130,30 @@ stow:
    - `config.rb` - Configuration loading and validation
    - `symlinker.rb` - GNU Stow integration
    - `puma_dev.rb` - Puma-dev symlink management
+   - `repository.rb` - Main working tree, default branch and the per-repository sweep lock
+   - `sweep.rb` - Removal of merged worktrees, shared by `worktree-create` and `worktree-sweep`
 
 2. **Executable Scripts**
    - `worktree-setup` - Main orchestration (detect → config → stow → puma-dev)
    - `worktree-setup-all` - Bulk setup for all worktrees
    - `worktree-remove` - Cleanup (remove puma-dev, unstow packages)
    - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>` off `origin`'s default branch; prints its path
+   - `worktree-sweep [--detach]` - Sweep merged worktrees of the current repository; the lefthook pull hooks run it with `--detach`
    - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or rename the herdr pane rooted in a worktree
 
 3. **Explicit Git Command**
    - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path
+
+### Sweep on pull
+
+A pull that moves the checked-out branch fires `post-merge` (fast-forward) or `post-rewrite` (rebase). The global `lefthook.yml` runs `worktree-sweep --detach` from both hooks. The pull returns at once; the sweep finishes in the background.
+
+The sweep fetches `origin`'s default branch, then removes each clean worktree under `.worktrees/` whose PR is `MERGED`, or whose branch was pushed under its own name and is now in `origin/<default>`. A branch that was never pushed stays. The worktree that ran the pull stays too. `worktree-create` takes the same lock, so a sweep and a create never overlap in one repository.
+
+Rollout, after the merge, on each machine:
+
+- Restow: `cd ~/Developer/dotfiles && stow -t "$HOME" --ignore='hooks/(post-merge|pre-commit|pre-push)' git`. Until then the hook command does nothing and prints nothing.
+- In each repository that references the global config through `remotes`, refresh the clone by hand: `git -C <repo>/.git/info/lefthook-remotes/dotfiles pull`. The hook shims never refresh it.
 
 ### How It Works
 
