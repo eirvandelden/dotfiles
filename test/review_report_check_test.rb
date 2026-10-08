@@ -127,6 +127,17 @@ class ReviewReportCheckTest < Minitest::Test
     assert_match(/pr list --head claims-status --state open/, File.read(@gh_log))
   end
 
+  def test_skip_without_pr_asks_about_the_origin_repository_not_a_default_remote
+    stale_change_folder
+    git("remote", "add", "origin", "git@github.com:eirvandelden/dotfiles.git")
+    git("remote", "add", "upstream", "git@github.com:cli/cli.git")
+    stub_gh(open_pull_requests: "0")
+
+    run_script("--skip-without-pr")
+
+    assert_match(/--repo eirvandelden\/dotfiles/, File.read(@gh_log))
+  end
+
   def test_skip_without_pr_still_refuses_a_stale_review_once_a_pull_request_is_open
     stale_change_folder
     stub_gh(open_pull_requests: "1")

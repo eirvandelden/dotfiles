@@ -41,7 +41,7 @@ end
 def no_open_pull_request?
   branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
   count, _stderr, status = Open3.capture3("gh", "pr", "list", "--head", branch, "--state", "open",
-                                          "--json", "number", "--jq", "length")
+                                          *origin_repository, "--json", "number", "--jq", "length")
   return count.strip == "0" if status.success?
 
   warn("gh could not tell whether #{branch} has an open pull request: applying the strict check.")
@@ -49,6 +49,13 @@ def no_open_pull_request?
 rescue SystemCallError
   warn("gh could not tell whether the branch has an open pull request: applying the strict check.")
   false
+end
+
+# gh picks the repository itself, and with an `upstream` remote that is not origin. Pin it to origin.
+def origin_repository
+  url, _stderr, status = Open3.capture3("git", "remote", "get-url", "origin")
+  path = url[%r{github\.com[:/](?<path>[^/\s]+/[^/\s]+?)(?:\.git)?\s*\z}, :path] if status.success?
+  path ? [ "--repo", path ] : []
 end
 
 def latest_commit(pathspec, range: nil)
