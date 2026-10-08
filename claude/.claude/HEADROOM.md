@@ -64,6 +64,11 @@ Then start `claude`, run `/mcp`, and log in once on TREK's consent screen.
 ```bash
 headroom wrap codex                     # full integration (preferred)
 headroom wrap codex -- --model opus     # pass flags through to codex
+```
+
+After `unlock`, `codex` and `headroom wrap codex` run in-process (`--no-daemon`) through the shim in `zsh/.config/zsh/unlocked-bin`, off the shared daemon, so they do not show in `codex agents`.
+
+```bash
 headroom unwrap codex                   # remove durable wrapping
 ```
 
