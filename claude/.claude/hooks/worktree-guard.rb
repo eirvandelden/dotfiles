@@ -5,11 +5,11 @@
 # hook never sees it.
 #
 # It tokenises the command; it is not a shell. Quoted text and heredoc bodies are text, so a
-# commit message or PR body that mentions `git worktree add` passes. The command text given to
-# `sh -c`, `bash -c`, `zsh -c` or `eval` is checked as a command of its own. Variables and `$(…)`
-# are not expanded, so such a target is taken literally and usually blocks. Everything else
-# errs towards allowing:
-# a false block stops legitimate work, and the written rule covers the rest.
+# commit message or PR body that mentions `git worktree add` passes. When the command word is
+# `eval`, or `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
+# Variables are not expanded, so such a target is taken literally and usually blocks. Commands
+# inside `( … )` or `$( … )` are not checked. Everything else errs towards allowing: a false
+# block stops legitimate work, and the written rule covers the rest.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does not block
 # anything, so keep Ruby on PATH.
@@ -188,7 +188,14 @@ def handed_on_command(segment_words)
   arguments = segment_words.drop(command_at + 1)
   return arguments.join(" ") if name == "eval"
 
-  arguments[1] if SHELLS.include?(name) && arguments.first == "-c"
+  shell_command_text(arguments) if SHELLS.include?(name)
+end
+
+# `-c` may share a cluster with other short flags (`-lc`) or follow them (`-e -c`); the command
+# text is the first word after the flags.
+def shell_command_text(arguments)
+  flags = arguments.take_while { |word| word.start_with?("-") }
+  arguments[flags.length] if flags.any? { |flag| flag.match?(/\A-[A-Za-z]*c[A-Za-z]*\z/) }
 end
 
 def blocked?(command, directory)

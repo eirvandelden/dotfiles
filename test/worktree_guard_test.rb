@@ -155,6 +155,15 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_a_shell_with_combined_or_earlier_flags_before_dash_c_is_still_checked
+    [ 'bash -lc "git worktree add ../x -b x"', 'bash -e -c "git worktree add ../x -b x"',
+     "zsh -i -c 'git worktree add ../x -b x'" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_a_worktree_add_handed_to_another_shell_inside_dot_worktrees_is_allowed
     _, stderr, status = run_guard('bash -c "git worktree add .worktrees/ok -b ok"')
 
