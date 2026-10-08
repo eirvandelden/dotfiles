@@ -276,8 +276,8 @@ pre-push:
       fail_text: Your pushed files include a NOCOMMIT. See above for details.
     review-report-fresh:
       tags: review
-      run: ~/.config/git/worktree-tools/review-report-fresh
-      fail_text: Run /review, then push again. --no-verify skips this if you must.
+      run: ~/.config/git/worktree-tools/review-report-fresh --skip-without-pr
+      fail_text: Run /review, then push again. The check applies once a pull request is open, or when gh cannot tell.
 
 # Run installs and migrations after pull
 # The nested runs pass the file list with -z: lefthook splits --files-from-stdin on NUL only.
