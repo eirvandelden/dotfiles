@@ -5,6 +5,12 @@
 # folder in HEAD, or the branch has no code commits of its own) or when the review is fresh;
 # exits 1 with a message otherwise.
 #
+# With --skip-without-pr (the pre-push hook passes it) a change folder in HEAD also passes while
+# the branch has no open pull request, so a work-in-progress push needs no review yet. Once a PR
+# is open, or when gh cannot tell, the strict check applies. Without the flag the script stays
+# strict: finish runs it that way before it opens the PR. An older copy of this script ignores
+# the flag and stays strict.
+#
 # "Last change to anything outside the folder" is scoped to this branch's own commits — the
 # range past the merge-base with the base branch — so main's history before the branch point
 # never counts as code the branch itself introduced.
@@ -30,6 +36,19 @@ end
 def folder_in_head?(folder)
   _, status = Open3.capture2("git", "cat-file", "-e", "HEAD:#{folder}")
   status.success?
+end
+
+def no_open_pull_request?
+  branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
+  count, _stderr, status = Open3.capture3("gh", "pr", "list", "--head", branch, "--state", "open",
+                                          "--json", "number", "--jq", "length")
+  return count.strip == "0" if status.success?
+
+  warn("gh could not tell whether #{branch} has an open pull request: applying the strict check.")
+  false
+rescue SystemCallError
+  warn("gh could not tell whether the branch has an open pull request: applying the strict check.")
+  false
 end
 
 def latest_commit(pathspec, range: nil)
@@ -114,6 +133,7 @@ end
 
 slug_folder = folder
 exit(0) unless folder_in_head?(slug_folder)
+exit(0) if ARGV.include?("--skip-without-pr") && no_open_pull_request?
 
 code = code_commit(slug_folder, own_commit_range(resolved_base_branch))
 review = review_commit(slug_folder)
