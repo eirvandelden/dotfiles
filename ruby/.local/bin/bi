@@ -3,10 +3,25 @@
 # Bundler resolves the lockfile; rv installs the gems. See docs/changes/bi-uses-rv-ci/plan.md.
 set -eu
 
-gemfile="${BUNDLE_GEMFILE:-Gemfile}"
+# The nearest directory at or above this one with a Gemfile, as Bundler searches.
+project_root() {
+  dir=$PWD
+  until [ -f "$dir/Gemfile" ]; do
+    [ "$dir" = / ] && return 1
+    dir=$(dirname "$dir")
+  done
+  echo "$dir"
+}
 
-if [ ! -f "$gemfile" ]; then
-  echo "bi: no Gemfile in $PWD, nothing to install"
+if [ -n "${BUNDLE_GEMFILE:-}" ]; then
+  if [ ! -f "$BUNDLE_GEMFILE" ]; then
+    echo "bi: no $BUNDLE_GEMFILE in $PWD, nothing to install"
+    exit 0
+  fi
+elif root=$(project_root); then
+  cd "$root"
+else
+  echo "bi: no Gemfile in $PWD or its parents, nothing to install"
   exit 0
 fi
 

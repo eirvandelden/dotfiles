@@ -118,6 +118,18 @@ class BiTest < Minitest::Test
     assert_equal("", command_log)
   end
 
+  def test_subdirectory_installs_for_the_project_above_it
+    write_rails_project
+    subdirectory = File.join(@project, "app", "models")
+    FileUtils.mkdir_p(subdirectory)
+
+    result = run_bi(chdir: subdirectory)
+
+    assert_success(result)
+    assert_runs_in_order("bundle lock", "rv ci", "bin/rails app:update:bin")
+    refute_includes(command_lines, "bundle install")
+  end
+
   def test_bundle_gemfile_names_the_gemfile_to_look_for
     File.write(File.join(@project, "other.gemfile"), "")
     File.write(File.join(@project, "other.gemfile.lock"), "")
@@ -207,11 +219,11 @@ class BiTest < Minitest::Test
 
   private
 
-  def run_bi(env: {})
+  def run_bi(env: {}, chdir: @project)
     flunk("ruby/.local/bin/bi is missing or not executable") unless File.executable?(BI)
 
     stdout, stderr, status = Timeout.timeout(60) do
-      Open3.capture3(base_env.merge(env), BI, chdir: @project, stdin_data: "")
+      Open3.capture3(base_env.merge(env), BI, chdir:, stdin_data: "")
     end
     { stdout:, stderr:, status: }
   end
