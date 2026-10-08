@@ -30,3 +30,28 @@ Acceptance criteria:
 - Post-merge installs through `bi` → `test/lefthook_pull_hooks_test.rb` `test_changed_gemfile_lock_installs_through_bi`.
 
 Security: nothing found. The new refusal sits on the never-allowed path, so no consent marker unlocks it, and the Codex change only removes an allow rule.
+
+## Round 2 — 2026-10-08T12:08Z — 4cb61a73
+
+Whole branch against `origin/main`, with focus on the three commits since round 1. No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy applies. Every `test/*_test.rb` passes except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`. The global `no-push-to-main` hook in `~/.config/git/hooks` refuses that test's commit on `main` in its temporary repository. This branch touches neither the test nor the hook, so it is not a finding here. `shellcheck`, `rubocop`, `yamllint` and `markdownlint` are clean on the changed files. Round 1's Nit about a modified `Gemfile.lock` after a pull is still open.
+
+- [ ] Important: A line continuation before `bundle` hides the install from the guard. `SHELL_PIECE` keeps a backslash and its newline as one escape, and `Shellwords.split` returns that escape as a word of its own (`"\\\n"`). That word takes command position, so `bundle` becomes an argument. Probed, each exits 0: `cd app && \` newline, two spaces, `bundle install`; `cd app && \` newline `bundle install`; `RAILS_ENV=test \` newline, two spaces, `bundle install`. A continuation after `&&` is ordinary multi-line agent shell, and the plan accepts only `bash -c`, `eval` and `xargs` as escapes. `test_install_in_any_command_position_is_refused` has no continuation case. — `claude/.claude/hooks/consent-guard.rb:56` →
+- [ ] Important: `bi` searches for a Gemfile past the repository root. From a Git repository without a Gemfile under a directory with one, `bi` runs `bundle lock`, `rv ci` and `bin/rails app:update:bin` in that parent directory. Probed with stubs: a Gemfile-less repository at `main/.worktrees/no-gemfile` ran all three in `main`. Worktrees live under `.worktrees/` in the main checkout, so a pull that deletes a worktree's Gemfile makes the post-merge hook lock, install and add binstubs in the main checkout. The `lefthook.yml:316` comment ("bi reports a missing Gemfile and exits 0") then does not hold. The intent's criterion "In a directory without a Gemfile, `bi` prints that there is nothing to install" fails for that repository root. `test_pull_deleting_root_gemfile_does_not_bundle_install` refutes only `bundle install`, and its temporary directory has no Gemfile above it, so it cannot see this. Bundler searches up the same way, but the old hook looked only at the repository root. — `ruby/.local/bin/bi:7` →
+- [ ] Nit: A prefix command with an option argument, or a wrapper outside `COMMAND_PREFIXES`, still hides an install. Probed, each exits 0: `timeout 600 bundle install`, `sudo bundle install`, `nice -n 10 bundle install`, `env -u FOO bundle install`. Of these, `timeout` is the form an agent writes most. — `claude/.claude/hooks/consent-guard.rb:48` →
+- [ ] Nit: An apostrophe in a comment line hides a later install. In `# don't forget the gems` newline `bundle install`, the `'` opens an unmatched quote. `separate_operators` then keeps the line break, and the `command.split` fallback treats it as a space. Probed: exits 0; the same command without the apostrophe exits 2. — `claude/.claude/hooks/consent-guard.rb:56` →
+- [ ] Nit: `bundle cache`, `bundle package` and `bundle pack` install gems, but the guard lets them run. Bundler 4.1's `CLI::Cache#run` calls `CLI::Install#run` first (`bundler/cli/cache.rb`). `BUNDLER_COMMANDS` lists all three, and the intent allows only non-install commands. — `claude/.claude/hooks/consent-guard.rb:45` →
+
+### Compliance, round 2
+
+Since round 1, `consent-guard.rb` splits at operators and line breaks, strips heredoc bodies, and allows a list of known Bundler commands. The plan's design refused only a missing next word, `install`, `i` or a flag; the new rule also refuses any unknown word after `bundle`. That answers round 1's Nit and errs towards refusing, so it is not a finding. `bi` now searches upward for the Gemfile (second Important finding). `evidence.md` records plan step 12.
+
+Tests were only added or extended. `test_gem_install_forms_are_refused_with_bi_advice` gained two forms. `test_install_in_any_command_position_is_refused`, `test_bundle_install_in_messages_heredocs_and_lookups_runs`, `test_bundler_options_before_a_non_install_command_run` and `test_subdirectory_installs_for_the_project_above_it` are new. No test was weakened, skipped or deleted. Every test the Proof list names exists.
+
+Acceptance criteria: as in round 1, with these changes.
+
+- No Gemfile: nothing to install, success → `test_directory_without_gemfile_has_nothing_to_install`. Gap: a Gemfile-less repository under a Ruby project, see the second Important finding.
+- Customised `bin/dev` kept, no prompt → `test_customised_binstub_is_kept_without_a_prompt`, plus `evidence.md` (Rails 8.1.4, `skip bin/dev`, `bin/dev` byte-identical).
+- Install forms refused with a message naming `bi` → the round 1 tests plus `test_install_in_any_command_position_is_refused`. Gap: line continuations, see the first Important finding.
+- Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
+
+Security: nothing new. The post-merge hook now boots the pulled app for `app:update:bin`, but its `migrate` command already runs pulled code.
