@@ -43,7 +43,7 @@ Etienne and every agent working in a repository that uses the intent, plan, impl
 - Running `gh pr create` on a branch that still has `docs/changes/pr-only-via-finish/` is refused with a message naming `/finish`.
 - After `/finish` removes the folder, its `gh pr create` succeeds.
 - Pushing a branch with `docs/changes/` and no PR succeeds without a fresh review.
-- Pushing a branch with no `docs/changes/` and a stale review is refused, as today.
+- Pushing a branch that has an open PR, or whose PR state `gh` cannot tell, keeps the strict review-freshness check, as today.
 - When `implement` ends, the branch and its commits are on `origin`.
 - When `review` ends, its `review.md` round is on `origin`.
 - `gh pr merge` on a branch whose tree still has `docs/changes/` is refused.
