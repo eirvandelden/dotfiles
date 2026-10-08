@@ -29,7 +29,7 @@ Etienne and every agent working in a repository that uses the intent, plan, impl
 - The consent guard refuses `gh pr create` while `docs/changes/<slug>/` exists in the working tree; `finish` runs it only after removal.
 - The global `pre-push` freshness check is skipped for a branch that has `docs/changes/` and no open PR, so a work-in-progress push succeeds. Once the folder is gone or a PR is open, the strict check applies.
 - `implement` and `review` push the branch at their end (`git push -u origin HEAD`), as `intent` and `plan` already do. The herdr hand-off prompts and skill text say so.
-- The consent guard also refuses `gh pr merge` while `docs/changes/` exists in the PR's branch tree, where it can tell.
+- The consent guard also refuses `gh pr merge` while the PR's own `docs/changes/<slug>/` exists in its branch tree, where it can tell.
 
 ## Out of scope
 
@@ -46,7 +46,7 @@ Etienne and every agent working in a repository that uses the intent, plan, impl
 - Pushing a branch that has an open PR, or whose PR state `gh` cannot tell, keeps the strict review-freshness check, as today.
 - When `implement` ends, the branch and its commits are on `origin`.
 - When `review` ends, its `review.md` round is on `origin`.
-- `gh pr merge` on a branch whose tree still has `docs/changes/` is refused.
+- `gh pr merge` on a pull request whose branch tree still has its own `docs/changes/<slug>/` is refused. A leftover folder of another slug does not block it.
 
 ## Flagged concerns
 
