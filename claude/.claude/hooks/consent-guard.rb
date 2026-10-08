@@ -78,12 +78,28 @@ end
 # The branch named by --head or -H, without a leading <owner>: part.
 def head_branch(words)
   index = words.index { |word| %w[--head -H].include?(word) }
-  value = index ? words[index + 1] : words.find { |word| word.start_with?("--head=") }&.delete_prefix("--head=")
+  value = index ? words[index + 1] : words.filter_map { |word| head_value(word) }.first
   value&.split(":", 2)&.last
 end
 
+# Reads the branch's own folder, locally or on origin. A branch git cannot resolve means "cannot tell".
+def head_value(word)
+  return word.delete_prefix("--head=") if word.start_with?("--head=")
+
+  word.delete_prefix("-H") if word.start_with?("-H") && word.length > 2
+end
+
 def branch_carries_change_folder?(directory, branch)
-  !git_output(directory, "ls-tree", "--name-only", branch, "docs/changes/").strip.empty?
+  toplevel = git_output(directory, "rev-parse", "--show-toplevel").strip
+  folder = "docs/changes/#{change_slug(branch)}"
+  [ branch, "origin/#{branch}" ].any? do |ref|
+    !git_output(toplevel, "ls-tree", "--name-only", ref, "--", folder).strip.empty?
+  end
+end
+
+# The folder name for a branch, as plan/scripts/change-folder derives it.
+def change_slug(branch)
+  branch.sub(%r{\A[^/]+/}, "")
 end
 
 # The words, plus the words inside the script of any `sh -c`, `bash -c` or `zsh -c`.
@@ -104,7 +120,7 @@ end
 
 # Where the command runs: the hook's directory, then each `cd` target.
 def command_directories(words, working_directory)
-  targets = words.each_cons(2).filter_map { |word, target| target.split(SHELL_OPERATOR, 2).first if word == "cd" }
+  targets = words.each_cons(2).filter_map { |word, target| target.split(SHELL_OPERATOR, 2).first if word.match?(/\A\(?(?:cd|pushd)\z/) }
   [ working_directory ] + targets.reject(&:empty?).map { |target| File.expand_path(target, working_directory) }
 end
 
@@ -124,23 +140,23 @@ MERGE_VALUE_OPTIONS = %w[-A --author-email -b --body -F --body-file -t --subject
 # docs/changes tree. A gh that fails or is missing means "cannot tell": not carried.
 def merge_carries_change_folder?(words, directory)
   selector, repository = merge_arguments(words)
-  owner, name, oid = head_commit(selector, repository, directory)
-  oid && gh_output(directory, "api", "graphql", *tree_query(owner, name, oid)) == "Tree"
+  owner, name, oid, branch = head_commit(selector, repository, directory)
+  oid && gh_output(directory, "api", "graphql", *tree_query(owner, name, oid, branch)) == "Tree"
 rescue SystemCallError
   false
 end
 
 def head_commit(selector, repository, directory)
-  jq = "[.headRepositoryOwner.login, .headRepository.name, .headRefOid] | @tsv"
+  jq = "[.headRepositoryOwner.login, .headRepository.name, .headRefOid, .headRefName] | @tsv"
   fields = gh_output(directory, "pr", "view", *selector, *repository,
-                     "--json", "headRefOid,headRepository,headRepositoryOwner", "--jq", jq)
+                     "--json", "headRefOid,headRefName,headRepository,headRepositoryOwner", "--jq", jq)
   fields&.split("\t")
 end
 
-def tree_query(owner, name, oid)
+def tree_query(owner, name, oid, branch)
   query = "query($owner:String!,$name:String!,$expression:String!){" \
           "repository(owner:$owner,name:$name){object(expression:$expression){__typename}}}"
-  [ "-f", "query=#{query}", "-f", "owner=#{owner}", "-f", "name=#{name}", "-f", "expression=#{oid}:docs/changes",
+  [ "-f", "query=#{query}", "-f", "owner=#{owner}", "-f", "name=#{name}", "-f", "expression=#{oid}:docs/changes/#{change_slug(branch)}",
     "--jq", '.data.repository.object.__typename // "absent"' ]
 end
 
