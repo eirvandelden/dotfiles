@@ -204,6 +204,21 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_a_heredoc_marker_inside_quotes_starts_no_heredoc
+    _, _, status = run_guard("git commit -m \"notes <<EOF\"\ngit worktree add ../y -b y")
+
+    assert_equal(2, status.exitstatus)
+  end
+
+  def test_a_heredoc_end_word_with_a_dash_or_dot_closes_the_heredoc
+    [ "cat <<END-OF\nhi\nEND-OF\ngit worktree add ../y -b y",
+     "cat <<'my.end'\nhi\nmy.end\ngit worktree add ../y -b y" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_the_path_after_dash_b_is_the_target_not_the_branch_name
     _, stderr, status = run_guard("git worktree add -b .worktrees/inside .worktrees/inside")
 
