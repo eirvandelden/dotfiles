@@ -145,6 +145,16 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_only_the_command_word_hands_a_command_on_and_the_segment_is_still_checked
+    [ "git worktree add ../x -b eval", "git worktree add ../eval -b x",
+     'git worktree add ../x -b x # bash -c "echo"', 'sudo bash -c "git worktree add ../x -b x"',
+     'FOO=1 env eval "git worktree add ../x -b x"' ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_a_worktree_add_handed_to_another_shell_inside_dot_worktrees_is_allowed
     _, stderr, status = run_guard('bash -c "git worktree add .worktrees/ok -b ok"')
 

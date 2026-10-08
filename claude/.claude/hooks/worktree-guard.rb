@@ -32,6 +32,8 @@ HEREDOC_START = /(?<!<)<<(?!<)-?\s*(['"]?)([A-Za-z_]\w*)\1/
 GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace --config-env --attr-source].freeze
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
 SHELLS = %w[sh bash zsh].freeze
+WRAPPERS = %w[command env sudo exec nohup].freeze
+ASSIGNMENT = /\A[A-Za-z_]\w*=/
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
@@ -179,12 +181,14 @@ end
 
 # The command text a segment hands to another shell (`bash -c "<command>"`) or to `eval`.
 def handed_on_command(segment_words)
-  names = segment_words.map { |word| File.basename(word) }
-  eval_at = names.index("eval")
-  return segment_words.drop(eval_at + 1).join(" ") if eval_at
+  command_at = segment_words.index { |word| !WRAPPERS.include?(word) && !word.match?(ASSIGNMENT) }
+  return nil unless command_at
 
-  shell_at = names.index { |name| SHELLS.include?(name) }
-  segment_words[shell_at + 2] if shell_at && segment_words[shell_at + 1] == "-c"
+  name = File.basename(segment_words[command_at])
+  arguments = segment_words.drop(command_at + 1)
+  return arguments.join(" ") if name == "eval"
+
+  arguments[1] if SHELLS.include?(name) && arguments.first == "-c"
 end
 
 def blocked?(command, directory)
@@ -194,11 +198,13 @@ def blocked?(command, directory)
       next false
     end
     handed_on = handed_on_command(segment_words)
-    next blocked?(handed_on, directory) if handed_on
-
-    found_directory, target = worktree_add(segment_words, directory)
-    target && File.directory?(found_directory) && misplaced_worktree?(found_directory, target)
+    (handed_on && blocked?(handed_on, directory)) || misplaced_add?(segment_words, directory)
   end
+end
+
+def misplaced_add?(segment_words, directory)
+  found_directory, target = worktree_add(segment_words, directory)
+  target && File.directory?(found_directory) && misplaced_worktree?(found_directory, target)
 end
 
 payload = JSON.parse($stdin.read)
