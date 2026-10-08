@@ -6,10 +6,14 @@ require "tmpdir"
 
 # Git gets GitHub HTTPS credentials from 1Password and nothing from the
 # Keychain. Each test runs real `git credential` against the dotfiles git
-# config, with a stub `op` on PATH and a stand-in for the Keychain helper that
-# Xcode's system gitconfig would name. `stub-token` is a placeholder, not a secret.
+# config, with a stub `op` on a minimal PATH, the helper script linked into a
+# temporary HOME as stow would, and a stand-in Keychain helper in a temporary
+# system config. Xcode's own gitconfig still loads on macOS; git cannot reach its
+# osxkeychain program because GIT_EXEC_PATH is empty and PATH holds only the stubs,
+# /usr/bin and /bin. `stub-token` is a placeholder, not a secret.
 class GitCredentialHelperTest < Minitest::Test
   CONFIG = File.expand_path("../git/.config/git/config", __dir__)
+  HELPER = File.expand_path("../git/.config/git/credential-1password", __dir__)
   OP_REFERENCE = "read op://Familie/Github/token --account vandelden".freeze
   UNSET = %w[
     GIT_DIR GIT_WORK_TREE GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT
@@ -24,6 +28,7 @@ class GitCredentialHelperTest < Minitest::Test
     stub_op
     stub_keychain
     write_system_config
+    stow_helper
   end
 
   def teardown
@@ -38,6 +43,20 @@ class GitCredentialHelperTest < Minitest::Test
     assert_includes stdout, "password=stub-token"
     assert_includes op_calls, OP_REFERENCE
     assert_equal "", keychain_calls
+  end
+
+  def test_a_git_credential_1password_program_on_path_does_not_replace_the_helper
+    write_executable(File.join(@bin, "git-credential-1password"), <<~SH)
+      #!/bin/sh
+      echo "username=impostor"
+      echo "password=from-impostor"
+    SH
+
+    stdout, stderr, status = fill("github.com")
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "password=stub-token"
+    refute_includes stdout, "from-impostor"
   end
 
   def test_gist_credentials_come_from_the_1password_item
@@ -127,6 +146,13 @@ class GitCredentialHelperTest < Minitest::Test
     SH
   end
 
+  # Links the tracked helper script where stow puts it, under the temporary HOME.
+  def stow_helper
+    target = File.join(@tmpdir, ".config", "git", "credential-1password")
+    FileUtils.mkdir_p(File.dirname(target))
+    File.symlink(HELPER, target)
+  end
+
   def write_system_config
     File.write(system_config, "[credential]\n\thelper = #{keychain}\n")
   end
@@ -175,7 +201,7 @@ class GitCredentialHelperTest < Minitest::Test
   def git_env
     UNSET.merge(
       "HOME" => @tmpdir,
-      "PATH" => "#{@bin}:#{ENV.fetch('PATH')}",
+      "PATH" => "#{@bin}:/usr/bin:/bin",
       "GIT_CONFIG_GLOBAL" => CONFIG,
       "GIT_CONFIG_SYSTEM" => system_config,
       "GIT_EXEC_PATH" => @exec_path,
