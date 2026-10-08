@@ -165,3 +165,11 @@ Compliance: Claude verifies all round 12–14 closures, supported field layouts,
 The read-only Codex CLI reproduces the same missing-title boundary as Claude. It reports no other finding. The branch remains clean during both reviews.
 
 Closure: Four missing-title regressions fail before the canonical-title guard and pass afterward. The entire parser suite passes at 58 runs/206 assertions. RuboCop, Markdownlint and diff whitespace checks pass. A final full-suite run follows this fix.
+
+## Round 17 — 2026-10-08T06:58:46Z — f29bfdf5 (codex)
+
+No findings.
+
+The completed read-only Codex CLI report says: "No discrete, actionable regressions were identified in the diff." Recovery reads the saved log. A clean rebase onto origin/main at `4059c915` produces `ce694f96`; the six-file source diff is byte-identical to the reviewed diff. The prior final 32-file run completes without failures or errors. Its two existing RuboCop environment skips pass separately outside the sandbox: 2 runs/13 assertions, zero skips. A fresh full suite runs against the latest base with CI skips treated as failures.
+
+Decision needed: The final Claude run ends with "Not logged in · Please run /login" at 2026-10-07T23:34:21Z. It does not complete a clean final review. Authenticate Claude Code, then rerun that review before publication. The coordinator does not substitute the Codex report for it.
