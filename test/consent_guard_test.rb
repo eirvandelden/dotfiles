@@ -707,6 +707,14 @@ class ConsentGuardTest < Minitest::Test
     assert_includes(tree, "expression=abc123:docs/changes/186-title")
   end
 
+  def test_another_commands_dash_h_does_not_hide_the_head_flag
+    commit_change_then_leave_branch
+
+    _, stderr, status = run_guard("curl -H 'Accept: x' https://example.com; gh pr create --head pr-only-via-finish")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
