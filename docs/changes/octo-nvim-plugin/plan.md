@@ -8,13 +8,17 @@ Reviewing a GitHub PR meant leaving the terminal. The implementation for this (o
 
 ## Files that change
 
-None new. Already changed, on this branch, before this plan existed:
+Already changed, on this branch (SHAs are post-rebase, from `git fetch origin main` on 2026-10-06; cspell and `project-dictionary.txt` were removed from `main` in `4e547b6b`, so this branch no longer touches that file):
 
-- `neovim/.config/nvim/lua/plugins/octo.lua` (`6445596c`, `283a9e90`) — installs octo.nvim, `picker = "snacks"`, `<leader>go` → `Octo pr list`.
-- `neovim/.config/nvim/lua/plugins/snacks.lua` (`283a9e90`) — lazygit moved to `<leader>gl`.
-- `packages.conf` (`eb823864`) — `gh` added to `BREW`.
-- `project-dictionary.txt` (`288b1267`, `5caaf233`) — cspell vocabulary for the above.
-- `~/.config/gh-dash/config.yml`, outside this repository, machine-local, not committed here — its `C` keybinding shells into `nvim -c ":silent Octo pr edit {{.PrNumber}}"`.
+- `neovim/.config/nvim/lua/plugins/octo.lua` (`cb23e731`, `27eeb96b`) — installs octo.nvim, `picker = "snacks"`, `<leader>go` → `Octo pr list`.
+- `neovim/.config/nvim/lua/plugins/snacks.lua` (`27eeb96b`) — lazygit moved to `<leader>gl`.
+- `packages.conf` (`72f14e7b`, `a145f2c1`) — `gh` added to `BREW`; `GH_EXTENSIONS` added with `dlvhdr/gh-dash`.
+- `install.sh`, `install/utils.sh`, `install/tasks/25_install_gh_extensions.sh` (`a145f2c1`) — installs the `gh-dash` CLI extension on a fresh machine, the same idempotent pattern as `install_brew_packages`.
+- `github/.config/gh-dash/config.yml` (`d5c08489`, `86bb6bd7`) — shipped in the `github` stow package, no longer machine-local. Its `C` keybinding opens a herdr pane (`herdr pane split` + `herdr pane run`) running `nvim -c ":silent Octo pr edit {{.PrNumber}} {{.RepoName}}"`. An earlier version used `tmux new-window` (wrong multiplexer for this setup, never actually exercised) and a second `R` keybinding that piped an untrusted PR diff into `claude -p` with no tool restriction — a prompt-injection risk under this repo's `auto` Claude mode, and broken besides: gh-dash redraws its TUI the instant the command exits, so the output never stayed on screen. `R` was unplanned (not in `intent.md`/`spec.md`) and is dropped in `86bb6bd7`.
+
+Dependency approval (playbook rule 11): the `dlvhdr/gh-dash` CLI extension is a new system dependency. Approved by the user's explicit instruction to "ship the gh-dash config and install step" (conversation, 2026-10-05) — it is what makes gh-dash's `C` keybinding resolve to a real binary on a fresh machine, instead of only on one where it happened to already be installed.
+
+One-time migration owed on this machine (not fresh-machine-blocking): `~/.config/gh-dash/config.yml` predates this branch as a plain file, not a symlink. `stow --restow github` cannot succeed until it is moved aside — but the committed config only exists on this unmerged branch, so the real restow has to happen after merge, from the main checkout. Until then, the corrected content was copied into place directly (not symlinked) so `C` keeps working; the stale original is at `~/.config/gh-dash/config.yml.bak`.
 
 ## Order of work
 
@@ -33,7 +37,7 @@ This repository has no automated test framework for Neovim Lua config (confirmed
 ## Risks
 
 - Steps 4 and 5's keymaps are confirmed correct against octo.nvim's actual default config (headless inspection, this plan's verification run), so the risk of a wrong key name is closed. What remains is only exercising them against a real PR, which is interactive and needs the user, not a plan-time step.
-- `~/.config/gh-dash/config.yml` lives outside this repository and cannot be committed or proven by this plan's proof steps — it is machine-local, already set up in an earlier step of this work, not tracked here.
+- The gh-dash config now ships in the `github` stow package, but this machine's live copy is still a plain file pending the post-merge restow described above — a second machine-local drift is possible if the migration step is skipped.
 - Rejected: building an automated test harness for this Neovim config. The repository has never had one; that is a bigger, separate change outside this intent's scope.
 
 ## Proof
@@ -48,4 +52,4 @@ This repository has no automated test framework for Neovim Lua config (confirmed
 - `gh` is in `packages.conf` → `grep -n '^\s*gh$' packages.conf`, step 8.
 - No telescope/fzf-lua added → `rg -i 'telescope|fzf-lua' neovim/`, step 9.
 
-Per changed file, no new unit tests: these files gained plugin registrations, a keymap rename, and a config line — no new testable units. No test setup needed.
+Per changed file: the Neovim and gh-dash config files gained plugin registrations, a keymap rename, and a config line — no new testable units. `install/utils.sh` gained `install_gh_extensions` and `gh_extension_is_installed`, which have no test — no function in that file does today, so this matches existing practice rather than a gap introduced here. No test setup needed.
