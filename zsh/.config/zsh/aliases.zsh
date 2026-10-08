@@ -79,9 +79,6 @@ alias portless-start='portless proxy start -p 1355 --no-tls'
 alias portless-stop='portless proxy stop'
 alias portless-log='tail -f /tmp/portless-proxy.log'
 
-# Secrets
-alias unlock='eval "$(secrets)"'
-
 # Editors
 # e: opens terminal Neovim when in a terminal, Neovide otherwise.
 # Aliases expand to the command + any arguments, so no "$@" is needed here.

@@ -9,9 +9,12 @@ require_relative "isolated_git"
 # ~/.config/secrets/1password.env, and for the optional work overlay beside it.
 # Each file is read from its own 1Password account: the personal one is named in
 # the function, the work one comes from SECRETS_WORK_OP_ACCOUNT so this
-# repository names no employer.
+# repository names no employer. `unlock` applies those exports to the current
+# shell and puts the unlocked-bin directory, with its `codex` shim, first on PATH.
 class SecretsLoaderTest < Minitest::Test
-  LOADER = File.expand_path("../zsh/.config/zsh/functions/secrets.zsh", __dir__)
+  ZSH_DIR = File.expand_path("../zsh/.config/zsh", __dir__)
+  LOADER = File.join(ZSH_DIR, "functions/secrets.zsh")
+  SHIM_DIR = File.join(ZSH_DIR, "unlocked-bin")
   REPO_MAPPING = File.expand_path("../secrets/.config/secrets/1password.env", __dir__)
 
   def setup
@@ -64,6 +67,54 @@ class SecretsLoaderTest < Minitest::Test
     assert_includes op_calls, "op://Familie/HomeAssistantMcp/HA_MCP_GATE_TOKEN --account vandelden"
   end
 
+  def test_unlock_exports_the_secrets_and_puts_the_unlocked_commands_first_on_path
+    stdout, stderr, status = run_unlock('unlock; print -r -- "token=$PERSONAL_TOKEN"; print -r -- "path=$PATH"')
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "token=a-secret-value"
+    assert_includes stdout, "path=#{SHIM_DIR}:"
+  end
+
+  def test_unlock_twice_keeps_one_path_entry
+    stdout, stderr, status = run_unlock('unlock; unlock; print -r -- "$PATH"')
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_equal 1, stdout.split(":").count(SHIM_DIR)
+  end
+
+  def test_a_failed_unlock_changes_neither_the_environment_nor_path
+    File.write(File.join(@bin, "op"), "#!/bin/sh\nexit 1\n")
+    File.write(File.join(@config, "1password.env"), "FIRST=op://a/b/c\nSECOND=op://a/b/c\n")
+
+    stdout, _, status = run_unlock('unlock; print -r -- "status=$? first=${FIRST-unset} path=$PATH"')
+
+    assert_equal(0, status.exitstatus)
+    assert_includes stdout, "status=1 first=unset"
+    refute_includes stdout, SHIM_DIR
+  end
+
+  def test_unlock_without_the_shim_in_zdotdir_exports_the_secrets_keeps_path_and_warns_to_restow
+    empty_zdotdir = File.join(@tmpdir, "empty-zdotdir")
+    FileUtils.mkdir_p(empty_zdotdir)
+
+    stdout, stderr, status = run_unlock('unlock; print -r -- "token=$PERSONAL_TOKEN path=$PATH"', "ZDOTDIR" => empty_zdotdir)
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "token=a-secret-value"
+    refute_includes stdout, empty_zdotdir
+    assert_includes stderr, "unlock: #{empty_zdotdir}/unlocked-bin/codex is missing; restow the zsh package"
+  end
+
+  def test_the_unlock_alias_no_longer_shadows_the_function
+    aliases = File.join(File.dirname(LOADER), "..", "aliases.zsh")
+    script = "source #{aliases}\nsource #{LOADER}\nunlock\nprint -r -- \"token=$PERSONAL_TOKEN\""
+
+    stdout, stderr, status = Open3.capture3(env, "zsh", "-f", "-c", script)
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "token=a-secret-value"
+  end
+
   private
 
   def write_work_overlay
@@ -93,11 +144,19 @@ class SecretsLoaderTest < Minitest::Test
     File.exist?(op_log) ? File.read(op_log) : ""
   end
 
-  def run_secrets(env = {})
-    full_env = {
+  def run_secrets(extra_env = {})
+    Open3.capture3(env.merge(extra_env), "zsh", "-c", "source #{LOADER} && secrets")
+  end
+
+  def run_unlock(script, extra_env = {})
+    Open3.capture3(env.merge(extra_env), "zsh", "-f", "-c", "source #{LOADER}\n#{script}")
+  end
+
+  def env
+    {
       "XDG_CONFIG_HOME" => File.join(@tmpdir, "config"),
+      "ZDOTDIR" => ZSH_DIR,
       "PATH" => "#{@bin}:#{ENV.fetch('PATH')}"
-    }.merge(env)
-    Open3.capture3(full_env, "zsh", "-c", "source #{LOADER} && secrets")
+    }
   end
 end

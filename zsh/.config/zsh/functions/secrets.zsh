@@ -3,7 +3,8 @@
 # Minimal secrets loader for zsh + 1Password CLI.
 #
 # Usage (sets vars in the CURRENT shell):
-#   eval "$(secrets)"
+#   unlock             # exports the secrets and puts unlocked-bin/ first on PATH
+#   eval "$(secrets)"  # exports only
 #
 # Reads:
 #   ~/.config/secrets/1password.env
@@ -110,4 +111,29 @@ secrets() {
   elif [[ -f "$cfg_work" ]]; then
     _secrets_emit_file "$cfg_work" "work" "$work_account"
   fi
+}
+
+# Exports the secrets into the current shell and puts unlocked-bin/ first on
+# PATH, so the `codex` shim there keeps Codex sessions off the shared daemon
+# (Codex 0.160+) and the unlocked environment reaches their MCP servers.
+# Nothing is applied when `secrets` fails.
+unlock() {
+  local exports
+  local shim_dir="${ZDOTDIR:-$HOME/.config/zsh}/unlocked-bin"
+
+  # A `|| return` here would switch off `set -e` inside secrets and let a failed
+  # `op read` through, so the status is checked on its own line.
+  exports="$(secrets)"
+  [[ $? -eq 0 ]] || return 1
+  eval "$exports"
+
+  if [[ ! -x "$shim_dir/codex" ]]; then
+    print -u2 "unlock: $shim_dir/codex is missing; restow the zsh package"
+    return 0
+  fi
+
+  case ":$PATH:" in
+    *":$shim_dir:"*) ;;
+    *) PATH="$shim_dir:$PATH" ;;
+  esac
 }
