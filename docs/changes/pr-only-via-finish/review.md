@@ -12,3 +12,7 @@ Compliance: every acceptance criterion maps to a test in the diff. Criterion 1 �
 - [ ] Nit: The create refusal checks the working tree with `File.directory?`. `finish` §4 uses `git rm -r`, which leaves untracked or ignored files (a `.DS_Store`, a scratch note) behind. The folder then still exists, and the guard refuses `finish`'s own `gh pr create` with a message that says "Run /finish". Checking the folder in `HEAD`, as `review-report-fresh` does, avoids that loop — `claude/.claude/hooks/consent-guard.rb:86` →
 - [ ] Nit: `plan.md` still treats criterion 4 as open. Design decisions call it "an open decision for the coordinator", and the Proof bullet quotes the old wording ("no `docs/changes/` and a stale review is refused"). Commit 9ee8e031 restated the criterion in `intent.md`, but `plan.md` did not follow — `docs/changes/pr-only-via-finish/plan.md:101` →
 - [ ] Nit: The plan's unit test `test_skip_without_pr_says_when_gh_cannot_tell` does not exist under that name. Its assertion (`/could not tell/i` on stderr) is inside `test_skip_without_pr_refuses_a_stale_review_when_gh_cannot_tell`. Rename the test or update `plan.md`'s Proof list so the two match — `docs/changes/pr-only-via-finish/plan.md:109` →
+
+## Round 2 — 2026-10-08T12:53Z — 56fd295a (codex)
+
+- [ ] Important: When `gh pr view` or the GraphQL query fails, the merge guard allows `gh pr merge`; it should fail closed — `claude/.claude/hooks/consent-guard.rb:98` →
