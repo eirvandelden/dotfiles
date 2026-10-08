@@ -9,7 +9,7 @@ arguments:
 
 # Finish
 
-One skill, not two: personal and work do the same core thing — confirm the review is fresh, fill the PR body, remove `docs/changes/<slug>/`, commit, push, and open the PR — and differ only in the ADR question and the reviewer request, both work only. Runs only on explicit command (`/finish`), never on its own. It is the only step that opens a pull request: the consent guard refuses `gh pr create` and `gh pr merge` while `docs/changes/` exists.
+One skill, not two: personal and work do the same core thing — confirm the review is fresh, fill the PR body, remove `docs/changes/<slug>/`, commit, push, and open the PR — and differ only in the ADR question and the reviewer request, both work only. Runs only on explicit command (`/finish`), never on its own. It is the only step that opens a pull request: the consent guard refuses `gh pr create` and `gh pr merge` while the branch's own `docs/changes/<slug>/` exists.
 
 `--dry-run`: print every step below with what it would do, then stop before doing anything — including no `gh pr create`. Etienne runs the first real use on a work PR this way and executes the printed steps by hand once; after that it is optional.
 

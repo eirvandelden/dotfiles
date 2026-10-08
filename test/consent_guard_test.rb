@@ -599,6 +599,8 @@ class ConsentGuardTest < Minitest::Test
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
            "commit", "--quiet", "-m", "intent")
     system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "remove")
     FileUtils.mkdir_p(File.join(@repo, "docs", "changes", "pr-only-via-finish"))
     File.write(File.join(@repo, "docs", "changes", "pr-only-via-finish", ".DS_Store"), "x")
 
@@ -703,6 +705,27 @@ class ConsentGuardTest < Minitest::Test
 
     tree = File.readlines(@gh_log).find { |line| line.start_with?("api graphql") }
     assert_includes(tree, "expression=abc123:docs/changes/186-title")
+  end
+
+  def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_head_branch_that_exists_only_on_origin_is_read
+    commit_change_then_leave_branch
+    system("git", "-C", @repo, "update-ref", "refs/remotes/origin/pr-only-via-finish", "pr-only-via-finish")
+    system("git", "-C", @repo, "branch", "-q", "-D", "pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
   end
 
   private
