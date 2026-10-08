@@ -453,6 +453,7 @@ class ConsentGuardTest < Minitest::Test
 
   def test_creating_a_pull_request_once_finish_removed_the_change_folder_is_allowed
     start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "rm", "-rfq", "--cached", "docs")
     FileUtils.rm_rf(File.join(@repo, "docs"))
 
     _, stderr, status = run_guard("gh pr create --fill")
@@ -563,6 +564,49 @@ class ConsentGuardTest < Minitest::Test
     assert_includes(view, "pr view 186 --repo eirvandelden/dotfiles")
   end
 
+  def test_merging_reads_only_the_words_of_the_merge_command
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "absent")
+
+    run_guard("gh pr merge --squash && git checkout main")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "&&")
+    refute_includes(view, "checkout")
+  end
+
+  def test_a_git_merge_before_the_gh_merge_does_not_name_the_pull_request
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "Tree")
+
+    _, stderr, status = run_guard("git merge origin/main && gh pr merge 186")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186")
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_trailing_value_flag_does_not_hide_the_selector
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123", tree: "absent")
+
+    run_guard("gh pr merge 186 --body")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186")
+  end
+
+  def test_leftover_untracked_files_do_not_keep_the_pull_request_refused
+    start_change("pr-only-via-finish")
+    system("git", "-C", @repo, "add", "docs")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
+           "commit", "--quiet", "-m", "intent")
+    system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
+    FileUtils.mkdir_p(File.join(@repo, "docs", "changes", "pr-only-via-finish"))
+    File.write(File.join(@repo, "docs", "changes", "pr-only-via-finish", ".DS_Store"), "x")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   private
 
   # A repository on <branch> whose working tree holds docs/changes/<branch>/.
@@ -572,6 +616,7 @@ class ConsentGuardTest < Minitest::Test
     system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "-b", branch)
     FileUtils.mkdir_p(File.join(repo, "docs", "changes", branch))
     File.write(File.join(repo, "docs", "changes", branch, "intent.md"), "intent")
+    system("git", "-C", repo, "add", "docs")
   end
 
   # A second repository with a change folder, and a directory to run the command from.
