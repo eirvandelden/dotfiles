@@ -187,6 +187,23 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(2, outside.exitstatus)
   end
 
+  def test_a_comment_that_mentions_worktree_add_is_allowed
+    [ "# do not run: git worktree add ../x\necho hi",
+     "# don't\ngit commit -m \"a; git worktree add ../x\"" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_comment_ends_at_the_newline_and_a_hash_inside_a_word_is_no_comment
+    [ "git status # note\ngit worktree add ../x -b x", "echo a#b; git worktree add ../x -b x" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_the_path_after_dash_b_is_the_target_not_the_branch_name
     _, stderr, status = run_guard("git worktree add -b .worktrees/inside .worktrees/inside")
 

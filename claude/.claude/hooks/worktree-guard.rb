@@ -4,7 +4,7 @@
 # to the agent; exit 0 lets it run. `worktree-create` runs git as its own subprocess, so this
 # hook never sees it.
 #
-# It tokenises the command; it is not a shell. Quoted text and heredoc bodies are text, so a
+# It tokenises the command; it is not a shell. Quoted text, comments and heredoc bodies are text, so a
 # commit message or PR body that mentions `git worktree add` passes. When the command word is
 # `eval`, or `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
 # Variables are not expanded, so such a target is taken literally and usually blocks. Commands
@@ -26,7 +26,8 @@ TOKEN = /
   | '(?<single>[^']*)'
   | "(?<double>(?:\\.|[^"\\])*)"
   | \\(?<escaped>.)
-  | (?<plain>[^\s;&|'"\\]+|&)
+  | (?<comment>\#[^\n]*)
+  | (?<plain>[^\s;&|'"\\\#][^\s;&|'"\\]*|&)
 /mx
 HEREDOC_START = /(?<!<)<<(?!<)-?\s*(['"]?)([A-Za-z_]\w*)\1/
 GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace --config-env --attr-source].freeze
@@ -78,7 +79,7 @@ end
 
 def piece(scanner)
   return :separator if scanner[:separator]
-  return :space if scanner[:space]
+  return :space if scanner[:space] || scanner[:comment]
 
   scanner[:single] || scanner[:double] || scanner[:escaped] || scanner[:plain]
 end
