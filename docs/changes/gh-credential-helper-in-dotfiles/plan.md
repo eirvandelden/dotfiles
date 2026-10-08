@@ -75,7 +75,7 @@ Target config shape (the implementer owns exact quoting; inside the quoted value
 - A machine without `op` gets `op: not found`, and git stops for GitHub HTTPS. Adding `op` to `packages.conf` is out of scope per intent.
 - Each GitHub HTTPS operation runs `op read`. With 1Password locked, that raises a Touch ID prompt.
 - A config file loaded later that sets an empty `credential.https://github.com.helper` disables this helper without a warning. Git has no protection against that.
-- Test safety: git's exec path holds the real `git-credential-osxkeychain`. While tests are red against the old config, a run could ask the real Keychain. The harness sets `GIT_EXEC_PATH` to an empty directory, so no test run can reach it, whatever the config says. Verified on git 2.54: git then reports `'credential-osxkeychain' is not a git command`, and an alias helper still works.
+- Test safety: git's exec path holds the real `git-credential-osxkeychain`. While tests are red against the old config, a run could ask the real Keychain. The harness sets `GIT_EXEC_PATH` to an empty directory and `PATH` to the stub directory, `/usr/bin` and `/bin` only. On macOS, Xcode's own gitconfig still loads and names `osxkeychain`, so this isolation holds only while no `git-credential-osxkeychain` sits in those directories (review round 1). Verified on git 2.54: git then reports `'credential-osxkeychain' is not a git command`, and an alias helper still works.
 - Rejected: the 1Password gh shell plugin (needs a terminal, per intent). Rejected: a helper script file under `git/.config/git/`, because `~/.config/git` is linked file by file (dotfiles-work shares the directory), so a new file needs `stow -R` first, and git would have no helper until then. Rejected: the same shell snippet inline in both host sections (duplicated logic). Rejected: a `https://*.github.com` section, wider than the two hosts the intent names.
 
 ## Out of scope
@@ -97,6 +97,7 @@ Target config shape (the implementer owns exact quoting; inside the quoted value
 Per changed file, the unit tests expected, named as behaviour:
 
 - `git/.config/git/config`: the tests above, plus `test_the_config_reads_nothing_from_the_keychain` (no `find-generic-password` anywhere in the file; covers the `[github] token` removal).
+- Review round 1: a `git-credential-1password` program on `PATH` does not replace the helper → `test/git_credential_helper_test.rb` `test_a_git_credential_1password_program_on_path_does_not_replace_the_helper`. Fix: the helper moves from the alias into the script `git/.config/git/credential-1password`, and both GitHub sections name it by path (`helper = "!~/.config/git/credential-1password"`), which git runs through the shell without a `PATH` lookup.
 
 What each test asserts:
 
