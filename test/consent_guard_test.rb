@@ -427,7 +427,7 @@ class ConsentGuardTest < Minitest::Test
 
   def test_gem_install_forms_are_refused_with_bi_advice
     [ "bundle", "bundle install", "bundle i", "bin/bundle install", "./bin/bundle i", "bundle install --jobs 4",
-      "bundle --jobs 4", "bundle --deployment" ].each do |command|
+      "bundle --jobs 4", "bundle --deployment", "bundle --no-color install", "bundle -V i" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)
@@ -481,6 +481,38 @@ class ConsentGuardTest < Minitest::Test
 
       assert_equal(2, status.exitstatus, command)
       assert_includes(stderr, GEM_INSTALL_MESSAGE, command)
+    end
+  end
+
+  def test_install_in_any_command_position_is_refused
+    [ "cd app\nbundle install", "if [ -f Gemfile ]; then bundle install; fi", "for d in a b; do bundle install; done",
+      "if false; then :; else bundle install; fi", "{ bundle install; }", "sleep 1 & bundle install",
+      "cd app;bundle install", "env bundle install", "env FOO=1 bundle install", "command bundle install",
+      "time bundle install", "exec bundle install", "nohup bundle install", "! bundle install",
+      "echo $(bundle install)", "echo `bundle install`" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_includes(stderr, GEM_INSTALL_MESSAGE, command)
+    end
+  end
+
+  def test_bundle_install_in_messages_heredocs_and_lookups_runs
+    [ %(git commit -m "first line\nbundle install is refused now"),
+      %(git commit -m "$(cat <<'EOF'\nUse "bi" now.\nbundle install is refused.\nEOF\n)"),
+      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "echo done\nbundle exec rake" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
+  def test_bundler_options_before_a_non_install_command_run
+    [ "bundle --no-color exec rake", "bundle -V exec rake", "bundle --retry 3 exec rake", "bundle e rake",
+      "bundle audit check" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
     end
   end
 

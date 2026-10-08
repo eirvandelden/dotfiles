@@ -10,6 +10,9 @@
 # lefthook locally, and by the "protect main" ruleset on GitHub.
 #
 # Installing gems is refused outright: bi is the one way to do it (playbook rule 11).
+# That check looks for bundle in command position, so it splits the command at
+# operators and line breaks first. `bash -c`, `eval`, `xargs` and a `$(...)` inside
+# double quotes still hide an install from it.
 #
 # What is left needs no understanding of the command, only whether a word is
 # present. Every check errs towards asking: a false question costs a moment, a
@@ -114,40 +117,72 @@ end
 GEM_INSTALL_REASON = "install gems with bi, not bundle install. " \
                      "bi resolves the lockfile with Bundler and installs with rv (playbook rule 11).".freeze
 BUNDLER_INFO_FLAGS = %w[-v --version -h --help].freeze
-COMMAND_SEPARATORS = /(?:&&|\|\||\||;)\z/
+# Bundler 4.1's commands and their aliases (Bundler::CLI.all_commands, COMMAND_ALIASES), plus
+# bundler-audit's `bundle audit`. Any other word after `bundle` counts as an install.
+BUNDLER_COMMANDS = %w[add audit binstubs c cache check clean config console doctor e env ex exe exec fund gem help
+                      info init inject issue licenses list lock ls open outdated pack package platform plugin
+                      pristine remove show tree update version viz].freeze
+COMMAND_PREFIXES = %w[command env exec nice nohup time].freeze
+SHELL_KEYWORDS = %w[! { do elif else if then until while].freeze
+SEPARATORS = %w[; & | ( ) `].freeze
+LOOKUP_FLAGS = %w[-v -V].freeze
 ENV_ASSIGNMENT = /\A\w+=/
+# A heredoc operator, the rest of its line, then the body up to the delimiter line.
+HEREDOC = /((?<!<)<<-?[ \t]*(['"]?)(\w+)\2[^\n]*\n).*?^[ \t]*\3[ \t]*$/m
+# Quoted text and escapes stay whole; an unquoted operator or line break is captured.
+SHELL_PIECE = /'[^']*'?|"(?:[^"\\]|\\.)*"?|\\.|([\n;&|()`])/m
 
-# A bundle word in command position (first word, or after a separator, skipping
-# VAR=value words) with no next word, an install word, or a flag that is not
-# -v/--version/-h/--help. `bundle exec`, `bundle update` and the like run.
+# The command as words, with each unquoted operator and line break a word of its
+# own and heredoc bodies left out, so a word in command position can be told apart.
+def shell_words(command)
+  words(separate_operators(command.gsub(HEREDOC) { "#{Regexp.last_match(1)}#{Regexp.last_match(3)}" }))
+end
+
+def separate_operators(command)
+  command.gsub(SHELL_PIECE) do
+    operator = Regexp.last_match(1)
+    operator ? " #{operator.tr("\n", ";")} " : Regexp.last_match(0)
+  end
+end
+
+# A bundle word in command position whose arguments name no Bundler command
+# other than install. Command position follows a separator, a shell keyword,
+# a VAR=value word, or a prefix such as env or time.
 def installs_gems?(words)
-  at_command = true
+  position = :command
   words.each_with_index do |word, index|
-    bare = word.sub(/\A\(+/, "")
-    if at_command && File.basename(bare) == "bundle"
-      return true if gem_install_argument?(words[index + 1])
-    end
-    at_command = starts_command?(word, bare, at_command)
+    return true if position != :argument && File.basename(word) == "bundle" && gem_install_arguments?(words, index)
+
+    position = next_position(position, word)
   end
   false
 end
 
-def gem_install_argument?(argument)
-  return true if argument.nil?
+def gem_install_arguments?(words, index)
+  arguments = words.drop(index + 1).take_while { |word| !SEPARATORS.include?(word) }
+  subcommand = arguments.find { |word| !word.start_with?("-") && !word.match?(/\A\d+\z/) }
+  return !BUNDLER_COMMANDS.include?(subcommand) if subcommand
 
-  argument = argument.sub(/[);]+\z/, "")
-  %w[install i].include?(argument) || (argument.start_with?("-") && !BUNDLER_INFO_FLAGS.include?(argument))
+  (arguments & BUNDLER_INFO_FLAGS).empty?
 end
 
-def starts_command?(word, bare, at_command)
-  return true if word.match?(COMMAND_SEPARATORS) || bare.empty?
+def next_position(position, word)
+  return :command if SEPARATORS.include?(word)
+  return :argument if position == :argument
+  return :prefix if COMMAND_PREFIXES.include?(word) || (position == :prefix && prefix_option?(word))
+  return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
 
-  at_command && bare.match?(ENV_ASSIGNMENT)
+  :argument
+end
+
+# `env -i bundle` and `time -p bundle` still run bundle; `command -v bundle` only looks it up.
+def prefix_option?(word)
+  word.start_with?("-") && !LOOKUP_FLAGS.include?(word)
 end
 
 # Rules 11 and 20 say never, so no consent marker unlocks these.
-def never_allowed_reason(words, working_directory)
-  return GEM_INSTALL_REASON if installs_gems?(words)
+def never_allowed_reason(command, words, working_directory)
+  return GEM_INSTALL_REASON if installs_gems?(shell_words(command))
   return "plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)." \
     if words.include?("--force") && !words.include?("--force-with-lease")
 
@@ -471,7 +506,7 @@ working_directory = call.fetch("cwd", "")
 
 command_words = words(command)
 
-refused = never_allowed_reason(command_words, working_directory)
+refused = never_allowed_reason(command, command_words, working_directory)
 if refused
   warn "Blocked: #{refused}"
   exit 2
