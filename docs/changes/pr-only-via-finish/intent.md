@@ -1,6 +1,6 @@
 # Intent: Only /finish creates pull requests
 
-Author: Etienne van Delden de la Haije. Status: draft.
+Author: Etienne van Delden de la Haije. Status: accepted.
 Type: feature
 Delivery: autonomous
 
@@ -54,4 +54,4 @@ Etienne and every agent working in a repository that uses the intent, plan, impl
 
 ## Open questions
 
-- Does "dotfiles get symlinked to lots of places and lefthook hooks get configured per repository" mean: put the guards in the stowed global hooks and consent guard, not in a workflow? This draft assumes yes.
+None. Etienne confirmed the guards live in the stowed hooks and the consent guard, with no CI check.
