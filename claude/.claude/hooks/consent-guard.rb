@@ -34,7 +34,7 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 # whitespace: cruder, and more likely to ask when it need not, which is the
 # direction to fail in.
 def words(command)
-  Shellwords.split(command)
+  Shellwords.split(command.gsub("\n", " ; "))
 rescue ArgumentError
   command.split
 end
@@ -121,7 +121,9 @@ end
 # Where the command runs: the hook's directory, then each `cd` target.
 def command_directories(words, working_directory)
   targets = words.each_cons(2).filter_map { |word, target| target.split(SHELL_OPERATOR, 2).first if word.match?(/\A\(?(?:cd|pushd)\z/) }
-  [ working_directory ] + targets.reject(&:empty?).map { |target| File.expand_path(target, working_directory) }
+  targets.reject(&:empty?).each_with_object([ working_directory ]) do |target, directories|
+    directories << File.expand_path(target, directories.last)
+  end
 end
 
 def change_folder?(directory)
@@ -195,6 +197,9 @@ def repository_flag(rest, words)
   equals = rest.find { |word| word.start_with?("--repo=") }
   return [ equals ] if equals
 
+  glued = rest.find { |word| word.start_with?("-R") && word.length > 2 }
+  return [ glued ] if glued
+
   index = rest.index { |word| %w[-R --repo].include?(word) }
   index ? rest[index, 2] : []
 end
@@ -267,6 +272,8 @@ end
 # The words up to the first shell operator, keeping the part of a word before a glued one.
 def window(words)
   words.each_with_object([]) do |word, kept|
+    break kept if word.start_with?("#")
+
     head, operator = word.split(SHELL_OPERATOR, 2)
     kept << head unless head.to_s.empty?
     break kept if operator

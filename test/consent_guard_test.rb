@@ -715,6 +715,42 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus, stderr)
   end
 
+  def test_a_newline_ends_the_merge_command
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
+
+    _, stderr, status = run_guard("gh pr merge 186 --squash\ngit checkout main")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_comment_ends_the_merge_command
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge --squash # then pull")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "#")
+  end
+
+  def test_chained_relative_cd_targets_expand_against_the_previous_directory
+    start_change("pr-only-via-finish")
+    FileUtils.mkdir_p(File.join(@repo, "sub"))
+    outside = File.dirname(@repo)
+
+    _, stderr, status = run_guard("cd #{File.basename(@repo)} && cd sub && gh pr create --fill", cwd: outside)
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_glued_short_repo_flag_is_passed_on
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge -Reirvandelden/dotfiles 186")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "-Reirvandelden/dotfiles")
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
