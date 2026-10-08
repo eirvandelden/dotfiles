@@ -228,7 +228,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
                                            "the literal word \"accepted\" or \"agreed\"")
   end
 
-  def test_the_implement_worker_is_told_not_to_push
+  def test_the_implement_worker_is_told_to_push_when_done
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "implement", "some-change")
@@ -236,7 +236,16 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     assert_includes(prompt, "implement skill's here backend")
     assert_includes(prompt, "docs/changes/some-change/plan.md")
-    refute_match(/push/i, prompt)
+    assert_includes(prompt, "push the branch (git push -u origin HEAD)")
+    assert_includes(prompt, "never use --no-verify")
+  end
+
+  def test_an_auto_implement_worker_is_told_to_push_when_done
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto")
+
+    assert_includes(worker_prompt("implement"), "push the branch (git push -u origin HEAD)")
   end
 
   def test_the_implement_worker_keeps_the_what_you_did_wording
@@ -687,6 +696,13 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(reviewer_prompt, "change-folder")
     assert_includes(reviewer_prompt, "REVIEW.md")
     assert_includes(reviewer_prompt, "review.md")
+  end
+
+  def test_the_reviewer_is_told_to_push_its_round
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt, "push the branch (git push -u origin HEAD)")
+    assert_includes(reviewer_prompt, "never use --no-verify")
   end
 
   def test_the_reviewer_is_told_to_ping_the_agent_that_asked_for_the_review

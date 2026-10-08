@@ -3,9 +3,9 @@
 #
 # Opens a Claude reviewer beside the caller to look at this branch. Report-only: it reads
 # REVIEW.md, this branch's change folder, and the diff, then appends a round to
-# docs/changes/<slug>/review.md and commits that file alone — the same contract the `reviewer`
-# agent follows for the in-session backend, so one location satisfies the pre-push freshness
-# check regardless of which backend produced it.
+# docs/changes/<slug>/review.md, commits that file alone and pushes the branch — the same
+# contract the `reviewer` agent follows for the in-session backend, so one location satisfies
+# the pre-push freshness check regardless of which backend produced it.
 
 set -euo pipefail
 
@@ -61,9 +61,10 @@ claude/.claude/skills/plan/scripts/change-folder for this branch's change folder
 REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's intent.md and plan.md. \
 Run the Bugs, Security and Compliance passes REVIEW.md describes, worst first; rank Important \
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \
-first round) and commit that file alone — change no code, stage nothing else. Then report back \
-to the agent that asked, with herdr agent prompt, sending pane $HERDR_PANE_ID the single line \
-Review ready: followed by that file's path. Quote the path yourself. That call is rejected while \
+first round) and commit that file alone — change no code, stage nothing else. Then push the \
+branch (git push -u origin HEAD); if the push is refused, say so in your report and never use \
+--no-verify. Then report back to the agent that asked, with herdr agent prompt, sending pane \
+$HERDR_PANE_ID the single line Review ready: followed by that file's path. Quote the path yourself. That call is rejected while \
 the caller is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
 again, at most twelve times. Once the line gets through, on the first try or a retry, run herdr \
 pane close \$HERDR_PANE_ID (your own pane's id from your shell, not the caller's id above) to \

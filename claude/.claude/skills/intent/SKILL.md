@@ -156,7 +156,7 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
-5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and record both reports as that skill directs. Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
+5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and record both reports as that skill directs, committing each transcribed round alone and pushing the branch (`git push -u origin HEAD`). Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
 6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
 7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
 
