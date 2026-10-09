@@ -7,7 +7,6 @@ keybindings:
     - key: C
       name: deep review (octo.nvim)
       command: >
-        pane=$(herdr pane split --current --direction down --cwd
-        "{{.RepoPath}}" --focus | jq -r '.result.pane.pane_id') && herdr
-        pane run "$pane" nvim -c ":silent Octo pr edit {{.PrNumber}}
-        {{.RepoName}}"
+        pane=$(herdr pane split --current --direction down --focus | jq -r
+        '.result.pane.pane_id') && [ -n "$pane" ] && herdr pane run "$pane"
+        "nvim -c 'silent Octo pr edit {{.PrNumber}} {{.RepoName}}'"
