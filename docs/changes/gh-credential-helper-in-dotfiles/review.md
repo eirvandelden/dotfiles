@@ -21,3 +21,28 @@ Compliance:
 
 - [x] Nit: Git tries a dashed external on `PATH` before it expands an alias. A `git-credential-1password` executable on `PATH` therefore replaces the alias without a warning, and git takes its answer instead of `op read`. `credential-1password` is the obvious name for any third-party 1Password helper. Verified with a stub `git-credential-1password` in `PATH`: `git credential fill` for `github.com` returned the stub's password. — `git/.config/git/config:13` → fixed (Name the 1Password credential helper by path, not by alias)
 - [x] Nit: The test harness keeps the real Keychain helper out only while `git-credential-osxkeychain` is absent from `PATH`; it passes the full user `PATH`. On macOS, `GIT_CONFIG_SYSTEM` does not replace Xcode's gitconfig: git loads it with scope `unknown` and it still names `osxkeychain`. The empty `helper =` clears it today, but a red run (as in plan step 1) on a machine with that helper on `PATH` would ask the real Keychain. The plan's risk note ("whatever the config says") and the test comment ("the Keychain helper that Xcode's system gitconfig would name") overstate this isolation. — `test/git_credential_helper_test.rb:178` → fixed (Tests: a git-credential-1password program on PATH cannot replace the helper)
+
+## Round 2 — 2026-10-08T09:24Z — bb3a1e72
+
+The repository has no `REVIEW.md` or `REVIEW.local.md`. This round uses the default passes: Bugs, Security, Compliance. It covers the round 1 fixes (`b4a0c98d`, `4fe7e6a0`) and the branch as a whole.
+
+Checks run: `ruby -Itest test/git_credential_helper_test.rb` (9 runs, 0 failures). `rubocop test/git_credential_helper_test.rb`: no offenses. `sh -n` and `dash -n` on `git/.config/git/credential-1password`: no errors. `/usr/bin` holds no `git-credential-osxkeychain`, so the narrowed test `PATH` keeps the real Keychain helper out.
+
+Full suite as CI runs it: four files error in this pane. They are `herdr_worker_scripts_test.rb`, `review_report_check_test.rb`, `worktree_create_test.rb` and `worktree_pane_test.rb`. Every error is a `git commit` in a temporary repository that uses the live global config, with commit signing through 1Password. An unsigned commit in a temporary repository succeeds here. This branch changes none of those files, and the live global config is the main checkout's. Not a finding for this branch.
+
+Bugs: one Important finding, below. Security: no findings. The token stays in a shell variable and leaves through the builtin `echo`. The helper path resolves under `$HOME`, the same place git reads the config from. The `op://Familie/Github/token` reference is public by Etienne's decision (intent, Constraints).
+
+Compliance:
+
+- Criterion 1 → `test_github_credentials_come_from_the_1password_item`
+- Criterion 2 → `test_gist_credentials_come_from_the_1password_item`
+- Criterion 3 → `test_storing_a_github_credential_leaves_1password_alone`, `test_erasing_a_github_credential_leaves_1password_alone`
+- Criterion 4 → `test_a_failed_op_read_gives_git_no_github_password`
+- Criterion 5 → `test_another_host_gets_no_credentials_from_any_helper`
+- Criterion 6 → `test_the_config_names_no_osxkeychain_helper`
+- Criterion 7 → manual, not run. Its pre-merge procedure no longer works; see the second Important finding.
+- Every test in the plan's `## Proof` exists, the round 1 test `test_a_git_credential_1password_program_on_path_does_not_replace_the_helper` included. The round 1 test edit narrowed `PATH` and added setup; it removed no assertion. No existing test file changed.
+
+- [ ] Important: The helper is now a new file in the `git` package, and git runs it by path from `$HOME`. `~/.config/git` is linked file by file, and it holds no `credential-1password` link today. `~/.gitconfig` is already gone on this machine. So once the main checkout carries this config, every GitHub HTTPS operation fails until the `git` package is restowed. Verified with a temporary `HOME` without the link: git prints `~/.config/git/credential-1password get: … No such file or directory`, then `fatal: could not read Username for 'https://github.com'` (with a terminal, it asks for a username instead). The plan rejected a helper script for this reason (`plan.md:79`). Its Risks list and the handover name no restow step before or right after the merge. The same applies on the Debian and Arch machines. — `git/.config/git/config:19` →
+- [ ] Important: Plan step 7, the only proof for criterion 7, says Etienne can run the check "from this worktree before merge" with `GIT_CONFIG_GLOBAL="$PWD/git/.config/git/config"`. That worked with the alias, which lived in the config file. The helper now resolves to `~/.config/git/credential-1password` under the real `HOME`, which does not exist before a restow. So the pre-merge check gets no password, and the `curl` calls send an empty bearer token. — `docs/changes/gh-credential-helper-in-dotfiles/plan.md:58` →
+- [ ] Nit: `plan.md` still describes the alias design in its Design decisions (line 11), the POSIX note (line 17), the target config shape (line 22), Files that change (line 46), Order of work step 4 (line 55) and the test-safety risk ("an alias helper still works", line 78). Only the Proof addendum (line 100) records the move to a script. The plan edit landed in the test commit `b4a0c98d`, not with the departing code in `4fe7e6a0`, as Files that change asks. — `docs/changes/gh-credential-helper-in-dotfiles/plan.md:11` →
