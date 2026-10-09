@@ -8,6 +8,22 @@ if [ "$LEFTHOOK" = "0" ]; then
   exit 0
 fi
 
+# A repository opts in with `git config worktree-tools.initOnCreate true`, so a new linked worktree
+# gets its stow package (and its lefthook-local.yml) before lefthook loads. Everywhere else
+# a new worktree is set up explicitly with `git worktree-init`.
+init_new_worktree()
+{
+  case "$1" in "" | *[!0]*) return 0 ;; esac
+  test "$(git config --type=bool worktree-tools.initOnCreate 2>/dev/null)" = "true" || return 0
+  _git_dir="$(git rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  _common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 0
+  test "$_git_dir" != "$_common_dir" || return 0
+  _init="${XDG_CONFIG_HOME:-$HOME/.config}/git/worktree-tools/worktree-init"
+  test -x "$_init" || return 0
+  "$_init" "$(git rev-parse --show-toplevel)" || echo "post-checkout: worktree-init failed, continuing" >&2
+  return 0
+}
+
 set_global_config()
 {
   _root="$(git rev-parse --show-toplevel 2>/dev/null)" || return 0
@@ -79,5 +95,6 @@ call_lefthook()
   fi
 }
 
+init_new_worktree "$1"
 set_global_config
 call_lefthook run "post-checkout" --no-auto-install "$@"

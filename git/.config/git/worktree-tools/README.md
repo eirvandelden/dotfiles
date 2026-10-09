@@ -163,6 +163,16 @@ stow:
    - Development server accessible at `https://<name>.<project>.localhost`
    - Ready for immediate development!
 
+### Setting up new worktrees automatically
+
+The global `post-checkout` hook runs `worktree-init` for a new linked worktree when the repository opts in:
+
+```bash
+git config worktree-tools.initOnCreate true
+```
+
+It runs before the hook's own lefthook run, so the stowed `lefthook-local.yml` is in place for that run. Lefthook reloads its config on every run, so later commits see the guard either way. A failing `worktree-init` prints a warning and the checkout goes on. Without the opt-in, nothing runs and you set the worktree up with `git worktree-init`. The hook skips a branch switch and a fresh clone.
+
 ## Conductor Integration
 
 ### Overview

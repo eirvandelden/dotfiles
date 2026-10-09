@@ -42,6 +42,26 @@ class LefthookPosixShTest < Minitest::Test
     refute(status.success?, "Expected a push from main to be rejected by no-push-to-main under dash")
   end
 
+  def test_pre_push_rejects_a_push_of_a_feature_branch_to_main_when_sh_is_dash
+    setup_repo("main")
+    stub_real_lefthook
+    stub_dash_as_sh
+    run_git("-C", @repo_dir, "switch", "-q", "-c", "feature")
+    commit_file("todo.txt", "hello\n")
+    out, err, status = git("push", "origin", "feature:main")
+    refute(status.success?, "Expected a push of a feature branch to main to be rejected under dash")
+    assert_match(/Pushing to main is not allowed/, out + err)
+  end
+
+  def test_commit_msg_rejects_an_empty_commit_on_main_when_sh_is_dash
+    setup_repo("main")
+    stub_real_lefthook
+    stub_dash_as_sh
+    out, err, status = git("commit", "--allow-empty", "-m", "empty")
+    refute(status.success?, "Expected an empty commit on main to be rejected under dash")
+    assert_match(/Direct commit to main is not allowed/, out + err)
+  end
+
   private
 
   def setup_dotfiles_home

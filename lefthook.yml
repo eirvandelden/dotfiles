@@ -60,9 +60,12 @@ pre-commit:
         fi
         markdownlint --config "$config/no-hardwrap.json" --rules "$config/no-hardwrap.cjs" {staged_files}
         exit 0
+    # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
     no-push-to-main:
       tags: branch-protection
       run: |
+        # A commit that concludes a merge has MERGE_HEAD and two parents.
+        [ -e "$(git rev-parse --git-path MERGE_HEAD)" ] && exit 0
         branch=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
           echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
@@ -121,6 +124,22 @@ pre-commit:
           --extended-regexp \
           '(^|[^.])\bdebugger\b|console\.log' "{staged_files}"
       fail_text: "Staged JS/TS files contain debugger statements or console.log calls. Remove before committing."
+
+# lefthook skips every pre-commit command on an empty index, so an empty commit needs this check.
+commit-msg:
+  commands:
+    # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
+    no-push-to-main:
+      tags: branch-protection
+      run: |
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        [ "$branch" = "main" ] || [ "$branch" = "master" ] || exit 0
+        [ -e "$(git rev-parse --git-path MERGE_HEAD)" ] && exit 0
+        git rev-parse --verify -q HEAD >/dev/null || exit 0
+        git diff --cached --quiet HEAD -- || exit 0
+        echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
+        exit 1
+      fail_text: Direct commits to main/master are blocked. Create a feature branch first.
 
 pre-push:
   parallel: true
@@ -243,14 +262,24 @@ pre-push:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {push_files}
+    # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
     no-push-to-main:
       tags: branch-protection
+      use_stdin: true
       run: |
         branch=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
           echo "Direct push to $branch is not allowed. Create a feature branch and open a PR."
           exit 1
         fi
+        while read -r _local_ref _local_sha remote_ref _remote_sha; do
+          case "$remote_ref" in
+            refs/heads/main | refs/heads/master)
+              echo "Pushing to ${remote_ref#refs/heads/} is not allowed. Push a feature branch and open a PR."
+              exit 1
+              ;;
+          esac
+        done
       fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
