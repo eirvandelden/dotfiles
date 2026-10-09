@@ -547,12 +547,13 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
-  def test_merging_is_allowed_when_gh_cannot_tell
+  def test_merging_is_refused_when_gh_cannot_tell
     stub_gh(fail: true)
 
     _, stderr, status = run_guard("gh pr merge 186")
 
-    assert_equal(0, status.exitstatus, stderr)
+    assert_equal(2, status.exitstatus, stderr)
+    assert_match(/could not verify/, stderr)
   end
 
   def test_merging_asks_gh_about_the_named_pull_request_and_repository
@@ -831,6 +832,30 @@ class ConsentGuardTest < Minitest::Test
 
     view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
     refute_includes(view, "git")
+  end
+
+  def test_a_single_ampersand_glued_to_the_action_does_not_hide_it
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create&")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_unmatched_quote_does_not_bring_back_glued_operators
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("cat <<EOF > n.txt\nit's\nEOF\ngh pr create;")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_redirect_ampersand_is_left_alone
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("ls 2>&1")
+
+    assert_equal(0, status.exitstatus, stderr)
   end
 
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request

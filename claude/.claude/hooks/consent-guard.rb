@@ -16,7 +16,8 @@
 # Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
 # So `gh pr create` is refused while that folder exists in a checkout the command
 # runs in, and `gh pr merge` is refused while the pull request's head commit still
-# holds its own docs/changes/<slug>/. Neither is unlocked by the consent marker.
+# holds its own docs/changes/<slug>/, or when gh cannot tell. Neither is unlocked by the
+# consent marker.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does
 # not block anything, so keep Ruby on PATH.
@@ -36,7 +37,7 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 def words(command)
   Shellwords.split(command_lines_as_operators(command))
 rescue ArgumentError
-  command.gsub("\n", " ; ").split
+  command.gsub(/\n|;|&&|\|/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
 end
 
 # Outside quotes, a newline ends a command like `;` does, a backslash-newline joins
@@ -57,11 +58,17 @@ def next_character(characters, result, quote)
   case character
   when "\\" then copy_escape(characters, result)
   when "\n", ";", "|" then result << " #{character == "\n" ? ';' : character} "
-  when "&" then result << (characters.first == "&" ? characters.shift && " && " : "&")
+  when "&" then result << ampersand(characters, result)
   when "#" then comment?(result) ? skip_comment(characters) : result << character
   else result << character
   end
   character if %w[' "].include?(character)
+end
+
+def ampersand(characters, result)
+  return characters.shift && " && " if characters.first == "&"
+
+  characters.first == ">" || result.end_with?("<", ">") ? "&" : " & "
 end
 
 def copy_escape(characters, result)
@@ -113,7 +120,10 @@ def merge_reason(words, working_directory)
 
   directory = command_directories(words.take(words.each_cons(2).find_index([ "pr", "merge" ]) || words.size),
                                   working_directory).last
-  return unless merge_carries_change_folder?(words, directory)
+  state = merge_state(words, directory)
+  return if state == "absent"
+  return "gh could not verify that the pull request's branch has removed docs/changes/<slug>/. " \
+         "Fix gh (auth, network) and retry, or merge by hand." unless state
 
   "only /finish prepares a branch for merging: the pull request's branch still has its own docs/changes/<slug>/ " \
     "folder. Run /finish first."
@@ -186,14 +196,15 @@ end
 
 MERGE_VALUE_OPTIONS = %w[-A --author-email -b --body -F --body-file -t --subject --match-head-commit -R --repo].freeze
 
-# Asks gh for the pull request's head commit, then whether that commit has a
-# docs/changes tree. A gh that fails or is missing means "cannot tell": not carried.
-def merge_carries_change_folder?(words, directory)
+# Asks gh for the pull request's head commit, then whether that commit has its own
+# docs/changes/<slug> tree. Returns "absent" or "Tree", or nil when gh cannot tell:
+# the merge is then refused, since nothing shows the folder is gone.
+def merge_state(words, directory)
   selector, repository = merge_arguments(words)
   owner, name, oid, branch = head_commit(selector, repository, directory)
-  oid && gh_output(directory, "api", "graphql", *tree_query(owner, name, oid, branch)) == "Tree"
+  oid && gh_output(directory, "api", "graphql", *tree_query(owner, name, oid, branch))
 rescue SystemCallError
-  false
+  nil
 end
 
 def head_commit(selector, repository, directory)
