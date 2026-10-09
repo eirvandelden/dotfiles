@@ -42,8 +42,10 @@ module WorktreeTools
       output.strip
     end
 
+    # A pull in the main checkout reads FETCH_HEAD between its own fetch and its merge, so a
+    # sweep running beside it must not rewrite that file.
     def fetch_default_branch(branch)
-      git("fetch", "origin", branch)
+      git("fetch", "--no-write-fetch-head", "origin", branch)
     end
 
     # Creates the lock file, so its presence shows that a sweep started.

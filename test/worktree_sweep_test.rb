@@ -111,8 +111,22 @@ class WorktreeSweepTest < Minitest::Test
 
     run_script
 
-    assert(git_calls.any? { |call| call.start_with?("fetch origin main") }, git_calls.join("\n"))
+    assert(git_calls.any? { |call| call.match?(/\Afetch .*origin main\z/) }, git_calls.join("\n"))
     refute(File.directory?(pushed))
+  end
+
+  # A pull in the main checkout reads FETCH_HEAD between its fetch and its merge; a background
+  # sweep that rewrote it there would make that pull merge origin/main instead of its upstream.
+  def test_leaves_the_fetch_head_of_the_main_checkout_alone
+    git(@repo, "fetch", "--quiet", "origin")
+    fetch_head = File.join(@repo, ".git", "FETCH_HEAD")
+    before = File.read(fetch_head)
+    advance_origin_main
+
+    run_script
+
+    assert(git_calls.any? { |call| call.match?(/\Afetch .*origin main\z/) }, git_calls.join("\n"))
+    assert_equal(before, File.read(fetch_head))
   end
 
   def test_still_sweeps_when_the_fetch_fails
