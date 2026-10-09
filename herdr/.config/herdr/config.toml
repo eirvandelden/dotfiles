@@ -51,10 +51,12 @@ command = "herdr-lazygit.open-tab"
 # herdr does not expand `~` — only a leading `/` counts as absolute, otherwise it resolves
 # relative to this config file's own directory. Hardcode the real path instead.
 # Only mp3 plays — anything else falls back to the default sound without failing loudly.
-path         = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/ready-to-serve.mp3"
-request_path = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/milord.mp3"
-done_path    = "/Users/etienne.vandelden/Documents/Tones/Warcraft/Humans/jobs-done.mp3"
-# done_path    = "/Users/etienne.vandelden/Documents/Tones/Overlord/MinionVoiceData_ENGLISH/ForTheMaster02.mp3"
+# herdr has no volume setting, so these are quieter copies (0.3 of the original level) that
+# `herdr/.config/herdr/scripts/quieter-tones.sh <original.mp3>` writes to ~/Documents/Tones/herdr/.
+path         = "/Users/etienne.vandelden/Documents/Tones/herdr/ready-to-serve.mp3"
+request_path = "/Users/etienne.vandelden/Documents/Tones/herdr/milord.mp3"
+done_path    = "/Users/etienne.vandelden/Documents/Tones/herdr/jobs-done.mp3"
+# done_path    = "/Users/etienne.vandelden/Documents/Tones/herdr/ForTheMaster02.mp3"
 
 [theme]
 # Take every color from the terminal's own palette. Ghostty already swaps solunized dark and
