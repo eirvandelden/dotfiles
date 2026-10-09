@@ -84,7 +84,7 @@ herdr 0.9.3 plays each `[ui.sound]` file with a bare `afplay <file>` and has no 
 - The default notification plays "ready to serve" at the 0.3 level → same two tests.
 - The three originals keep their checksums → `test/herdr_quieter_tones_test.rb` `test_the_source_is_left_byte_for_byte_unchanged`, plus the step 4 gate: `shasum -a 256 <sources> | diff before.sha -` exits 0.
 - After a swap to `ForTheMaster02.mp3`, one run gives a 0.3 copy → `test/herdr_quieter_tones_test.rb` `test_one_run_copies_every_source_given`, plus `test/herdr_config_test.rb` `test_the_commented_alternative_also_points_at_a_quieter_copy`, plus the real run in step 4.
-- No mp3 file is in the repo → partly: `test/herdr_config_test.rb` `test_no_herdr_tone_is_tracked` proves this change adds no audio. The literal reading fails on the three pre-existing `tones/` mp3s and waits on Etienne's decision (see Risks).
+- No mp3 file is in the repo → `test/herdr_config_test.rb` `test_no_herdr_tone_is_tracked` proves this change adds no audio. Etienne decided on 2026-10-09 that the criterion reads "this change adds no mp3"; the pre-existing `tones/` mp3s stay and are out of scope, so this criterion is met in full.
 - `herdr config check` reports no problems → `test/herdr_config_test.rb` `test_herdr_accepts_the_config` (existing), plus the manual run in step 5.
 
 Per changed file, the unit tests expected:
