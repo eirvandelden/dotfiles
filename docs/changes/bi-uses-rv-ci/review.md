@@ -55,3 +55,25 @@ Acceptance criteria: as in round 1, with these changes.
 - Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
 
 Security: nothing new. The post-merge hook now boots the pulled app for `app:update:bin`, but its `migrate` command already runs pulled code.
+
+## Round 3 — 2026-10-09T08:58Z — 5238fc53
+
+Whole branch against `origin/main`, with focus on `1f0d251c` (guard) and `0542e0e4` (`bi`). No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy applies. Every `test/*_test.rb` passes except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, the same global `no-push-to-main` refusal as in round 2. `shellcheck` and `rubocop` are clean on the changed files. Round 1's Nit about a modified `Gemfile.lock` after a pull is still open.
+
+Both round 2 Important findings hold when probed. The guard refuses each round 2 continuation, prefix, comment and `bundle cache` form. `bi` prints "nothing to install" and runs nothing in a Gemfile-less `git worktree add` worktree under a checkout with a Gemfile: from the worktree root, from a subdirectory, through a symlinked path, and with a hook-style `GIT_DIR` set.
+
+- [ ] Nit: A prefix flag that follows another prefix flag still hides an install. After `:option_value`, any word becomes `:prefix`, so a second flag's value is read as the command, and `bundle` becomes an argument. Probed, each exits 0: `sudo -E -u root bundle install`, `env -i -u FOO bundle install`, `timeout --preserve-status -s KILL 60 bundle install`. One flag, or a flag after a value (`sudo -u root -H bundle install`), is refused. A flag in `:option_value` position needs the same handling as in `:prefix` position, plus a refusal test. — `claude/.claude/hooks/consent-guard.rb:109` →
+
+### Compliance, round 3
+
+Since round 2, the guard drops a line continuation and a comment before it splits words, treats `sudo` and `timeout` as prefixes, skips a prefix's option value and a duration, and refuses `bundle cache`, `package` and `pack`. `bundle cache` installs first, so refusing it matches the intent's "every install form". The Codex rules have no `bundle cache` entry; the shared hook covers both tools. `bi` stops its Gemfile search at `git rev-parse --show-toplevel`; the `lefthook.yml` comment ("bi reports a missing Gemfile and exits 0") now holds for a worktree.
+
+Tests were only added or extended. `test_git_repository_without_gemfile_stops_at_its_root` is new. `test_gem_install_forms_are_refused_with_bi_advice`, `test_install_in_any_command_position_is_refused` and `test_bundle_install_in_messages_heredocs_and_lookups_runs` gained cases. No test was weakened, skipped or deleted. Every test the Proof list names exists.
+
+Acceptance criteria: as in round 2, with these changes.
+
+- No Gemfile: nothing to install, success → `test_directory_without_gemfile_has_nothing_to_install`, `test_git_repository_without_gemfile_stops_at_its_root`. Round 2's gap is closed.
+- Install forms refused with a message naming `bi` → the earlier tests plus the new continuation, prefix and comment cases. Remaining gap: chained prefix flags, see the Nit above.
+- Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
+
+Security: nothing new. The guard changes only widen what it refuses, and `bi` now runs in fewer directories.
