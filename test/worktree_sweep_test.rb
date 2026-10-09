@@ -21,6 +21,7 @@ class WorktreeSweepTest < Minitest::Test
   end
 
   def teardown
+    stop_waiter
     FileUtils.rm_rf(@enclosing)
   end
 
@@ -179,8 +180,9 @@ class WorktreeSweepTest < Minitest::Test
       stdin, stdout, stderr, waiter = Open3.popen3(script_environment, "ruby", SCRIPT, chdir: @repo)
       [ stdin, stdout, stderr ].each(&:close)
       @waiter = waiter
-      wait_until("the sweep to find the repository") { git_calls.any? { |call| call.start_with?("worktree list") } }
-      sleep 2
+      # Its last git call before it takes the lock finds the lock file's directory.
+      wait_until("the sweep to reach the lock") { git_calls.any? { |call| call.include?("--git-common-dir") } }
+      sleep 0.5
       assert(waiter.alive?, "the sweep must still be waiting")
       assert_empty(git_calls.grep(/\Afetch /), "the sweep must not fetch while the lock is held")
       assert(File.directory?(merged), "the sweep must wait while the lock is held")
@@ -220,6 +222,15 @@ class WorktreeSweepTest < Minitest::Test
   end
 
   private
+
+  # A failed assertion inside the lock block releases the lock, and the waiting sweep would
+  # carry on while teardown deletes its directories.
+  def stop_waiter
+    return unless @waiter&.alive?
+
+    Process.kill("KILL", @waiter.pid)
+    @waiter.join
+  end
 
   def lock_free?
     File.open(lock_file, File::RDWR) do |file|

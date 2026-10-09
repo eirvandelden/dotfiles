@@ -23,6 +23,7 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def teardown
+    stop_waiter
     FileUtils.rm_rf([ @enclosing, @stub_bin, @gh_stub_bin, @state_home ])
   end
 
@@ -359,9 +360,11 @@ class WorktreeCreateTest < Minitest::Test
                                                    chdir: @repo)
       [ stdin, stdout, stderr ].each(&:close)
       @waiter = waiter
+      # Its last git call before it takes the lock finds the lock file's directory.
       deadline = Time.now + 20
-      sleep 0.05 until git_calls.any? { |call| call.start_with?("worktree prune") } || Time.now > deadline
-      sleep 2
+      sleep 0.05 until git_calls.any? { |call| call.include?("--git-common-dir") } || Time.now > deadline
+      refute_operator(Time.now, :>, deadline, "worktree-create never reached the lock")
+      sleep 0.5
       assert(waiter.alive?, "worktree-create must wait while a sweep holds the lock")
       refute(File.directory?(File.join(@repo, ".worktrees", "feature")))
       assert_empty(git_calls.grep(/\Afetch /), "worktree-create must not fetch while a sweep holds the lock")
@@ -576,6 +579,15 @@ class WorktreeCreateTest < Minitest::Test
 
   def git_call_log
     @git_call_log ||= File.join(@stub_bin, "git-calls.log")
+  end
+
+  # A failed assertion inside the lock block releases the lock, and the waiting process would
+  # carry on while teardown deletes its directories.
+  def stop_waiter
+    return unless @waiter&.alive?
+
+    Process.kill("KILL", @waiter.pid)
+    @waiter.join
   end
 
   def git_calls
