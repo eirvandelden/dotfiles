@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Hotwire Native"
+  short_description: "Hotwire Native iOS and Android shell work: navigation, bridge components, validation"

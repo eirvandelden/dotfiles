@@ -80,6 +80,10 @@ Must run in plan mode — this is where the codebase gets read and the approach 
    ```
 
    `## Proof` is structured, not prose: one line per acceptance criterion from `intent.md` naming the test file and test name that proves it, then per changed file the unit tests expected. Step 1 of `## Order of work` is always the first failing acceptance test, run, watched fail — the walking skeleton.
+
+   Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+
+   A criterion under the mobile exception has no test to name. Its Proof line names the check instead: `- <criterion> → check: <exact command or manual step>`. Step 1 of `## Order of work` may then be the first failing check when no criterion needs an automated test.
 4. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, a fresh worker pane, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
 5. Before offering acceptance, ask the user at least one interrogation question — "what could break", "what did you reject", "what's riskiest" — so the plan gets challenged before it is frozen.
 6. For anything non-trivial, offer a second-model critique (below) before acceptance.

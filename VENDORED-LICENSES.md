@@ -29,3 +29,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## MobileBuildMCP (MIT)
+
+The `mobilebuildmcp` skill is a pinned snapshot of Sentry's MobileBuildMCP, used under its MIT licence. The licence text is in `claude/.claude/skills/mobilebuildmcp/LICENSE`. The pinned release, commit and copied paths are in `VENDORED-SKILLS.yml`.
+
+## android/skills (Apache-2.0)
+
+The `android-intent-security` skill is a pinned snapshot from Google's `android/skills`, used under the Apache License 2.0. The licence text is in `claude/.claude/skills/android-intent-security/LICENSE.txt`. The pinned release, commit and copied paths are in `VENDORED-SKILLS.yml`. The upstream repository has no NOTICE file.

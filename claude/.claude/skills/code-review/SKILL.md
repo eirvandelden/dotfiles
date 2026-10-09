@@ -11,6 +11,7 @@ When asked to implement fixes for issues found during a review (e.g. "implement 
 
 1. Verify each finding before touching code — confirm it is real using systematic debugging; write a failing test that demonstrates it where possible. Report findings that do not hold instead of "fixing" them.
 2. Fix the verified findings (failing test first, per the playbook TDD rule).
+   Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
 3. Run linters on every touched file and fix all issues.
 4. Run the full test suite. Only fix failures that are directly caused by your changes; do not fix pre-existing failures. Report any pre-existing failures explicitly.
 5. If linters or tests caused by your changes cannot be made green, proceed to re-review but explicitly report the failures.

@@ -22,6 +22,10 @@ Run the full set. Every new test must fail, and fail for the reason its criterio
 
 Commit everything with `Tests for <slug>`.
 
+Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+
+Skip every `## Proof` line of the form `→ check: ...`. List each one in your output as not written.
+
 ## Rules
 
 - Writes only under test paths (`test/**`, `spec/**`, `*_test.rb`, `*_spec.rb`, `__tests__/**`, `*.test.*`) plus updating `plan.md`'s `## Proof` lines when a test needed a name Proof didn't already have.

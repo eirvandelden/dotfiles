@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "MobileBuildMCP"
+  short_description: "Build, run, test and debug iOS apps with MobileBuildMCP tools"

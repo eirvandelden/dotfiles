@@ -45,6 +45,14 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 - Report-only review of the current branch before pushing — a fresh reviewer in a herdr pane, or in-session with `here`; findings land in `docs/changes/<slug>/review.md`: `claude/.claude/skills/review/SKILL.md`. The review policy template (passes, what "Important" means, nit cap, do-not-report list) ships at `claude/.claude/skills/new-repo-setup/references/REVIEW.md`; `new-repo-setup` copies it to a personal repo's root as `REVIEW.md`.
 - Closing a change once review is fresh — deletes `docs/changes/<slug>/`, fills the PR body, pushes, and creates or updates the PR, in both scopes; work also asks about an ADR and requests reviewers: `claude/.claude/skills/finish/SKILL.md`
 
+## Mobile
+
+- Hotwire Native apps — Swift and Kotlin shell work, path configuration, bridge components, the mobile validation matrix and build targeting: `claude/.claude/skills/hotwire-native/SKILL.md`
+- iOS build, simulator and UI inspection through MobileBuildMCP tools (vendored): `claude/.claude/skills/mobilebuildmcp/SKILL.md`
+- Auditing Android Intent handling and component exposure in manifests and source (vendored): `claude/.claude/skills/android-intent-security/SKILL.md`
+
+The vendored mobile skills are pinned snapshots. `VENDORED-SKILLS.yml` records each upstream, tag, commit, licence and copied paths.
+
 ## Planning and setup
 
 - Starting any change — interview for the problem, outcome, scope and acceptance criteria, write `docs/changes/<slug>/intent.md`: `claude/.claude/skills/intent/SKILL.md`

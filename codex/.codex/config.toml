@@ -118,6 +118,12 @@ type = "command"
 command = '"$HOME/.claude/hooks/test-guard.rb"'
 timeout = 10
 
+[mcp_servers.MobileBuildMCP]
+command = "npx"
+args = ["-y", "mobilebuildmcp@2.7.1", "mcp"]
+tool_timeout_sec = 600
+env = { MOBILEBUILDMCP_SENTRY_DISABLED = "true" }
+
 [mcp_servers.super-mcp]
 url = "https://api.super.work/mcp"
 

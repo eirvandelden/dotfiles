@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Android Intent Security"
+  short_description: "Audit Android Intent handling and component exposure"
