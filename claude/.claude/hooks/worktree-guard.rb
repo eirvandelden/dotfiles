@@ -19,7 +19,8 @@ require "open3"
 require "shellwords"
 require "strscan"
 
-SEGMENT_SEPARATOR = /&&|\|\||[;|\n]/
+# A single `&` also ends a command, except in a redirection such as `2>&1` or `&>file`.
+SEGMENT_SEPARATOR = /&&|\|\||[;|\n]|(?<![<>])&(?!>)/
 LINE_CONTINUATION = /\\\n/
 TOKEN = /
   (?<separator>#{SEGMENT_SEPARATOR})
@@ -38,6 +39,7 @@ GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace --config-env
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
 SHELLS = %w[sh bash zsh].freeze
 WRAPPERS = %w[command env sudo exec nohup].freeze
+WRAPPER_OPTIONS_WITH_VALUE = %w[-u -g -U -C -D -h -p -r -t].freeze
 ASSIGNMENT = /\A[A-Za-z_]\w*=/
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
@@ -190,7 +192,7 @@ end
 
 # The command text a segment hands to another shell (`bash -c "<command>"`) or to `eval`.
 def handed_on_command(segment_words)
-  command_at = segment_words.index { |word| !WRAPPERS.include?(word) && !word.match?(ASSIGNMENT) }
+  command_at = command_word_index(segment_words)
   return nil unless command_at
 
   name = File.basename(segment_words[command_at])
@@ -198,6 +200,22 @@ def handed_on_command(segment_words)
   return arguments.join(" ") if name == "eval"
 
   shell_command_text(arguments) if SHELLS.include?(name)
+end
+
+# Where the command word is: past variable assignments, and past wrappers with their options.
+def command_word_index(words, index = 0)
+  word = words[index]
+  return nil unless word
+  return command_word_index(words, index + 1) if word.match?(ASSIGNMENT)
+  return index unless WRAPPERS.include?(word)
+
+  command_word_index(words, past_options(words, index + 1))
+end
+
+def past_options(words, index)
+  return index unless words[index]&.start_with?("-")
+
+  past_options(words, index + (WRAPPER_OPTIONS_WITH_VALUE.include?(words[index]) ? 2 : 1))
 end
 
 # `-c` may share a cluster with other short flags (`-lc`) or follow them (`-e -c`); the command

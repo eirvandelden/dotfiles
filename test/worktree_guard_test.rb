@@ -161,6 +161,29 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_a_wrapper_with_its_own_options_still_hands_the_command_on
+    [ 'sudo -u me bash -c "git worktree add ../x -b x"',
+     'env -i -u HOME bash -c "git worktree add ../x -b x"' ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
+  def test_a_single_ampersand_ends_a_command
+    _, _, status = run_guard('echo a & bash -c "git worktree add ../x -b x"')
+
+    assert_equal(2, status.exitstatus)
+  end
+
+  def test_a_redirection_with_an_ampersand_does_not_split_the_command
+    _, stderr, inside = run_guard("git worktree add .worktrees/ok -b ok 2>&1")
+    _, _, outside = run_guard("git worktree add ../x -b x >/dev/null 2>&1")
+
+    assert_equal(0, inside.exitstatus, stderr)
+    assert_equal(2, outside.exitstatus)
+  end
+
   def test_a_shell_with_combined_or_earlier_flags_before_dash_c_is_still_checked
     [ 'bash -lc "git worktree add ../x -b x"', 'bash -e -c "git worktree add ../x -b x"',
      "zsh -i -c 'git worktree add ../x -b x'" ].each do |command|
