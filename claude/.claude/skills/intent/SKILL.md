@@ -70,7 +70,9 @@ The interview ends when every template section can be filled without guessing. U
 1. Which permissions will the change need? List gems or packages, system tools, migrations that drop or remove, and deploy files (playbook rules 8, 9, 11, 12, 13). Each one is approved now, or becomes a stop-and-ask later.
 2. Autonomous delivery (playbook §7a: agents carry the change to a verified PR; you approve the intent and the merge) or step-by-step (you accept the plan too)?
 
-Autonomous adds a `Delivery: autonomous` line next to `Status:` in `intent.md`, with the approved permissions under `## Constraints`.
+Autonomous adds `Delivery: autonomous` in the same paragraph as `Status:` in `intent.md`. Put it on the status line or immediately below, without a blank line. Record approved permissions under `## Constraints`.
+
+Header fields are `Author:`, `Status:`, `Type:` and `Delivery:`. Start each line at column zero; separate inline fields with a period and a space. An accepted status is `accepted` or `accepted (YYYY-MM-DD)`. Delivery is `autonomous` or `step-by-step`. Conflicting Status or Delivery values refuse automatic acceptance.
 
 Batch independent multiple-choice questions (up to 4) only when none of them would change another's answer; otherwise ask one at a time.
 
@@ -154,7 +156,7 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
-5. Review. Run `~/.config/herdr/scripts/start-review.sh` and `codex review --base <base>`. Transcribe the Codex output as its own round in `docs/changes/<slug>/review.md`, in the reviewer's format (see the `review` skill), and commit it alone. Fix findings through `code-review`, then run both reviewers again, as the `review` skill's auto mode says. Repeat until a round of each reviewer leaves no open finding.
+5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and record both reports as that skill directs. Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
 6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
 7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
 

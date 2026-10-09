@@ -9,7 +9,7 @@ arguments:
 
 # Finish
 
-One skill, not two: personal and work do the same core thing — confirm the review is fresh, fill the PR body, remove `docs/changes/<slug>/`, commit, push, and open the PR — and differ only in the ADR question and the reviewer request, both work only. Runs only on explicit command (`/finish`), never on its own.
+One skill, not two: personal and work do the same core thing — confirm the review is fresh, fill the PR body, remove `docs/changes/<slug>/`, commit, push, and open the PR — and differ only in the ADR question and the reviewer request, both work only. Runs on explicit command (`/finish`), or by the autonomous coordinator under the Auto mode preconditions.
 
 `--dry-run`: print every step below with what it would do, then stop before doing anything — including no `gh pr create`. Etienne runs the first real use on a work PR this way and executes the printed steps by hand once; after that it is optional.
 
@@ -77,9 +77,9 @@ Supplied by `dotfiles-work` through its `claude` stow package (`STOW_SHARED`, fi
 
 ## Auto mode
 
-Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`). A `work` scope refuses auto mode and uses the steps above unchanged. Differences:
+Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`). It also requires an accepted `intent.md` with `Delivery: autonomous` in its header metadata. A `work` scope or step-by-step change refuses auto mode and uses the steps above unchanged. Differences:
 
-- §3 step 2: do not wait for confirmation of the PR body.
+- §3 step 3: capture the PR body and title without waiting for confirmation. Show the body in step 2 as usual.
 - §4: close every matching idle or done stage pane without asking.
 - Never merge, and never comment on the PR.
 

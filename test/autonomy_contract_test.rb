@@ -54,6 +54,7 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(text, "finish/scripts/change-scope")
     assert_includes(text, "Delivery: autonomous")
     assert_match(/only when .*`personal`/i, text)
+    assert_match(/same paragraph as `Status:`/, text)
   end
 
   def test_intent_accept_starts_the_coordinator_loop
@@ -116,6 +117,13 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/a round of each .*no open finding/i, section)
   end
 
+  def test_codex_coordinator_uses_the_claude_cli_review_backend
+    section = section_of(skill("intent"), "## Autonomous delivery")
+
+    assert_match(/Review.*`review`.*auto mode/, section)
+    assert_match(/Codex coordinator.*read-only Claude CLI backend/, section)
+  end
+
   def test_plan_auto_mode_runs_the_other_family_critique
     assert_critique_contract(section_of(skill("plan"), "## Auto mode"))
   end
@@ -127,6 +135,25 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section, "codex review --base")
     assert_includes(section, "code-review")
     assert_match(/transcribe/i, section)
+  end
+
+  def test_codex_auto_review_uses_a_read_only_claude_cli_backend
+    section = section_of(skill("review"), "## Auto mode")
+
+    assert_includes(section, "claude -p --model opus --permission-mode plan")
+    assert_match(/Codex coordinator/i, section)
+    assert_match(/read-only/i, section)
+    assert_includes(section, "(claude)")
+    assert_match(/unavailable.*Decision needed:/i, section)
+    assert_includes(section_of(skill("review"), "## Codex"), "Auto mode")
+  end
+
+  def test_claude_cli_review_replaces_the_reviewer_write_and_fetch_steps
+    section = section_of(skill("review"), "### Read-only Claude CLI backend")
+
+    assert_match(/replaces.*fetch.*write.*commit.*Output/, section)
+    assert_includes(section, "Do not fetch")
+    assert_includes(section, "stdout")
   end
 
   def test_implement_auto_reports_a_decision_instead_of_adding_a_dependency
@@ -149,6 +176,27 @@ class AutonomyContractTest < Minitest::Test
 
     assert_match(/personal/i, section)
     assert_match(/work.*refuses/i, section)
+  end
+
+  def test_finish_auto_mode_skips_the_actual_body_confirmation_step
+    section = section_of(skill("finish"), "## Auto mode")
+
+    assert_includes(section, "§3 step 3")
+    assert_match(/capture.*body.*without waiting for confirmation/i, section)
+  end
+
+  def test_finish_auto_mode_requires_an_accepted_autonomous_intent
+    section = section_of(skill("finish"), "## Auto mode")
+
+    assert_match(/accepted `intent.md`/, section)
+    assert_includes(section, "`Delivery: autonomous`")
+    assert_match(/step-by-step.*steps above unchanged/i, section)
+  end
+
+  def test_finish_overview_allows_the_autonomous_coordinator
+    overview = skill("finish").split("## 1.").first
+
+    assert_includes(overview, "or by the autonomous coordinator")
   end
 
   def test_plan_forbids_an_arrow_inside_a_closure
