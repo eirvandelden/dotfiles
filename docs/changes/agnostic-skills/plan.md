@@ -20,7 +20,7 @@ Both `claude` and `agents` are in `STOW_SHARED` (`packages.conf`). `install/util
 - Codex policy file for the eleven skills: `agents/openai.yaml` with `interface.display_name` and `interface.short_description`, in the shape of `compound/agents/openai.yaml`. None of the eleven has `disable-model-invocation: true`, so none gets a `policy` block. The short description is a shortened copy of the skill's own frontmatter `description`, not new content.
 - The parity test drops `CLAUDE_ONLY` (now empty by design) and keeps `CODEX_ONLY` and `AGENT_INVOKED` as they are.
 - The "a source under `claude/.claude/skills/` fails the suite" criterion gets a fixture test as well as the live-repository assertion. The check moves into a small private helper that takes the two directories, so a `Dir.mktmpdir` fixture can prove it without touching the repository. This follows `test/stow_package_roots_test.rb`.
-- Restow command after the merge: `stow --dir "$HOME/Developer/dotfiles" --target "$HOME" --restow --no-folding claude agents`, run from the main checkout. This is the intent's approved `stow -R -t "$HOME"` with the flags `stow_configure` uses for shared packages. Without `--no-folding` stow would fold differently from every other install run.
+- Restow command after the merge: `stow --dir "$HOME/Developer/dotfiles" --target "$HOME" --restow --no-folding claude agents`, run from the main checkout. This is the intent's approved `stow -R -t "$HOME"` with the flags `stow_configure` uses for shared packages. Without `--no-folding` stow would fold differently from every other install run. Etienne confirmed on 2026-10-09 that the approved restow includes `--no-folding`.
 
 ## Integration points
 
@@ -65,7 +65,7 @@ Both `claude` and `agents` are in `STOW_SHARED` (`packages.conf`). `install/util
 
 ## Risks
 
-- Restow of a package-side symlink over an existing real directory. Traced in `Stow.pm` 2.4.1: on `-D`, `unstow_node` descends through the link (the package path is a directory to `-d`) and removes the per-file links it owns. On `-S`, an existing `~/.claude/skills/<name>/` directory gets per-file links through the package link; a missing one gets one link to `claude/.claude/skills/<name>`. Both resolve. Not yet exercised: step 11 is the first real run.
+- Restow of a package-side symlink over an existing real directory. Traced in `Stow.pm` 2.4.1: on `-D`, `unstow_node` descends through the link (the package path is a directory to `-d`) and removes the per-file links it owns. On `-S`, an existing `~/.claude/skills/<name>/` directory gets per-file links through the package link; a missing one gets one link to `claude/.claude/skills/<name>`. Both resolve. Not yet exercised: step 11 is the first real run. Etienne declined a scratch-target rehearsal before the merge (2026-10-09), so no `stow` runs before step 11.
 - Codex side changes shape. `~/.agents/skills/<name>` turns from one directory link into a real directory of per-file links (`--no-folding` on a real package directory). Codex has only read directory links on this machine so far. The "Codex lists every skill" check catches a loader that ignores file links.
 - Between the merge and the restow, nothing breaks: the existing `~/.claude/skills/<name>/SKILL.md` links point at `claude/.claude/skills/<name>/SKILL.md`, which still resolves through the new package link. The eleven new Codex skills appear only after the restow.
 - A skill whose files the dotfiles-work repo also provides under the same name would collide. None does today (work skills have distinct names).
