@@ -43,13 +43,13 @@ This repository has no automated test framework for Neovim Lua config (confirmed
 
 ## Proof
 
-- `<leader>go` lists open pull requests → manual check, step 1 (no test file: no Lua test suite in this repository).
-- Selecting a PR opens its overview with a file panel → manual check, step 2.
-- Opening a changed file shows diff hunks → manual check, step 3.
+- `<leader>go` lists open pull requests → verified, step 1 (no test file: no Lua test suite in this repository). `;go` opened the snacks picker titled "Pull Requests", 7/7, real open PRs from `eirvandelden/dotfiles` (#190, #189, #186, #179, #141, #75, #46).
+- Selecting a PR opens its overview with a file panel → verified, step 2. Selected #190: a real overview (repo, author, checks, merge status, 9 commits, 7 changed files); `;pf` opened "Changed Files", 7/7, with real diffstat per file.
+- Opening a changed file shows diff hunks → verified, step 3. Opened `git/.config/git/hooks/post-checkout` from that panel: the real file content, diff-highlighted, not a placeholder.
 - `<localleader>ca`/`<localleader>sa` add a comment/suggestion → keymap names confirmed against octo.nvim's real config (headless), step 4. Owed: manual run against a real PR.
 - `<localleader>vs` starts and submits a review with approve/comment/request-changes → keymap names and submit-window keys confirmed against octo.nvim's real config (headless), step 5. Owed: manual run against a real PR (a GitHub write — the user's own action, not automated here).
 - `C` in gh-dash opens the same PR in Octo → verified, step 6: `herdr pane split` + `herdr pane run "nvim -c 'silent Octo pr edit 181 eirvandelden/dotfiles'"`, run end to end against real PR 181, `:ls` in the resulting pane shows exactly one buffer, `octo://eirvandelden/dotfiles/pull/181`. The config itself still invokes `gh-dash`'s own template substitution rather than this literal PR number, which is unchanged by this check.
-- `<leader>gl` opens lazygit → manual check, step 7.
+- `<leader>gl` opens lazygit → verified, step 7, by direct keymap inspection: `vim.api.nvim_get_keymap('n')` shows `;gl` bound with `desc = "Lazygit"` (mapleader is `;` in this config).
 - `gh` is in `packages.conf` → `grep -n '^\s*gh$' packages.conf`, step 8.
 - No telescope/fzf-lua added → `rg -i 'telescope|fzf-lua' neovim/`, step 9.
 
