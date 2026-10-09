@@ -210,12 +210,18 @@ end
 def blocked?(command, directory)
   segments(command).any? do |segment_words|
     if segment_words.first == "cd" && segment_words[1]
-      directory = File.expand_path(segment_words[1], directory)
+      directory = after_cd(segment_words[1], directory)
       next false
     end
     handed_on = handed_on_command(segment_words)
     (handed_on && blocked?(handed_on, directory)) || misplaced_add?(segment_words, directory)
   end
+end
+
+# A failed `cd` leaves the shell where it was.
+def after_cd(destination, directory)
+  path = File.expand_path(destination, directory)
+  File.directory?(path) ? path : directory
 end
 
 def misplaced_add?(segment_words, directory)

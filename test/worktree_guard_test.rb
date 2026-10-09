@@ -104,6 +104,12 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus)
   end
 
+  def test_a_cd_into_a_missing_directory_leaves_the_working_directory_unchanged
+    _, _, status = run_guard("cd nowhere; git worktree add ../x -b x")
+
+    assert_equal(2, status.exitstatus)
+  end
+
   def test_a_worktree_add_later_in_a_chain_is_still_checked
     _, _, status = run_guard("git status && echo hi; git worktree add ../elsewhere -b x")
 
