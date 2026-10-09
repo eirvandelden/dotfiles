@@ -1,7 +1,6 @@
 # Intent: Keep every skill in one tool-agnostic location
 
-Author: Etienne van Delden de la Haije. Status: accepted. Type: refactor.
-Delivery: autonomous
+Author: Etienne van Delden de la Haije. Status: accepted. Type: refactor. Delivery: autonomous.
 
 ## Problem
 
