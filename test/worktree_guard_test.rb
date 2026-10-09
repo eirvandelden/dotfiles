@@ -239,6 +239,16 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus)
   end
 
+  def test_a_heredoc_marker_in_a_comment_a_dollar_string_or_arithmetic_starts_no_heredoc
+    [ "echo hi # use <<EOF for heredocs\ngit worktree add ../x -b x",
+     "git commit -m \"costs $5 <<EOF\"\ngit worktree add ../x -b x",
+     "echo $((1<<2))\ngit worktree add ../x -b x" ].each do |command|
+      _, _, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+    end
+  end
+
   def test_a_heredoc_end_word_with_a_dash_or_dot_closes_the_heredoc
     [ "cat <<END-OF\nhi\nEND-OF\ngit worktree add ../y -b y",
      "cat <<'my.end'\nhi\nmy.end\ngit worktree add ../y -b y" ].each do |command|

@@ -6,8 +6,8 @@
 #
 # It tokenises the command; it is not a shell. Quoted text, comments and heredoc bodies are
 # text, so a commit message or PR body that mentions `git worktree add` passes. A `<<` inside
-# quoted text starts no heredoc. When the command word is `eval`, or `sh`, `bash` or `zsh` with
-# `-c` among its flags, that command text is checked too.
+# quoted text, a comment or `$(( … ))` starts no heredoc. When the command word is `eval`, or
+# `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
 # Variables are not expanded, so such a target is taken literally and usually blocks. Commands
 # inside `( … )` or `$( … )` are not checked. Everything else errs towards allowing: a false
 # block stops legitimate work, and the written rule covers the rest.
@@ -32,9 +32,10 @@ TOKEN = /
   | (?<plain>[^\s;&|'"\\\#][^\s;&|'"\\]*|&)
 /mx
 HEREDOC_START = /(?<!<)<<(?!<)-?[ \t]*(['"]?)([^\s'"<>;&|()]+)\1/
-# Quoted text on one line. A double-quoted string with `$` in it may hold `$(cat <<'EOF'`, a
-# real heredoc, so it does not count as text here.
-QUOTED_ON_LINE = /'[^'\n]*'|"(?:\\.|[^"\\$\n])*"/
+# Quoted text and arithmetic on one line, where a `<<` starts no heredoc. A double-quoted string
+# with `$(` in it may hold `$(cat <<'EOF'`, a real heredoc, so it does not count here.
+NO_HEREDOC_ON_LINE = /'[^'\n]*'|"(?:\\.|\$(?!\()|[^"\\$\n])*"|\$\(\(.*?\)\)/
+COMMENT_START = /(?:\A|(?<=[\s;&|]))\#/
 GLOBAL_OPTIONS_WITH_VALUE = %w[-c --git-dir --work-tree --namespace --config-env --attr-source].freeze
 ADD_OPTIONS_WITH_VALUE = %w[-b -B --reason].freeze
 SHELLS = %w[sh bash zsh].freeze
@@ -71,10 +72,21 @@ def without_heredoc_bodies(command)
 end
 
 def heredoc_delimiters(line)
-  quoted = match_spans(line, QUOTED_ON_LINE)
+  no_heredoc = match_spans(line, NO_HEREDOC_ON_LINE)
+  comment_at = comment_start(line, no_heredoc)
   match_spans(line, HEREDOC_START).filter_map do |match|
-    match[2] unless quoted.any? { |text| match.begin(0).between?(text.begin(0) + 1, text.end(0) - 1) }
+    match[2] unless match.begin(0) >= comment_at || inside?(match.begin(0), no_heredoc)
   end
+end
+
+# Where an unquoted `#` starts a comment, or the line's length when it has none.
+def comment_start(line, quoted)
+  starts = match_spans(line, COMMENT_START).map { |match| match.begin(0) }
+  starts.find { |at| !inside?(at, quoted) } || line.length
+end
+
+def inside?(at, spans)
+  spans.any? { |span| at.between?(span.begin(0) + 1, span.end(0) - 1) }
 end
 
 def match_spans(line, pattern)
