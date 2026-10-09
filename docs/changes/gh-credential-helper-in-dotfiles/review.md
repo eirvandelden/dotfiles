@@ -68,4 +68,4 @@ Compliance:
 - Criterion 7 → manual, not run. Plan step 7 now runs the worktree's script directly, so the pre-merge check works without a restow.
 - Every test in the plan's `## Proof` exists. The round 2 test edit replaced the stowed link with a link to the checkout and removed no assertion. The plan now describes the script design throughout, and its edit landed with the departing code in `29947137`. The diff changes only the files the plan names.
 
-- [ ] Nit: The class comment wraps unevenly after the round 2 edit: line 11 ends after "in a temporary", and "system config" starts the next line. — `test/git_credential_helper_test.rb:11` →
+- [x] Nit: The class comment wraps unevenly after the round 2 edit: line 11 ends after "in a temporary", and "system config" starts the next line. — `test/git_credential_helper_test.rb:11` → fixed (Rewrap the credential helper test comment)
