@@ -858,6 +858,30 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_a_redirect_glued_to_the_action_does_not_hide_it
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create>/dev/null --fill")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_unmatched_quote_does_not_bring_back_a_glued_single_ampersand
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("cat <<X > n.txt\nit's\nX\ngh pr create&")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_asking_for_merge_help_is_never_refused
+    stub_gh(fail: true)
+
+    _, stderr, status = run_guard("gh pr merge --help")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",

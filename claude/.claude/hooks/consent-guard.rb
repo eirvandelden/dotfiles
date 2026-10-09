@@ -37,7 +37,7 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 def words(command)
   Shellwords.split(command_lines_as_operators(command))
 rescue ArgumentError
-  command.gsub(/\n|;|&&|\|/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
+  command.gsub(/\n|;|&&|\||(?<![<>])&(?!>)/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
 end
 
 # Outside quotes, a newline ends a command like `;` does, a backslash-newline joins
@@ -59,6 +59,7 @@ def next_character(characters, result, quote)
   when "\\" then copy_escape(characters, result)
   when "\n", ";", "|" then result << " #{character == "\n" ? ';' : character} "
   when "&" then result << ampersand(characters, result)
+  when ">", "<" then result << (characters.first == "&" ? " #{character}" : " #{character} ")
   when "#" then comment?(result) ? skip_comment(characters) : result << character
   else result << character
   end
@@ -120,6 +121,8 @@ def merge_reason(words, working_directory)
 
   directory = command_directories(words.take(words.each_cons(2).find_index([ "pr", "merge" ]) || words.size),
                                   working_directory).last
+  return if merge_window(words).include?("--help")
+
   state = merge_state(words, directory)
   return if state == "absent"
   return "gh could not verify that the pull request's branch has removed docs/changes/<slug>/. " \
