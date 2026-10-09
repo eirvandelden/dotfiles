@@ -82,3 +82,15 @@ Either way, the files only exist at these paths once the `herdr` package is stow
 ## Worker scripts
 
 `scripts/hand-off-plan.sh <stage> <change-slug>` starts a named stage (`intent`, `plan`, or `implement`) of a change in a fresh Claude worker, in a pane split below the caller, rooted in the change's worktree. Every stage but `implement` starts the next one itself once its artifact is accepted. `scripts/start-review.sh` asks a reviewer to look at the current branch in a pane beside it. Both refuse to run outside a herdr pane. They are covered by `test/herdr_worker_scripts_test.rb`.
+
+## Notification sounds
+
+herdr has no volume setting and plays each `[ui.sound]` file at full level. `config.toml` therefore points at quieter copies in `~/Documents/Tones/herdr/`, made at 0.3 of the original level, the same as `afplay -v 0.3`. The tones are copyrighted, so neither they nor the copies are in this repository.
+
+`scripts/quieter-tones.sh <source.mp3>...` writes one copy per source under the same file name. The source is only read. Run it again after a tone swap, or after a source tone changes:
+
+```bash
+herdr/.config/herdr/scripts/quieter-tones.sh ~/Documents/Tones/Warcraft/Humans/jobs-done.mp3
+```
+
+herdr plays only mp3, and the script refuses anything else, and refuses a file that already sits in the copies folder. It needs `ffmpeg`. After changing the `[ui.sound]` paths, run `herdr server reload-config`. The script is covered by `test/herdr_quieter_tones_test.rb`.
