@@ -130,6 +130,19 @@ class BiTest < Minitest::Test
     refute_includes(command_lines, "bundle install")
   end
 
+  def test_git_repository_without_gemfile_stops_at_its_root
+    write_rails_project
+    repository = File.join(@project, ".worktrees", "no-gemfile")
+    FileUtils.mkdir_p(repository)
+    system("git", "init", "--quiet", repository, exception: true)
+
+    result = run_bi(chdir: repository)
+
+    assert_success(result)
+    assert_match(/no Gemfile in .*nothing to install/, result[:stdout] + result[:stderr])
+    assert_equal("", command_log)
+  end
+
   def test_bundle_gemfile_names_the_gemfile_to_look_for
     File.write(File.join(@project, "other.gemfile"), "")
     File.write(File.join(@project, "other.gemfile.lock"), "")

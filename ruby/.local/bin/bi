@@ -3,11 +3,16 @@
 # Bundler resolves the lockfile; rv installs the gems. See docs/changes/bi-uses-rv-ci/plan.md.
 set -eu
 
-# The nearest directory at or above this one with a Gemfile, as Bundler searches.
+# The nearest directory at or above this one with a Gemfile, as Bundler searches,
+# but never above the Git work tree: a worktree under .worktrees/ must not reach
+# the main checkout's Gemfile.
 project_root() {
-  dir=$PWD
+  top=$(git rev-parse --show-toplevel 2>/dev/null) || top=/
+  dir=$(pwd -P)
   until [ -f "$dir/Gemfile" ]; do
-    [ "$dir" = / ] && return 1
+    if [ "$dir" = "$top" ] || [ "$dir" = / ]; then
+      return 1
+    fi
     dir=$(dirname "$dir")
   done
   echo "$dir"
