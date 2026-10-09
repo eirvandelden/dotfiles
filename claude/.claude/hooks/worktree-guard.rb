@@ -120,36 +120,29 @@ def worktree_add(segment_words, directory)
   start = segment_words.index { |word| word == "git" || word.end_with?("/git") }
   return nil unless start
 
-  rest = segment_words.drop(start + 1)
-  directory = apply_global_options(rest, directory)
+  directory, rest = after_global_options(segment_words.drop(start + 1), directory)
   return nil unless rest.first(2) == %w[worktree add]
 
   target = add_target(rest.drop(2))
   target && [ directory, target ]
 end
 
-# Consumes the global options from the front of rest and returns the directory they select.
-def apply_global_options(rest, directory)
-  while rest.first&.start_with?("-")
-    option = rest.shift
-    if option == "-C"
-      directory = File.expand_path(rest.shift.to_s, directory)
-    elsif GLOBAL_OPTIONS_WITH_VALUE.include?(option)
-      rest.shift
-    end
-  end
-  directory
+# The directory git's global options select, and the words after those options.
+def after_global_options(words, directory)
+  option, *rest = words
+  return [ directory, words ] unless option&.start_with?("-")
+  return after_global_options(rest.drop(1), File.expand_path(rest.first.to_s, directory)) if option == "-C"
+
+  after_global_options(GLOBAL_OPTIONS_WITH_VALUE.include?(option) ? rest.drop(1) : rest, directory)
 end
 
 def add_target(arguments)
-  until arguments.empty?
-    argument = arguments.shift
-    return arguments.first if argument == "--"
-    return argument unless argument.start_with?("-")
+  argument, *rest = arguments
+  return nil unless argument
+  return rest.first if argument == "--"
+  return argument unless argument.start_with?("-")
 
-    arguments.shift if ADD_OPTIONS_WITH_VALUE.include?(argument)
-  end
-  nil
+  add_target(ADD_OPTIONS_WITH_VALUE.include?(argument) ? rest.drop(1) : rest)
 end
 
 # Ported from worktree-create's repo_root!. The first `worktree` line is the main working tree,
