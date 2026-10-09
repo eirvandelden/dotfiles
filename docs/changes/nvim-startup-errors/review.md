@@ -21,3 +21,7 @@ Both tests named in `plan.md`'s `## Proof` exist with the named names. Files cha
 
 - [ ] Nit: Neither acceptance criterion has a committed test that exercises Neovim; both rest on the startup probe, by the plan's accepted design (no Neovim in CI). The probe outputs for steps 2, 5 and 6 are not on the branch, so this review cannot confirm a red run and two `RESULT pass` runs happened. The pull request body must carry them, as plan step 11 says. — `docs/changes/nvim-startup-errors/plan.md:57` →
 - [ ] Nit: The pull request body must also name the uncommitted `lazy-lock.json` drift in the main checkout and leave keep or discard to Etienne, per the plan's Risks section. Nothing on the branch shows this yet. — `docs/changes/nvim-startup-errors/plan.md:198` →
+
+## Round 2 — 2026-10-09T09:12Z — c0803d05 (codex)
+
+`codex review --base origin/main`: no findings. Codex checked that the dependency entry in `ai.lua` and the two lockfile entries agree, and ran `ruby -Itest test/neovim_avante_dependencies_test.rb` (2 runs, 6 assertions, green).
