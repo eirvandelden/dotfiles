@@ -21,6 +21,7 @@ Both `claude` and `agents` are in `STOW_SHARED` (`packages.conf`). `install/util
 - The parity test drops `CLAUDE_ONLY` (now empty by design) and keeps `CODEX_ONLY` and `AGENT_INVOKED` as they are.
 - The "a source under `claude/.claude/skills/` fails the suite" criterion gets a fixture test as well as the live-repository assertion. The check moves into a small private helper that takes the two directories, so a `Dir.mktmpdir` fixture can prove it without touching the repository. This follows `test/stow_package_roots_test.rb`.
 - Restow command after the merge: `stow --dir "$HOME/Developer/dotfiles" --target "$HOME" --restow --no-folding claude agents`, run from the main checkout. This is the intent's approved `stow -R -t "$HOME"` with the flags `stow_configure` uses for shared packages. Without `--no-folding` stow would fold differently from every other install run. Etienne confirmed on 2026-10-09 that the approved restow includes `--no-folding`.
+- The `no-fixme` hook flags vendored lines that the move commit stages in full (`37signals-style/references/development-philosophy.md`, `rails-guides/references/command_line.md`). Etienne decided on 2026-10-09 to skip only that tag, never to edit the vendored files or the lefthook config. Step 2 is committed as `8087440d` with `LEFTHOOK_EXCLUDE=fixme`. Every push of this branch that still includes `8087440d` runs as `LEFTHOOK_EXCLUDE=fixme git push`. No other hook is skipped.
 
 ## Integration points
 
