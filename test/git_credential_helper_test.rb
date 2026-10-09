@@ -8,10 +8,10 @@ require "tmpdir"
 # Keychain. Each test runs real `git credential` against the dotfiles git
 # config, with a stub `op` on a minimal PATH, the dotfiles checkout linked at
 # ~/Developer/dotfiles in a temporary HOME (and nothing restowed), and a
-# stand-in Keychain helper in a temporary
-# system config. Xcode's own gitconfig still loads on macOS; git cannot reach its
-# osxkeychain program because GIT_EXEC_PATH is empty and PATH holds only the stubs,
-# /usr/bin and /bin. `stub-token` is a placeholder, not a secret.
+# stand-in Keychain helper in a temporary system config. Xcode's own gitconfig
+# still loads on macOS; git cannot reach its osxkeychain program because
+# GIT_EXEC_PATH is empty and PATH holds only the stubs, /usr/bin and /bin.
+# `stub-token` is a placeholder, not a secret.
 class GitCredentialHelperTest < Minitest::Test
   CONFIG = File.expand_path("../git/.config/git/config", __dir__)
   CHECKOUT = File.expand_path("..", __dir__)
