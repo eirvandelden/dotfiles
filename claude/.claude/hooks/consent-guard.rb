@@ -59,7 +59,7 @@ def next_character(characters, result, quote)
   when "\\" then copy_escape(characters, result)
   when "\n", ";", "|" then result << " #{character == "\n" ? ';' : character} "
   when "&" then result << ampersand(characters, result)
-  when ">", "<" then result << (characters.first == "&" ? " #{character}" : " #{character} ")
+  when ">", "<" then redirect(characters, result)
   when "#" then comment?(result) ? skip_comment(characters) : result << character
   else result << character
   end
@@ -68,8 +68,23 @@ end
 
 def ampersand(characters, result)
   return characters.shift && " && " if characters.first == "&"
+  return redirect(characters, result) if characters.first == ">"
 
-  characters.first == ">" || result.end_with?("<", ">") ? "&" : " & "
+  " & "
+end
+
+# A redirect is dropped whole: an optional file descriptor before it, the operator, and its
+# target word. None of them is an argument of the command.
+def redirect(characters, result)
+  result.sub!(/(?<=\A|\s)\d+\z/, "")
+  characters.shift while %w[> < & |].include?(characters.first)
+  characters.shift while characters.first&.match?(/[ \t]/)
+  skip_word(characters) unless %w[' "].include?(characters.first)
+  ""
+end
+
+def skip_word(characters)
+  characters.shift until characters.empty? || characters.first.match?(/[\s;|&<>]/)
 end
 
 def copy_escape(characters, result)
@@ -119,11 +134,15 @@ end
 def merge_reason(words, working_directory)
   return unless gh_command?(words, "merge")
 
-  directory = command_directories(words.take(words.each_cons(2).find_index([ "pr", "merge" ]) || words.size),
-                                  working_directory).last
-  return if merge_window(words).include?("--help")
+  pr_windows(words, "merge").filter_map do |index, window|
+    merge_window_reason(words, index, window, working_directory)
+  end.first
+end
 
-  state = merge_state(words, directory)
+def merge_window_reason(words, index, window, working_directory)
+  return if window.include?("--help") || window.include?("-h")
+
+  state = merge_state(window, words, command_directories(words.take(index), working_directory).last)
   return if state == "absent"
   return "gh could not verify that the pull request's branch has removed docs/changes/<slug>/. " \
          "Fix gh (auth, network) and retry, or merge by hand." unless state
@@ -202,8 +221,8 @@ MERGE_VALUE_OPTIONS = %w[-A --author-email -b --body -F --body-file -t --subject
 # Asks gh for the pull request's head commit, then whether that commit has its own
 # docs/changes/<slug> tree. Returns "absent" or "Tree", or nil when gh cannot tell:
 # the merge is then refused, since nothing shows the folder is gone.
-def merge_state(words, directory)
-  selector, repository = merge_arguments(words)
+def merge_state(window, words, directory)
+  selector, repository = merge_arguments(window, words)
   owner, name, oid, branch = head_commit(selector, repository, directory)
   oid && gh_output(directory, "api", "graphql", *tree_query(owner, name, oid, branch))
 rescue SystemCallError
@@ -231,22 +250,23 @@ end
 
 # The first positional word after `pr merge` names the pull request; --repo is passed on.
 # Only the words up to the next shell operator belong to the merge.
-def merge_arguments(words)
-  rest = merge_window(words)
+def merge_arguments(rest, words)
   selector = rest.each_with_index.find do |word, index|
     !word.start_with?("-") && !(index.positive? && MERGE_VALUE_OPTIONS.include?(rest[index - 1]))
   end&.first
   [ [ selector ].compact, repository_flag(rest, words) ]
 end
 
-def merge_window(words)
-  pr_window(words, "merge")
-end
-
 # The words after `pr <action>`, up to the next shell operator.
 def pr_window(words, action)
-  index = words.each_cons(2).find_index([ "pr", action ])
-  window(words.drop(index + 2))
+  pr_windows(words, action).first&.last || []
+end
+
+# Each `pr <action>` in the command, as [the index of `pr`, the words after the action].
+def pr_windows(words, action)
+  words.each_cons(2).each_with_index.filter_map do |pair, index|
+    [ index, window(words.drop(index + 2)) ] if pair == [ "pr", action ]
+  end
 end
 
 def repository_flag(rest, words)

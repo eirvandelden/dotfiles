@@ -882,6 +882,40 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_a_trailing_fd_redirect_is_not_the_merge_selector
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge --squash 2>&1")
+    run_guard("gh pr merge --squash 2> err.txt")
+
+    views = File.readlines(@gh_log).select { |line| line.start_with?("pr view") }
+    assert(views.none? { |line| line.start_with?("pr view 2") || line.include?(">") }, views.join)
+  end
+
+  def test_an_ampersand_redirect_glued_to_the_action_does_not_hide_it
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create&>/dev/null")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_merge_help_followed_by_a_real_merge_is_still_checked
+    stub_gh(fail: true)
+
+    _, stderr, status = run_guard("gh pr merge --help; gh pr merge --squash")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_the_short_help_flag_is_never_refused
+    stub_gh(fail: true)
+
+    _, stderr, status = run_guard("gh pr merge -h")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
