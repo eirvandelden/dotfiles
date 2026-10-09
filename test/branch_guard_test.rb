@@ -95,6 +95,36 @@ class BranchGuardTest < Minitest::Test
     assert(status.success?, "Expected --no-verify to let a no-change amend through:\n#{err}")
   end
 
+  def test_a_lefthook_local_extending_the_guard_allows_pushing_a_branch_named_main_fix
+    setup_extending_repo("main")
+    assert_push_allowed("feature:main-fix")
+  end
+
+  def test_a_lefthook_local_extending_the_guard_allows_pushing_a_branch_named_mainline
+    setup_extending_repo("main")
+    assert_push_allowed("feature:mainline")
+  end
+
+  def test_a_lefthook_local_extending_the_guard_allows_pushing_a_tag
+    setup_extending_repo("main")
+    assert_tag_push_allowed
+  end
+
+  def test_the_fallback_config_allows_pushing_a_branch_named_main_fix
+    setup_fallback_repo("main")
+    assert_push_allowed("feature:main-fix")
+  end
+
+  def test_the_fallback_config_allows_pushing_a_branch_named_mainline
+    setup_fallback_repo("main")
+    assert_push_allowed("feature:mainline")
+  end
+
+  def test_the_fallback_config_allows_pushing_a_tag
+    setup_fallback_repo("main")
+    assert_tag_push_allowed
+  end
+
   def test_the_guard_file_defines_only_the_guard_commands
     config = YAML.safe_load_file(GUARD_FILE)
     assert_equal(%w[pre-commit commit-msg pre-push].sort, config.keys.sort)
@@ -335,6 +365,19 @@ class BranchGuardTest < Minitest::Test
     out, err, status = git("push", *args)
     refute(status.success?, "Expected `git push #{args.join(" ")}` to be refused")
     assert_match(/Pushing to (main|master) is not allowed|Direct push to (main|master) is not allowed/, out + err)
+  end
+
+  def assert_push_allowed(refspec)
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    _out, err, status = git("push", "origin", refspec)
+    assert(status.success?, "Expected `git push origin #{refspec}` to go through:\n#{err}")
+  end
+
+  def assert_tag_push_allowed
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
+    run_git(@repo_dir, "tag", "v1")
+    _out, err, status = git("push", "origin", "v1")
+    assert(status.success?, "Expected a tag push to go through:\n#{err}")
   end
 
   def assert_empty_commit_refused
