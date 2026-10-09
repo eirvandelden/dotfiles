@@ -175,16 +175,17 @@ end
 def next_position(position, word)
   return :command if SEPARATORS.include?(word)
   return :argument if position == :argument
-  return :prefix if COMMAND_PREFIXES.include?(word) || position == :option_value
-  return prefix_word_position(word) if position == :prefix
+  return :prefix if COMMAND_PREFIXES.include?(word) || (position == :option_value && !word.start_with?("-"))
+  return prefix_word_position(word) if %i[prefix option_value].include?(position)
   return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
 
   :argument
 end
 
-# After a prefix, an option may take a value (`sudo -u root`, `nice -n 10`), and a
-# duration or VAR=value word (`timeout 600`, `env FOO=1`) still comes before the
-# command. `command -v bundle` only looks bundle up.
+# After a prefix, an option may take a value (`sudo -u root`, `nice -n 10`), a flag
+# may follow another (`sudo -E -u root`), and a duration or VAR=value word
+# (`timeout 600`, `env FOO=1`) still comes before the command. `command -v bundle`
+# only looks bundle up.
 def prefix_word_position(word)
   return :argument if LOOKUP_FLAGS.include?(word)
   return :option_value if word.start_with?("-")
