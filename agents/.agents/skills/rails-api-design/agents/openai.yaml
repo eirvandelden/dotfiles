@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Rails API Design"
+  short_description: "Design REST API endpoints, JSON responses, authentication, pagination, versioning"

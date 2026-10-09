@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Sync"
+  short_description: "Rebase a branch on main, resolve conflicts, verify green, push with --force-with-lease"

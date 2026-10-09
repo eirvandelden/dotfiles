@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Rails UI"
+  short_description: "Views, Hotwire, Stimulus, Turbo, CSS, forms, i18n and accessibility"

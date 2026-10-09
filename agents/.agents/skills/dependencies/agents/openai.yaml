@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Dependencies"
+  short_description: "Add, remove or upgrade a dependency: sources, constraint style, personal gems, Dependabot"

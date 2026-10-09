@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Object-Oriented Design"
+  short_description: "Design or review object-oriented code: responsibilities, DI, composition, Law of Demeter"
