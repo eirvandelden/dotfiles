@@ -93,6 +93,28 @@ class SecretsLoaderTest < Minitest::Test
     refute_includes stdout, SHIM_DIR
   end
 
+  def test_a_failed_unlock_before_and_reports_failure_and_changes_nothing
+    fail_every_op_read
+
+    stdout, _, status = run_unlock('unlock && print reported-success; print -r -- "first=${FIRST-unset} path=$PATH"')
+
+    assert_equal(0, status.exitstatus)
+    refute_includes stdout, "reported-success"
+    assert_includes stdout, "first=unset"
+    refute_includes stdout, SHIM_DIR
+  end
+
+  def test_a_failed_unlock_before_or_runs_the_fallback_and_changes_nothing
+    fail_every_op_read
+
+    stdout, _, status = run_unlock('unlock || print fallback-ran; print -r -- "first=${FIRST-unset} path=$PATH"')
+
+    assert_equal(0, status.exitstatus)
+    assert_includes stdout, "fallback-ran"
+    assert_includes stdout, "first=unset"
+    refute_includes stdout, SHIM_DIR
+  end
+
   def test_unlock_without_the_shim_in_zdotdir_exports_the_secrets_keeps_path_and_warns_to_restow
     empty_zdotdir = File.join(@tmpdir, "empty-zdotdir")
     FileUtils.mkdir_p(empty_zdotdir)
@@ -134,6 +156,13 @@ class SecretsLoaderTest < Minitest::Test
       echo "a-secret-value"
     SH
     FileUtils.chmod(0o755, op)
+  end
+
+  # zsh ignores `set -e` on the left of && and ||, so these failures must be
+  # caught without it.
+  def fail_every_op_read
+    File.write(File.join(@bin, "op"), "#!/bin/sh\nexit 1\n")
+    File.write(File.join(@config, "1password.env"), "FIRST=op://a/b/c\nSECOND=op://a/b/c\n")
   end
 
   def op_log

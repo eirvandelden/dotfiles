@@ -88,9 +88,14 @@ secrets() {
       fi
 
       # Resolve secret via the correct account. Never print raw value.
+      # Checked explicitly: zsh ignores `set -e` when the caller sits left of
+      # && or ||, as in `unlock && codex`.
       local op_args=("read" "$ref")
       [[ -n "$account" ]] && op_args+=("--account" "$account")
-      val="$(op "${op_args[@]}")"
+      if ! val="$(op "${op_args[@]}")"; then
+        print -u2 "secrets: op read failed for $key"
+        return 1
+      fi
       escaped_val="$(printf "%q" "$val")"
       print -r -- "export ${key}=${escaped_val}"
 
@@ -102,14 +107,14 @@ secrets() {
   local personal_account="vandelden"
   local work_account="${SECRETS_WORK_OP_ACCOUNT:-}"
 
-  _secrets_emit_file "$cfg" "base" "$personal_account"
+  _secrets_emit_file "$cfg" "base" "$personal_account" || return 1
 
   # Optional overlay (not required, typically gitignored). Without an account
   # the references would be read from the personal one, so skip it instead.
   if [[ -f "$cfg_work" && -z "$work_account" ]]; then
     print -u2 "secrets: SECRETS_WORK_OP_ACCOUNT is unset, skipping $cfg_work"
   elif [[ -f "$cfg_work" ]]; then
-    _secrets_emit_file "$cfg_work" "work" "$work_account"
+    _secrets_emit_file "$cfg_work" "work" "$work_account" || return 1
   fi
 }
 
@@ -121,10 +126,7 @@ unlock() {
   local exports
   local shim_dir="${ZDOTDIR:-$HOME/.config/zsh}/unlocked-bin"
 
-  # A `|| return` here would switch off `set -e` inside secrets and let a failed
-  # `op read` through, so the status is checked on its own line.
-  exports="$(secrets)"
-  [[ $? -eq 0 ]] || return 1
+  exports="$(secrets)" || return 1
   eval "$exports"
 
   if [[ ! -x "$shim_dir/codex" ]]; then
