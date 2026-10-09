@@ -83,6 +83,18 @@ class BranchGuardTest < Minitest::Test
     assert_match(/Direct commit to main is changed/, out + err)
   end
 
+  def test_no_verify_lets_an_empty_commit_through_on_main_with_the_extending_guard
+    setup_extending_repo("main")
+    _out, err, status = git("commit", "--no-verify", "--allow-empty", "-m", "empty")
+    assert(status.success?, "Expected --no-verify to let an empty commit through:\n#{err}")
+  end
+
+  def test_no_verify_lets_an_amend_that_stages_no_change_through_on_main_with_the_extending_guard
+    setup_extending_repo("main")
+    _out, err, status = git("commit", "--no-verify", "--amend", "-m", "reworded")
+    assert(status.success?, "Expected --no-verify to let a no-change amend through:\n#{err}")
+  end
+
   def test_the_guard_file_defines_only_the_guard_commands
     config = YAML.safe_load_file(GUARD_FILE)
     assert_equal(%w[pre-commit commit-msg pre-push].sort, config.keys.sort)
