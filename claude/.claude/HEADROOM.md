@@ -28,9 +28,9 @@ One-time registration after `install.sh` installs `semble[mcp]` via uv (`mcpServ
 claude mcp add --scope user semble uvx -- --from "semble[mcp]" semble
 ```
 
-### Home MCP servers (email, fizzy)
+### Home MCP servers (email, fizzy, homeassistant)
 
-Same servers as `[mcp_servers.email]` / `[mcp_servers.fizzy]` in `codex/.codex/config.toml`. Claude has no `bearer_token_env_var`, so the token comes from `${VAR}` expansion instead — run `unlock` before `claude`, or the server sends the literal `${VAR}` text and gets a 401.
+Same servers as `[mcp_servers.email]` / `[mcp_servers.fizzy]` / `[mcp_servers.homeassistant]` in `codex/.codex/config.toml`. Claude has no `bearer_token_env_var`, so the token comes from `${VAR}` expansion instead — run `unlock` before `claude`, or the server sends the literal `${VAR}` text and gets a 401.
 
 One-time registration (no claude session running — a live session rewrites `~/.claude.json` and drops the change). Single quotes keep zsh from baking the token into the config:
 
@@ -40,6 +40,9 @@ claude mcp add --scope user --transport http email http://email-mcp.home.arpa/mc
 
 claude mcp add --scope user --transport http fizzy http://fizzy-mcp.home.arpa/mcp \
   --header 'Authorization: Bearer ${FIZZY_PAT}'
+
+claude mcp add --scope user --transport http homeassistant http://ha-mcp.home.arpa/mcp \
+  --header 'Authorization: Bearer ${HA_MCP_GATE_TOKEN}'
 ```
 
 ### TREK MCP server
