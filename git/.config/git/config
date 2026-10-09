@@ -16,9 +16,9 @@
   # osxkeychain included, so no credential comes from the Keychain.
   helper =
 [credential "https://github.com"]
-  helper = "!~/.config/git/credential-1password"
+  helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"
 [credential "https://gist.github.com"]
-  helper = "!~/.config/git/credential-1password"
+  helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"
 [color]
   ui = true
   status = true

@@ -8,28 +8,25 @@ From `intent.md` (2026-10-06). Status: accepted.
 
 ## Design decisions
 
-- **One helper, defined once as a git alias.** `[alias] credential-1password` holds a shell function. `credential.https://github.com.helper = 1password` and the same line for `gist.github.com` make git run `git credential-1password <action>`, which resolves to the alias. Verified on git 2.54: git resolves a credential helper name through an alias.
-- **Only `get` reads 1Password.** The function exits 0 at once for `store` and `erase` (criterion 3).
-- **The account is named.** The function runs `op read op://Familie/Github/token --account vandelden`. `zsh/.config/zsh/functions/secrets.zsh` uses the same personal account name. Etienne chose this on 2026-10-06, so a recent work-account sign-in or `OP_ACCOUNT` cannot redirect the read.
-- **Output.** On success the function prints `username=x-access-token` and `password=<token>`. When `op read` fails, it prints `quit=1`. Git then stops with `credential helper '1password' told us to quit`: no terminal prompt, and no helper configured after it runs (criterion 4). Etienne chose this on 2026-10-06. The function prints nothing else; `op` writes its own error to stderr.
+- **One helper script, named by its path in the checkout.** `git/.config/git/credential-1password` is a POSIX sh script. Both GitHub sections run it as `helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"`. Git runs a `!` helper through the shell, so no program on `PATH` can replace it (review round 1), and the path exists as soon as the merge is pulled, with no restow (review round 2). The global hooks already assume the checkout at `~/Developer/dotfiles` (`set_global_config`). This replaces the first design, a git alias named `credential-1password`, which a `git-credential-1password` program on `PATH` would override.
+- **Only `get` reads 1Password.** The script exits 0 at once for `store` and `erase` (criterion 3).
+- **The account is named.** The script runs `op read op://Familie/Github/token --account vandelden`. `zsh/.config/zsh/functions/secrets.zsh` uses the same personal account name. Etienne chose this on 2026-10-06, so a recent work-account sign-in or `OP_ACCOUNT` cannot redirect the read.
+- **Output.** On success the script prints `username=x-access-token` and `password=<token>`. When `op read` fails, it prints `quit=1`. Git then stops with `credential helper '1password' told us to quit`: no terminal prompt, and no helper configured after it runs (criterion 4). Etienne chose this on 2026-10-06. The script prints nothing else; `op` writes its own error to stderr.
 - **Inherited helpers are cleared.** Xcode's git ships a system config (`/Applications/Xcode.app/Contents/Developer/usr/share/git-core/gitconfig`) with `credential.helper = osxkeychain`. Removing the dotfiles line alone leaves that helper active. An empty `[credential] helper =` in the dotfiles config clears every helper set before it, the system one included. The GitHub sections come after it in the file, so the reset does not clear them: git applies `credential.*` entries in file order. Verified on git 2.54.
 - **`[github] token` is removed.** Its value runs `security find-generic-password`, a Keychain read. Nothing in this repository reads `github.token`. Etienne chose on 2026-10-06 to remove it in this change. `github.user` stays.
-- **POSIX sh only.** Git runs `!` aliases with `sh -c`, which is dash on Debian. Use `[ ]`, never `[[ ]]`.
+- **POSIX sh only.** The script starts with `#!/bin/sh`, which is dash on Debian. Use `[ ]`, never `[[ ]]`.
 
-Target config shape (the implementer owns exact quoting; inside the quoted value, `"` is written `\"`):
+Target config shape:
 
 ```gitconfig
-[alias]
-  # Git's credential helper for GitHub; see [credential "https://github.com"].
-  credential-1password = "!f() { [ \"$1\" = get ] || exit 0; token=$(op read op://Familie/Github/token --account vandelden) || { echo quit=1; exit 0; }; echo username=x-access-token; echo \"password=$token\"; }; f"
 [credential]
   # An empty helper clears every helper set before this file, Xcode's
   # osxkeychain included, so no credential comes from the Keychain.
   helper =
 [credential "https://github.com"]
-  helper = 1password
+  helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"
 [credential "https://gist.github.com"]
-  helper = 1password
+  helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"
 ```
 
 ## Integration points
@@ -43,7 +40,8 @@ Target config shape (the implementer owns exact quoting; inside the quoted value
 
 ## Files that change
 
-- `git/.config/git/config` — add the alias, the empty `[credential] helper`, and the two GitHub sections. Remove `helper = osxkeychain`. Remove the `token = !security …` line from `[github]`.
+- `git/.config/git/credential-1password` — new: the helper script.
+- `git/.config/git/config` — add the empty `[credential] helper`, and the two GitHub sections. Remove `helper = osxkeychain`. Remove the `token = !security …` line from `[github]`.
 - `test/git_credential_helper_test.rb` — new file with the tests under Proof.
 - `docs/changes/gh-credential-helper-in-dotfiles/plan.md` — only if reality departs from this plan, in the same commit as the departing code.
 
@@ -52,13 +50,13 @@ Target config shape (the implementer owns exact quoting; inside the quoted value
 1. Write the test harness (Test setup below) and `test_github_credentials_come_from_the_1password_item`. Run it with `ruby -Itest test/git_credential_helper_test.rb -n test_github_credentials_come_from_the_1password_item`. Watch it fail: the Keychain stand-in answers `password=from-keychain`, and `op` is never called.
 2. Write the remaining tests under Proof. Run each one and confirm it fails for its own reason (the stand-in answers, or the config still names `osxkeychain` or `find-generic-password`). Split mode: test-writer does steps 1–2 and commits `Tests for gh-credential-helper-in-dotfiles`.
 3. Config: replace `helper = osxkeychain` with the empty `helper =` and its comment. Criteria 5 and 6 (and 3) go green. Commit: `Clear inherited git credential helpers`.
-4. Config: add the alias and the two GitHub sections. Criteria 1, 2 and 4 go green. Commit: `Read GitHub HTTPS credentials from 1Password`.
+4. Config: add the helper (first as an alias; review rounds 1 and 2 moved it into the script) and the two GitHub sections. Criteria 1, 2 and 4 go green. Commit: `Read GitHub HTTPS credentials from 1Password`.
 5. Config: remove `token = !security …` from `[github]`. `test_the_config_reads_nothing_from_the_keychain` goes green. Commit: `Drop the Keychain-backed github.token`.
 6. Run the whole file, then the full suite as CI runs it: `set -o pipefail; for f in test/*_test.rb; do ruby -Itest "$f" || break; done`. Run `rubocop test/git_credential_helper_test.rb`. Re-read the full diff.
-7. Do not run criterion 7. Put this manual check in the report for Etienne. He runs it after a valid token is in the item, from this worktree before merge, or from anywhere after he removes `~/.gitconfig` (then drop the `GIT_CONFIG_GLOBAL` prefix). Neither command prints the token:
+7. Do not run criterion 7. Put this manual check in the report for Etienne. He runs it after a valid token is in the item, from this worktree before merge: it runs the worktree's script directly, so it needs no restow and ignores `~/.gitconfig`. After merge, `printf 'protocol=https\nhost=github.com\n\n' | git credential fill` gives the same password from anywhere. Neither command prints the token:
 
    ```sh
-   token=$(printf 'protocol=https\nhost=github.com\n\n' | GIT_CONFIG_GLOBAL="$PWD/git/.config/git/config" git credential fill | sed -n 's/^password=//p')
+   token=$(printf 'protocol=https\nhost=github.com\n\n' | git/.config/git/credential-1password get | sed -n 's/^password=//p')
    curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $token" https://api.github.com/user
    curl -s -H "Authorization: Bearer $token" https://api.github.com/user | jq -r .login
    unset token
@@ -75,8 +73,8 @@ Target config shape (the implementer owns exact quoting; inside the quoted value
 - A machine without `op` gets `op: not found`, and git stops for GitHub HTTPS. Adding `op` to `packages.conf` is out of scope per intent.
 - Each GitHub HTTPS operation runs `op read`. With 1Password locked, that raises a Touch ID prompt.
 - A config file loaded later that sets an empty `credential.https://github.com.helper` disables this helper without a warning. Git has no protection against that.
-- Test safety: git's exec path holds the real `git-credential-osxkeychain`. While tests are red against the old config, a run could ask the real Keychain. The harness sets `GIT_EXEC_PATH` to an empty directory and `PATH` to the stub directory, `/usr/bin` and `/bin` only. On macOS, Xcode's own gitconfig still loads and names `osxkeychain`, so this isolation holds only while no `git-credential-osxkeychain` sits in those directories (review round 1). Verified on git 2.54: git then reports `'credential-osxkeychain' is not a git command`, and an alias helper still works.
-- Rejected: the 1Password gh shell plugin (needs a terminal, per intent). Rejected: a helper script file under `git/.config/git/`, because `~/.config/git` is linked file by file (dotfiles-work shares the directory), so a new file needs `stow -R` first, and git would have no helper until then. Rejected: the same shell snippet inline in both host sections (duplicated logic). Rejected: a `https://*.github.com` section, wider than the two hosts the intent names.
+- Test safety: git's exec path holds the real `git-credential-osxkeychain`. While tests are red against the old config, a run could ask the real Keychain. The harness sets `GIT_EXEC_PATH` to an empty directory and `PATH` to the stub directory, `/usr/bin` and `/bin` only. On macOS, Xcode's own gitconfig still loads and names `osxkeychain`, so this isolation holds only while no `git-credential-osxkeychain` sits in those directories (review round 1). Verified on git 2.54: git then reports `'credential-osxkeychain' is not a git command`, and a `!` helper still works.
+- Rejected: the 1Password gh shell plugin (needs a terminal, per intent). Rejected: naming the script by its stowed path `~/.config/git/credential-1password`, because `~/.config/git` is linked file by file (dotfiles-work shares the directory), so the new file needs a restow first and git would have no GitHub helper until then (review round 2). Rejected: a git alias, which a `git-credential-1password` program on `PATH` overrides (review round 1). Rejected: the same shell snippet inline in both host sections (duplicated logic). Rejected: a `https://*.github.com` section, wider than the two hosts the intent names.
 
 ## Out of scope
 
@@ -97,7 +95,8 @@ Target config shape (the implementer owns exact quoting; inside the quoted value
 Per changed file, the unit tests expected, named as behaviour:
 
 - `git/.config/git/config`: the tests above, plus `test_the_config_reads_nothing_from_the_keychain` (no `find-generic-password` anywhere in the file; covers the `[github] token` removal).
-- Review round 1: a `git-credential-1password` program on `PATH` does not replace the helper → `test/git_credential_helper_test.rb` `test_a_git_credential_1password_program_on_path_does_not_replace_the_helper`. Fix: the helper moves from the alias into the script `git/.config/git/credential-1password`, and both GitHub sections name it by path (`helper = "!~/.config/git/credential-1password"`), which git runs through the shell without a `PATH` lookup.
+- Review round 1: a `git-credential-1password` program on `PATH` does not replace the helper → `test/git_credential_helper_test.rb` `test_a_git_credential_1password_program_on_path_does_not_replace_the_helper`. Fix: the helper moves from the alias into the script `git/.config/git/credential-1password`, and both GitHub sections name it by path, which git runs through the shell without a `PATH` lookup.
+- Review round 2: GitHub credentials work before the `git` package is restowed → every GitHub test in `test/git_credential_helper_test.rb`, whose temporary HOME holds only the checkout at `~/Developer/dotfiles`. Fix: the helper path points into the checkout (`~/Developer/dotfiles/git/.config/git/credential-1password`), not at the stowed link.
 
 What each test asserts:
 
