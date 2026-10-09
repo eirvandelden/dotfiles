@@ -6,14 +6,15 @@ require "tmpdir"
 
 # Git gets GitHub HTTPS credentials from 1Password and nothing from the
 # Keychain. Each test runs real `git credential` against the dotfiles git
-# config, with a stub `op` on a minimal PATH, the helper script linked into a
-# temporary HOME as stow would, and a stand-in Keychain helper in a temporary
+# config, with a stub `op` on a minimal PATH, the dotfiles checkout linked at
+# ~/Developer/dotfiles in a temporary HOME (and nothing restowed), and a
+# stand-in Keychain helper in a temporary
 # system config. Xcode's own gitconfig still loads on macOS; git cannot reach its
 # osxkeychain program because GIT_EXEC_PATH is empty and PATH holds only the stubs,
 # /usr/bin and /bin. `stub-token` is a placeholder, not a secret.
 class GitCredentialHelperTest < Minitest::Test
   CONFIG = File.expand_path("../git/.config/git/config", __dir__)
-  HELPER = File.expand_path("../git/.config/git/credential-1password", __dir__)
+  CHECKOUT = File.expand_path("..", __dir__)
   OP_REFERENCE = "read op://Familie/Github/token --account vandelden".freeze
   UNSET = %w[
     GIT_DIR GIT_WORK_TREE GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT
@@ -28,7 +29,7 @@ class GitCredentialHelperTest < Minitest::Test
     stub_op
     stub_keychain
     write_system_config
-    stow_helper
+    link_dotfiles_checkout
   end
 
   def teardown
@@ -146,11 +147,13 @@ class GitCredentialHelperTest < Minitest::Test
     SH
   end
 
-  # Links the tracked helper script where stow puts it, under the temporary HOME.
-  def stow_helper
-    target = File.join(@tmpdir, ".config", "git", "credential-1password")
+  # The checkout sits where the global hooks expect it. Nothing from the git
+  # package is restowed, as on a machine that pulled the merge but has not run
+  # install.sh yet.
+  def link_dotfiles_checkout
+    target = File.join(@tmpdir, "Developer", "dotfiles")
     FileUtils.mkdir_p(File.dirname(target))
-    File.symlink(HELPER, target)
+    File.symlink(CHECKOUT, target)
   end
 
   def write_system_config
