@@ -775,6 +775,64 @@ class ConsentGuardTest < Minitest::Test
     assert_includes(view, "-Reirvandelden/dotfiles")
   end
 
+  def test_combined_shell_flags_do_not_hide_the_nested_command
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("bash -lc 'gh pr create --fill'")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_unmatched_quote_still_ends_the_merge_command_at_a_newline
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge --squash\ncat <<EOF > notes.txt\nit's merged\nEOF")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "cat")
+  end
+
+  def test_a_semicolon_glued_to_the_action_does_not_hide_it
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create; echo done")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_ampersand_pair_glued_to_the_action_does_not_hide_it
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create&&echo done")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_pipe_glued_to_the_action_does_not_hide_it
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("gh pr create|tee out.txt")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_upper_case_combined_shell_flag_does_not_hide_the_nested_command
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("sh -Cc 'gh pr create --fill'")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_stray_quote_before_the_merge_does_not_hide_the_newline_after_it
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("cat <<EOF > notes.txt\nit's ready\nEOF\ngh pr merge --squash\ngit checkout main")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "git")
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
@@ -807,6 +865,7 @@ class ConsentGuardTest < Minitest::Test
 
   # A repository on <branch> whose working tree holds docs/changes/<branch>/.
   def start_change(branch, repo: @repo)
+    system("git", "-C", repo, "config", "commit.gpgsign", "false")
     system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet",
            "--allow-empty", "-m", "init")
     system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "-b", branch)

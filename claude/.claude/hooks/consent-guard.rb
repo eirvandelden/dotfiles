@@ -36,7 +36,7 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 def words(command)
   Shellwords.split(command_lines_as_operators(command))
 rescue ArgumentError
-  command.split
+  command.gsub("\n", " ; ").split
 end
 
 # Outside quotes, a newline ends a command like `;` does, a backslash-newline joins
@@ -56,7 +56,8 @@ def next_character(characters, result, quote)
 
   case character
   when "\\" then copy_escape(characters, result)
-  when "\n" then result << " ; "
+  when "\n", ";", "|" then result << " #{character == "\n" ? ';' : character} "
+  when "&" then result << (characters.first == "&" ? characters.shift && " && " : "&")
   when "#" then comment?(result) ? skip_comment(characters) : result << character
   else result << character
   end
@@ -151,9 +152,10 @@ def pull_request_words(words)
 end
 
 def nested_shell_words(word, rest)
-  return [] unless word.match?(%r{(?:\A|/)(?:ba|z)?sh\z}) && rest.include?("-c")
+  return [] unless word.match?(%r{(?:\A|/)(?:ba|z)?sh\z})
 
-  script = rest[rest.index("-c") + 1]
+  flag = rest.index { |argument| argument.match?(/\A-[A-Za-z]*c[A-Za-z]*\z/) }
+  script = rest[flag + 1] if flag
   script ? words(script) : []
 end
 
