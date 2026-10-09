@@ -118,19 +118,23 @@ GEM_INSTALL_REASON = "install gems with bi, not bundle install. " \
                      "bi resolves the lockfile with Bundler and installs with rv (playbook rule 11).".freeze
 BUNDLER_INFO_FLAGS = %w[-v --version -h --help].freeze
 # Bundler 4.1's commands and their aliases (Bundler::CLI.all_commands, COMMAND_ALIASES), plus
-# bundler-audit's `bundle audit`. Any other word after `bundle` counts as an install.
-BUNDLER_COMMANDS = %w[add audit binstubs c cache check clean config console doctor e env ex exe exec fund gem help
-                      info init inject issue licenses list lock ls open outdated pack package platform plugin
+# bundler-audit's `bundle audit`. Any other word after `bundle` counts as an install, and so
+# does `bundle cache` (alias package, pack): it installs before it caches.
+BUNDLER_COMMANDS = %w[add audit binstubs c check clean config console doctor e env ex exe exec fund gem help
+                      info init inject issue licenses list lock ls open outdated platform plugin
                       pristine remove show tree update version viz].freeze
-COMMAND_PREFIXES = %w[command env exec nice nohup time].freeze
+COMMAND_PREFIXES = %w[command env exec nice nohup sudo time timeout].freeze
 SHELL_KEYWORDS = %w[! { do elif else if then until while].freeze
 SEPARATORS = %w[; & | ( ) `].freeze
 LOOKUP_FLAGS = %w[-v -V].freeze
 ENV_ASSIGNMENT = /\A\w+=/
+DURATION = /\A\d+(?:\.\d+)?[smhd]?\z/
 # A heredoc operator, the rest of its line, then the body up to the delimiter line.
 HEREDOC = /((?<!<)<<-?[ \t]*(['"]?)(\w+)\2[^\n]*\n).*?^[ \t]*\3[ \t]*$/m
-# Quoted text and escapes stay whole; an unquoted operator or line break is captured.
-SHELL_PIECE = /'[^']*'?|"(?:[^"\\]|\\.)*"?|\\.|([\n;&|()`])/m
+# Quoted text and escapes stay whole. A line continuation, a comment (a # that starts a
+# word) and an unquoted operator or line break are captured.
+SHELL_PIECE = /'[^']*'?|"(?:[^"\\]|\\.)*"?|(?<continuation>\\\n)|\\.|
+               (?<comment>(?<![^\s;&|()])\#[^\n]*)|(?<operator>[\n;&|()`])/mx
 
 # The command as words, with each unquoted operator and line break a word of its
 # own and heredoc bodies left out, so a word in command position can be told apart.
@@ -140,14 +144,16 @@ end
 
 def separate_operators(command)
   command.gsub(SHELL_PIECE) do
-    operator = Regexp.last_match(1)
-    operator ? " #{operator.tr("\n", ";")} " : Regexp.last_match(0)
+    piece = Regexp.last_match
+    next " #{piece[:operator].tr("\n", ";")} " if piece[:operator]
+
+    piece[:continuation] || piece[:comment] ? " " : piece[0]
   end
 end
 
 # A bundle word in command position whose arguments name no Bundler command
 # other than install. Command position follows a separator, a shell keyword,
-# a VAR=value word, or a prefix such as env or time.
+# a VAR=value word, or a prefix such as env, sudo or timeout.
 def installs_gems?(words)
   position = :command
   words.each_with_index do |word, index|
@@ -169,15 +175,22 @@ end
 def next_position(position, word)
   return :command if SEPARATORS.include?(word)
   return :argument if position == :argument
-  return :prefix if COMMAND_PREFIXES.include?(word) || (position == :prefix && prefix_option?(word))
+  return :prefix if COMMAND_PREFIXES.include?(word) || position == :option_value
+  return prefix_word_position(word) if position == :prefix
   return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
 
   :argument
 end
 
-# `env -i bundle` and `time -p bundle` still run bundle; `command -v bundle` only looks it up.
-def prefix_option?(word)
-  word.start_with?("-") && !LOOKUP_FLAGS.include?(word)
+# After a prefix, an option may take a value (`sudo -u root`, `nice -n 10`), and a
+# duration or VAR=value word (`timeout 600`, `env FOO=1`) still comes before the
+# command. `command -v bundle` only looks bundle up.
+def prefix_word_position(word)
+  return :argument if LOOKUP_FLAGS.include?(word)
+  return :option_value if word.start_with?("-")
+  return :prefix if word.match?(DURATION) || word.match?(ENV_ASSIGNMENT)
+
+  :argument
 end
 
 # Rules 11 and 20 say never, so no consent marker unlocks these.

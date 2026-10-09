@@ -427,7 +427,8 @@ class ConsentGuardTest < Minitest::Test
 
   def test_gem_install_forms_are_refused_with_bi_advice
     [ "bundle", "bundle install", "bundle i", "bin/bundle install", "./bin/bundle i", "bundle install --jobs 4",
-      "bundle --jobs 4", "bundle --deployment", "bundle --no-color install", "bundle -V i" ].each do |command|
+      "bundle --jobs 4", "bundle --deployment", "bundle --no-color install", "bundle -V i", "bundle cache",
+      "bundle package", "bundle pack" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)
@@ -489,7 +490,10 @@ class ConsentGuardTest < Minitest::Test
       "if false; then :; else bundle install; fi", "{ bundle install; }", "sleep 1 & bundle install",
       "cd app;bundle install", "env bundle install", "env FOO=1 bundle install", "command bundle install",
       "time bundle install", "exec bundle install", "nohup bundle install", "! bundle install",
-      "echo $(bundle install)", "echo `bundle install`" ].each do |command|
+      "echo $(bundle install)", "echo `bundle install`", "cd app && \\\n  bundle install",
+      "RAILS_ENV=test \\\n  bundle install", "timeout 600 bundle install", "sudo bundle install",
+      "nice -n 10 bundle install", "env -u FOO bundle install", "sudo -u root bundle install",
+      "# don't forget the gems\nbundle install" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)
@@ -500,7 +504,9 @@ class ConsentGuardTest < Minitest::Test
   def test_bundle_install_in_messages_heredocs_and_lookups_runs
     [ %(git commit -m "first line\nbundle install is refused now"),
       %(git commit -m "$(cat <<'EOF'\nUse "bi" now.\nbundle install is refused.\nEOF\n)"),
-      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "echo done\nbundle exec rake" ].each do |command|
+      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "echo done\nbundle exec rake",
+      "# run bundle install later\nbundle exec rake", "echo issue#12 && bundle exec rake",
+      "timeout 600 bundle exec rake" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
