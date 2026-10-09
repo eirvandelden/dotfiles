@@ -67,7 +67,7 @@ pre-push:
         - "packages.conf"
       run: ruby -Itest test/skill_parity_test.rb
       fail_text: |
-        A Claude skill and its Codex link have drifted. See the failure above and fix it,
+        A skill source and its Claude link have drifted. See the failure above and fix it,
         or use --no-verify to skip.
     guard-parity:
       tags: skills

@@ -1,5 +1,5 @@
 ---
-# Pinned snapshots of third-party skills. One entry per snapshot folder under claude/.claude/skills/.
+# Pinned snapshots of third-party skills. One entry per snapshot folder under agents/.agents/skills/.
 # Each folder keeps the upstream licence file. The superpowers-ruby skills follow their own convention
 # (see VENDORED-LICENSES.md) and are not listed here.
 - skill: mobilebuildmcp

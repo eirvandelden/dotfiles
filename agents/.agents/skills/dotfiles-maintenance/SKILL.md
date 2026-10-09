@@ -45,6 +45,6 @@ Each top-level directory in the dotfiles repo is a Stow package. See `references
 
 ## Agent skills
 
-One source per shared skill: `claude/.claude/skills/<skill-name>/SKILL.md`, with an optional `agents/openai.yaml` next to it for Codex's invocation policy. Stowing `claude` installs it at `~/.claude/skills/`; stowing `agents` links the same folder in at `~/.agents/skills/<skill-name>`, the path Codex actually scans — `~/.codex/skills/` is not read by Codex.
+One source per skill: `agents/.agents/skills/<skill-name>/SKILL.md`, with an `agents/openai.yaml` next to it for Codex's invocation policy. Stowing `agents` installs it at `~/.agents/skills/<skill-name>`, the path Codex actually scans — `~/.codex/skills/` is not read by Codex. `claude/.claude/skills/<skill-name>` is a relative link to the source, so stowing `claude` installs it at `~/.claude/skills/`. Never add a skill source under `claude/.claude/skills/`; the parity test fails on it.
 
 Stow handles installation on the next install run. Codex-specific setup detail: `codex/.codex/HEADROOM.md`.

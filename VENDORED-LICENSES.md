@@ -2,7 +2,7 @@
 
 The skills listed in `SKILLS-INDEX.md` as vendored from `lucianghinda/superpowers-ruby` 7.5.0 are copies of that project, used under its MIT licence, reproduced below as the licence requires.
 
-The files under `claude/.claude/skills/rails-guides/references/` are the Ruby on Rails Guides, copied through that project. The Rails Guides are licensed under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/); copyright the Rails core team and contributors. They are reproduced unchanged except for line reflow.
+The files under `agents/.agents/skills/rails-guides/references/` are the Ruby on Rails Guides, copied through that project. The Rails Guides are licensed under [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/); copyright the Rails core team and contributors. They are reproduced unchanged except for line reflow.
 
 ## superpowers-ruby (MIT)
 
@@ -32,8 +32,8 @@ SOFTWARE.
 
 ## MobileBuildMCP (MIT)
 
-The `mobilebuildmcp` skill is a pinned snapshot of Sentry's MobileBuildMCP, used under its MIT licence. The licence text is in `claude/.claude/skills/mobilebuildmcp/LICENSE`. The pinned release, commit and copied paths are in `VENDORED-SKILLS.yml`.
+The `mobilebuildmcp` skill is a pinned snapshot of Sentry's MobileBuildMCP, used under its MIT licence. The licence text is in `agents/.agents/skills/mobilebuildmcp/LICENSE`. The pinned release, commit and copied paths are in `VENDORED-SKILLS.yml`.
 
 ## android/skills (Apache-2.0)
 
-The `android-intent-security` skill is a pinned snapshot from Google's `android/skills`, used under the Apache License 2.0. The licence text is in `claude/.claude/skills/android-intent-security/LICENSE.txt`. The pinned release, commit and copied paths are in `VENDORED-SKILLS.yml`. The upstream repository has no NOTICE file.
+The `android-intent-security` skill is a pinned snapshot from Google's `android/skills`, used under the Apache License 2.0. The licence text is in `agents/.agents/skills/android-intent-security/LICENSE.txt`. The pinned release, commit and copied paths are in `VENDORED-SKILLS.yml`. The upstream repository has no NOTICE file.

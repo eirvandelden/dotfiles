@@ -35,7 +35,7 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
     .claude/worktrees/
     .claude/scheduled_tasks.lock
     ```
-11. Review policy: copy `claude/.claude/skills/new-repo-setup/references/REVIEW.md` to the repo root as `REVIEW.md` and commit it. The `reviewer` agent and the `review` skill's pane backend read it before every review; a repo without one falls back to the same file's defaults undocumented in the repo itself.
+11. Review policy: copy `agents/.agents/skills/new-repo-setup/references/REVIEW.md` to the repo root as `REVIEW.md` and commit it. The `reviewer` agent and the `review` skill's pane backend read it before every review; a repo without one falls back to the same file's defaults undocumented in the repo itself.
 12. Types: inline RBS checked by Steep. Steep and RBS 4 need Ruby 3.3 or later. Steep comes from the global gem install in `packages.conf`, never the Gemfile. Add a `Steepfile` at the repo root with one target, `lib` only for a non-Rails project:
 
     ```ruby

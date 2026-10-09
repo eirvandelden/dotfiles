@@ -169,7 +169,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Resolve each conflicted file on its own merits; never blindly discard one side.
     - After a rebase, push with `--force-with-lease` only. NEVER use plain `--force`.
     - The consent guard refuses plain `--force` in both Claude and Codex. Codex's `rules/default.rules` also forbids it when the flag follows `push` directly; the hook catches every other position.
-    - Full workflow: `sync` skill (`claude/.claude/skills/sync/SKILL.md`).
+    - Full workflow: `sync` skill (`agents/.agents/skills/sync/SKILL.md`).
 21. Commit scope hygiene:
     - Before committing, re-read the full diff. Every hunk must be required by the task. Revert unrelated changes: whitespace, quote style, comments, renamed test strings, lint configs, `.github/` files.
     - NEVER commit personal or machine-local setup files (`.pumadev`, local `database.yml`, local `.rubocop.yml` tweaks, editor configs). If such a file is already tracked and shows up as modified, leave it out of the commit and mention it.

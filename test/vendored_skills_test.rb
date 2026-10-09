@@ -52,7 +52,7 @@ class VendoredSkillsTest < Minitest::Test
   def test_skills_index_lists_every_new_mobile_skill
     index = File.read(File.join(REPO_ROOT, "SKILLS-INDEX.md"))
     NEW_MOBILE_SKILLS.each do |name|
-      assert(index.include?("claude/.claude/skills/#{name}/SKILL.md"), "SKILLS-INDEX.md lacks #{name}")
+      assert(index.include?("agents/.agents/skills/#{name}/SKILL.md"), "SKILLS-INDEX.md lacks #{name}")
     end
     assert(index.include?("VENDORED-SKILLS.yml"), "SKILLS-INDEX.md does not name VENDORED-SKILLS.yml")
   end
