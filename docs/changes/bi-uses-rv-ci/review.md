@@ -62,7 +62,7 @@ Whole branch against `origin/main`, with focus on `1f0d251c` (guard) and `0542e0
 
 Both round 2 Important findings hold when probed. The guard refuses each round 2 continuation, prefix, comment and `bundle cache` form. `bi` prints "nothing to install" and runs nothing in a Gemfile-less `git worktree add` worktree under a checkout with a Gemfile: from the worktree root, from a subdirectory, through a symlinked path, and with a hook-style `GIT_DIR` set.
 
-- [ ] Nit: A prefix flag that follows another prefix flag still hides an install. After `:option_value`, any word becomes `:prefix`, so a second flag's value is read as the command, and `bundle` becomes an argument. Probed, each exits 0: `sudo -E -u root bundle install`, `env -i -u FOO bundle install`, `timeout --preserve-status -s KILL 60 bundle install`. One flag, or a flag after a value (`sudo -u root -H bundle install`), is refused. A flag in `:option_value` position needs the same handling as in `:prefix` position, plus a refusal test. — `claude/.claude/hooks/consent-guard.rb:109` →
+- [ ] Nit: A prefix flag that follows another prefix flag still hides an install. After `:option_value`, any word becomes `:prefix`, so a second flag's value is read as the command, and `bundle` becomes an argument. Probed, each exits 0: `sudo -E -u root bundle install`, `env -i -u FOO bundle install`, `timeout --preserve-status -s KILL 60 bundle install`. One flag, or a flag after a value (`sudo -u root -H bundle install`), is refused. A flag in `:option_value` position needs the same handling as in `:prefix` position, plus a refusal test. — `claude/.claude/hooks/consent-guard.rb:109` → fixed (consent-guard: read a flag after a prefix flag as a flag)
 
 ### Compliance, round 3
 
