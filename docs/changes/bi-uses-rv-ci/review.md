@@ -77,3 +77,22 @@ Acceptance criteria: as in round 2, with these changes.
 - Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
 
 Security: nothing new. The guard changes only widen what it refuses, and `bi` now runs in fewer directories.
+
+## Round 4 — 2026-10-09T21:00Z — f54421c3
+
+Whole branch against `origin/main`, with focus on `98e93031` (guard). No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy applies. Every `test/*_test.rb` passes except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, the same global `no-push-to-main` refusal as in rounds 2 and 3. `shellcheck` and `rubocop` are clean on the changed files. Round 1's Nit about a modified `Gemfile.lock` after a pull is still open.
+
+Round 3's Nit holds when probed. The guard refuses `sudo -E -u root bundle install`, `env -i -u FOO bundle install` and `timeout --preserve-status -s KILL 60 bundle install`. It also refuses `nice -n -5`, `timeout -k 5 60`, `env -u FOO -u BAR`, `sudo --user root`, `sudo -u root --` and `env -C app` before `bundle install`. `sudo -u root bundle exec rake`, `env -i bundle exec rake`, `command -v bundle` and `timeout 10m bundle exec rspec` still run.
+
+- [ ] Nit: `rv run bundle install` runs `bundle install`, and the guard lets it run. `rv run` is rv 0.7.1's "Run a command or script with Ruby" (probed: `rv run bundle --version` prints Bundler's version). `rv` is not in `COMMAND_PREFIXES`, so `bundle` is an argument. In an rv-only setup this is the form an agent writes when Ruby is not on PATH. `arch -arm64 bundle install` and `caffeinate -i bundle install` pass the same way. The plan accepts only `bash -c`, `eval` and `xargs` as escapes. — `claude/.claude/hooks/consent-guard.rb:49` →
+
+### Compliance, round 4
+
+Since round 3, `next_position` reads a flag in option-value position as a new flag, not as the value. `test_install_in_any_command_position_is_refused` gained the three round 3 forms. No test was weakened, skipped or deleted. Every test the Proof list names exists.
+
+Acceptance criteria: as in round 3, with these changes.
+
+- Install forms refused with a message naming `bi` → the earlier tests plus the chained prefix flag cases. Round 3's gap is closed. Remaining gap: `rv run` and other wrappers outside the prefix list, see the Nit above.
+- Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
+
+Security: nothing new. The change only widens what the guard refuses.
