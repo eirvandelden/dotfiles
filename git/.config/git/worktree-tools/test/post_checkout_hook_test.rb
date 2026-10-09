@@ -143,6 +143,8 @@ module WorktreeTools
     def hook_env
       {
         "HOME" => @tmpdir,
+        "XDG_CONFIG_HOME" => File.join(@tmpdir, ".config"),
+        "LEFTHOOK_BIN" => nil,
         "PATH" => "#{@bin_dir}:/usr/bin:/bin"
       }
     end
