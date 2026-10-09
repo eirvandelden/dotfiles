@@ -66,7 +66,7 @@ An agent that reads `references/ios.md` or `references/android.md` knows the con
 
 - Duplicating shared rules in two files risks drift. Chosen side: duplicate, in each platform's words, with a parity test by key phrase, so the skill file stays short and each reference reads on its own.
 - The colleague's "regression test first for any behaviour change" conflicts with the mobile testing exception. Chosen side: the mobile exception wins. Regressions, meaningful logic and security-sensitive behaviour keep the test-first rule through the validation matrix.
-- Not every platform trap is documented on `native.hotwired.dev`. Chosen side: a Hotwire Native claim must be backed by `native.hotwired.dev`; a platform claim must be backed by official Apple, Android or Kotlin documentation. A claim with no official backing is dropped, not paraphrased.
+- Not every platform trap is documented on `native.hotwired.dev`. Chosen side: a Hotwire Native claim must be backed by `native.hotwired.dev`; a platform claim must be backed by official Apple, Android or Kotlin documentation. A claim with no official backing is dropped, not paraphrased. Decided 2026-10-09: the official `hotwired` library source on GitHub also counts as backing, so the cleanup rule names the bridge lifecycle hooks and links that source next to the `native.hotwired.dev` page.
 
 ## Open questions
 
