@@ -75,8 +75,10 @@ class BranchGuardTest < Minitest::Test
     guard_copy = File.join(@tmpdir, "guard.yml")
     File.write(guard_copy, original)
     File.write(File.join(@repo_dir, "lefthook-local.yml"), "extends:\n  - #{guard_copy}\n")
-    File.write(guard_copy, original.gsub("is not allowed", "is changed"))
     stage_file("change.txt", "change\n")
+    out, err, _status = git("commit", "-m", "change")
+    assert_match(/Direct commit to main is not allowed/, out + err)
+    File.write(guard_copy, original.gsub("is not allowed", "is changed"))
     out, err, _status = git("commit", "-m", "change")
     assert_match(/Direct commit to main is changed/, out + err)
   end
