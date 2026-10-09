@@ -7,6 +7,18 @@ require "yaml"
 class HotwireNativeSkillTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   SKILL_DIR = File.join(REPO_ROOT, "claude/.claude/skills/hotwire-native")
+  REFERENCES = %w[ios android].freeze
+  SHARED_RULES = {
+    path_configuration: /later matching rule overrides/i,
+    bridge_component: /read every side before changing one/i,
+    progressive_enhancement: /hide web UI only when the native side supports/i,
+    cleanup: /repeat visit shows no stale/i,
+    sessions: /session expiry/i,
+    logging: /never log/i,
+    untrusted_destinations: /untrusted destinations/i,
+    report_split: /three separate/i,
+    skill_prerequisites: /prerequisites/i
+  }.freeze
 
   def test_skill_routes_swift_files_to_the_ios_reference_and_kotlin_files_to_the_android_reference
     skill = read("SKILL.md")
@@ -86,7 +98,134 @@ class HotwireNativeSkillTest < Minitest::Test
     assert(yaml.dig("interface", "display_name"))
   end
 
+  def test_both_references_state_path_configuration_as_an_ordered_contract
+    each_reference do |file|
+      assert_rule(file, /later matching rule overrides/i, /already shipped app versions/i,
+        links: %w[native.hotwired.dev/reference/path-configuration])
+    end
+  end
+
+  def test_both_references_state_the_bridge_component_as_one_contract
+    each_reference do |file|
+      assert_rule(file, /one contract/i, /HTML data attributes/i, /Stimulus component/i, /native registration/i,
+        /message names/i, /payloads/i, /replies/i, /read every side before changing one/i,
+        links: [ "native.hotwired.dev/#{file}/bridge-components" ])
+    end
+    assert_rule("ios", /one contract/i, /Hotwire\.registerBridgeComponents/)
+    assert_rule("android", /one contract/i, /BridgeComponentFactory/)
+  end
+
+  def test_both_references_state_progressive_enhancement
+    each_reference do |file|
+      assert_rule(file, /web control stays usable/i, /plain browser/i, /older app versions/i,
+        /hide web UI only when the native side supports/i, /data-bridge-components/,
+        links: [ "native.hotwired.dev/#{file}/bridge-components" ])
+    end
+  end
+
+  def test_both_references_require_cleanup_on_disconnect
+    each_reference do |file|
+      assert_rule(file, /disconnect/i, /remove(s)? (its )?native controls and callbacks/i,
+        /repeat visit shows no stale/i, /fires no duplicate action/i,
+        links: [ "native.hotwired.dev/#{file}/bridge-components", "github.com/hotwired/hotwire-native-#{file}" ])
+    end
+  end
+
+  def test_both_references_preserve_sessions_and_never_log_secrets
+    each_reference do |file|
+      assert_rule(file, /cookies/i, /authentication/i, /session expiry/i, /sign-out/i)
+      assert_rule(file, /never log/i, /tokens/i, /sensitive bridge payloads/i)
+    end
+    assert_rule("ios", /session expiry/i, links: %w[native.hotwired.dev/ios/reference])
+  end
+
+  def test_both_references_validate_untrusted_destinations
+    each_reference do |file|
+      assert_rule(file, /untrusted destinations/i, /authenticated web content/i, /arbitrary origin/i,
+        links: %w[native.hotwired.dev/reference/navigation])
+    end
+  end
+
+  def test_android_reference_validates_intents_and_exported_components_with_the_vendored_skill
+    assert_rule("android", /incoming Intents/, /exported components/i,
+      links: %w[claude/.claude/skills/android-intent-security/SKILL.md
+                developer.android.com/guide/topics/manifest/activity-element#exported])
+  end
+
+  def test_android_reference_names_its_lifecycle_traps
+    assert_rule("android", /Activity recreation/, links: %w[developer.android.com/guide/components/activities/state-changes])
+    assert_rule("android", /process death/i, links: %w[developer.android.com/topic/libraries/architecture/saving-states])
+    assert_rule("android", /predictive back/i,
+      links: %w[developer.android.com/guide/navigation/custom-back/predictive-back-gesture])
+    assert_rule("android", /never swallow `CancellationException`/,
+      links: %w[kotlinlang.org/docs/cancellation-and-timeouts.html])
+  end
+
+  def test_ios_reference_names_its_lifecycle_traps
+    assert_rule("ios", /WKWebView process termination/i, links: %w[webviewwebcontentprocessdidterminate])
+    assert_rule("ios", /no blanket `@MainActor`/, links: %w[developer.apple.com/documentation/swift/mainactor])
+  end
+
+  def test_both_references_report_checks_observations_and_untested_behaviour_separately
+    each_reference do |file|
+      assert_rule(file, /three separate/i, /automated checks/i, /untested device-only behaviour/i)
+    end
+    assert_rule("ios", /three separate/i, /simulator/i)
+    assert_rule("android", /three separate/i, /emulator/i)
+  end
+
+  def test_both_references_check_skill_prerequisites_before_applying_a_skill
+    each_reference { |file| assert_rule(file, /prerequisites/i, /against the project/i) }
+    assert_rule("android", /prerequisites/i, /Compose skill does not apply to a Views shell/i)
+    assert_rule("ios", /prerequisites/i, /SwiftUI skill does not apply to a UIKit shell/i)
+  end
+
+  def test_shared_rules_appear_in_both_references
+    assert_empty(shared_rule_gaps(read("references/ios.md"), read("references/android.md")))
+  end
+
+  def test_parity_check_reports_a_rule_present_in_one_reference_only
+    gaps = shared_rule_gaps("The later matching rule overrides the earlier one.", "Nothing shared here.")
+    assert_equal([ :path_configuration ], gaps)
+  end
+
+  def test_references_leave_the_testing_rule_to_the_mobile_exception
+    each_reference do |file|
+      refute_match(/regression test (comes )?first/i, reference(file))
+      refute_match(/(every|any) behaviou?r change/i, reference(file))
+    end
+  end
+
+  def test_references_carry_no_persona_or_copilot_framing
+    each_reference do |file|
+      text = reference(file)
+      refute_includes(text, "~/.copilot")
+      refute_match(/personal preferences/i, text)
+      refute_match(/\A---/, text)
+      refute_match(/^\s*(You are an? |Act as |Role:|Persona:)/i, text)
+    end
+  end
+
   private
+
+  def each_reference(&block)
+    REFERENCES.each(&block)
+  end
+
+  def reference(file)
+    read("references/#{file}.md")
+  end
+
+  def assert_rule(file, *patterns, links: [])
+    line = reference(file).lines.find { |candidate| candidate.match?(patterns.first) }
+    assert(line, "#{file}.md has no line matching #{patterns.first.inspect}")
+    patterns.each { |pattern| assert_match(pattern, line, "#{file}.md rule line lacks #{pattern.inspect}") }
+    links.each { |link| assert_includes(line, link, "#{file}.md rule line lacks the link #{link}") }
+  end
+
+  def shared_rule_gaps(ios_text, android_text)
+    SHARED_RULES.select { |_, phrase| ios_text.match?(phrase) != android_text.match?(phrase) }.keys
+  end
 
   def read(relative)
     File.read(File.join(SKILL_DIR, relative))
