@@ -11,6 +11,8 @@ From `intent.md` (2026-10-06). Status: accepted.
 - Acceptance criterion 5 differs for Codex: with `HA_MCP_GATE_TOKEN` unset, Codex does not send a request. It reports `Environment variable HA_MCP_GATE_TOKEN for MCP server 'homeassistant' is not set`, and the session continues without the Home Assistant tools. Claude sends the literal `${HA_MCP_GATE_TOKEN}` and gets the 401. Both mean no access without `unlock`.
 - Tests read `config.toml` and `HEADROOM.md` as text, the same way `test/guard_parity_test.rb` reads `config.toml`. Ruby has no TOML parser in its standard library, and a TOML gem is a new dependency.
 
+- The approval check goes to Codex's automatic reviewer, not to Etienne. `config.toml` sets `approvals_reviewer = "auto_review"` (from `33c88415`), and the installed Codex 0.162.0 routes MCP tool-call approvals to it. Etienne keeps that setting (2026-10-10, review round 1). The `writes` semantics were checked against Codex 0.160.1.
+
 ## Integration points
 
 - 1Password: item `Familie/HomeAssistantMcp`, field `HA_MCP_GATE_TOKEN`, personal account. Read only.
@@ -82,7 +84,7 @@ From `intent.md` (2026-10-06). Status: accepted.
 
 - After `unlock`, the shell has `HA_MCP_GATE_TOKEN` set → `test/secrets_loader_test.rb` `test_the_personal_mapping_unlocks_the_home_assistant_gate_token`; live: `unlock && [[ -n $HA_MCP_GATE_TOKEN ]] && echo set`.
 - A new Codex session after `unlock` lists the tools and reads an entity's state without approval → `test/home_assistant_mcp_test.rb` `test_codex_reaches_home_assistant_through_the_gate_with_the_unlocked_token`; live, after merge and pull: `unlock`, start `codex`, `/mcp` lists `homeassistant` tools, ask for the state of an entity (for example `sun.sun`), and `ha_get_state` runs with no prompt.
-- Turning on a light, and creating, editing or deleting an automation, scene or script, asks first → `test/home_assistant_mcp_test.rb` `test_codex_asks_before_every_home_assistant_tool_that_is_not_read_only` and `test_no_home_assistant_tool_skips_the_approval_prompt`; live: ask Codex to turn on a light, then to create an automation; each shows an approval prompt; decline both.
+- Turning on a light, and creating, editing or deleting an automation, scene or script, asks first → `test/home_assistant_mcp_test.rb` `test_codex_asks_before_every_home_assistant_tool_that_is_not_read_only` and `test_no_home_assistant_tool_skips_the_approval_prompt`; live: ask Codex to turn on a light, then to create an automation; each goes to the automatic reviewer before it runs, and no write runs unchecked.
 - After the registration command, a new Claude session after `unlock` shows the server connected and reads an entity's state → `test/home_assistant_mcp_test.rb` `test_headroom_registers_home_assistant_for_claude_with_the_token_left_unexpanded`; live: Etienne runs the command with no Claude session open, `grep -c 'Bearer \${HA_MCP_GATE_TOKEN}' ~/.claude.json` prints `1`, then `unlock`, start `claude`, `/mcp` shows `homeassistant` connected, ask for the state of an entity.
 - Without `unlock`, the gate answers 401, and `HEADROOM.md` says to run `unlock` first → `test/home_assistant_mcp_test.rb` `test_headroom_says_to_unlock_before_starting_claude_for_home_assistant`; live: the `curl` in step 9 prints `401`; `env -u HA_MCP_GATE_TOKEN codex` reports the variable is not set for `homeassistant`.
 

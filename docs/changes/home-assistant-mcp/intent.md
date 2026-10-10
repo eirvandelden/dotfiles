@@ -8,7 +8,7 @@ Claude Code and Codex sessions cannot read or control Home Assistant. The Home A
 
 ## Proposed outcome
 
-After `unlock`, every new Codex session has the Home Assistant tools. Every new Claude session has them too, once the documented one-time registration command has run on that machine. Codex runs reads freely and asks before anything that changes Home Assistant.
+After `unlock`, every new Codex session has the Home Assistant tools. Every new Claude session has them too, once the documented one-time registration command has run on that machine. Codex runs reads freely and sends anything that changes Home Assistant to an approval check first. Under the existing `approvals_reviewer = "auto_review"`, Codex's automatic reviewer makes that check, not Etienne.
 
 ## Affected users and systems
 
@@ -45,7 +45,7 @@ After `unlock`, every new Codex session has the Home Assistant tools. Every new 
 
 - After `unlock`, the shell has `HA_MCP_GATE_TOKEN` set to the gate token.
 - A new Codex session started after `unlock` lists the Home Assistant tools and reads the state of an entity without asking for approval.
-- In that Codex session, turning on a light asks for approval before it runs; so does creating, editing or deleting an automation, scene or script.
+- In that Codex session, turning on a light goes to the approval check before it runs; so does creating, editing or deleting an automation, scene or script. With `approvals_reviewer = "auto_review"`, the automatic reviewer decides, and Etienne keeps that setting (decided 2026-10-10).
 - After the documented registration command has run once, a new Claude session started after `unlock` shows the Home Assistant server as connected and reads the state of an entity.
 - A session started without `unlock` gets a 401 from the gate; `HEADROOM.md` says to run `unlock` first.
 
