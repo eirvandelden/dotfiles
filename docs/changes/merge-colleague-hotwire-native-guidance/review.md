@@ -90,3 +90,35 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - Branch is current with `origin/main` (0 commits behind).
 - Upstream checks (2026-10-10, `main`): `BridgeDelegate` per destination with `activeComponents` gated on an active bridge (iOS) or `destinationIsActive` (Android); default lifecycle hooks are empty; the web `disconnect()` only clears web-side callbacks and pending messages. These back the round 4 fixes as written.
 - Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+## Round 6 — 2026-10-10T13:42Z — 95add8b9
+
+- [ ] Nit: The iOS sessions line says `WKProcessPool` "is deprecated since iOS 15 and has no effect, so the upstream example's pool changes nothing". Apple's page backs "no effect" from iOS 15 on only. `hotwire-native-ios` `Package.swift` supports `.iOS(.v14)`, and the library still sets its own `sharedProcessPool` in `HotwireConfig.makeWebViewConfiguration`. For an app that still ships to iOS 14, "changes nothing" is too strong. Qualify the clause with "on iOS 15 and later". — `claude/.claude/skills/hotwire-native/references/ios.md:19` →
+- [ ] Nit: The same line says "share cookies with web views outside Hotwire Native by giving them the same `WKWebsiteDataStore` in `makeCustomWebView`". `makeCustomWebView` builds only the Hotwire Native web view, so "them" reads as the outside web views, which that block never sees. Say that the Hotwire Native web view (set in `makeCustomWebView`) and the outside web views use the same data store. — `claude/.claude/skills/hotwire-native/references/ios.md:19` →
+- [ ] Nit: `plan.md` was revised in `## Proof` only. Its Design decisions still describe the old cleanup default (name `onViewWillDisappear` / `onViewDidDisappear` / `onStop` as the cleanup place, line 17) and cookie sharing "through the web view configuration" (line 18). `## Upstream pages per rule` still pairs cleanup with `BridgeComponent.swift` (line 43), and `## Risks` still calls the hook names an open decision with a generic fallback (line 64). The references now link `BridgeDelegate`, `Session.swift`, `turbo.js` and the Apple data store page instead. Bring these sections in line with the 2026-10-10 decision, so the plan reads as one design. — `docs/changes/merge-colleague-hotwire-native-guidance/plan.md:17` →
+
+### Compliance
+
+- Rounds 1 to 5: every finding is closed with a commit subject or a reason.
+- Path configuration ordered contract, linked → `test_both_references_state_path_configuration_as_an_ordered_contract`.
+- Bridge component one contract, read every side, linked → `test_both_references_state_the_bridge_component_as_one_contract`.
+- Progressive enhancement → `test_both_references_state_progressive_enhancement`.
+- Cleanup on repeat visits (revised criterion) → `test_both_references_keep_repeat_visits_free_of_stale_and_duplicate_controls` and `test_both_references_describe_lifecycle_hooks_as_overrides_that_do_nothing_by_default`. Both now match `plan.md`'s Proof.
+- Cookies, sessions, no logging → `test_both_references_preserve_sessions_and_never_log_secrets`.
+- Untrusted destinations; Android Intents through the vendored skill → `test_both_references_validate_untrusted_destinations`, `test_android_reference_validates_intents_and_exported_components_with_the_vendored_skill`.
+- Android lifecycle traps → `test_android_reference_names_its_lifecycle_traps`. iOS lifecycle traps → `test_ios_reference_names_its_lifecycle_traps`.
+- Three-way report split → `test_both_references_report_checks_observations_and_untested_behaviour_separately`. Skill prerequisites → `test_both_references_check_skill_prerequisites_before_applying_a_skill`.
+- Links on every restated rule → same-line link assertions in the tests above.
+- Parity → `test_shared_rules_appear_in_both_references`, `test_parity_check_reports_a_rule_present_in_one_reference_only`.
+- No blanket regression rule → `test_references_leave_the_testing_rule_to_the_mobile_exception`. No persona or Copilot framing → `test_references_carry_no_persona_or_copilot_framing`.
+- Every test named in the plan's Proof exists. No test on `origin/main` was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb`: unchanged against `origin/main`.
+- Privacy grep on `git diff origin/main...HEAD -- claude test`: prints nothing.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 27 runs, 479 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file with a 90 s limit: all green except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (exit 1). The branch touches neither file. Same pattern as rounds 1, 3 and 5.
+- Branch is current with `origin/main` (0 commits behind).
+- Upstream checks (2026-10-10, `main`): Apple marks `WKProcessPool` deprecated at iOS 15 with "Creating and using multiple instances of WKProcessPool no longer has any effect"; `native.hotwired.dev/ios/reference` shows the custom process pool example in `makeCustomWebView`; Android `turbo.js` dispatches `native:restore`, and the web `BridgeComponent.restore()` calls `this.connect()`. These back the round 5 fixes, with the iOS 14 qualification above.
+- Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
