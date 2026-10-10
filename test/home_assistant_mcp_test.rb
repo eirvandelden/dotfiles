@@ -14,19 +14,19 @@ class HomeAssistantMcpTest < Minitest::Test
   def test_codex_reaches_home_assistant_through_the_gate_with_the_unlocked_token
     table = codex_table("mcp_servers.homeassistant")
 
-    assert_includes table, %(url = "#{URL}")
-    assert_includes table, %(bearer_token_env_var = "HA_MCP_GATE_TOKEN")
+    assert_match setting("url", URL), table
+    assert_match setting("bearer_token_env_var", "HA_MCP_GATE_TOKEN"), table
   end
 
   def test_codex_asks_before_every_home_assistant_tool_that_is_not_read_only
-    assert_includes codex_table("mcp_servers.homeassistant"), %(default_tools_approval_mode = "writes")
+    assert_match setting("default_tools_approval_mode", "writes"), codex_table("mcp_servers.homeassistant")
   end
 
   def test_no_home_assistant_tool_skips_the_approval_prompt
     tool_tables = codex_tables.select { |name, _| name.start_with?("mcp_servers.homeassistant.tools.") }
 
     tool_tables.each do |name, body|
-      refute_includes body, %(approval_mode = "approve"), "#{name} never asks before it runs"
+      refute_match setting("approval_mode", "approve"), body, "#{name} never asks before it runs"
     end
   end
 
@@ -45,6 +45,11 @@ class HomeAssistantMcpTest < Minitest::Test
   end
 
   private
+
+  # An active `key = "value"` line, at any spacing; a commented-out line does not match.
+  def setting(key, value)
+    /^\s*#{Regexp.escape(key)}\s*=\s*"#{Regexp.escape(value)}"/
+  end
 
   def codex_table(name)
     codex_tables.fetch(name) { flunk "config.toml has no [#{name}] table" }
