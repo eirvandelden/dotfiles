@@ -151,7 +151,7 @@ class HotwireNativeSkillTest < Minitest::Test
       assert_rule(file, SHARED_RULES[:sessions], /cookies/i, /authentication/i, /sign-out/i)
       assert_rule(file, SHARED_RULES[:logging], /tokens/i, /sensitive bridge payloads/i)
     end
-    assert_rule("ios", SHARED_RULES[:sessions], /app's own error handler/i, /login screen/i, /401/,
+    assert_rule("ios", SHARED_RULES[:sessions], /app's own error handler/i, /login screen/i, /401/, /when (the|a) 401 means the session has expired/i,
       /same `WKWebsiteDataStore`/, /`makeCustomWebView`/, /outside Hotwire Native/,
       /`WKProcessPool` is deprecated/, /on iOS 15 and later/,
       links: %w[native.hotwired.dev/ios/reference developer.apple.com/documentation/webkit/wkwebsitedatastore
