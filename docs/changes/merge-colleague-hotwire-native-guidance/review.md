@@ -41,3 +41,24 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 ## Round 2 — 2026-10-09T22:15Z — bbba3ec2 (codex)
 
 - [x] Important: Distinguish Android `onStop` from component removal. When a destination becomes inactive, `onStop` runs even if its fragment remains and may later resume. `BridgeComponent` only forwards this lifecycle event; it does not remove controls or callbacks automatically. The wording can lead an agent to tear down controls without restoring them on `onStart`, or to assume `onStop` handles web-controller disconnects. Clarify that `onStop` means inactive, and pair cleanup with restoration or actual disconnect handling. — `claude/.claude/skills/hotwire-native/references/android.md:17` → fixed (docs: tie Android bridge cleanup to onStop and onStart)
+
+## Round 3 — 2026-10-10T06:03Z — b91c23b8
+
+- [ ] Important: The iOS cleanup rule tells the agent to remove controls in `onViewWillDisappear` / `onViewDidDisappear`, but upstream source shows those hooks often never reach the component. `BridgeDelegate` forwards lifecycle events only to `activeComponents`, which is empty once `bridge` is nil (`Source/Bridge/BridgeDelegate.swift`, `destinationIsActive`). On a push, `NavigationHierarchyController.navigate` calls `session.visit` before `pushViewController`; `Visit.start` → `Session.visitWillStart` → `activateVisitable` deactivates the old visitable first, so its `onViewWillDisappear` and `onViewDidDisappear` reach no component. On a pop, `VisitableViewController.viewDidDisappear` runs `Session.visitableViewDidDisappear` → `deactivateVisitable` inside `super`, before `HotwireWebViewController` calls `bridgeDelegate.onViewDidDisappear()`, so that hook reaches no component either. Android differs: `BridgeDelegate.onStop` forwards to components before it sets `destinationIsActive = false`, so the Android line holds. An agent that follows the iOS line puts cleanup where it does not run on the main forward path. Traced in source at `hotwire-native-ios` `main` (2026-10-10), not on a simulator. — `claude/.claude/skills/hotwire-native/references/ios.md:17` →
+- [ ] Nit: Both cleanup lines say to restore controls in `onStart` / `onViewWillAppear`. On return, Turbo renders the restored page and the Stimulus controller connects again, which sends `connect` and reaches `onReceive` a second time. If both paths add the control or register the callback, the result is the duplicate action the rule wants to prevent. The line can say that the restore must be idempotent with what `onReceive` adds. — `claude/.claude/skills/hotwire-native/references/android.md:17` →
+- [ ] Nit: `test_both_references_require_cleanup_on_disconnect` asserts `/disconnect/i`, which now matches only the negation "not that the web controller disconnected". The test name and that assertion describe cleanup on disconnect, which the rule no longer says. A rename (for example `..._require_cleanup_when_the_destination_goes_inactive`) and an assertion on the inactive wording would match the rule. — `test/hotwire_native_skill_test.rb:126` →
+
+### Compliance
+
+- Round 1 and round 2 findings are all closed with a commit subject or a reason.
+- Cleanup criterion → `test_both_references_require_cleanup_on_disconnect` passes; see the Important finding on the iOS content and the Nit on the test.
+- Every other acceptance criterion maps to the same test as in round 1. Every test named in the plan's Proof exists. No existing test was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb` unchanged against `origin/main`.
+- Privacy grep on `git diff origin/main...HEAD -- claude test` prints nothing.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 26 runs, 430 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file with a 90 s limit: all green except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (does not finish). The branch does not touch either file. Same pattern as round 1: environmental, not diagnosed here.
+- Branch is current with `origin/main` (0 commits behind).
+- Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
