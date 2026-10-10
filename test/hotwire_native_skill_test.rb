@@ -126,10 +126,13 @@ class HotwireNativeSkillTest < Minitest::Test
 
   def test_both_references_keep_repeat_visits_free_of_stale_and_duplicate_controls
     each_reference do |file|
-      assert_rule(file, SHARED_RULES[:cleanup], /own `BridgeDelegate`/, /`connect` message again/i,
-        /`onReceive` replaces/i, /fires no duplicate action/i, /sends nothing to native/i, /only through a message/i,
+      assert_rule(file, SHARED_RULES[:cleanup], /own `BridgeDelegate`/, /from its own `connect\(\)`/,
+        /`connect` again/i, /`onReceive` must replace/i, /fires no duplicate action/i, /sends nothing to native/i,
+        /only through a message/i,
         links: [ "native.hotwired.dev/#{file}/bridge-components", "github.com/hotwired/hotwire-native-#{file}" ])
     end
+    assert_rule("android", SHARED_RULES[:cleanup], /`native:restore`/, /re-runs the component's `connect\(\)`/,
+      links: %w[core/src/main/assets/js/turbo.js])
   end
 
   def test_both_references_describe_lifecycle_hooks_as_overrides_that_do_nothing_by_default
@@ -148,8 +151,9 @@ class HotwireNativeSkillTest < Minitest::Test
       assert_rule(file, SHARED_RULES[:logging], /tokens/i, /sensitive bridge payloads/i)
     end
     assert_rule("ios", SHARED_RULES[:sessions], /app's own error handler/i, /login screen/i, /401/,
-      /custom `WKProcessPool`/, /`makeCustomWebView`/, /outside Hotwire Native/,
-      links: %w[native.hotwired.dev/ios/reference])
+      /same `WKWebsiteDataStore`/, /`makeCustomWebView`/, /outside Hotwire Native/, /`WKProcessPool` is deprecated/,
+      links: %w[native.hotwired.dev/ios/reference developer.apple.com/documentation/webkit/wkwebsitedatastore
+                developer.apple.com/documentation/webkit/wkprocesspool])
   end
 
   def test_both_references_validate_untrusted_destinations
