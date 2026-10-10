@@ -62,3 +62,7 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - Full `test/` suite, per file with a 90 s limit: all green except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (does not finish). The branch does not touch either file. Same pattern as round 1: environmental, not diagnosed here.
 - Branch is current with `origin/main` (0 commits behind).
 - Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+## Round 4 — 2026-10-10T04:30Z — b91c23b8 (codex)
+
+- [ ] Important: Describe lifecycle hooks as callbacks, not automatic cleanup. The Android `BridgeComponent` and iOS `BridgeComponent` only forward lifecycle events; their default hooks do nothing. The wording implies the library removes controls and callbacks automatically. Tell agents to implement cleanup and restoration in their component overrides. The same claim appears in both platform references. — `claude/.claude/skills/hotwire-native/references/android.md:17` →
