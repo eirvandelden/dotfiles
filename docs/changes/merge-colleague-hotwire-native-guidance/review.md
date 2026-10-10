@@ -122,3 +122,24 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - Branch is current with `origin/main` (0 commits behind).
 - Upstream checks (2026-10-10, `main`): Apple marks `WKProcessPool` deprecated at iOS 15 with "Creating and using multiple instances of WKProcessPool no longer has any effect"; `native.hotwired.dev/ios/reference` shows the custom process pool example in `makeCustomWebView`; Android `turbo.js` dispatches `native:restore`, and the web `BridgeComponent.restore()` calls `this.connect()`. These back the round 5 fixes, with the iOS 14 qualification above.
 - Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+## Round 7 — 2026-10-10T18:48Z — 303329de
+
+- [ ] Nit: The branch is 11 commits behind `origin/main` (PR #192, home-assistant-mcp). Rebase before the push (playbook rule 20). `git merge-tree` shows no conflict. — `(branch)` →
+- [ ] Nit: The round 6 fix made the iOS sessions assertion 139 characters wide; lines 173 and 174 are 125 and 121. The playbook targets lines under about 120 characters. `rubocop` passes, so this is style only. Wrap the pattern list over two lines, as the `links:` argument below it already does. — `test/hotwire_native_skill_test.rb:154` →
+
+### Compliance
+
+- Rounds 1 to 6: every finding is closed with a commit subject or a reason.
+- Every acceptance criterion maps to the same test as in round 6. The round 6 fixes are guarded: `test_both_references_preserve_sessions_and_never_log_secrets` now also asserts `/on iOS 15 and later/`.
+- `plan.md` Design decisions, Upstream pages per rule and Risks now match the revised cleanup and cookie rules and the references' links.
+- Every test named in the plan's Proof exists. No test on `origin/main` was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb`: unchanged against `origin/main`.
+- Privacy grep on `git diff origin/main...HEAD -- claude test`: prints nothing.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 27 runs, 481 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file: green up to `test/stow_package_roots_test.rb`, except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (exit 1), as in rounds 1, 3, 5 and 6. `test/rubocop_fallback_test.rb` and `test/test_guard_test.rb` hung in this environment and were stopped; the files after `test_guard_test.rb` did not run. The branch touches none of these files.
+- Upstream check (2026-10-10, `main`): `hotwire-native-bridge` `BridgeComponent.restore()` calls `this.connect()` on `native:restore`; `hotwire-native-ios` dispatches no `native:restore`, so the Android-only clause is correct.
+- Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
