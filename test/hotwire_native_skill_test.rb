@@ -140,7 +140,8 @@ class HotwireNativeSkillTest < Minitest::Test
       assert_rule(file, SHARED_RULES[:lifecycle_hooks], /do nothing by default/i, /only while/i,
         links: [ "github.com/hotwired/hotwire-native-#{file}" ])
     end
-    assert_rule("android", SHARED_RULES[:lifecycle_hooks], /`onStop` means inactive/, /`onStart`/, /idempotent/i)
+    assert_rule("android", SHARED_RULES[:lifecycle_hooks], /`onStop` means inactive/, /`onStart`/,
+      /idempotent/i)
     assert_rule("ios", SHARED_RULES[:lifecycle_hooks], /`onViewWillDisappear`/, /`onViewDidDisappear`/,
       /do not put cleanup there/i, links: %w[Source/Turbo/Session/Session.swift])
   end
@@ -151,7 +152,8 @@ class HotwireNativeSkillTest < Minitest::Test
       assert_rule(file, SHARED_RULES[:logging], /tokens/i, /sensitive bridge payloads/i)
     end
     assert_rule("ios", SHARED_RULES[:sessions], /app's own error handler/i, /login screen/i, /401/,
-      /same `WKWebsiteDataStore`/, /`makeCustomWebView`/, /outside Hotwire Native/, /`WKProcessPool` is deprecated/, /on iOS 15 and later/,
+      /same `WKWebsiteDataStore`/, /`makeCustomWebView`/, /outside Hotwire Native/,
+      /`WKProcessPool` is deprecated/, /on iOS 15 and later/,
       links: %w[native.hotwired.dev/ios/reference developer.apple.com/documentation/webkit/wkwebsitedatastore
                 developer.apple.com/documentation/webkit/wkprocesspool])
   end
