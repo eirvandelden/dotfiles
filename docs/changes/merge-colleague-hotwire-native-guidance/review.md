@@ -203,7 +203,7 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 
 ## Round 11 — 2026-10-10T19:19Z — 046cf4da
 
-- [ ] Nit: `plan.md`'s Design decisions still describe the iOS 401 rule as "401 handling in the app's own error handler to present a login screen". Since rounds 9 and 10, the line adds a condition that comes from no upstream page: present the login screen only when the user must sign in (no session, or an expired one), not when the app's auth flow can refresh it. The upstream example presents it for every unauthorized error. Record in the plan that this condition is project guidance on top of the upstream example, so plan and reference agree. — `docs/changes/merge-colleague-hotwire-native-guidance/plan.md:18` →
+- [x] Nit: `plan.md`'s Design decisions still describe the iOS 401 rule as "401 handling in the app's own error handler to present a login screen". Since rounds 9 and 10, the line adds a condition that comes from no upstream page: present the login screen only when the user must sign in (no session, or an expired one), not when the app's auth flow can refresh it. The upstream example presents it for every unauthorized error. Record in the plan that this condition is project guidance on top of the upstream example, so plan and reference agree. — `docs/changes/merge-colleague-hotwire-native-guidance/plan.md:18` → fixed (docs: record the 401 sign-in condition as project guidance in the plan)
 
 ### Bugs
 
