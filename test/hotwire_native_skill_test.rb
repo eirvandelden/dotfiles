@@ -13,6 +13,7 @@ class HotwireNativeSkillTest < Minitest::Test
     bridge_component: /read every side before changing one/i,
     progressive_enhancement: /hide web UI only when the native side supports/i,
     cleanup: /repeat visit shows no stale/i,
+    lifecycle_hooks: /lifecycle hooks are overrides/i,
     sessions: /session expiry/i,
     logging: /never log/i,
     untrusted_destinations: /untrusted destinations/i,
@@ -123,14 +124,22 @@ class HotwireNativeSkillTest < Minitest::Test
     end
   end
 
-  def test_both_references_require_cleanup_on_disconnect
+  def test_both_references_keep_repeat_visits_free_of_stale_and_duplicate_controls
     each_reference do |file|
-      assert_rule(file, SHARED_RULES[:cleanup], /disconnect/i, /remove(s)? (its )?native controls and callbacks/i,
-        /fires no duplicate action/i, /only through a message/i, /restore(s)? them/i,
+      assert_rule(file, SHARED_RULES[:cleanup], /own `BridgeDelegate`/, /`connect` message again/i,
+        /`onReceive` replaces/i, /fires no duplicate action/i, /sends nothing to native/i, /only through a message/i,
         links: [ "native.hotwired.dev/#{file}/bridge-components", "github.com/hotwired/hotwire-native-#{file}" ])
     end
-    assert_rule("android", SHARED_RULES[:cleanup], /`onStop` means the destination is inactive/, /`onStart`/)
-    assert_rule("ios", SHARED_RULES[:cleanup], /`onViewWillDisappear`/, /`onViewDidDisappear`/, /`onViewWillAppear`/)
+  end
+
+  def test_both_references_describe_lifecycle_hooks_as_overrides_that_do_nothing_by_default
+    each_reference do |file|
+      assert_rule(file, SHARED_RULES[:lifecycle_hooks], /do nothing by default/i, /only while/i,
+        links: [ "github.com/hotwired/hotwire-native-#{file}" ])
+    end
+    assert_rule("android", SHARED_RULES[:lifecycle_hooks], /`onStop` means inactive/, /`onStart`/, /idempotent/i)
+    assert_rule("ios", SHARED_RULES[:lifecycle_hooks], /`onViewWillDisappear`/, /`onViewDidDisappear`/,
+      /do not put cleanup there/i, links: %w[Source/Turbo/Session/Session.swift])
   end
 
   def test_both_references_preserve_sessions_and_never_log_secrets
