@@ -125,18 +125,22 @@ class HotwireNativeSkillTest < Minitest::Test
 
   def test_both_references_require_cleanup_on_disconnect
     each_reference do |file|
-      assert_rule(file, /disconnect/i, /remove(s)? (its )?native controls and callbacks/i,
-        /repeat visit shows no stale/i, /fires no duplicate action/i,
+      assert_rule(file, SHARED_RULES[:cleanup], /disconnect/i, /remove(s)? (its )?native controls and callbacks/i,
+        /fires no duplicate action/i, /only through a message/i, /restore(s)? them/i,
         links: [ "native.hotwired.dev/#{file}/bridge-components", "github.com/hotwired/hotwire-native-#{file}" ])
     end
+    assert_rule("android", SHARED_RULES[:cleanup], /`onStop` means the destination is inactive/, /`onStart`/)
+    assert_rule("ios", SHARED_RULES[:cleanup], /`onViewWillDisappear`/, /`onViewDidDisappear`/, /`onViewWillAppear`/)
   end
 
   def test_both_references_preserve_sessions_and_never_log_secrets
     each_reference do |file|
-      assert_rule(file, /cookies/i, /authentication/i, /session expiry/i, /sign-out/i)
-      assert_rule(file, /never log/i, /tokens/i, /sensitive bridge payloads/i)
+      assert_rule(file, SHARED_RULES[:sessions], /cookies/i, /authentication/i, /sign-out/i)
+      assert_rule(file, SHARED_RULES[:logging], /tokens/i, /sensitive bridge payloads/i)
     end
-    assert_rule("ios", /session expiry/i, links: %w[native.hotwired.dev/ios/reference])
+    assert_rule("ios", SHARED_RULES[:sessions], /app's own error handler/i, /login screen/i, /401/,
+      /custom `WKProcessPool`/, /`makeCustomWebView`/, /outside Hotwire Native/,
+      links: %w[native.hotwired.dev/ios/reference])
   end
 
   def test_both_references_validate_untrusted_destinations
@@ -181,7 +185,13 @@ class HotwireNativeSkillTest < Minitest::Test
   end
 
   def test_shared_rules_appear_in_both_references
-    assert_empty(shared_rule_gaps(read("references/ios.md"), read("references/android.md")))
+    ios = reference("ios")
+    android = reference("android")
+    assert_empty(shared_rule_gaps(ios, android))
+    SHARED_RULES.each do |name, phrase|
+      assert_match(phrase, ios, "ios.md lacks the shared rule #{name}")
+      assert_match(phrase, android, "android.md lacks the shared rule #{name}")
+    end
   end
 
   def test_parity_check_reports_a_rule_present_in_one_reference_only
