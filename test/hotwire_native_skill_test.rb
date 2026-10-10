@@ -172,8 +172,10 @@ class HotwireNativeSkillTest < Minitest::Test
   end
 
   def test_android_reference_names_its_lifecycle_traps
-    assert_rule("android", /Activity recreation/, links: %w[developer.android.com/guide/components/activities/state-changes])
-    assert_rule("android", /process death/i, links: %w[developer.android.com/topic/libraries/architecture/saving-states])
+    assert_rule("android", /Activity recreation/,
+      links: %w[developer.android.com/guide/components/activities/state-changes])
+    assert_rule("android", /process death/i,
+      links: %w[developer.android.com/topic/libraries/architecture/saving-states])
     assert_rule("android", /predictive back/i,
       links: %w[developer.android.com/guide/navigation/custom-back/predictive-back-gesture])
     assert_rule("android", /never swallow `CancellationException`/,
