@@ -225,3 +225,29 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - `test/hotwire_native_skill_test.rb`: 27 runs, 483 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
 - Full `test/` suite, per file with a 120 s limit: all green except `test/review_report_check_test.rb` (1 error) and `test/herdr_worker_scripts_test.rb` (exit 1, no result line), as in rounds 1, 3 and 5 to 10. The branch touches neither file.
 - Branch is current with `origin/main` (0 commits behind).
+
+## Round 12 — 2026-10-10T19:29Z — 51d88e1b
+
+No findings.
+
+### Bugs
+
+- Nothing found. Since round 11, only `plan.md` and `review.md` changed. The plan's Design decisions now record the iOS 401 condition as project guidance on top of the upstream example, which presents the login screen for every unauthorized error. This matches the `ios.md` sessions line and its assertion. The references and the test file are unchanged since round 10.
+
+### Security
+
+- Documentation and tests only. All links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+### Compliance
+
+- Rounds 1 to 11: every finding is closed with a commit subject or a reason.
+- Every acceptance criterion maps to the same test as in rounds 6 to 11. Every test named in the plan's Proof exists. No test on `origin/main` was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb`: unchanged against `origin/main`. `android.md` names no MCP server.
+- Privacy grep on `git diff origin/main...HEAD -- claude test`: prints nothing.
+- REVIEW.md and REVIEW.local.md do not exist at the repository root. The passes follow the reviewer's default Bugs, Security and Compliance criteria, as in earlier rounds.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 27 runs, 483 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean; no line over 120 characters. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file with a 120 s limit: all green except `test/review_report_check_test.rb` (1 error, `git commit --quiet -m advance main failed`) and `test/herdr_worker_scripts_test.rb` (exit 1, `IOError: stream closed in another thread`), as in rounds 1, 3 and 5 to 11. The branch touches neither file.
+- Branch is current with `origin/main` (0 commits behind).
