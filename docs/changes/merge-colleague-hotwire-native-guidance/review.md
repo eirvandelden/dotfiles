@@ -125,8 +125,8 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 
 ## Round 7 — 2026-10-10T18:48Z — 303329de
 
-- [ ] Nit: The branch is 11 commits behind `origin/main` (PR #192, home-assistant-mcp). Rebase before the push (playbook rule 20). `git merge-tree` shows no conflict. — `(branch)` →
-- [ ] Nit: The round 6 fix made the iOS sessions assertion 139 characters wide; lines 173 and 174 are 125 and 121. The playbook targets lines under about 120 characters. `rubocop` passes, so this is style only. Wrap the pattern list over two lines, as the `links:` argument below it already does. — `test/hotwire_native_skill_test.rb:154` →
+- [x] Nit: The branch is 11 commits behind `origin/main` (PR #192, home-assistant-mcp). Rebase before the push (playbook rule 20). `git merge-tree` shows no conflict. — `(branch)` → fixed (rebased onto origin/main, no conflicts)
+- [x] Nit: The round 6 fix made the iOS sessions assertion 139 characters wide; lines 173 and 174 are 125 and 121. The playbook targets lines under about 120 characters. `rubocop` passes, so this is style only. Wrap the pattern list over two lines, as the `links:` argument below it already does. — `test/hotwire_native_skill_test.rb:154` → fixed (test: wrap the assertion lines under 120 characters)
 
 ### Compliance
 
