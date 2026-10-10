@@ -143,3 +143,28 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - Full `test/` suite, per file: green up to `test/stow_package_roots_test.rb`, except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (exit 1), as in rounds 1, 3, 5 and 6. `test/rubocop_fallback_test.rb` and `test/test_guard_test.rb` hung in this environment and were stopped; the files after `test_guard_test.rb` did not run. The branch touches none of these files.
 - Upstream check (2026-10-10, `main`): `hotwire-native-bridge` `BridgeComponent.restore()` calls `this.connect()` on `native:restore`; `hotwire-native-ios` dispatches no `native:restore`, so the Android-only clause is correct.
 - Security pass: documentation and tests only; all links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+## Round 8 — 2026-10-10T19:00Z — df9d15e3
+
+- [ ] Nit: `plan.md`'s Proof names a private helper `rule_line(file, pattern)` that returns the matching line, used by `assert_rule`. The test file has no `rule_line`; `assert_rule` finds the line inline. Behaviour matches the plan, so either extract the helper or drop it from the plan's helper list, so plan and code agree. — `test/hotwire_native_skill_test.rb:246`
+
+### Bugs
+
+- Nothing found. Since round 7 only `test/hotwire_native_skill_test.rb` changed: three assertions are wrapped over two lines, with the same patterns and links. No line is over 120 characters.
+
+### Security
+
+- Documentation and tests only. All links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+### Compliance
+
+- Rounds 1 to 7: every finding is closed with a commit subject or a reason.
+- Every acceptance criterion maps to the same test as in rounds 6 and 7. Every test named in the plan's Proof exists. No test on `origin/main` was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb`: unchanged against `origin/main`.
+- Privacy grep on `git diff origin/main...HEAD -- claude test`: prints nothing.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 27 runs, 481 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file with a 60 s limit: all green except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (`IOError: stream closed in another thread`), as in earlier rounds. `test/worktree_create_test.rb` hit the 60 s limit; with a 240 s limit it passes (31 runs, 0 failures, 71 s). The branch touches none of these files.
+- Branch is current with `origin/main` (0 commits behind).
