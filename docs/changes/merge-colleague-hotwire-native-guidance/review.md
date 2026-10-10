@@ -200,3 +200,28 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - `test/hotwire_native_skill_test.rb`: 27 runs, 483 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
 - Full `test/` suite, per file with a 90 s limit: all green except `test/review_report_check_test.rb` (1 error) and `test/herdr_worker_scripts_test.rb` (no result), as in rounds 1, 3 and 5 to 8. The branch touches neither file.
 - Branch is current with `origin/main` (0 commits behind).
+
+## Round 11 — 2026-10-10T19:19Z — 046cf4da
+
+- [ ] Nit: `plan.md`'s Design decisions still describe the iOS 401 rule as "401 handling in the app's own error handler to present a login screen". Since rounds 9 and 10, the line adds a condition that comes from no upstream page: present the login screen only when the user must sign in (no session, or an expired one), not when the app's auth flow can refresh it. The upstream example presents it for every unauthorized error. Record in the plan that this condition is project guidance on top of the upstream example, so plan and reference agree. — `docs/changes/merge-colleague-hotwire-native-guidance/plan.md:18` →
+
+### Bugs
+
+- Nothing found. Since round 10, only the iOS sessions line, its assertion and `review.md` changed. The new pattern sits on its own line; no line in the test file is over 120 characters. The assertion is red on the test commit `95ac2b66` (`ios.md rule line lacks /when the 401 means the user must sign in \(no session, or an expired one\)/i`) and green after `5c71af00`.
+
+### Security
+
+- Documentation and tests only. All links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+### Compliance
+
+- Rounds 1 to 10: every finding is closed with a commit subject or a reason.
+- Every acceptance criterion maps to the same test as in rounds 6 to 10. Every test named in the plan's Proof exists. No test on `origin/main` was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb`: unchanged against `origin/main`. `android.md` names no MCP server.
+- Privacy grep on `git diff origin/main...HEAD -- claude test`: prints nothing.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 27 runs, 483 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file with a 120 s limit: all green except `test/review_report_check_test.rb` (1 error) and `test/herdr_worker_scripts_test.rb` (exit 1, no result line), as in rounds 1, 3 and 5 to 10. The branch touches neither file.
+- Branch is current with `origin/main` (0 commits behind).
