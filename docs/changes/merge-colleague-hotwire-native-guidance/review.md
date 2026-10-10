@@ -168,3 +168,7 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 - `test/hotwire_native_skill_test.rb`: 27 runs, 481 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
 - Full `test/` suite, per file with a 60 s limit: all green except `test/review_report_check_test.rb` (1 error: `git commit --quiet -m advance main failed` in its temporary repository) and `test/herdr_worker_scripts_test.rb` (`IOError: stream closed in another thread`), as in earlier rounds. `test/worktree_create_test.rb` hit the 60 s limit; with a 240 s limit it passes (31 runs, 0 failures, 71 s). The branch touches none of these files.
 - Branch is current with `origin/main` (0 commits behind).
+
+## Round 9 — 2026-10-10T19:05Z — df9d15e3 (codex)
+
+- [ ] Important: Make 401 handling conditional on the app's auth flow. When an app returns a 401 that its auth flow can refresh or handle without user interaction, the line still tells agents to present the login screen. The upstream example leaves that behaviour to the app; qualify the guidance so it applies only when the 401 means the user's session has expired. — `claude/.claude/skills/hotwire-native/references/ios.md:19` →
