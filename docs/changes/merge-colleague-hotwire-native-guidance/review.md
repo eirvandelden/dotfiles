@@ -172,3 +172,31 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 ## Round 9 — 2026-10-10T19:05Z — df9d15e3 (codex)
 
 - [x] Important: Make 401 handling conditional on the app's auth flow. When an app returns a 401 that its auth flow can refresh or handle without user interaction, the line still tells agents to present the login screen. The upstream example leaves that behaviour to the app; qualify the guidance so it applies only when the 401 means the user's session has expired. — `claude/.claude/skills/hotwire-native/references/ios.md:19` → fixed (docs: scope the iOS login screen advice to an expired session)
+
+## Round 10 — 2026-10-10T19:02Z — 92d0d594
+
+- [ ] Important: The round 9 fix scopes the login screen to "only when the 401 means the session has expired". A 401 also comes back when there is no session at all, for example on first launch or after sign-out, and there the user must sign in too. The upstream example presents the login screen for every unauthorized error and leaves refresh flows to the app. An agent that follows the new line skips the login screen for a user who never signed in. Phrase the condition as "when the 401 means the user must sign in (no session, or an expired one), not when the app's auth flow can refresh it", and widen the test pattern to match. — `claude/.claude/skills/hotwire-native/references/ios.md:19` →
+- [ ] Nit: The round 9 fix put the new pattern on the first line of the iOS sessions assertion, which is now 150 characters wide. Round 7 wrapped this assertion under 120 characters; this undoes it. `rubocop` passes, so this is style only. Move the new pattern to its own line. — `test/hotwire_native_skill_test.rb:154` →
+- [ ] Nit: Commit `2926d033` is titled "Record Codex review round 6 of the Hotwire Native references", but it adds round 9 to `review.md`. The title points a reader at the wrong round. It is already in history; reword it only if the branch is rebased anyway. — `docs/changes/merge-colleague-hotwire-native-guidance/review.md` →
+
+### Bugs
+
+- See the Important finding. Since round 8, only the iOS sessions line, its assertion and `review.md` changed. The new assertion is red on the round 8 content (the phrase did not exist) and green now; the test commit precedes the docs commit.
+
+### Security
+
+- Documentation and tests only. All links go to official Hotwire, Apple, Android, Kotlin and Swift pages or the `hotwired` repositories. Nothing found.
+
+### Compliance
+
+- Rounds 1 to 9: every finding is closed with a commit subject or a reason.
+- Every acceptance criterion maps to the same test as in rounds 6 to 8. The sessions criterion is guarded by `test_both_references_preserve_sessions_and_never_log_secrets`, which now also asserts the 401 condition.
+- Every test named in the plan's Proof exists. No test on `origin/main` was weakened, skipped or deleted.
+- `SKILL.md`, `test/mobile_testing_exception_test.rb` and `test/mobile_tooling_test.rb`: unchanged against `origin/main`. `android.md` names no 401 handling and no MCP server.
+- Privacy grep on `git diff origin/main...HEAD -- claude test`: prints nothing.
+
+### Checks run
+
+- `test/hotwire_native_skill_test.rb`: 27 runs, 483 assertions, 0 failures. Mobile tests green. `rubocop test/hotwire_native_skill_test.rb` clean. markdownlint `no-hardwrap` passes on both references and the change folder.
+- Full `test/` suite, per file with a 90 s limit: all green except `test/review_report_check_test.rb` (1 error) and `test/herdr_worker_scripts_test.rb` (no result), as in rounds 1, 3 and 5 to 8. The branch touches neither file.
+- Branch is current with `origin/main` (0 commits behind).
