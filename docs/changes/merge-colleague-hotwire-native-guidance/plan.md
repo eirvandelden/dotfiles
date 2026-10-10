@@ -99,7 +99,7 @@ Each test below lives in `test/hotwire_native_skill_test.rb`. A shared rule is a
 
 Per changed file, the unit tests expected:
 
-- `test/hotwire_native_skill_test.rb`: all tests named above. `SHARED_RULES` maps each shared rule name to its key phrase regex. Private helpers: `rule_line(file, pattern)` returns the line that matches, failing with the file name when none does; `assert_rule(file, *patterns, links:)` asserts every pattern and link on that one line; `shared_rule_gaps(ios_text, android_text)` returns the rule names that match exactly one of the two texts.
+- `test/hotwire_native_skill_test.rb`: all tests named above. `SHARED_RULES` maps each shared rule name to its key phrase regex. Private helpers: `assert_rule(file, *patterns, links:)` finds the line that matches the first pattern, failing with the file name when none does, and asserts every pattern and link on that one line; `shared_rule_gaps(ios_text, android_text)` returns the rule names that match exactly one of the two texts.
 - `references/ios.md`, `references/android.md`: no tests of their own; guarded by the file above.
 
 Test setup: plain file reads from `SKILL_DIR`, as the existing tests do. No fixtures, no network.
