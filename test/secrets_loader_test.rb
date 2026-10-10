@@ -11,6 +11,7 @@ require "tmpdir"
 # repository names no employer.
 class SecretsLoaderTest < Minitest::Test
   LOADER = File.expand_path("../zsh/.config/zsh/functions/secrets.zsh", __dir__)
+  REPO_MAPPING = File.expand_path("../secrets/.config/secrets/1password.env", __dir__)
 
   def setup
     @tmpdir = Dir.mktmpdir
@@ -50,6 +51,16 @@ class SecretsLoaderTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
     assert_includes stdout, "export PERSONAL_TOKEN="
     assert_includes op_calls, "op://Private/token/credential --account vandelden"
+  end
+
+  def test_the_personal_mapping_unlocks_the_home_assistant_gate_token
+    FileUtils.cp(REPO_MAPPING, File.join(@config, "1password.env"))
+
+    stdout, stderr, status = run_secrets
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "export HA_MCP_GATE_TOKEN="
+    assert_includes op_calls, "op://Familie/HomeAssistantMcp/HA_MCP_GATE_TOKEN --account vandelden"
   end
 
   private
