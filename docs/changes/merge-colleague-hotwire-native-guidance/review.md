@@ -146,7 +146,7 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 
 ## Round 8 — 2026-10-10T19:00Z — df9d15e3
 
-- [ ] Nit: `plan.md`'s Proof names a private helper `rule_line(file, pattern)` that returns the matching line, used by `assert_rule`. The test file has no `rule_line`; `assert_rule` finds the line inline. Behaviour matches the plan, so either extract the helper or drop it from the plan's helper list, so plan and code agree. — `test/hotwire_native_skill_test.rb:246`
+- [x] Nit: `plan.md`'s Proof names a private helper `rule_line(file, pattern)` that returns the matching line, used by `assert_rule`. The test file has no `rule_line`; `assert_rule` finds the line inline. Behaviour matches the plan, so either extract the helper or drop it from the plan's helper list, so plan and code agree. — `test/hotwire_native_skill_test.rb:246` → fixed (docs: drop the rule_line helper from the plan's helper list)
 
 ### Bugs
 
@@ -171,4 +171,4 @@ Every test named in the plan's Proof exists. No existing test was weakened, skip
 
 ## Round 9 — 2026-10-10T19:05Z — df9d15e3 (codex)
 
-- [ ] Important: Make 401 handling conditional on the app's auth flow. When an app returns a 401 that its auth flow can refresh or handle without user interaction, the line still tells agents to present the login screen. The upstream example leaves that behaviour to the app; qualify the guidance so it applies only when the 401 means the user's session has expired. — `claude/.claude/skills/hotwire-native/references/ios.md:19` →
+- [x] Important: Make 401 handling conditional on the app's auth flow. When an app returns a 401 that its auth flow can refresh or handle without user interaction, the line still tells agents to present the login screen. The upstream example leaves that behaviour to the app; qualify the guidance so it applies only when the 401 means the user's session has expired. — `claude/.claude/skills/hotwire-native/references/ios.md:19` → fixed (docs: scope the iOS login screen advice to an expired session)
