@@ -52,3 +52,14 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1 and 3 still h
 ## Round 6 — 2026-10-11T08:45:30Z — 9ab13530 (codex)
 
 No findings. `codex review --base origin/main`: the skill guidance and Codex link match the stated scope, and both focused tests pass.
+
+## Round 7 — 2026-10-11T09:01:13Z — d3d652d3
+
+Checks run: `test/rails_ui_interaction_design_test.rb` (14 runs, 192 assertions, 0 failures) and `test/skill_parity_test.rb` (7 runs, 0 failures) pass. The full suite passes except `test/review_report_check_test.rb`, which a global git hook breaks locally (known, out of scope). RuboCop, Yamllint, markdownlint (reference and change folder) and the no-hardwrap check pass on the changed files. The branch sits on current `origin/main`, and the working tree is clean.
+
+Round 5 fixes hold. The `## Action rows` guard now requires "plain `<button>`" after `<form method="dialog">`, so a `type="button"` rewrite fails it. The row check filters `each row` again. Both `content: attr(data-label)` declarations carry `/ ""`, and a scan over the whole file pins that. Line 61 states Etienne's decision: a record whose fields are all edited inline still gets an edit page with its fields and Delete, and the test pins it. `intent.md` records the decision.
+
+Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3 and 5 still holds. Every test named in `plan.md` `## Proof` exists. No existing test is weakened, skipped or deleted; `test/skill_parity_test.rb` only loses `rails-ui` from `CLAUDE_ONLY`. Security: nothing found. The two findings below are Nits. Neither blocks the pull request.
+
+- [ ] Nit: The flex-row recipe right-aligns `Cancel` and `Save` only when `Delete…` is present, because the space comes from its `margin-inline-end: auto`. A new page has no Delete. When it shares the `_form` partial with the edit page, `Cancel` and `Save` move to the left edge on new and to the right edge on edit. The line could add `justify-content: flex-end` on the row. The auto margin still pushes `Delete…` far left when it is there — `claude/.claude/skills/rails-ui/references/interaction-design.md:36` →
+- [ ] Nit: `test_stacked_tables_keep_headers_for_screen_readers_and_add_table_roles` checks `table`, `row`, `columnheader` and `cell`, but not `rowgroup`. Line 92 sets `thead` and `tbody` to `display: block`, so line 110 needs `role="rowgroup"` for them. If a rewrite drops it, the test still passes — `test/rails_ui_interaction_design_test.rb:127` →
