@@ -19,7 +19,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/`Save`[^.]*rightmost[^.]*default/i, section)
     assert_match(/justify-content: flex-end/, section)
     assert_match(/margin-inline-end: auto/, section)
-    assert_match(/`Don't Save`[^.]*`<button type="button">`/, section)
+    assert_match(/`Don't Save`[^.]*link or a `<button type="button">`[^.]*never a submit button/, section)
     assert_match(/Return[^.]*first submit button[^.]*`Save`/i, section)
     assert_match(/without[^.]*`Delete…`|no `Delete…`/i, section)
   end
@@ -90,7 +90,8 @@ class RailsUiInteractionDesignTest < Minitest::Test
 
   def test_default_button_is_save_on_edit_pages_and_cancel_in_destructive_confirmations
     section = section(reference, "## Default button")
-    assert_match(/safest forward action/i, section)
+    assert_match(/default button is the safest action for the context/i, section)
+    refute_match(/safest forward action/i, section)
     assert_match(/`Save`/, section)
     assert_match(/`Cancel`/, section)
     assert_match(/never[^.]*`Delete`[^.]*default|`Delete`[^.]*never[^.]*default/i, section)

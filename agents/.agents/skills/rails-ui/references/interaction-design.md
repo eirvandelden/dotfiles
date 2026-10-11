@@ -31,7 +31,7 @@ These rules apply to user-facing action patterns across the UI, including modal 
 An edit page follows the macOS save sheet. The red `Delete…` button stands apart on the far left of the action row. `Cancel` and `Save` sit together on the right, with `Save` rightmost.
 
 - `Save` is rightmost and is the default button: filled, primary style.
-- A three-button save sheet keeps the shape: `Don't Save` stands apart on the far left, then `Cancel`, then `Save`. `Don't Save` is a `<button type="button">`.
+- A three-button save sheet keeps the shape: `Don't Save` stands apart on the far left, then `Cancel`, then `Save`. `Don't Save` is a link or a `<button type="button">`, never a submit button.
 - Pressing Return in a text field presses the form's first submit button, so that button must be `Save`. Every button left of it is a link or a `<button type="button">`.
 - The ellipsis in `Delete…` says that a confirmation follows. Translate the label, keep the ellipsis.
 - Build the row as a flex row with `justify-content: flex-end`, so `Cancel` and `Save` sit on the right even on a page without `Delete…`, such as a new page that shares the form partial. The destructive button takes `margin-inline-end: auto`, which keeps it apart on the left. Use `rem` sizes, and take mvpa.css styles first.
@@ -72,7 +72,7 @@ For a record with editable fields, Delete appears only on the edit page.
 
 ## Default button
 
-The default button is the safest forward action for the context. `Return` activates it.
+The default button is the safest action for the context. `Return` activates it. Usually that is the forward action; in a destructive confirmation it is `Cancel`.
 
 - On an edit page the default is `Save`: rightmost and filled.
 - In a destructive confirmation the default is `Cancel`. The red `Delete` is never the default.
