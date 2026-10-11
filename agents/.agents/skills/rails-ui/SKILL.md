@@ -72,5 +72,4 @@ Full i18n namespacing/fallback conventions: `references/i18n.md`.
 
 ## UI interaction and dialog rules
 
-Button placement, color semantics, confirmation dialogs, progressive disclosure, and other
-interaction-design rules (based on Apple's macOS dialog guidance): `references/interaction-design.md`.
+Edit-page action row, where Delete lives, confirmation dialogs, color semantics, table width and responsive tables, progressive disclosure, and other interaction-design rules (based on Apple's macOS dialog guidance): `references/interaction-design.md`.
