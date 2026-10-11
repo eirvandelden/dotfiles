@@ -66,6 +66,8 @@ An agent that follows the skill builds the layout Etienne chose in the journal_a
 
 On 2026-10-11 the plan stage raised two decisions. Etienne chose to link `rails-ui` for Codex in this change, and to put Delete on the show page, outside any menu, for records with no editable fields. The sections above include both.
 
+On 2026-10-11 the review raised a third: a record whose fields are all edited inline has no edit page. Etienne chose that such a record still gets an edit page, which holds its fields and Delete.
+
 ## Open questions
 
 None.
