@@ -98,3 +98,14 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3, 5, 7 and 
 ## Round 12 — 2026-10-11T09:20:54Z — 6e70e6b3 (codex)
 
 No findings. `codex review --base origin/main`: the changes match the stated scope, and both focused test files pass.
+
+## Round 13 — 2026-10-11T09:31:11Z — 25c9389f
+
+Checks run: `test/rails_ui_interaction_design_test.rb` (14 runs, 206 assertions, 0 failures) and `test/skill_parity_test.rb` (7 runs, 0 failures) pass. The full suite passes except `test/review_report_check_test.rb`, which a global git hook breaks locally (known, out of scope). RuboCop, Yamllint, markdownlint (reference and change folder) and the no-hardwrap check pass on the changed files. The branch sits on current `origin/main`, and the working tree is clean.
+
+Round 11 fixes hold. Line 34 lets `Don't Save` be a link or a `<button type="button">`, never a submit button, and the test pins all three parts. Line 75 defines the default button as the safest action, names `Cancel` as the default in a destructive confirmation, and the test refutes "safest forward action".
+
+Compliance: the acceptance-criterion-to-test mapping from rounds 1 to 11 still holds. Every test named in `plan.md` `## Proof` exists, including the three parity tests. No existing test is weakened, skipped or deleted; `test/skill_parity_test.rb` only loses `rails-ui` from `CLAUDE_ONLY`. The Proof behaviour check lives in the implement report outside the branch; this review cannot confirm it. Security: nothing found.
+
+- [ ] Important: `overflow-wrap: anywhere` on every text cell defeats the breakpoint rule at line 98. Unlike `break-word`, `anywhere` lowers each cell's min-content width to about one character. The auto table layout then shrinks every column below its max-content width as soon as the content area is narrower than the full table. Amounts and dates break mid-value (`€ 1.2` over `34,56`), and the table never "no longer fits". An agent that narrows the window as line 98 says finds no overflow to measure, so it has no trigger for the stack. Line 88 could limit `anywhere` to cells with long unbroken values (IDs, URLs, free text), and line 98 could set the breakpoint where a cell first breaks inside a value — `claude/.claude/skills/rails-ui/references/interaction-design.md:88` →
+- [ ] Nit: The `@media` fallback at line 97 leaves a grid or flex content area at its default `min-inline-size: auto`. A table cell with content that cannot wrap (a button, an image) then widens the `1fr` track or flex item, and the page scrolls sideways. `max-inline-size: 100%` does not stop it, because a percentage maximum does not limit a min-content contribution. The container query path is safe: `container-type: inline-size` drops the content from the area's intrinsic width. Line 97 could add `min-inline-size: 0` on the content area — `claude/.claude/skills/rails-ui/references/interaction-design.md:97` →
