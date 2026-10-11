@@ -179,6 +179,16 @@ class SecretsLoaderTest < Minitest::Test
     assert_includes stdout, "token=a-secret-value"
   end
 
+  def test_the_personal_mapping_resolves_the_journal_assistant_token_from_1password
+    FileUtils.cp(REPO_MAPPING, File.join(@config, "1password.env"))
+
+    stdout, stderr, status = run_secrets
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "export JOURNAL_ASSISTANT_TOKEN="
+    assert_includes op_calls, "op://Familie/JournalAdministration/assistant_token --account vandelden"
+  end
+
   private
 
   # The PATH that path_helper leaves behind: a directory with a real codex
