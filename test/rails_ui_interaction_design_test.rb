@@ -18,6 +18,9 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/`Cancel` and `Save`[^.]*together[^.]*right/i, section)
     assert_match(/`Save`[^.]*rightmost[^.]*default/i, section)
     assert_match(/justify-content: flex-end/, section)
+    assert_match(/margin-inline-end: auto/, section)
+    assert_match(/`Don't Save`[^.]*`<button type="button">`/, section)
+    assert_match(/Return[^.]*first submit button[^.]*`Save`/i, section)
     assert_match(/without[^.]*`Delete…`|no `Delete…`/i, section)
   end
 

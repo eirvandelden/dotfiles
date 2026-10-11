@@ -31,7 +31,8 @@ These rules apply to user-facing action patterns across the UI, including modal 
 An edit page follows the macOS save sheet. The red `Delete…` button stands apart on the far left of the action row. `Cancel` and `Save` sit together on the right, with `Save` rightmost.
 
 - `Save` is rightmost and is the default button: filled, primary style.
-- A three-button save sheet keeps the shape: `Don't Save` stands apart on the far left, then `Cancel`, then `Save`.
+- A three-button save sheet keeps the shape: `Don't Save` stands apart on the far left, then `Cancel`, then `Save`. `Don't Save` is a `<button type="button">`.
+- Pressing Return in a text field presses the form's first submit button, so that button must be `Save`. Every button left of it is a link or a `<button type="button">`.
 - The ellipsis in `Delete…` says that a confirmation follows. Translate the label, keep the ellipsis.
 - Build the row as a flex row with `justify-content: flex-end`, so `Cancel` and `Save` sit on the right even on a page without `Delete…`, such as a new page that shares the form partial. The destructive button takes `margin-inline-end: auto`, which keeps it apart on the left. Use `rem` sizes, and take mvpa.css styles first.
 - `Delete…` is a `<button type="button">`, because it opens in-place UI. It opens a `<dialog>` that holds the `button_to … method: :delete` form.
@@ -59,7 +60,7 @@ For a record with editable fields, Delete appears only on the edit page.
 - Never between other buttons. It stands apart, as described under Edit pages and sheets.
 - Inline editing of a single field does not move Delete. The record keeps its edit page, and Delete stays there.
 - A record with editable fields where every field is edited inline still gets an edit page. That page holds the fields and Delete.
-- A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its `Delete…` sits on the show page as a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It still opens the confirmation dialog.
+- A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its show page holds a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It still opens the confirmation dialog.
 - Never put that `Delete…` inside an "Actions" menu or any other pull-down.
 - This exception does not let any other show page carry Delete.
 
