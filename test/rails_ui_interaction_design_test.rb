@@ -104,6 +104,8 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/never scrolls sideways/i, width)
     assert_match(/max-inline-size: 100%/, width)
     assert_match(/overflow-wrap: anywhere/, width)
+    assert_match(/amounts and dates never break/i, width)
+    assert_match(/min-inline-size: 0/, width)
     assert_match(/not the fix[^.]*overflow-x|overflow-x[^.]*not the fix/i, width)
 
     responsive = section(reference, "### Responsive tables")
@@ -117,6 +119,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/layout CSS[^.]*container-type|container-type[^.]*layout CSS/i, responsive)
     assert_match(/table CSS never declares/i, responsive)
     assert_match(/breakpoint[^.]*(measure|narrow)|(measure|narrow)[^.]*breakpoint/i, responsive)
+    assert_match(/narrow the window until[^.]*(amount or date no longer fits|text column)/i, responsive)
     assert_includes(responsive, "https://css-tricks.com/responsive-data-tables/")
     assert_includes(responsive, "https://css-tricks.com/making-tables-responsive-with-minimal-css/")
   end

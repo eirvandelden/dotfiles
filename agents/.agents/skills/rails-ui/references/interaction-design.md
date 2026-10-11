@@ -85,7 +85,9 @@ A table is never wider than the content area. The content area is the viewport w
 
 - A scroll wrapper (`overflow-x: auto`) is not the fix. The table is then still wider than the content area.
 - Give the table `max-inline-size: 100%`.
-- Text cells may break anywhere: `overflow-wrap: anywhere`, and no `white-space: nowrap`. A long ID or URL then cannot widen the table.
+- Free-text cells (names, notes, IDs, URLs) may break anywhere: `overflow-wrap: anywhere`. A long ID or URL then cannot widen the table.
+- Amounts and dates never break. Give only those cells `white-space: nowrap`, so a value stays whole.
+- A grid or flex content area needs `min-inline-size: 0`. Without it, a cell that cannot wrap pushes the content area wider than the viewport.
 - When the table still needs more room, it stacks. See Responsive tables.
 
 ### Responsive tables
@@ -95,7 +97,7 @@ Below a breakpoint, `table`, `thead`, `tbody`, `tr`, `th` and `td` all get `disp
 - Prefer a container query (`@container`). The width that matters is the content area, not the viewport.
 - The layout CSS declares `container-type: inline-size` on the content area, which is often `main`. Table CSS never declares it.
 - Without such a container, use a `@media` query in `rem` that adds the sidebar width.
-- A container query cannot find the width where a table stops fitting. Pick the breakpoint per table: load the page with realistic data, narrow the window until the table no longer fits, and set the breakpoint above that width, in `rem`. A ten-column table may stack even at desktop width.
+- A container query cannot find the width where a table stops fitting. Pick the breakpoint per table: load the page with realistic data, narrow the window until an amount or date no longer fits, or a text column gets too narrow to read, and set the breakpoint above that width, in `rem`. A ten-column table may stack even at desktop width.
 - Each `td` carries `data-label`. Below the breakpoint, `td::before { content: attr(data-label) / "" }` shows it. The `/ ""` part is explained under Screen readers. Above the breakpoint, the visible header row names the columns, so the label stays hidden.
 - `attr(data-label)` renders the attribute as is. The attribute holds the translated text, not a key. The `<th>` and each `td` call the same `t(...)` key, so both show the same words. The i18n rule forbids a hardcoded string.
 - Sources: [Responsive Data Tables](https://css-tricks.com/responsive-data-tables/) and [Making Tables Responsive With Minimal CSS](https://css-tricks.com/making-tables-responsive-with-minimal-css/).
