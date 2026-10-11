@@ -67,3 +67,15 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3 and 5 stil
 ## Round 8 — 2026-10-11T09:01:40Z — d3d652d3 (codex)
 
 No findings. `codex review --base origin/main`: no actionable defects, and both focused test files pass.
+
+## Round 9 — 2026-10-11T09:10:38Z — d88b146c
+
+Checks run: `test/rails_ui_interaction_design_test.rb` (14 runs, 198 assertions, 0 failures) and `test/skill_parity_test.rb` (7 runs, 0 failures) pass. The full suite passes except `test/review_report_check_test.rb`, which a global git hook breaks locally (known, out of scope). RuboCop, Yamllint, markdownlint (reference and change folder) and the no-hardwrap check pass on the changed files. The branch sits on current `origin/main`, and the working tree is clean.
+
+Round 7 fixes hold. Line 36 sets `justify-content: flex-end` on the row, so `Cancel` and `Save` stay right on a page without `Delete…`. The `margin-inline-end: auto` on `Delete…` takes the free space before `justify-content` does, so `Delete…` still stands apart on the far left. The test pins `flex-end` and the no-Delete case. The screen-reader test now checks `role="rowgroup"` too.
+
+Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3, 5 and 7 still holds. Every test named in `plan.md` `## Proof` exists. No existing test is weakened, skipped or deleted; `test/skill_parity_test.rb` only loses `rails-ui` from `CLAUDE_ONLY`. The Proof behaviour check lives in the implement report outside the branch; this review cannot confirm it. Security: nothing found. The three findings below are Nits. None blocks the pull request.
+
+- [ ] Nit: The test pins `justify-content: flex-end` but not `margin-inline-end: auto`. Since round 7 the two work together: without the auto margin, `flex-end` packs `Delete…`, `Cancel` and `Save` together on the right. A rewrite that drops the auto margin still passes, because the test only checks the words "far left" and "apart" — `test/rails_ui_interaction_design_test.rb:20` →
+- [ ] Nit: A three-button save sheet puts `Don't Save` first in the row. On the web, `Return` in a text field submits through the first submit button in DOM order. If an agent builds `Don't Save` as a submit button (for example with `formaction`), `Return` discards the changes. That breaks the "`Return` triggers the safest operation" rule. `Delete…` is safe because line 37 makes it `type="button"`; line 34 gives `Don't Save` no such rule — `claude/.claude/skills/rails-ui/references/interaction-design.md:34` →
+- [ ] Nit: Line 62 names the button twice in one sentence: "Its `Delete…` sits on the show page as a visible red `Delete…` button". The sentence could read "A visible red `Delete…` button sits on its show page" — `claude/.claude/skills/rails-ui/references/interaction-design.md:62` →
