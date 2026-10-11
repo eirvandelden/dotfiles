@@ -29,11 +29,13 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/`Cancel`[^.]*closes the dialog/i, section)
     assert_match(/command="close"/, section)
     assert_match(/method="dialog"/, section)
+    assert_match(/<form method="dialog">[^.]*plain `<button>`|plain `<button>`[^.]*<form method="dialog">/, section)
+    assert_match(/<form method="dialog">/, section(reference, "## Action rows"))
   end
 
   def test_far_left_rule_is_scoped_to_edit_pages_and_save_sheets
     shared = section(reference, "## Action rows").split(/^### /).first
-    refute_match(/far left/i, shared.gsub(/^.*edit pages? and (save )?sheets?.*$/i, ""))
+    refute_match(/far left/i, shared)
     assert_match(/Edit pages and sheets/, shared)
     assert_match(/Confirmation dialogs/, shared)
   end
@@ -59,6 +61,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/never in an index table row/i, section)
     assert_match(/never on[^.]*show page/i, section)
     assert_match(/never between other buttons/i, section)
+    assert_match(/inline editing[^.]*does not move Delete/i, section)
   end
 
   def test_record_without_editable_fields_puts_delete_on_its_show_page_outside_menus
@@ -73,9 +76,9 @@ class RailsUiInteractionDesignTest < Minitest::Test
     refute_match(/third[^.\n]*(button)?[^.\n]*left of `Cancel`/i, reference)
     refute_match(/third dismissal button/i, reference)
     reference.each_line do |line|
-      next unless line =~ /table row|index row|each row/i && line =~ /delete/i
+      next unless line =~ /table row|index row/i
 
-      assert_match(/never|no |not |without/i, line, "a line allows Delete in a row: #{line}")
+      assert_match(/\b(never|no|not|without)\b/i, line, "a line allows Delete in a row: #{line}")
     end
   end
 
@@ -99,6 +102,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     responsive = section(reference, "### Responsive tables")
     assert_match(/data-label/, responsive)
     assert_match(/attr\(data-label\)/, responsive)
+    assert_match(/below the breakpoint[^.]*`td::before|td::before[^.]*below the breakpoint/i, responsive)
     assert_match(/t\(/, responsive)
     assert_match(/@container/, responsive)
     %w[table thead tbody tr th td].each { |element| assert_match(/`#{element}`/, responsive) }

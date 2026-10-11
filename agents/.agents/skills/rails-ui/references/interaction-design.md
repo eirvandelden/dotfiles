@@ -23,6 +23,7 @@ These rules apply to user-facing action patterns across the UI, including modal 
 - Back/Cancel control type:
   - Use `<a>` when Cancel/Back navigates to another page or URL.
   - Use `<button type="button">` when Cancel dismisses or resets in-place UI.
+  - Inside a `<form method="dialog">`, Cancel is a plain `<button>`. Its default submit closes the dialog without sending anything.
 - A destructive button gets a fixed place in two layouts only: see Edit pages and sheets, and Confirmation dialogs. The one exception is the show page of a record with no editable fields: see Where Delete lives. Do not invent another.
 
 ### Edit pages and sheets
@@ -45,7 +46,7 @@ Use a modal confirmation when an action is irreversible. The red `Delete` is rig
 - Name the confirm button with the action verb (`Delete`, not `OK`).
 - Describe the item and the result (for example: `Delete this budget? This cannot be undone.`). Avoid vague prompts such as `Are you sure?`.
 - `Cancel` carries `autofocus`, so `Return` triggers `Cancel`, never the red `Delete`.
-- A click on `Cancel` closes the dialog. Use `<button type="button" commandfor="…" command="close">`, or put `Cancel` in a `<form method="dialog">`, which works without Invoker Commands.
+- A click on `Cancel` closes the dialog. Use `<button type="button" commandfor="…" command="close">`. Or put a plain `<button>` (a submit button, not `type="button"`) in a `<form method="dialog">`, which works without Invoker Commands.
 - `Esc` closes the dialog. The native `<dialog>` cancel event already does this.
 - Never require the user to type the item's name to confirm a deletion — a confirmation dialog is enough.
 
@@ -56,6 +57,7 @@ For a record with editable fields, Delete appears only on the edit page.
 - Never in an index table row. A row links to the record.
 - Never on that record's show page. A show page links to Edit.
 - Never between other buttons. It stands apart, as described under Edit pages and sheets.
+- Inline editing of a single field does not move Delete. The record keeps its edit page, and Delete stays there.
 - A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its `Delete…` sits on the show page as a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It still opens the confirmation dialog.
 - Never put that `Delete…` inside an "Actions" menu or any other pull-down.
 - This exception does not let any other show page carry Delete.
@@ -92,7 +94,7 @@ Below a breakpoint, `table`, `thead`, `tbody`, `tr`, `th` and `td` all get `disp
 - The layout CSS declares `container-type: inline-size` on the content area, which is often `main`. Table CSS never declares it.
 - Without such a container, use a `@media` query in `rem` that adds the sidebar width.
 - A container query cannot find the width where a table stops fitting. Pick the breakpoint per table: load the page with realistic data, narrow the window until the table no longer fits, and set the breakpoint above that width, in `rem`. A ten-column table may stack even at desktop width.
-- Each `td` carries `data-label`, and `td::before { content: attr(data-label) }` shows it.
+- Each `td` carries `data-label`. Below the breakpoint, `td::before { content: attr(data-label) }` shows it. Above the breakpoint, the visible header row names the columns, so the label stays hidden.
 - `attr(data-label)` renders the attribute as is. The attribute holds the translated text, not a key. The `<th>` and each `td` call the same `t(...)` key, so both show the same words. The i18n rule forbids a hardcoded string.
 - Sources: [Responsive Data Tables](https://css-tricks.com/responsive-data-tables/) and [Making Tables Responsive With Minimal CSS](https://css-tricks.com/making-tables-responsive-with-minimal-css/).
 
