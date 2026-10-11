@@ -35,3 +35,16 @@ Compliance: the acceptance-criterion-to-test mapping from round 1 still holds, a
 ## Round 4 — 2026-10-11T08:27:46Z — ef865958 (codex)
 
 No findings. `codex review --base origin/main`: the changes match the stated scope, and the focused interaction-design and skill-parity tests pass.
+
+## Round 5 — 2026-10-11T08:44:58Z — 9ab13530
+
+Checks run: `test/rails_ui_interaction_design_test.rb` (14 runs, 186 assertions, 0 failures) and `test/skill_parity_test.rb` (7 runs, 0 failures) pass. The full suite passes except `test/review_report_check_test.rb`, which a global git hook breaks locally (known, out of scope). RuboCop, Yamllint, markdownlint (reference and change folder) and the no-hardwrap check pass on the changed files. The working tree is clean.
+
+Round 3 fixes hold. The `<form method="dialog">` Cancel is now a plain submit `<button>` in both `## Action rows` and `### Confirmation dialogs`. The `td::before` label is scoped below the breakpoint. Inline editing keeps Delete on the edit page. `test_far_left_rule_is_scoped_to_edit_pages_and_save_sheets` now refutes "far left" on every shared line. The row check uses word boundaries and checks every table-row line. Each fix has an assertion.
+
+Compliance: the acceptance-criterion-to-test mapping from rounds 1 and 3 still holds. Every test named in `plan.md` `## Proof` exists. No existing test is weakened, skipped or deleted; `test/skill_parity_test.rb` only loses `rails-ui` from `CLAUDE_ONLY`. Security: nothing found. The four findings below are all Nits. None blocks the pull request.
+
+- [ ] Nit: The round 3 fix for the conflicting Cancel rules has a weak guard. Line 33 of the test only asserts that `<form method="dialog">` appears in `## Action rows`. It does not assert that the line says a plain `<button>`. A rewrite such as "Inside a `<form method="dialog">`, Cancel is a `<button type="button">`" passes, and that brings back the round 3 conflict — `test/rails_ui_interaction_design_test.rb:33` →
+- [ ] Nit: The row check dropped `each row` from its line filter in round 3, but the reference has no `each row` line that needed the change. A new line such as "Add a Delete button to each row" now escapes the check. The filter could keep `each row` next to `table row` and `index row` — `test/rails_ui_interaction_design_test.rb:79` →
+- [ ] Nit: Two lines give two forms of the same declaration. `### Responsive tables` shows `td::before { content: attr(data-label) }`. `### Screen readers` shows `td::before { content: attr(data-label) / "" }`. An agent that copies the first line gets the doubled screen-reader announcement that round 1 fixed. Line 97 could show the decorative form, or point to Screen readers — `claude/.claude/skills/rails-ui/references/interaction-design.md:97` →
+- [ ] Nit: "The record keeps its edit page" assumes the record already has one. `## Minimize modes` prefers inline editing for single-field changes. For a record whose only field is edited inline, an agent cannot tell if it must build an edit page only to hold Delete. Line 61 forbids exactly that for records with no editable fields. The line could say so plainly: a record with any editable field has an edit page — `claude/.claude/skills/rails-ui/references/interaction-design.md:60` →
