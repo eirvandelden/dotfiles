@@ -124,3 +124,7 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1 to 13 still h
 
 - [ ] Nit: The round 13 Important fix has a weak guard. The test asserts the words "amounts and dates never break", but not `white-space: nowrap`, and not that `overflow-wrap: anywhere` is limited to free-text cells. A rewrite that drops `nowrap` from line 89, or that widens line 88 back to "Text cells", still passes. Then amounts and dates break mid-value again, and the breakpoint at line 100 has no trigger. The test could assert `white-space: nowrap` on the amounts-and-dates line and "Free-text cells" on the `overflow-wrap: anywhere` line — `test/rails_ui_interaction_design_test.rb:107` →
 - [ ] Nit: "A grid or flex content area needs `min-inline-size: 0`" reads as a content area that is a grid or flex container. The fix works on the content area as a grid or flex item, for example `main` in `body { display: grid }` next to the sidebar. An agent whose `main` is a plain block inside a flex `body` can read the rule as not applying to it, and the round 13 overflow stays. The line could say "A content area that is a grid or flex item (for example `main` next to the sidebar)" — `claude/.claude/skills/rails-ui/references/interaction-design.md:90` →
+
+## Round 16 — 2026-10-11T09:49:09Z — 79f2c0d8 (codex)
+
+No findings. `codex review --base origin/main`: the diff matches its stated scope, the tests pass, and the Codex skill symlink resolves.
