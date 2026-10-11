@@ -79,3 +79,7 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3, 5 and 7 s
 - [ ] Nit: The test pins `justify-content: flex-end` but not `margin-inline-end: auto`. Since round 7 the two work together: without the auto margin, `flex-end` packs `Delete…`, `Cancel` and `Save` together on the right. A rewrite that drops the auto margin still passes, because the test only checks the words "far left" and "apart" — `test/rails_ui_interaction_design_test.rb:20` →
 - [ ] Nit: A three-button save sheet puts `Don't Save` first in the row. On the web, `Return` in a text field submits through the first submit button in DOM order. If an agent builds `Don't Save` as a submit button (for example with `formaction`), `Return` discards the changes. That breaks the "`Return` triggers the safest operation" rule. `Delete…` is safe because line 37 makes it `type="button"`; line 34 gives `Don't Save` no such rule — `claude/.claude/skills/rails-ui/references/interaction-design.md:34` →
 - [ ] Nit: Line 62 names the button twice in one sentence: "Its `Delete…` sits on the show page as a visible red `Delete…` button". The sentence could read "A visible red `Delete…` button sits on its show page" — `claude/.claude/skills/rails-ui/references/interaction-design.md:62` →
+
+## Round 10 — 2026-10-11T09:11:08Z — d88b146c (codex)
+
+No findings. `codex review --base origin/main`: the changes match the documented scope, and both focused test files pass.
