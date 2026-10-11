@@ -94,7 +94,7 @@ Below a breakpoint, `table`, `thead`, `tbody`, `tr`, `th` and `td` all get `disp
 - The layout CSS declares `container-type: inline-size` on the content area, which is often `main`. Table CSS never declares it.
 - Without such a container, use a `@media` query in `rem` that adds the sidebar width.
 - A container query cannot find the width where a table stops fitting. Pick the breakpoint per table: load the page with realistic data, narrow the window until the table no longer fits, and set the breakpoint above that width, in `rem`. A ten-column table may stack even at desktop width.
-- Each `td` carries `data-label`. Below the breakpoint, `td::before { content: attr(data-label) }` shows it. Above the breakpoint, the visible header row names the columns, so the label stays hidden.
+- Each `td` carries `data-label`. Below the breakpoint, `td::before { content: attr(data-label) / "" }` shows it. The `/ ""` part is explained under Screen readers. Above the breakpoint, the visible header row names the columns, so the label stays hidden.
 - `attr(data-label)` renders the attribute as is. The attribute holds the translated text, not a key. The `<th>` and each `td` call the same `t(...)` key, so both show the same words. The i18n rule forbids a hardcoded string.
 - Sources: [Responsive Data Tables](https://css-tricks.com/responsive-data-tables/) and [Making Tables Responsive With Minimal CSS](https://css-tricks.com/making-tables-responsive-with-minimal-css/).
 

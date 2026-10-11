@@ -30,7 +30,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/command="close"/, section)
     assert_match(/method="dialog"/, section)
     assert_match(/<form method="dialog">[^.]*plain `<button>`|plain `<button>`[^.]*<form method="dialog">/, section)
-    assert_match(/<form method="dialog">/, section(reference, "## Action rows"))
+    assert_match(/<form method="dialog">[^.]*plain `<button>`/, section(reference, "## Action rows"))
   end
 
   def test_far_left_rule_is_scoped_to_edit_pages_and_save_sheets
@@ -76,7 +76,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     refute_match(/third[^.\n]*(button)?[^.\n]*left of `Cancel`/i, reference)
     refute_match(/third dismissal button/i, reference)
     reference.each_line do |line|
-      next unless line =~ /table row|index row/i
+      next unless line =~ /table row|index row|each row/i
 
       assert_match(/\b(never|no|not|without)\b/i, line, "a line allows Delete in a row: #{line}")
     end
@@ -103,6 +103,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/data-label/, responsive)
     assert_match(/attr\(data-label\)/, responsive)
     assert_match(/below the breakpoint[^.]*`td::before|td::before[^.]*below the breakpoint/i, responsive)
+    reference.scan(/content: attr\(data-label\)[^`]*/).each { |rule| assert_includes(rule, '/ ""', "undecorated label: #{rule}") }
     assert_match(/t\(/, responsive)
     assert_match(/@container/, responsive)
     %w[table thead tbody tr th td].each { |element| assert_match(/`#{element}`/, responsive) }
