@@ -17,6 +17,8 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/apart/i, section)
     assert_match(/`Cancel` and `Save`[^.]*together[^.]*right/i, section)
     assert_match(/`Save`[^.]*rightmost[^.]*default/i, section)
+    assert_match(/justify-content: flex-end/, section)
+    assert_match(/without[^.]*`Delete…`|no `Delete…`/i, section)
   end
 
   def test_confirmation_dialog_puts_cancel_directly_left_of_red_delete_and_return_triggers_cancel
@@ -124,7 +126,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/above the breakpoint[^.]*header row stays visible/i, section)
     assert_includes(section, 'content: attr(data-label) / ""')
     assert_match(/never[^.]*display: none/i, section)
-    %w[table row columnheader cell].each { |role| assert_includes(section, %(role="#{role}")) }
+    %w[table rowgroup row columnheader cell].each { |role| assert_includes(section, %(role="#{role}")) }
     assert_match(/VoiceOver|accessibility tree/i, section)
     assert_includes(section, "https://www.w3.org/WAI/ARIA/apg/patterns/table/")
   end

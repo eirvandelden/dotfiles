@@ -33,7 +33,7 @@ An edit page follows the macOS save sheet. The red `Delete…` button stands apa
 - `Save` is rightmost and is the default button: filled, primary style.
 - A three-button save sheet keeps the shape: `Don't Save` stands apart on the far left, then `Cancel`, then `Save`.
 - The ellipsis in `Delete…` says that a confirmation follows. Translate the label, keep the ellipsis.
-- Build the row as a flex row. The destructive button takes `margin-inline-end: auto`, which pushes `Cancel` and `Save` to the right. Use `rem` sizes, and take mvpa.css styles first.
+- Build the row as a flex row with `justify-content: flex-end`, so `Cancel` and `Save` sit on the right even on a page without `Delete…`, such as a new page that shares the form partial. The destructive button takes `margin-inline-end: auto`, which keeps it apart on the left. Use `rem` sizes, and take mvpa.css styles first.
 - `Delete…` is a `<button type="button">`, because it opens in-place UI. It opens a `<dialog>` that holds the `button_to … method: :delete` form.
 - Put that `<dialog>` outside the edit `<form>`. HTML forbids nested forms.
 - Open the dialog with Invoker Commands: `commandfor` on the button and `command="show-modal"`. Add a small Stimulus controller as the fallback for browsers without them.
