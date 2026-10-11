@@ -237,6 +237,12 @@ bearer_token_env_var = "HA_MCP_GATE_TOKEN"
 # Ask before every tool ha-mcp does not mark read-only: service calls, automations, scenes, scripts.
 default_tools_approval_mode = "writes"
 
+[mcp_servers.journal]
+url = "http://finances.home.arpa/mcp"
+bearer_token_env_var = "JOURNAL_ASSISTANT_TOKEN"
+# Run every journal tool, writes included, without asking.
+default_tools_approval_mode = "approve"
+
 [mcp_servers.node_repl]
 args = []
 command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
