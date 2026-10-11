@@ -26,6 +26,9 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/autofocus/, section)
     assert_match(/`Return`[^.]*`Cancel`/, section)
     assert_match(/far-left rule[^.]*never applies/i, section)
+    assert_match(/`Cancel`[^.]*closes the dialog/i, section)
+    assert_match(/command="close"/, section)
+    assert_match(/method="dialog"/, section)
   end
 
   def test_far_left_rule_is_scoped_to_edit_pages_and_save_sheets
@@ -33,6 +36,11 @@ class RailsUiInteractionDesignTest < Minitest::Test
     refute_match(/far left/i, shared.gsub(/^.*edit pages? and (save )?sheets?.*$/i, ""))
     assert_match(/Edit pages and sheets/, shared)
     assert_match(/Confirmation dialogs/, shared)
+  end
+
+  def test_shared_action_rows_point_to_the_show_page_exception
+    shared = section(reference, "## Action rows").split(/^### /).first
+    assert_match(/Where Delete lives/, shared)
   end
 
   def test_delete_opens_a_dialog_outside_the_edit_form
@@ -93,6 +101,9 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/attr\(data-label\)/, responsive)
     assert_match(/t\(/, responsive)
     assert_match(/@container/, responsive)
+    %w[table thead tbody tr th td].each { |element| assert_match(/`#{element}`/, responsive) }
+    assert_match(/layout CSS[^.]*container-type|container-type[^.]*layout CSS/i, responsive)
+    assert_match(/table CSS never declares/i, responsive)
     assert_match(/breakpoint[^.]*(measure|narrow)|(measure|narrow)[^.]*breakpoint/i, responsive)
     assert_includes(responsive, "https://css-tricks.com/responsive-data-tables/")
     assert_includes(responsive, "https://css-tricks.com/making-tables-responsive-with-minimal-css/")
@@ -103,6 +114,9 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/scope="col"/, section)
     assert_match(/<caption>|aria-labelledby/, section)
     assert_match(/visually hidden|visually-hidden/i, section)
+    assert_match(/below the breakpoint[^.]*hide the header row/i, section)
+    assert_match(/above the breakpoint[^.]*header row stays visible/i, section)
+    assert_includes(section, 'content: attr(data-label) / ""')
     assert_match(/never[^.]*display: none/i, section)
     %w[table row columnheader cell].each { |role| assert_includes(section, %(role="#{role}")) }
     assert_match(/VoiceOver|accessibility tree/i, section)

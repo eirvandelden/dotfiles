@@ -23,7 +23,7 @@ These rules apply to user-facing action patterns across the UI, including modal 
 - Back/Cancel control type:
   - Use `<a>` when Cancel/Back navigates to another page or URL.
   - Use `<button type="button">` when Cancel dismisses or resets in-place UI.
-- A destructive button gets a fixed place in two layouts only: see Edit pages and sheets, and Confirmation dialogs. Do not invent a third.
+- A destructive button gets a fixed place in two layouts only: see Edit pages and sheets, and Confirmation dialogs. The one exception is the show page of a record with no editable fields: see Where Delete lives. Do not invent another.
 
 ### Edit pages and sheets
 
@@ -45,6 +45,7 @@ Use a modal confirmation when an action is irreversible. The red `Delete` is rig
 - Name the confirm button with the action verb (`Delete`, not `OK`).
 - Describe the item and the result (for example: `Delete this budget? This cannot be undone.`). Avoid vague prompts such as `Are you sure?`.
 - `Cancel` carries `autofocus`, so `Return` triggers `Cancel`, never the red `Delete`.
+- A click on `Cancel` closes the dialog. Use `<button type="button" commandfor="…" command="close">`, or put `Cancel` in a `<form method="dialog">`, which works without Invoker Commands.
 - `Esc` closes the dialog. The native `<dialog>` cancel event already does this.
 - Never require the user to type the item's name to confirm a deletion — a confirmation dialog is enough.
 
@@ -85,10 +86,10 @@ A table is never wider than the content area. The content area is the viewport w
 
 ### Responsive tables
 
-Below a breakpoint each `tr` becomes a block and each `td` becomes a row of label and value.
+Below a breakpoint, `table`, `thead`, `tbody`, `tr`, `th` and `td` all get `display: block`. Each `tr` becomes a stacked block, and each `td` becomes a row of label and value. Changing only `tr` and `td` leaves anonymous table boxes and a half-stacked layout.
 
 - Prefer a container query (`@container`). The width that matters is the content area, not the viewport.
-- The layout CSS declares `container-type: inline-size` on the content area. A table component never sets it on `main` itself.
+- The layout CSS declares `container-type: inline-size` on the content area, which is often `main`. Table CSS never declares it.
 - Without such a container, use a `@media` query in `rem` that adds the sidebar width.
 - A container query cannot find the width where a table stops fitting. Pick the breakpoint per table: load the page with realistic data, narrow the window until the table no longer fits, and set the breakpoint above that width, in `rem`. A ten-column table may stack even at desktop width.
 - Each `td` carries `data-label`, and `td::before { content: attr(data-label) }` shows it.
@@ -100,7 +101,9 @@ Below a breakpoint each `tr` becomes a block and each `td` becomes a row of labe
 Keep native `<table>`, `<thead>`, `<th scope="col">` and `<td>` markup.
 
 - Name the table with a `<caption>` (it may be visually hidden) or `aria-labelledby`.
-- Hide the header row with a clip-based visually hidden rule. Never use `display: none`, because screen readers then lose the headers.
+- Below the breakpoint, hide the header row with a clip-based visually hidden rule. Never use `display: none`, because screen readers then lose the headers.
+- Above the breakpoint, the header row stays visible. Sighted users need it on a table that does not stack.
+- Mark the label as decorative: `td::before { content: attr(data-label) / "" }`. The empty alternative text keeps a screen reader from announcing the column name twice, once from the header and once from the label.
 - A changed `display` on table elements drops table semantics in some browsers. Give the elements whose `display` changes explicit roles: `role="table"`, `role="rowgroup"`, `role="row"`, `role="columnheader"` and `role="cell"`.
 - Check the stacked table once with VoiceOver or the browser's accessibility tree.
 - Pattern: [WAI-ARIA table pattern](https://www.w3.org/WAI/ARIA/apg/patterns/table/).
