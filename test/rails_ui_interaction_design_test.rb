@@ -104,8 +104,10 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/never scrolls sideways/i, width)
     assert_match(/max-inline-size: 100%/, width)
     assert_match(/overflow-wrap: anywhere/, width)
-    assert_match(/amounts and dates never break/i, width)
-    assert_match(/min-inline-size: 0/, width)
+    assert_match(/amounts and dates never break[^.]*\.[^.]*only those cells `white-space: nowrap`/i, width)
+    assert_match(/free-text cells[^.]*may break anywhere: `overflow-wrap: anywhere`/i, width)
+    refute_match(/(all|every|text) cells may break anywhere/i, width)
+    assert_match(/content area is a grid or flex item[^.]*min-inline-size: 0/i, width)
     assert_match(/not the fix[^.]*overflow-x|overflow-x[^.]*not the fix/i, width)
 
     responsive = section(reference, "### Responsive tables")

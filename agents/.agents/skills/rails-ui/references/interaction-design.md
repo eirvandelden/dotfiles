@@ -87,7 +87,7 @@ A table is never wider than the content area. The content area is the viewport w
 - Give the table `max-inline-size: 100%`.
 - Free-text cells (names, notes, IDs, URLs) may break anywhere: `overflow-wrap: anywhere`. A long ID or URL then cannot widen the table.
 - Amounts and dates never break. Give only those cells `white-space: nowrap`, so a value stays whole.
-- A grid or flex content area needs `min-inline-size: 0`. Without it, a cell that cannot wrap pushes the content area wider than the viewport.
+- When the content area is a grid or flex item (for example `main` beside the sidebar in a grid layout), give it `min-inline-size: 0`. Without it, a cell that cannot wrap pushes the content area wider than the viewport.
 - When the table still needs more room, it stacks. See Responsive tables.
 
 ### Responsive tables
