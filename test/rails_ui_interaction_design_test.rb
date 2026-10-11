@@ -62,6 +62,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/never on[^.]*show page/i, section)
     assert_match(/never between other buttons/i, section)
     assert_match(/inline editing[^.]*does not move Delete/i, section)
+    assert_match(/every field[^.]*inline[^.]*still gets an edit page/i, section)
   end
 
   def test_record_without_editable_fields_puts_delete_on_its_show_page_outside_menus

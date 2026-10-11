@@ -58,6 +58,7 @@ For a record with editable fields, Delete appears only on the edit page.
 - Never on that record's show page. A show page links to Edit.
 - Never between other buttons. It stands apart, as described under Edit pages and sheets.
 - Inline editing of a single field does not move Delete. The record keeps its edit page, and Delete stays there.
+- A record with editable fields where every field is edited inline still gets an edit page. That page holds the fields and Delete.
 - A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its `Delete…` sits on the show page as a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It still opens the confirmation dialog.
 - Never put that `Delete…` inside an "Actions" menu or any other pull-down.
 - This exception does not let any other show page carry Delete.
