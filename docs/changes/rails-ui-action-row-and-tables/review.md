@@ -48,3 +48,7 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1 and 3 still h
 - [ ] Nit: The row check dropped `each row` from its line filter in round 3, but the reference has no `each row` line that needed the change. A new line such as "Add a Delete button to each row" now escapes the check. The filter could keep `each row` next to `table row` and `index row` — `test/rails_ui_interaction_design_test.rb:79` →
 - [ ] Nit: Two lines give two forms of the same declaration. `### Responsive tables` shows `td::before { content: attr(data-label) }`. `### Screen readers` shows `td::before { content: attr(data-label) / "" }`. An agent that copies the first line gets the doubled screen-reader announcement that round 1 fixed. Line 97 could show the decorative form, or point to Screen readers — `claude/.claude/skills/rails-ui/references/interaction-design.md:97` →
 - [ ] Nit: "The record keeps its edit page" assumes the record already has one. `## Minimize modes` prefers inline editing for single-field changes. For a record whose only field is edited inline, an agent cannot tell if it must build an edit page only to hold Delete. Line 61 forbids exactly that for records with no editable fields. The line could say so plainly: a record with any editable field has an edit page — `claude/.claude/skills/rails-ui/references/interaction-design.md:60` →
+
+## Round 6 — 2026-10-11T08:45:30Z — 9ab13530 (codex)
+
+No findings. `codex review --base origin/main`: the skill guidance and Codex link match the stated scope, and both focused tests pass.
