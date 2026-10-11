@@ -94,3 +94,7 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3, 5, 7 and 
 
 - [ ] Nit: The round 9 fix makes `Don't Save` always a `<button type="button">`. On the web, `Don't Save` usually discards the changes and leaves the page, which is navigation. Line 9 and line 24 make a control that navigates an `<a>`, and line 35 itself allows "a link or a `<button type="button">`". An agent that follows line 34 builds a `Don't Save` that does nothing without JavaScript. Line 34 could say "a link or a `<button type="button">`, never a submit button", and the test at `test/rails_ui_interaction_design_test.rb:22` could accept both — `claude/.claude/skills/rails-ui/references/interaction-design.md:34` →
 - [ ] Nit: `## Default button` says "The default button is the safest forward action for the context", and three lines later makes `Cancel` the default in a destructive confirmation. `Cancel` is not a forward action, so the section contradicts itself. Line 18 in `## Action rows` already says "the safest operation for the context". Line 75 could drop "forward", and the test at `test/rails_ui_interaction_design_test.rb:93` would follow — `claude/.claude/skills/rails-ui/references/interaction-design.md:75` →
+
+## Round 12 — 2026-10-11T09:20:54Z — 6e70e6b3 (codex)
+
+No findings. `codex review --base origin/main`: the changes match the stated scope, and both focused test files pass.
