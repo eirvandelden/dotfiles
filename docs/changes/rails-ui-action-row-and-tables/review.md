@@ -63,3 +63,7 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1, 3 and 5 stil
 
 - [ ] Nit: The flex-row recipe right-aligns `Cancel` and `Save` only when `Delete…` is present, because the space comes from its `margin-inline-end: auto`. A new page has no Delete. When it shares the `_form` partial with the edit page, `Cancel` and `Save` move to the left edge on new and to the right edge on edit. The line could add `justify-content: flex-end` on the row. The auto margin still pushes `Delete…` far left when it is there — `claude/.claude/skills/rails-ui/references/interaction-design.md:36` →
 - [ ] Nit: `test_stacked_tables_keep_headers_for_screen_readers_and_add_table_roles` checks `table`, `row`, `columnheader` and `cell`, but not `rowgroup`. Line 92 sets `thead` and `tbody` to `display: block`, so line 110 needs `role="rowgroup"` for them. If a rewrite drops it, the test still passes — `test/rails_ui_interaction_design_test.rb:127` →
+
+## Round 8 — 2026-10-11T09:01:40Z — d3d652d3 (codex)
+
+No findings. `codex review --base origin/main`: no actionable defects, and both focused test files pass.
