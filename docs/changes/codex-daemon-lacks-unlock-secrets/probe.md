@@ -11,7 +11,7 @@ Recorded 2026-10-08 and 2026-10-09 by the probe runner. No secret value appears 
 
 ## Result
 
-P0 to P8 and P10 passed. P4's fizzy and email calls ran on 2026-10-12 from the home network. P9 is pending.
+P0 to P10 passed. P4's fizzy and email calls and P9 ran on 2026-10-12.
 
 ## P0: a failed unlock changes nothing (commit dc6cb172)
 
@@ -80,7 +80,9 @@ P0 to P8 and P10 passed. P4's fizzy and email calls ran on 2026-10-12 from the h
 
 ## P9: ChatGPT.app agents get no secrets
 
-- Pending: Etienne drives ChatGPT.app.
+- Command on 2026-10-12, run by Etienne: a ChatGPT.app Codex agent ran P3's command before and after he started `unlock && codex` in a terminal.
+- Result: every run printed `FIZZY_PAT unset` and `NODE_AUTH_TOKEN unset`.
+- Pass.
 
 ## P10: a locked shell runs Codex as today
 
