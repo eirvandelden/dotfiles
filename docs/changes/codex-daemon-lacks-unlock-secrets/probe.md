@@ -13,7 +13,7 @@ Recorded 2026-10-08 and 2026-10-09 by the probe runner. No secret value appears 
 
 P0 to P8 and P10 passed. P4's fizzy and email calls ran on 2026-10-12 from the home network. P9 is pending.
 
-## P0: a failed unlock changes nothing (commit acb8012d)
+## P0: a failed unlock changes nothing (commit dc6cb172)
 
 - Command: a stub `op` that always exits 1, then `unlock`, `unlock && echo ok` and `unlock || echo "unlock reported failure"` in a `zsh -f` shell.
 - Result: plain `unlock` returned 1. `unlock && echo ok` printed nothing and returned 1. `unlock || ...` printed `unlock reported failure`. In all three cases the mapped variable stayed unset and the shim was not on `PATH`. `secrets` printed `op read failed for A_SECRET`.
