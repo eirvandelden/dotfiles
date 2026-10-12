@@ -86,3 +86,5 @@ Domain skills applied: ruby-style, object-oriented-design, dotfiles-maintenance 
 - A hostile hook that refuses every commit fails `ReviewReportCheckTest` in setup, not at the reported commit on `main` → fixed (the hostile `pre-commit` copies the `no-push-to-main` rule; the control asserts failure at the second commit on `main`)
 - A checked-in config with `user.name` and `user.email` lets a commit without identity pass locally and fail in CI → fixed (the helper points both variables at `/dev/null`; the checked-in config file is gone)
 - The claim that all fifteen files have a `git` helper is false; `auto_accept_test.rb` and `change_scope_test.rb` call `system("git", ...)` directly → fixed (Context corrected)
+
+Reproduction: committed
