@@ -106,6 +106,42 @@ class FillPrTemplateTest < Minitest::Test
     - Claims see export progress mid-run
   MARKDOWN
 
+  PLAN_WITH_DESIGN = <<~MARKDOWN
+    # Plan: Claims status export
+
+    Status: accepted.
+
+    ## Design
+
+    ### Domain terms
+
+    - **Export**: a run that sends claims out.
+
+    ### Diagrams
+
+    ```mermaid
+    classDiagram
+      Claim --> Export
+    ```
+
+    ### Signatures
+
+    Not affected: no new public method.
+
+    ## Files that change
+
+    `app/models/claim.rb`: adds `#export_status`.
+
+    ## Order of work
+
+    1. Write the acceptance test, watch it fail.
+    2. Add `#export_status`.
+
+    ## Proof
+
+    - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
+  MARKDOWN
+
   def setup
     @dir = Dir.mktmpdir
   end
@@ -534,6 +570,38 @@ class FillPrTemplateTest < Minitest::Test
 
     assert_match(/## Implementation/, output)
     refute_match(/## Proof/, output)
+  end
+
+  def test_the_plans_design_section_lands_in_the_implementation_part_with_its_mermaid_fence
+    output = run_fill(<<~MARKDOWN, plan: PLAN_WITH_DESIGN)
+      ## Implementation
+
+      _how did you build it_
+    MARKDOWN
+
+    implementation = output[/## Implementation\n\n(.*?)(?=\n\n## |\z)/m, 1]
+    assert_match(/### Domain terms/, implementation)
+    assert_match(/### Signatures\n\nNot affected: no new public method\./, implementation)
+    assert_match(/```mermaid\nclassDiagram\n  Claim --> Export\n```/, implementation)
+    assert_operator(implementation.index("### Domain terms"), :<, implementation.index("app/models/claim.rb"))
+    refute_match(/^## Design$/, output)
+  end
+
+  def test_an_appended_implementation_section_starts_with_the_design
+    output = run_fill(nil, plan: PLAN_WITH_DESIGN)
+
+    implementation = output[/## Implementation\n\n(.*?)(?=\n\n## Proof)/m, 1]
+    assert_match(/\A### Domain terms/, implementation)
+    assert_match(/```mermaid\nclassDiagram/, implementation)
+    assert_match(%r{app/models/claim\.rb}, implementation)
+  end
+
+  def test_a_plan_without_design_fills_as_before
+    output = run_fill(nil)
+
+    implementation = output[/## Implementation\n\n(.*?)(?=\n\n## Proof)/m, 1]
+    refute_match(/###/, implementation)
+    assert_match(%r{\A`app/models/claim\.rb`}, implementation)
   end
 
   private

@@ -22,7 +22,7 @@ class ApprovalWordTest < Minitest::Test
   end
 
   def test_the_plan_skill_flips_status_to_accepted_when_agreed
-    step = skill_text("plan")[/^7\. .*$/] || flunk("no step 7 in plan")
+    step = skill_text("plan")[/^8\. .*$/] || flunk("no step 8 in plan")
 
     assert_includes(step, "`Status: accepted` only on the user's literal word \"accepted\" or \"agreed\"")
     assert_includes(step, "On either word")
