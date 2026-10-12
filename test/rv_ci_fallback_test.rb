@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require "yaml"
+require_relative "isolated_git"
 
 class RvCiFallbackTest < Minitest::Test
   def setup

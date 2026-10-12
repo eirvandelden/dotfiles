@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Claude Code PreToolUse hook (same stdin/exit contract as consent-guard.rb): while a bugfix's
 # reproduction test is committed (plan.md carries "Reproduction: committed"), an edit to a test

@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "open3"
 require "yaml"
+require_relative "isolated_git"
 
 # Claude and Codex share skills from one source: a Claude skill folder under
 # claude/.claude/skills/<name>/, linked into agents/.agents/skills/<name> for

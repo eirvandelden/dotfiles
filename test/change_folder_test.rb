@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Every change gets a folder named after its branch: docs/changes/<slug>/. This
 # script is the one place that derivation happens — the intent, plan and

@@ -6,6 +6,7 @@ require "tmpdir"
 
 $LOAD_PATH.unshift(File.expand_path("../git/.config/git/worktree-tools/lib", __dir__))
 require "agent_worktree"
+require_relative "isolated_git"
 
 # AgentWorktree remembers, per herdr pane, the worktree its agent created or reused last.
 class AgentWorktreeTest < Minitest::Test

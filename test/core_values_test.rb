@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The core values hook re-injects a handful of behavioral rules on SessionStart
 # ("full" mode) and on every UserPromptSubmit ("motto" mode), so they survive

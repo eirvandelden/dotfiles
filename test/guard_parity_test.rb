@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "json"
 require_relative "../claude/.claude/hooks/remote_matcher"
+require_relative "isolated_git"
 
 # The consent guard and the test guard run in both tools from one script each under
 # claude/.claude/hooks/. Claude calls them from settings.json, Codex from the inline [hooks]

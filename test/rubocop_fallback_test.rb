@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The global fallback `rubocop/.rubocop.yml` lints every repo without its own RuboCop config.
 # Plain Minitest has no `assert_not` or `assert_no_match`: those exist only in Rails'

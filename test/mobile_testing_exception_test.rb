@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Every instruction that says "test first" carries the same mobile exception, so a blanket rule
 # elsewhere cannot negate it (docs/changes/hotwire-native-agent-guidance/plan.md, canonical wording).

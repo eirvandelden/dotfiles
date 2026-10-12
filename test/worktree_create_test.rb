@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # worktree-create sweeps merged/gone worktrees, then creates a fresh one off origin's default
 # branch. It shells out to git, gh (PR state) and, inside herdr, worktree-pane — all stubbed.

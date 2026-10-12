@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Two scripts spawn a Claude worker inside the running Herdr session: one starts a stage
 # (intent, plan, or implement) in a fresh worker in a new pane, one asks a reviewer to look at

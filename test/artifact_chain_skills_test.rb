@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # The change workflow is intent -> plan -> implement. These tests read the skill, agent and
 # playbook text, since that text is the behaviour: an agent does what the skill says.

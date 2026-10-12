@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # `secrets` prints export statements for the references listed in
 # ~/.config/secrets/1password.env, and for the optional work overlay beside it.

@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # finish needs to know which of its two behaviours applies before doing
 # anything else. change-scope answers that from the "origin" remote alone,

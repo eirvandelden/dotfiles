@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The consent guard is a Claude Code PreToolUse hook. It reads the tool call as
 # JSON on stdin and exits 2 (block, reason on stderr) when the command needs

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "yaml"
+require_relative "isolated_git"
 
 # The hotwire-native skill is first-party guidance the repo owns: how its routing, validation matrix and
 # targeting rules read is behaviour an agent acts on (docs/changes/hotwire-native-agent-guidance/plan.md).

@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Codex has no shared agent-definition format with Claude, so each Claude agent under
 # claude/.claude/agents/<name>.md is compiled into a Codex codex/.codex/agents/<name>.toml —

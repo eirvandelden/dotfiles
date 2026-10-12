@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "isolated_git"
 
 class LefthookPullHooksTest < Minitest::Test
   TRUNK = "trunk"
