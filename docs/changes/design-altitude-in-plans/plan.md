@@ -70,8 +70,8 @@ sequenceDiagram
 # Renders Mermaid as text or as an image in the terminal.
 class MermaidShow
   # Reads the mode and the input from the command line.
-  #: (Array[String] argv, ?out: IO, ?env: Hash[String, String]) -> void
-  def initialize(argv, out: $stdout, env: ENV)
+  #: (Array[String] argv, ?out: IO, ?input: IO) -> void
+  def initialize(argv, out: $stdout, input: $stdin)
   # Renders the input in the chosen mode; returns the exit status.
   #: () -> Integer
   def run

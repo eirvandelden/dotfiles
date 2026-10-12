@@ -1,0 +1,162 @@
+#!/usr/bin/env ruby
+# Shows Mermaid diagrams in the terminal, as Unicode text or as an image.
+#
+#   mermaid-show <file.mmd>       prints the diagram as text
+#   mermaid-show <file.md>        prints each Mermaid fence as text
+#   mermaid-show --markdown       reads markdown on stdin, writes it back with text fences
+#   mermaid-show --image <file>   renders a PNG with mmdc, then shows it with timg
+require "open3"
+require "tmpdir"
+
+# Renders Mermaid as text or as an image in the terminal.
+class MermaidShow
+  HELPER = File.join(__dir__, "mermaid-ascii.mjs")
+  USAGE = "usage: mermaid-show <file.mmd|file.md> | --markdown | --image <file>".freeze
+  INSTALL_HINT = "mermaid-show needs beautiful-mermaid: npm install -g beautiful-mermaid".freeze
+  OPENING_FENCE = /\A(`{3,}|~{3,})\s*(\S*)/
+  Failure = Class.new(StandardError)
+
+  # Reads the mode and the input from the command line.
+  #: (Array[String] argv, ?out: IO, ?input: IO) -> void
+  def initialize(argv, out: $stdout, input: $stdin)
+    @argv = argv
+    @out = out
+    @input = input
+  end
+
+  # Renders the input in the chosen mode; returns the exit status.
+  #: () -> Integer
+  def run
+    dispatch
+    0
+  rescue Failure => error
+    warn(error.message)
+    error.message == USAGE ? 2 : 1
+  end
+
+  # Replaces each Mermaid fence with a text fence of its rendering.
+  #: (String markdown) -> String
+  def replace_fences(markdown)
+    fences(markdown).map do |kind, text|
+      kind == :mermaid ? "```text\n#{text_for(text)}\n```\n" : text
+    end.join
+  end
+
+  # Renders one diagram as Unicode text.
+  #: (String source) -> String
+  def text_for(source)
+    stdout, stderr, status = Open3.capture3("node", HELPER, stdin_data: source)
+    raise Failure, "#{INSTALL_HINT}\n#{stderr}".strip unless status.success?
+
+    stdout.chomp
+  end
+
+  # Renders one diagram to a PNG and shows it with timg.
+  #: (String source) -> void
+  def show_image(source)
+    Dir.mktmpdir("mermaid-show") do |dir|
+      png = File.join(dir, "diagram.png")
+      render_png(source, dir, png)
+      system("timg", png, out: @out) || raise(Failure, "timg could not show #{png}")
+    end
+  end
+
+  private
+
+  # Picks the mode from the arguments and runs it.
+  #: () -> void
+  def dispatch
+    case @argv
+    in [ "--markdown" ] then @out.write(replace_fences(@input.read))
+    in [ "--image", path ] then diagrams_in(path).each { |source| show_image(source) }
+    in [ path ] unless path.start_with?("-") then print_text(path)
+    else raise Failure, USAGE
+    end
+  end
+
+  # Prints every diagram of a file as text, one after the other.
+  #: (String path) -> void
+  def print_text(path)
+    diagrams_in(path).each { |source| @out.puts(text_for(source)) }
+  end
+
+  # Returns the diagrams of a file: its Mermaid fences for markdown, the whole file otherwise.
+  #: (String path) -> Array[String]
+  def diagrams_in(path)
+    raise Failure, "mermaid-show: no such file: #{path}" unless File.file?(path)
+
+    content = File.read(path)
+    return [ content ] unless File.extname(path) == ".md"
+
+    fences(content).filter_map { |kind, text| text if kind == :mermaid }
+  end
+
+  # Runs mmdc to write the PNG for one diagram.
+  #: (String source, String dir, String png) -> void
+  def render_png(source, dir, png)
+    input = File.join(dir, "diagram.mmd")
+    File.write(input, source)
+    _, stderr, status = Open3.capture3("mmdc", "-q", "-i", input, "-o", png, "-b", "white", "-s", "2")
+    raise Failure, "mmdc failed: #{stderr}".strip unless status.success?
+  end
+
+  # Splits markdown into [:mermaid, source] and [:text, lines] chunks; the text chunks keep every byte.
+  #: (String markdown) -> Array[[Symbol, String]]
+  def fences(markdown)
+    chunks = []
+    open_fence = nil
+    markdown.each_line do |line|
+      open_fence = advance(chunks, open_fence, line)
+    end
+    chunks.concat(flush(open_fence))
+  end
+
+  # Handles one line: opens, extends or closes a fence; returns the fence still open.
+  #: (Array[[Symbol, String]] chunks, Hash[Symbol, untyped]? open_fence, String line) -> Hash[Symbol, untyped]?
+  def advance(chunks, open_fence, line)
+    return open_new(chunks, line) unless open_fence
+
+    open_fence[:lines] << line
+    return open_fence unless closes?(open_fence, line)
+
+    chunks.concat(flush(open_fence, closed: true))
+    nil
+  end
+
+  # Starts a fence when the line opens one, otherwise keeps the line as plain text.
+  #: (Array[[Symbol, String]] chunks, String line) -> Hash[Symbol, untyped]?
+  def open_new(chunks, line)
+    match = line.match(OPENING_FENCE)
+    return add_text(chunks, line) unless match
+
+    { marker: match[1], language: match[2], lines: [ line ] }
+  end
+
+  # Appends plain text to the last text chunk; returns nil because no fence is open.
+  #: (Array[[Symbol, String]] chunks, String line) -> nil
+  def add_text(chunks, line)
+    chunks.last&.first == :text ? chunks.last[1] += line : chunks << [ :text, +line ]
+    nil
+  end
+
+  # Tells whether the line closes the open fence: same character, at least as long, nothing after it.
+  #: (Hash[Symbol, untyped] open_fence, String line) -> bool
+  def closes?(open_fence, line)
+    marker = open_fence[:marker]
+    line.strip.match?(/\A#{Regexp.escape(marker[0])}{#{marker.length},}\z/)
+  end
+
+  # Turns a finished fence into chunks; a Mermaid backtick fence becomes one :mermaid chunk.
+  #: (Hash[Symbol, untyped]? fence, ?closed: bool) -> Array[[Symbol, String]]
+  def flush(fence, closed: false)
+    return [] unless fence
+
+    if closed && fence[:language] == "mermaid" && fence[:marker].start_with?("`")
+      [ [ :mermaid, fence[:lines][1...-1].join ] ]
+    else
+      [ [ :text, fence[:lines].join ] ]
+    end
+  end
+end
+
+exit(MermaidShow.new(ARGV).run) if $PROGRAM_NAME == __FILE__
