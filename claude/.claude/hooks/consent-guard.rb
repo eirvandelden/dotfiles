@@ -37,7 +37,8 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 def words(command)
   Shellwords.split(command_lines_as_operators(command))
 rescue ArgumentError
-  command.gsub(/\n|;|&&|\||&>|(?<![<>])&(?!>)|[<>]/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
+  without_redirects = command.gsub(/(?:(?<=\s|\A)\d+)?(?:&>>?|[<>]+&?)(?!\()\s*[^\s;|&<>]*/, " ")
+  without_redirects.gsub(/\n|;|&&|\||(?<![<>])&/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
 end
 
 # Outside quotes, a newline ends a command like `;` does, a backslash-newline joins

@@ -956,6 +956,17 @@ class ConsentGuardTest < Minitest::Test
     refute_includes(view, "log.txt")
   end
 
+  def test_an_unmatched_quote_does_not_make_a_redirect_the_merge_selector
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("echo it's; gh pr merge --squash 2>/dev/null")
+    run_guard("echo it's; gh pr merge --squash 2>&1")
+    run_guard("echo it's; gh pr merge --squash > out.txt")
+
+    views = File.readlines(@gh_log).select { |line| line.start_with?("pr view") }
+    assert(views.none? { |line| line.start_with?("pr view 2") || line.include?(">") || line.include?("out.txt") }, views.join)
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
