@@ -1,6 +1,6 @@
 # Plan: Consent guard asks before any way of skipping the git hooks
 
-From `intent.md` (2026-10-07). Status: accepted.
+From `intent.md` (2026-10-07, amended 2026-10-12). Status: draft.
 
 ## Context
 
@@ -116,6 +116,15 @@ Test setup: the guard tests keep their helpers. `setup` makes a temporary reposi
 
 ---
 Domain skills applied: dotfiles-maintenance (stow layout, rule 12), object-oriented-design (module boundary), ruby-style (method shape). No conflicts between them.
+
+## Coordinator decisions (2026-10-12)
+
+`intent.md` was amended and re-accepted. Revise the plan to match, then run a new critique round.
+
+- In scope now: any abbreviation of `--no-verify` that git accepts (`--no-veri`); `LEFTHOOK_BIN=` and `LEFTHOOK_CONFIG=` assignments, inline or exported, like `LEFTHOOK=`; and splitting on `;`, `&` and `|` for every check, old and new, so `git push --force origin x; echo done` is refused outright while `git push --force-with-lease origin x; echo done` goes through.
+- Out of scope, a known limit: `GIT_CONFIG_GLOBAL=`, `XDG_CONFIG_HOME=` and `HOME=` overrides.
+- The branch was rebased onto `origin/main`, which moved 134 commits. Re-verify every claim the plan makes about `consent-guard.rb`, `remote_matcher.rb`, `default.rules`, the parity test and the hook shims against the current code before revising.
+- Each new acceptance criterion in `intent.md` gets a line in `## Proof`.
 
 ## Critique
 
