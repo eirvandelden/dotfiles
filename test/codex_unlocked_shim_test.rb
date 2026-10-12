@@ -72,6 +72,18 @@ class CodexUnlockedShimTest < Minitest::Test
     end
   end
 
+  # `codex app` starts the Desktop app and `exec-server` serves other sessions,
+  # so neither may hold the unlocked environment.
+  def test_the_desktop_app_and_exec_server_launch_like_daemon_commands
+    %w[app exec-server].each { |command| run_shim(command, extra_env: { "UNLOCKED_BIN" => SHIM_DIR }) }
+
+    assert_equal %w[app exec-server], codex_calls.map { |call| call[:args].first }
+    codex_calls.each do |call|
+      assert_equal(%w[unset unset unset unset], (MAPPED + [ "UNLOCKED_BIN" ]).map { |name| call[:env][name] })
+      refute_includes call[:path], SHIM_DIR
+    end
+  end
+
   def test_a_daemon_command_runs_without_the_shim_on_path
     run_shim("agents")
 

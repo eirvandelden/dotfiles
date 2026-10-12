@@ -5,7 +5,7 @@
 # shared app-server daemon, which keeps the environment it started with. This
 # shim runs sessions in-process (`--no-daemon`), so they inherit the unlocked
 # environment, and strips the mapped secrets from commands that may start or
-# reach the shared daemon. Subcommand lists come from Codex 0.161.0.
+# reach the shared daemon, start the Desktop app or serve other sessions. Subcommand lists come from Codex 0.161.0.
 
 self_dir=$(cd "$(dirname "$0")" && pwd -P)
 
@@ -60,10 +60,10 @@ classify() {
         [ $# -gt 0 ] && shift
         ;;
       -*) shift ;;
-      agents | queue | app-server | remote-control | update) echo daemon; return ;;
+      agents | queue | app-server | remote-control | update | app | exec-server) echo daemon; return ;;
       resume | fork) echo session; return ;;
-      exec | e | review | login | logout | mcp | plugin | app | completion | doctor | sandbox | debug | apply | a | \
-        archive | delete | migrate-rollouts | unarchive | cloud | exec-server | features | help)
+      exec | e | review | login | logout | mcp | plugin | completion | doctor | sandbox | debug | apply | a | \
+        archive | delete | migrate-rollouts | unarchive | cloud | features | help)
         echo other; return ;;
       *) echo session; return ;;
     esac
