@@ -1,6 +1,6 @@
 # Probes: Codex sessions lack unlocked secrets
 
-Recorded 2026-10-08 and 2026-10-09 by the probe runner. No secret value appears here. Presence checks use `test -n "$(printenv NAME)"` and `ps eww -p <pid> | tr ' ' '\n' | grep -c '^NAME='`.
+Recorded 2026-10-08 and 2026-10-09 by the probe runner. P4's fizzy and email calls were recorded on 2026-10-12 by the coordinator. Etienne ran P9 on 2026-10-12. No secret value appears here. Presence checks use `test -n "$(printenv NAME)"` and `ps eww -p <pid> | tr ' ' '\n' | grep -c '^NAME='`.
 
 ## Setup
 
