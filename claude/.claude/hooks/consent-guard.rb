@@ -37,7 +37,7 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", 
 def words(command)
   Shellwords.split(command_lines_as_operators(command))
 rescue ArgumentError
-  command.gsub(/\n|;|&&|\||(?<![<>])&(?!>)/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
+  command.gsub(/\n|;|&&|\||&>|(?<![<>])&(?!>)|[<>]/) { |operator| operator == "\n" ? " ; " : " #{operator} " }.split
 end
 
 # Outside quotes, a newline ends a command like `;` does, a backslash-newline joins
@@ -59,7 +59,7 @@ def next_character(characters, result, quote)
   when "\\" then copy_escape(characters, result)
   when "\n", ";", "|" then result << " #{character == "\n" ? ';' : character} "
   when "&" then result << ampersand(characters, result)
-  when ">", "<" then redirect(characters, result)
+  when ">", "<" then characters.first == "(" ? result << " #{character} " : redirect(characters, result)
   when "#" then comment?(result) ? skip_comment(characters) : result << character
   else result << character
   end
@@ -68,23 +68,25 @@ end
 
 def ampersand(characters, result)
   return characters.shift && " && " if characters.first == "&"
-  return redirect(characters, result) if characters.first == ">"
+  return redirect(characters, result, fd: false) if characters.first == ">"
 
   " & "
 end
 
 # A redirect is dropped whole: an optional file descriptor before it, the operator, and its
 # target word. None of them is an argument of the command.
-def redirect(characters, result)
-  result.sub!(/(?<=\A|\s)\d+\z/, "")
+def redirect(characters, result, fd: true)
+  result.sub!(/(?<=\A|\s)\d+\z/, "") if fd
   characters.shift while %w[> < & |].include?(characters.first)
   characters.shift while characters.first&.match?(/[ \t]/)
-  skip_word(characters) unless %w[' "].include?(characters.first)
+  skip_word(characters)
   ""
 end
 
 def skip_word(characters)
-  characters.shift until characters.empty? || characters.first.match?(/[\s;|&<>]/)
+  quote = characters.shift if %w[' "].include?(characters.first)
+  characters.shift until characters.empty? || (quote ? characters.first == quote : characters.first.match?(/[\s;|&<>]/))
+  characters.shift if quote
 end
 
 def copy_escape(characters, result)
@@ -124,9 +126,9 @@ def create_reason(words, working_directory)
   return unless gh_command?(words, "create")
 
   directories = command_directories(words, working_directory)
-  head = head_branch(pr_window(words, "create"))
+  heads = pr_windows(words, "create").filter_map { |_, window| head_branch(window) }
   return unless directories.any? { |directory| change_folder?(directory) } ||
-                (head && directories.any? { |directory| branch_carries_change_folder?(directory, head) })
+                heads.any? { |head| directories.any? { |directory| branch_carries_change_folder?(directory, head) } }
 
   "only /finish opens a pull request, once it removed docs/changes/<slug>/. Run /finish."
 end

