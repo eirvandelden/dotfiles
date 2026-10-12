@@ -27,7 +27,73 @@ class IsolatedGitTest < Minitest::Test
     assert(status.success?, output)
   end
 
+  COMMIT_SCRIPT = <<~'RUBY'.freeze
+    require "tmpdir"
+    Dir.mktmpdir do |dir|
+      identity = ["-c", "user.name=Test", "-c", "user.email=test@example.com"]
+      system("git", "init", "--quiet", "--initial-branch=main", dir, exception: true)
+      2.times do |index|
+        system("git", "-C", dir, *identity, "commit", "--quiet", "--allow-empty", "-m", "commit #{index}",
+               exception: true)
+      end
+    end
+  RUBY
+
+  def test_a_commit_ignores_the_global_no_push_to_main_hook
+    write_hostile_config(hook: true)
+
+    output, status = run_commit_script("-Itest", "-risolated_git")
+
+    assert(status.success?, output)
+  end
+
+  def test_a_commit_ignores_global_signing_with_no_agent
+    write_hostile_config(signing: true)
+
+    output, status = run_commit_script("-Itest", "-risolated_git")
+
+    assert(status.success?, output)
+  end
+
+  def test_without_the_helper_the_global_hook_blocks_the_second_commit_on_main
+    write_hostile_config(hook: true)
+
+    output, status = run_commit_script
+
+    assert_match(/global hook refused main/, output)
+    refute(status.success?)
+  end
+
+  def test_without_the_helper_global_signing_blocks_the_commit
+    write_hostile_config(signing: true)
+
+    output, status = run_commit_script
+
+    assert_match(/no signing agent/, output)
+    refute(status.success?)
+  end
+
+  def test_the_helper_empties_the_global_and_system_config
+    output, status = run_child(RbConfig.ruby, "-Itest", "-risolated_git", "-e",
+                               'puts ENV.values_at("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM")')
+
+    assert(status.success?, output)
+    assert_equal([ "/dev/null", "/dev/null" ], output.lines.map(&:chomp))
+  end
+
+  def test_every_test_file_requires_the_helper
+    missing = Dir.glob(File.join(ROOT, "test", "*_test.rb")).reject do |file|
+      File.read(file).include?('require_relative "isolated_git"')
+    end
+
+    assert_empty(missing.map { |file| File.basename(file) }, "these files must require isolated_git")
+  end
+
   private
+
+  def run_commit_script(*flags)
+    run_child(RbConfig.ruby, *flags, "-e", COMMIT_SCRIPT)
+  end
 
   def write_hostile_config(hook: false, signing: false)
     config = []
