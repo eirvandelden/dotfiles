@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "isolated_git"
+require_relative "codex_shim_support"
 
 # `secrets` prints export statements for the references listed in
 # ~/.config/secrets/1password.env, and for the optional work overlay beside it.
@@ -12,9 +13,8 @@ require_relative "isolated_git"
 # repository names no employer. `unlock` applies those exports to the current
 # shell and puts the unlocked-bin directory, with its `codex` shim, first on PATH.
 class SecretsLoaderTest < Minitest::Test
-  ZSH_DIR = File.expand_path("../zsh/.config/zsh", __dir__)
-  LOADER = File.join(ZSH_DIR, "functions/secrets.zsh")
-  SHIM_DIR = File.join(ZSH_DIR, "unlocked-bin")
+  include CodexShimSupport
+
   REPO_MAPPING = File.expand_path("../secrets/.config/secrets/1password.env", __dir__)
 
   def setup
