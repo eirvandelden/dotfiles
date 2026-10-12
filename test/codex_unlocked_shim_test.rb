@@ -101,10 +101,15 @@ class CodexUnlockedShimTest < Minitest::Test
     assert_equal %w[unset unset set], MAPPED.map { |name| single_call[:env][name] }
   end
 
-  def test_the_shim_skips_its_own_directory_to_find_the_real_codex
-    _, stderr, status = run_shim
+  # A stowed shim sits behind a symlinked directory. If the skip broke, the shim
+  # would exec itself forever, so the run has a deadline instead of hanging.
+  def test_the_shim_skips_its_own_directory_behind_a_symlink_to_find_the_real_codex
+    linked_dir = File.join(@tmpdir, "linked-unlocked-bin")
+    File.symlink(SHIM_DIR, linked_dir)
 
-    assert_equal(0, status.exitstatus, stderr)
+    status = run_with_deadline(File.join(linked_dir, "codex"), { "PATH" => "#{linked_dir}:#{@fake_bin}:/usr/bin:/bin" })
+
+    assert_equal 0, status.exitstatus
     assert_equal [ "--no-daemon" ], single_call[:args]
   end
 
@@ -127,6 +132,21 @@ class CodexUnlockedShimTest < Minitest::Test
 
   def run_shim(*args, extra_env: {})
     Open3.capture3(shim_env.merge(extra_env), SHIM, *args, unsetenv_others: true)
+  end
+
+  def run_with_deadline(command, extra_env, seconds: 10)
+    pid = Process.spawn(shim_env.merge(extra_env), command, unsetenv_others: true, out: File::NULL, err: File::NULL)
+    deadline = Time.now + seconds
+    loop do
+      _, status = Process.wait2(pid, Process::WNOHANG)
+      return status if status
+      break if Time.now > deadline
+
+      sleep 0.05
+    end
+    Process.kill("KILL", pid)
+    Process.wait(pid)
+    flunk "the shim did not finish within #{seconds}s; it probably runs itself"
   end
 
   def shim_env
