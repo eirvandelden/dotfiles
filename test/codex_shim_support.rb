@@ -88,7 +88,7 @@ module CodexShimSupport
         echo CALL
         for arg in "$@"; do echo "ARG=$arg"; done
         echo "PATH=$PATH"
-        for name in #{MAPPED.join(' ')} UNMAPPED_VAR; do
+        for name in #{MAPPED.join(' ')} UNMAPPED_VAR UNLOCKED_BIN; do
           eval "value=\\${$name+set}"
           echo "$name=${value:-unset}"
         done

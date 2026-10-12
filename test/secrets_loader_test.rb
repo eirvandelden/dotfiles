@@ -127,6 +127,36 @@ class SecretsLoaderTest < Minitest::Test
     assert_includes stderr, "unlock: #{empty_zdotdir}/unlocked-bin/codex is missing; restow the zsh package"
   end
 
+  def test_unlock_exports_the_shim_directory_to_child_shells
+    stdout, stderr, status = run_unlock('unlock; zsh -f -c \'print -r -- "marker=$UNLOCKED_BIN"\'')
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "marker=#{SHIM_DIR}"
+  end
+
+  # Codex runs its shell commands as `zsh -lc`. On macOS, /etc/zprofile runs
+  # path_helper there, which moves /opt/homebrew/bin ahead of the shim.
+  def test_zprofile_puts_the_shim_back_ahead_of_a_reordered_path
+    stdout, stderr, status = run_zprofile("UNLOCKED_BIN" => SHIM_DIR)
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_equal File.join(SHIM_DIR, "codex"), stdout.chomp
+  end
+
+  def test_zprofile_leaves_path_alone_without_unlock
+    stdout, stderr, status = run_zprofile
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_equal File.join(@tmpdir, "homebrew-bin", "codex"), stdout.chomp
+  end
+
+  def test_a_login_shell_started_after_unlock_finds_the_shim_first
+    stdout, stderr, status = run_unlock('unlock; zsh -l -c "command -v codex"', "HOME" => stowed_home)
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_equal File.join(SHIM_DIR, "codex"), stdout.lines.last.to_s.chomp
+  end
+
   def test_the_unlock_alias_no_longer_shadows_the_function
     aliases = File.join(File.dirname(LOADER), "..", "aliases.zsh")
     script = "source #{aliases}\nsource #{LOADER}\nunlock\nprint -r -- \"token=$PERSONAL_TOKEN\""
@@ -138,6 +168,26 @@ class SecretsLoaderTest < Minitest::Test
   end
 
   private
+
+  # The PATH that path_helper leaves behind: a directory with a real codex
+  # ahead of the shim.
+  def run_zprofile(extra_env = {})
+    homebrew_bin = File.join(@tmpdir, "homebrew-bin")
+    FileUtils.mkdir_p(homebrew_bin)
+    File.write(File.join(homebrew_bin, "codex"), "#!/bin/sh\n")
+    FileUtils.chmod(0o755, File.join(homebrew_bin, "codex"))
+    path = "#{homebrew_bin}:#{SHIM_DIR}:/usr/bin:/bin"
+    script = "source #{File.join(ZSH_DIR, '.zprofile')}\ncommand -v codex"
+    Open3.capture3(env.merge("PATH" => path).merge(extra_env), "zsh", "-f", "-c", script)
+  end
+
+  # A HOME laid out as stow leaves it, so a login shell reads this branch's files.
+  def stowed_home
+    home = File.join(@tmpdir, "home")
+    FileUtils.mkdir_p(File.join(home, ".config"))
+    File.symlink(ZSH_DIR, File.join(home, ".config", "zsh"))
+    home
+  end
 
   def write_work_overlay
     File.write(File.join(@config, "1password.work.env"), "WORK_TOKEN=op://Work/token/credential\n")

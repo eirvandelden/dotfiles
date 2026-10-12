@@ -79,6 +79,15 @@ class CodexUnlockedShimTest < Minitest::Test
     assert_includes single_call[:path], @fake_bin
   end
 
+  # unlock exports UNLOCKED_BIN so child login shells put the shim back first.
+  # A daemon must not carry it to the locked sessions it serves.
+  def test_a_session_keeps_the_unlocked_bin_marker_and_a_daemon_command_drops_it
+    run_shim(extra_env: { "UNLOCKED_BIN" => SHIM_DIR })
+    run_shim("agents", extra_env: { "UNLOCKED_BIN" => SHIM_DIR })
+
+    assert_equal %w[set unset], codex_calls.map { |call| call[:env]["UNLOCKED_BIN"] }
+  end
+
   def test_a_remote_launch_runs_unchanged_without_the_secrets
     run_shim("--remote", "ws://127.0.0.1:1")
 

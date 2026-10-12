@@ -138,4 +138,6 @@ unlock() {
     *":$shim_dir:"*) ;;
     *) PATH="$shim_dir:$PATH" ;;
   esac
+  # .zprofile reads this to put the shim back first in child login shells.
+  export UNLOCKED_BIN="$shim_dir"
 }

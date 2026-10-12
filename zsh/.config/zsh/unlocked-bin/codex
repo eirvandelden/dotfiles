@@ -88,7 +88,7 @@ real_codex=$(find_real_codex) || {
 case $(classify "$@") in
   session) exec "$real_codex" --no-daemon "$@" ;;
   daemon)
-    for name in $(mapped_names); do unset "$name"; done
+    for name in $(mapped_names) UNLOCKED_BIN; do unset "$name"; done
     PATH=$(path_without_self)
     export PATH
     exec "$real_codex" "$@"
