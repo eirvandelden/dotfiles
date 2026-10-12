@@ -66,8 +66,9 @@ class PullRequestFlowTest < Minitest::Test
     intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
     review = File.read(File.join(SKILLS, "review/SKILL.md"))
 
-    assert_match(/commit it alone, then push/, intent[/^5\. Review\..*$/])
+    assert_match(/committing each transcribed round alone and pushing the branch/, intent[/^5\. Review\..*$/])
     assert_match(/Commit that file alone, then push/, review[/^2\. The Codex CLI.*$/])
+    assert_match(/Commit that file alone, then push/, review[/transcribes the output into `review.md`.*$/])
   end
 
   private
