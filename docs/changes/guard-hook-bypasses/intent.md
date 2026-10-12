@@ -10,12 +10,16 @@ The git hooks are what keep commits and pushes off `main`. The consent guard ask
 - `LEFTHOOK=false`, and `LEFTHOOK=0` inline or exported. The global shims check only for `0`; lefthook itself treats `false` as off too.
 - `LEFTHOOK_EXCLUDE=<tag or command>`, for example `LEFTHOOK_EXCLUDE=no-push-to-main`.
 - `git -c core.hooksPath=…` and `GIT_CONFIG_PARAMETERS` that set `core.hooksPath`.
+- An abbreviated `--no-verify`, such as `git commit --no-veri`, which git accepts (found during planning).
+- `LEFTHOOK_BIN=true`, which the global shims run in place of lefthook, and `LEFTHOOK_CONFIG=` pointing at another config (found during planning).
 
 Three more routes skip or disarm the hooks without running them at all:
 
 - `git config core.hooksPath …` or `--unset core.hooksPath`, which change the hooks path for every later command.
 - `git commit-tree` with `git update-ref`, which build a commit and move a branch with no hook involved.
 - `lefthook install` and `lefthook uninstall`, which replace or remove the global shims. On 2026-10-06 lefthook wrote its stock shims over four global hooks, and the main guard silently disappeared for repositories without their own lefthook config.
+
+The guard's existing checks share a second weakness: they see `--force;` as one word, so `git push --force; echo done` passes the never-allowed `--force` check (found during planning).
 
 ## Proposed outcome
 
@@ -38,19 +42,21 @@ An agent that takes any of these routes is stopped until Etienne agrees, the sam
 
 ## In scope
 
-- `git commit -n`.
-- The lefthook switches `LEFTHOOK` (any value that turns lefthook off) and `LEFTHOOK_EXCLUDE`, inline or exported.
+- `git commit -n`, and any abbreviation of `--no-verify` that git accepts.
+- The lefthook switches `LEFTHOOK` (any value that turns lefthook off), `LEFTHOOK_EXCLUDE`, `LEFTHOOK_BIN` and `LEFTHOOK_CONFIG`, inline or exported.
 - Every way to set or unset `core.hooksPath`: `git -c`, `GIT_CONFIG_PARAMETERS`, `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_<n>`, and `git config` in any scope.
 - The plumbing commands `git commit-tree` and `git update-ref`.
 - `lefthook install` and `lefthook uninstall`.
 - Codex `default.rules` entries for each route a prefix rule can express.
+- Every check, old and new, sees commands chained with `;`, `&` or `|` as separate words.
 
 ## Out of scope
 
 - Routes hidden from the command line: script files, `sh -c "…"` or `eval` strings, edits or `chmod` of the hook files themselves.
 - lefthook's own auto-sync during `lefthook run` (the uncovered case in PR #168).
 - The main guard's first-commit hole on an unborn branch.
-- The guard's other checks (plain `--force`, GitHub posts, deploys, the remote allowlist) keep their behaviour.
+- The guard's other checks (plain `--force`, GitHub posts, deploys, the remote allowlist) keep their behaviour, except that they now see chained commands split.
+- Overrides that move git's global config: `GIT_CONFIG_GLOBAL=`, `XDG_CONFIG_HOME=` and `HOME=`. Each hides the global `core.hooksPath` (probed during planning). This is a known limit.
 - The work repositories' lefthook setup (change `work-repos-branch-guard` in dotfiles-work).
 
 ## Acceptance criteria
@@ -66,6 +72,10 @@ An agent that takes any of these routes is stopped until Etienne agrees, the sam
 - `git commit-tree HEAD^{tree} -p HEAD -m "x"` and `git update-ref refs/heads/main <sha>` each wait for consent.
 - `lefthook install` and `lefthook uninstall` wait for consent; `lefthook dump` goes through.
 - After consent, `I_HAVE_USER_CONSENT=1 git commit -n -m "x"` goes through.
+- `git commit --no-veri -m "x"` waits for consent.
+- `LEFTHOOK_BIN=true git commit -m "x"` and `LEFTHOOK_CONFIG=/tmp/empty.yml git commit -m "x"` each wait for consent.
+- `git push --force origin feature; echo done` is refused outright, as plain `--force` is today.
+- `git push --force-with-lease origin feature; echo done` goes through without a question.
 - `git commit -m "explain why LEFTHOOK=0 is refused"` goes through without a question.
 - Codex prompts for each new route that a prefix rule can express, and the guard parity test passes.
 
