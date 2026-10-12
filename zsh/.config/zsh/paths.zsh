@@ -1,5 +1,6 @@
 # paths.zsh — single source of truth for PATH construction.
-# All PATH modifications go here. rv is last.
+# All PATH modifications go here. rv comes after every other tool; only the
+# unlocked codex shim (step 6) goes after it, since that directory holds only codex.
 #
 # Sourced from .zshenv so it runs for every shell type, including
 # non-interactive shells used by editors, IDEs, and AI coding agents.
@@ -27,7 +28,8 @@ export SSL_CERT_FILE="$HOMEBREW_PREFIX/etc/openssl@3/cert.pem"
 # Hook helper is needed here because paths.zsh is sourced from .zshenv.
 autoload -Uz add-zsh-hook
 
-# 4. rv (Ruby version manager) — MUST be last.
+# 4. rv (Ruby version manager) — MUST come after every other tool (step 6 adds
+# only the codex shim).
 # rv shell init prepends Ruby paths to PATH, so anything added after this
 # would end up ahead of Ruby and break version management.
 if [[ -x "${HOMEBREW_PREFIX:-/opt/homebrew}/bin/rv" ]]; then
