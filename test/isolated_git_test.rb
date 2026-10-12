@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Temporary-repository tests must not pick up the machine's global git setup (hooks, signing).
 # Each test builds a hostile XDG_CONFIG_HOME, which is where Etienne's global git config lives.
