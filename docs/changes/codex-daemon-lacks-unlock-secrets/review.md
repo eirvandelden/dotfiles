@@ -44,3 +44,7 @@ The round 5 Important holds on macOS. Startup order for `zsh -lc` and `zsh -ilc`
 - [ ] Nit: the plan lists `app` and `exec-server` under both *Daemon* (line 30) and *Other* (line 31). The shim now treats them as daemon commands only — `docs/changes/codex-daemon-lacks-unlock-secrets/plan.md:31` →
 - [ ] Nit: `## Files that change` does not name `zsh/.config/zsh/.zprofile`, which the round 5 fix changes — `docs/changes/codex-daemon-lacks-unlock-secrets/plan.md:49` →
 - [ ] Nit: the plan and the commit `docs: the plan lists app and exec-server as daemon commands` cite "review round 8", but at 6542774d `review.md` has no round 7 or 8 — `docs/changes/codex-daemon-lacks-unlock-secrets/plan.md:30` →
+
+## Round 8 — 2026-10-12T14:48Z — da72d3f4 (codex)
+
+- [x] Important: after `unlock`, `codex app` is classed as *Other* and starts the Desktop app with every mapped secret; `exec-server`, also *Other*, has the same problem — `zsh/.config/zsh/unlocked-bin/codex:65` → fixed (fix: codex app and exec-server launch without the unlocked environment)
