@@ -25,11 +25,11 @@ Compliance:
 
 Findings:
 
-- [ ] Nit: The regression check passes on any occurrence of the text, so a commented-out `# require_relative "isolated_git"` or the string inside a heredoc counts as the setup. A line-anchored match closes that gap — `test/isolated_git_test.rb:86` →
-- [ ] Nit: The hostile setup keeps the real `HOME`, so a `~/.gitconfig` on the machine is read after the hostile `XDG_CONFIG_HOME` config and wins. The control tests (`refused main`, `no signing agent`) then depend on that file being absent; it is absent on this machine. Pointing `GIT_CONFIG_GLOBAL` at the hostile file in the child makes the controls machine-independent — `test/isolated_git_test.rb:133` →
-- [ ] Nit: The helper comment says git reads no global config "in every child process", but an explicit environment hash overrides it, which is how the `lefthook_*` tests keep their hooks. One sentence on that opt-out tells the next hook test how to get a global config back — `test/isolated_git.rb:2` →
-- [ ] Nit: `COMMIT_SCRIPT` sits between test methods instead of with `ROOT` at the top of the class — `test/isolated_git_test.rb:30` →
-- [ ] Nit: `run_child` destructures the pair from `Open3.capture2e` and rebuilds the same pair; returning the call directly is the same — `test/isolated_git_test.rb:134` →
+- [x] Nit: The regression check passes on any occurrence of the text, so a commented-out `# require_relative "isolated_git"` or the string inside a heredoc counts as the setup. A line-anchored match closes that gap — `test/isolated_git_test.rb:86` → fixed (Close review round 1 nits for temp-repo-tests-ignore-global-hooks)
+- [x] Nit: The hostile setup keeps the real `HOME`, so a `~/.gitconfig` on the machine is read after the hostile `XDG_CONFIG_HOME` config and wins. The control tests (`refused main`, `no signing agent`) then depend on that file being absent; it is absent on this machine. Pointing `GIT_CONFIG_GLOBAL` at the hostile file in the child makes the controls machine-independent — `test/isolated_git_test.rb:133` → fixed (Close review round 1 nits for temp-repo-tests-ignore-global-hooks)
+- [x] Nit: The helper comment says git reads no global config "in every child process", but an explicit environment hash overrides it, which is how the `lefthook_*` tests keep their hooks. One sentence on that opt-out tells the next hook test how to get a global config back — `test/isolated_git.rb:2` → fixed (Close review round 1 nits for temp-repo-tests-ignore-global-hooks)
+- [x] Nit: `COMMIT_SCRIPT` sits between test methods instead of with `ROOT` at the top of the class — `test/isolated_git_test.rb:30` → fixed (Close review round 1 nits for temp-repo-tests-ignore-global-hooks)
+- [x] Nit: `run_child` destructures the pair from `Open3.capture2e` and rebuilds the same pair; returning the call directly is the same — `test/isolated_git_test.rb:134` → fixed (Close review round 1 nits for temp-repo-tests-ignore-global-hooks)
 
 ## Round 2 — 2026-10-12T15:56:19Z — 88dd95f9 (codex)
 

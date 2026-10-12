@@ -11,6 +11,18 @@ require_relative "isolated_git"
 class IsolatedGitTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
+  COMMIT_SCRIPT = <<~'RUBY'.freeze
+    require "tmpdir"
+    Dir.mktmpdir do |dir|
+      identity = ["-c", "user.name=Test", "-c", "user.email=test@example.com"]
+      system("git", "init", "--quiet", "--initial-branch=main", dir, exception: true)
+      2.times do |index|
+        system("git", "-C", dir, *identity, "commit", "--quiet", "--allow-empty", "-m", "commit #{index}",
+               exception: true)
+      end
+    end
+  RUBY
+
   def setup
     @config_home = Dir.mktmpdir
   end
@@ -26,18 +38,6 @@ class IsolatedGitTest < Minitest::Test
 
     assert(status.success?, output)
   end
-
-  COMMIT_SCRIPT = <<~'RUBY'.freeze
-    require "tmpdir"
-    Dir.mktmpdir do |dir|
-      identity = ["-c", "user.name=Test", "-c", "user.email=test@example.com"]
-      system("git", "init", "--quiet", "--initial-branch=main", dir, exception: true)
-      2.times do |index|
-        system("git", "-C", dir, *identity, "commit", "--quiet", "--allow-empty", "-m", "commit #{index}",
-               exception: true)
-      end
-    end
-  RUBY
 
   def test_a_commit_ignores_the_global_no_push_to_main_hook
     write_hostile_config(hook: true)
@@ -83,7 +83,7 @@ class IsolatedGitTest < Minitest::Test
 
   def test_every_test_file_requires_the_helper
     missing = Dir.glob(File.join(ROOT, "test", "*_test.rb")).reject do |file|
-      File.read(file).include?('require_relative "isolated_git"')
+      File.read(file).match?(/^require_relative "isolated_git"$/)
     end
 
     assert_empty(missing.map { |file| File.basename(file) }, "these files must require isolated_git")
@@ -130,8 +130,9 @@ class IsolatedGitTest < Minitest::Test
   end
 
   def run_child(*command)
-    environment = { "XDG_CONFIG_HOME" => @config_home, "GIT_CONFIG_GLOBAL" => nil, "GIT_CONFIG_SYSTEM" => nil }
-    output, status = Open3.capture2e(environment, *command, chdir: ROOT)
-    [ output, status ]
+    # HOME points at the temporary directory too, so a real ~/.gitconfig cannot override the hostile one.
+    environment = { "HOME" => @config_home, "XDG_CONFIG_HOME" => @config_home,
+                    "GIT_CONFIG_GLOBAL" => nil, "GIT_CONFIG_SYSTEM" => nil }
+    Open3.capture2e(environment, *command, chdir: ROOT)
   end
 end
