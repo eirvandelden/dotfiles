@@ -62,3 +62,10 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
   apply_default_node_version
   add-zsh-hook chpwd apply_default_node_version
 fi
+
+# 6. After `unlock`, its codex shim goes first (see functions/secrets.zsh), so a
+# nested `codex` starts sessions off the shared daemon. .zprofile does this
+# again after macOS path_helper reorders PATH in login shells.
+if [[ -n "${UNLOCKED_BIN:-}" && -x "$UNLOCKED_BIN/codex" ]]; then
+  path=("$UNLOCKED_BIN" "${path[@]}") # .zshenv sets typeset -U path
+fi

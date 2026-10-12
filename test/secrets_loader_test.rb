@@ -150,6 +150,18 @@ class SecretsLoaderTest < Minitest::Test
     assert_equal File.join(@tmpdir, "homebrew-bin", "codex"), stdout.chomp
   end
 
+  # paths.zsh runs in every shell and puts /usr/local/bin and /usr/bin first,
+  # where an Intel Mac or Linux keeps codex.
+  def test_paths_zsh_keeps_the_shim_first_after_unlock
+    script = "source #{File.join(ZSH_DIR, 'paths.zsh')}\nprint -r -- \"first=$path[1]\""
+    stdout, stderr, status = Open3.capture3(env.merge("UNLOCKED_BIN" => SHIM_DIR), "zsh", "-f", "-c", script)
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "first=#{SHIM_DIR}\n"
+  end
+
+  # End to end on a Mac whose path_helper puts a real codex ahead of the shim.
+  # Elsewhere it passes without the fix; the zprofile tests prove the logic.
   def test_a_login_shell_started_after_unlock_finds_the_shim_first
     stdout, stderr, status = run_unlock('unlock; zsh -l -c "command -v codex"', "HOME" => stowed_home)
 
