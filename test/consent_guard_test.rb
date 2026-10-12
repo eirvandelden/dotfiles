@@ -494,7 +494,8 @@ class ConsentGuardTest < Minitest::Test
       "RAILS_ENV=test \\\n  bundle install", "timeout 600 bundle install", "sudo bundle install",
       "nice -n 10 bundle install", "env -u FOO bundle install", "sudo -u root bundle install",
       "# don't forget the gems\nbundle install", "sudo -E -u root bundle install", "env -i -u FOO bundle install",
-      "timeout --preserve-status -s KILL 60 bundle install" ].each do |command|
+      "timeout --preserve-status -s KILL 60 bundle install", "rv run bundle install", "rv r bundle i",
+      "rv run --ruby 4.0 bundle install" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)
@@ -507,7 +508,7 @@ class ConsentGuardTest < Minitest::Test
       %(git commit -m "$(cat <<'EOF'\nUse "bi" now.\nbundle install is refused.\nEOF\n)"),
       "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "echo done\nbundle exec rake",
       "# run bundle install later\nbundle exec rake", "echo issue#12 && bundle exec rake",
-      "timeout 600 bundle exec rake" ].each do |command|
+      "timeout 600 bundle exec rake", "rv run bundle exec rake", "rv ci", "rv ruby list bundle" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")

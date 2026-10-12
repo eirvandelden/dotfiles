@@ -124,6 +124,7 @@ BUNDLER_COMMANDS = %w[add audit binstubs c check clean config console doctor e e
                       info init inject issue licenses list lock ls open outdated platform plugin
                       pristine remove show tree update version viz].freeze
 COMMAND_PREFIXES = %w[command env exec nice nohup sudo time timeout].freeze
+RV_RUN = %w[run r].freeze
 SHELL_KEYWORDS = %w[! { do elif else if then until while].freeze
 SEPARATORS = %w[; & | ( ) `].freeze
 LOOKUP_FLAGS = %w[-v -V].freeze
@@ -153,7 +154,7 @@ end
 
 # A bundle word in command position whose arguments name no Bundler command
 # other than install. Command position follows a separator, a shell keyword,
-# a VAR=value word, or a prefix such as env, sudo or timeout.
+# a VAR=value word, or a prefix such as env, sudo, timeout or rv run.
 def installs_gems?(words)
   position = :command
   words.each_with_index do |word, index|
@@ -175,11 +176,18 @@ end
 def next_position(position, word)
   return :command if SEPARATORS.include?(word)
   return :argument if position == :argument
+  return rv_position(word) if position == :rv
   return :prefix if COMMAND_PREFIXES.include?(word) || (position == :option_value && !word.start_with?("-"))
   return prefix_word_position(word) if %i[prefix option_value].include?(position)
   return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
+  return :rv if word == "rv"
 
   :argument
+end
+
+# `rv run` (alias `rv r`) runs the rest of the command with rv's Ruby.
+def rv_position(word)
+  RV_RUN.include?(word) ? :prefix : :argument
 end
 
 # After a prefix, an option may take a value (`sudo -u root`, `nice -n 10`), a flag
