@@ -36,6 +36,7 @@ Etienne and every agent working in a repository that uses the intent, plan, impl
 - A GitHub Actions or other CI check.
 - Merges from the GitHub UI; no local hook can see them.
 - `gh pr create --head OWNER:BRANCH` for a fork branch git cannot resolve locally. Etienne accepted this as a known limit.
+- Command-parsing edge cases the guard does not model: nested `$(...)` inside double quotes, here-document bodies, aliases and shell functions, and `env`, `xargs` or `eval` wrappers. The guard reads words, not shell syntax. Etienne ended the review loop at round 28.
 - Changing the review-freshness rule for the final push in `finish`.
 - Per-repository lefthook files in repositories other than dotfiles.
 
