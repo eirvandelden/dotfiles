@@ -11,7 +11,7 @@ Recorded 2026-10-08 and 2026-10-09 by the probe runner. No secret value appears 
 
 ## Result
 
-P0, P1, P2, P3, P5, P6, P7, P8 and P10 passed. P4 passed for the secrets in shell commands and the MCP tokens in every entry point. Its fizzy and email calls did not run on 2026-10-09: the home MCP hosts did not resolve from this network. P9 is pending.
+P0 to P8 and P10 passed. P4's fizzy and email calls ran on 2026-10-12 from the home network. P9 is pending.
 
 ## P0: a failed unlock changes nothing (commit acb8012d)
 
@@ -45,7 +45,13 @@ P0, P1, P2, P3, P5, P6, P7, P8 and P10 passed. P4 passed for the secrets in shel
 - `headroom wrap codex --no-mcp --no-tokensave --no-serena --no-context-tool -- -s read-only` (headroom 0.32.1; flags checked with `--help`): headroom found the shim. The process was `codex --no-daemon --config openai_base_url="http://127.0.0.1:8787/p/dotfiles/v1" -s read-only`. Its environment held `FIZZY_PAT`. It had no link to the shared daemon. The P3 command printed `FIZZY_PAT set` and `NODE_AUTH_TOKEN set`. The `git diff` of `codex/.codex/config.toml` in the main checkout had the same md5 before and after. No headroom proxy stayed on port 8787.
 - `codex exec -s read-only` with the P3 command: `FIZZY_PAT set`, `NODE_AUTH_TOKEN set`.
 - Fizzy and email on 2026-10-09: `/mcp` in each session above showed `fizzy : failed` and `email : failed`. `codex exec` logged `error sending request for url (http://fizzy-mcp.home.arpa/mcp)`, and the same for email. `fizzy-mcp.home.arpa` and `email-mcp.home.arpa` did not resolve from this network (`dscacheutil` gave no address, `curl` failed). This is a network failure, not a missing token: the locked P8 session reports a missing token with a different message.
-- Pass for the secrets in shell commands and in every entry point's environment. The fizzy and email calls for these entry points were not run. They need the home network.
+- Fizzy and email on 2026-10-12, from the home network: one unlocked shell (the branch's `unlock`, with the shim first on `PATH`) ran each entry point with a read-only prompt. The prompt asked for the fizzy accounts and boards and the email accounts, and said not to show any content.
+  - `codex exec --json -s read-only`: the `mcp_tool_call` events were `fizzy fizzy_get_accounts completed`, `fizzy fizzy_get_boards completed` and `email list_available_accounts completed`, each without an error.
+  - `codex -p terra -s read-only`: the process was `codex --no-daemon -p terra -s read-only`. The TUI showed `Called fizzy.fizzy_get_boards` and `Called email.list_available_accounts`. The first prompt's calls failed on missing arguments (`Required`, `account_name Field required`), which means the servers accepted the token.
+  - `codex -s read-only resume <the terra session>`: the process was `codex --no-daemon -s read-only resume <id>`. The TUI showed `Called fizzy.fizzy_get_accounts`, `Called fizzy.fizzy_get_boards` and `Called email.list_available_accounts`.
+  - `headroom wrap codex --no-mcp --no-tokensave --no-serena --no-context-tool -- -s read-only <prompt>`: the process was `codex --no-daemon --config openai_base_url="http://127.0.0.1:8787/p/codex-daemon-lacks-unlock-secrets/v1" ...`. The TUI showed the same three `Called` lines. Afterwards no headroom proxy listened on port 8787, and the main checkout's `codex/.codex/config.toml` diff had no `openai_base_url`.
+  - The shared daemon processes (started 2026-10-09) and the ChatGPT.app app-server had no `FIZZY_PAT` in their environment after these runs.
+- Pass.
 
 ## P5: the shared daemon runs without secrets
 
