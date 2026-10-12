@@ -2,7 +2,7 @@
 
 ## Round 1 — 2026-10-09T10:45Z — 904f37da (codex)
 
-- [ ] Important: an unlocked `--no-daemon` session passes every secret to the real Codex, so a shared daemon that the session starts for a background feature ("Start background server", a handoff) inherits the secrets and exposes them to other Codex sessions and ChatGPT.app — `zsh/.config/zsh/unlocked-bin/codex:74` →
+- [x] Important: an unlocked `--no-daemon` session passes every secret to the real Codex, so a shared daemon that the session starts for a background feature ("Start background server", a handoff) inherits the secrets and exposes them to other Codex sessions and ChatGPT.app — `zsh/.config/zsh/unlocked-bin/codex:74` → dismissed: Etienne accepted this risk on 2026-10-12, because it needs an explicit action; documented in docs: warn against starting the background server from an unlocked session
 
 ## Round 2 — 2026-10-12T07:53Z — 9bdd7fec (claude)
 

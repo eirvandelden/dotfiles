@@ -64,13 +64,12 @@ Then start `claude`, run `/mcp`, and log in once on TREK's consent screen.
 ```bash
 headroom wrap codex                     # full integration (preferred)
 headroom wrap codex -- --model opus     # pass flags through to codex
+headroom unwrap codex                   # remove durable wrapping
 ```
 
 After `unlock`, `codex` and `headroom wrap codex` run in-process (`--no-daemon`) through the shim in `zsh/.config/zsh/unlocked-bin`, off the shared daemon, so they do not show in `codex agents`.
 
-```bash
-headroom unwrap codex                   # remove durable wrapping
-```
+Never start the background server from an unlocked session ("Start background server" in the agents overview, or a handoff to it). When no shared daemon runs, Codex starts it from that session's environment, and every later Codex session and ChatGPT.app agent then sees the secrets. Restart the daemon from a locked shell to clear them: `codex app-server daemon restart`.
 
 ### Meta commands
 
