@@ -72,6 +72,13 @@ class CodexUnlockedShimTest < Minitest::Test
     end
   end
 
+  def test_a_daemon_command_runs_without_the_shim_on_path
+    run_shim("agents")
+
+    refute_includes single_call[:path], SHIM_DIR
+    assert_includes single_call[:path], @fake_bin
+  end
+
   def test_a_remote_launch_runs_unchanged_without_the_secrets
     run_shim("--remote", "ws://127.0.0.1:1")
 

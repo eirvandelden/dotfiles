@@ -43,7 +43,8 @@ module CodexShimSupport
     }
   end
 
-  # One hash per fake-codex call: { args: [...], env: { "NAME" => "set"/"unset" } }.
+  # One hash per fake-codex call:
+  # { args: [...], env: { "NAME" => "set"/"unset" }, path: [...] }.
   def codex_calls
     return [] unless File.exist?(@codex_log)
 
@@ -61,7 +62,8 @@ module CodexShimSupport
     lines = call.lines(chomp: true)
     args = lines.filter_map { |line| line.delete_prefix("ARG=") if line.start_with?("ARG=") }
     env = lines.grep(/\A[A-Z_]+=(set|unset)\z/).to_h { |line| line.split("=", 2) }
-    { args: args, env: env }
+    path = lines.find { |line| line.start_with?("PATH=") }.to_s.delete_prefix("PATH=").split(":")
+    { args: args, env: env, path: path }
   end
 
   def write_mapping_files
@@ -85,6 +87,7 @@ module CodexShimSupport
       {
         echo CALL
         for arg in "$@"; do echo "ARG=$arg"; done
+        echo "PATH=$PATH"
         for name in #{MAPPED.join(' ')} UNMAPPED_VAR; do
           eval "value=\\${$name+set}"
           echo "$name=${value:-unset}"

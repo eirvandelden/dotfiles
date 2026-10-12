@@ -26,6 +26,21 @@ find_real_codex() {
   return 1
 }
 
+# Prints PATH without the entries that resolve to this shim's directory, so a
+# daemon that a daemon command starts never hands the shim to locked sessions.
+path_without_self() {
+  old_ifs=$IFS
+  IFS=:
+  kept=
+  for dir in $PATH; do
+    resolved=$(cd "${dir:-.}" 2>/dev/null && pwd -P)
+    [ "$resolved" = "$self_dir" ] && continue
+    kept="${kept:+$kept:}$dir"
+  done
+  IFS=$old_ifs
+  printf '%s\n' "$kept"
+}
+
 # Prints session, daemon or other. Looks at every word for --remote and
 # --no-daemon, then at the first word that is not an option or its value.
 classify() {
@@ -74,6 +89,8 @@ case $(classify "$@") in
   session) exec "$real_codex" --no-daemon "$@" ;;
   daemon)
     for name in $(mapped_names); do unset "$name"; done
+    PATH=$(path_without_self)
+    export PATH
     exec "$real_codex" "$@"
     ;;
   *) exec "$real_codex" "$@" ;;
