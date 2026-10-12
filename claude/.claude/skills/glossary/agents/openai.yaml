@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Glossary"
+  short_description: "Keep agreed domain terms in GLOSSARY.md or GLOSSARY.local.md and challenge avoided words"

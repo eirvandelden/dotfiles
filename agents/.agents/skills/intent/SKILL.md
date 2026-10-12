@@ -83,6 +83,8 @@ One question at a time; prefer multiple choice (use `AskUserQuestion` where avai
 
 The interview ends when every template section can be filled without guessing. Until then, keep asking.
 
+**Glossary.** Read the repository glossary (`glossary` skill) before the first question. When a word in the request is one a term lists under `Avoid:`, name the glossary term and ask which one Etienne means. Note each new term he agrees; write it to the glossary when the intent is accepted.
+
 **Delivery mode.** Run `~/.claude/skills/finish/scripts/change-scope`. Offer autonomous delivery only when it prints `personal`; on `work`, or when it exits 1, skip this step and use the step-by-step flow. On `personal`, ask:
 
 1. Which permissions will the change need? List gems or packages, system tools, migrations that drop or remove, and deploy files (playbook rules 8, 9, 11, 12, 13). Each one is approved now, or becomes a stop-and-ask later.
@@ -172,7 +174,7 @@ Refuse to flip `Status:` to `accepted` while any of these holds, and name what i
 - `## Open questions` holds anything but "None.".
 - A flagged concern names no chosen side.
 
-Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted` and leave `intent.md` uncommitted. Do not commit it and do not push: the plan stage commits `intent.md` and `plan.md` together, in the same worktree.
+Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted` and leave `intent.md` uncommitted. Do not commit it and do not push: the plan stage commits `intent.md` and `plan.md` together, in the same worktree. Write the agreed terms into the glossary as the `glossary` skill says; a personal repository gets its own commit (`docs: glossary terms for <slug>`).
 
 Inside herdr (`HERDR_ENV` set), record this pane for the delivery step. Run `herdr pane current` and write the `pane_id` field, then the `terminal_id` field, one per line, to `<git-common-dir>/herdr/intent-pane-<slug>` (create the directory). The delivery step opens its gh-dash pane directly left of this pane, and the terminal id tells this pane from a later pane that reuses its id.
 
