@@ -18,7 +18,7 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 
 ## Writing code
 
-- Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc comments: `agents/.agents/skills/ruby-style/SKILL.md`
+- Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc comments and inline RBS signatures: `agents/.agents/skills/ruby-style/SKILL.md`
 - Idiomatic modern Ruby — pattern matching, `Data.define`, error handling, memoization, performance idioms: `agents/.agents/skills/ruby/SKILL.md`
 - The official Rails guides, for any Rails-specific topic: `agents/.agents/skills/rails-guides/SKILL.md`
 - Views, Hotwire/Stimulus, CSS, HTML, forms, i18n, accessibility, dialog and UX rules: `agents/.agents/skills/rails-ui/SKILL.md`
