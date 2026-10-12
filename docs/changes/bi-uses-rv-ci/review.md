@@ -96,3 +96,23 @@ Acceptance criteria: as in round 3, with these changes.
 - Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
 
 Security: nothing new. The change only widens what the guard refuses.
+
+## Round 5 — 2026-10-12T15:25Z — c8442d03
+
+Whole branch against `origin/main`, with focus on `a12da42a` (guard). No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy applies. Every `test/*_test.rb` passes except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, the same global `no-push-to-main` refusal as in rounds 2 to 4. `shellcheck` and `rubocop` are clean on the changed files.
+
+Round 4's Nit holds when probed. The guard refuses `rv run bundle install`, `rv r bundle i`, `rv run --ruby 4.0 bundle install`, `rv run --ruby=4.0 bundle install`, `rv run --no-install bundle install`, `rv run -q bundle install` and `rv run -- bundle install`. `rv run bundle exec rake`, `rv run -v bundle exec rake`, `rv ci` and `rv run --ruby 4.0 rake` still run.
+
+- [ ] Nit: The branch is 193 commits behind `origin/main` (merge base `58dab0a3`). Six files changed on both sides: `agents.md`, `core-values.yml`, `consent-guard.rb`, `default.rules`, `test/consent_guard_test.rb` and `test/guard_parity_test.rb`. `git merge-tree` finds no conflict, and on the merged tree `consent_guard_test`, `guard_parity_test`, `bi_test`, `gem_install_rule_mirror_test` and `lefthook_pull_hooks_test` pass. Rebase onto `origin/main` and rerun the suite before the pull request (playbook rule 20). — `claude/.claude/hooks/consent-guard.rb:1` →
+- [ ] Nit: `-v` after `rv run` hides an install. `prefix_word_position` reads `-v` as a lookup flag, as in `command -v`, but for `rv run` it means `--verbose`. An rv option before `run` hides it too, because `rv_position` accepts only `run` or `r` as the next word. Probed, each exits 0: `rv run -v bundle install`, `rv r -v bundle i`, `rv -v run bundle install`, `rv -q run bundle install`, `rv --color never run bundle install`. `rv run -q bundle install` is refused. — `claude/.claude/hooks/consent-guard.rb:129` →
+
+### Compliance, round 5
+
+Since round 4, `next_position` moves to `:rv` after an `rv` word in command position, and `rv_position` reads `run` or `r` as a prefix. `test_install_in_any_command_position_is_refused` gained three `rv run` forms, and `test_bundle_install_in_messages_heredocs_and_lookups_runs` gained `rv run bundle exec rake`, `rv ci` and `rv ruby list bundle`. `c8442d03` closes the round 1 platform Nit and the round 4 Nit in `review.md`, with Etienne's dismissals dated 2026-10-12. No test was weakened, skipped or deleted. Every test the Proof list names exists.
+
+Acceptance criteria: as in round 4, with these changes.
+
+- Install forms refused with a message naming `bi` → the earlier tests plus the `rv run` cases. Round 4's `rv run` gap is closed. Remaining gap: `-v` and rv's own options around `run`, see the second Nit above. `arch` and `caffeinate` are dismissed.
+- Claude and Codex agents can run `bi` → still partial. `command -v bi` finds nothing, and `~/.local/bin/bi` does not exist yet; it waits on `stow -R -t "$HOME" ruby`.
+
+Security: nothing new. The change only widens what the guard refuses.
