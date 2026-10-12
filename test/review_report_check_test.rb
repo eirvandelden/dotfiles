@@ -129,8 +129,9 @@ class ReviewReportCheckTest < Minitest::Test
   end
 
   def git(*arguments)
-    system("git", "-C", @repo, "-c", "commit.gpgsign=false", "-c", "user.email=test@example.com",
-           "-c", "user.name=Test", *arguments) || raise("git #{arguments.join(' ')} failed")
+    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false",
+           "-c", "user.email=test@example.com", "-c", "user.name=Test",
+           *arguments) || raise("git #{arguments.join(' ')} failed")
   end
 
   def run_script
