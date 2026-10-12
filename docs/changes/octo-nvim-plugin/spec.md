@@ -21,7 +21,7 @@ From `intent.md` (2026-09-29). Status: accepted.
 
 ## Integration points
 
-- gh-dash config, shipped as `github/.config/gh-dash/config.yml` in the `github` stow package — its `C` keybinding opens a herdr pane running `nvim -c ":silent Octo pr edit {{.PrNumber}} {{.RepoName}}"`.
+- gh-dash config, shipped as `github/.config/gh-dash/config.yml` in the `github` stow package — its `C` keybinding opens a herdr pane running `nvim -c 'silent Octo pr edit {{.PrNumber}} {{.RepoName}}'`.
 - `packages.conf` `BREW` list — `gh`. `GH_EXTENSIONS` list — `dlvhdr/gh-dash`, installed by `install/tasks/25_install_gh_extensions.sh`.
 - Neovim `which-key-extra.lua` — the existing `<leader>g` "Git" group.
 
