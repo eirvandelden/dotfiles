@@ -10,8 +10,13 @@
 # `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
 # Variables are not expanded, so such a target is taken literally and usually blocks. `cd`,
 # `cd -P`, `cd --` and `pushd` move the directory; inside `( … )` the move ends with the
-# subshell. Commands inside `$( … )` are not checked. Everything else errs towards allowing: a false
-# block stops legitimate work, and the written rule covers the rest.
+# subshell. Commands inside `$( … )` are not checked. Everything else errs towards allowing:
+# a false block stops legitimate work, and the written rule covers the rest.
+#
+# Known gaps, each a command that passes although it should block:
+# - a `#` right after a closing quote (`-m "Fix "#12; git worktree add …`) starts a comment;
+# - a `<<` inside a one-line `"…$(…)…"` string starts a heredoc that never closes;
+# - `time`, `nice` and `timeout` before `bash -c "…"` hide the command word.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does not block
 # anything, so keep Ruby on PATH.
