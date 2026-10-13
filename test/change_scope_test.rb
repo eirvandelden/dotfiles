@@ -10,7 +10,7 @@ require_relative "isolated_git"
 # reusing the same remote matching the consent guard already has (RemoteMatcher)
 # so a repository only has to be taught the answer once.
 class ChangeScopeTest < Minitest::Test
-  SCRIPT = File.expand_path("../claude/.claude/skills/finish/scripts/change-scope", __dir__)
+  SCRIPT = File.expand_path("../agents/.agents/skills/finish/scripts/change-scope", __dir__)
 
   def setup
     @repo = Dir.mktmpdir

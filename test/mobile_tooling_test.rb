@@ -7,7 +7,7 @@ require_relative "isolated_git"
 # between them, as guard_parity_test.rb does for the guards (docs/changes/hotwire-native-agent-guidance/plan.md).
 class MobileToolingTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  IOS_REFERENCE = File.join(REPO_ROOT, "claude/.claude/skills/hotwire-native/references/ios.md")
+  IOS_REFERENCE = File.join(REPO_ROOT, "agents/.agents/skills/hotwire-native/references/ios.md")
   CODEX_CONFIG = File.join(REPO_ROOT, "codex/.codex/config.toml")
   TELEMETRY_OFF = "MOBILEBUILDMCP_SENTRY_DISABLED"
 

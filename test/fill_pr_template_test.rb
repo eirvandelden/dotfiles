@@ -11,7 +11,7 @@ require_relative "isolated_git"
 # wording, so any repository's own phrasing still gets filled; a heading
 # nothing matches keeps its own text.
 class FillPrTemplateTest < Minitest::Test
-  SCRIPT = File.expand_path("../claude/.claude/skills/finish/scripts/fill-pr-template", __dir__)
+  SCRIPT = File.expand_path("../agents/.agents/skills/finish/scripts/fill-pr-template", __dir__)
 
   INTENT = <<~MARKDOWN
     # Intent: Claims status export

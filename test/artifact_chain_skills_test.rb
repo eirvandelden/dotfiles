@@ -6,7 +6,7 @@ require_relative "isolated_git"
 # playbook text, since that text is the behaviour: an agent does what the skill says.
 class ArtifactChainSkillsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  SKILLS = File.join(ROOT, "claude/.claude/skills")
+  SKILLS = File.join(ROOT, "agents/.agents/skills")
 
   LIVE_PATHS = %w[claude agents codex herdr git bin agents.md SKILLS-INDEX.md].freeze
   STAGE_SHAPED_SPEC = [

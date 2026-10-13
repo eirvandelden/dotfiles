@@ -12,7 +12,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
   SCRIPTS = File.expand_path("../herdr/.config/herdr/scripts", __dir__)
   HAND_OFF_PLAN = File.join(SCRIPTS, "hand-off-plan.sh")
   START_REVIEW = File.join(SCRIPTS, "start-review.sh")
-  SKILLS_DIR = File.expand_path("../claude/.claude/skills", __dir__)
+  SKILLS_DIR = File.expand_path("../agents/.agents/skills", __dir__)
 
   def setup
     @stub_bin = Dir.mktmpdir
