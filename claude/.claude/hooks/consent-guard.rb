@@ -127,7 +127,7 @@ COMMAND_PREFIXES = %w[env exec nice nohup sudo time timeout].freeze
 RV_RUN = %w[run r].freeze
 SHELL_KEYWORDS = %w[! { do elif else if then until while].freeze
 SEPARATORS = %w[; & | ( ) `].freeze
-LOOKUP_FLAGS = %w[-v -V].freeze
+LOOKUP_FLAG = /\A-[a-zA-Z]*[vV]/
 ENV_ASSIGNMENT = /\A\w+=/
 DURATION = /\A\d+(?:\.\d+)?[smhd]?\z/
 # A heredoc operator, the rest of its line, then the body up to the delimiter line.
@@ -199,11 +199,17 @@ end
 # (`timeout 600`, `env FOO=1`) still comes before the command. `command -v bundle`
 # only looks bundle up.
 def prefix_word_position(position, word)
-  return :argument if position == :lookup && LOOKUP_FLAGS.include?(word)
+  return lookup_flag_position(word) if position == :lookup && word.start_with?("-")
   return :option_value if word.start_with?("-")
   return :prefix if word.match?(DURATION) || word.match?(ENV_ASSIGNMENT)
 
   :argument
+end
+
+# command takes no option values. A flag with v or V in it (`-v`, `-pV`) makes the
+# next word a lookup; any other flag (`-p`) still runs it.
+def lookup_flag_position(word)
+  word.match?(LOOKUP_FLAG) ? :argument : :lookup
 end
 
 # Rules 11 and 20 say never, so no consent marker unlocks these.

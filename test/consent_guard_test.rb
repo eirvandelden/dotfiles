@@ -509,7 +509,7 @@ class ConsentGuardTest < Minitest::Test
   def test_bundle_install_in_messages_heredocs_and_lookups_runs
     [ %(git commit -m "first line\nbundle install is refused now"),
       %(git commit -m "$(cat <<'EOF'\nUse "bi" now.\nbundle install is refused.\nEOF\n)"),
-      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "command -V bundle", "echo done\nbundle exec rake",
+      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "command -V bundle", "command -pv bundle", "command -p -V bundle", "echo done\nbundle exec rake",
       "# run bundle install later\nbundle exec rake", "echo issue#12 && bundle exec rake",
       "timeout 600 bundle exec rake", "rv run bundle exec rake", "rv ci", "rv ruby list bundle" ].each do |command|
       _, stderr, status = run_guard(command)
