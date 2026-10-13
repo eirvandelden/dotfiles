@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "codex_shim_support"
 
 # Since Codex 0.160 a plain `codex` hands MCP servers and shell commands to a

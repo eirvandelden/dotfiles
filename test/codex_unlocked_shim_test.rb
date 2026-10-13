@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "codex_shim_support"
 
 # The `codex` shim in zsh/.config/zsh/unlocked-bin sorts each launch into a
