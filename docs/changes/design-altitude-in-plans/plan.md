@@ -31,7 +31,7 @@ Plans today stay at file-and-task level. This change adds a design section to ev
 - **Packages**: add `mermaid-cli` and `timg` to `BREW` and `beautiful-mermaid` to `NPM_PACKAGES` in `packages.conf` (approved in the intent). `imagemagick` stays undeclared because nothing uses it.
 - **The pull request carries the design**: `fill-pr-template` copies the whole `## Design` section, its `###` subsections and Mermaid fences included, to the top of the Implementation part, so GitHub renders the diagrams after `finish` removes the change folder. A new helper reads a section up to the next heading of the same or a higher level; `section_body` stays as it is.
 - **Viewer**: the herdr file viewer has no hook, only a replaceable `markdown` command whose output keeps SGR codes only. The wrapper would be `mermaid-show --markdown | glow -s <bundled style> …`. It is kept only if the check in step 14 passes; otherwise the viewer config stays untouched and the PR body records why.
-- **YARD**: dropped from `ruby-style` and `rails-architecture`, including the custom `@action` and `@route` tags. Every class and method gets a prose summary and an inline RBS comment, both scopes. This also removes the current contradiction ("Personal: YARD-document every method" against "Personal: no doc comments"). `rubocop-yard` stays in `rubocop/.rubocop.yml`: without tags its cops are silent, and removing it is a dependency change for its own branch.
+- **YARD** (amended 2026-10-13, after #201 merged): #201 removed `rubocop-yard`, allowed `#:` in `Layout/LeadingCommentSpace`, and gave `ruby-style` and `rails-architecture` one personal rule: a one-line summary per class, an inline RBS signature per method, other comments only for a non-obvious "why". Work repositories keep YARD, `@action` and `@route` included. Etienne kept both rules over this plan's "prose summary per method, both scopes". This change therefore only adds a `sig/*.rbs` and Steep pointer to `ruby-style`, and points `implement` and `object-oriented-design` at `ruby-style`. The rubocop commit is dropped; #201 carries it.
 
 ## Design
 
@@ -64,7 +64,7 @@ sequenceDiagram
 
 ### Signatures
 
-`mermaid-show` (Ruby, inline RBS, prose summary per method):
+`mermaid-show` (Ruby, one-line class summary, inline RBS per method, a method comment only for a non-obvious "why"):
 
 ```ruby
 # Renders Mermaid as text or as an image in the terminal.
@@ -166,7 +166,7 @@ Each numbered step is one commit. In every step the named tests are written firs
 - Mermaid class, ER, sequence and state diagrams print as text and show as an image → `test/mermaid_show_test.rb` `test_prints_a_diagram_as_text`, `test_image_mode_renders_a_png_and_shows_it_with_timg`; check: step 13 real render, recorded in `evidence.md`
 - Two or three architects at once with different goals; Codex gets the same agent → `test/architect_agent_test.rb` `test_the_plan_runs_two_or_three_architects_with_different_goals`, `test_the_architect_is_read_only_and_generated_for_codex` (no `Bash`; `architect.toml` exists and matches the generator)
 - The reviewer reports unsigned public methods, Law of Demeter violations, N+1 loops, avoided words → `test/design_review_pass_test.rb` `test_the_design_pass_names_all_four_findings`
-- New Ruby code has a prose summary and inline RBS per method, no YARD tags → `test/ruby_signatures_test.rb` `test_ruby_style_asks_for_a_summary_and_inline_rbs_per_method`, `test_no_skill_asks_for_yard_tags`; `test/mermaid_show_test.rb` `test_every_method_has_a_summary_and_an_inline_signature`
+- New Ruby code in a personal repository has a one-line class summary and an inline RBS signature per method, no YARD tags; work keeps YARD → #201's `test/rbs_inline_tooling_test.rb` (ruby-style and rails-architecture rules); `test/ruby_signatures_test.rb` `test_implement_and_object_oriented_design_defer_to_ruby_style`, `test_ruby_style_forbids_hand_written_sig_files`; `test/mermaid_show_test.rb` `test_every_method_has_an_inline_signature`
 - `steep check` passes where accepted; otherwise the plan says signatures are not checked → `test/ruby_signatures_test.rb` `test_signatures_are_checked_by_steep_or_marked_not_checked`
 - Codex loads the same design, diagrams and glossary skills and the same plan template → `test/skill_parity_test.rb` `test_codex_gets_the_design_diagrams_and_glossary_skills`
 - GitHub renders the plan's diagrams in the pull request → `test/fill_pr_template_test.rb` `test_the_plans_design_section_lands_in_the_implementation_part_with_its_mermaid_fence`, `test_an_appended_implementation_section_starts_with_the_design`

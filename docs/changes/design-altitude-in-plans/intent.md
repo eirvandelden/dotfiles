@@ -36,7 +36,7 @@ The reviewer and the plan critique check the design as well as the code.
 - Playbook rules stay in force: no service objects, rich models, TDD, Simplified Technical English, one line per markdown paragraph.
 - Claude/Codex parity: one shared source per skill; Claude-only features (the question tool's previews) need a plain-text equivalent for Codex.
 - Ruby signatures are inline RBS comments (`#:` and `# @rbs`) above each `def`. No `sig/*.rbs` files, no Sorbet or Shopify typing tools.
-- YARD tags are dropped. Prose summaries of what a class or method does stay; the inline RBS comment replaces `@param` and `@return`.
+- YARD tags are dropped in personal repositories: a one-line summary per class, an inline RBS signature per method, other comments only for a non-obvious "why". Work repositories keep YARD, `@action` and `@route` included. (Amended 2026-10-13 to match #201, by Etienne's decision.)
 - Diagrams are Mermaid only.
 - A design section the change does not touch shrinks to one line that says why.
 - New gems in a project (rails-erd, Steep, rbs_rails, rbs) are added only after the agent asks in that project; each has a fallback when the answer is no.
@@ -77,7 +77,7 @@ The reviewer and the plan critique check the design as well as the code.
 - An agent prints a Mermaid class, ER, sequence or state diagram as text in its own pane, and shows it as an image in Ghostty on request.
 - The plan stage runs two or three architect agents at once, each with a different design goal, and compares their designs. Codex gets the same architect agent.
 - The reviewer reports a design finding for each of: a public method the plan did not sign, a Law of Demeter violation, an N+1 query loop, a word from the glossary's avoid list.
-- New Ruby code an agent writes has a prose summary and an inline RBS signature per method, and no YARD tags.
+- New Ruby code an agent writes in a personal repository has a one-line summary per class, an inline RBS signature per method, and no YARD tags. In a work repository it follows the YARD rules.
 - In a project that accepted Steep and rbs_rails, `steep check` passes on the change. In a project that declined them, the plan says the signatures are not checked.
 - A Codex session loads the same design, diagrams and glossary skills from `~/.agents/skills` and writes the same plan template.
 
