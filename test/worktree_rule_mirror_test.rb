@@ -13,7 +13,7 @@ class WorktreeRuleMirrorTest < Minitest::Test
   end
 
   def test_the_worktree_first_skill_says_never_type_git_worktree_add
-    assert_match(RULE, File.read(File.join(REPO_ROOT, "claude/.claude/skills/worktree-first/SKILL.md")))
+    assert_match(RULE, File.read(File.join(REPO_ROOT, "agents/.agents/skills/worktree-first/SKILL.md")))
   end
 
   def test_the_playbook_says_never_type_git_worktree_add

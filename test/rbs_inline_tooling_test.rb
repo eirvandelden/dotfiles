@@ -8,7 +8,7 @@ class RbsInlineToolingTest < Minitest::Test
   RUBOCOP_YARD = %w[rubocop yard].join("-").freeze
   YARD_GEMS = [ RUBOCOP_YARD, "yard", "yard-activesupport-concern", "yard-solargraph" ].freeze
   RBS_GEMS = [ "rbs", "steep", "rubocop-rbs_inline" ].freeze
-  SKILLS = "claude/.claude/skills".freeze
+  SKILLS = "agents/.agents/skills".freeze
 
   def test_fallback_config_does_not_load_rubocop_yard
     refute_includes(read("rubocop/.rubocop.yml"), RUBOCOP_YARD)

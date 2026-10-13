@@ -8,7 +8,7 @@ require "tmpdir"
 # reuse the current worktree or call worktree-create. These tests run that snippet in fixture
 # repositories, with worktree-create wrapped so each call is logged, and read where the shell ends.
 class WorktreeFirstSkillTest < Minitest::Test
-  SKILL = File.expand_path("../claude/.claude/skills/worktree-first/SKILL.md", __dir__)
+  SKILL = File.expand_path("../agents/.agents/skills/worktree-first/SKILL.md", __dir__)
   CREATE = File.expand_path("../git/.config/git/worktree-tools/worktree-create", __dir__)
   WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
