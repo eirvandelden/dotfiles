@@ -11,7 +11,8 @@
 #
 # What is left needs no understanding of the command, only whether a word is
 # present. Every check errs towards asking: a false question costs a moment, a
-# missed one costs the user's name on something they did not send.
+# missed one costs the user's name on something they did not send. That includes
+# every way of skipping the git hooks that shows in the words (hook_bypass.rb).
 #
 # Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
 # So `gh pr create` is refused while that folder exists in a checkout the command
@@ -24,6 +25,7 @@
 require "json"
 require "open3"
 require "shellwords"
+require_relative "hook_bypass"
 require_relative "remote_matcher"
 
 CONSENT_MARKER = "I_HAVE_USER_CONSENT=1 ".freeze
@@ -287,9 +289,6 @@ def repository_flag(rest, words)
 end
 
 def consentable_reason(words, working_directory)
-  return "--no-verify skips the git hooks, which are what keep commits off main (playbook rule 19)." \
-    if words.include?("--no-verify")
-
   return "posting on GitHub as the user needs approval for that exact message (playbook rule 6). " \
          "Draft the text in chat instead." if posts_to_github?(words)
 
@@ -440,7 +439,7 @@ if refused
   exit 2
 end
 
-reason = consentable_reason(command_words, working_directory)
+reason = HookBypass.reason(command_words, command) || consentable_reason(command_words, working_directory)
 exit 0 if reason.nil?
 exit 0 if command.start_with?(CONSENT_MARKER)
 

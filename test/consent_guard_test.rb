@@ -426,7 +426,7 @@ class ConsentGuardTest < Minitest::Test
   # tool_name "Bash", the command in tool_input.command, plus session, turn and model fields.
   def test_a_codex_payload_is_refused_with_the_same_message_as_a_claude_payload
     [ "git push --force origin x", "git push --no-verify origin x", "gh pr comment 12 --body hi",
-      "kamal deploy" ].each do |command|
+      "kamal deploy", "git commit -n -m x", "LEFTHOOK=0 git commit -m x" ].each do |command|
       _, claude_stderr, claude_status = run_guard(command)
       _, codex_stderr, codex_status = run_codex_guard(command)
 
@@ -988,7 +988,109 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus, stderr)
   end
 
+  def test_commit_n_waits_for_consent
+    assert_waits("git commit -n -m \"x\"")
+  end
+
+  def test_a_push_dry_run_runs_without_a_question
+    assert_runs("git push -n origin feature")
+  end
+
+  def test_turning_lefthook_off_waits_for_consent
+    [ "LEFTHOOK=0 git commit -m \"x\"", "LEFTHOOK=false git commit -m \"x\"",
+      "export LEFTHOOK=0; git commit -m \"x\"" ].each { |command| assert_waits(command) }
+  end
+
+  def test_excluding_a_lefthook_command_waits_for_consent
+    assert_waits("LEFTHOOK_EXCLUDE=no-push-to-main git commit -m \"x\"")
+  end
+
+  def test_overriding_core_hooks_path_for_one_command_waits_for_consent
+    assert_waits("git -c core.hooksPath=/dev/null commit -m \"x\"")
+  end
+
+  def test_setting_core_hooks_path_through_the_environment_waits_for_consent
+    [ "GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/dev/null'\" git commit -m \"x\"",
+      "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m \"x\"" ]
+      .each { |command| assert_waits(command) }
+  end
+
+  def test_writing_or_unsetting_core_hooks_path_waits_for_consent
+    [ "git config core.hooksPath /dev/null", "git config --global --unset core.hooksPath" ]
+      .each { |command| assert_waits(command) }
+  end
+
+  def test_removing_or_renaming_the_core_section_waits_for_consent
+    [ "git config --global remove-section core", "git config --rename-section core core2" ]
+      .each { |command| assert_waits(command) }
+  end
+
+  def test_reading_core_hooks_path_runs_without_a_question
+    assert_runs("git config --get core.hooksPath")
+  end
+
+  def test_plumbing_that_skips_the_commit_hooks_waits_for_consent
+    [ "git commit-tree HEAD^{tree} -p HEAD -m \"x\"", "git update-ref refs/heads/main abc123" ]
+      .each { |command| assert_waits(command) }
+  end
+
+  def test_installing_or_uninstalling_lefthook_waits_for_consent
+    [ "lefthook install", "lefthook uninstall" ].each { |command| assert_waits(command) }
+  end
+
+  def test_lefthook_dump_runs_without_a_question
+    assert_runs("lefthook dump")
+  end
+
+  def test_commit_n_runs_once_the_user_has_consented
+    assert_runs("I_HAVE_USER_CONSENT=1 git commit -n -m \"x\"")
+  end
+
+  def test_an_abbreviated_no_verify_waits_for_consent
+    assert_waits("git commit --no-veri -m \"x\"")
+  end
+
+  def test_replacing_lefthook_or_its_config_waits_for_consent
+    [ "LEFTHOOK_BIN=true git commit -m \"x\"", "LEFTHOOK_CONFIG=/tmp/empty.yml git commit -m \"x\"" ]
+      .each { |command| assert_waits(command) }
+  end
+
+  def test_a_plain_force_push_chained_to_another_command_is_refused
+    _, stderr, status = run_guard("git push --force origin feature; echo done")
+
+    assert_equal(2, status.exitstatus)
+    assert_match(/force-with-lease/, stderr)
+  end
+
+  def test_a_force_with_lease_push_chained_to_another_command_is_allowed
+    assert_runs("git push --force-with-lease origin feature; echo done")
+  end
+
+  def test_a_message_naming_a_hook_switch_runs_without_a_question
+    [ "git commit -m \"explain why LEFTHOOK=0 is refused\"",
+      "git commit -m 'LEFTHOOK_CONFIG=\"/tmp/hook dir/x.yml\" is refused'" ]
+      .each { |command| assert_runs(command) }
+  end
+
+  def test_a_hook_skip_chained_or_substituted_still_waits_for_consent
+    [ "git commit -n; echo done", "lefthook install&&echo done", "echo $(git commit -n -m x)",
+      "echo `git commit -n -m x`", "(git commit -n -m x)" ].each { |command| assert_waits(command) }
+  end
+
   private
+
+  def assert_waits(command)
+    _, stderr, status = run_guard(command)
+
+    assert_equal(2, status.exitstatus, command)
+    assert_match(/Ask the user first/, stderr, command)
+  end
+
+  def assert_runs(command)
+    _, stderr, status = run_guard(command)
+
+    assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+  end
 
   def commit_change_then_leave_branch
     start_change("pr-only-via-finish")
