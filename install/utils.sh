@@ -577,6 +577,38 @@ install_npm_packages() {
 }
 
 ###############################################################################
+# GitHub CLI extensions
+###############################################################################
+
+gh_extension_is_installed() {
+  # Usage: gh_extension_is_installed <owner/repo>
+  gh extension list 2>/dev/null | awk -F'\t' '{print $2}' | grep -qx "$1"
+}
+
+install_gh_extensions() {
+  # Usage: install_gh_extensions "${GH_EXTENSIONS[@]}"
+  require_cmd gh
+
+  local extensions=("$@")
+  local ext
+  for ext in "${extensions[@]}"; do
+    [[ -z "$ext" ]] && continue
+
+    if gh_extension_is_installed "$ext"; then
+      log "gh extension: already installed: $ext"
+      continue
+    fi
+
+    # gh_extension_is_installed needs `gh extension list`, which needs
+    # authentication. Unauthenticated, it always reports false, so this
+    # line does not claim "installing": `gh extension install` itself is
+    # a no-op with its own message when the extension is already there.
+    log "gh extension: ensuring installed: $ext"
+    gh extension install "$ext"
+  done
+}
+
+###############################################################################
 # Stow configuration
 ###############################################################################
 
