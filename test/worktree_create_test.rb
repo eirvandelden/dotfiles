@@ -391,6 +391,34 @@ class WorktreeCreateTest < Minitest::Test
     refute(@waiter.alive?, "worktree-create did not finish after the lock was released")
   end
 
+  # Only the background sweep has a time limit: worktree-create's own fetch runs as long as it
+  # takes, as before.
+  def test_a_fetch_slower_than_the_sweep_time_limit_still_brings_origin_main_up_to_date
+    advance_origin_main
+    environment = create_environment.merge("GIT_FETCH_DELAY" => "2", "WORKTREE_TOOLS_TIME_LIMIT" => "1")
+
+    stdout, stderr, status = Open3.capture3(environment, "ruby", SCRIPT, "feature", "--no-pane", chdir: @repo)
+
+    assert(status.success?, stderr)
+    assert_equal(git(@origin, "rev-parse", "main").strip, git(stdout.strip, "rev-parse", "HEAD").strip)
+  end
+
+  # A terminal sends Ctrl-C to its foreground process group; the fetch must be part of it.
+  def test_ctrl_c_ends_it_during_a_fetch
+    environment = create_environment.merge("GIT_FETCH_DELAY" => "30")
+    pid = Process.spawn(environment, "ruby", SCRIPT, "feature", "--no-pane",
+                        chdir: @repo, out: File::NULL, err: File::NULL, pgroup: true)
+    @waiter = Process.detach(pid)
+    deadline = Time.now + 20
+    sleep 0.05 until git_calls.any? { |call| call.start_with?("fetch ") } || Time.now > deadline
+    sleep 0.5
+    Process.kill("INT", -pid)
+
+    refute_nil(@waiter.join(10), "worktree-create kept running after Ctrl-C")
+  ensure
+    kill_group(pid)
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end
@@ -512,6 +540,7 @@ class WorktreeCreateTest < Minitest::Test
       #!/bin/sh
       printf '%s\\n' "$*" >> "$GIT_CALL_LOG"
       printf 'git: %s\\n' "$*" >> "$ORDER_LOG"
+      if [ "$1" = fetch ] && [ -n "$GIT_FETCH_DELAY" ]; then sleep "$GIT_FETCH_DELAY"; fi
       exec /usr/bin/git "$@"
     SH
     FileUtils.chmod(0o755, recorder)
@@ -598,6 +627,12 @@ class WorktreeCreateTest < Minitest::Test
 
   # A failed assertion inside the lock block releases the lock, and the waiting process would
   # carry on while teardown deletes its directories.
+  def kill_group(pid)
+    Process.kill("KILL", -pid) if pid
+  rescue Errno::ESRCH
+    nil
+  end
+
   def stop_waiter
     return unless @waiter&.alive?
 

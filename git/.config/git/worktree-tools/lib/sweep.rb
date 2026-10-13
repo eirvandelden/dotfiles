@@ -10,8 +10,9 @@ module WorktreeTools
     PANE = File.expand_path("../worktree-pane", __dir__)
     REMOVE = File.expand_path("../worktree-remove", __dir__)
 
-    def initialize(program)
+    def initialize(program, time_limit: nil)
       @program = program
+      @time_limit = time_limit
     end
 
     def run(default_branch:, keep: [])
@@ -60,7 +61,8 @@ module WorktreeTools
     end
 
     def pr_state(branch)
-      output, status = capture_within_time_limit("gh", "pr", "view", branch, "--json", "state", "-q", ".state")
+      output, status = capture_output("gh", "pr", "view", branch, "--json", "state", "-q", ".state",
+                                      time_limit: @time_limit)
       output.strip if status.success?
     rescue Errno::ENOENT
       nil

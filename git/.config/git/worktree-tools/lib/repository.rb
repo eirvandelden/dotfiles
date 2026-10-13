@@ -7,8 +7,9 @@ module WorktreeTools
   class Repository
     include Helpers
 
-    def initialize(program)
+    def initialize(program, time_limit: nil)
       @program = program
+      @time_limit = time_limit
     end
 
     # git worktree list's first "worktree <path>" line is the main working tree, except inside
@@ -45,7 +46,7 @@ module WorktreeTools
     # A pull in the main checkout reads FETCH_HEAD between its own fetch and its merge, so a
     # sweep running beside it must not rewrite that file.
     def fetch_default_branch(branch)
-      capture_within_time_limit("git", "fetch", "--no-write-fetch-head", "origin", branch)
+      capture_output("git", "fetch", "--no-write-fetch-head", "origin", branch, time_limit: @time_limit)
     end
 
     # Creates the lock file, so its presence shows that a sweep started.
