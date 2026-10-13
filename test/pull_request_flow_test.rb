@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Only deliver opens a pull request, and it removes docs/changes/<slug>/ first. The consent guard
 # enforces that mechanically (test/consent_guard_test.rb); these tests pin the skill, playbook and

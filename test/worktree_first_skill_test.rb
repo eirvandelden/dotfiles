@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The worktree-first skill is prose plus a shell snippet. Step 1's snippet decides whether to
 # reuse the current worktree or call worktree-create. These tests run that snippet in fixture

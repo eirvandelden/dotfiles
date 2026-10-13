@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "json"
+require_relative "isolated_git"
 
 class NeovimAvanteDependenciesTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)

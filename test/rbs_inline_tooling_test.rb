@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "open3"
+require_relative "isolated_git"
 
 # Static checks that the dotfiles install and wire up inline RBS tooling, and no YARD tooling.
 class RbsInlineToolingTest < Minitest::Test

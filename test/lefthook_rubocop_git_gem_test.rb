@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "isolated_git"
 
 # Git exports GIT_DIR to hooks and lefthook passes it to every job. A gem installed from git can run
 # git while Bundler loads its gemspec (mvpa-css does, for its version). With GIT_DIR set that call

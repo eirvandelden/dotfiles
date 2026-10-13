@@ -5,6 +5,7 @@ require "open3"
 require "rbconfig"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "isolated_git"
 
 # A real `git push` through the global pre-push hook, lefthook and the stowed
 # review-report-fresh script. A branch with a change folder but no open pull request
