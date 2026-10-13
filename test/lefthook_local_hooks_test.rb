@@ -67,6 +67,21 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
+  def test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set
+    setup_repo("trunk")
+    stub_logging_lefthook
+    stage_file("clean.txt", "hello\n")
+    with_lefthook_bin_set { git("commit", "-m", "clean") }
+    assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
+  end
+
+  def test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set
+    setup_repo("trunk")
+    stub_logging_lefthook
+    with_lefthook_bin_set { push }
+    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
+  end
+
   def test_pre_commit_uses_global_fallback_and_commits_an_unknown_word
     setup_repo("trunk")
     stub_real_lefthook
@@ -207,6 +222,15 @@ class LefthookLocalHooksTest < Minitest::Test
 
   def stub_logging_lefthook
     write_executable("lefthook", "#!/bin/sh\necho \"$*\" >> \"#{@log_file}\"\n")
+  end
+
+  # A developer's shell may export LEFTHOOK_BIN; the global hook shim prefers it over lefthook on PATH.
+  def with_lefthook_bin_set
+    previous = ENV.fetch("LEFTHOOK_BIN", nil)
+    ENV["LEFTHOOK_BIN"] = NATIVE_LEFTHOOK
+    yield
+  ensure
+    ENV["LEFTHOOK_BIN"] = previous
   end
 
   def write_executable(name, body)
