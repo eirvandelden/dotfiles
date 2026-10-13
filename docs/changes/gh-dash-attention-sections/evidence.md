@@ -23,6 +23,11 @@ Recorded 2026-10-13. Plan steps 6 and 7.
 - Draft nedap PRs with a review request for me: 0, so the draft exclusion in section 1 has no live example.
 - Other counts: My Pull Requests 46, Involved (PRs) 2, Assigned to me 9, My Issues 155, Involved (issues) 22.
 
+## Full suite (plan step 8)
+
+- `for f in test/*_test.rb; do ruby -Itest "$f"; done` on 2026-10-13, after section 5 and the round 3 fixes (same config and test as now): 42 of 43 files pass.
+- `test/review_report_check_test.rb` fails once (`test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`: `git commit --quiet -m advance main failed`). It passes with `LEFTHOOK=0`: the global lefthook hooks leak into the test's temporary repository. Unrelated to this change; branch `test-repos-ignore-global-git-setup` fixes it.
+
 ## Base
 
 - `origin/main` already shipped `github/.config/gh-dash/config.yml` (pager and `C` only, since d5c08489). The intent's premise that the config lives outside dotfiles was stale. This branch now extends that file. `~/.config/gh-dash/config.yml` on this machine is still a plain file, so the trash-and-restow step stays with Etienne.

@@ -142,4 +142,4 @@ Nothing found. A scan of every added line in the branch history finds only `org:
 
 Every acceptance criterion keeps the proof listed in round 3. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
 
-- [ ] Nit: No round and no `evidence.md` entry records a finished full-suite run (plan step 8). Rounds 3, 4, 7 and 8 all stopped short of it. Record one green run before `finish`. — `docs/changes/gh-dash-attention-sections/plan.md:76` →
+- [ ] Nit: No round and no `evidence.md` entry records a finished full-suite run (plan step 8). Rounds 3, 4, 7 and 8 all stopped short of it. Record one green run before `finish`. — `docs/changes/gh-dash-attention-sections/plan.md:76` → fixed (docs: record the full-suite run for gh-dash-attention-sections)
