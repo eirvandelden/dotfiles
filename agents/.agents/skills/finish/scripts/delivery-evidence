@@ -1,0 +1,222 @@
+#!/usr/bin/env ruby
+# Records what actually ran against the code being delivered, so autonomous
+# delivery can refuse stale proof and hand the pull request real results.
+#
+#   delivery-evidence run --kind K --name N [--paths p,q] [--limits T] [--summary T] -- cmd...
+#   delivery-evidence record --kind K --name N --status pass|fail --scenario T --result T [--paths p,q] [--limits T]
+#   delivery-evidence note --delivered T | --limitation T
+#   delivery-evidence status
+#   delivery-evidence check [--require kind,kind]
+#   delivery-evidence handover [--require kind,kind]
+#   delivery-evidence pr-check
+#
+# Evidence lives in the shared git directory (see delivery_evidence/store.rb) and is
+# never deleted with the change folder. Command output is streamed, never stored.
+require "json"
+require "open3"
+require "optparse"
+require "shellwords"
+require "time"
+require_relative "delivery_evidence/fingerprint"
+require_relative "delivery_evidence/handover"
+require_relative "delivery_evidence/repo"
+require_relative "delivery_evidence/store"
+
+CHANGE_FOLDER_SCRIPT = File.expand_path("../../plan/scripts/change-folder", __dir__)
+
+class DeliveryEvidence
+  def initialize(repo)
+    @repo = repo
+    @folder = change_folder
+    @store = Store.new(repo.common_dir, File.basename(@folder))
+    @fingerprint = Fingerprint.new(repo, @folder)
+  end
+
+  def run(options, command)
+    abort("run needs a command after --") if command.empty?
+    paths = pathspecs(options)
+    before = @fingerprint.of(paths)
+    dirty = @repo.uncommitted?(paths, @folder)
+    exit_status = execute(command)
+    reason = "inputs changed during the run" if @fingerprint.of(paths) != before
+    warn("delivery-evidence: #{reason}; recorded as failed.") if reason
+    add(options, paths, dirty, status: exit_status.zero? && !reason ? "pass" : "fail", command: command.shelljoin,
+                             exit_status: exit_status, summary: options[:summary], reason: reason)
+    exit_status
+  end
+
+  def record(options)
+    paths = pathspecs(options)
+    add(options, paths, @repo.uncommitted?(paths, @folder), status: options.fetch(:status),
+                                                            scenario: options.fetch(:scenario), result: options.fetch(:result))
+    0
+  end
+
+  def note(options)
+    @store.data["delivered"] = options[:delivered] if options[:delivered]
+    @store.data["limitations"] << options[:limitation] if options[:limitation]
+    @store.save
+    0
+  end
+
+  def status
+    @store.current.each do |entry|
+      puts([ label(entry).ljust(7), entry["kind"], entry["name"], entry["head"][0, 8], entry["time"] ].join("  "))
+    end
+    0
+  end
+
+  def check(required)
+    problems = problems(required)
+    return puts("OK: delivery evidence is fresh.") || 0 if problems.empty?
+
+    warn(problems.map { |problem| "- #{problem}" }.join("\n"))
+    1
+  end
+
+  def handover(required)
+    return refuse("no delivered behaviour note: run `delivery-evidence note --delivered <text>`.") unless @store.data["delivered"]
+
+    problems = problems(required)
+    return refuse(problems.join("\n")) unless problems.empty?
+
+    File.write(@store.handover_path, Handover.new(@store.data, @store.current, review_markdown).to_markdown)
+    puts(@store.handover_path)
+    0
+  end
+
+  def pr_check
+    abort("no handover file at #{@store.handover_path}") unless File.exist?(@store.handover_path)
+    pull_request = fetch_pull_request
+    mismatches = pr_mismatches(pull_request)
+    return puts("OK: pull request head and Verification section match the handover.") || 0 if mismatches.empty?
+
+    warn(mismatches.join("\n"))
+    1
+  end
+
+  private
+
+  def change_folder
+    stdout, stderr, status = Open3.capture3(CHANGE_FOLDER_SCRIPT, chdir: @repo.toplevel)
+    abort(stderr) unless status.success?
+
+    stdout.strip
+  end
+
+  def pathspecs(options)
+    options[:paths] || (options[:kind] == "migration" ? [ "db" ] : [ "." ])
+  end
+
+  def execute(command)
+    system(*command, chdir: @repo.toplevel)
+    $?&.exitstatus || 127
+  rescue SystemCallError => error
+    warn("delivery-evidence: #{error.message}")
+    127
+  end
+
+  def add(options, paths, dirty, **fields)
+    @store.add({ "kind" => options.fetch(:kind), "name" => options.fetch(:name), "paths" => paths,
+                 "fingerprint" => @fingerprint.of(paths), "head" => @repo.head, "dirty" => dirty,
+                 "limits" => options[:limits], "time" => Time.now.utc.iso8601 }
+               .merge(fields.transform_keys(&:to_s).compact))
+  end
+
+  def fresh?(entry)
+    entry["status"] == "pass" && @fingerprint.of(entry["paths"]) == entry["fingerprint"]
+  end
+
+  def label(entry)
+    return "failed" if entry["status"] != "pass"
+
+    fresh?(entry) ? "fresh" : "stale"
+  end
+
+  def problems(required)
+    entry_problems = @store.current.filter_map { |entry| entry_problem(entry) }
+    entry_problems + (required.to_a + automatic_kinds).uniq.filter_map { |kind| kind_problem(kind) }
+  end
+
+  def entry_problem(entry)
+    case label(entry)
+    when "failed" then "#{entry['name']} (#{entry['kind']}) failed#{": #{entry['reason']}" if entry['reason']}."
+    when "stale" then "#{entry['name']} (#{entry['kind']}) is stale: its files changed since #{entry['head'][0, 8]}. Run it again."
+    end
+  end
+
+  def kind_problem(kind)
+    return if @store.current.any? { |entry| entry["kind"] == kind && fresh?(entry) }
+
+    "required kind #{kind} has no fresh passing entry."
+  end
+
+  def automatic_kinds
+    paths = @repo.branch_paths
+    kinds = []
+    kinds << "migration" if paths.any? { |path| path.match?(Repo::MIGRATION_PATHS) }
+    kinds << "browser" if paths.any? { |path| path.match?(Repo::UI_PATHS) }
+    kinds
+  end
+
+  def review_markdown
+    path = File.join(@repo.toplevel, @folder, "review.md")
+    File.read(path) if File.exist?(path)
+  end
+
+  def refuse(message)
+    warn(message)
+    1
+  end
+
+  def fetch_pull_request
+    stdout, stderr, status = Open3.capture3("gh", "pr", "view", "--json", "body,headRefOid",
+                                            stdin_data: "", chdir: @repo.toplevel)
+    abort("gh pr view failed: #{stderr.strip}") unless status.success?
+
+    JSON.parse(stdout)
+  end
+
+  def pr_mismatches(pull_request)
+    mismatches = []
+    unless pull_request["headRefOid"] == @repo.head
+      mismatches << "Pull request head #{pull_request['headRefOid']} differs from local HEAD #{@repo.head}."
+    end
+    mismatches << "Pull request body lacks the handover's Verification section." unless verification_in?(pull_request["body"])
+    mismatches
+  end
+
+  def verification_in?(body)
+    section = File.read(@store.handover_path)[/^## Verification\n\n(.*?)(?=\n## |\z)/m, 1].to_s.strip
+    !section.empty? && body.to_s.gsub("\r\n", "\n").include?(section)
+  end
+end
+
+def parse_options(argv)
+  options = {}
+  OptionParser.new do |parser|
+    %i[kind name scenario result limits summary delivered limitation status].each do |key|
+      parser.on("--#{key} VALUE") { |value| options[key] = value }
+    end
+    parser.on("--paths LIST") { |value| options[:paths] = value.split(",") }
+    parser.on("--require LIST") { |value| options[:require] = value.split(",") }
+  end.order!(argv)
+  options
+end
+
+subcommand = ARGV.shift
+options = parse_options(ARGV)
+tool = DeliveryEvidence.new(Repo.new)
+
+exit(
+  case subcommand
+  when "run" then tool.run(options, ARGV)
+  when "record" then tool.record(options)
+  when "note" then tool.note(options)
+  when "status" then tool.status
+  when "check" then tool.check(options[:require])
+  when "handover" then tool.handover(options[:require])
+  when "pr-check" then tool.pr_check
+  else abort("usage: delivery-evidence run|record|note|status|check|handover|pr-check")
+  end
+)
