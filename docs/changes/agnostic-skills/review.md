@@ -34,3 +34,31 @@ Every test named in the plan's `## Proof` exists. No existing test was weakened,
 Source: `codex review --base origin/main`, transcribed. Codex found no confirmed defects. It reports that the skill parity test passes and the diff has no whitespace errors.
 
 No findings.
+
+## Round 3 — 2026-10-13T11:17:50Z — f7c4267c
+
+The repository has no `REVIEW.md` or `REVIEW.local.md`, so this round uses the reviewer's default passes. The branch is rebased: `origin/main` is an ancestor of `HEAD`, 0 commits behind. There are no uncommitted changes. Every rename except the five planned path edits is `R100`, so no edit from main got lost in the rebase. Linters are green: rubocop on the 7 changed Ruby files, yamllint on every `openai.yaml` and `lefthook-local.yml`, `shellcheck -x -S warning` on `start-review.sh`, and the no-hardwrap markdownlint rule on the changed Markdown. The full suite has one error, `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`. It is the same pre-existing error that round 1 dismissed under rule 25. No test skips. The step 9 grep returns only the expected hits.
+
+No Important findings.
+
+- [ ] Nit: `test_a_pushed_claude_skill_link_runs_the_parity_job` checks only that the output lacks `skill-parity (skip)`. It also passes when the job does not exist. Evidence: `lefthook run pre-push --file claude/.claude/skills/sync --command no-such-job` prints `no job matching no-such-job found` and exits 0, and that output lacks `(skip)`. A rename or removal of the `skill-parity` job keeps both hook tests green. Assert a positive marker of the job run instead. — `test/skill_parity_hook_test.rb:19` →
+- [ ] Nit: The plan still names the move commit as `8087440d` with the subject `refactor: move skill sources into the agents package`. After the rebase, that commit is `e4f30374` with the subject `Move every skill source into the agents package`. It is the only commit on the branch without a conventional prefix. The plan's `LEFTHOOK_EXCLUDE=fixme` push rule now names a SHA that is not on the branch. — `docs/changes/agnostic-skills/plan.md:24` →
+- [ ] Nit: `consent-guard.rb` still finds `change-folder` through the Claude link (`../skills/plan/scripts/change-folder`), but `test-guard.rb` in the same folder now uses the agents source. Both paths resolve, so nothing breaks. The two hooks now use different path forms for one script. — `claude/.claude/hooks/consent-guard.rb:30` →
+
+### Security
+
+The diff adds no secrets, credentials or work references. No new command takes input from outside. The new `skill_parity_hook_test.rb` runs only the repository's own lefthook job with a fixed file argument.
+
+### Compliance
+
+- `claude/.claude/skills/` holds no skill source → `test_every_agents_skill_is_a_real_folder_with_a_skill_md`, `test_claude_skills_are_relative_links_into_the_agents_package`. `git ls-tree` shows only `120000` entries under `claude/.claude/skills/` and none under `agents/.agents/skills/`.
+- A skill source added under `claude/.claude/skills/` fails the suite → `test_a_real_folder_under_claude_skills_is_reported`, `test_an_absolute_link_under_claude_skills_is_reported`, `test_a_dangling_link_under_claude_skills_is_reported`, `test_a_plain_file_under_claude_skills_is_reported`, plus the probe run in `evidence.md`.
+- A new Claude session lists every skill → post-restow check (plan step 11); pending until after the merge.
+- Codex lists every skill, including `ruby-style` and `sync` → post-restow check; pending. All eleven new `openai.yaml` files exist, and each short description is a shortened copy of the frontmatter description.
+- `~/.claude/skills/finish/scripts/change-scope` prints `personal` → post-restow check; pending. `test/change_scope_test.rb` passes on the repository path.
+- `hand-off-plan.sh` and `start-review.sh` find their skill files → post-restow check; pending. `test/herdr_worker_scripts_test.rb` passes.
+- No dangling link after the restow → post-restow check; pending. Read of Stow 2.4.1 `stow_node` and `unstow_node` agrees with the plan's Risks trace: an existing real target folder is descended, and the old `~/.agents/skills/<name>` folder link is removed on `-D` and rebuilt as a folder of file links on `-S`.
+- The test suite and linters pass → linters green; one pre-existing suite error (above).
+- The four rule folders are gone → `test_unused_agent_rule_folders_are_gone`.
+
+Every test named in the plan's `## Proof` exists. No existing test was weakened, skipped or deleted.
