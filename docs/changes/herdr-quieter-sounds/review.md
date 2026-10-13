@@ -225,3 +225,21 @@ Nothing found. Every path in the script is quoted. The source is only ever an ff
 - No existing test was weakened, skipped or deleted.
 
 Totals: 0 Important, 0 Nit.
+
+## Round 10 — 2026-10-13T08:30Z — 7e24fa33 — Codex (`codex review --base origin/main`)
+
+Transcribed from the Codex CLI. Codex ran both herdr test files (green) and checked the diff for whitespace errors (none).
+
+### Bugs
+
+Nothing found. Codex: "The changes match the documented behavior."
+
+### Security
+
+Nothing found.
+
+### Compliance
+
+Nothing found.
+
+Totals: 0 findings.
