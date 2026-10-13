@@ -1,0 +1,22 @@
+## Round 1 — 2026-10-13T10:59:08Z — 2b5b8d78
+
+- [ ] Important: The fallback reports every valid `#:` signature as `Layout/LeadingCommentSpace` ("Missing space after #."). That cop comes from the inherited `rubocop-rails-omakase` config, and its `AllowRBSInlineAnnotation` defaults to `false`. With `rubocop -a`, which the lefthook pre-commit hook runs, RuboCop stops with "Infinite loop detected ... caused by Layout/LeadingCommentSpace -> Style/RbsInline/InvalidComment". Reproduced on `#: (Integer) -> String` above `def label(count) = count.to_s` in `lib/typed.rb` and on `#: Integer` above `attr_reader`. So the acceptance criterion "accepts a valid RBS 4 annotation" does not hold, and autocorrect is broken in any repository that uses the fallback. `# @rbs` lines are not affected. — `rubocop/.rubocop.yml:93` →
+- [ ] Important: `test_fallback_accepts_valid_rbs_inline_signature` filters offenses to `Style/RbsInline/` only, so it passes while the fallback still reports the valid signature through `Layout/LeadingCommentSpace`. The test does not prove the criterion it is named for. It needs to assert no offense on the signature line from any cop, and to cover `-a` as well (the infinite loop goes to stderr, which `run_fallback` already fails on). — `test/rubocop_fallback_test.rb:95` →
+- [ ] Nit: `test_no_rubocop_yard_reference_outside_change_folders` ignores the `git grep` exit status. A git error (status 128, for example a checkout without `.git`) prints nothing on stdout, so the test passes vacuously. Assert exit status 1 (no match) as well. — `test/rbs_inline_tooling_test.rb:96` →
+
+Compliance (acceptance criteria from `intent.md`):
+
+- No `rubocop-yard`, no `YARD/*` cop → `test_fallback_reports_no_yard_cop`, `test_fallback_config_does_not_load_rubocop_yard`.
+- Malformed annotation reported → `test_fallback_reports_malformed_rbs_inline_type`, `test_fallback_reports_rbs_inline_comment_without_colon_prefix`. Valid RBS 4 annotation accepted → missing (see the Important findings above; the named test passes, but the criterion fails).
+- `packages.conf` installs `rbs`, `steep`, `rubocop-rbs_inline`, lists no YARD gem → `test_packages_conf_installs_rbs_tooling`, `test_packages_conf_lists_no_yard_gems` (list only; transitive YARD gems accepted by Etienne).
+- CI installs `rubocop-rbs_inline`, not `rubocop-yard`; fallback test passes → `test_ci_installs_rubocop_rbs_inline_not_rubocop_yard`; `test/rubocop_fallback_test.rb` 7/7 green locally with the plugin installed.
+- Editors show Steep diagnostics next to Solargraph → `test_neovim_enables_steep_next_to_solargraph`, `test_neovim_steep_starts_only_with_a_steepfile`, `test_zed_runs_steep_next_to_solargraph`, `test_vscode_runs_global_steep`. Neovim headless loads `vim.lsp.config.steep` with `cmd = { "steep", "langserver" }`. The in-editor diagnostic stays a manual gate.
+- Solargraph shows RBS for `String#upcase` → plan check run: Solargraph 0.58.1 prints `String`.
+- `new-repo-setup` adds an inline Steepfile and `steep check` runs → `test_new_repo_setup_adds_inline_steepfile`. The skill's Steepfile, run in a scratch project, makes `steep check` report `Ruby::MethodBodyTypeMismatch` for `#: (Integer) -> String` on `def f(x) = x`.
+- Personal rule is the same in both skills → `test_ruby_style_personal_rule_names_inline_rbs`, `test_rails_architecture_personal_rule_names_inline_rbs`, `test_rails_architecture_drops_personal_yard_method_docs`.
+- Work YARD rules kept, with `@action` / `@route` → `test_rails_architecture_keeps_work_action_route_tags`, `test_ruby_style_keeps_work_yard_rule`.
+- `git grep -i rubocop-yard` empty outside `docs/changes/` → `test_no_rubocop_yard_reference_outside_change_folders`.
+
+Every test named in `plan.md` `## Proof` exists. No existing test was weakened, skipped or deleted: `run_fallback` gained a `path:` keyword with the old fixture as default.
+
+Checks: `test/rubocop_fallback_test.rb` and `test/rbs_inline_tooling_test.rb` green; RuboCop, yamllint and markdownlint (no-hardwrap) clean on the changed files. In the full suite, `test/agent_worktree_test.rb` and `test/review_report_check_test.rb` error on `git` calls inside their temporary repositories (status 128, and a global `no-push-to-main` hook firing on a temporary `main`). This branch does not touch those files or the code they cover.
