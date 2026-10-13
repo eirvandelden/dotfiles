@@ -115,6 +115,15 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_a_paren_in_a_substitution_or_quoted_text_does_not_end_the_subshell
+    [ "(cd .worktrees/foo && echo $(pwd) && git worktree add ../bar -b bar)",
+     '(cd .worktrees/foo && git commit -m "fix (x)" && git worktree add ../bar -b bar)' ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
   def test_a_cd_inside_a_subshell_ends_with_the_subshell
     _, _, status = run_guard("(cd .worktrees/foo); git worktree add ../x -b x")
 

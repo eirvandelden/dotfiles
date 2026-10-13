@@ -49,6 +49,9 @@ WRAPPERS = %w[command env sudo exec nohup].freeze
 WRAPPER_OPTIONS_WITH_VALUE = %w[-u -g -U -C -D -h -p -r -t].freeze
 ASSIGNMENT = /\A[A-Za-z_]\w*=/
 DIRECTORY_CHANGES = %w[cd pushd].freeze
+PARENS = %i[open close].freeze
+# The words of one simple command, and how many subshells it opens and closes.
+Segment = Struct.new(:words, :opens, :closes)
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
@@ -59,11 +62,15 @@ MESSAGE
 def segments(command)
   text = without_heredoc_bodies(command).gsub(LINE_CONTINUATION, "")
   pieces = tokens(text)
-  return text.split(SEGMENT_SEPARATOR).map { |segment| words(segment) } unless pieces
+  return split_on_every_separator(text) unless pieces
 
   pieces.slice_when { |before, after| [ before, after ].include?(:separator) }
         .reject { |chunk| chunk == [ :separator ] }
-        .map { |chunk| join_words(chunk) }
+        .map { |chunk| Segment.new(join_words(chunk - PARENS), chunk.count(:open), chunk.count(:close)) }
+end
+
+def split_on_every_separator(text)
+  text.split(SEGMENT_SEPARATOR).map { |part| Segment.new(words(part), part.count("("), part.count(")")) }
 end
 
 def without_heredoc_bodies(command)
@@ -108,16 +115,21 @@ def tokens(text)
   until scanner.eos?
     return nil unless scanner.scan(TOKEN)
 
-    pieces << piece(scanner)
+    pieces.concat(pieces_of(scanner))
   end
   pieces
 end
 
-def piece(scanner)
-  return :separator if scanner[:separator]
-  return :space if scanner[:space] || scanner[:comment]
+# Unquoted text also yields an :open or :close for each `(` or `)` in it, so a subshell can be
+# told apart from a parenthesis inside quotes.
+def pieces_of(scanner)
+  return [ :separator ] if scanner[:separator]
+  return [ :space ] if scanner[:space] || scanner[:comment]
 
-  scanner[:single] || scanner[:double] || scanner[:escaped] || scanner[:plain]
+  plain = scanner[:plain]
+  return [ scanner[:single] || scanner[:double] || scanner[:escaped] ] unless plain
+
+  [ plain, *Array.new(plain.count("("), :open), *Array.new(plain.count(")"), :close) ]
 end
 
 def join_words(pieces)
@@ -244,15 +256,16 @@ def shell_command_text(arguments)
   arguments[flags.length] if flags.any? { |flag| flag.match?(/\A-[A-Za-z]*c[A-Za-z]*\z/) }
 end
 
-# A `cd` inside `( … )` ends with the subshell, so each `(` saves the directory and `)` restores it.
+# A `cd` inside `( … )` ends with the subshell, so each unquoted `(` saves the directory and each
+# `)` restores it. A balanced `$(pwd)` saves and restores in the same segment.
 def blocked?(command, directory)
   directories = [ directory ]
-  segments(command).any? do |segment_words|
-    words = without_subshell_parens(segment_words)
-    directories.push(directories.last) if segment_words.first&.start_with?("(")
+  segments(command).any? do |segment|
+    words = without_subshell_parens(segment.words)
+    segment.opens.times { directories.push(directories.last) }
     directories[-1] = next_directory(words, directories.last)
     found = segment_blocked?(words, directories.last)
-    directories.pop if segment_words.last&.end_with?(")") && directories.length > 1
+    segment.closes.times { directories.pop if directories.length > 1 }
     found
   end
 end
