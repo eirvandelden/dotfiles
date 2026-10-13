@@ -71,3 +71,27 @@ No Important findings.
 ## Round 4 — 2026-10-13T17:45Z — 565cd9b9 (codex)
 
 - [x] Important: Escape the style path for YAML. If `$HOME` contains `"` or `\`, the step writes an invalid or misinterpreted quoted YAML value, so Glow cannot load its config. — `install/tasks/51_configure_glow_style.sh:37` → fixed (Escape the glow style path for YAML; make the failed-write test root-safe)
+
+## Round 5 — 2026-10-13T17:55Z — b7f054ee
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes apply (Bugs, Security, Compliance). This round covers the commits since round 3: `01642586`, `b7f054ee`.
+
+No findings.
+
+### Bugs
+
+- `yaml_escape` escapes `\` before `"`, so the backslash it adds before a quote is not doubled again. Probed with `h"o\me` under `/bin/bash` 3.2.57 and Homebrew bash 5.3.20 (where `patsub_replacement` is on): both write `h\"o\\me`. Ruby's YAML parser reads the result back as the original path.
+- `test_a_failed_write_leaves_no_temp_file_behind` now puts a directory where `glow.yml` goes. macOS awk reads a directory as empty and exits 0, and gawk skips it with a warning, so on both the step fails at the `cat` write, after `mktemp`. A root process cannot write to a directory either, so the test holds under root.
+- A second run with an escaped path still compares equal and writes nothing.
+
+### Security
+
+- Nothing found. The escape closes the YAML-injection path that round 4 raised. The path still reaches awk through `ENVIRON`. No secrets or work references in the new commits.
+
+### Compliance
+
+- The acceptance-criteria table from round 1 still holds. `glow/`, `packages.conf` and `install.sh` have not changed since round 3.
+- Round 1, 3 and 4 findings are all closed. The plan's Risks entry on `"` and `\` in a home path ("Not handled") is now out of date; the change handles it.
+- No existing test was weakened, skipped or deleted. The failed-write test changes how it forces the failure, not what it asserts.
+- Checks run: `glow_style_install_test.rb` (11 runs), `glow_package_test.rb` (4 runs) and `stow_package_roots_test.rb` (7 runs) pass. `shellcheck -x -S warning` and `rubocop` on the touched files are clean.
+- Outside this branch: `test/isolated_git_test.rb` still fails on `origin/main` (`31fbbd43`) with the same 18 files from round 3. Neither glow test file is in the list. The fix belongs on its own branch (playbook rule 25).
