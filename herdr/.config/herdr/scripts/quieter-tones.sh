@@ -30,7 +30,8 @@ check_source() {
     *.mp3) ;;
     *) fail "not an mp3 (herdr plays only mp3): $source" ;;
   esac
-  [ "$(physical_dir "$(dirname "$source")")" != "$(physical_dir "$out_dir")" ] ||
+  # realpath follows a link, so a link to a copy counts as the copy.
+  [ "$(dirname "$(realpath "$source")")" != "$(physical_dir "$out_dir")" ] ||
     fail "already a quieter copy: $source"
 }
 

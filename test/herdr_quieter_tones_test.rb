@@ -115,6 +115,21 @@ class HerdrQuieterTonesTest < Minitest::Test
     assert_empty(ffmpeg_calls)
   end
 
+  def test_a_link_to_a_quieter_copy_is_refused
+    install_ffmpeg_stub
+    FileUtils.mkdir_p(@copies)
+    copy = File.join(@copies, "milord.mp3")
+    File.write(copy, "copy")
+    link = File.join(@sources, "milord.mp3")
+    FileUtils.ln_s(copy, link)
+
+    _, stderr, status = run_script(link)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/copy|already/i, stderr)
+    assert_equal("copy", File.read(copy))
+  end
+
   def test_ffmpeg_is_told_to_overwrite_and_write_mp3_to_a_temporary_file
     install_ffmpeg_stub
 
