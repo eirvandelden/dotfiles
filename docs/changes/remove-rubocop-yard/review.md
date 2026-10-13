@@ -84,3 +84,7 @@ Compliance (acceptance criteria from `intent.md`):
 Every test named in `plan.md` `## Proof` exists. No existing test was weakened, skipped or deleted: the Round 3 fix changes only the new `rbs_inline` fixtures.
 
 Checks: `test/rubocop_fallback_test.rb` (8 runs, 0 skips) and `test/rbs_inline_tooling_test.rb` (15 runs) green locally under Ruby 4.0.7. RuboCop clean on both test files. yamllint clean on the changed YAML. The no-hardwrap markdownlint config is clean on the changed markdown. The full suite was not run, as instructed: `test/agent_worktree_test.rb` and `test/review_report_check_test.rb` fail locally only.
+
+## Round 6 — 2026-10-13T11:23:06Z — 683fd762 (codex)
+
+No findings.
