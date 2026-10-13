@@ -44,6 +44,14 @@ class RubocopFallbackTest < Minitest::Test
 
   RBS_FIXTURE_PATH = "lib/typed.rb".freeze
   RBS_COP_PATTERN = %r{\AStyle/RbsInline/}
+  VALID_RBS_FIXTURE = <<~RUBY.freeze
+    class Typed
+      attr_reader :count #: Integer
+
+      #: (Integer) -> String
+      def label(count) = count.to_s
+    end
+  RUBY
 
   def setup
     skip_unless_ci(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
@@ -93,9 +101,15 @@ class RubocopFallbackTest < Minitest::Test
   end
 
   def test_fallback_accepts_valid_rbs_inline_signature
-    report = run_rbs_fixture("#: (Integer) -> String\ndef label(count) = count.to_s\n")
+    report = run_rbs_fixture(VALID_RBS_FIXTURE)
 
-    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+    assert_empty(cop_names(report))
+  end
+
+  def test_fallback_autocorrect_keeps_valid_rbs_inline_signature
+    run_rbs_fixture(VALID_RBS_FIXTURE, "-a")
+
+    assert_equal(VALID_RBS_FIXTURE, File.read(File.join(@project, RBS_FIXTURE_PATH)))
   end
 
   def test_fallback_leaves_nodoc_comment_alone
@@ -106,9 +120,9 @@ class RubocopFallbackTest < Minitest::Test
 
   private
 
-  def run_rbs_fixture(source)
+  def run_rbs_fixture(source, *options)
     write_fixture(RBS_FIXTURE_PATH, source)
-    run_fallback(path: RBS_FIXTURE_PATH)
+    run_fallback(*options, path: RBS_FIXTURE_PATH)
   end
 
   def write_fixture(path, content)

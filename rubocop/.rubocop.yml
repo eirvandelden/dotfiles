@@ -92,6 +92,9 @@ Rails/IndexWith:
 # have no annotations yet, so the cops that demand annotations stay off.
 Style/RbsInline:
   Mode: opt_out
+# rubocop-rails-omakase enables this cop, which reads `#:` as a comment missing its space.
+Layout/LeadingCommentSpace:
+  AllowRBSInlineAnnotation: true
 Style/RbsInline/InvalidComment:
   Enabled: true
 Style/RbsInline/InvalidTypes:
