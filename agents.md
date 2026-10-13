@@ -148,7 +148,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - When asked to review work: read the project's `AGENTS.md` for what the application does and what its domain requires. This playbook already applies from the user config, so there is no fallback to look up.
     - Combine both with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
-    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `finish` checks it before it opens one.
+    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `deliver` checks it before it opens one.
 17. Plan before implementing:
     - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
     - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.

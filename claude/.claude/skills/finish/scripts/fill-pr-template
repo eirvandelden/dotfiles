@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Fills a PR template from intent.md and plan.md before finish opens it, in
+# Fills a PR template from intent.md and plan.md before deliver opens it, in
 # either scope. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own template phrasing still gets filled. A
 # heading nothing matches, or whose body is a checkbox list, keeps its own

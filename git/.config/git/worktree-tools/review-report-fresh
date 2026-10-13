@@ -8,7 +8,7 @@
 # With --skip-without-pr (the pre-push hook passes it) a change folder in HEAD also passes while
 # the branch has no open pull request, so a work-in-progress push needs no review yet. Once a PR
 # is open, or when gh cannot tell, the strict check applies. Without the flag the script stays
-# strict: finish runs it that way before it opens the PR. An older copy of this script ignores
+# strict: deliver runs it that way before it opens the PR. An older copy of this script ignores
 # the flag and stays strict.
 #
 # "Last change to anything outside the folder" is scoped to this branch's own commits — the

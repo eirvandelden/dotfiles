@@ -28,6 +28,17 @@ class PullRequestFlowTest < Minitest::Test
     assert_match(/deliver/, playbook[/^## 7a\..*?(?=^## 8\.)/m])
   end
 
+  def test_deliver_is_named_as_the_freshness_check_before_the_pull_request
+    playbook = File.read(File.join(REPO_ROOT, "agents.md"))
+    header = File.read(File.join(REPO_ROOT, "git/.config/git/worktree-tools/review-report-fresh"))[/\A(?:#.*\n)+/]
+
+    assert_match(/`deliver` checks it before it opens one/, rule(playbook, 16))
+    refute_match(/finish\b[^.]*\bopens/, rule(playbook, 16))
+    assert_match(/deliver runs it that way before it opens the PR/, header)
+    refute_match(/finish runs it/, header)
+    refute_match(/finish opens/, File.read(File.join(SKILLS, "finish/scripts/fill-pr-template")))
+  end
+
   def test_lefthook_messages_send_pull_requests_through_deliver
     messages = File.readlines(File.join(REPO_ROOT, "lefthook.yml")).grep(/is not allowed\./)
 
