@@ -190,6 +190,30 @@ class ShipTest < Minitest::Test
     refute_includes(origin_branches, @branch)
   end
 
+  def test_a_refused_merge_stops_at_once_with_the_reason_from_gh
+    stub_response("gh pr merge", { "exit" => 1, "stderr" => "Pull request is not mergeable: the base branch policy prohibits the merge\n" })
+    stub_response("gh pr view", { "stdout" => '{"state":"OPEN","autoMergeRequest":null}' })
+
+    stdout, stderr, status = ship(env: { "SHIP_MERGE_WAIT" => "60" })
+
+    assert_equal(1, status.exitstatus)
+    assert_includes(stdout + stderr, "the base branch policy prohibits the merge")
+    assert_equal(1, gh_calls.count { |call| call.start_with?("pr view") })
+    assert_includes(origin_branches, @branch)
+  end
+
+  def test_a_failed_merge_call_still_waits_for_a_queued_merge
+    stub_response("gh pr merge", { "exit" => 1, "stderr" => "merge queue: request timed out\n" })
+    queued = { "stdout" => '{"state":"OPEN","autoMergeRequest":{"mergeMethod":"MERGE"}}' }
+    stub_response("gh pr view", queued, queued, { "stdout" => '{"state":"MERGED","autoMergeRequest":null}' })
+
+    stdout, stderr, status = ship(env: { "SHIP_MERGE_WAIT" => "60" })
+
+    assert(status.success?, stdout + stderr)
+    assert_equal(3, gh_calls.count { |call| call.start_with?("pr view") })
+    refute_includes(origin_branches, @branch)
+  end
+
   def test_waits_for_a_queued_merge_before_deleting_the_branch
     stub_response("gh pr view", { "stdout" => '{"state":"OPEN"}' }, { "stdout" => '{"state":"OPEN"}' },
                   { "stdout" => '{"state":"MERGED"}' })

@@ -6,7 +6,8 @@
 #
 # SHIP_CHECKS_GRACE (default 120 s): how long "no checks reported" is retried after the PR turns
 # ready. SHIP_MERGE_WAIT (default 900 s): how long to wait for the PR to read MERGED, which also
-# covers a merge queue. SHIP_POLL_INTERVAL (default 10 s): the wait between retries and polls.
+# covers a merge queue; a merge gh refuses, with no auto-merge set, stops at once with gh's reason.
+# SHIP_POLL_INTERVAL (default 10 s): the wait between retries and polls.
 require "json"
 require "open3"
 
@@ -127,21 +128,29 @@ class Shipment
   end
 
   def merge(number)
-    run("gh", "pr", "merge", number, "--merge")
-    await_merged(number)
+    _, stderr, success = run("gh", "pr", "merge", number, "--merge")
+    await_merged(number, success ? nil : stderr.strip)
     delete_remote_branch
     puts("Merged PR #{number}; remote branch #{@branch} deleted.")
   end
 
-  def await_merged(number)
+  # Polls until the PR reads MERGED. A merge that gh refused stops at once, with gh's reason,
+  # unless the PR merged anyway or waits in a merge queue (auto-merge set).
+  def await_merged(number, merge_error)
     clock = Clock.new(Float(ENV.fetch("SHIP_MERGE_WAIT", "900")))
     loop do
-      state = JSON.parse(run!("gh", "pr", "view", number, "--json", "state"))["state"]
-      return if state == "MERGED"
-      raise Stop, "PR #{number} is #{state}, not merged in time; the remote branch stays." if clock.expired?
+      pr = JSON.parse(run!("gh", "pr", "view", number, "--json", "state,autoMergeRequest"))
+      return if pr["state"] == "MERGED"
+      raise Stop, not_merged(number, pr["state"], merge_error) if clock.expired? || refused?(pr, merge_error)
 
       clock.pause
     end
+  end
+
+  def refused?(pr, merge_error) = !merge_error.nil? && pr["autoMergeRequest"].nil?
+
+  def not_merged(number, state, merge_error)
+    [ "PR #{number} is #{state}, not merged; the remote branch stays.", merge_error ].compact.join("\n")
   end
 
   def delete_remote_branch
