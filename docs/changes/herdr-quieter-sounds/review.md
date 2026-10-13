@@ -50,3 +50,33 @@ Nothing found.
 Nothing found.
 
 Totals: 0 findings.
+
+## Round 3 — 2026-10-13T08:15Z — 7bbd46b2
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the reviewer defaults apply. Suite state before review: `test/herdr_quieter_tones_test.rb` 17 runs green (real-ffmpeg tests ran, none skipped), `test/herdr_config_test.rb` 5 runs green, shellcheck clean, rubocop clean on both test files, `herdr config check` on the worktree config prints `config: ok`. The four copies in `~/Documents/Tones/herdr/` are now `-rw-r--r--`. All round 1 fixes hold. Note: the local branch is rebased and has diverged from `origin/herdr-quieter-sounds` (92 local, 3 remote commits), so the next push needs `--force-with-lease`. No pull request exists yet.
+
+### Bugs
+
+- [ ] Nit: the copy-of-a-copy guard compares only the physical folder of the path given, not of the file it resolves to. A source that is a symlink to a file in `~/Documents/Tones/herdr/` passes the guard. The script then reads that copy and replaces it with a 0.09-level copy. Verified in a scratch `HOME`: a symlink `src/a.mp3 → Documents/Tones/herdr/a.mp3` exits 0 and rewrites `a.mp3`. Resolving the file itself (for example `cd` into its folder and follow the link, or compare `pwd -P` of the link target's folder) closes the gap. — `herdr/.config/herdr/scripts/quieter-tones.sh:33` →
+- [ ] Nit: `test_no_herdr_tone_is_tracked` ignores the exit status of `git ls-files`. Outside a work tree git exits 128 with empty output (verified), so both `assert_empty` calls pass without checking anything. Assert the status succeeded, or that `tracked` holds at least this test file. — `test/herdr_config_test.rb:37` →
+
+### Security
+
+Nothing found. Every path in the script is quoted. The source is only ever an ffmpeg input. A SIGTERM during conversion leaves no hidden temporary file (verified with a slow ffmpeg stub). No audio or secret enters the public repository.
+
+### Compliance
+
+| Acceptance criterion (intent.md) | Proof in the diff |
+| --- | --- |
+| "jobs done" plays at the 0.3 level | `test_each_sound_points_at_its_quieter_copy`, `test_the_copy_is_three_tenths_of_the_source_level`; playback unheard until Etienne's pre-merge audition (plan step 8) |
+| "milord" plays at the 0.3 level | same two tests; playback unheard |
+| default "ready to serve" plays at the 0.3 level | same two tests; playback unheard |
+| originals keep their checksums | `test_the_source_is_left_byte_for_byte_unchanged` (now asserts a successful run first); the step 4 `shasum … \| diff` evidence still needs to go in the pull request description |
+| one run after a swap to `ForTheMaster02.mp3` gives a 0.3 copy | `test_one_run_copies_every_source_given`, `test_the_commented_alternative_also_points_at_a_quieter_copy`; the copy exists on disk |
+| no mp3 file is in the repo (read as "this change adds no mp3") | `test_no_herdr_tone_is_tracked`, now run from the repository root (see the Nit above about its exit status) |
+| `herdr config check` reports no problems | `test_herdr_accepts_the_config` (existing, green); manual run prints `config: ok` |
+
+- Every test named in `plan.md` `## Proof` exists, plus `test_the_copy_is_readable_like_an_ordinary_file` from the round 1 fix.
+- No existing test was weakened, skipped or deleted.
+
+Totals: 0 Important, 2 Nit.
