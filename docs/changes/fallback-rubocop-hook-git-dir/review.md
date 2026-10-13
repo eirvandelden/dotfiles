@@ -32,3 +32,25 @@ Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened
 - [x] Nit: `restore_dynamic_gemspec` takes `Dir.glob(...).first` without a guard. If a Bundler release changes the checkout layout, the test errors with a `TypeError` on `nil` instead of a message that names the missing checkout — `test/lefthook_rubocop_git_gem_test.rb:205` → dismissed: the bugfix test guard protects the committed reproduction test, and Etienne chose to keep it unchanged.
 - [x] Nit: `shared_built` is set only after the whole shared build succeeds. If `bundle install` fails, the next test runs `init_and_commit` again on the already-committed gem repository, `git commit` fails with nothing to commit, and every later test reports that error instead of the first cause — `test/lefthook_rubocop_git_gem_test.rb:179` → dismissed: the bugfix test guard protects the committed reproduction test, and Etienne chose to keep it unchanged.
 - [x] Nit: Plan step 8 says to commit the test and the fix together as one logical change. The branch has them as two commits (c51fce47 tests, 4aacbdc3 fix). This matches the implement skill's split mode, but the plan text and the history disagree — `docs/changes/fallback-rubocop-hook-git-dir/plan.md:58` → dismissed: the implement skill's split mode commits the tests and the fix separately, on purpose; the history follows the skill.
+
+## Round 2 — 2026-10-13T07:38Z — 3d6f95de
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the default passes from `new-repo-setup/references/REVIEW.md` apply.
+
+Checks run:
+
+- `test/lefthook_rubocop_git_gem_test.rb`: 6 runs, 35 assertions, 0 failures (44 s).
+- `yamllint lefthook.yml` and `rubocop test/lefthook_rubocop_git_gem_test.rb`: clean.
+- `git merge-tree` of HEAD and `origin/main`: merges clean. `origin/main` changes neither `lefthook.yml`, the hook shims nor any `test/lefthook_*` file since the branch point.
+- `origin/fallback-rubocop-hook-git-dir` is at 436def72, the pre-rebase intent and plan only. No pull request exists yet.
+
+Changes since round 1: 4dfd6a71 rewords the pre-commit comment to name both the absolute and the relative `GIT_DIR` case; 3d6f95de closes Nits 2–4. All round 1 findings are closed.
+
+Bugs: nothing Important found. Both `run` block scalars keep `unset GIT_DIR` on the first line, so a lefthook split of a long `{staged_files}` or `{push_files}` list repeats it in each chunk. Tags, globs, flags and `stage_fixed` are unchanged.
+
+Security: nothing found.
+
+Compliance: unchanged from round 1. Criteria 1–5 each map to the named test in `plan.md`'s `## Proof`, and all six tests exist and pass. Criteria 6–9 follow after the merge by design. No existing test was weakened, skipped or deleted. Only the two planned files changed, plus the change folder.
+
+- [ ] Nit: The branch is 79 commits behind `origin/main`. Playbook rule 20 asks for a rebase onto the latest `main` before the push; the remote branch also needs `--force-with-lease`, because it still holds the pre-rebase 436def72 — `lefthook.yml:27` →
+- [ ] Nit: The test's header comment still says the gem's git call "reads the project's repository". Round 1 corrected the same wording in `lefthook.yml` to name the relative `.git` case too. The test runs only in a linked worktree, so the sentence is true for the test, but not as the general cause it states — `test/lefthook_rubocop_git_gem_test.rb:9` →
