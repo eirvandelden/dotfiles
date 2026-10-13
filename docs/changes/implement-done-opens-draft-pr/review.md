@@ -64,7 +64,7 @@ Checks: Codex ran the deliver, ship, pane and contract tests; all green. None co
 
 Scope: `ce0ca5ae..HEAD` only.
 
-- [ ] Nit: `CLOSED_SLOT` rejects a commit subject that contains `)`. The `fixed` branch is `fixed \(\s*[^)\s][^)]*\)` followed by `\s*\z`, so `→ fixed (Fix foo (bar))` counts as open, and `deliver --check` exits 1 on a correctly closed finding. It fails safe, but the only way out is to reword the subject. Match greedily up to the last `)` on the line — `claude/.claude/skills/deliver/scripts/deliver:42` →
+- [ ] Nit: `CLOSED_SLOT` rejects a commit subject that contains `)`. The `fixed` branch is `fixed \(\s*[^)\s][^)]*\)` followed by `\s*\z`, so `→ fixed (Fix foo (bar))` counts as open, and `deliver --check` exits 1 on a correctly closed finding. It fails safe, but the only way out is to reword the subject. Match greedily up to the last `)` on the line — `claude/.claude/skills/deliver/scripts/deliver:42` → dismissed: fails safe (blocks delivery, never lets an open finding through), and it matches the rule plan/scripts/auto-accept already uses; reword the subject in the rare case it bites.
 
 Closings checked: every `fixed (<subject>)` in this file names a subject that exists in `git log --format=%s origin/main..HEAD`. The two-commit closings write both subjects joined by `; `, and each one exists. `deliver --check` exits 0 on this file before this round.
 
