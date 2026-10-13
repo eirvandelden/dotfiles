@@ -105,8 +105,8 @@ No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the reviewer defa
 
 ### Bugs
 
-- [ ] Nit: `test_no_herdr_tone_is_tracked` misses audio with a non-ASCII name under `herdr/`. With the default `core.quotePath`, `git ls-files` prints such a path in quotes with octal escapes, so the `\Aherdr/` pattern does not match it. Verified in a scratch repository: a tracked `herdr/tône.mp3` lists as `"herdr/t\303\264ne.mp3"` and the grep returns `[]`. `git ls-files -z` with a split on `"\0"` gives raw paths. — `test/herdr_config_test.rb:37` →
-- [ ] Nit: `bash_path` is 125 characters, over the playbook limit of about 120 characters per line. Rubocop does not flag it, so only the playbook rule catches it. Break the chain over two lines. — `test/herdr_quieter_tones_test.rb:225` →
+- [x] Nit: `test_no_herdr_tone_is_tracked` misses audio with a non-ASCII name under `herdr/`. With the default `core.quotePath`, `git ls-files` prints such a path in quotes with octal escapes, so the `\Aherdr/` pattern does not match it. Verified in a scratch repository: a tracked `herdr/tône.mp3` lists as `"herdr/t\303\264ne.mp3"` and the grep returns `[]`. `git ls-files -z` with a split on `"\0"` gives raw paths. — `test/herdr_config_test.rb:37` → fixed in 07ea2dfc (`git ls-files -z`, split on NUL; a staged `herdr/tône.mp3` now turns it red)
+- [x] Nit: `bash_path` is 125 characters, over the playbook limit of about 120 characters per line. Rubocop does not flag it, so only the playbook rule catches it. Break the chain over two lines. — `test/herdr_quieter_tones_test.rb:225` → fixed in 97496abe
 
 ### Security
 
