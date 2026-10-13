@@ -536,14 +536,72 @@ class FillPrTemplateTest < Minitest::Test
     refute_match(/## Proof/, output)
   end
 
+  HANDOVER = <<~MARKDOWN
+    # Handover
+
+    ## Delivered behaviour
+
+    Claims adjusters now see the export status.
+
+    ## Verification
+
+    - pass, tests, suite: `bin/rails test` returned exit 0, 312 runs, 0 failures (at abc1234)
+
+    ## Review
+
+    - Round 1 (claude), reviewed abc1234: no findings.
+
+    ## Limitations
+
+    None recorded.
+  MARKDOWN
+
+  def test_without_a_handover_output_is_unchanged
+    template = "## Summary\n\n_x_\n\n## Testing\n\n_y_\n"
+
+    assert_equal(run_fill(template), run_fill(template, handover: nil))
+    refute_match(/Delivered behaviour/, run_fill(template))
+  end
+
+  def test_a_handover_replaces_the_plans_proof_in_the_test_heading
+    output = run_fill(<<~MARKDOWN, handover: HANDOVER)
+      ## Summary
+
+      _x_
+
+      ## Testing
+
+      _y_
+    MARKDOWN
+
+    testing = output[/## Testing\n\n(.*?)\n\n##/m, 1]
+    assert_match(/312 runs, 0 failures/, testing)
+    refute_match(/test_shows_export_status/, output)
+    assert_match(/## Delivered behaviour\n\nClaims adjusters now see the export status\./, output)
+    assert_match(/## Review\n\n- Round 1 \(claude\)/, output)
+    assert_match(/## Limitations\n\nNone recorded\.\n*\z/, output)
+  end
+
+  def test_a_handover_without_a_template_appends_verification_review_and_limitations
+    output = run_fill(nil, handover: HANDOVER)
+
+    assert_match(/## Verification\n\n- pass, tests, suite/, output)
+    refute_match(/## Proof/, output)
+    assert_match(/## Delivered behaviour/, output)
+    assert_match(/## Review/, output)
+    assert_match(/## Limitations/, output)
+    assert_operator(output.index("## Verification"), :<, output.index("## Delivered behaviour"))
+  end
+
   private
 
-  def run_fill(template, plan: PLAN)
+  def run_fill(template, plan: PLAN, handover: nil)
     intent_path = write("intent.md", INTENT)
     plan_path = write("plan.md", plan)
     template_path = template.nil? ? "" : write("template.md", template)
+    extra = handover ? [ write("handover.md", handover) ] : []
 
-    stdout, stderr, status = Open3.capture3(SCRIPT, template_path, intent_path, plan_path)
+    stdout, stderr, status = Open3.capture3(SCRIPT, template_path, intent_path, plan_path, *extra)
     assert(status.success?, stderr)
     stdout
   end
