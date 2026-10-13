@@ -12,3 +12,9 @@ Compliance:
 - The pull request's CI is green → `gh pr checks` (no pull request yet; pending `/finish`).
 
 No existing test is weakened, skipped or deleted. The diff is eleven one-line additions in the planned position, plus the change artifacts. RuboCop reports no offenses on the eleven files.
+
+## Round 2 — 2026-10-13T13:38:31Z — 28bcf79d (codex)
+
+No findings.
+
+`codex review --base origin/main` (gpt-6-luna) reported: "Each missing test file now loads the isolated_git helper. The contract test and all eleven affected test files pass."
