@@ -41,15 +41,15 @@ The repository has no `REVIEW.md` or `REVIEW.local.md`, so this round uses the r
 
 No Important findings.
 
-- [ ] Nit: `test_a_pushed_claude_skill_link_runs_the_parity_job` checks only that the output lacks `skill-parity (skip)`. It also passes when the job does not exist. Evidence: `lefthook run pre-push --file claude/.claude/skills/sync --command no-such-job` prints `no job matching no-such-job found` and exits 0, and that output lacks `(skip)`. A rename or removal of the `skill-parity` job keeps both hook tests green. Assert a positive marker of the job run instead. — `test/skill_parity_hook_test.rb:19` →
-- [ ] Nit: The plan still names the move commit as `8087440d` with the subject `refactor: move skill sources into the agents package`. After the rebase, that commit is `e4f30374` with the subject `Move every skill source into the agents package`. It is the only commit on the branch without a conventional prefix. The plan's `LEFTHOOK_EXCLUDE=fixme` push rule now names a SHA that is not on the branch. — `docs/changes/agnostic-skills/plan.md:24` →
-- [ ] Nit: `consent-guard.rb` still finds `change-folder` through the Claude link (`../skills/plan/scripts/change-folder`), but `test-guard.rb` in the same folder now uses the agents source. Both paths resolve, so nothing breaks. The two hooks now use different path forms for one script. — `claude/.claude/hooks/consent-guard.rb:30` →
+- [x] Nit: `test_a_pushed_claude_skill_link_runs_the_parity_job` checks only that the output lacks `skill-parity (skip)`. It also passes when the job does not exist. Evidence: `lefthook run pre-push --file claude/.claude/skills/sync --command no-such-job` prints `no job matching no-such-job found` and exits 0, and that output lacks `(skip)`. A rename or removal of the `skill-parity` job keeps both hook tests green. Assert a positive marker of the job run instead. — `test/skill_parity_hook_test.rb:19` → fixed (test: assert the skill-parity job ran, not only that it was not skipped)
+- [x] Nit: The plan still names the move commit as `8087440d` with the subject `refactor: move skill sources into the agents package`. After the rebase, that commit is `e4f30374` with the subject `Move every skill source into the agents package`. It is the only commit on the branch without a conventional prefix. The plan's `LEFTHOOK_EXCLUDE=fixme` push rule now names a SHA that is not on the branch. — `docs/changes/agnostic-skills/plan.md:24` → fixed (docs: name the move commit by its real subject in the plan)
+- [x] Nit: `consent-guard.rb` still finds `change-folder` through the Claude link (`../skills/plan/scripts/change-folder`), but `test-guard.rb` in the same folder now uses the agents source. Both paths resolve, so nothing breaks. The two hooks now use different path forms for one script. — `claude/.claude/hooks/consent-guard.rb:30` → fixed (refactor: find change-folder the way consent-guard does)
 
-### Security
+### Security (round 3)
 
 The diff adds no secrets, credentials or work references. No new command takes input from outside. The new `skill_parity_hook_test.rb` runs only the repository's own lefthook job with a fixed file argument.
 
-### Compliance
+### Compliance (round 3)
 
 - `claude/.claude/skills/` holds no skill source → `test_every_agents_skill_is_a_real_folder_with_a_skill_md`, `test_claude_skills_are_relative_links_into_the_agents_package`. `git ls-tree` shows only `120000` entries under `claude/.claude/skills/` and none under `agents/.agents/skills/`.
 - A skill source added under `claude/.claude/skills/` fails the suite → `test_a_real_folder_under_claude_skills_is_reported`, `test_an_absolute_link_under_claude_skills_is_reported`, `test_a_dangling_link_under_claude_skills_is_reported`, `test_a_plain_file_under_claude_skills_is_reported`, plus the probe run in `evidence.md`.
@@ -62,3 +62,9 @@ The diff adds no secrets, credentials or work references. No new command takes i
 - The four rule folders are gone → `test_unused_agent_rule_folders_are_gone`.
 
 Every test named in the plan's `## Proof` exists. No existing test was weakened, skipped or deleted.
+
+## Round 4 — 2026-10-13T11:20:00Z — f7c4267c (codex)
+
+Source: `codex review --base origin/main`, transcribed. Codex found no actionable regression. It reports that the skill-source move and the Claude links resolve, and that the parity and related tests pass.
+
+No findings.
