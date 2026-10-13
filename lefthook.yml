@@ -24,7 +24,13 @@ pre-commit:
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"
-      run: rubocop -a --force-exclusion {staged_files} --parallel
+      # Git exports GIT_DIR to its hooks. A gem installed from git can run git while Bundler loads
+      # its gemspec. With GIT_DIR set, that call never reads the gem's own repository: an absolute
+      # GIT_DIR (linked worktree) points at the project, a relative .git (main checkout) points at
+      # nothing. Either way the version mismatches Gemfile.lock and RuboCop cannot find the gem.
+      run: |
+        unset GIT_DIR
+        rubocop -a --force-exclusion {staged_files} --parallel
       stage_fixed: true
     ruby-syntax:
       tags:
@@ -190,7 +196,10 @@ pre-push:
     rubocop:
       tags: linter
       glob: "*.rb"
-      run: rubocop --force-exclusion {push_files}
+      # GIT_DIR is unset for the reason given on the pre-commit rubocop job.
+      run: |
+        unset GIT_DIR
+        rubocop --force-exclusion {push_files}
     minitest:
       tags:
         - ruby
