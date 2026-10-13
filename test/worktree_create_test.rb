@@ -10,6 +10,9 @@ require_relative "isolated_git"
 # branch. It shells out to git, gh (PR state) and, inside herdr, worktree-pane — all stubbed.
 class WorktreeCreateTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-create", __dir__)
+  # A job a non-interactive shell starts in the background inherits SIGINT as ignored, and a
+  # shell cannot undo that for its children; Ruby can. A terminal leaves SIGINT at its default.
+  RESTORE_SIGINT = 'trap("INT", "SYSTEM_DEFAULT"); exec("ruby", *ARGV)'.freeze
 
   def setup
     @enclosing = Dir.mktmpdir
@@ -406,7 +409,7 @@ class WorktreeCreateTest < Minitest::Test
   # A terminal sends Ctrl-C to its foreground process group; the fetch must be part of it.
   def test_ctrl_c_ends_it_during_a_fetch
     environment = create_environment.merge("GIT_FETCH_DELAY" => "30")
-    pid = Process.spawn(environment, "ruby", SCRIPT, "feature", "--no-pane",
+    pid = Process.spawn(environment, "ruby", "-e", RESTORE_SIGINT, SCRIPT, "feature", "--no-pane",
                         chdir: @repo, out: File::NULL, err: File::NULL, pgroup: true)
     @waiter = Process.detach(pid)
     deadline = Time.now + 20
@@ -416,7 +419,7 @@ class WorktreeCreateTest < Minitest::Test
 
     refute_nil(@waiter.join(10), "worktree-create kept running after Ctrl-C")
   ensure
-    kill_group(pid)
+    kill_group(pid) if @waiter&.alive?
   end
 
   def test_the_shebang_does_not_depend_on_rv_being_on_path
@@ -625,14 +628,14 @@ class WorktreeCreateTest < Minitest::Test
     @git_call_log ||= File.join(@stub_bin, "git-calls.log")
   end
 
-  # A failed assertion inside the lock block releases the lock, and the waiting process would
-  # carry on while teardown deletes its directories.
   def kill_group(pid)
     Process.kill("KILL", -pid) if pid
   rescue Errno::ESRCH
     nil
   end
 
+  # A failed assertion inside the lock block releases the lock, and the waiting process would
+  # carry on while teardown deletes its directories.
   def stop_waiter
     return unless @waiter&.alive?
 
