@@ -70,6 +70,16 @@ class GlowStyleInstallTest < Minitest::Test
     assert_equal(%(style: "auto"\n), config)
   end
 
+  def test_a_failed_write_leaves_no_temp_file_behind
+    write_config(%(style: "auto"\n))
+    FileUtils.chmod(0o444, config_path)
+
+    _stdout, _stderr, status = run_step
+
+    refute_predicate(status, :success?)
+    assert_empty(Dir.children(scratch_tmp))
+  end
+
   def test_install_sh_runs_the_glow_step_after_stowing
     lines = File.readlines(File.join(REPO_ROOT, "install.sh"))
     stow = lines.index { |line| line.include?(%(run_task "50_stow_all.sh")) }
@@ -86,7 +96,7 @@ class GlowStyleInstallTest < Minitest::Test
 
   def setup
     @tmp = Dir.mktmpdir
-    FileUtils.mkdir_p([ glow_dir, bin_dir ])
+    FileUtils.mkdir_p([ glow_dir, bin_dir, scratch_tmp ])
     FileUtils.touch(File.join(glow_dir, "solunized.json"))
   end
 
@@ -98,6 +108,7 @@ class GlowStyleInstallTest < Minitest::Test
 
   def home = File.join(@tmp, "home")
   def bin_dir = File.join(@tmp, "bin")
+  def scratch_tmp = File.join(@tmp, "tmp")
   def glow_dir = File.join(home, "Library/Preferences/glow")
   def config_path = File.join(glow_dir, "glow.yml")
   def style_path = File.join(glow_dir, "solunized.json")
@@ -112,6 +123,6 @@ class GlowStyleInstallTest < Minitest::Test
     File.write(stub, "#!/bin/sh\necho #{os}\n")
     FileUtils.chmod(0o755, stub)
 
-    Open3.capture3({ "HOME" => home, "PATH" => "#{bin_dir}:#{ENV["PATH"]}" }, SCRIPT)
+    Open3.capture3({ "HOME" => home, "PATH" => "#{bin_dir}:#{ENV["PATH"]}", "TMPDIR" => scratch_tmp }, SCRIPT)
   end
 end

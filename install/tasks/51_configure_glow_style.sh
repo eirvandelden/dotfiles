@@ -40,15 +40,24 @@ rewrite_style() {
   ' "$config"
 }
 
+# The rewritten config goes to a temp file first. It lives at script level so the EXIT trap still
+# removes it when a later step fails under `set -e`.
+updated=""
+
+remove_updated() {
+  [[ -z "$updated" ]] || rm -f "$updated"
+}
+
 # Write through `cat` rather than `mv`, so a config that is a symlink or has its own mode keeps
 # that identity.
 set_style() {
-  local config="$1" style="$2" updated
+  local config="$1" style="$2"
 
   mkdir -p "$(dirname "$config")"
   [[ -e "$config" ]] || : >"$config"
 
-  updated="$(mktemp)"
+  updated="$(mktemp "${TMPDIR:-/tmp}/glow-style.XXXXXX")"
+  trap remove_updated EXIT
   rewrite_style "$config" "$style" >"$updated"
 
   if cmp -s "$updated" "$config"; then
@@ -57,8 +66,6 @@ set_style() {
     cat "$updated" >"$config"
     log "glow: style set to ${style}."
   fi
-
-  rm -f "$updated"
 }
 
 main() {
