@@ -1,0 +1,52 @@
+---
+name: deliver
+description: Ends a change once its review is closed — removes the change folder in its own commit, pushes, opens a draft PR with the filled body, opens a gh-dash pane and closes idle stage panes. Runs without questions, started by the review skill on a clean review or by the autonomous coordinator.
+disable-model-invocation: true
+---
+
+# Deliver
+
+Delivery is the step between a closed review and `/finish`. It opens a draft pull request. It never marks the PR ready and never merges: `/finish` does that.
+
+Other skills reach this one by path: `~/.claude/skills/deliver/SKILL.md`. Etienne can also type `/deliver`.
+
+## When it runs
+
+- Outside auto mode: the `review` skill runs it without asking when a review reads `Review clean:`, or when `deliver --check` exits 0 in the `here` backend.
+- In auto mode: the coordinator runs it once a round of each reviewer leaves no open finding (intent skill, Autonomous delivery). Then it runs `~/.claude/skills/finish/scripts/ship --no-merge`.
+
+## Run it
+
+```bash
+~/.claude/skills/deliver/scripts/deliver
+```
+
+The script asks no questions. It does these steps, in order:
+
+1. Check the preconditions. It stops with every reason when one fails.
+2. Look up an open PR for this branch with `gh pr list --head <branch>`. Only an empty answer means "no PR". Any error stops the script, and it never leads to `gh pr create`.
+3. Fill the PR body from the repository template, `intent.md` and `plan.md`, and take the title from `intent.md`. Save both under `<git-common-dir>/deliver/`.
+4. Remove `docs/changes/<slug>/` in a commit of its own: `Remove change artifacts for <slug>`.
+5. Push the branch.
+6. Create a draft PR, or edit the body of the PR that exists. Delete the saved body and title.
+7. Inside herdr: open a gh-dash pane for the PR with `~/.config/herdr/scripts/open-pr-dash.sh`, then close this change's idle or done stage panes. Never the delivering agent's own pane. Outside herdr it prints the PR URL and opens no pane.
+
+A push that fails leaves the folder removed and the saved files in place. Run `deliver` again: it resumes at the push.
+
+`deliver --check` runs step 1 only and changes nothing. It exits 0 when delivery may run, and 1 with the reasons otherwise.
+
+## Preconditions
+
+- `review.md` exists and has a round.
+- `~/.config/git/worktree-tools/review-report-fresh` exits 0.
+- No finding is open. An open finding is a line `- [ ] Important: …` or `- [ ] Nit: …` with nothing after its last `→`.
+- The working tree is clean.
+- `~/.claude/skills/finish/scripts/change-scope` prints `personal` or `work`.
+
+## Report
+
+Tell Etienne the PR URL, whether a gh-dash pane opened, and that `/finish` is the next step. Never comment on the PR.
+
+## Codex
+
+Same script, same steps. Invoked as `$deliver`. A Codex coordinator runs it after a clean review round, then `ship --no-merge`.
