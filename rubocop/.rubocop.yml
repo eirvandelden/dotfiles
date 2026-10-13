@@ -10,7 +10,6 @@ plugins:
   - rubocop-performance
   - rubocop-rails
   - rubocop-rspec
-  - rubocop-yard
 
 AllCops:
   # RuboCop has a bunch of cops enabled by default. This setting tells RuboCop
@@ -84,18 +83,4 @@ Rails/RefuteMethods:
 Rails/IndexBy:
   Enabled: true
 Rails/IndexWith:
-  Enabled: true
-
-# Cops from YARD
-YARD/CollectionStyle:
-  Enabled: true
-YARD/CollectionType:
-  Enabled: true
-YARD/MeaninglessTag:
-  Enabled: true
-YARD/MismatchName:
-  Enabled: true
-YARD/TagTypeSyntax:
-  Enabled: true
-YARD/TagTypePosition:
   Enabled: true

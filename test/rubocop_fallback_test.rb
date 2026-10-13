@@ -35,6 +35,13 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
+  YARD_FIXTURE_PATH = "lib/sample.rb".freeze
+  YARD_FIXTURE = <<~RUBY.freeze
+    # @param name [String]
+    class Sample
+    end
+  RUBY
+
   def setup
     skip_unless_ci(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
 
@@ -62,7 +69,20 @@ class RubocopFallbackTest < Minitest::Test
     PLAIN_ASSERTIONS.each { |assertion| assert_includes(corrected_lines, assertion) }
   end
 
+  def test_fallback_reports_no_yard_cop
+    write_fixture(YARD_FIXTURE_PATH, YARD_FIXTURE)
+
+    report = run_fallback(path: YARD_FIXTURE_PATH)
+
+    assert_empty(cop_names(report).grep(%r{\AYARD/}))
+  end
+
   private
+
+  def write_fixture(path, content)
+    FileUtils.mkdir_p(File.dirname(File.join(@project, path)))
+    File.write(File.join(@project, path), content)
+  end
 
   def fixture_file
     File.join(@project, FIXTURE_PATH)
@@ -84,9 +104,9 @@ class RubocopFallbackTest < Minitest::Test
   # skip. Only status 2, RuboCop failing to load the config or its plugins, skips, and only
   # outside CI, since CI installs RuboCop and its plugins. Anything on stderr otherwise, such as a
   # cop crashing, fails.
-  def run_fallback(*options)
+  def run_fallback(*options, path: FIXTURE_PATH)
     stdout, stderr, status = Open3.capture3(
-      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, FIXTURE_PATH, chdir: @project
+      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, path, chdir: @project
     )
     skip_unless_ci("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
 
