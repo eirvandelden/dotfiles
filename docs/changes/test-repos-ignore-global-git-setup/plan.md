@@ -126,3 +126,7 @@ Revised Proof:
 - AC4 → the `Dotfiles tests` workflow on the pull request.
 
 Order of work: write both tests, watch them error with `Errno::ENOENT … commands.log`, commit; add `"LEFTHOOK_BIN" => nil`, watch them pass, commit; rubocop; full suite plain and under both hostile configs.
+
+### Re-scope critique (codex exec -p terra)
+
+- AC3's tests pass on main before the `repo_env` unset, so they cannot prove the fix → dismissed: Codex ran the two older `*_calls_lefthook_with_no_auto_install` tests with `LEFTHOOK_BIN=/bin/false` while the unset was already in the working tree. The new tests at commit "Test: lefthook local hook tests reach the logging stub when LEFTHOOK_BIN is set" (no fix) give `2 runs, 0 assertions, 0 failures, 2 errors` (`Errno::ENOENT … commands.log`), with `LEFTHOOK_BIN` unset in the caller; with the fix, 13 runs pass with and without `LEFTHOOK_BIN` set. Codex agreed that `ensure` restores `ENV` safely.
