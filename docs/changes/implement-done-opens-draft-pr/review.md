@@ -71,3 +71,7 @@ Closings checked: every `fixed (<subject>)` in this file names a subject that ex
 Fixes checked: R3 Important (plan.md) and R3 Nit (failed before pending) hold; R4 Important (marker validation) holds, and `test_a_finding_without_a_valid_close_marker_is_open` covers the six invalid markers. No test was weakened, skipped or deleted in this range.
 
 Checks: full suite not run (Etienne's call); narrow tests only. `test_a_finding_without_a_valid_close_marker_is_open` and `test_a_failed_check_beside_a_pending_one_reports_the_failure_first` pass. RuboCop is clean on `deliver`, `ship`, `deliver_test.rb` and `ship_test.rb`.
+
+## Round 6 (Codex) — 2026-10-13T14:10Z — dbbb13b8
+
+No findings. Codex reviewed the fixes since round 4 (close-marker validation, failed-before-pending reporting in `ship`, `plan.md` and `review.md` updates) and found no actionable regression.
