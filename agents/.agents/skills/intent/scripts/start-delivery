@@ -6,6 +6,7 @@
 # (hand-off-plan.sh deliver); outside Herdr it becomes a background session (claude --bg) that
 # runs with the configured permission mode and every hook: no permission flag is ever passed.
 require "open3"
+require "tempfile"
 require "time"
 require_relative "../../../hooks/remote_matcher"
 require_relative "../../plan/scripts/intent_metadata"
@@ -67,7 +68,17 @@ def inside_herdr?
   ENV["HERDR_ENV"] == "1" && !ENV.fetch("HERDR_PANE_ID", "").empty?
 end
 
+# hand-off-plan.sh deliver reuses only .worktrees/<slug> on branch <slug>.
+def check_branch_matches(slug)
+  branch, = git("branch", "--show-current")
+  return if branch == slug
+
+  refuse("Inside Herdr the branch must equal the change slug, because hand-off-plan.sh deliver " \
+         "reuses only .worktrees/#{slug} on branch #{slug}: the current branch is #{branch}.")
+end
+
 def hand_to_pane(slug)
+  check_branch_matches(slug)
   scripts = ENV.fetch("HERDR_SCRIPTS_DIR") { File.expand_path("~/.config/herdr/scripts") }
   exec(File.join(scripts, "hand-off-plan.sh"), "deliver", slug)
 end
@@ -83,21 +94,66 @@ def coordinator_prompt(slug, worktree, account)
   TEXT
 end
 
-def start_claude(slug, worktree, account)
-  reader, writer = IO.pipe
-  pid = Process.spawn("claude", "--bg", "--model", "opus", "--name", "deliver-#{slug}",
-                      coordinator_prompt(slug, worktree, account),
-                      chdir: worktree, in: File::NULL, out: writer, err: writer)
-  writer.close
-  output = reader.read
+def timeout_seconds
+  Float(ENV.fetch("START_DELIVERY_TIMEOUT", "60"))
+rescue ArgumentError
+  60.0
+end
+
+def kill_group(pid)
+  Process.kill("KILL", -pid)
+rescue Errno::ESRCH, Errno::EPERM
+  nil
+ensure
   Process.wait(pid)
-  [ output, $?.success? ]
+end
+
+# Waits for the child until the deadline. Returns its status, or nil after killing its group.
+def wait_for(pid, seconds)
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+  loop do
+    reaped, status = Process.wait2(pid, Process::WNOHANG)
+    return status if reaped
+    break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+    sleep(0.05)
+  end
+  kill_group(pid)
+  nil
+end
+
+# Output goes to a file, not a pipe: a background child holding a pipe open could block the read
+# after claude ended.
+def start_claude(slug, worktree, account)
+  seconds = timeout_seconds
+  Tempfile.create("start-delivery") do |capture|
+    pid = Process.spawn("claude", "--bg", "--model", "opus", "--name", "deliver-#{slug}",
+                        coordinator_prompt(slug, worktree, account),
+                        chdir: worktree, in: File::NULL, out: capture, err: capture, pgroup: true)
+    status = wait_for(pid, seconds)
+    refuse("claude did not finish within #{format('%g', seconds)}s: Claude was not started.") unless status
+
+    capture.rewind
+    [ capture.read, status.success? ]
+  end
 rescue Errno::ENOENT
   refuse("claude is not on PATH: Claude was not started.")
 end
 
+SESSION_PATTERNS = [
+  /claude attach ([0-9a-zA-Z-]{6,})/, /backgrounded\s*·\s*([0-9a-zA-Z-]{6,})/, /session[ :]+([0-9a-zA-Z-]{6,})/i
+].freeze
+
+def session_id(output)
+  SESSION_PATTERNS.each do |pattern|
+    id = output[pattern, 1]
+    return id if id
+  end
+  "<session-id>"
+end
+
 def summary(worktree, output, account)
-  id = output[/session[ :]+([0-9a-zA-Z-]{6,})/i, 1] || "<session-id>"
+  id = session_id(output)
   <<~TEXT
     Delivery coordinator started at #{Time.now.iso8601}.
     Worktree: #{worktree}

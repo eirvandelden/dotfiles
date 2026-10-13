@@ -116,6 +116,66 @@ class StartDeliveryTest < Minitest::Test
     refute_match(/dangerously|permission-mode|skip-permissions/, everything)
   end
 
+  def test_a_background_child_holding_stdout_does_not_hang_the_hand_off
+    write_executable("claude", <<~SH)
+      #!/bin/sh
+      (sleep 30 &)
+      echo "backgrounded"
+    SH
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    _, stderr, status = run_script
+
+    assert_predicate(status, :success?, stderr)
+    assert_operator(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 10)
+    assert(File.exist?(File.join(@repo, ".git", "herdr", "deliver-fix-login-handoff.md")))
+  end
+
+  def test_a_coordinator_start_that_never_ends_is_refused_after_the_deadline
+    write_executable("claude", "#!/bin/sh\nexec sleep 30\n")
+    @extra_env = { "START_DELIVERY_TIMEOUT" => "1" }
+
+    _, stderr, status = run_script
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/did not finish within 1s/, stderr)
+  end
+
+  def test_reads_the_session_id_from_the_real_claude_bg_output
+    write_executable("claude", <<~'SH')
+      #!/bin/sh
+      echo "Starting background service…"
+      echo "backgrounded · 8eb97c3b · adr-bg-smoke"
+      echo "  claude agents             list sessions"
+      echo "  claude attach 8eb97c3b    open in this terminal"
+      echo "  claude logs 8eb97c3b      show recent output"
+      echo "  claude stop 8eb97c3b      stop this session"
+    SH
+
+    stdout, = run_script
+
+    assert_includes(stdout, "Attach: claude attach 8eb97c3b\n")
+    assert_includes(stdout, "Stop: claude stop 8eb97c3b\n")
+  end
+
+  def test_inside_herdr_refuses_a_branch_that_differs_from_the_slug
+    git("checkout", "-q", "-b", "ai/fix-login")
+
+    _, stderr, status = run_script(herdr: true)
+
+    assert_equal(1, status.exitstatus, stderr)
+    assert_match(%r{current branch is ai/fix-login}, stderr)
+    refute(File.exist?(hand_off_log), "no stage may start")
+  end
+
+  def test_outside_herdr_a_prefixed_branch_still_starts
+    git("checkout", "-q", "-b", "ai/fix-login")
+
+    _, stderr, status = run_script
+
+    assert_predicate(status, :success?, stderr)
+  end
+
   private
 
   def assert_refused(pattern)
@@ -135,6 +195,7 @@ class StartDeliveryTest < Minitest::Test
       "HERDR_SCRIPTS_DIR" => @bin, "HERDR_ENV" => nil, "HERDR_PANE_ID" => nil,
       "CLAUDE_LOG" => claude_log, "CLAUDE_CWD_LOG" => claude_cwd_log, "HAND_OFF_LOG" => hand_off_log
     }
+    environment.merge!(@extra_env || {})
     environment.merge!("HERDR_ENV" => "1", "HERDR_PANE_ID" => "w1:p1") if herdr
     Open3.capture3(environment, SCRIPT, chdir: @repo)
   end
