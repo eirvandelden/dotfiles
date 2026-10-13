@@ -26,3 +26,18 @@ Compliance:
 - Every file the plan names changed as described; nothing unplanned. `Repository#touch_lock` is an extra public method; decision 7 calls for its behaviour.
 
 Security: nothing found. Branch names reach `git` and `gh` as argument arrays, never through a shell. The lock file lives in the git common directory.
+
+## Round 2 — 2026-10-13 08:09 UTC — c228eda9
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy from `claude/.claude/skills/new-repo-setup/references/REVIEW.md` applies. Checks run: `test/worktree_sweep_test.rb` (15 runs), `test/worktree_sweep_on_pull_test.rb` (10 runs), `test/worktree_create_test.rb` (28 runs) and `test/lefthook_pull_hooks_test.rb` (13 runs) are green. A first run of `worktree_create_test.rb` had 3 errors in `origin_and_clone` (a `git clone` in setup) under a load average of 36–90 from other sessions; the re-run was green. RuboCop on the 7 changed Ruby files and `yamllint lefthook.yml` report no offenses.
+
+The round-1 fixes hold: `fetch_default_branch` passes `--no-write-fetch-head`, and `test_leaves_the_fetch_head_of_the_main_checkout_alone` fails without it. `verification.md` records plan step 12. Both lock-wait tests now anchor on the `--git-common-dir` call, which is the last git call before `flock` in both scripts, and `stop_waiter` kills a waiter that is still alive in teardown.
+
+- [ ] Nit: `sweep-worktrees` sits under the hook-level `files:` list, so a pull whose new commits change no files skips the sweep with "no files for inspection". `verification.md` observed this, but the intent says "a pull that moves the checked-out branch sweeps", and neither the plan's Risks nor the README name the gap. Rare (an empty PR or `--allow-empty` merges only), but it belongs in Risks or the README if it stays — `lefthook.yml:286` →
+- [ ] Nit: `Repository#exclusively` waits on the lock with no bound and no message. A background sweep that hangs keeps the lock, and the next `worktree-create` in that repository then blocks silently. Two plausible hangs: the SSH fetch to `git@github.com` waiting on an agent approval (the 1Password agent shows a dialog, and the daemon has no terminal), and `gh pr view` with no network timeout. The plan's Risks section assumes the sweep finishes ("at most one sweep, about one `gh` round trip per worktree, plus one fetch") — `git/.config/git/worktree-tools/lib/repository.rb:59` →
+
+The round-1 nit about a locked worktree (`sweep.rb:86`) is still open and is not repeated here.
+
+Compliance: unchanged from round 1; every acceptance criterion maps to its test and every `## Proof` test exists. The round-1 fixes added one test (`test_leaves_the_fetch_head_of_the_main_checkout_alone`) and changed only the wait anchors of two lock tests; the wait no longer uses a fixed `sleep 2`, and no assertion was removed or weakened.
+
+Security: nothing found. `--no-write-fetch-head` adds no input from outside.
