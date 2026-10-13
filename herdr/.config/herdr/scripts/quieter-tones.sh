@@ -46,6 +46,8 @@ quieten() {
   tmp=$(mktemp "$out_dir/.$name.XXXXXX")
   ffmpeg -hide_banner -loglevel error -y -i "$source" -map_metadata -1 \
     -af "volume=$VOLUME" -c:a libmp3lame -q:a 2 -f mp3 "$tmp"
+  # mktemp creates the file as 0600; give the copy the mode of an ordinary file.
+  chmod 644 "$tmp"
   mv -f "$tmp" "$destination"
   tmp=""
   echo "$destination"

@@ -57,6 +57,14 @@ class HerdrQuieterTonesTest < Minitest::Test
     assert_equal(original, call[call.index("-i") + 1])
   end
 
+  def test_the_copy_is_readable_like_an_ordinary_file
+    install_ffmpeg_stub
+
+    run_script(source("milord.mp3"))
+
+    assert_equal(0o644, File.stat(File.join(@copies, "milord.mp3")).mode & 0o777)
+  end
+
   def test_the_output_folder_is_created_when_missing
     install_ffmpeg_stub
 
