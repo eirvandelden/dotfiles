@@ -24,4 +24,4 @@ Compliance:
 
 Findings:
 
-- [ ] Nit: Plan step 5 says to record the mutation output as evidence for criterion 2, but no commit or file on the branch records it; this round now holds a reproduction — `docs/changes/review-report-test-bypasses-guard/plan.md:36` →
+- [x] Nit: Plan step 5 says to record the mutation output as evidence for criterion 2, but no commit or file on the branch records it; this round now holds a reproduction — `docs/changes/review-report-test-bypasses-guard/plan.md:36` → dismissed: this round records the mutation reproduction (1 runs, 1 failures, "no review.md"), and the delivery account repeats it; a separate evidence file adds nothing.
