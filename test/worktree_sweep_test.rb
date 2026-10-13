@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "timeout"
 require "tmpdir"
+require_relative "isolated_git"
 
 # worktree-sweep removes merged worktrees of the repository it runs in. It shells out to git, gh
 # (PR state) and, inside herdr, worktree-pane; gh and herdr are stubbed.

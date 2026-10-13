@@ -30,6 +30,8 @@ Each gets one added line, `require_relative "isolated_git"`, as the last line of
 - `test/worktree_first_skill_test.rb` — after `require "tmpdir"`.
 - `test/worktree_guard_test.rb` — after `require "tmpdir"`.
 - `test/worktree_rule_mirror_test.rb` — after `require "minitest/autorun"`.
+- `test/worktree_sweep_on_pull_test.rb` — after `require_relative "lefthook_binary"`. Added after PR #205 landed on `main` (489b5988) without the helper (step 8).
+- `test/worktree_sweep_test.rb` — after `require "tmpdir"`. Same origin as the line above.
 
 ## Order of work
 
@@ -51,7 +53,7 @@ Each gets one added line, `require_relative "isolated_git"`, as the last line of
 ## Proof
 
 - The contract test lists no missing file → `test/isolated_git_test.rb` `IsolatedGitTest#test_every_test_file_requires_the_helper`
-- Each of the eleven files passes on its own with the helper → check: `for f in bi gem_install_rule_mirror herdr_quieter_tones lefthook_rubocop_git_gem neovim_avante_dependencies pull_request_flow rbs_inline_tooling review_push_hook worktree_first_skill worktree_guard worktree_rule_mirror; do ruby -Itest "test/${f}_test.rb" || exit 1; done`
+- Each of the eleven files passes on its own with the helper → check: `for f in bi gem_install_rule_mirror herdr_quieter_tones lefthook_rubocop_git_gem neovim_avante_dependencies pull_request_flow rbs_inline_tooling review_push_hook worktree_first_skill worktree_guard worktree_rule_mirror worktree_sweep worktree_sweep_on_pull; do ruby -Itest "test/${f}_test.rb" || exit 1; done`
 - The full suite passes locally with the CI test loop → check: `for file in test/*_test.rb; do ruby -Itest "$file" || exit 1; done`
 - The pull request's CI is green → check: `gh pr checks <pr-number>`
 
