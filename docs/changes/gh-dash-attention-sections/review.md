@@ -40,3 +40,38 @@ Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened
 `codex review --base origin/main`: the configuration and tests match the stated section order and filters; `ruby -Itest test/gh_dash_config_test.rb` passes (11 runs, 35 assertions).
 
 No findings.
+
+## Round 3 — 2026-10-13T11:05Z — a4fcaff2
+
+Checks run: `ruby -Itest test/gh_dash_config_test.rb` green (12 runs, 38 assertions, 0 failures); `yamllint github/.config/gh-dash/config.yml` and `rubocop test/gh_dash_config_test.rb` clean. The full `test/*_test.rb` loop did not finish within 10 minutes; other sessions ran heavy suites at the same time, so this round has no full-suite result. The branch contains `origin/main` (0 commits behind). No REVIEW.md or REVIEW.local.md exists, so the reviewer defaults apply.
+
+### Bugs
+
+Nothing found. The section 5 filter `is:open org:nedap author:@me draft:false review:changes_requested` catches a "changes requested" PR without comments, which closes the round 1 finding. Its overlap with section 4 is accepted in the intent.
+
+### Security
+
+- [ ] Important: The change folder names private work repositories and PR numbers: `work repo 1`, `work repo 2`, `work repo 3`, and PRs such as work PR A and work PR E. The intent allows only the `org:nedap` reference in this public repository. Plan step 9 greps with `':!docs'`, so it misses these. `finish` removes the folder, but `origin/main` merges with merge commits (for example `f4060ba3`), so the commits that add these names stay in public history. The branch is already on the public `origin`. Fix: replace the names with neutral labels ("a work PR" → "work PR A") before the merge, or squash the change-folder commits away; Etienne decides whether the already-pushed refs matter. — `docs/changes/gh-dash-attention-sections/evidence.md:9`, also `evidence.md:14-20`, `plan.md:42,72-73,82,98`, `review.md:7`
+
+### Compliance
+
+| Acceptance criterion | Proof in the diff |
+| --- | --- |
+| Team-requested, unreviewed, non-draft nedap PR in section 1 | `test_pr_sections_put_what_needs_action_first`, `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts`; live: evidence.md step 7 |
+| Leaves section 1 after my review | `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts` (`-reviewed-by:@me`); live: no example today, recorded |
+| Draft nedap PR not in section 1 | same test (`draft:false`); live: no example today, recorded |
+| Dependabot PR in section 2; draft not | `test_personal_section_takes_every_ready_pr_in_my_repositories`; live: 53 dependabot, 0 drafts |
+| My nedap draft in section 3 | `test_drafts_section_takes_my_open_work_drafts`; live: recorded |
+| "Changes requested" PR in section 4 | `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`; live: recorded |
+| Commented-reviews-only PR in section 4 | same test (`comments:>0`); live: recorded |
+| "Changes requested" PR without inline comments in section 5 | `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`; live: 1 PR, recorded |
+| Approved PR not in section 4, in "My Pull Requests" | `-review:approved` test, `test_default_pr_sections_follow_with_their_gh_dash_filters`; live: 0 approved today, recorded |
+| Uncommented non-draft PR in neither section 3 nor 4 | `draft:true` and `comments:>0` tests; live: 16 such PRs absent, recorded |
+| "Needs My Review" gone; defaults follow | `test_pr_sections_put_what_needs_action_first`, `test_default_pr_sections_follow_with_their_gh_dash_filters` |
+| Issues view opens on assigned issues; "Assigned" gone | `test_issue_sections_open_on_issues_assigned_to_me`; live: evidence.md step 6 |
+| `C` still opens octo.nvim through herdr | `test_deep_review_keybinding_opens_octo_in_a_herdr_pane`, `test_diff_pager_stays_delta`; live: evidence.md step 6 |
+| Symlink after restow; gh-dash loads without errors | `test_config_is_valid_yaml_inside_the_github_stow_package`; load: evidence.md step 6; the symlink stays Etienne's step |
+
+Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted. The non-docs diff contains only the `org:nedap` work reference that the intent allows.
+
+- [ ] Nit: `plan.md` still lists the config as "new" and the intent still says the config lives outside dotfiles. The branch modifies the file that `origin/main` already ships (recorded in evidence.md under Base). A pull request body drafted from these files would describe the change wrongly. — `docs/changes/gh-dash-attention-sections/plan.md:56`
