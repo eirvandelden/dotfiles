@@ -93,7 +93,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 5. Pull request workflow:
    - Always target `origin` (personal fork or own work repo) over upstream.
    - Agents may push branches to `origin` without asking first, while implementing. Rule 6 still applies: never post/comment as Etienne on a PR without explicit instruction for that exact message.
-   - Only `finish` opens a pull request, after it removes `docs/changes/<slug>/`. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
+   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/`; `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
    - If the target repository is ambiguous, ask before proceeding.
    - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
@@ -191,7 +191,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Anything requiring judgement — reading a diff for correctness, choosing between designs, writing tests — stays on Opus or Sonnet.
 25. Pre-existing CI failures:
     - CI red on a branch or repo for reasons unrelated to the current task never gets ignored. Fix it.
-    - Workflow: new worktree → fix the CI failure there → push → `/finish` opens the PR (rules 5/6/19 consent still apply) → rebase the original in-progress work on top of that fix.
+    - Workflow: new worktree → fix the CI failure there → push → review → `deliver` opens the PR (rules 5/6/19 consent still apply) → rebase the original in-progress work on top of that fix.
     - Applies to personal and work projects both.
 26. Markdown prose:
     - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
@@ -201,7 +201,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
 
 - Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
-- One coordinator drives plan, implement, review, fixes and `finish`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
+- One coordinator drives plan, implement, review, fixes and `deliver`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
 - A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -p terra`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
 - Independent review: the Claude `reviewer` agent and the Codex CLI each review the diff. No open finding may remain before the pull request.
 - Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.

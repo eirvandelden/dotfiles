@@ -18,7 +18,7 @@
 # present. Every check errs towards asking: a false question costs a moment, a
 # missed one costs the user's name on something they did not send.
 #
-# Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
+# Only deliver opens a pull request, and it removes docs/changes/<slug>/ first.
 # So `gh pr create` is refused while that folder exists in a checkout the command
 # runs in, and `gh pr merge` is refused while the pull request's head commit still
 # holds its own docs/changes/<slug>/, or when gh cannot tell. Neither is unlocked by the
@@ -235,7 +235,7 @@ def create_reason(words, working_directory)
   return unless directories.any? { |directory| change_folder?(directory) } ||
                 heads.any? { |head| directories.any? { |directory| branch_carries_change_folder?(directory, head) } }
 
-  "only /finish opens a pull request, once it removed docs/changes/<slug>/. Run /finish."
+  "only deliver opens a pull request, once it removed docs/changes/<slug>/. Run deliver."
 end
 
 def merge_reason(words, working_directory)
@@ -254,8 +254,8 @@ def merge_window_reason(words, index, window, working_directory)
   return "gh could not verify that the pull request's branch has removed docs/changes/<slug>/. " \
          "Fix gh (auth, network) and retry, or merge by hand." unless state
 
-  "only /finish prepares a branch for merging: the pull request's branch still has its own docs/changes/<slug>/ " \
-    "folder. Run /finish first."
+  "only deliver prepares a branch for merging: the pull request's branch still has its own docs/changes/<slug>/ " \
+    "folder. Run deliver first."
 end
 
 # The branch named by --head or -H, without a leading <owner>: part.

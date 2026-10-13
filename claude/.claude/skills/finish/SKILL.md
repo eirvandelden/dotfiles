@@ -9,7 +9,7 @@ arguments:
 
 # Finish
 
-`/finish` ships a change. The `deliver` skill already removed `docs/changes/<slug>/`, pushed the branch and opened a draft PR. This skill takes that PR the rest of the way. It runs on explicit command (`/finish`), or by the autonomous coordinator in auto mode (below). Etienne's `/finish` is the merge approval. The consent guard refuses `gh pr create` and `gh pr merge` while the branch's own `docs/changes/<slug>/` exists; `deliver` removed it, so both pass here.
+`/finish` ships a change. The `deliver` skill already removed `docs/changes/<slug>/`, pushed the branch and opened a draft PR. This skill takes that PR the rest of the way. It runs on explicit command (`/finish`), or by the autonomous coordinator in auto mode (below). Etienne's `/finish` is the merge approval. The consent guard refuses to create or merge a pull request through `gh` while the branch's own `docs/changes/<slug>/` exists; `deliver` removed it, so the merge passes here.
 
 `--dry-run`: print the steps below for the scope that applies, then stop before doing anything.
 
@@ -56,7 +56,7 @@ Print what ran and the PR URL. This skill never comments on the PR (playbook rul
 
 ## Auto mode
 
-Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`), right after `deliver`. `deliver` already removed `intent.md`, so the coordinator's own delivery is the proof of `Delivery: autonomous`. A `work` scope refuses auto mode and uses the steps above unchanged. Differences:
+Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`), right after `deliver`. It also requires an accepted `intent.md` with `Delivery: autonomous` in its header metadata; `deliver` removes that file, so the coordinator checks it before it runs `deliver`. A `work` scope or step-by-step change refuses auto mode and uses the steps above unchanged. Differences:
 
 - Run `~/.claude/skills/finish/scripts/ship --no-merge` instead of `ship`. It marks the PR ready and waits for green CI.
 - Never merge, and never comment on the PR. Etienne's `/finish` is the merge approval.

@@ -64,7 +64,7 @@ worktree_path=$(~/.config/git/worktree-tools/worktree-create --no-pane "$branch"
 
 ## Step 3: work, commit, push — all from here
 
-Edits, commits, `git push` and `/finish` (the only step that opens a PR) all run with the worktree as `cwd`. Never `cd` back to the main checkout to commit or push. The worktree stays in place until its PR merges. Then a pull in the repository (`worktree-sweep`, started by the lefthook `post-merge` and `post-rewrite` hooks) or a future task's Step 1 sweeps it.
+Edits, commits, `git push` and `deliver` (the only step that opens a PR) all run with the worktree as `cwd`. Never `cd` back to the main checkout to commit or push. The worktree stays in place until its PR merges. Then a pull in the repository (`worktree-sweep`, started by the lefthook `post-merge` and `post-rewrite` hooks) or a future task's Step 1 sweeps it.
 
 ## Rails + SQLite projects
 

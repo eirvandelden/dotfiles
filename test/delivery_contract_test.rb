@@ -93,11 +93,11 @@ class DeliveryContractTest < Minitest::Test
     assert_match(/never merge/i, section)
   end
 
-  def test_implement_leaves_the_push_to_the_delivery_step
+  def test_implement_hands_the_branch_to_review_and_the_delivery_step
     text = skill("implement")
 
-    assert_includes(text, "leaves the push to `/review` and the delivery step")
-    refute_includes(text, "leaves the push to `/review` and `/finish`")
+    assert_includes(text, "`/review` and the delivery step send the branch onward")
+    refute_includes(text, "`/review` and `/finish` send the branch onward")
   end
 
   def test_playbook_rule_5_names_the_delivery_step

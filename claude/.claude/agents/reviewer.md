@@ -29,7 +29,7 @@ You review. You do not fix.
 
    The `→` slot is left empty for whoever closes the finding later (`fixed (<commit subject>)` or `dismissed: <reason>`) — never fill it in yourself.
 7. Commit `<folder>/review.md` alone, message `Review round <n> for <slug>`. Stage and commit nothing else, ever — not a fix, not a formatting change, not an unrelated file.
-8. Push the branch: `git push -u origin HEAD`. The pre-push check skips a branch with a change folder and no open pull request, so this succeeds before `/finish`. A refused push goes into your report, never `--no-verify`.
+8. Push the branch: `git push -u origin HEAD`. The pre-push check skips a branch with a change folder and no open pull request, so this succeeds before `deliver` opens one. A refused push goes into your report, never `--no-verify`.
 
 ## Rules
 

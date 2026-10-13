@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 
-# Only /finish opens a pull request, and it removes docs/changes/<slug>/ first. The consent guard
+# Only deliver opens a pull request, and it removes docs/changes/<slug>/ first. The consent guard
 # enforces that mechanically (test/consent_guard_test.rb); these tests pin the skill, playbook and
 # hook text that carries the same rule, and the pushes that keep the remote branch current. They
 # prove the words exist, not that an agent obeys them.
@@ -9,43 +9,52 @@ class PullRequestFlowTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(REPO_ROOT, "claude/.claude/skills")
   FINISH = File.join(SKILLS, "finish/SKILL.md")
+  DELIVER_DIR = File.join(SKILLS, "deliver")
+  DELIVER_SCRIPT = File.join(DELIVER_DIR, "scripts/deliver")
   PUSH = "git push -u origin HEAD".freeze
 
-  def test_only_the_finish_skill_runs_gh_pr_create
-    offenders = scanned_files.reject { |path| path == FINISH }.select { |path| File.read(path).include?("gh pr create") }
+  def test_only_the_deliver_skill_runs_gh_pr_create
+    offenders = scanned_files.reject { |path| path.start_with?("#{DELIVER_DIR}/") }
+                             .select { |path| File.read(path).include?("gh pr create") }
 
     assert_empty(offenders.map { |path| path.delete_prefix("#{REPO_ROOT}/") })
   end
 
-  def test_the_playbook_lets_only_finish_open_a_pull_request
+  def test_the_playbook_lets_only_deliver_open_a_pull_request
     playbook = File.read(File.join(REPO_ROOT, "agents.md"))
 
-    assert_match(/only `?finish`? opens/i, rule(playbook, 5))
-    assert_includes(rule(playbook, 25), "/finish")
-    assert_match(/finish/, playbook[/^## 7a\..*?(?=^## 8\.)/m])
+    assert_match(/only `?deliver`? opens/i, rule(playbook, 5))
+    assert_includes(rule(playbook, 25), "deliver")
+    assert_match(/deliver/, playbook[/^## 7a\..*?(?=^## 8\.)/m])
   end
 
-  def test_lefthook_messages_send_pull_requests_through_finish
+  def test_lefthook_messages_send_pull_requests_through_deliver
     messages = File.readlines(File.join(REPO_ROOT, "lefthook.yml")).grep(/is not allowed\./)
 
     assert_equal(2, messages.size)
     messages.each do |message|
-      assert_includes(message, "/finish")
+      assert_includes(message, "deliver opens the PR")
       refute_match(/open a PR/, message)
     end
   end
 
-  def test_finish_checks_freshness_without_the_skip
-    line = File.readlines(FINISH).find { |entry| entry.include?("review-report-fresh") }
+  def test_deliver_checks_freshness_without_the_skip
+    line = File.readlines(DELIVER_SCRIPT).find { |entry| entry.include?("review-report-fresh") }
 
     refute_includes(line, "--skip-without-pr")
   end
 
-  def test_finish_removes_the_change_folder_before_it_creates_the_pull_request
+  def test_deliver_removes_the_change_folder_before_it_creates_the_pull_request
+    script = File.read(DELIVER_SCRIPT)
+
+    assert_operator(script.index('capture("git", "rm", "-r"'), :<, script.index('capture("gh", "pr", "create"'))
+  end
+
+  def test_finish_names_the_consent_guard_and_creates_no_pull_request
     finish = File.read(FINISH)
 
-    assert_operator(finish.index("git rm -r docs/changes/<slug>"), :<, finish.index("`gh pr create --title"))
-    assert_match(/consent guard refuses `gh pr create`/, finish)
+    assert_match(/consent guard refuses to create or merge a pull request/, finish)
+    refute_includes(finish, "gh pr create")
   end
 
   def test_implement_pushes_the_branch_when_done
