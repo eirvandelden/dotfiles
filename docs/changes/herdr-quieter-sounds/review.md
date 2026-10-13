@@ -98,3 +98,33 @@ Nothing found.
 Nothing found.
 
 Totals: 0 findings.
+
+## Round 5 — 2026-10-13T08:19Z — b09e5165
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the reviewer defaults apply. Suite state before review: `test/herdr_quieter_tones_test.rb` 18 runs green (real-ffmpeg tests ran, none skipped), `test/herdr_config_test.rb` 5 runs green, shellcheck clean, rubocop clean on both test files, `git diff --check` clean, `herdr config check` on the worktree config prints `config: ok`. The round 3 fixes hold: a link to a copy is refused, and the tracked-audio test asserts that `git ls-files` succeeded. The local branch has still diverged from `origin/herdr-quieter-sounds` (97 local, 3 remote commits), so the next update of the remote branch needs `--force-with-lease`. No pull request exists yet.
+
+### Bugs
+
+- [ ] Nit: `test_no_herdr_tone_is_tracked` misses audio with a non-ASCII name under `herdr/`. With the default `core.quotePath`, `git ls-files` prints such a path in quotes with octal escapes, so the `\Aherdr/` pattern does not match it. Verified in a scratch repository: a tracked `herdr/tône.mp3` lists as `"herdr/t\303\264ne.mp3"` and the grep returns `[]`. `git ls-files -z` with a split on `"\0"` gives raw paths. — `test/herdr_config_test.rb:37` →
+- [ ] Nit: `bash_path` is 125 characters, over the playbook limit of about 120 characters per line. Rubocop does not flag it, so only the playbook rule catches it. Break the chain over two lines. — `test/herdr_quieter_tones_test.rb:225` →
+
+### Security
+
+Nothing found. Every path in the script is quoted. The source is only ever an ffmpeg input. The copy-of-a-copy guard resolves links. No audio or secret enters the public repository.
+
+### Compliance
+
+| Acceptance criterion (intent.md) | Proof in the diff |
+| --- | --- |
+| "jobs done" plays at the 0.3 level | `test_each_sound_points_at_its_quieter_copy`, `test_the_copy_is_three_tenths_of_the_source_level`; playback unheard until Etienne's pre-merge audition (plan step 8) |
+| "milord" plays at the 0.3 level | same two tests; playback unheard |
+| default "ready to serve" plays at the 0.3 level | same two tests; playback unheard |
+| originals keep their checksums | `test_the_source_is_left_byte_for_byte_unchanged`; the step 4 `shasum … \| diff` evidence still needs to go in the pull request description |
+| one run after a swap to `ForTheMaster02.mp3` gives a 0.3 copy | `test_one_run_copies_every_source_given`, `test_the_commented_alternative_also_points_at_a_quieter_copy`; the copy exists on disk (`-rw-r--r--`) |
+| no mp3 file is in the repo (read as "this change adds no mp3") | `test_no_herdr_tone_is_tracked` (see the Nit above about quoted paths); the diff adds no audio |
+| `herdr config check` reports no problems | `test_herdr_accepts_the_config` (existing, green); manual run prints `config: ok` |
+
+- Every test named in `plan.md` `## Proof` exists, plus `test_the_copy_is_readable_like_an_ordinary_file` and `test_a_link_to_a_quieter_copy_is_refused` from earlier fixes.
+- No existing test was weakened, skipped or deleted.
+
+Totals: 0 Important, 2 Nit.
