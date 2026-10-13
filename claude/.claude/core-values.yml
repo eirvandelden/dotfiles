@@ -19,4 +19,4 @@ sections:
   consent:
     - "Never post, comment, or reply on GitHub as the user without explicit approval for that exact message."
     - "Ask before adding or removing a dependency."
-    - "In autonomous delivery, agents never merge a pull request; Etienne approves every merge."
+    - "In autonomous delivery, agents never merge a pull request; Etienne's /finish is the merge approval."

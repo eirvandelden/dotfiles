@@ -97,7 +97,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - If the target repository is ambiguous, ask before proceeding.
    - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
-   - `docs/changes/<slug>/` artifacts are removed by the `finish` skill; never delete them by hand.
+   - `docs/changes/<slug>/` artifacts are removed by the delivery step (the `deliver` skill) once review is closed; never delete them by hand.
 6. GitHub identity and consent:
    - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit instruction for that exact message.
    - This includes issue comments, pull request comments, review comments, and replies.
@@ -207,6 +207,7 @@ Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`R
 - Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
 - Verify behaviour as a human would (rule 22) and record the evidence.
 - Stop and ask Etienne one concrete question when: a choice changes the agreed behaviour; a step needs permission under rules 8, 9, 11, 12 or 13; the coordinator makes three failed attempts at one problem; a review finding stays disputed after two rounds.
+- Delivery is a draft pull request: the coordinator runs `deliver`, marks the PR ready and waits for green CI, and never merges. Etienne's `/finish` is the merge approval.
 - Rules 6, 8, 9, 11, 12 and 13 stay in force. Opening the pull request is allowed; replying on it as Etienne is not.
 - The coordinator ends with a short account: behaviour delivered, evidence, check results, review outcome, pull request URL.
 
