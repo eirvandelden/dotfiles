@@ -6,9 +6,9 @@ No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes a
 
 No Important findings.
 
-- [ ] Nit: `set_style` has no `trap` for the `mktemp` file. When `rewrite_style` or the `cat` write fails under `set -e`, the temp file stays behind in `$TMPDIR`. — `install/tasks/51_configure_glow_style.sh:51` →
-- [ ] Nit: A config with CRLF line endings gets mixed endings. The `style:` line is rewritten without `\r`, and the other lines keep it. Glow's YAML parser accepts this, so it is cosmetic. — `install/tasks/51_configure_glow_style.sh:37` →
-- [ ] Nit: When the `50_stow_all.sh` line is missing from `install.sh`, `assert_operator(glow, :>, stow)` raises `ArgumentError` on `nil`. It does not fail with a clear message. Add `refute_nil(stow)` next to `refute_nil(glow)`. — `test/glow_style_install_test.rb:78` →
+- [x] Nit: `set_style` has no `trap` for the `mktemp` file. When `rewrite_style` or the `cat` write fails under `set -e`, the temp file stays behind in `$TMPDIR`. — `install/tasks/51_configure_glow_style.sh:51` → fixed (Remove the glow step's temp file when a write fails)
+- [x] Nit: A config with CRLF line endings gets mixed endings. The `style:` line is rewritten without `\r`, and the other lines keep it. Glow's YAML parser accepts this, so it is cosmetic. — `install/tasks/51_configure_glow_style.sh:37` → dismissed: glow writes its config with LF endings, and the reviewer confirms glow's YAML parser accepts mixed endings; no reader sees a difference.
+- [x] Nit: When the `50_stow_all.sh` line is missing from `install.sh`, `assert_operator(glow, :>, stow)` raises `ArgumentError` on `nil`. It does not fail with a clear message. Add `refute_nil(stow)` next to `refute_nil(glow)`. — `test/glow_style_install_test.rb:78` → fixed (Fail clearly when install.sh loses its stow step)
 
 ### Bugs
 
