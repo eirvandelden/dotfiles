@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "open3"
+require_relative "isolated_git"
 require_relative "lefthook_binary"
 
 # The skill-parity pre-push job must run when a push touches only a Claude skill
