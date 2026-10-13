@@ -30,3 +30,7 @@ Checks run: `test/delivery_evidence_test.rb` (32 runs), `test/delivery_preflight
 - The handover and evidence survive the folder's removal → `test_handover_and_evidence_survive_removing_the_change_folder`.
 
 Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted: the only removed lines are the old `run_fill` helper in `test/fill_pr_template_test.rb`, which was replaced to accept the optional handover argument. The `fill-pr-template` output without a handover, step-by-step `finish` and the non-deliver stage prompts of `hand-off-plan.sh` stay as they were.
+
+## Round 2 — 2026-10-13T13:40:00Z — b8438c79 (codex)
+
+- [ ] Important: A valid lockfile v1 `package-lock.json` has a `dependencies` map, not `packages`, so the runtime check reports every installed dependency as missing from the lockfile and blocks delivery. Read versions from the legacy format as well. — `agents/.agents/skills/intent/scripts/delivery-preflight:221` →
