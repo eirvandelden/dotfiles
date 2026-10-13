@@ -63,6 +63,22 @@ class SkillParityTest < Minitest::Test
     end
   end
 
+  def test_a_dangling_link_under_claude_skills_is_reported
+    in_fixture do |claude, _agents|
+      File.symlink("../../../agents/.agents/skills/gone", File.join(claude, "gone"))
+
+      assert_equal([ "gone" ], misplaced_claude_skills(claude))
+    end
+  end
+
+  def test_a_plain_file_under_claude_skills_is_reported
+    in_fixture do |claude, _agents|
+      File.write(File.join(claude, "stray.md"), "")
+
+      assert_equal([ "stray.md" ], misplaced_claude_skills(claude))
+    end
+  end
+
   def test_a_relative_link_into_the_agents_package_is_accepted
     in_fixture do |claude, agents|
       FileUtils.mkdir_p(File.join(agents, "probe"))
@@ -84,7 +100,7 @@ class SkillParityTest < Minitest::Test
   end
 
   def test_skill_names_match_on_both_sides
-    claude_names = skill_names(CLAUDE_SKILLS)
+    claude_names = entry_names(CLAUDE_SKILLS)
     agents_names = skill_names(AGENTS_SKILLS) - CODEX_ONLY
 
     assert_equal(agents_names.sort, claude_names.sort)
@@ -139,12 +155,19 @@ class SkillParityTest < Minitest::Test
 
   private
 
-  # Names under the Claude skills folder that are not a relative link into the agents package.
+  # Names under the Claude skills folder that are not a resolving relative link into the agents package.
   def misplaced_claude_skills(claude_dir)
-    skill_names(claude_dir).reject do |name|
+    entry_names(claude_dir).reject do |name|
       path = File.join(claude_dir, name)
-      File.symlink?(path) && File.readlink(path) == "../../../agents/.agents/skills/#{name}"
+      File.symlink?(path) && File.readlink(path) == "../../../agents/.agents/skills/#{name}" && File.directory?(path)
     end
+  end
+
+  # Every entry except hidden ones such as .DS_Store, including plain files and dangling links.
+  def entry_names(dir)
+    return [] unless Dir.exist?(dir)
+
+    Dir.children(dir).reject { |name| name.start_with?(".") }
   end
 
   def in_fixture
