@@ -141,3 +141,8 @@ Domain skills applied: dotfiles-maintenance, dependencies, ruby-style, rails-arc
 - The global fallback and the setup skill set no Ruby version minimum, while the new tools need Ruby 3.3 or later → fixed (Risks explain that global gems are per Ruby version, so older-Ruby repositories already lack the fallback's plugins; the `new-repo-setup` Types step now states the Ruby 3.3 minimum)
 - Several acceptance criteria lack executable proof: package tests read text, fallback tests skip locally, editor and new-repository checks fall to Etienne → fixed (new "Manual acceptance gates" section; Order of work and Risks now say that branch pushes start no CI run, so the pull request's CI run is the first real run and must be green before merge)
 - The `extension.generateYard` VS Code keybinding still asks for YARD → dismissed: intent lists the `generateYard` keybinding as out of scope.
+
+## Coordinator decisions (2026-10-13)
+
+- Etienne accepts the transitive YARD gems: the `packages.conf` criterion covers the list only. `yard`, `yard-activesupport-concern` and `yard-solargraph` still arrive as Solargraph runtime dependencies, which is expected.
+- Etienne approved the local install of `steep` and `rubocop-rbs_inline` (rule 8). The coordinator installed `steep` 2.1.0, `rubocop-rbs_inline` 2.0.0 and `rbs-inline` 0.14.0 under Ruby 4.0.7. The `rbs_inline` fallback tests and `steep check` must run locally, not skip.
