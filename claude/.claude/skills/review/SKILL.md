@@ -41,9 +41,9 @@ A round left with an open finding and no newer round means the review is not clo
 Only valid when `intent.md` has `Delivery: autonomous`; the coordinator runs this, and "stop, do not start fixing" under "After either backend" does not apply. Two independent reviewers look at the diff:
 
 1. Claude: a Claude coordinator uses the `reviewer` agent through either backend above. A Codex coordinator uses the read-only Claude CLI backend below. A native Codex reviewer cannot replace this Claude round.
-2. The Codex CLI: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as ``- [ ] Important: <finding> — `<file>:<line>` →`` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Commit that file alone, then push the branch (`git push -u origin HEAD`).
+2. The Codex CLI: `codex review --base <base> < /dev/null`, with `<base>` resolved as in `start-review.sh`. Closing stdin keeps an inherited prompt stream out of the review. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as ``- [ ] Important: <finding> — `<file>:<line>` →`` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Commit that file alone, then push the branch (`git push -u origin HEAD`).
 
-Fix every finding through `code-review`, then run both reviewers again. Repeat until a round of each leaves no open finding. A finding disputed for two rounds goes to Etienne (see `code-review`).
+Fix every finding through `code-review`, then run both reviewers again. A fix in code makes earlier `delivery-evidence` runs stale; the coordinator reruns them before `finish`. Repeat until a round of each leaves no open finding. A finding disputed for two rounds goes to Etienne (see `code-review`).
 
 ### Read-only Claude CLI backend
 

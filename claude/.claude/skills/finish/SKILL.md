@@ -79,9 +79,12 @@ Supplied by `dotfiles-work` through its `claude` stow package (`STOW_SHARED`, fi
 
 Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`). It also requires an accepted `intent.md` with `Delivery: autonomous` in its header metadata. A `work` scope or step-by-step change refuses auto mode and uses the steps above unchanged. Differences:
 
+- §1: one more precondition, `~/.claude/skills/finish/scripts/delivery-evidence check --require tests,lint` exits 0. It names every missing, failed or stale entry, and a migration replay or browser check the branch needs. Rerun and record those, then start again; never finish on old proof.
+- §3 step 2: before §4 removes the change folder, run `delivery-evidence handover`. It writes the handover — delivered behaviour, the recorded checks with their actual outcome, revision and limits, each review round by source and closure, and the limitations — to the shared git directory and prints its path. Pass that path as the fourth argument: `fill-pr-template <template-path-or-empty> <folder>/intent.md <folder>/plan.md <handover>`. The test or verification part of the body then holds actual results, not the plan's promised Proof.
 - §3 step 3: capture the PR body and title without waiting for confirmation. Show the body in step 2 as usual.
 - §4: close every matching idle or done stage pane without asking.
-- Never merge, and never comment on the PR.
+- §5: after `gh pr create` or `gh pr edit`, run `delivery-evidence pr-check`. It fails unless the PR head equals the pushed `HEAD` and the body holds the handover's Verification section. Then read the CI checks with `gh pr checks`; report pending checks as pending, never as passing.
+- Opening the PR and updating its body are the only GitHub writes. Never merge, and never comment on the PR.
 
 ## Codex
 

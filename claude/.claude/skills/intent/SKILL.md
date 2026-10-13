@@ -150,21 +150,26 @@ Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the 
 
 ## Autonomous delivery
 
-Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes only on a `personal` origin. This session is the coordinator. Etienne's "accepted" on the intent was the last approval before the PR, except the escalations below.
+Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes only on a `personal` origin. Etienne's "accepted" on the intent was the last approval before the PR, except the escalations below.
 
-1. For each stage in order — `plan`, then `implement` — run `HERDR_PANE_ID=<own pane id> ~/.config/herdr/scripts/hand-off-plan.sh <stage> <slug> --auto`. Wait for that stage's `Plan ready:` or `Handoff done:` line, then read its report before starting the next stage.
+Claude coordinates. A Claude session that accepted the intent is the coordinator. A Codex session that accepted it runs `~/.claude/skills/intent/scripts/start-delivery` from the change's worktree and stops: the script checks the intent and the preflight, then starts a Claude coordinator. Inside herdr that is a pane below (`hand-off-plan.sh deliver <slug>`); outside herdr it is a background session (`claude --bg`), and the script prints how to attach to it and where its report lands. If the script refuses, report its output to Etienne and stop. Codex coordinates only on Etienne's explicit instruction; Codex otherwise stays the plan critic and the second reviewer.
+
+The coordinator keeps the account, `<git-common-dir>/herdr/deliver-<slug>.md`, current after every stage: the stage reached, the blockers, the report paths and the next action. A resumed or restarted coordinator reads the account first, then `~/.claude/skills/finish/scripts/delivery-evidence status`, then `review.md`, and resumes from the next action. It never repeats a stage whose result is committed and fresh.
+
+Preflight first. Run `~/.claude/skills/intent/scripts/delivery-preflight`, with `--needs database` and `--needs browser` when the agreed proof needs a migration replay or a browser check. On `Blockers:`, stop and report every missing item together in one message, before any costly work. Never turn a missing check into a skip. Rerun it with the needs `plan.md` names once the plan is accepted, before the implement stage.
+
+1. For each stage in order — `plan`, then `implement` — run `HERDR_PANE_ID=<own pane id> ~/.config/herdr/scripts/hand-off-plan.sh <stage> <slug> --auto`. Wait for that stage's `Plan ready:` or `Handoff done:` line, then read its report before starting the next stage. Outside herdr, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
-3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
-4. Exercise the behaviour as a human would, and record the evidence.
-5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and record both reports as that skill directs, committing each transcribed round alone and pushing the branch (`git push -u origin HEAD`). Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
-6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
-7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
+3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them, each through `~/.claude/skills/finish/scripts/delivery-evidence run --kind <tests|lint|audit> --name <name> [--summary <counts>] -- <command>`. The script records the result against the exact content it ran on and never stores the output.
+4. Exercise the behaviour as a human would. Record each scenario with `delivery-evidence record --kind <browser|migration|check> --name <name> --status pass|fail --scenario <what you did> --result <what you saw>`, with `--paths` naming what the proof depends on and `--limits` for what it did not cover. Replay a migration only on a scratch copy of a database, never the original.
+5. Review. Follow the `review` skill in auto mode. A Claude coordinator chooses its pane or `here` backend according to the session. A Codex coordinator, on Etienne's explicit instruction only, uses its read-only Claude CLI backend for the Claude round. Run the separate Codex round and record both reports as that skill directs, committing each transcribed round alone and pushing the branch (`git push -u origin HEAD`). Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
+6. Before finishing, run `delivery-evidence status`. Any `stale` or `failed` entry, from a fix, a rebase or an uncommitted edit, is rerun and recorded again. Commits that touch only `docs/changes/<slug>/` never make evidence stale. Record the delivered behaviour with `delivery-evidence note --delivered <text>` and each material limitation with `note --limitation <text>`.
+7. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode. It refuses on missing, failed or stale evidence, builds the PR body from the handover and checks the PR afterwards.
+8. Finish the account — behaviour delivered, evidence, check results, review outcome, handover path, PR URL and CI status as observed — and tell Etienne. Never merge.
 
-A stage pane started by `hand-off-plan.sh intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the account, as the single line `Delivery done: <account path>`, sent once the delivery ends; the account path also goes into the report file the starting prompt names.
+A stage pane started by `hand-off-plan.sh intent` or `hand-off-plan.sh deliver` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the account, as the single line `Delivery done: <account path>`, sent once the delivery ends; the account path also goes into the report file the starting prompt names.
 
 Escalation: stop and ask Etienne one concrete question when a choice changes the agreed behaviour, a step needs a permission he has not approved, one problem fails three times, or a finding is still disputed after two rounds. A `Decision needed:` line in a stage report is how a pane raises one of these.
-
-Outside herdr, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
 
 ## Codex
 

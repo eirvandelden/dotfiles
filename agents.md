@@ -201,13 +201,16 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
 
 - Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
-- One coordinator drives plan, implement, review, fixes and `finish`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
+- One Claude coordinator drives plan, implement, review, fixes and `finish`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
+- A Codex session that accepts the intent hands the delivery to Claude with the `intent` skill's `start-delivery` script, inside herdr or outside it. Codex stays the plan critic and the second reviewer, and coordinates only on Etienne's explicit instruction.
+- Before costly work, the coordinator runs the delivery preflight and reports every missing setup item together. A missing required check is a blocker, never a skip.
 - A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -p terra`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
 - Independent review: the Claude `reviewer` agent and the Codex CLI each review the diff. No open finding may remain before the pull request.
 - Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
-- Verify behaviour as a human would (rule 22) and record the evidence.
+- Verify behaviour as a human would (rule 22) and record the evidence with the `delivery-evidence` script, against the content it verified. A code change, committed or not, makes that evidence stale; `finish` refuses on missing, failed or stale evidence.
 - Stop and ask Etienne one concrete question when: a choice changes the agreed behaviour; a step needs permission under rules 8, 9, 11, 12 or 13; the coordinator makes three failed attempts at one problem; a review finding stays disputed after two rounds.
 - Rules 6, 8, 9, 11, 12 and 13 stay in force. Opening the pull request is allowed; replying on it as Etienne is not.
+- The pull request body is the handover: delivered behaviour, actual check results, review outcomes, browser and migration evidence, and limitations. A plan's promised tests are not results.
 - The coordinator ends with a short account: behaviour delivered, evidence, check results, review outcome, pull request URL.
 
 ## 8. Things agents get wrong here

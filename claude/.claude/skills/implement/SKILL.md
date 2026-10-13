@@ -79,6 +79,7 @@ Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` ar
 - A new dependency (gem, package, system tool) is never added. Report a `Decision needed:` line that names it and why it is needed.
 - A choice that would change the behaviour agreed in `intent.md` is a `Decision needed:` line, not a guess.
 - Fix failing tests in production code. Never skip a test, add a linter disable comment or edit a linter config.
+- Run the final full suite and the linters through `~/.claude/skills/finish/scripts/delivery-evidence run --kind tests|lint --name <name> -- <command>`, and name the recorded entries in the report. A plan line is not a result.
 
 ## Codex
 
