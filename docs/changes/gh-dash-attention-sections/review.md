@@ -155,3 +155,21 @@ No findings.
 `codex review --base origin/main`: the configuration matches the documented section order and filters; the focused test passes (12 runs, 38 assertions).
 
 No findings.
+
+## Round 11 — 2026-10-13T13:47Z — 9e993e9a
+
+Checks run: `ruby -Itest test/gh_dash_config_test.rb` green (12 runs, 38 assertions, 0 failures); `yamllint github/.config/gh-dash/config.yml` and `rubocop test/gh_dash_config_test.rb` clean. The full-suite loop (plan step 8, fail-fast) stopped at `test/auto_accept_test.rb`; the branch does not touch that file or its script, and the cause was not diagnosed because Etienne asked not to wait for tests. Three worktrees ran that file at the same time. No uncommitted changes. The branch is 59 commits behind `origin/main`; `git merge-tree` merges it cleanly, and `origin/main` has no new change to the gh-dash config or its test. Rebase before `finish` (rule 20). No REVIEW.md or REVIEW.local.md exists, so the reviewer defaults apply.
+
+### Bugs
+
+Nothing found. The five new PR sections and three issue sections match the plan's filter table token for token. The `pager` and `keybindings` blocks are unchanged from `origin/main`.
+
+### Security
+
+Nothing found. A scan of every added line in the branch history finds only `org:nedap` and the public `midagedev/bloomery#107`.
+
+### Compliance
+
+Every acceptance criterion keeps the proof listed in round 3. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
+
+- [ ] Nit: `evidence.md` records the full suite as 42 of 43 files, with the `review_report_check_test.rb` failure left to branch `test-repos-ignore-global-git-setup`. That fix is now on `origin/main` (`0f009c61`, PR #198), and `test/` now has 51 files. After the rebase, run plan step 8 again and record the result. — `docs/changes/gh-dash-attention-sections/evidence.md:28`
