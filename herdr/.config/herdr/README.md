@@ -93,4 +93,4 @@ herdr has no volume setting and plays each `[ui.sound]` file at full level. `con
 herdr/.config/herdr/scripts/quieter-tones.sh ~/Documents/Tones/Warcraft/Humans/jobs-done.mp3
 ```
 
-herdr plays only mp3, and the script refuses anything else, and refuses a file that already sits in the copies folder. It needs `ffmpeg`. After changing the `[ui.sound]` paths, run `herdr server reload-config`. The script is covered by `test/herdr_quieter_tones_test.rb`.
+herdr plays only mp3, so the script refuses anything else. It also refuses a file that already sits in the copies folder. It needs `ffmpeg`. After changing the `[ui.sound]` paths, run `herdr server reload-config`. The script is covered by `test/herdr_quieter_tones_test.rb`.
