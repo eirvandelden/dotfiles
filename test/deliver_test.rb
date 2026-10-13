@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "delivery_harness"
+require_relative "isolated_git"
 
 # `deliver` ends a change: once a review round leaves no open finding it removes the change folder
 # in a commit of its own, pushes the branch and opens (or updates) a draft PR, then asks the herdr

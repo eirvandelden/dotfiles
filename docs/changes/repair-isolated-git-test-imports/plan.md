@@ -6,8 +6,8 @@ From `intent.md` (2026-10-13). Status: accepted.
 
 - The reproduction already exists. `IsolatedGitTest#test_every_test_file_requires_the_helper` (`test/isolated_git_test.rb:84`) is on `main` and fails there. It is the RED proof; no new test is written.
 - `Type: chore`, not `bugfix`, and this plan has no `Reproduction: committed` line. The fix itself edits test files. `test-guard.rb` refuses every test-file write while `plan.md` carries `Reproduction: committed`, which the bugfix flow in `implement` adds. That would block the only correct fix.
-- Position: the established one. In the files that already have the helper, `require_relative "isolated_git"` is the last line of the top require block, after any other `require_relative` (for example `require_relative "lefthook_binary"`). Each of the eleven files gets one line in that slot, nothing else.
-- Work from the live `origin/main` (534781ca), not from 3826d72e. PR #204 added three more files without the helper, so the list is eleven, not eight. Before the push, fetch again and re-run the contract test against any newer `main`.
+- Position: the established one. In the files that already have the helper, `require_relative "isolated_git"` is the last line of the top require block, after any other `require_relative` (for example `require_relative "lefthook_binary"`). Each changed file gets one line in that slot, nothing else.
+- Work from the live `origin/main` (534781ca), not from 3826d72e. PR #204 added three more files without the helper, so the first list was eleven, not eight; later `main` commits added more (step 8). Before the push, fetch again and re-run the contract test against any newer `main`.
 
 ## Integration points
 
@@ -32,6 +32,11 @@ Each gets one added line, `require_relative "isolated_git"`, as the last line of
 - `test/worktree_rule_mirror_test.rb` — after `require "minitest/autorun"`.
 - `test/worktree_sweep_on_pull_test.rb` — after `require_relative "lefthook_binary"`. Added after PR #205 landed on `main` (489b5988) without the helper (step 8).
 - `test/worktree_sweep_test.rb` — after `require "tmpdir"`. Same origin as the line above.
+- `test/deliver_test.rb` — after `require_relative "delivery_harness"`. Added after PRs #206 and #207 landed on `main` (31fbbd43) without the helper (step 8).
+- `test/delivery_contract_test.rb` — after `require "yaml"`. Same origin as the line above.
+- `test/gh_dash_config_test.rb` — after `require "yaml"`. Same origin.
+- `test/open_pr_dash_test.rb` — after `require_relative "delivery_harness"`. Same origin.
+- `test/ship_test.rb` — after `require_relative "delivery_harness"`. Same origin.
 
 ## Order of work
 
@@ -53,7 +58,7 @@ Each gets one added line, `require_relative "isolated_git"`, as the last line of
 ## Proof
 
 - The contract test lists no missing file → `test/isolated_git_test.rb` `IsolatedGitTest#test_every_test_file_requires_the_helper`
-- Each changed file passes on its own with the helper → check: `for f in bi gem_install_rule_mirror herdr_quieter_tones lefthook_rubocop_git_gem neovim_avante_dependencies pull_request_flow rbs_inline_tooling review_push_hook worktree_first_skill worktree_guard worktree_rule_mirror worktree_sweep worktree_sweep_on_pull; do ruby -Itest "test/${f}_test.rb" || exit 1; done`
+- Each changed file passes on its own with the helper → check: `for f in bi gem_install_rule_mirror herdr_quieter_tones lefthook_rubocop_git_gem neovim_avante_dependencies pull_request_flow rbs_inline_tooling review_push_hook worktree_first_skill worktree_guard worktree_rule_mirror worktree_sweep worktree_sweep_on_pull deliver delivery_contract gh_dash_config open_pr_dash ship; do ruby -Itest "test/${f}_test.rb" || exit 1; done`
 - The full suite passes locally with the CI test loop → check: `for file in test/*_test.rb; do ruby -Itest "$file" || exit 1; done`
 - The pull request's CI is green → check: `gh pr checks <pr-number>`
 
