@@ -35,13 +35,13 @@ Each gets one added line, `require_relative "isolated_git"`, as the last line of
 
 ## Order of work
 
-1. Run `ruby -Itest test/isolated_git_test.rb -n test_every_test_file_requires_the_helper` and watch it fail, listing the eleven files.
-2. Add the line to the eleven files.
+1. Run `ruby -Itest test/isolated_git_test.rb -n test_every_test_file_requires_the_helper` and watch it fail, listing the missing files.
+2. Add the line to every listed file.
 3. Run the contract test again; it passes.
-4. Run each of the eleven files on its own with `ruby -Itest`; each passes.
+4. Run each changed file on its own with `ruby -Itest`; each passes.
 5. Run the full suite with the same loop CI uses (the local Ruby and tools may differ; the pull request CI run is the Ruby 3.4 proof): `for file in test/*_test.rb; do ruby -Itest "$file" || exit 1; done`.
-6. Run `rubocop --force-exclusion` on the eleven files.
-7. Re-read the diff: eleven one-line additions and nothing else. Commit as one change.
+6. Run `rubocop --force-exclusion` on every changed file.
+7. Re-read the diff: one added line per changed file and nothing else. Commit as one change.
 8. Fetch `origin/main` again. If it moved, rebase, then list missing files with `git grep -L "^require_relative \"isolated_git\"$" -- "test/*_test.rb"`. Add the helper to every newly listed file in the same position, then repeat steps 3 to 7.
 
 ## Risks
@@ -53,7 +53,7 @@ Each gets one added line, `require_relative "isolated_git"`, as the last line of
 ## Proof
 
 - The contract test lists no missing file → `test/isolated_git_test.rb` `IsolatedGitTest#test_every_test_file_requires_the_helper`
-- Each of the eleven files passes on its own with the helper → check: `for f in bi gem_install_rule_mirror herdr_quieter_tones lefthook_rubocop_git_gem neovim_avante_dependencies pull_request_flow rbs_inline_tooling review_push_hook worktree_first_skill worktree_guard worktree_rule_mirror worktree_sweep worktree_sweep_on_pull; do ruby -Itest "test/${f}_test.rb" || exit 1; done`
+- Each changed file passes on its own with the helper → check: `for f in bi gem_install_rule_mirror herdr_quieter_tones lefthook_rubocop_git_gem neovim_avante_dependencies pull_request_flow rbs_inline_tooling review_push_hook worktree_first_skill worktree_guard worktree_rule_mirror worktree_sweep worktree_sweep_on_pull; do ruby -Itest "test/${f}_test.rb" || exit 1; done`
 - The full suite passes locally with the CI test loop → check: `for file in test/*_test.rb; do ruby -Itest "$file" || exit 1; done`
 - The pull request's CI is green → check: `gh pr checks <pr-number>`
 
