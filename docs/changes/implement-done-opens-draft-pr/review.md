@@ -59,3 +59,15 @@ Checks: full suite green except `test/review_report_check_test.rb` `test_a_chang
 - [ ] Important: `deliver --check` treats any text after a finding's `→` as closed, so `→ still investigating` lets delivery proceed. The review skill allows only `fixed (<commit subject>)` or `dismissed: <reason>`; validate those markers instead of accepting any non-empty text — `claude/.claude/skills/deliver/scripts/deliver:57` → fixed (Close a finding only on a valid fixed or dismissed marker)
 
 Checks: Codex ran the deliver, ship, pane and contract tests; all green. None covers an invalid close marker.
+
+## Round 5 — 2026-10-13T13:44Z — dbbb13b8
+
+Scope: `ce0ca5ae..HEAD` only.
+
+- [ ] Nit: `CLOSED_SLOT` rejects a commit subject that contains `)`. The `fixed` branch is `fixed \(\s*[^)\s][^)]*\)` followed by `\s*\z`, so `→ fixed (Fix foo (bar))` counts as open, and `deliver --check` exits 1 on a correctly closed finding. It fails safe, but the only way out is to reword the subject. Match greedily up to the last `)` on the line — `claude/.claude/skills/deliver/scripts/deliver:42` →
+
+Closings checked: every `fixed (<subject>)` in this file names a subject that exists in `git log --format=%s origin/main..HEAD`. The two-commit closings write both subjects joined by `; `, and each one exists. `deliver --check` exits 0 on this file before this round.
+
+Fixes checked: R3 Important (plan.md) and R3 Nit (failed before pending) hold; R4 Important (marker validation) holds, and `test_a_finding_without_a_valid_close_marker_is_open` covers the six invalid markers. No test was weakened, skipped or deleted in this range.
+
+Checks: full suite not run (Etienne's call); narrow tests only. `test_a_finding_without_a_valid_close_marker_is_open` and `test_a_failed_check_beside_a_pending_one_reports_the_failure_first` pass. RuboCop is clean on `deliver`, `ship`, `deliver_test.rb` and `ship_test.rb`.
