@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Deterministic pre-push backstop (playbook's "skill makes violations rare, hook makes them
 # impossible" pairing): refuses a push whose change folder has no review.md at least as new,

@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # GNU Stow maps a package's top-level entries onto $HOME: `zsh/.zshrc` becomes `~/.zshrc`, which
 # is the point. The mapping does not care whether a file was meant to go there, and `README.md`

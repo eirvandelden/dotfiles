@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Claude Code PostToolUse hook: after an Edit/Write/MultiEdit touches a Markdown file, tells
 # Claude about any hardwrapped paragraph the no-hardwrap markdownlint rule finds, so the habit

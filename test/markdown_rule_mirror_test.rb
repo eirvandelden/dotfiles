@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # agents.md (the playbook Claude and Codex both read) and core-values.yml (the hook that
 # re-injects a subset of the playbook so it survives context compaction) must both carry the

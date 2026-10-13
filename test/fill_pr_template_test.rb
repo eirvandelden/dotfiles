@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # finish fills the work PR template from intent.md and plan.md before opening
 # it for the team, so colleagues see something written for them instead of an

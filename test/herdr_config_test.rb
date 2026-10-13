@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "open3"
+require_relative "isolated_git"
 
 class HerdrConfigTest < Minitest::Test
   CONFIG_PATH = File.expand_path("../herdr/.config/herdr/config.toml", __dir__)

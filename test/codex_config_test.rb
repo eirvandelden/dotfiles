@@ -4,6 +4,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require "fileutils"
+require_relative "isolated_git"
 
 class CodexConfigTest < Minitest::Test
   CONFIG_PATH = File.expand_path("../codex/.codex/config.toml", __dir__)

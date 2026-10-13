@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 class EditorTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)

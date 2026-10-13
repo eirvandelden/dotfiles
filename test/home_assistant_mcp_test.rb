@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Home Assistant's MCP server sits behind a gate that wants a bearer token. Codex reads the
 # token from HA_MCP_GATE_TOKEN through its config; Claude gets it from a one-time

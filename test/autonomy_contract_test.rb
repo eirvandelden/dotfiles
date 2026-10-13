@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Autonomous delivery is skill and playbook text, not code. These contract tests pin the text that
 # carries each boundary, so a later edit cannot drop one silently. They prove the words exist, not

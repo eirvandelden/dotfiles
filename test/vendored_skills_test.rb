@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "yaml"
+require_relative "isolated_git"
 
 # Third-party skills are pinned snapshots recorded in VENDORED-SKILLS.yml. A snapshot folder is a skill whose
 # SKILL.md carries an `<!-- upstream: ... -->` comment that does not name superpowers-ruby, which keeps its own convention.

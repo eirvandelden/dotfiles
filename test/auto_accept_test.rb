@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # In autonomous delivery a recorded critique replaces Etienne's word "accepted"
 # on plan.md. auto-accept is the one mechanical gate: it flips the

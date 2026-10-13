@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "shellwords"
 require "tmpdir"
+require_relative "isolated_git"
 
 # worktree-viewer opens the herdr-file-viewer plugin's program at the worktree an agent works in.
 # Everything outside the launcher is stubbed: herdr on PATH, and a fake plugin root holding a stub

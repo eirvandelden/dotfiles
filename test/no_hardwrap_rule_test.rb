@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The no-hardwrap markdownlint rule reports (or, in unwrap mode, fixes) a paragraph that source
 # control hardwraps across several lines with a soft line break, so agents stop copying that

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Etienne approves a stage with "accepted" or "agreed". The Status: line stays "accepted" either way.
 class ApprovalWordTest < Minitest::Test

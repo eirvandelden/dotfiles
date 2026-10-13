@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Claude registers MobileBuildMCP by a command in references/ios.md, Codex by a block in config.toml.
 # The two must name the same pinned version and the same telemetry opt-out, so this guards the drift

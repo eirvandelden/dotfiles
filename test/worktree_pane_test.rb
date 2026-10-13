@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # worktree-pane opens or closes the herdr pane rooted in a worktree's directory. It talks to
 # herdr only, never to git worktree state, so a stub herdr on PATH is enough to test it.
