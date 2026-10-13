@@ -136,3 +136,24 @@ Acceptance criteria: as in round 5, with these changes.
 - Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
 
 Security: nothing new. The change only widens what the guard refuses.
+
+## Round 7 — 2026-10-13T11:47Z — 82b19304
+
+Whole branch against `origin/main`, with focus on `faaa04e1` and `7fde8233` (guard). No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy applies. Every `test/*_test.rb` passes except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, the same global `no-push-to-main` refusal as in rounds 2 to 6. `shellcheck` and `rubocop` are clean on the changed files. The merge base is `origin/main` (`f4060ba3`), so the branch is not behind.
+
+Both round 6 Nits hold when probed. The guard refuses `timeout 600 rv run bundle install`, `sudo rv run bundle install`, `env rv run bundle install`, `nice -n 5 rv r bundle i`, `exec rv run bundle install`, `nohup rv run bundle install`, `time rv run bundle install`, `command rv run bundle install`, `rv run timeout 60 bundle install`, `rv run sudo bundle install`, `command -- bundle install` and `command -p -- bundle install`. `command -pv bundle`, `command -vp bundle`, `command -p -V bundle`, `command -V rv`, `echo rv run bundle install` and `git commit -m "rv run bundle install"` still run.
+
+No findings.
+
+Push refused: `git push -u origin HEAD` was rejected as non-fast-forward. `origin/bi-uses-rv-ci` holds only the pre-rebase `e2f34639` (intent) and `9f9b9167` (plan); the local branch carries the rebased history plus this round. This round is committed locally only. The branch needs `git push --force-with-lease` (playbook rule 20) before the pull request.
+
+### Compliance, round 7
+
+Since round 6, `next_position` reads `rv` before the prefix checks, so `rv` after a prefix, an option value or `command` starts `rv run`. `LOOKUP_FLAG` replaces `LOOKUP_FLAGS`: after `command`, a flag with `v` or `V` in it makes the next word a lookup, and any other flag keeps the lookup position. `test_install_in_any_command_position_is_refused` gained six forms, and `test_bundle_install_in_messages_heredocs_and_lookups_runs` gained `command -pv bundle` and `command -p -V bundle`. `82b19304` closes both round 6 Nits in `review.md` and changes nothing else. No test was weakened, skipped or deleted. Every test the Proof list names exists.
+
+Acceptance criteria: as in round 6, with these changes.
+
+- Install forms refused with a message naming `bi` → the earlier tests plus the `rv run` after a prefix cases. Round 6's gap is closed. `arch`, `caffeinate` and `rv --color never run` stay dismissed.
+- Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
+
+Security: nothing new. The change only widens what the guard refuses.
