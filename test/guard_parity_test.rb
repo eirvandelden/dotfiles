@@ -20,7 +20,11 @@ class GuardParityTest < Minitest::Test
     %w[git push --force], %w[git commit --no-verify], %w[git push --no-verify],
     %w[gh pr comment], %w[gh pr review], %w[gh issue comment],
     %w[kamal deploy], %w[kamal app exec], %w[cap deploy],
-    %w[bundle install], %w[bundle i], %w[bin/bundle install], %w[bin/bundle i]
+    %w[bundle install], %w[bundle i], %w[bin/bundle install], %w[bin/bundle i],
+    %w[git commit -n], %w[git ci -n], %w[git ci --no-verify], %w[git commit --no-veri],
+    %w[git config core.hooksPath], %w[git config --global --unset core.hooksPath],
+    %w[git config --remove-section core], %w[git commit-tree], %w[git update-ref],
+    %w[lefthook install], %w[lefthook uninstall]
   ].freeze
   GEM_INSTALL_FORMS = [ %w[bundle install], %w[bundle i], %w[bin/bundle install], %w[bin/bundle i] ].freeze
   MACHINE_PATHS = %w[/Users/ /private/ /opt/ /Applications/].freeze
@@ -112,11 +116,17 @@ class GuardParityTest < Minitest::Test
     assert_equal(claude_command, codex_command)
   end
 
-  # Every prefix_rule as { pattern:, decision: }. The rules language is not JSON, but its rules only use
-  # string lists, which read as JSON.
+  # Every prefix_rule as { pattern:, decision: }, one per concrete pattern. The rules language is not JSON,
+  # but its rules only use string lists, which read as JSON. A list inside a pattern is a set of alternatives
+  # for that position, so a pattern expands into every concrete pattern it stands for.
   def rules
     @rules ||= File.read(RULES).scan(/prefix_rule\(\s*pattern\s*=\s*(\[.*?\])\s*,\s*decision\s*=\s*"(\w+)"/m)
-                   .map { |pattern, decision| { pattern: JSON.parse(pattern), decision: decision } }
+                   .flat_map { |pattern, decision| expand(JSON.parse(pattern)).map { |concrete| { pattern: concrete, decision: decision } } }
+  end
+
+  def expand(pattern)
+    first, *rest = pattern.map { |token| Array(token) }
+    first.product(*rest)
   end
 
   def claude_hook(matcher, script)
