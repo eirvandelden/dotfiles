@@ -133,6 +133,13 @@ Test setup: temporary git repositories with a bare repository as `origin`, built
 ---
 Domain skills applied: dotfiles-maintenance, object-oriented-design (one script per responsibility, no service layer), ruby-style.
 
+## Departures during implementation
+
+- `deliver` opens the gh-dash pane before it closes idle stage panes, so an idle intent pane still exists as the anchor.
+- `deliver` looks up the PR before it removes the change folder.
+- `deliver` pushes with a plain `git push -u origin <branch>`.
+- The `finish` frontmatter says "private work hook" instead of naming `after-push`.
+
 ## Critique
 
 ### Round 1 (codex exec -p terra)
