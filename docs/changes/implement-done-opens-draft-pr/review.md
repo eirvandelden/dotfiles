@@ -33,3 +33,23 @@ Checks: full suite green except `test/review_report_check_test.rb` `test_a_chang
 - [ ] Important: `deliver` closes every idle or done agent pane whose `cwd` is this worktree. An unrelated agent sharing the worktree, and the recorded intent pane itself, match that filter, so delivery can close panes that are not this change's stage workers. Track the panes this change opened and close only those — `claude/.claude/skills/deliver/scripts/deliver:179` → fixed in 03a7e89e and acfc5a50: hand-off-plan.sh and start-review.sh record stage-panes-<slug>; deliver closes only those panes while the terminal id matches, never its own or the intent pane
 
 Checks: Codex ran `deliver_test`, `ship_test`, `open_pr_dash_test` and `delivery_contract_test`; all green.
+
+## Round 3 — 2026-10-13T12:58Z — 00d1c0d5
+
+- [ ] Important: `plan.md` no longer describes the code. Design decision 17 still selects panes by `cwd` = worktree toplevel; the code closes only panes listed in `stage-panes-<slug>`, with a terminal-id match, and never the intent pane. Ship step 4 still reads "any `fail` or `cancel`"; only `pass`/`skipping` count as green now. Ship step 6 still polls "even when the merge command exits non-zero"; a refused merge without auto-merge now stops at once. Decision 12 and the `intent` line in "Files that change" still run `ship --no-merge` directly. The first departure gives a reason that no longer holds, because the intent pane is never closed. "Departures during implementation" records none of these changes. "Files that change" feeds the PR body and omits the stage-pane recording in `hand-off-plan.sh` and `start-review.sh`, plus the `reviewer.md` Bash allowance — `docs/changes/implement-done-opens-draft-pr/plan.md:136` →
+- [ ] Nit: Red CI is often reported as unfinished CI. `--fail-fast` exits on the first failure while sibling checks are still `pending`. So `unfinished_note` puts "CI has not finished; PR left unmerged." first, then the whole `--watch` output, then the pending checks and the failed one together. The AC7 data is present, but the failed check is not singled out. No test covers a fail plus a pending check — `claude/.claude/skills/finish/scripts/ship:94` →
+
+Closed findings checked against the code:
+
+- R1 Important 1 (pending counts as green): holds. `GREEN = pass, skipping`; a failed watch returns gh's reason; an unreadable checks list stops unmerged. Covered by four new `ship_test.rb` tests. Checked against gh 2.102.0: `gh pr checks --json` exits 0 with failed checks, so `listed` reads the list in the red case.
+- R1 Important 2 (stale "finish opens the PR"): holds in rule 16, the `review-report-fresh` header and the `fill-pr-template` header. A `git grep` outside `docs/changes` and `test` finds no other "finish opens/creates the PR" wording.
+- R1 Nit (merge stderr dropped): holds. A refused merge with `autoMergeRequest` null stops after one `pr view` with gh's stderr; MERGED and auto-merge still win.
+- R1 Nit (pane list failure after the PR exists): holds. `Refusal` and `JSON::ParserError` only warn; `--workspace` is omitted when `HERDR_WORKSPACE_ID` is empty.
+- R1 Nit (reviewer Bash rule): holds in `reviewer.md` and the regenerated `reviewer.toml`; contract test added.
+- R1 Nit (intent pane closed after anchoring): holds. `kept` holds `$HERDR_PANE_ID` and the first line of `intent-pane-<slug>`.
+- R1 Nit (finish auto mode dead text): holds. Intent step 6 checks `Delivery: autonomous` before `deliver`, then follows `finish` auto mode; only `finish` names `ship --no-merge`.
+- R2 Important (unrelated panes closed): holds. `hand-off-plan.sh` and `start-review.sh` append `<pane_id> <terminal_id>`. Live herdr 0.9.3 confirms that `pane get` has `.result.pane.terminal_id` and `pane list` carries `terminal_id`. `deliver` closes only recorded pairs that are idle or done, and never its own or the intent pane.
+
+Compliance: the acceptance-criteria mapping from round 1 still holds. Every test named in `plan.md` `## Proof` exists. Fix commits weakened, skipped or deleted no test. The removed `w1:pElsewhere` case is now outside the selection by construction, because unlisted panes are never closed.
+
+Checks: full suite green except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, which also errors on main. RuboCop, shellcheck and markdownlint (no-hardwrap) are clean on the changed files. The branch is 13 commits behind `origin/main` and rebases without conflicts.
