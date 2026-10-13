@@ -80,3 +80,21 @@ Nothing found. Every path in the script is quoted. The source is only ever an ff
 - No existing test was weakened, skipped or deleted.
 
 Totals: 0 Important, 2 Nit.
+
+## Round 4 — 2026-10-13T08:20Z — 7bbd46b2 — Codex (`codex review --base origin/main`)
+
+Transcribed from the Codex CLI. Codex ran both herdr test files (green), `shellcheck` on the script (clean) and `git diff --check` (clean).
+
+### Bugs
+
+Nothing found. Codex: "No actionable defects found."
+
+### Security
+
+Nothing found.
+
+### Compliance
+
+Nothing found.
+
+Totals: 0 findings.
