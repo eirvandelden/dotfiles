@@ -57,8 +57,8 @@ No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the reviewer defa
 
 ### Bugs
 
-- [ ] Nit: the copy-of-a-copy guard compares only the physical folder of the path given, not of the file it resolves to. A source that is a symlink to a file in `~/Documents/Tones/herdr/` passes the guard. The script then reads that copy and replaces it with a 0.09-level copy. Verified in a scratch `HOME`: a symlink `src/a.mp3 → Documents/Tones/herdr/a.mp3` exits 0 and rewrites `a.mp3`. Resolving the file itself (for example `cd` into its folder and follow the link, or compare `pwd -P` of the link target's folder) closes the gap. — `herdr/.config/herdr/scripts/quieter-tones.sh:33` →
-- [ ] Nit: `test_no_herdr_tone_is_tracked` ignores the exit status of `git ls-files`. Outside a work tree git exits 128 with empty output (verified), so both `assert_empty` calls pass without checking anything. Assert the status succeeded, or that `tracked` holds at least this test file. — `test/herdr_config_test.rb:37` →
+- [x] Nit: the copy-of-a-copy guard compares only the physical folder of the path given, not of the file it resolves to. A source that is a symlink to a file in `~/Documents/Tones/herdr/` passes the guard. The script then reads that copy and replaces it with a 0.09-level copy. Verified in a scratch `HOME`: a symlink `src/a.mp3 → Documents/Tones/herdr/a.mp3` exits 0 and rewrites `a.mp3`. Resolving the file itself (for example `cd` into its folder and follow the link, or compare `pwd -P` of the link target's folder) closes the gap. — `herdr/.config/herdr/scripts/quieter-tones.sh:33` → fixed in 277b8684 (the guard compares the folder of `realpath "$source"`; `test_a_link_to_a_quieter_copy_is_refused` added, red first)
+- [x] Nit: `test_no_herdr_tone_is_tracked` ignores the exit status of `git ls-files`. Outside a work tree git exits 128 with empty output (verified), so both `assert_empty` calls pass without checking anything. Assert the status succeeded, or that `tracked` holds at least this test file. — `test/herdr_config_test.rb:37` → fixed in e74dc3ee (asserts `git ls-files` succeeded; verified red outside a work tree)
 
 ### Security
 
