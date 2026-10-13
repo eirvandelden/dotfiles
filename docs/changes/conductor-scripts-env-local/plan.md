@@ -11,6 +11,8 @@ This plan treats the test as stale, not the scripts as broken. Both acceptance c
 3. Must `archive` load `DATABASE_NAME` again, and use it for `rails db:drop`? #48 removed both on purpose. Loading the value does not require the drop; these can be answered separately.
 4. If all three answers are "no": replace the two acceptance criteria in `intent.md` with the two replacement lines under `## Proof`, and accept the amended intent.
 
+Resolved: Etienne answered "No, #48 stands" on 2026-10-12. The amended `intent.md` carries the replacement criteria and was accepted on 2026-10-13. Implementation may start.
+
 ## Cause
 
 Systematic debugging, done while writing this plan, on `origin/main` `174043a8`:
