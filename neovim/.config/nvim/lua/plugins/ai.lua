@@ -46,6 +46,7 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
+    { "ColinKennedy/mega.cmdparse", dependencies = { "ColinKennedy/mega.logging" } },
     "stevearc/dressing.nvim", -- for input provider dressing
     "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
     {
