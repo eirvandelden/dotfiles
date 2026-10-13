@@ -123,5 +123,5 @@ Nothing found. The non-docs diff names only `org:nedap`, as the intent allows. A
 
 Every acceptance criterion keeps the proof listed in round 3. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
 
-- [ ] Nit: `plan.md` still says the `pager` block and `C` keybinding "are copied byte for byte from the live `~/.config/gh-dash/config.yml`". The branch copies nothing: both blocks come unchanged from the file `origin/main` already ships. — `docs/changes/gh-dash-attention-sections/plan.md:8` →
-- [ ] Nit: `plan.md` says the live-check evidence "is recorded in the implementation report". It is in `evidence.md` on the branch. — `docs/changes/gh-dash-attention-sections/plan.md:113` →
+- [ ] Nit: `plan.md` still says the `pager` block and `C` keybinding "are copied byte for byte from the live `~/.config/gh-dash/config.yml`". The branch copies nothing: both blocks come unchanged from the file `origin/main` already ships. — `docs/changes/gh-dash-attention-sections/plan.md:8` → fixed (docs: point the plan at the shipped blocks and evidence.md)
+- [ ] Nit: `plan.md` says the live-check evidence "is recorded in the implementation report". It is in `evidence.md` on the branch. — `docs/changes/gh-dash-attention-sections/plan.md:113` → fixed (docs: point the plan at the shipped blocks and evidence.md)

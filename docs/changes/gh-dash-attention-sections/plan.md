@@ -5,7 +5,7 @@ From `intent.md` (2026-10-13). Status: accepted.
 ## Design decisions
 
 - The sections go into `github/.config/gh-dash/config.yml`, which `origin/main` already ships with the pager and `C` keybinding (found in review round 1; the plan stage assumed a new file). The `github` stow package is already in `packages.conf` (`STOW` list), so no new package appears. Stow links the file into the existing real directory `~/.config/gh-dash/`, next to the untouched `config.yml.bak`.
-- The `pager` block and the `C` keybinding are copied byte for byte from the live `~/.config/gh-dash/config.yml` (Etienne's machine, read on 2026-10-13). Their current text:
+- The `pager` block and the `C` keybinding stay unchanged from the file `origin/main` already ships; they match the live `~/.config/gh-dash/config.yml` byte for byte (Etienne's machine, read on 2026-10-13). Their text:
 
   ```yaml
   pager:
@@ -110,7 +110,7 @@ Per changed file, the unit tests expected:
 - `test/gh_dash_config_test.rb`: `test_config_is_valid_yaml_inside_the_github_stow_package`, `test_pr_sections_put_what_needs_action_first`, `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts`, `test_personal_section_takes_every_ready_pr_in_my_repositories`, `test_drafts_section_takes_my_open_work_drafts`, `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`, `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`, `test_default_pr_sections_follow_with_their_gh_dash_filters`, `test_issue_sections_open_on_issues_assigned_to_me`, `test_no_filter_uses_or`, `test_deep_review_keybinding_opens_octo_in_a_herdr_pane`, `test_diff_pager_stays_delta`.
 - `github/.config/gh-dash/config.yml`: covered by the test file above; no code of its own.
 
-Test setup: `YAML.safe_load_file` on `github/.config/gh-dash/config.yml`, path from `File.expand_path("../github/.config/gh-dash/config.yml", __dir__)`, like `test/herdr_config_test.rb`. Compare filters as whitespace-split token sets, so token order does not matter but no token is missing or extra. No network, no gh-dash binary in the unit tests; the live checks are Order of work steps 6 and 7 and their evidence is recorded in the implementation report.
+Test setup: `YAML.safe_load_file` on `github/.config/gh-dash/config.yml`, path from `File.expand_path("../github/.config/gh-dash/config.yml", __dir__)`, like `test/herdr_config_test.rb`. Compare filters as whitespace-split token sets, so token order does not matter but no token is missing or extra. No network, no gh-dash binary in the unit tests; the live checks are Order of work steps 6 and 7 and their evidence is recorded in `evidence.md`.
 
 ## Out of scope
 
