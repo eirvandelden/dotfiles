@@ -9,6 +9,11 @@
 # pushing to main are enforced where they cannot be argued with instead: by
 # lefthook locally, and by the "protect main" ruleset on GitHub.
 #
+# Installing gems is refused outright: bi is the one way to do it (playbook rule 11).
+# That check looks for bundle in command position, so it splits the command at
+# operators and line breaks first. `bash -c`, `eval`, `xargs` and a `$(...)` inside
+# double quotes still hide an install from it.
+#
 # What is left needs no understanding of the command, only whether a word is
 # present. Every check errs towards asking: a false question costs a moment, a
 # missed one costs the user's name on something they did not send.
@@ -109,8 +114,107 @@ def copy_quoted(character, characters, result, quote)
   quote unless character == quote
 end
 
-# Rule 20 says never, so no consent marker unlocks this one.
-def never_allowed_reason(words, working_directory)
+GEM_INSTALL_REASON = "install gems with bi, not bundle install. " \
+                     "bi resolves the lockfile with Bundler and installs with rv (playbook rule 11).".freeze
+BUNDLER_INFO_FLAGS = %w[-v --version -h --help].freeze
+# Bundler 4.1's commands and their aliases (Bundler::CLI.all_commands, COMMAND_ALIASES), plus
+# bundler-audit's `bundle audit`. Any other word after `bundle` counts as an install, and so
+# does `bundle cache` (alias package, pack): it installs before it caches.
+BUNDLER_COMMANDS = %w[add audit binstubs c check clean config console doctor e env ex exe exec fund gem help
+                      info init inject issue licenses list lock ls open outdated platform plugin
+                      pristine remove show tree update version viz].freeze
+COMMAND_PREFIXES = %w[env exec nice nohup sudo time timeout].freeze
+RV_RUN = %w[run r].freeze
+SHELL_KEYWORDS = %w[! { do elif else if then until while].freeze
+SEPARATORS = %w[; & | ( ) `].freeze
+LOOKUP_FLAG = /\A-[a-zA-Z]*[vV]/
+ENV_ASSIGNMENT = /\A\w+=/
+DURATION = /\A\d+(?:\.\d+)?[smhd]?\z/
+# A heredoc operator, the rest of its line, then the body up to the delimiter line.
+HEREDOC = /((?<!<)<<-?[ \t]*(['"]?)(\w+)\2[^\n]*\n).*?^[ \t]*\3[ \t]*$/m
+# Quoted text and escapes stay whole. A line continuation, a comment (a # that starts a
+# word) and an unquoted operator or line break are captured.
+SHELL_PIECE = /'[^']*'?|"(?:[^"\\]|\\.)*"?|(?<continuation>\\\n)|\\.|
+               (?<comment>(?<![^\s;&|()])\#[^\n]*)|(?<operator>[\n;&|()`])/mx
+
+# The command as words, with each unquoted operator and line break a word of its
+# own and heredoc bodies left out, so a word in command position can be told apart.
+def shell_words(command)
+  words(separate_operators(command.gsub(HEREDOC) { "#{Regexp.last_match(1)}#{Regexp.last_match(3)}" }))
+end
+
+def separate_operators(command)
+  command.gsub(SHELL_PIECE) do
+    piece = Regexp.last_match
+    next " #{piece[:operator].tr("\n", ";")} " if piece[:operator]
+
+    piece[:continuation] || piece[:comment] ? " " : piece[0]
+  end
+end
+
+# A bundle word in command position whose arguments name no Bundler command
+# other than install. Command position follows a separator, a shell keyword,
+# a VAR=value word, or a prefix such as env, sudo, timeout or rv run.
+def installs_gems?(words)
+  position = :command
+  words.each_with_index do |word, index|
+    return true if position != :argument && File.basename(word) == "bundle" && gem_install_arguments?(words, index)
+
+    position = next_position(position, word)
+  end
+  false
+end
+
+def gem_install_arguments?(words, index)
+  arguments = words.drop(index + 1).take_while { |word| !SEPARATORS.include?(word) }
+  subcommand = arguments.find { |word| !word.start_with?("-") && !word.match?(/\A\d+\z/) }
+  return !BUNDLER_COMMANDS.include?(subcommand) if subcommand
+
+  (arguments & BUNDLER_INFO_FLAGS).empty?
+end
+
+def next_position(position, word)
+  return :command if SEPARATORS.include?(word)
+  return :argument if position == :argument
+  return rv_position(word) if position == :rv
+  return :rv if word == "rv"
+  return :lookup if word == "command"
+  return :prefix if COMMAND_PREFIXES.include?(word) || (position == :option_value && !word.start_with?("-"))
+  return prefix_word_position(position, word) if %i[prefix option_value lookup].include?(position)
+  return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
+
+  :argument
+end
+
+# `rv run` (alias `rv r`) runs the rest of the command with rv's Ruby. rv's own
+# flags may come before run (`rv -v run`).
+def rv_position(word)
+  return :rv if word.start_with?("-")
+
+  RV_RUN.include?(word) ? :prefix : :argument
+end
+
+# After a prefix, an option may take a value (`sudo -u root`, `nice -n 10`), a flag
+# may follow another (`sudo -E -u root`), and a duration or VAR=value word
+# (`timeout 600`, `env FOO=1`) still comes before the command. `command -v bundle`
+# only looks bundle up.
+def prefix_word_position(position, word)
+  return lookup_flag_position(word) if position == :lookup && word.start_with?("-")
+  return :option_value if word.start_with?("-")
+  return :prefix if word.match?(DURATION) || word.match?(ENV_ASSIGNMENT)
+
+  :argument
+end
+
+# command takes no option values. A flag with v or V in it (`-v`, `-pV`) makes the
+# next word a lookup; any other flag (`-p`) still runs it.
+def lookup_flag_position(word)
+  word.match?(LOOKUP_FLAG) ? :argument : :lookup
+end
+
+# Rules 11 and 20 say never, so no consent marker unlocks these.
+def never_allowed_reason(command, words, working_directory)
+  return GEM_INSTALL_REASON if installs_gems?(shell_words(command))
   return "plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)." \
     if words.include?("--force") && !words.include?("--force-with-lease")
 
@@ -434,7 +538,7 @@ working_directory = call.fetch("cwd", "")
 
 command_words = words(command)
 
-refused = never_allowed_reason(command_words, working_directory)
+refused = never_allowed_reason(command, command_words, working_directory)
 if refused
   warn "Blocked: #{refused}"
   exit 2

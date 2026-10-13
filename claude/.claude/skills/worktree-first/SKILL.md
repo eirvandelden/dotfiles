@@ -50,7 +50,7 @@ worktree_path=$(~/.config/git/worktree-tools/worktree-create --no-pane "$branch"
 
 ## Step 2: install dependencies
 
-`worktree-create` already ran `git worktree-init` (symlinks, local-service wiring) when the `worktree-init` alias exists. Install dependencies the same way you would after a fresh clone — `bundle install`, `npm install`/`yarn`, `cargo build`, `pip install`/`poetry install`, `go mod download`, whatever the project's manifest calls for.
+`worktree-create` already ran `git worktree-init` (symlinks, local-service wiring) when the `worktree-init` alias exists. Install dependencies the same way you would after a fresh clone — `bi` for Ruby gems, `npm install`/`yarn`, `cargo build`, `pip install`/`poetry install`, `go mod download`, whatever the project's manifest calls for.
 
 ## Step 3: work, commit, push — all from here
 

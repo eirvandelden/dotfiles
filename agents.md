@@ -126,6 +126,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 11. Dependency management:
     - NEVER add or remove gems, npm packages, or other dependencies without asking for approval first. The request must explain why the dependency is needed and what it does.
     - NEVER run `bundle update` (all gems) without explicit instruction. Prefer `bundle update <specific-gem>`.
+    - Install gems with `bi`, never `bundle install`, `bundle`, `bundle i` or `bin/bundle install`. A guard refuses them.
 12. Symlinks and dotfiles:
     - NEVER overwrite, delete, or modify symlinks directly. When editing dotfiles, always edit the source file in `~/Developer/dotfiles/<package>/`, never the symlinked target in `~/` or `~/.config/`.
     - NEVER run `stow` or `stow -R` without explicit instruction.

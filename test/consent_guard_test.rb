@@ -423,6 +423,111 @@ class ConsentGuardTest < Minitest::Test
     assert_match(/consent-guard-allowed-remotes\.txt/, stderr)
   end
 
+  GEM_INSTALL_MESSAGE = "Blocked: install gems with bi, not bundle install. " \
+                        "bi resolves the lockfile with Bundler and installs with rv (playbook rule 11)."
+
+  def test_gem_install_forms_are_refused_with_bi_advice
+    [ "bundle", "bundle install", "bundle i", "bin/bundle install", "./bin/bundle i", "bundle install --jobs 4",
+      "bundle --jobs 4", "bundle --deployment", "bundle --no-color install", "bundle -V i", "bundle cache",
+      "bundle package", "bundle pack" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_includes(stderr, GEM_INSTALL_MESSAGE, command)
+    end
+  end
+
+  def test_non_install_bundler_commands_run
+    [ "bundle exec rake", "bundle update rails", "bundle add rake", "bundle lock", "bundle show rails",
+      "bundle exec bundler-audit check --update" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
+  def test_consent_does_not_unlock_a_gem_install
+    _, _, status = run_guard("I_HAVE_USER_CONSENT=1 bundle install")
+
+    assert_equal(2, status.exitstatus)
+  end
+
+  def test_bundle_named_as_an_argument_is_not_an_install
+    [ "cat bin/bundle", "which bundle" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
+  def test_quoted_prose_mentioning_bundle_install_runs
+    [ %(git commit -m "run bundle install"), "git commit -m 'docs: use bi, never bundle install'" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
+  def test_bundle_version_and_help_run
+    [ "bundle -v", "bundle --version", "bundle -h", "bundle --help" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
+  def test_install_after_a_separator_or_env_assignment_is_refused
+    [ "cd app && bundle install", "true; bundle install", "false || bundle i", "echo go | bundle install",
+      "(bundle install)", "RAILS_ENV=test bundle install", "FOO=1 BAR=2 bin/bundle install" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_includes(stderr, GEM_INSTALL_MESSAGE, command)
+    end
+  end
+
+  def test_install_in_any_command_position_is_refused
+    [ "cd app\nbundle install", "if [ -f Gemfile ]; then bundle install; fi", "for d in a b; do bundle install; done",
+      "if false; then :; else bundle install; fi", "{ bundle install; }", "sleep 1 & bundle install",
+      "cd app;bundle install", "env bundle install", "env FOO=1 bundle install", "command bundle install",
+      "time bundle install", "exec bundle install", "nohup bundle install", "! bundle install",
+      "echo $(bundle install)", "echo `bundle install`", "cd app && \\\n  bundle install",
+      "RAILS_ENV=test \\\n  bundle install", "timeout 600 bundle install", "sudo bundle install",
+      "nice -n 10 bundle install", "env -u FOO bundle install", "sudo -u root bundle install",
+      "# don't forget the gems\nbundle install", "sudo -E -u root bundle install", "env -i -u FOO bundle install",
+      "timeout --preserve-status -s KILL 60 bundle install", "rv run bundle install", "rv r bundle i",
+      "rv run --ruby 4.0 bundle install", "rv run -v bundle install", "rv r -v bundle i",
+      "rv -v run bundle install", "rv -q run bundle install",
+      "timeout 600 rv run bundle install", "sudo rv run bundle install", "env rv run bundle install",
+      "nice -n 5 rv r bundle i", "exec rv run bundle install", "command -p bundle install" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(2, status.exitstatus, command)
+      assert_includes(stderr, GEM_INSTALL_MESSAGE, command)
+    end
+  end
+
+  def test_bundle_install_in_messages_heredocs_and_lookups_runs
+    [ %(git commit -m "first line\nbundle install is refused now"),
+      %(git commit -m "$(cat <<'EOF'\nUse "bi" now.\nbundle install is refused.\nEOF\n)"),
+      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "command -V bundle", "command -pv bundle", "command -p -V bundle", "echo done\nbundle exec rake",
+      "# run bundle install later\nbundle exec rake", "echo issue#12 && bundle exec rake",
+      "timeout 600 bundle exec rake", "rv run bundle exec rake", "rv ci", "rv ruby list bundle" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
+  def test_bundler_options_before_a_non_install_command_run
+    [ "bundle --no-color exec rake", "bundle -V exec rake", "bundle --retry 3 exec rake", "bundle e rake",
+      "bundle audit check" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}\n#{stderr}")
+    end
+  end
+
   # Codex sends the same contract with more fields around it (probed 2026-10-01, codex-cli 0.159.3):
   # tool_name "Bash", the command in tool_input.command, plus session, turn and model fields.
   def test_a_codex_payload_is_refused_with_the_same_message_as_a_claude_payload

@@ -1,0 +1,52 @@
+#!/bin/sh
+# bi: install the gems of the project in the current directory.
+# Bundler resolves the lockfile; rv installs the gems. See docs/changes/bi-uses-rv-ci/plan.md.
+set -eu
+
+# The nearest directory at or above this one with a Gemfile, as Bundler searches,
+# but never above the Git work tree: a worktree under .worktrees/ must not reach
+# the main checkout's Gemfile.
+project_root() {
+  top=$(git rev-parse --show-toplevel 2>/dev/null) || top=/
+  dir=$(pwd -P)
+  until [ -f "$dir/Gemfile" ]; do
+    if [ "$dir" = "$top" ] || [ "$dir" = / ]; then
+      return 1
+    fi
+    dir=$(dirname "$dir")
+  done
+  echo "$dir"
+}
+
+if [ -n "${BUNDLE_GEMFILE:-}" ]; then
+  if [ ! -f "$BUNDLE_GEMFILE" ]; then
+    echo "bi: no $BUNDLE_GEMFILE in $PWD, nothing to install"
+    exit 0
+  fi
+elif root=$(project_root); then
+  cd "$root"
+else
+  echo "bi: no Gemfile in $PWD or its parents, nothing to install"
+  exit 0
+fi
+
+if ! command -v rv >/dev/null 2>&1; then
+  echo "bi: rv is missing. Install rv, then run bi again." >&2
+  exit 1
+fi
+
+bundle lock
+
+if ! MAKE="make --jobs $(getconf _NPROCESSORS_ONLN)" rv ci; then
+  echo "bi: rv ci failed, installing with bundle install instead" >&2
+  bundle install
+fi
+
+if [ -x bin/rails ]; then
+  yes n | bin/rails app:update:bin
+  if command -v solargraph >/dev/null 2>&1; then
+    solargraph gems
+  else
+    echo "bi: solargraph not found, skipping"
+  fi
+fi

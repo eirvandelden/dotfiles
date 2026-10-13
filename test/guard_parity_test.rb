@@ -19,8 +19,10 @@ class GuardParityTest < Minitest::Test
   GUARDED_COMMANDS = [
     %w[git push --force], %w[git commit --no-verify], %w[git push --no-verify],
     %w[gh pr comment], %w[gh pr review], %w[gh issue comment],
-    %w[kamal deploy], %w[kamal app exec], %w[cap deploy]
+    %w[kamal deploy], %w[kamal app exec], %w[cap deploy],
+    %w[bundle install], %w[bundle i], %w[bin/bundle install], %w[bin/bundle i]
   ].freeze
+  GEM_INSTALL_FORMS = [ %w[bundle install], %w[bundle i], %w[bin/bundle install], %w[bin/bundle i] ].freeze
   MACHINE_PATHS = %w[/Users/ /private/ /opt/ /Applications/].freeze
 
   def test_no_allow_rule_begins_with_a_guarded_command
@@ -45,6 +47,24 @@ class GuardParityTest < Minitest::Test
     force_push = rules.find { |rule| rule[:pattern] == %w[git push --force] }
 
     assert_equal("forbidden", force_push&.fetch(:decision))
+  end
+
+  def test_gem_install_forms_are_forbidden_for_codex
+    GEM_INSTALL_FORMS.each do |form|
+      rule = rules.find { |candidate| candidate[:pattern] == form }
+
+      assert_equal("forbidden", rule&.fetch(:decision), "no forbidden rule for #{form.join(' ')}")
+    end
+  end
+
+  def test_non_install_bundler_commands_are_not_forbidden_for_codex
+    [ %w[bundle exec rake], %w[bundle update rails], %w[bundle show] ].each do |command|
+      forbidding = rules.select do |rule|
+        rule[:decision] == "forbidden" && command.first(rule[:pattern].length) == rule[:pattern]
+      end
+
+      assert_empty(forbidding, "a forbidden rule also catches #{command.join(' ')}")
+    end
   end
 
   def test_no_rule_names_a_machine_path
