@@ -456,6 +456,85 @@ class HerdrWorkerScriptsTest < Minitest::Test
     end
   end
 
+  def test_the_deliver_stage_starts_claude_on_opus_in_a_pane_below
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "deliver", "some-change")
+
+    assert_includes(herdr_calls, "agent start deliver-w1-pv --kind claude --pane w1:pV -- --model opus")
+    assert(herdr_calls.grep(/\Apane split /).all? { |call| call.include?("--direction down") })
+    assert_equal(1, herdr_calls.count { |call| call.start_with?("pane split ") })
+  end
+
+  def test_the_deliver_worker_coordinates_and_reports_delivery_done
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "deliver", "some-change")
+    prompt = worker_prompt("deliver")
+
+    assert_includes(prompt, "coordinator of the autonomous delivery of docs/changes/some-change")
+    assert_includes(prompt, "Delivery: autonomous")
+    assert_includes(prompt, "Autonomous delivery section")
+    assert_includes(prompt, "never merge")
+    assert_includes(prompt, "sending pane w1:p1 the single line Delivery done:")
+    assert_includes(prompt, "at most twelve times")
+    refute_includes(prompt, "next stage with HERDR_PANE_ID")
+    refute_includes(prompt, "Plan ready:")
+  end
+
+  def test_deliver_without_a_slug_is_refused
+    _, stderr, status = run_script(HAND_OFF_PLAN, "deliver")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/slug/i, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_deliver_refuses_auto
+    _, stderr, status = run_script(HAND_OFF_PLAN, "deliver", "some-change", "--auto")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/--auto is not valid for the deliver stage/, stderr)
+    assert_empty(herdr_calls)
+  end
+
+  def test_the_usage_message_lists_deliver
+    _, stderr, = run_script(HAND_OFF_PLAN, "bogus-stage", "some-change")
+
+    assert_match(/intent, plan, implement, deliver/, stderr)
+  end
+
+  def test_the_deliver_worker_passes_its_own_pane_id_to_every_stage
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "deliver", "some-change")
+    prompt = worker_prompt("deliver")
+
+    assert_match(/pass your own pane id \(\$HERDR_PANE_ID in your shell\) to every stage/, prompt)
+    assert_match(/never the caller's id/, prompt)
+  end
+
+  def test_the_deliver_worker_keeps_its_pane_open_until_the_delivery_ends
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "deliver", "some-change")
+    prompt = worker_prompt("deliver")
+
+    assert_match(/keep your own pane open through every stage/, prompt)
+    assert_operator(prompt.index("keep your own pane open"), :<, prompt.index("herdr pane close"))
+    assert_operator(prompt.index("Delivery done:"), :<, prompt.index("herdr pane close"))
+  end
+
+  def test_the_deliver_worker_writes_the_account_path_into_its_report_then_closes
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "deliver", "some-change")
+    prompt = worker_prompt("deliver")
+
+    assert_match(%r{account file path into \S*/herdr/deliver-\S+\.md}, prompt)
+    assert_operator(prompt.index("account file path into"), :<, prompt.index("herdr pane close $HERDR_PANE_ID"))
+  end
+
   def test_the_worker_is_told_to_close_its_own_pane_after_reporting
     worktree_creatable!
 
