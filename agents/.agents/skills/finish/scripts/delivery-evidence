@@ -10,6 +10,9 @@
 #   delivery-evidence handover [--require kind,kind]
 #   delivery-evidence pr-check
 #
+# `run` records the command line, and the handover publishes it in the PR body. A secret must
+# never be on the command line: pass it through the environment instead.
+#
 # Evidence lives in the shared git directory (see delivery_evidence/store.rb) and is
 # never deleted with the change folder. Command output is streamed, never stored.
 require "json"
