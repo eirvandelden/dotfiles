@@ -121,6 +121,7 @@
   "html.format.indentInnerHtml": true,
   "solargraph.commandPath": "/Users/etienne.vandelden/.gem/ruby/3.4.6/bin/solargraph",
   "solargraph.diagnostics": true,
+  "steep.command": "steep",
   "editor.formatOnSaveMode": "file",
   "editor.linkedEditing": true,
   "git.allowNoVerifyCommit": true,

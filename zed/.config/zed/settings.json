@@ -149,7 +149,7 @@
     },
     "Ruby": {
       "enable_language_server": true,
-      "language_servers": ["solargraph"],
+      "language_servers": ["solargraph", "steep"],
       "format_on_save": "on",
       "formatter": {
         "external": {
@@ -199,6 +199,12 @@
           "diagnostics": true,
           "formatting": false,
         },
+      },
+    },
+    "steep": {
+      "binary": {
+        "path": "steep",
+        "arguments": ["langserver"],
       },
     },
   },
