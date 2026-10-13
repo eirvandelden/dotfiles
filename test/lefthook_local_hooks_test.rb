@@ -251,7 +251,8 @@ class LefthookLocalHooksTest < Minitest::Test
       "GIT_AUTHOR_NAME" => "Test",
       "GIT_AUTHOR_EMAIL" => "test@example.com",
       "GIT_COMMITTER_NAME" => "Test",
-      "GIT_COMMITTER_EMAIL" => "test@example.com"
+      "GIT_COMMITTER_EMAIL" => "test@example.com",
+      "LEFTHOOK_BIN" => nil
     }
   end
 
