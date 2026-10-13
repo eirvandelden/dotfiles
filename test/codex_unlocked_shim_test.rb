@@ -55,6 +55,14 @@ class CodexUnlockedShimTest < Minitest::Test
     assert_equal %w[--no-daemon resume], single_call[:args]
   end
 
+  def test_an_explicit_no_daemon_does_not_keep_the_secrets_for_a_daemon_command
+    run_shim("--no-daemon", "agents")
+    run_shim("--no-daemon", "app-server", "daemon", "start")
+
+    assert_equal [ %w[--no-daemon agents], %w[--no-daemon app-server daemon start] ], codex_calls.map { |call| call[:args] }
+    codex_calls.each { |call| assert_equal(%w[unset unset unset], MAPPED.map { |name| call[:env][name] }) }
+  end
+
   def test_exec_and_other_subcommands_run_unchanged_with_the_secrets
     %w[exec mcp login features review].each { |subcommand| run_shim(subcommand, "-x") }
 

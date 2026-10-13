@@ -41,14 +41,13 @@ path_without_self() {
   printf '%s\n' "$kept"
 }
 
-# Prints session, daemon or other. Looks at every word for --remote and
-# --no-daemon, then at the first word that is not an option or its value.
+# Prints session, daemon or other. Looks at every word for --remote, then at
+# the first word that is not an option or its value.
 classify() {
   for arg in "$@"; do
     case $arg in
       --) break ;;
       --remote | --remote=*) echo daemon; return ;;
-      --no-daemon) echo other; return ;;
     esac
   done
   while [ $# -gt 0 ]; do
@@ -71,6 +70,17 @@ classify() {
   echo session
 }
 
+# Succeeds when the arguments before any -- already hold --no-daemon.
+has_no_daemon() {
+  for arg in "$@"; do
+    case $arg in
+      --) return 1 ;;
+      --no-daemon) return 0 ;;
+    esac
+  done
+  return 1
+}
+
 # Prints the KEY of every KEY=... line in the two 1Password mapping files.
 mapped_names() {
   secrets_dir="${XDG_CONFIG_HOME:-$HOME/.config}/secrets"
@@ -86,7 +96,10 @@ real_codex=$(find_real_codex) || {
 }
 
 case $(classify "$@") in
-  session) exec "$real_codex" --no-daemon "$@" ;;
+  session)
+    has_no_daemon "$@" && exec "$real_codex" "$@"
+    exec "$real_codex" --no-daemon "$@"
+    ;;
   daemon)
     for name in $(mapped_names) UNLOCKED_BIN; do unset "$name"; done
     PATH=$(path_without_self)
