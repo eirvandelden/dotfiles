@@ -43,6 +43,26 @@ module WorktreeTools
       exit(exit_code)
     end
 
+    # For a command that can hang on the network or on an SSH agent's approval dialog. After
+    # WORKTREE_TOOLS_TIME_LIMIT seconds (default 30) it kills the command's process group, ssh
+    # included, and returns a failed status. The own process group also means the command
+    # cannot prompt on the terminal.
+    def capture_within_time_limit(*command)
+      Open3.popen2(*command, err: File::NULL, pgroup: true) do |stdin, stdout, waiter|
+        stdin.close
+        reader = Thread.new { stdout.read }
+        reader.report_on_exception = false
+        return [ reader.value, waiter.value ] if waiter.join(time_limit)
+
+        Process.kill("KILL", -waiter.pid)
+        [ "", waiter.value ]
+      end
+    end
+
+    def time_limit
+      Float(ENV.fetch("WORKTREE_TOOLS_TIME_LIMIT", "30"))
+    end
+
     # Git helpers
     def git_root(path = ".")
       # Use array form to avoid shell injection

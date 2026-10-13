@@ -142,6 +142,35 @@ class WorktreeSweepTest < Minitest::Test
     refute(File.directory?(merged))
   end
 
+  # A background sweep holds the repository's lock; a call that never returns would keep it.
+  def test_gives_up_on_a_gh_call_that_hangs
+    pushed = add_worktree("pushed")
+    commit(pushed, "pushed work")
+    git(pushed, "push", "--quiet", "-u", "origin", "pushed")
+    merge_into_origin_main_from_elsewhere("pushed")
+    advance_origin_main
+    FileUtils.touch(gh_hang_file)
+
+    _, stderr, status = run_script_within_deadline(extra_env: time_limit_env)
+
+    assert(status.success?, stderr)
+    refute(File.directory?(pushed), "the ancestor rule still applies when gh gives no answer")
+  end
+
+  def test_gives_up_on_a_fetch_that_hangs
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_gh_states("merged-branch" => "MERGED")
+    git(@repo, "remote", "set-url", "origin", "ssh://git.example.invalid/repo.git")
+    write_stub("hanging-ssh", "#!/bin/sh\nsleep 600\n")
+    env = time_limit_env.merge("GIT_SSH_COMMAND" => File.join(@stub_bin, "hanging-ssh"))
+
+    _, stderr, status = run_script_within_deadline(extra_env: env)
+
+    assert(status.success?, stderr)
+    refute(File.directory?(merged))
+  end
+
   def test_writes_nothing_to_stdout
     merged = add_worktree("merged-branch")
     commit(merged, "more work")
@@ -328,10 +357,19 @@ class WorktreeSweepTest < Minitest::Test
     File.join(@stub_bin, "gh-states.txt")
   end
 
+  def gh_hang_file
+    File.join(@stub_bin, "gh-hang")
+  end
+
+  def time_limit_env
+    { "WORKTREE_TOOLS_TIME_LIMIT" => "3" }
+  end
+
   def install_gh_stub
     write_gh_states({})
     write_stub("gh", <<~'RUBY')
       #!/usr/bin/env ruby
+      sleep 600 if File.exist?(ENV["GH_STUB_HANG"].to_s)
       states = File.exist?(ENV["GH_STUB_STATES"].to_s) ? File.readlines(ENV["GH_STUB_STATES"], chomp: true) : []
       line = states.find { |entry| entry.start_with?("#{ARGV[2]}=") }
       exit 1 unless line
@@ -364,11 +402,27 @@ class WorktreeSweepTest < Minitest::Test
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HOME" => @enclosing,
       "GH_STUB_STATES" => gh_states_file,
+      "GH_STUB_HANG" => gh_hang_file,
       "GIT_CALL_LOG" => File.join(@enclosing, "git-calls.log")
     }.merge(extra_env)
   end
 
   def run_script(*arguments, chdir: @repo, extra_env: {})
     Open3.capture3(script_environment(extra_env), "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  # Kills the sweep and its children and fails when it does not finish in time, so a hang
+  # cannot stall the suite.
+  def run_script_within_deadline(extra_env: {})
+    stdin, stdout, stderr, waiter = Open3.popen3(script_environment(extra_env), "ruby", SCRIPT,
+                                                 chdir: @repo, pgroup: true)
+    stdin.close
+    unless waiter.join(DEADLINE)
+      Process.kill("KILL", -waiter.pid)
+      flunk("worktree-sweep did not finish within #{DEADLINE} seconds")
+    end
+    [ stdout.read, stderr.read, waiter.value ]
+  ensure
+    [ stdout, stderr ].each { |io| io&.close }
   end
 end

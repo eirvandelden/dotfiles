@@ -60,8 +60,7 @@ module WorktreeTools
     end
 
     def pr_state(branch)
-      output, status = Open3.capture2("gh", "pr", "view", branch, "--json", "state", "-q", ".state",
-                                       err: File::NULL)
+      output, status = capture_within_time_limit("gh", "pr", "view", branch, "--json", "state", "-q", ".state")
       output.strip if status.success?
     rescue Errno::ENOENT
       nil
