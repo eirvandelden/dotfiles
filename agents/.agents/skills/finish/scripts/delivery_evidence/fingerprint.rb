@@ -48,10 +48,16 @@ class Fingerprint
   end
 
   def submodule_marker(path)
-    return "submodule uninitialized" unless File.exist?(File.join(full(path), ".git"))
+    return "submodule uninitialized #{gitlink(path)}" unless File.exist?(File.join(full(path), ".git"))
 
     stdout, _stderr, status = @repo.try("-C", path, "rev-parse", "HEAD")
     "submodule #{status.success? ? stdout.strip : 'unknown'}"
+  end
+
+  # The commit the index records for a submodule (mode 160000), so a pointer bump changes the marker.
+  def gitlink(path)
+    entry = @repo.capture("ls-files", "-s", "--", path).lines.find { |line| line.start_with?("160000 ") }
+    entry ? entry.split[1] : "unknown"
   end
 
   # hash-object reads newline-separated paths; a path holding a newline is hashed alone.

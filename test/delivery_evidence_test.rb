@@ -116,6 +116,23 @@ class DeliveryEvidenceTest < Minitest::Test
     assert_match(/^stale\s+tests\s+suite\b/, evidence("status").first)
   end
 
+  def test_an_uninitialized_submodule_pointer_bump_makes_evidence_stale
+    sub_source = File.join(@root, "sub-source")
+    FileUtils.mkdir_p(sub_source)
+    git("init", "--quiet", "--initial-branch=main", dir: sub_source)
+    git("commit", "--quiet", "--allow-empty", "-m", "first", dir: sub_source)
+    git("-c", "protocol.file.allow=always", "submodule", "--quiet", "add", sub_source, "vendor/sub")
+    git("commit", "--quiet", "-m", "add submodule")
+    git("submodule", "--quiet", "deinit", "-f", "vendor/sub")
+    record_suite
+    git("commit", "--quiet", "--allow-empty", "-m", "second", dir: sub_source)
+    bumped = git("rev-parse", "HEAD", dir: sub_source).first.strip
+
+    git("update-index", "--cacheinfo", "160000,#{bumped},vendor/sub")
+
+    assert_match(/^stale\s+tests\s+suite\b/, evidence("status").first)
+  end
+
   def test_the_newest_entry_per_name_is_current
     evidence("run", "--kind", "tests", "--name", "suite", "--", "false")
     record_suite
@@ -231,6 +248,16 @@ class DeliveryEvidenceTest < Minitest::Test
 
     evidence("run", "--kind", "migration", "--name", "replay", "--", "true")
     assert_equal(0, evidence_status("check"))
+  end
+
+  def test_check_fails_when_the_base_branch_cannot_be_resolved
+    git("branch", "--move", "main", "trunk")
+    record_suite
+
+    _, stderr, status = evidence_in(@repo, "check")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/cannot resolve the base branch, so the automatic migration and browser requirements are unknown/, stderr)
   end
 
   def test_a_changed_migration_makes_the_replay_stale

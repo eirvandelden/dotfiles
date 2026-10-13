@@ -49,12 +49,13 @@ class Repo
   end
 
   # Files the branch touches against its merge-base, working tree and untracked files included.
+  # Nil when no base branch or merge-base resolves: the caller must not read that as "no files".
   def branch_paths
     base = base_branch
-    return [] unless base
+    return nil unless base
 
     fork_point, _stderr, status = try("merge-base", base, "HEAD")
-    return [] unless status.success?
+    return nil unless status.success?
 
     tracked = capture("diff", "--name-only", "-z", fork_point.strip).split("\0")
     tracked | capture("ls-files", "-z", "--others", "--exclude-standard").split("\0")

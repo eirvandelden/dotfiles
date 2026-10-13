@@ -24,6 +24,8 @@ require_relative "delivery_evidence/store"
 
 CHANGE_FOLDER_SCRIPT = File.expand_path("../../plan/scripts/change-folder", __dir__)
 
+UNKNOWN_BASE = "cannot resolve the base branch, so the automatic migration and browser requirements are unknown.".freeze
+
 class DeliveryEvidence
   def initialize(repo)
     @repo = repo
@@ -135,7 +137,9 @@ class DeliveryEvidence
 
   def problems(required)
     entry_problems = @store.current.filter_map { |entry| entry_problem(entry) }
-    entry_problems + (required.to_a + automatic_kinds).uniq.filter_map { |kind| kind_problem(kind) }
+    kinds = automatic_kinds
+    unknown = kinds ? [] : [ UNKNOWN_BASE ]
+    entry_problems + unknown + (required.to_a + kinds.to_a).uniq.filter_map { |kind| kind_problem(kind) }
   end
 
   def entry_problem(entry)
@@ -153,6 +157,8 @@ class DeliveryEvidence
 
   def automatic_kinds
     paths = @repo.branch_paths
+    return nil unless paths
+
     kinds = []
     kinds << "migration" if paths.any? { |path| path.match?(Repo::MIGRATION_PATHS) }
     kinds << "browser" if paths.any? { |path| path.match?(Repo::UI_PATHS) }
