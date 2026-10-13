@@ -73,7 +73,7 @@ From `intent.md` (2026-10-09). Status: accepted.
 
 - `claude/.claude/finish/after-push` — board status step.
 - `test/finish_after_push_test.rb` — new tests; the `gh` stub learns `project` subcommands.
-- `claude/.claude/finish/review-board` — new, only once Etienne gives its two values (see Risks).
+- `claude/.claude/finish/review-board` — new. Its two values are in the private, untracked file `<git-common-dir>/herdr/decisions-implement-done-opens-draft-pr.md`. Never copy them into this repository.
 
 ## Order of work
 
@@ -93,10 +93,10 @@ From `intent.md` (2026-10-09). Status: accepted.
 - gh-dash config keys (`prSections`, `filters`, `defaults.view`) are from memory. Verify them against `gh dash` docs or a real run before relying on them (rule 22).
 - `herdr pane swap --source-pane/--target-pane` semantics are read from `--help`, not tried. Verify in a live herdr session that the new pane ends up directly left of A and A keeps its size class.
 - Pane ids are recycled across herdr sessions. The recorded terminal id guards against anchoring beside an unrelated pane; verify in a live session that `terminal_id` survives a herdr client reattach but changes for a new terminal.
-- `gh pr checks --watch` right after `gh pr ready` can see no checks yet. The grace loop covers that; a repo without CI stops unmerged instead of merging blind. Rejected: merging when no checks appear, because a slow CI start looks the same.
+- `gh pr checks --watch` right after `gh pr ready` can see no checks yet. The grace loop covers that; a repo without CI stops unmerged instead of merging blind. Rejected: merging when no checks appear, because a slow CI start looks the same. Etienne confirmed stopping unmerged on 2026-10-13.
 - `gh pr merge` inside a worktree can report failure after the merge landed. `ship` reads the PR state instead of trusting the exit code.
-- The `gh` token has `read:project` only. Setting a board status needs `project` scope; Etienne must run `gh auth refresh -s project`. Until then the work `after-push` stops at its scope preflight, before any change, and `/finish` stops before reviewers.
-- The board's owner and project number are not recorded anywhere. They must come from Etienne; the plan does not invent them.
+- Settled 2026-10-13: the stored `gh` token now has the `project` scope. A shell with `GH_TOKEN` set uses that token instead; `after-push` still preflights the scope and stops before any change when it is missing.
+- Settled 2026-10-13: Etienne gave the board's owner and project number. They live only in the private decisions file named above, and the board was checked to have a "Needs Review" status option.
 - The public repo must never name the work org, board or project. Plan, scripts and tests use "team review board" and the private `review-board` file only. The Proof check greps the diff.
 - Rejected: putting delivery inside the `review` skill text only. A script makes "no further command" deterministic and testable; skill text alone is not.
 - Rejected: moving `fill-pr-template` and `change-scope` to `deliver/scripts`. Path churn for no behaviour.
