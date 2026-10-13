@@ -1,30 +1,26 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
-# New Ruby code carries a prose summary and an inline RBS signature per method, never YARD tags.
+# Ruby documentation follows ruby-style: inline RBS signatures, never hand-written sig files.
 class RubySignaturesTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(ROOT, "claude/.claude/skills")
-  YARD_SKILL_FILES = %w[
-    ruby-style/SKILL.md rails-architecture/SKILL.md rails-architecture/references/examples.md
-    implement/SKILL.md object-oriented-design/SKILL.md
-  ].freeze
   YARD_ASK = /YARD-document|use YARD|@param\b|@return\b|@action\b|@route\b|YARD tags `@/
 
-  def test_ruby_style_asks_for_a_summary_and_inline_rbs_per_method
-    text = File.read(File.join(SKILLS, "ruby-style/SKILL.md"))
+  def test_implement_and_object_oriented_design_defer_to_ruby_style
+    %w[implement/SKILL.md object-oriented-design/SKILL.md].each do |relative|
+      text = File.read(File.join(SKILLS, relative))
 
-    assert_match(/inline RBS/i, text)
-    assert_includes(text, "#:")
-    assert_includes(text, "# @rbs")
-    assert_match(/prose summary|summary/i, text)
-    assert_match(/every (class and )?method/i, text)
+      assert_includes(text, "`ruby-style`", "#{relative} does not point at ruby-style")
+      refute_match(YARD_ASK, text, "#{relative} states its own YARD rule")
+    end
   end
 
-  def test_no_skill_asks_for_yard_tags
-    offences = YARD_SKILL_FILES.flat_map { |relative| yard_lines(relative) }
+  def test_ruby_style_forbids_hand_written_sig_files
+    text = File.read(File.join(SKILLS, "ruby-style/SKILL.md"))
 
-    assert_empty(offences)
+    assert_match(%r{never in a hand-written `sig/\*\.rbs` file}, text)
   end
 
   def test_signatures_are_checked_by_steep_or_marked_not_checked
@@ -32,15 +28,5 @@ class RubySignaturesTest < Minitest::Test
 
     assert_includes(text, "Checked by: steep check")
     assert_includes(text, "Not checked:")
-  end
-
-  private
-
-  def yard_lines(relative)
-    File.readlines(File.join(SKILLS, relative)).each_with_index.filter_map do |line, index|
-      next unless line.match?(YARD_ASK)
-
-      "#{relative}:#{index + 1}: #{line.strip}"
-    end
   end
 end

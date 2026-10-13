@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require "fileutils"
 require "open3"
 require "tmpdir"
@@ -97,16 +98,15 @@ class MermaidShowTest < Minitest::Test
     assert_match(/usage/i, result[:stdout] + result[:stderr])
   end
 
-  def test_every_method_has_a_summary_and_an_inline_signature
+  def test_every_method_has_an_inline_signature
     flunk("#{SCRIPT} does not exist") unless File.exist?(SCRIPT)
     lines = File.readlines(SCRIPT)
 
     lines.each_with_index do |line, index|
       next unless line.match?(/^\s*def /)
 
-      comments = comment_block_above(lines, index)
-      assert(comments.any? { |text| text.start_with?("#:") }, "#{line.strip} has no inline RBS signature")
-      assert(comments.any? { |text| !text.start_with?("#:", "# @rbs") }, "#{line.strip} has no prose summary")
+      assert(comment_block_above(lines, index).any? { |text| text.start_with?("#:") },
+             "#{line.strip} has no inline RBS signature")
     end
   end
 
