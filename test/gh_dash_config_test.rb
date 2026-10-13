@@ -65,7 +65,7 @@ class GhDashConfigTest < Minitest::Test
   end
 
   def test_deep_review_keybinding_opens_octo_in_a_herdr_pane
-    keybinding = config.dig("keybindings", "prs").find { |binding| binding["key"] == "C" }
+    keybinding = config.fetch("keybindings").fetch("prs").find { |binding| binding["key"] == "C" }
 
     refute_nil(keybinding, "no C keybinding in keybindings.prs")
     assert_equal(DEEP_REVIEW_COMMAND, keybinding["command"].strip)
@@ -78,7 +78,7 @@ class GhDashConfigTest < Minitest::Test
   private
 
   def config
-    YAML.safe_load_file(CONFIG_PATH)
+    @config ||= YAML.safe_load_file(CONFIG_PATH)
   end
 
   def titles(view)
