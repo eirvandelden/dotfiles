@@ -69,19 +69,14 @@ sequenceDiagram
 ```ruby
 # Renders Mermaid as text or as an image in the terminal.
 class MermaidShow
-  # Reads the mode and the input from the command line.
   #: (Array[String] argv, ?out: IO, ?input: IO) -> void
   def initialize(argv, out: $stdout, input: $stdin)
-  # Renders the input in the chosen mode; returns the exit status.
   #: () -> Integer
   def run
-  # Replaces each Mermaid fence with a text fence of its rendering.
   #: (String markdown) -> String
   def replace_fences(markdown)
-  # Renders one diagram as Unicode text.
   #: (String source) -> String
   def text_for(source)
-  # Renders one diagram to a PNG and shows it with timg.
   #: (String source) -> void
   def show_image(source)
 end

@@ -16,7 +16,6 @@ class MermaidShow
   OPENING_FENCE = /\A(`{3,}|~{3,})\s*(\S*)/
   Failure = Class.new(StandardError)
 
-  # Reads the mode and the input from the command line.
   #: (Array[String] argv, ?out: IO, ?input: IO) -> void
   def initialize(argv, out: $stdout, input: $stdin)
     @argv = argv
@@ -24,7 +23,6 @@ class MermaidShow
     @input = input
   end
 
-  # Renders the input in the chosen mode; returns the exit status.
   #: () -> Integer
   def run
     dispatch
@@ -34,7 +32,6 @@ class MermaidShow
     error.message == USAGE ? 2 : 1
   end
 
-  # Replaces each Mermaid fence with a text fence of its rendering.
   #: (String markdown) -> String
   def replace_fences(markdown)
     fences(markdown).map do |kind, text|
@@ -42,7 +39,6 @@ class MermaidShow
     end.join
   end
 
-  # Renders one diagram as Unicode text.
   #: (String source) -> String
   def text_for(source)
     stdout, stderr, status = Open3.capture3("node", HELPER, stdin_data: source)
@@ -51,7 +47,6 @@ class MermaidShow
     stdout.chomp
   end
 
-  # Renders one diagram to a PNG and shows it with timg.
   #: (String source) -> void
   def show_image(source)
     Dir.mktmpdir("mermaid-show") do |dir|
@@ -63,7 +58,6 @@ class MermaidShow
 
   private
 
-  # Picks the mode from the arguments and runs it.
   #: () -> void
   def dispatch
     case @argv
@@ -74,7 +68,6 @@ class MermaidShow
     end
   end
 
-  # Prints every diagram of a file as text, one after the other.
   #: (String path) -> void
   def print_text(path)
     diagrams_in(path).each { |source| @out.puts(text_for(source)) }
@@ -91,7 +84,6 @@ class MermaidShow
     fences(content).filter_map { |kind, text| text if kind == :mermaid }
   end
 
-  # Runs mmdc to write the PNG for one diagram.
   #: (String source, String dir, String png) -> void
   def render_png(source, dir, png)
     input = File.join(dir, "diagram.mmd")
@@ -123,7 +115,6 @@ class MermaidShow
     nil
   end
 
-  # Starts a fence when the line opens one, otherwise keeps the line as plain text.
   #: (Array[[Symbol, String]] chunks, String line) -> Hash[Symbol, untyped]?
   def open_new(chunks, line)
     match = line.match(OPENING_FENCE)
