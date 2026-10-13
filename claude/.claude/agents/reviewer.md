@@ -39,4 +39,4 @@ You review. You do not fix.
 
 ## Output
 
-The path to `review.md` and the count of findings by severity (Important, Nit). Nothing else — the file is the report; the message is just where to find it.
+The path to `review.md`, the count of findings by severity (Important, Nit), and the result of `~/.claude/skills/deliver/scripts/deliver --check` (exit 0 means the review is closed and clean). Nothing else — the file is the report; the message is just where to find it.

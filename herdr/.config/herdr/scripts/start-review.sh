@@ -63,8 +63,10 @@ Run the Bugs, Security and Compliance passes REVIEW.md describes, worst first; r
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \
 first round) and commit that file alone — change no code, stage nothing else. Then push the \
 branch (git push -u origin HEAD); if the push is refused, say so in your report and never use \
---no-verify. Then report back to the agent that asked, with herdr agent prompt, sending pane \
-$HERDR_PANE_ID the single line Review ready: followed by that file's path. Quote the path yourself. That call is rejected while \
+--no-verify. Then run ~/.claude/skills/deliver/scripts/deliver --check, which changes nothing. \
+Then report back to the agent that asked, with herdr agent prompt, sending pane $HERDR_PANE_ID \
+a single line: Review clean: when the check exits 0, else Review ready: when it exits non-zero, \
+followed in both cases by that file's path. Quote the path yourself. That call is rejected while \
 the caller is blocked on a prompt of its own, so if it fails, wait a few seconds and send it \
 again, at most twelve times. Once the line gets through, on the first try or a retry, run herdr \
 pane close \$HERDR_PANE_ID (your own pane's id from your shell, not the caller's id above) to \

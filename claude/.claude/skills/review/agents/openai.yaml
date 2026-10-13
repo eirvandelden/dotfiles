@@ -1,7 +1,7 @@
 ---
 interface:
   display_name: "Review"
-  short_description: "Report-only review of this branch, findings written to review.md"
+  short_description: "Reviews this branch into review.md; a clean review hands over to deliver"
 
 policy:
   allow_implicit_invocation: false
