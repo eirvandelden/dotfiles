@@ -104,6 +104,23 @@ class WorktreeGuardTest < Minitest::Test
     assert_equal(2, status.exitstatus)
   end
 
+  def test_cd_with_options_pushd_and_cd_in_a_subshell_are_followed
+    [ "cd -P .worktrees/foo && git worktree add ../bar -b bar",
+     "cd -- .worktrees/foo && git worktree add ../bar -b bar",
+     "pushd .worktrees && git worktree add bar -b bar",
+     "(cd .worktrees/foo && git worktree add ../bar -b bar)" ].each do |command|
+      _, stderr, status = run_guard(command)
+
+      assert_equal(0, status.exitstatus, "#{command}: #{stderr}")
+    end
+  end
+
+  def test_a_cd_inside_a_subshell_ends_with_the_subshell
+    _, _, status = run_guard("(cd .worktrees/foo); git worktree add ../x -b x")
+
+    assert_equal(2, status.exitstatus)
+  end
+
   def test_a_cd_into_a_missing_directory_leaves_the_working_directory_unchanged
     _, _, status = run_guard("cd nowhere; git worktree add ../x -b x")
 

@@ -8,8 +8,9 @@
 # text, so a commit message or PR body that mentions `git worktree add` passes. A `<<` inside
 # quoted text, a comment or `$(( … ))` starts no heredoc. When the command word is `eval`, or
 # `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
-# Variables are not expanded, so such a target is taken literally and usually blocks. Commands
-# inside `( … )` or `$( … )` are not checked. Everything else errs towards allowing: a false
+# Variables are not expanded, so such a target is taken literally and usually blocks. `cd`,
+# `cd -P`, `cd --` and `pushd` move the directory; inside `( … )` the move ends with the
+# subshell. Commands inside `$( … )` are not checked. Everything else errs towards allowing: a false
 # block stops legitimate work, and the written rule covers the rest.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does not block
@@ -42,6 +43,7 @@ SHELLS = %w[sh bash zsh].freeze
 WRAPPERS = %w[command env sudo exec nohup].freeze
 WRAPPER_OPTIONS_WITH_VALUE = %w[-u -g -U -C -D -h -p -r -t].freeze
 ASSIGNMENT = /\A[A-Za-z_]\w*=/
+DIRECTORY_CHANGES = %w[cd pushd].freeze
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
@@ -237,15 +239,46 @@ def shell_command_text(arguments)
   arguments[flags.length] if flags.any? { |flag| flag.match?(/\A-[A-Za-z]*c[A-Za-z]*\z/) }
 end
 
+# A `cd` inside `( … )` ends with the subshell, so each `(` saves the directory and `)` restores it.
 def blocked?(command, directory)
+  directories = [ directory ]
   segments(command).any? do |segment_words|
-    if segment_words.first == "cd" && segment_words[1]
-      directory = after_cd(segment_words[1], directory)
-      next false
-    end
-    handed_on = handed_on_command(segment_words)
-    (handed_on && blocked?(handed_on, directory)) || misplaced_add?(segment_words, directory)
+    words = without_subshell_parens(segment_words)
+    directories.push(directories.last) if segment_words.first&.start_with?("(")
+    directories[-1] = next_directory(words, directories.last)
+    found = segment_blocked?(words, directories.last)
+    directories.pop if segment_words.last&.end_with?(")") && directories.length > 1
+    found
   end
+end
+
+def segment_blocked?(words, directory)
+  handed_on = handed_on_command(words)
+  (handed_on && blocked?(handed_on, directory)) || misplaced_add?(words, directory)
+end
+
+def without_subshell_parens(words)
+  return words if words.empty?
+
+  inner = [ words.first.delete_prefix("("), *words.drop(1) ]
+  [ *inner[0...-1], inner.last.delete_suffix(")") ].reject(&:empty?)
+end
+
+def next_directory(words, directory)
+  return directory unless DIRECTORY_CHANGES.include?(words.first)
+
+  destination = change_destination(words.drop(1))
+  destination ? after_cd(destination, directory) : directory
+end
+
+# The directory `cd` or `pushd` is given, past its options; nil for `cd -` or a bare `cd`.
+def change_destination(arguments)
+  argument, *rest = arguments
+  return nil if argument.nil? || argument == "-"
+  return rest.first if argument == "--"
+  return argument unless argument.start_with?("-")
+
+  change_destination(rest)
 end
 
 # A failed `cd` leaves the shell where it was.
