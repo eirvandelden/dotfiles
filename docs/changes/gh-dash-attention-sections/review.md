@@ -94,3 +94,15 @@ Every acceptance criterion keeps the proof listed in round 3; this round adds no
 
 - [ ] Nit: `plan.md` still says the config "moves to" `github/.config/gh-dash/config.yml` (line 7), that step 1 fails because the file "does not exist" (line 62), and that step 3 "Create"s it (line 64). Round 3's fix changed only line 56. `origin/main` already ships the file, so these lines describe a change that did not happen. — `docs/changes/gh-dash-attention-sections/plan.md:7` → fixed (docs: describe the plan steps against the shipped gh-dash config)
 - [ ] Nit: Round 1 says `comments:` counts issue comments only, but `evidence.md:19` shows it counts inline review comments too (work PR G and work PR F have 0 issue comments and match `comments:>0`). The round 1 finding stays valid for a review body without inline comments, which section 5 now covers. No action beyond awareness when writing the pull request body. — `docs/changes/gh-dash-attention-sections/evidence.md:19` → dismissed: awareness only; evidence.md records the correct behaviour and section 5 covers the remaining gap
+
+## Round 5 — 2026-10-13T12:10Z — a4fcaff2 (codex)
+
+`codex review --base origin/main` on the commit that added section 5 (pre-rewrite SHA): configuration matches the stated section order and filters; the focused test passes.
+
+No findings.
+
+## Round 6 — 2026-10-13T12:15Z — b5e2a4c9 (codex)
+
+`codex review --base origin/main` after the round 3 fixes (pre-rewrite SHA): the configuration and tests match the stated section order and filters; the focused test passes (12 runs, 38 assertions).
+
+No findings.
