@@ -53,15 +53,21 @@ module WorktreeTools
       File.open(lock_path, File::RDWR | File::CREAT) { nil }
     end
 
-    # One sweep or create at a time per repository: another caller waits here.
-    def exclusively
+    # One sweep or create at a time per repository: another caller waits here, and says so
+    # first when it has a waiting message.
+    def exclusively(waiting_message: nil)
       File.open(lock_path, File::RDWR | File::CREAT) do |lock|
-        lock.flock(File::LOCK_EX)
+        wait_for(lock, waiting_message) unless lock.flock(File::LOCK_EX | File::LOCK_NB)
         yield
       end
     end
 
     private
+
+    def wait_for(lock, message)
+      $stderr.puts(message) if message
+      lock.flock(File::LOCK_EX)
+    end
 
     def lock_path
       File.join(common_dir, "worktree-sweep.lock")

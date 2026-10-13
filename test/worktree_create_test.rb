@@ -356,10 +356,8 @@ class WorktreeCreateTest < Minitest::Test
     lock = File.join(@repo, ".git", "worktree-sweep.lock")
     File.open(lock, File::RDWR | File::CREAT) do |file|
       file.flock(File::LOCK_EX)
-      stdin, stdout, stderr, waiter = Open3.popen3(create_environment, "ruby", SCRIPT, "feature", "--no-pane",
-                                                   chdir: @repo)
-      [ stdin, stdout, stderr ].each(&:close)
-      @waiter = waiter
+      @waiter = waiter = Process.detach(Process.spawn(create_environment, "ruby", SCRIPT, "feature", "--no-pane",
+                                                      chdir: @repo, out: File::NULL, err: File::NULL))
       # Its last git call before it takes the lock finds the lock file's directory.
       deadline = Time.now + 20
       sleep 0.05 until git_calls.any? { |call| call.include?("--git-common-dir") } || Time.now > deadline
@@ -374,6 +372,23 @@ class WorktreeCreateTest < Minitest::Test
     sleep 0.1 while @waiter.alive? && Time.now < deadline
     refute(@waiter.alive?, "worktree-create did not finish after the lock was released")
     assert(File.directory?(File.join(@repo, ".worktrees", "feature")))
+  end
+
+  def test_says_that_it_waits_for_a_running_sweep
+    lock = File.join(@repo, ".git", "worktree-sweep.lock")
+    stderr_log = File.join(@enclosing, "create-stderr.log")
+    File.open(lock, File::RDWR | File::CREAT) do |file|
+      file.flock(File::LOCK_EX)
+      @waiter = Process.detach(Process.spawn(create_environment, "ruby", SCRIPT, "feature", "--no-pane",
+                                             chdir: @repo, out: File::NULL, err: stderr_log))
+      deadline = Time.now + 20
+      sleep 0.05 until File.read(stderr_log).include?("waiting for a running worktree sweep") || Time.now > deadline
+      assert_includes(File.read(stderr_log), "worktree-create: waiting for a running worktree sweep to finish")
+    end
+
+    deadline = Time.now + 60
+    sleep 0.1 while @waiter.alive? && Time.now < deadline
+    refute(@waiter.alive?, "worktree-create did not finish after the lock was released")
   end
 
   def test_the_shebang_does_not_depend_on_rv_being_on_path

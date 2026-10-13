@@ -16,6 +16,7 @@ module WorktreeTools
     include Helpers
 
     PANE = File.expand_path("worktree-pane", __dir__)
+    WAITING = "worktree-create: waiting for a running worktree sweep to finish".freeze
 
     def self.run!(argv)
       new.run!(argv)
@@ -31,7 +32,7 @@ module WorktreeTools
       die("worktree-create: .worktrees is not gitignored; add it to .git/info/exclude") unless worktrees_ignored?
       git("worktree", "prune")
 
-      path = repository.exclusively { prepare_worktree(repository, name) }
+      path = repository.exclusively(waiting_message: WAITING) { prepare_worktree(repository, name) }
       open_pane(path) unless no_pane
       puts path
     end
