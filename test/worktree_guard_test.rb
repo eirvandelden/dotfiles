@@ -124,6 +124,16 @@ class WorktreeGuardTest < Minitest::Test
     end
   end
 
+  def test_popd_returns_to_the_directory_before_the_matching_pushd
+    _, stderr, back_home = run_guard("pushd .worktrees/foo && popd && git worktree add .worktrees/ok -b ok")
+    _, _, beside_repo = run_guard("pushd .worktrees/foo && popd && git worktree add ../bar -b bar")
+    _, stderr_nested, back_in_foo = run_guard("pushd .worktrees/foo && pushd .. && popd && git worktree add ../bar -b bar")
+
+    assert_equal(0, back_home.exitstatus, stderr)
+    assert_equal(2, beside_repo.exitstatus)
+    assert_equal(0, back_in_foo.exitstatus, stderr_nested)
+  end
+
   def test_a_cd_inside_a_subshell_ends_with_the_subshell
     _, _, status = run_guard("(cd .worktrees/foo); git worktree add ../x -b x")
 

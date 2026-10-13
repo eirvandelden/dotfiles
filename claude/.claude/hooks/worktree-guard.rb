@@ -9,8 +9,9 @@
 # quoted text, a comment or `$(( … ))` starts no heredoc. When the command word is `eval`, or
 # `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
 # Variables are not expanded, so such a target is taken literally and usually blocks. `cd`,
-# `cd -P`, `cd --` and `pushd` move the directory; inside `( … )` the move ends with the
-# subshell. Commands inside `$( … )` are not checked. Everything else errs towards allowing:
+# `cd -P`, `cd --` and `pushd` move the directory and `popd` moves it back; inside `( … )` a
+# move ends with the subshell. Commands inside `$( … )` are not checked. Everything else errs
+# towards allowing:
 # a false block stops legitimate work, and the written rule covers the rest.
 #
 # Known gaps, each a command that passes although it should block:
@@ -256,16 +257,48 @@ def shell_command_text(arguments)
   arguments[flags.length] if flags.any? { |flag| flag.match?(/\A-[A-Za-z]*c[A-Za-z]*\z/) }
 end
 
-# A `cd` inside `( … )` ends with the subshell, so each unquoted `(` saves the directory and each
-# `)` restores it. A balanced `$(pwd)` saves and restores in the same segment.
+# Where the shell is while the guard reads a command. Each subshell level has its own `pushd`
+# stack, a copy of the one around it; the last entry of the innermost stack is the directory.
+class ShellPosition
+  def initialize(directory)
+    @stacks = [ [ directory ] ]
+  end
+
+  def directory
+    @stacks.last.last
+  end
+
+  def enter_subshell
+    @stacks.push(@stacks.last.dup)
+  end
+
+  def leave_subshell
+    @stacks.pop if @stacks.length > 1
+  end
+
+  def cd(path)
+    @stacks.last[-1] = path
+  end
+
+  def pushd(path)
+    @stacks.last.push(path)
+  end
+
+  def popd
+    @stacks.last.pop if @stacks.last.length > 1
+  end
+end
+
+# A `cd` inside `( … )` ends with the subshell, so each unquoted `(` enters a subshell level and
+# each `)` leaves one. A balanced `$(pwd)` enters and leaves in the same segment.
 def blocked?(command, directory)
-  directories = [ directory ]
+  position = ShellPosition.new(directory)
   segments(command).any? do |segment|
     words = without_subshell_parens(segment.words)
-    segment.opens.times { directories.push(directories.last) }
-    directories[-1] = next_directory(words, directories.last)
-    found = segment_blocked?(words, directories.last)
-    segment.closes.times { directories.pop if directories.length > 1 }
+    segment.opens.times { position.enter_subshell }
+    follow_directory_change(words, position)
+    found = segment_blocked?(words, position.directory)
+    segment.closes.times { position.leave_subshell }
     found
   end
 end
@@ -282,11 +315,12 @@ def without_subshell_parens(words)
   [ *inner[0...-1], inner.last.delete_suffix(")") ].reject(&:empty?)
 end
 
-def next_directory(words, directory)
-  return directory unless DIRECTORY_CHANGES.include?(words.first)
+def follow_directory_change(words, position)
+  return position.popd if words.first == "popd"
+  return unless DIRECTORY_CHANGES.include?(words.first)
 
-  destination = change_destination(words.drop(1))
-  destination ? after_cd(destination, directory) : directory
+  path = existing_destination(words.drop(1), position.directory)
+  words.first == "cd" ? position.cd(path) : position.pushd(path) if path
 end
 
 # The directory `cd` or `pushd` is given, past its options; nil for `cd -` or a bare `cd`.
@@ -299,10 +333,12 @@ def change_destination(arguments)
   change_destination(rest)
 end
 
-# A failed `cd` leaves the shell where it was.
-def after_cd(destination, directory)
-  path = File.expand_path(destination, directory)
-  File.directory?(path) ? path : directory
+# Nil when there is no destination or it does not exist: a failed `cd` or `pushd` leaves the
+# shell where it was.
+def existing_destination(arguments, directory)
+  destination = change_destination(arguments)
+  path = destination && File.expand_path(destination, directory)
+  path if path && File.directory?(path)
 end
 
 def misplaced_add?(segment_words, directory)
