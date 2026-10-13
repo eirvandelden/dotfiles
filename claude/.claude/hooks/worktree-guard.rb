@@ -11,8 +11,7 @@
 # Variables are not expanded, so such a target is taken literally and usually blocks. `cd`,
 # `cd -P`, `cd --` and `pushd` move the directory and `popd` moves it back; inside `( … )` a
 # move ends with the subshell. Commands inside `$( … )` are not checked. Everything else errs
-# towards allowing:
-# a false block stops legitimate work, and the written rule covers the rest.
+# towards allowing: a false block stops legitimate work, and the written rule covers the rest.
 #
 # Known gaps, each a command that passes although it should block:
 # - a `#` right after a closing quote (`-m "Fix "#12; git worktree add …`) starts a comment;
