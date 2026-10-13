@@ -125,3 +125,21 @@ Every acceptance criterion keeps the proof listed in round 3. Every test named i
 
 - [ ] Nit: `plan.md` still says the `pager` block and `C` keybinding "are copied byte for byte from the live `~/.config/gh-dash/config.yml`". The branch copies nothing: both blocks come unchanged from the file `origin/main` already ships. — `docs/changes/gh-dash-attention-sections/plan.md:8` → fixed (docs: point the plan at the shipped blocks and evidence.md)
 - [ ] Nit: `plan.md` says the live-check evidence "is recorded in the implementation report". It is in `evidence.md` on the branch. — `docs/changes/gh-dash-attention-sections/plan.md:113` → fixed (docs: point the plan at the shipped blocks and evidence.md)
+
+## Round 8 — 2026-10-13T13:29Z — cd5e006d
+
+Checks run: `ruby -Itest test/gh_dash_config_test.rb` green (12 runs, 38 assertions, 0 failures); `yamllint github/.config/gh-dash/config.yml` and `rubocop test/gh_dash_config_test.rb` clean. The full `test/*_test.rb` loop was stopped before it finished, at Etienne's request. `markdownlint-cli2` did not run: the worktree has no `node_modules`. No uncommitted changes. The branch contains `origin/main` (0 commits behind). No REVIEW.md or REVIEW.local.md exists, so the reviewer defaults apply.
+
+### Bugs
+
+Nothing found. The five new PR sections and three issue sections match the plan's filter table token for token. The `pager` and `keybindings` blocks are unchanged from `origin/main`. Round 7's two nits are fixed in `cd5e006d`.
+
+### Security
+
+Nothing found. A scan of every added line in the branch history finds only `org:nedap` and the public `midagedev/bloomery#107`.
+
+### Compliance
+
+Every acceptance criterion keeps the proof listed in round 3. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
+
+- [ ] Nit: No round and no `evidence.md` entry records a finished full-suite run (plan step 8). Rounds 3, 4, 7 and 8 all stopped short of it. Record one green run before `finish`. — `docs/changes/gh-dash-attention-sections/plan.md:76` →
