@@ -148,7 +148,9 @@ stow:
 
 A pull that moves the checked-out branch fires `post-merge` (fast-forward) or `post-rewrite` (rebase). The global `lefthook.yml` runs `worktree-sweep --detach` from both hooks. The pull returns at once; the sweep finishes in the background.
 
-The sweep fetches `origin`'s default branch, then removes each clean worktree under `.worktrees/` whose PR is `MERGED`, or whose branch was pushed under its own name and is now in `origin/<default>`. A branch that was never pushed stays. The worktree that ran the pull stays too. `worktree-create` takes the same lock, so a sweep and a create never overlap in one repository.
+The sweep fetches `origin`'s default branch, then removes each clean worktree under `.worktrees/` whose PR is `MERGED`, or whose branch was pushed under its own name and is now in `origin/<default>`. A branch that was never pushed stays. The worktree that ran the pull stays too. `worktree-create` takes the same lock, so a sweep and a create never overlap in one repository. When a sweep holds it, `worktree-create` says so and waits. The fetch and each `gh` call give up after `WORKTREE_TOOLS_TIME_LIMIT` seconds (default 30), so a sweep cannot keep the lock forever.
+
+A pull whose new commits change no files does not sweep. The hooks list the changed files for `migrations`; when that list is empty, lefthook skips every command of the hook, `sweep-worktrees` included. Only empty commits cause this, so the next pull or `worktree-create` sweeps instead.
 
 Rollout, after the merge, on each machine:
 
