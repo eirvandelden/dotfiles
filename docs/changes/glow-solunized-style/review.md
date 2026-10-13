@@ -1,0 +1,40 @@
+# Review: glow-solunized-style
+
+## Round 1 — 2026-10-13T17:00Z — 759b05d8
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes apply (Bugs, Security, Compliance).
+
+No Important findings.
+
+- [ ] Nit: `set_style` has no `trap` for the `mktemp` file. When `rewrite_style` or the `cat` write fails under `set -e`, the temp file stays behind in `$TMPDIR`. — `install/tasks/51_configure_glow_style.sh:51` →
+- [ ] Nit: A config with CRLF line endings gets mixed endings. The `style:` line is rewritten without `\r`, and the other lines keep it. Glow's YAML parser accepts this, so it is cosmetic. — `install/tasks/51_configure_glow_style.sh:37` →
+- [ ] Nit: When the `50_stow_all.sh` line is missing from `install.sh`, `assert_operator(glow, :>, stow)` raises `ArgumentError` on `nil`. It does not fail with a clear message. Add `refute_nil(stow)` next to `refute_nil(glow)`. — `test/glow_style_install_test.rb:78` →
+
+### Bugs
+
+- Probed the install step with a scratch `HOME`. A config without a trailing newline gets one. A second run logs `style already set` and writes nothing. A missing stowed style warns and leaves the config alone.
+- `determine_os` with the `Linux` stub on macOS falls back to `Unknown` and skips. With the `Darwin` stub on Ubuntu CI it takes the macOS branch without calling macOS-only tools.
+
+### Security
+
+- Nothing found. The style path reaches awk through `ENVIRON`, so awk applies no escape processing to it. The diff has no secrets. `nedap`/`caren` appear only in the plan's own grep instruction.
+
+### Compliance
+
+| Acceptance criterion | Proof |
+| --- | --- |
+| Package holds `solunized.json`, byte-identical to the generator output, and no `glow.yml` | `GlowPackageTest#test_the_package_holds_a_valid_glamour_style`, `#test_the_package_holds_no_glow_yml`; check: `cmp` against `solunized/.worktrees/glow-style/dist/glow/solunized.json` at `a27d632` exits 0; SHA-256 `bcdaebf1…665f` matches the commit body |
+| `packages.conf` lists `glow` in `STOW` | `GlowPackageTest#test_packages_conf_stows_glow` (plus `#test_packages_conf_links_glow_file_by_file` for `STOW_SHARED`) |
+| Existing `style: "auto"` + `width: 80` → absolute style path, `width: 80` kept | `GlowStyleInstallTest#test_an_existing_style_line_points_at_the_stowed_solunized_style` |
+| No `style:` line → one added, other lines kept | `GlowStyleInstallTest#test_a_config_without_a_style_line_gets_one_and_keeps_its_other_lines` |
+| No `glow.yml` → created with only the `style:` line | `GlowStyleInstallTest#test_a_missing_config_is_created_with_only_the_style_line` |
+| Second run gives the same file | `GlowStyleInstallTest#test_a_second_run_leaves_the_config_unchanged` |
+| `glow -s <package style> README.md` renders without a style error, palette 0–15 only | check, rerun by this review: exit 0, `error` count 0, 94 palette escapes, 0 escapes outside 0–15 |
+| Scratch home + installed `glow.yml` → plain `glow` from `/` uses Solunized | check, rerun by this review: `style:` holds the scratch home spelled out; output equals the `-s` output above and differs from `-s auto` |
+| Ghostty light and dark mode show Solunized colours | manual check by Etienne before merge; the PR body must give the command |
+| After merge: stowed symlink into the main checkout, plain `glow` uses the style | post-merge check by the coordinator; not provable before merge |
+
+- Every test named in the plan's `## Proof` exists. The plan's `test_the_step_leaves_the_config_alone_outside_macos` is split in two: that test covers an existing config, and `test_the_step_creates_no_config_outside_macos` covers a missing one. Both halves of the named behaviour are proven.
+- Files changed match the plan's list. Nothing unplanned. Commits follow the plan's split.
+- `test/stow_package_roots_test.rb`: the existing tests are unchanged. Only two tests and the `HOME_DIRECTORIES` allowlist are added.
+- Checks run: the three changed test files pass (20 runs, 0 failures). `shellcheck -x -S warning` and `rubocop` on the touched files are clean. In the full suite, 43 of 45 files pass. `test/agent_worktree_test.rb` hangs (974s) and `test/review_report_check_test.rb` errors (`git commit --quiet -m advance main failed`, a fixture commit on `main`). This branch touches neither file. Both failures look environmental (global git hooks in fixture repositories), not caused by this change.
