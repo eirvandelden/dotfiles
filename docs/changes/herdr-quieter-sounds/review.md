@@ -153,8 +153,8 @@ No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the reviewer defa
 
 ### Bugs
 
-- [ ] Nit: a relative source with a colon in its name fails inside ffmpeg, not in the refusals. ffmpeg reads `a:b.mp3` as protocol `a` and stops with "Protocol not found", exit status 8, after `mkdir -p` already ran. macOS stores a `/` typed in Finder as `:` on disk, so such names occur. Verified in a scratch `HOME`: `quieter-tones.sh a:b.mp3` exits 8; the absolute path to the same file exits 0. Nothing is damaged. Passing `file:$source` (or the `realpath` result) to `-i` makes both forms work. — `herdr/.config/herdr/scripts/quieter-tones.sh:48` →
-- [ ] Nit: a source whose name starts with `-` reaches `realpath` and `basename` as an option. `realpath` then fails inside the command substitution, the guard compares `.` against the copies folder, and the copy-of-a-copy check passes open. The run stops later only because `basename` fails too. Verified: `quieter-tones.sh -x.mp3` prints the `realpath` and `basename` usage texts and exits 1, with no copy written. `realpath -- "$source"` and `basename -- "$source"` remove the option reading; a failed `realpath` should refuse the source, not pass it. — `herdr/.config/herdr/scripts/quieter-tones.sh:34` →
+- [x] Nit: a relative source with a colon in its name fails inside ffmpeg, not in the refusals. ffmpeg reads `a:b.mp3` as protocol `a` and stops with "Protocol not found", exit status 8, after `mkdir -p` already ran. macOS stores a `/` typed in Finder as `:` on disk, so such names occur. Verified in a scratch `HOME`: `quieter-tones.sh a:b.mp3` exits 8; the absolute path to the same file exits 0. Nothing is damaged. Passing `file:$source` (or the `realpath` result) to `-i` makes both forms work. — `herdr/.config/herdr/scripts/quieter-tones.sh:48` → fixed in 5ab30347 (ffmpeg gets `file:$source`; `test_a_relative_source_with_a_colon_in_its_name_is_converted` added, red first)
+- [x] Nit: a source whose name starts with `-` reaches `realpath` and `basename` as an option. `realpath` then fails inside the command substitution, the guard compares `.` against the copies folder, and the copy-of-a-copy check passes open. The run stops later only because `basename` fails too. Verified: `quieter-tones.sh -x.mp3` prints the `realpath` and `basename` usage texts and exits 1, with no copy written. `realpath -- "$source"` and `basename -- "$source"` remove the option reading; a failed `realpath` should refuse the source, not pass it. — `herdr/.config/herdr/scripts/quieter-tones.sh:34` → fixed in 5ab30347 (`realpath --`, `dirname --`, `basename --`; a failed `realpath` refuses the source; `test_a_source_named_like_an_option_is_still_checked` added, red first)
 
 ### Security
 
@@ -177,3 +177,21 @@ Nothing found. Every path in the script is quoted. The source is only ever an ff
 - No existing test was weakened, skipped or deleted.
 
 Totals: 0 Important, 2 Nit.
+
+## Round 8 — 2026-10-13T08:26Z — 40bb86e0 — Codex (`codex review --base origin/main`)
+
+Transcribed from the Codex CLI. Codex ran both herdr test files (green).
+
+### Bugs
+
+Nothing found. Codex: "No actionable defects found in the diff."
+
+### Security
+
+Nothing found.
+
+### Compliance
+
+Nothing found.
+
+Totals: 0 findings.
