@@ -34,7 +34,8 @@ class HerdrConfigTest < Minitest::Test
   end
 
   def test_no_herdr_tone_is_tracked
-    tracked, = Open3.capture2("git", "ls-files", chdir: File.expand_path("..", __dir__))
+    tracked, status = Open3.capture2("git", "ls-files", chdir: File.expand_path("..", __dir__))
+    assert(status.success?, "git ls-files failed")
     herdr_audio = tracked.lines.grep(%r{\Aherdr/.*\.(mp3|wav|aiff|m4a|ogg|flac)\n?\z}i)
     tones = %w[ready-to-serve milord jobs-done ForTheMaster02]
 
