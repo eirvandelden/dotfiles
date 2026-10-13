@@ -10,11 +10,11 @@ Author: Etienne van Delden de la Haije. Status: accepted. Type: bugfix. Delivery
 - `test_run_loads_database_name_from_env_local`: the run script prints `DATABASE_NAME=` instead of `DATABASE_NAME=workspace_db`.
 - `test_archive_loads_database_name_from_env_local`: `workspace/bundle.log` does not exist (`Errno::ENOENT`).
 
-It is not yet known whether the scripts or the tests are wrong.
+Planning found the cause: the test is stale. #48 (`eb296b4c`, 2026-05-29) removed all `DATABASE_NAME` and `.env.local` handling from `setup`, `run` and `archive` on purpose (no database or secrets in workspaces; `archive` cleans `.context/` instead of dropping a database). It updated `conductor/.config/conductor/scripts/test/scripts_test.rb` but missed this file. Etienne confirmed on 2026-10-12 that #48 stands.
 
 ## Proposed outcome
 
-The cause is found with systematic debugging. Whichever side is wrong gets fixed: the scripts, or a stale test. If the scripts' intended behaviour is unclear, the coordinator raises it to Etienne instead of choosing.
+The stale test is gone, and today's behaviour is pinned by tests in the maintained scripts test, so it cannot silently drift back. The scripts and READMEs stay as they are.
 
 ## Affected users and systems
 
@@ -29,7 +29,8 @@ The cause is found with systematic debugging. Whichever side is wrong gets fixed
 
 ## In scope
 
-- Finding the cause of the three failures and fixing it.
+- Tests that pin the #48 behaviour: `setup` leaves `.env.local` unchanged, `run` exports no `DATABASE_NAME` from it, `archive` runs no database command.
+- Removing the stale `conductor_scripts_test.rb`.
 
 ## Out of scope
 
@@ -39,8 +40,8 @@ The cause is found with systematic debugging. Whichever side is wrong gets fixed
 
 ## Acceptance criteria
 
-- `ruby -Itest git/.config/git/worktree-tools/test/conductor_scripts_test.rb` passes: 3 runs, 0 failures, 0 errors.
-- A Conductor workspace whose `.env.local` sets `DATABASE_NAME` gets that value in `run` and `archive`, shown in a real or scratch workspace.
+- The stale `conductor_scripts_test.rb` is gone, and `ruby conductor/.config/conductor/scripts/test/scripts_test.rb` passes: 10 runs, 0 failures, 0 errors.
+- In a scratch workspace whose `.env.local` sets `DATABASE_NAME`, `run` prints `DATABASE_NAME=` (not exported) and `archive` calls neither `bundle` nor `rails`; the new tests fail against the pre-#48 scripts.
 
 ## Open questions
 
