@@ -217,6 +217,79 @@ class AutonomyContractTest < Minitest::Test
     end
   end
 
+  def test_a_codex_session_hands_autonomous_delivery_to_claude
+    section = section_of(skill("intent"), "## Autonomous delivery")
+
+    assert_includes(section, "intent/scripts/start-delivery")
+    assert_match(/Codex session.*runs .*start-delivery.*stops/i, section)
+    assert_match(/Codex coordinates only on Etienne's explicit instruction/i, section)
+    refute_match(/as a Codex coordinator, run each stage/i, section)
+  end
+
+  def test_codex_stays_the_plan_critic_and_reviewer_with_stdin_closed
+    assert_match(%r{codex exec -p terra .*< /dev/null}, section_of(skill("plan"), "## Auto mode"))
+    assert_match(%r{codex review --base <base>.*< /dev/null}, section_of(skill("review"), "## Auto mode"))
+  end
+
+  def test_intent_runs_the_preflight_before_the_plan_stage
+    section = section_of(skill("intent"), "## Autonomous delivery")
+    preflight = section.index("intent/scripts/delivery-preflight")
+
+    refute_nil(preflight, "the coordinator never runs the preflight")
+    assert_operator(preflight, :<, section.index("hand-off-plan.sh <stage> <slug> --auto"))
+    assert_match(/--needs/, section)
+    assert_match(/every missing item together/i, section)
+  end
+
+  def test_intent_records_evidence_and_keeps_the_account_current
+    section = section_of(skill("intent"), "## Autonomous delivery")
+
+    assert_includes(section, "finish/scripts/delivery-evidence run")
+    assert_includes(section, "delivery-evidence status")
+    assert_match(/after every stage/i, section)
+    assert_match(/resum/i, section)
+  end
+
+  def test_implement_auto_records_final_runs
+    assert_includes(section_of(skill("implement"), "## Auto mode"), "delivery-evidence run")
+  end
+
+  def test_finish_auto_mode_gates_on_fresh_evidence
+    section = section_of(skill("finish"), "## Auto mode")
+
+    assert_includes(section, "delivery-evidence check --require tests,lint")
+    assert_match(/stale|missing|failed/i, section)
+  end
+
+  def test_finish_auto_mode_builds_the_body_from_the_handover
+    section = section_of(skill("finish"), "## Auto mode")
+
+    assert_includes(section, "delivery-evidence handover")
+    assert_match(/fill-pr-template .*<handover>/, section)
+    assert_match(/before §4/, section)
+  end
+
+  def test_finish_auto_mode_verifies_the_pull_request_body_and_head
+    assert_includes(section_of(skill("finish"), "## Auto mode"), "delivery-evidence pr-check")
+  end
+
+  def test_playbook_names_the_claude_coordinator_preflight_evidence_and_handover
+    section = autonomy_section
+
+    assert_match(/Claude coordinator/, section)
+    assert_includes(section, "start-delivery")
+    assert_match(/preflight/i, section)
+    assert_match(/evidence/i, section)
+    assert_match(/stale/i, section)
+    assert_match(/pull request body/i, section)
+  end
+
+  def test_core_values_keep_the_autonomous_delivery_mirror
+    assert_includes(CORE_VALUES, "a recorded critique replaces accepted on the plan")
+    assert_match(/critique replaces "accepted"/i, autonomy_section)
+    assert_match(/Agents never merge/, autonomy_section)
+  end
+
   private
 
   def assert_critique_contract(section)
