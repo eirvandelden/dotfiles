@@ -116,3 +116,23 @@ Acceptance criteria: as in round 4, with these changes.
 - Claude and Codex agents can run `bi` → still partial. `command -v bi` finds nothing, and `~/.local/bin/bi` does not exist yet; it waits on `stow -R -t "$HOME" ruby`.
 
 Security: nothing new. The change only widens what the guard refuses.
+
+## Round 6 — 2026-10-13T08:47Z — 7deb3c4e
+
+Whole branch against `origin/main`, with focus on `d24ea57b` (guard). No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy applies. Every `test/*_test.rb` passes except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, the same global `no-push-to-main` refusal as in rounds 2 to 5. `shellcheck` and `rubocop` are clean on the changed files. The branch is 30 commits behind `origin/main` again, but no file changed on both sides and `git merge-tree` finds no conflict; rebase before the pull request (playbook rule 20).
+
+Round 5's second Nit holds when probed. The guard refuses `rv run -v bundle install`, `rv r -v bundle i`, `rv -v run bundle install`, `rv -q run bundle install`, `command bundle install`, `command -p bundle install` and `env -v bundle install`. `command -v bundle`, `command -V bundle`, `rv run -v bundle exec rake`, `rv -v run bundle exec rake` and `time -v bundle exec rake` still run.
+
+- [ ] Nit: `rv` after a prefix hides an install. `next_position` sends a word in `:prefix`, `:option_value` or `:lookup` position to `prefix_word_position` before it checks for `rv`, so `rv` becomes an argument there. Probed, each exits 0: `timeout 600 rv run bundle install`, `sudo rv run bundle install`, `env rv run bundle install`, `nice -n 5 rv r bundle i`, `exec rv run bundle install`. `FOO=1 rv run bundle install` and `then rv run bundle install` are refused. `timeout 600` is the prefix an agent writes most, and round 4 added `rv run` for agents without Ruby on PATH. — `claude/.claude/hooks/consent-guard.rb:113` →
+- [ ] Nit: `command -pv bundle` is refused with "install gems with bi". A combined flag after `command` is not in `LOOKUP_FLAGS`, so it moves to `:option_value`, and `bundle` there reads as a bare `bundle`. It errs towards refusing, but the advice is wrong for a lookup. — `claude/.claude/hooks/consent-guard.rb:133` →
+
+### Compliance, round 6
+
+Since round 5, `command` moves to a new `:lookup` position, and only there do `-v` and `-V` make the next word an argument. `rv_position` keeps `:rv` across rv's own flags before `run`. `test_install_in_any_command_position_is_refused` gained four `rv` forms, and `test_bundle_install_in_messages_heredocs_and_lookups_runs` gained `command -V bundle`. `7deb3c4e` closes both round 5 Nits, with the `rv --color never run` dismissal dated 2026-10-13. No test was weakened, skipped or deleted. Every test the Proof list names exists.
+
+Acceptance criteria: as in round 5, with these changes.
+
+- Install forms refused with a message naming `bi` → the earlier tests plus the new `rv` cases. Round 5's `-v` gap is closed. Remaining gap: `rv run` behind a prefix, see the first Nit above.
+- Claude and Codex agents can run `bi` → still partial. `command -v bi` in an agent session waits on `stow -R -t "$HOME" ruby`.
+
+Security: nothing new. The change only widens what the guard refuses.
