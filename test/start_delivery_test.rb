@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # start-delivery hands an accepted autonomous intent to a Claude coordinator: a pane inside Herdr,
 # a background session outside it. A stub `claude`, a stub preflight and a stub hand-off script

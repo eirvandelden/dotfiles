@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Autonomous delivery must hand over proof that matches the code it ships.
 # delivery-evidence records every check against a fingerprint of the files it

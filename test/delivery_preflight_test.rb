@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require_relative "isolated_git"
 
 # delivery-preflight answers one question before autonomous delivery starts: can this machine
 # finish the job unattended? Every external tool is a stub. PATH holds only the stub directory,
