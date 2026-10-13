@@ -1,0 +1,318 @@
+#!/usr/bin/env ruby
+# delivery-preflight [--needs database,browser]
+#
+# Answers one question before autonomous delivery starts: can this machine finish the job
+# unattended? One line per check, in a fixed order:
+#   pass     <check>: <reason>
+#   missing  <check>: <reason>
+#   n/a      <check>: <reason>
+# then "Blockers: <checks>" and exit 1, or "No blockers." and exit 0. An unknown --needs value
+# exits 2.
+#
+# Safety, by construction: every external command runs with stdin closed, its output captured and
+# never echoed, in its own process group, under a deadline (DELIVERY_PREFLIGHT_TIMEOUT seconds,
+# default 20). On expiry the whole group is killed. Nothing here writes to the repository or
+# connects to a database server, so a token, an e-mail address or a key cannot leak, and an
+# ambient PGHOST cannot reach production.
+require "fileutils"
+require "json"
+require "tempfile"
+require "tmpdir"
+
+NEEDS = %w[database browser].freeze
+ORDER = %w[claude codex github origin signing runtime database browser].freeze
+BROWSERS = %w[google-chrome chromium chromium-browser].freeze
+BROWSER_APPS = [ "Google Chrome.app", "Chromium.app" ].freeze
+WRITE_PERMISSIONS = %w[WRITE MAINTAIN ADMIN].freeze
+DATABASE_TOOLS = {
+  "sqlite3" => %w[sqlite3], "postgresql" => %w[psql pg_isready], "mysql2" => %w[mysql], "trilogy" => %w[mysql]
+}.freeze
+# A leaked GIT_DIR (set by hooks) would point every git call at the wrong repository.
+CLEAN_GIT = { "GIT_DIR" => nil, "GIT_WORK_TREE" => nil, "GIT_INDEX_FILE" => nil }.freeze
+
+Outcome = Struct.new(:ok, :output, :reason)
+
+def usage_error(message)
+  warn("delivery-preflight: #{message}\nusage: delivery-preflight [--needs database,browser]")
+  exit(2)
+end
+
+def parse_needs(args)
+  needs = []
+  until args.empty?
+    arg = args.shift
+    value = arg.start_with?("--needs=") ? arg.delete_prefix("--needs=") : (arg == "--needs" ? args.shift : nil)
+    usage_error("unknown argument #{arg}") if value.nil?
+    needs.concat(value.split(","))
+  end
+  unknown = needs - NEEDS
+  usage_error("unknown need #{unknown.first}") if unknown.any?
+  needs
+end
+
+def timeout_seconds
+  Float(ENV.fetch("DELIVERY_PREFLIGHT_TIMEOUT", "20"))
+rescue ArgumentError
+  20.0
+end
+
+def kill_group(pid)
+  Process.kill("KILL", -pid)
+rescue Errno::ESRCH, Errno::EPERM
+  nil
+ensure
+  Process.wait(pid)
+end
+
+# Waits for the child until the deadline. Returns its status, or nil after killing its group.
+def wait_for(pid, seconds)
+  deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+  loop do
+    reaped, status = Process.wait2(pid, Process::WNOHANG)
+    return status if reaped
+    break if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+    sleep(0.05)
+  end
+  kill_group(pid)
+  nil
+end
+
+# Output goes to a file, not a pipe: a background grandchild holding a pipe open could block the
+# read after the command ended.
+def run(*command, env: {})
+  seconds = timeout_seconds
+  Tempfile.create("preflight") do |capture|
+    pid = Process.spawn(CLEAN_GIT.merge(env), *command, in: File::NULL, out: capture, err: capture, pgroup: true)
+    status = wait_for(pid, seconds)
+    next Outcome.new(false, "", "timed out after #{format('%g', seconds)}s") unless status
+
+    capture.rewind
+    Outcome.new(status.success?, capture.read, "#{command.first} exited with status #{status.exitstatus}")
+  end
+rescue Errno::ENOENT, Errno::EACCES
+  Outcome.new(false, "", "#{command.first} not found")
+end
+
+def on_path?(tool)
+  ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, tool)) }
+end
+
+def check_claude
+  outcome = run("claude", "auth", "status", "--json")
+  return [ "missing", outcome.reason ] if outcome.reason.match?(/not found|timed out/)
+
+  logged_in = JSON.parse(outcome.output)["loggedIn"]
+  logged_in ? [ "pass", "logged in" ] : [ "missing", "not logged in" ]
+rescue JSON::ParserError
+  [ "missing", "could not read the login status" ]
+end
+
+def check_codex
+  outcome = run("codex", "login", "status")
+  outcome.ok ? [ "pass", "logged in" ] : [ "missing", outcome.reason.sub(/\Acodex exited.*/, "not logged in") ]
+end
+
+# The raw configured URL, not "git remote get-url": that one applies insteadOf rewrites.
+def origin_url
+  outcome = run("git", "config", "--get", "remote.origin.url")
+  outcome.ok ? outcome.output.strip : nil
+end
+
+def github_repository(url)
+  url&.match(%r{\A(?:git@|ssh://git@|https://(?:[^@/]+@)?)github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?/?\z})&.captures&.join("/")
+end
+
+def check_github
+  url = origin_url
+  return [ "missing", "no origin remote" ] unless url
+
+  repository = github_repository(url)
+  return [ "missing", "origin is not a GitHub repository" ] unless repository
+
+  outcome = run("gh", "repo", "view", repository, "--json", "viewerPermission", "--jq", ".viewerPermission")
+  permission = outcome.output.strip
+  return [ "pass", "can push to #{repository}" ] if outcome.ok && WRITE_PERMISSIONS.include?(permission)
+
+  [ "missing", outcome.ok ? "viewer permission is #{permission}, not write" : "cannot read #{repository}: #{outcome.reason}" ]
+end
+
+def check_origin
+  outcome = run("git", "ls-remote", "--exit-code", "origin", "HEAD", env: { "GIT_TERMINAL_PROMPT" => "0" })
+  outcome.ok ? [ "pass", "origin answers" ] : [ "missing", "origin is not reachable (#{outcome.reason})" ]
+end
+
+def git_value(*args)
+  outcome = run("git", "config", *args)
+  outcome.ok ? outcome.output : nil
+end
+
+# "name\nvalue\0" entries, so a value with spaces survives.
+def signing_options
+  keys = %w[user.name user.email user.signingkey].filter_map do |key|
+    value = git_value("--get", key)
+    [ key, value.chomp ] if value
+  end
+  gpg = (git_value("--null", "--get-regexp", "^gpg\\.") || "").split("\0").map { |entry| entry.split("\n", 2) }
+  (keys + gpg).flat_map { |key, value| [ "-c", "#{key}=#{value}" ] }
+end
+
+# Signs an empty-tree commit in a throwaway repository with the effective signing settings.
+# commit-tree runs no hooks. The failure reason is fixed text: git's own message may name a key.
+def sign_test_commit(directory)
+  git = [ "git", "-C", directory ]
+  return nil unless run(*git, "init", "--quiet").ok
+
+  tree = run(*git, "mktree")
+  return nil unless tree.ok
+
+  commit = run(*git, *signing_options, "commit-tree", "-S", "-m", "preflight", tree.output.strip)
+  return nil unless commit.ok
+
+  run(*git, "cat-file", "commit", commit.output.strip).output.match?(/^gpgsig /)
+end
+
+def check_signing
+  return [ "n/a", "commits are not signed" ] unless git_value("--type=bool", "--get", "commit.gpgsign")&.strip == "true"
+
+  signed = Dir.mktmpdir("preflight-signing") { |directory| sign_test_commit(directory) }
+  signed ? [ "pass", "a test commit was signed" ] : [ "missing", "git could not sign a test commit" ]
+end
+
+def runtime_problems_and_notes
+  [ ruby_runtime, bundle_runtime, node_runtime, package_runtime ].compact
+end
+
+def version_runtime(file, label, command, strip)
+  return nil unless File.file?(file)
+
+  wanted = File.read(file).strip.sub(strip, "")
+  outcome = run(*command)
+  return [ false, "#{label}: #{outcome.reason}" ] unless outcome.ok
+
+  actual = outcome.output.strip.sub(strip, "")
+  actual == wanted ? [ true, "#{label} #{wanted}" ] : [ false, "#{label} #{wanted} wanted, #{actual} active" ]
+end
+
+def ruby_runtime
+  version_runtime(".ruby-version", "ruby", [ "ruby", "-e", "print RUBY_VERSION" ], /\Aruby-/)
+end
+
+def node_runtime
+  version_runtime(".node-version", "node", [ "node", "--version" ], /\Av/)
+end
+
+def bundle_runtime
+  return nil unless File.file?("Gemfile")
+
+  outcome = run("bundle", "check", env: { "BUNDLE_FROZEN" => "true" })
+  outcome.ok ? [ true, "bundle satisfied" ] : [ false, "bundle check failed (#{outcome.reason})" ]
+end
+
+def installed_version(name)
+  JSON.parse(File.read(File.join("node_modules", name, "package.json")))["version"]
+rescue Errno::ENOENT
+  nil
+end
+
+def locked_versions
+  return nil unless File.file?("package-lock.json")
+
+  JSON.parse(File.read("package-lock.json")).fetch("packages", {})
+end
+
+def node_dependency_problems(names, locked)
+  names.filter_map do |name|
+    installed = installed_version(name)
+    wanted = locked&.dig("node_modules/#{name}", "version")
+    if installed.nil? then "#{name} is not installed"
+    elsif locked && wanted.nil? then "#{name} is not in package-lock.json"
+    elsif locked && installed != wanted then "#{name} is #{installed}, lockfile has #{wanted}"
+    end
+  end
+end
+
+def package_runtime
+  return nil unless File.file?("package.json")
+
+  package = JSON.parse(File.read("package.json"))
+  names = %w[dependencies devDependencies].flat_map { |section| package.fetch(section, {}).keys }.uniq
+  locked = locked_versions
+  problems = node_dependency_problems(names, locked)
+  return [ false, problems.join(", ") ] if problems.any?
+
+  [ true, locked ? "node_modules match the lockfile" : "node_modules present, versions not compared (no package-lock.json)" ]
+rescue JSON::ParserError
+  [ false, "package.json or package-lock.json is not valid JSON" ]
+end
+
+def check_runtime
+  results = runtime_problems_and_notes
+  return [ "n/a", "no .ruby-version, Gemfile, .node-version or package.json" ] if results.empty?
+
+  failed = results.reject(&:first)
+  return [ "missing", failed.map(&:last).join("; ") ] if failed.any?
+
+  [ "pass", results.map(&:last).join("; ") ]
+end
+
+def database_adapters
+  File.read("config/database.yml").scan(/^\s*adapter:\s*["']?([\w-]+)/).flatten.uniq
+end
+
+def adapter_problem(adapter)
+  tools = DATABASE_TOOLS[adapter]
+  return "unknown adapter #{adapter}" unless tools
+
+  absent = tools.reject { |tool| on_path?(tool) }
+  "#{adapter} needs #{absent.join(' and ')} on PATH" if absent.any?
+end
+
+def check_database(needed)
+  return [ "n/a", "the agreed proof needs no database" ] unless needed
+  return [ "missing", "config/database.yml is missing" ] unless File.file?("config/database.yml")
+  return [ "missing", "bin/rails is not executable" ] unless File.executable?("bin/rails")
+
+  adapters = database_adapters
+  return [ "missing", "no adapter found in config/database.yml" ] if adapters.empty?
+
+  problems = adapters.filter_map { |adapter| adapter_problem(adapter) }
+  return [ "missing", problems.join("; ") ] if problems.any?
+
+  [ "pass", "client tools for #{adapters.join(', ')} present; server reachability was not checked" ]
+end
+
+def browser_found?
+  applications = ENV.fetch("DELIVERY_PREFLIGHT_APPLICATIONS", "/Applications")
+  BROWSERS.any? { |tool| on_path?(tool) } || BROWSER_APPS.any? { |app| File.directory?(File.join(applications, app)) }
+end
+
+def check_browser(needed)
+  return [ "n/a", "the agreed proof needs no browser" ] unless needed
+
+  browser_found? ? [ "pass", "Chrome or Chromium found" ] : [ "missing", "no Chrome or Chromium found" ]
+end
+
+def run_check(name, needs)
+  case name
+  when "claude" then check_claude
+  when "codex" then check_codex
+  when "github" then check_github
+  when "origin" then check_origin
+  when "signing" then check_signing
+  when "runtime" then check_runtime
+  when "database" then check_database(needs.include?("database"))
+  when "browser" then check_browser(needs.include?("browser"))
+  end
+end
+
+def run_checks(needs)
+  ORDER.to_h { |name| [ name, run_check(name, needs) ] }
+end
+
+needs = parse_needs(ARGV.dup)
+results = run_checks(needs)
+results.each { |name, (status, reason)| puts("#{status.ljust(9)}#{name}: #{reason}") }
+blockers = results.select { |_, (status, _)| status == "missing" }.keys
+puts(blockers.empty? ? "No blockers." : "Blockers: #{blockers.join(', ')}")
+exit(blockers.empty? ? 0 : 1)

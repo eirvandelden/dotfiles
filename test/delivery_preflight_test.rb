@@ -116,6 +116,8 @@ class DeliveryPreflightTest < Minitest::Test
 
   def test_leaves_the_repository_untouched
     File.write(File.join(@repo, ".ruby-version"), "#{RUBY_VERSION}\n")
+    git("add", ".ruby-version")
+    git("commit", "--quiet", "-m", "pin ruby")
     enable_signing
     before = snapshot
 
