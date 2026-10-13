@@ -72,3 +72,17 @@ The round-1 nit about a locked worktree (`sweep.rb:86`) stays dismissed and is n
 Compliance: unchanged from round 3; every acceptance criterion maps to its test and every `## Proof` test exists. No existing test was weakened, skipped or deleted: the `gh` and `hanging-ssh` stubs only add a line that records their process group, and the `git` recorder sleeps only when `GIT_FETCH_DELAY` is set. The new tests (`test_a_fetch_slower_than_the_sweep_time_limit_still_brings_origin_main_up_to_date`, `test_ctrl_c_ends_it_during_a_fetch`, the four in `capture_output_test.rb`) cover review fixes and are outside the plan's `## Proof`, which is expected.
 
 Security: nothing found. The commands still reach `Open3` as argument arrays. `WORKTREE_TOOLS_TIME_LIMIT` passes through `Float()`, reaches no shell, and now applies only to `worktree-sweep`. Process groups that the tests kill come from files in the test's own temporary directory.
+
+## Round 5 — 2026-10-13 11:42 UTC — 671c8d4b
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default policy from `claude/.claude/skills/new-repo-setup/references/REVIEW.md` applies. This round covers the two code commits since round 4: `60853587` (SIGINT in the Ctrl-C test) and `671c8d4b` (hanging stubs). Both change tests only. Checks run, under a load average of about 17: `test/worktree_sweep_test.rb` (17 runs), `test/worktree_sweep_on_pull_test.rb` (10 runs), `test/worktree_create_test.rb` (37 runs), `test/lefthook_pull_hooks_test.rb` (13 runs) and `git/.config/git/worktree-tools/test/capture_output_test.rb` (4 runs) are green. RuboCop on the 9 changed Ruby files and `yamllint lefthook.yml` report no offenses. `git/.config/git/worktree-tools/test/conductor_scripts_test.rb` still fails (2 failures, 1 error), as on `origin/main`; the branch does not touch it.
+
+The round-4 fixes hold in the scenario that failed. `test_ctrl_c_ends_it_during_a_fetch` passes as a `( … ) &` background job, in the foreground under `sh -c "trap '' INT; …"`, and as 4 parallel background jobs (4 of 4). `RESTORE_SIGINT` passes `SCRIPT` and its arguments through `ARGV` to the `exec`, so the pid, the process group and the arguments stay the same. The group kill in that test's `ensure` now runs only while `worktree-create` is alive. `stop_hanging_stubs` runs only after `run_script_within_deadline` misses its deadline; on a run that keeps it, the time limit already killed the stubs' groups, because each stub runs in the group of the call that the limit kills (`gh` itself, or `git fetch` with its `ssh`). `stop_waiter`'s comment sits above `stop_waiter` again.
+
+Nothing found.
+
+The round-1 nit about a locked worktree (`sweep.rb:86`) stays dismissed and is not repeated here.
+
+Compliance: unchanged from round 4; every acceptance criterion maps to its test and every `## Proof` test exists. No test was weakened, skipped or deleted: the Ctrl-C test keeps its assertion and only resets an inherited SIGINT disposition, and the sweep test keeps every kill on a missed deadline.
+
+Security: nothing found. `RESTORE_SIGINT` is a fixed string, and the spawned `ruby` gets its arguments as an array, not through a shell.
