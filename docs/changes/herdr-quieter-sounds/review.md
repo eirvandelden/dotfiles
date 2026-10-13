@@ -32,3 +32,21 @@ Nothing found. Every path in the script is quoted, the source is only ever an ff
 - [ ] Nit: one README sentence has 21 words and chains two "and" clauses, against the playbook's Simplified Technical English rule (at most 20 words, one statement per sentence). Split it into "herdr plays only mp3, so the script refuses anything else." and "It also refuses a file that already sits in the copies folder." — `herdr/.config/herdr/README.md:96` →
 
 Totals: 1 Important, 4 Nit.
+
+## Round 2 — 2026-10-13T08:10Z — 4a0202ca — Codex (`codex review --base origin/main`)
+
+Transcribed from the Codex CLI. Codex ran `test/herdr_quieter_tones_test.rb` (16 runs green, real-ffmpeg tests included), `test/herdr_config_test.rb` (5 runs green) and `shellcheck -x -S warning` on the script (clean).
+
+### Bugs
+
+Nothing found. Codex: "The new script, sound configuration, and tests are consistent with the stated behavior."
+
+### Security
+
+Nothing found.
+
+### Compliance
+
+Nothing found.
+
+Totals: 0 findings.
