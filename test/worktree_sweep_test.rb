@@ -22,7 +22,7 @@ class WorktreeSweepTest < Minitest::Test
 
   def teardown
     stop_waiter
-    stop_hanging_stubs
+    stop_hanging_stubs if @missed_deadline
     FileUtils.rm_rf(@enclosing)
   end
 
@@ -368,7 +368,8 @@ class WorktreeSweepTest < Minitest::Test
 
   # The hanging stubs run in the process group of the call that started them (git fetch, or gh),
   # which a missed deadline does not reach. Killing the group also stops git from starting ssh
-  # again.
+  # again. After a run that kept its deadline, the time limit already ended those groups, and
+  # their ids may belong to new processes by now.
   def stop_hanging_stubs
     return unless File.exist?(hanging_groups_file)
 
@@ -440,6 +441,7 @@ class WorktreeSweepTest < Minitest::Test
                                                  chdir: @repo, pgroup: true)
     stdin.close
     unless waiter.join(DEADLINE)
+      @missed_deadline = true
       Process.kill("KILL", -waiter.pid)
       flunk("worktree-sweep did not finish within #{DEADLINE} seconds")
     end
