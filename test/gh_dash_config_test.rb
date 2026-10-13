@@ -16,7 +16,7 @@ class GhDashConfigTest < Minitest::Test
 
   def test_pr_sections_put_what_needs_action_first
     expected = [ "Work reviews", "Personal PRs", "My work drafts", "My work: needs reply",
-                "My Pull Requests", "Involved" ]
+                "My work: changes requested", "My Pull Requests", "Involved" ]
 
     assert_equal(expected, titles("prSections"))
   end
@@ -43,6 +43,12 @@ class GhDashConfigTest < Minitest::Test
     expected = %w[is:open org:nedap author:@me draft:false comments:>0 -review:approved]
 
     assert_equal(expected.sort, filter_tokens("prSections", "My work: needs reply"))
+  end
+
+  def test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested
+    expected = %w[is:open org:nedap author:@me draft:false review:changes_requested]
+
+    assert_equal(expected.sort, filter_tokens("prSections", "My work: changes requested"))
   end
 
   def test_default_pr_sections_follow_with_their_gh_dash_filters

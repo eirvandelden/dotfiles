@@ -8,6 +8,8 @@ prSections:
     filters: is:open org:nedap author:@me draft:true
   - title: "My work: needs reply"
     filters: is:open org:nedap author:@me draft:false comments:>0 -review:approved
+  - title: "My work: changes requested"
+    filters: is:open org:nedap author:@me draft:false review:changes_requested
   - title: My Pull Requests
     filters: is:open author:@me
   - title: Involved

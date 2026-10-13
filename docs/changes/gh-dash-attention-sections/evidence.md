@@ -17,6 +17,7 @@ Recorded 2026-10-13. Plan steps 6 and 7.
 - Section 3: work PR E (draft) is present.
 - Section 4: 6 PRs: work PR F, work PR G (changes requested), work PR H, work PR I (bot and own comments only, accepted), work PR J, work PR K.
 - `comments:` counts inline review comments: work PR G and work PR F have 0 issue comments and still match `comments:>0`.
+- Section 5 (added after review round 1): 1 PR, work PR G.
 - Approved nedap PRs of mine: 0.
 - Non-draft nedap PRs of mine with `comments:0 review:none`: 16, absent from sections 3 and 4.
 - Draft nedap PRs with a review request for me: 0, so the draft exclusion in section 1 has no live example.

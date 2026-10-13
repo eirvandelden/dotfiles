@@ -31,6 +31,7 @@ From `intent.md` (2026-10-13). Status: accepted.
   | PRs | Personal PRs | `is:open user:eirvandelden draft:false` (76, of which 53 dependabot) |
   | PRs | My work drafts | `is:open org:nedap author:@me draft:true` (1) |
   | PRs | My work: needs reply | `is:open org:nedap author:@me draft:false comments:>0 -review:approved` (6) |
+  | PRs | My work: changes requested | `is:open org:nedap author:@me draft:false review:changes_requested` (1) |
   | PRs | My Pull Requests | `is:open author:@me` |
   | PRs | Involved | `is:open involves:@me -author:@me` |
   | Issues | Assigned to me | `is:open assignee:@me` (9) |
@@ -94,6 +95,7 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
 - A non-draft dependabot PR in an `eirvandelden` repository shows in the second section; a draft there does not → `test_personal_section_takes_every_ready_pr_in_my_repositories` (filter is `user:eirvandelden draft:false` with no `author:` qualifier); live: step 7.
 - My open nedap draft shows in the third section → `test_drafts_section_takes_my_open_work_drafts`; live: step 7.
 - My open nedap PR with "changes requested" shows in the fourth section → `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`; live: step 7.
+- My open non-draft nedap PR with a "changes requested" review shows in the fifth section → `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`; live: work PR G.
 - My open nedap PR with only commented reviews shows in the fourth section → `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved` (`comments:>0`); live: step 7 with `work PR F`.
 - My open approved nedap PR does not show in the fourth section; it shows in "My Pull Requests" → `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved` (`-review:approved`) and `test_default_pr_sections_follow_with_their_gh_dash_filters`.
 - My open non-draft nedap PR with no comments and no review shows in neither section 3 nor 4 → `test_drafts_section_takes_my_open_work_drafts` (`draft:true`) and `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved` (`comments:>0`); live: step 7.
@@ -105,7 +107,7 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
 
 Per changed file, the unit tests expected:
 
-- `test/gh_dash_config_test.rb`: `test_config_is_valid_yaml_inside_the_github_stow_package`, `test_pr_sections_put_what_needs_action_first`, `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts`, `test_personal_section_takes_every_ready_pr_in_my_repositories`, `test_drafts_section_takes_my_open_work_drafts`, `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`, `test_default_pr_sections_follow_with_their_gh_dash_filters`, `test_issue_sections_open_on_issues_assigned_to_me`, `test_no_filter_uses_or`, `test_deep_review_keybinding_opens_octo_in_a_herdr_pane`, `test_diff_pager_stays_delta`.
+- `test/gh_dash_config_test.rb`: `test_config_is_valid_yaml_inside_the_github_stow_package`, `test_pr_sections_put_what_needs_action_first`, `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts`, `test_personal_section_takes_every_ready_pr_in_my_repositories`, `test_drafts_section_takes_my_open_work_drafts`, `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`, `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`, `test_default_pr_sections_follow_with_their_gh_dash_filters`, `test_issue_sections_open_on_issues_assigned_to_me`, `test_no_filter_uses_or`, `test_deep_review_keybinding_opens_octo_in_a_herdr_pane`, `test_diff_pager_stays_delta`.
 - `github/.config/gh-dash/config.yml`: covered by the test file above; no code of its own.
 
 Test setup: `YAML.safe_load_file` on `github/.config/gh-dash/config.yml`, path from `File.expand_path("../github/.config/gh-dash/config.yml", __dir__)`, like `test/herdr_config_test.rb`. Compare filters as whitespace-split token sets, so token order does not matter but no token is missing or extra. No network, no gh-dash binary in the unit tests; the live checks are Order of work steps 6 and 7 and their evidence is recorded in the implementation report.

@@ -32,8 +32,9 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
   2. Open non-draft PRs in my personal repositories (`user:eirvandelden`), dependabot included.
   3. My own open work drafts.
   4. My own open non-draft work PRs that have comments or reviews, excluding approved PRs.
-  5. Default "My Pull Requests".
-  6. Default "Involved".
+  5. My own open non-draft work PRs with changes requested.
+  6. Default "My Pull Requests".
+  7. Default "Involved".
 - Issues sections, in this order: issues assigned to me, default "My Issues", default "Involved".
 
 ## Out of scope
@@ -52,6 +53,7 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
 - My open nedap draft shows in the third section.
 - My open nedap PR with "changes requested" shows in the fourth section.
 - My open nedap PR with only commented reviews shows in the fourth section.
+- My open non-draft nedap PR with a "changes requested" review shows in the fifth section, even when that review has no inline comments.
 - My open approved nedap PR does not show in the fourth section; it shows in "My Pull Requests".
 - My open non-draft nedap PR with no comments and no review shows in neither the third nor the fourth section.
 - The default "Needs My Review" section is gone; "My Pull Requests" and "Involved" follow the new sections.
@@ -61,7 +63,7 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
 
 ## Flagged concerns
 
-- Classic search cannot express "draft OR reviewed OR commented", and it counts a PR with only commented reviews as `review:none`. Chosen side (Etienne, 2026-10-13, during the plan stage): two sections, and section 4 matches any comment. Section 4 therefore also shows PRs whose only comments come from bots or from me.
+- Classic search cannot express "draft OR reviewed OR commented", and it counts a PR with only commented reviews as `review:none`. Chosen side (Etienne, 2026-10-13, during the plan stage): two sections, and section 4 matches any comment. Section 4 therefore also shows PRs whose only comments come from bots or from me. `comments:` ignores a review body without inline comments, so section 5 catches "changes requested" by review state (Etienne, 2026-10-13, after review round 1); it mostly repeats section 4.
 - `-reviewed-by:@me` hides a PR where my review was re-requested after I reviewed. Chosen side: accept that, to keep handled team requests out.
 
 ## Open questions
