@@ -93,9 +93,11 @@ class RbsInlineToolingTest < Minitest::Test
   end
 
   def test_no_rubocop_yard_reference_outside_change_folders
-    output, = Open3.capture2("git", "grep", "-i", "-l", RUBOCOP_YARD, "--", ":!docs/changes", chdir: REPO_ROOT)
+    output, status = Open3.capture2("git", "grep", "-i", "-l", RUBOCOP_YARD, "--", ":!docs/changes", chdir: REPO_ROOT)
 
     assert_empty(output)
+    # git grep exits 1 for no match; anything else means it never searched.
+    assert_equal(1, status.exitstatus)
   end
 
   private
