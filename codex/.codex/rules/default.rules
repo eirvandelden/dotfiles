@@ -63,9 +63,14 @@ prefix_rule(
 
 # A second layer under the consent guard hook (claude/.claude/hooks/consent-guard.rb, wired
 # in config.toml's [hooks]). The hook is what refuses; these rules make Codex ask, or refuse,
-# for plain --force, --no-verify, posting on GitHub and deploys even if the hook cannot run.
+# for plain --force, the ways of skipping the git hooks (--no-verify and its abbreviations,
+# git commit -n, core.hooksPath writes, commit-tree, update-ref, lefthook install), posting on
+# GitHub and deploys even if the hook cannot run.
 # The hook's remote check (pushes only to your own repositories) has no rule equivalent, so
 # the push allows below name `origin` only; any other remote prompts.
+# A prefix cannot express the LEFTHOOK* and GIT_CONFIG_* assignments (they come before the
+# program and carry any value), git -c and --config-env (key and value share one token), or
+# -n after other flags. Only the hook covers those, in Codex too.
 
 prefix_rule(
     pattern = ["git", "push", "--force"],
@@ -76,17 +81,103 @@ prefix_rule(
 )
 
 prefix_rule(
-    pattern = ["git", "push", "--no-verify"],
+    pattern = ["git", ["commit", "ci", "push", "merge", "pull", "am"], ["--no-verify", "--no-verif", "--no-veri"]],
     decision = "prompt",
     justification = "skips the git hooks that keep commits off main",
-    match = [["git", "push", "--no-verify", "origin", "x"]],
+    match = [
+        ["git", "push", "--no-verify", "origin", "x"],
+        ["git", "commit", "--no-verify", "-m", "x"],
+        ["git", "commit", "--no-veri", "-m", "x"],
+        ["git", "merge", "--no-verify", "x"],
+    ],
 )
 
 prefix_rule(
-    pattern = ["git", "commit", "--no-verify"],
+    pattern = ["git", ["commit", "ci"], "-n"],
     decision = "prompt",
-    justification = "skips the git hooks that keep commits off main",
-    match = [["git", "commit", "--no-verify", "-m", "x"]],
+    justification = "git commit -n is --no-verify: it skips the git hooks that keep commits off main",
+    match = [["git", "commit", "-n", "-m", "x"], ["git", "ci", "-n", "-m", "x"]],
+    not_match = [["git", "push", "-n", "origin", "x"]],
+)
+
+prefix_rule(
+    pattern = ["git", ["commit-tree", "update-ref"]],
+    decision = "prompt",
+    justification = "writes history without running any git hook",
+    match = [["git", "commit-tree", "HEAD^{tree}", "-m", "x"], ["git", "update-ref", "refs/heads/x", "abc"]],
+)
+
+prefix_rule(
+    pattern = ["lefthook", ["install", "uninstall"]],
+    decision = "prompt",
+    justification = "replaces or removes the global git hooks",
+    match = [["lefthook", "install"], ["lefthook", "uninstall"]],
+    not_match = [["lefthook", "dump"]],
+)
+
+# core.hooksPath decides where git looks for hooks. Writing or unsetting it, in any scope, disarms them.
+prefix_rule(
+    pattern = ["git", "config", ["core.hooksPath", "core.hookspath"]],
+    decision = "prompt",
+    justification = "changes where git looks for its hooks",
+    match = [["git", "config", "core.hooksPath", "/dev/null"]],
+    not_match = [["git", "config", "--get", "core.hooksPath"]],
+)
+
+prefix_rule(
+    pattern = [
+        "git", "config",
+        ["--global", "--local", "--system", "--worktree", "--unset", "--unset-all", "--replace-all", "--add", "set", "unset"],
+        ["core.hooksPath", "core.hookspath"]
+    ],
+    decision = "prompt",
+    justification = "changes where git looks for its hooks",
+    match = [["git", "config", "--global", "core.hooksPath", "/dev/null"], ["git", "config", "--unset", "core.hooksPath"]],
+    not_match = [["git", "config", "--get", "core.hooksPath"]],
+)
+
+prefix_rule(
+    pattern = [
+        "git", "config",
+        ["--global", "--local", "--system", "--worktree", "--unset", "--unset-all", "--replace-all", "--add", "set", "unset"],
+        ["--global", "--local", "--system", "--worktree", "--unset", "--unset-all", "--replace-all", "--add", "set", "unset"],
+        ["core.hooksPath", "core.hookspath"]
+    ],
+    decision = "prompt",
+    justification = "changes where git looks for its hooks",
+    match = [["git", "config", "--global", "--unset", "core.hooksPath"]],
+)
+
+# Removing or renaming the core section drops core.hooksPath without naming it.
+prefix_rule(
+    pattern = ["git", "config", ["--remove-section", "--rename-section", "remove-section", "rename-section"], "core"],
+    decision = "prompt",
+    justification = "drops core.hooksPath along with the rest of the core section",
+    match = [["git", "config", "--remove-section", "core"]],
+)
+
+prefix_rule(
+    pattern = [
+        "git", "config",
+        ["--global", "--local", "--system", "--worktree", "--unset", "--unset-all", "--replace-all", "--add", "set", "unset"],
+        ["--remove-section", "--rename-section", "remove-section", "rename-section"],
+        "core"
+    ],
+    decision = "prompt",
+    justification = "drops core.hooksPath along with the rest of the core section",
+    match = [["git", "config", "--global", "remove-section", "core"]],
+)
+
+prefix_rule(
+    pattern = [
+        "git", "config",
+        ["--remove-section", "--rename-section", "remove-section", "rename-section"],
+        ["--global", "--local", "--system", "--worktree", "--unset", "--unset-all", "--replace-all", "--add", "set", "unset"],
+        "core"
+    ],
+    decision = "prompt",
+    justification = "drops core.hooksPath along with the rest of the core section",
+    match = [["git", "config", "remove-section", "--global", "core"]],
 )
 
 prefix_rule(
