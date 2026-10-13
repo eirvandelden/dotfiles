@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # hand-off-plan.sh <stage> <change-slug> [--auto]
 #
-# Hands a stage (intent, plan, or implement) of docs/changes/<change-slug> to a fresh
+# Hands a stage (intent, plan, implement, or deliver) of docs/changes/<change-slug> to a fresh
 # Claude worker in a pane split below the caller.
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
 # --auto (plan, implement; autonomous delivery on a personal repository): the worker runs the
 # skill in its auto mode, never waits for Etienne's word "accepted", never starts the next stage
 # (the coordinator does), and puts open decisions in its report as "Decision needed:" lines.
+# deliver (autonomous delivery) starts the Claude coordinator of the whole delivery; it takes no --auto.
 
 set -euo pipefail
 
@@ -28,6 +29,7 @@ case "${3:-}" in
     ;;
 esac
 
+reported_file="that file path"
 accepted_then_push="Once Etienne says the literal word \"accepted\" or \"agreed\" and the skill has committed \
 the artifact, push the branch (git push -u origin HEAD)."
 
@@ -65,15 +67,32 @@ the branch for the review pane and /finish to send onward."
     report_instruction="Then write what you did, and anything you could not finish, as Markdown \
 to"
     ;;
+  deliver)
+    model="opus"
+    ready_word="Delivery done:"
+    role_instruction="You are the Claude coordinator of the autonomous delivery of \
+docs/changes/$slug; intent.md is accepted and records Delivery: autonomous. Follow the intent \
+skill's Autonomous delivery section from its preflight on. keep your own pane open through every \
+stage; pass your own pane id (\$HERDR_PANE_ID in your shell) to every stage you start, never the \
+caller's id below; never merge."
+    acceptance_instruction=""
+    report_instruction="When the delivery ends, write the account file path into"
+    reported_file="the account file path"
+    ;;
   *)
     echo "Usage: hand-off-plan.sh <stage> <change-slug>. <stage> must be one of intent, \
-plan, implement." >&2
+plan, implement, deliver." >&2
     exit 1
     ;;
 esac
 
 if [ "$auto" = 1 ] && [ "$stage" = "intent" ]; then
   echo "--auto is not valid for the intent stage: the intent interview is the human gate." >&2
+  exit 1
+fi
+
+if [ "$auto" = 1 ] && [ "$stage" = "deliver" ]; then
+  echo "--auto is not valid for the deliver stage: it is always autonomous." >&2
   exit 1
 fi
 
@@ -181,7 +200,7 @@ already created at $worker_cwd. Do not invoke worktree-first, and do not create 
 # stage must report to it, not to this pane, which closes itself right after starting that stage.
 # implement has no accepted status line to flip, so it is the one stage that chains nowhere.
 chain_instruction=""
-if [ "$stage" != "implement" ] && [ "$auto" = 0 ]; then
+if [ "$stage" != "implement" ] && [ "$stage" != "deliver" ] && [ "$auto" = 0 ]; then
   chain_instruction=" Your coordinator's pane id is $HERDR_PANE_ID; the skill's Accept step starts \
 the next stage with HERDR_PANE_ID set to that id. If starting the next stage fails, do not retry: \
 include one line in your own report file, named next, saying so and why."
@@ -205,8 +224,8 @@ fi
 herdr agent prompt "$worker" "$intro $role_instruction Read the applicable agents.md and \
 CLAUDE.md first. $acceptance_instruction$chain_instruction$auto_instruction$intent_branch $report_instruction $report. Then \
 report back to the agent that handed this over, with \
-herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by that \
-file path. Quote the path yourself. That call is rejected while the coordinator is blocked on a \
+herdr agent prompt, sending pane $HERDR_PANE_ID the single line $ready_word followed by $reported_file. \
+Quote the path yourself. That call is rejected while the coordinator is blocked on a \
 prompt of its own, so if it fails, wait a few seconds and send it again, at most twelve times. \
 Whether that report line gets through or not, then run herdr pane close \$HERDR_PANE_ID (your \
 own pane's id from your shell, not the coordinator's id above) to close your own pane; the \
