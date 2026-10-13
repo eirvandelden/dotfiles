@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The glow install step points `style:` in glow's live config at the stowed Solunized style. Glow
 # 3.0.0 only resolves a style from every directory through an absolute path, so the step writes the

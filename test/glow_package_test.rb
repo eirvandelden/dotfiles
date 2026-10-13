@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "json"
 require "open3"
+require_relative "isolated_git"
 
 # The glow package carries only the committed copy of the generated Solunized style. Glow's own
 # config stays a plain file, because the style path in it must be absolute and the repository is
