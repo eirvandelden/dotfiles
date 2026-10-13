@@ -56,3 +56,31 @@ Checks: `test/rubocop_fallback_test.rb` (8 runs, 0 skips) and `test/rbs_inline_t
 ## Round 4 — 2026-10-13T11:12:06Z — a32fb3b1 (codex)
 
 No findings. `codex review --base origin/main` could not run the fallback RuboCop tests, because its sandbox blocked the RuboCop cache writes; they pass locally.
+
+## Round 5 — 2026-10-13T11:24:12Z — 683fd762
+
+No findings.
+
+Round 3 fixes checked:
+
+- Important (CI parses as Ruby 2.7): fixed. The fixtures in `test/rubocop_fallback_test.rb` no longer use endless methods. A CI-like copy of `rubocop/.rubocop.yml` and the test file, in a scratch folder with no `.ruby-version`, `.tool-versions` or Gemfile above it, resolves the target Ruby to 2.7 and still passes with `CI=true`: 8 runs, 0 failures, 0 skips. An endless method in the same setup still gives `Lint/Syntax`, so the cause was the fixture syntax, as recorded.
+- The autocorrect test is no longer vacuous. In the same CI-like setup, `AllowRBSInlineAnnotation: false` makes `test_fallback_accepts_valid_rbs_inline_signature` fail on `Layout/LeadingCommentSpace` and `test_fallback_autocorrect_keeps_valid_rbs_inline_signature` fail on the infinite-loop error.
+- Nit (`# @rbs` not covered): fixed. `VALID_RBS_FIXTURE` now holds `# @rbs count: Integer` and `# @rbs return: String`, and both valid-signature tests assert no offense from any cop and an unchanged file after `-a`.
+- Real use is not affected by the Ruby 2.7 default: `~/.rubocop.yml` is stowed in `~`, and `~/.ruby-version` (from `ruby/.ruby-version`) sits next to it.
+
+Compliance (acceptance criteria from `intent.md`):
+
+- No `rubocop-yard`, no `YARD/*` cop → `test_fallback_reports_no_yard_cop`, `test_fallback_config_does_not_load_rubocop_yard`.
+- Malformed annotation reported, valid RBS 4 annotation accepted → `test_fallback_reports_malformed_rbs_inline_type`, `test_fallback_reports_rbs_inline_comment_without_colon_prefix`, `test_fallback_accepts_valid_rbs_inline_signature`, `test_fallback_autocorrect_keeps_valid_rbs_inline_signature`, `test_fallback_leaves_nodoc_comment_alone`. Green locally and in the CI-like setup.
+- `packages.conf` installs `rbs`, `steep`, `rubocop-rbs_inline` and lists no YARD gem → `test_packages_conf_installs_rbs_tooling`, `test_packages_conf_lists_no_yard_gems` (list only; transitive YARD gems accepted by Etienne).
+- CI installs `rubocop-rbs_inline`, not `rubocop-yard`, and `rubocop_fallback_test.rb` passes locally and in CI → `test_ci_installs_rubocop_rbs_inline_not_rubocop_yard`; the CI half is proven in the CI-like setup only. The pull request's CI run stays the manual gate from `plan.md`.
+- Editors show Steep diagnostics next to Solargraph → `test_neovim_enables_steep_next_to_solargraph`, `test_neovim_steep_starts_only_with_a_steepfile`, `test_zed_runs_steep_next_to_solargraph`, `test_vscode_runs_global_steep`. The in-editor check stays a manual gate.
+- Solargraph shows RBS for `String#upcase` → plan check (recorded in Round 1).
+- `new-repo-setup` adds an inline Steepfile and `steep check` runs → `test_new_repo_setup_adds_inline_steepfile`, plus the Round 1 scratch `steep check`.
+- Personal rule is the same in both skills → `test_ruby_style_personal_rule_names_inline_rbs`, `test_rails_architecture_personal_rule_names_inline_rbs`, `test_rails_architecture_drops_personal_yard_method_docs`.
+- Work YARD rules kept, with `@action` / `@route` → `test_rails_architecture_keeps_work_action_route_tags`, `test_ruby_style_keeps_work_yard_rule`.
+- `git grep -i rubocop-yard` empty outside `docs/changes/` → `test_no_rubocop_yard_reference_outside_change_folders`; the literal command also exits 1 with no output.
+
+Every test named in `plan.md` `## Proof` exists. No existing test was weakened, skipped or deleted: the Round 3 fix changes only the new `rbs_inline` fixtures.
+
+Checks: `test/rubocop_fallback_test.rb` (8 runs, 0 skips) and `test/rbs_inline_tooling_test.rb` (15 runs) green locally under Ruby 4.0.7. RuboCop clean on both test files. yamllint clean on the changed YAML. The no-hardwrap markdownlint config is clean on the changed markdown. The full suite was not run, as instructed: `test/agent_worktree_test.rb` and `test/review_report_check_test.rb` fail locally only.
