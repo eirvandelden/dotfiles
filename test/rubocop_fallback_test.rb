@@ -42,6 +42,9 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
+  RBS_FIXTURE_PATH = "lib/typed.rb".freeze
+  RBS_COP_PATTERN = %r{\AStyle/RbsInline/}
+
   def setup
     skip_unless_ci(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
 
@@ -77,7 +80,36 @@ class RubocopFallbackTest < Minitest::Test
     assert_empty(cop_names(report).grep(%r{\AYARD/}))
   end
 
+  def test_fallback_reports_malformed_rbs_inline_type
+    report = run_rbs_fixture("#: (Integer -> String\ndef label(count) = count.to_s\n")
+
+    assert_includes(cop_names(report), "Style/RbsInline/InvalidTypes")
+  end
+
+  def test_fallback_reports_rbs_inline_comment_without_colon_prefix
+    report = run_rbs_fixture("# : (Integer) -> String\ndef label(count) = count.to_s\n")
+
+    assert_includes(cop_names(report), "Style/RbsInline/InvalidComment")
+  end
+
+  def test_fallback_accepts_valid_rbs_inline_signature
+    report = run_rbs_fixture("#: (Integer) -> String\ndef label(count) = count.to_s\n")
+
+    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+  end
+
+  def test_fallback_leaves_nodoc_comment_alone
+    report = run_rbs_fixture("# :nodoc:\nclass Hidden\nend\n")
+
+    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+  end
+
   private
+
+  def run_rbs_fixture(source)
+    write_fixture(RBS_FIXTURE_PATH, source)
+    run_fallback(path: RBS_FIXTURE_PATH)
+  end
 
   def write_fixture(path, content)
     FileUtils.mkdir_p(File.dirname(File.join(@project, path)))
