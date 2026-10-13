@@ -54,7 +54,7 @@ class HerdrQuieterTonesTest < Minitest::Test
     call = ffmpeg_calls.first
     assert_includes(call, "volume=0.3")
     assert_includes(call, "libmp3lame")
-    assert_equal(original, call[call.index("-i") + 1])
+    assert_equal("file:#{original}", call[call.index("-i") + 1])
   end
 
   def test_the_copy_is_readable_like_an_ordinary_file
@@ -130,6 +130,20 @@ class HerdrQuieterTonesTest < Minitest::Test
     assert_equal("copy", File.read(copy))
   end
 
+  def test_a_source_named_like_an_option_is_still_checked
+    install_ffmpeg_stub
+    FileUtils.mkdir_p(@copies)
+    copy = File.join(@copies, "-x.mp3")
+    File.write(copy, "copy")
+    FileUtils.ln_s(copy, File.join(@sources, "-x.mp3"))
+
+    _, stderr, status = run_script("-x.mp3", chdir: @sources)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/copy|already/i, stderr)
+    assert_equal("copy", File.read(copy))
+  end
+
   def test_ffmpeg_is_told_to_overwrite_and_write_mp3_to_a_temporary_file
     install_ffmpeg_stub
 
@@ -199,6 +213,16 @@ class HerdrQuieterTonesTest < Minitest::Test
     assert_in_delta(20 * Math.log10(0.3), drop, 0.5)
   end
 
+  def test_a_relative_source_with_a_colon_in_its_name_is_converted
+    skip("ffmpeg is not installed") unless ffmpeg_installed?
+    FileUtils.mv(sine_tone, File.join(@sources, "a:b.mp3"))
+
+    _, stderr, status = run_script("a:b.mp3", path: ENV.fetch("PATH"), chdir: @sources)
+
+    assert(status.success?, stderr)
+    assert(File.exist?(File.join(@copies, "a:b.mp3")))
+  end
+
   def test_the_source_is_left_byte_for_byte_unchanged
     skip("ffmpeg is not installed") unless ffmpeg_installed?
     original = sine_tone
@@ -211,8 +235,8 @@ class HerdrQuieterTonesTest < Minitest::Test
 
   private
 
-  def run_script(*arguments, path: "#{@stub_bin}:#{SYSTEM_PATH}")
-    Open3.capture3({ "HOME" => @home, "PATH" => path }, SCRIPT, *arguments)
+  def run_script(*arguments, path: "#{@stub_bin}:#{SYSTEM_PATH}", chdir: Dir.pwd)
+    Open3.capture3({ "HOME" => @home, "PATH" => path }, SCRIPT, *arguments, chdir: chdir)
   end
 
   def convert(original)

@@ -24,14 +24,15 @@ cleanup() {
 }
 
 check_source() {
-  local source=$1
+  local source=$1 resolved
   [ -f "$source" ] || fail "no such file: $source"
   case "$source" in
     *.mp3) ;;
     *) fail "not an mp3 (herdr plays only mp3): $source" ;;
   esac
   # realpath follows a link, so a link to a copy counts as the copy.
-  [ "$(dirname "$(realpath "$source")")" != "$(physical_dir "$out_dir")" ] ||
+  resolved=$(realpath -- "$source") || fail "cannot resolve: $source"
+  [ "$(dirname -- "$resolved")" != "$(physical_dir "$out_dir")" ] ||
     fail "already a quieter copy: $source"
 }
 
@@ -42,10 +43,10 @@ physical_dir() {
 quieten() {
   local source=$1
   local name destination
-  name=$(basename "$source")
+  name=$(basename -- "$source")
   destination="$out_dir/$name"
   tmp=$(mktemp "$out_dir/.$name.XXXXXX")
-  ffmpeg -hide_banner -loglevel error -y -i "$source" -map_metadata -1 \
+  ffmpeg -hide_banner -loglevel error -y -i "file:$source" -map_metadata -1 \
     -af "volume=$VOLUME" -c:a libmp3lame -q:a 2 -f mp3 "$tmp"
   # mktemp creates the file as 0600; give the copy the mode of an ordinary file.
   chmod 644 "$tmp"
