@@ -1,0 +1,132 @@
+#!/usr/bin/env ruby
+# Hands an accepted autonomous intent to a Claude coordinator. Run it with no arguments from inside
+# the change's worktree. It refuses, and never starts Claude, unless origin is personal, intent.md
+# is committed and unchanged, and it is accepted with "Delivery: autonomous". It then runs the
+# delivery preflight and refuses on any blocker. Inside Herdr the coordinator becomes a pane
+# (hand-off-plan.sh deliver); outside Herdr it becomes a background session (claude --bg) that
+# runs with the configured permission mode and every hook: no permission flag is ever passed.
+require "open3"
+require "time"
+require_relative "../../../hooks/remote_matcher"
+require_relative "../../plan/scripts/intent_metadata"
+
+HERE = File.dirname(File.realpath(__FILE__))
+
+def refuse(message)
+  warn(message)
+  exit(1)
+end
+
+def git(*arguments)
+  output, status = Open3.capture2e("git", *arguments)
+  [ output.strip, status.success? ]
+end
+
+def git!(*arguments)
+  output, success = git(*arguments)
+  refuse("git #{arguments.first} failed: #{output}") unless success
+  output
+end
+
+def change_folder
+  output, error, status = Open3.capture3(File.join(HERE, "../../plan/scripts/change-folder"))
+  refuse(error.strip) unless status.success?
+  output.strip
+end
+
+def check_origin
+  url, = git("remote", "get-url", "origin")
+  return if RemoteMatcher.personal?(url)
+
+  refuse("origin is not a personal repository: autonomous delivery runs only on personal origins.")
+end
+
+def committed_intent(folder)
+  path = "#{folder}/intent.md"
+  _, committed = git("cat-file", "-e", "HEAD:#{path}")
+  refuse("#{path} is not committed in HEAD: commit it first.") unless committed
+  _, unchanged = git("diff", "--quiet", "HEAD", "--", path)
+  refuse("#{path} has uncommitted changes: commit them first.") unless unchanged
+  git!("show", "HEAD:#{path}")
+end
+
+def check_intent(text)
+  refuse("intent.md is not accepted: Etienne has to accept the intent first.") unless IntentMetadata.accepted?(text)
+  return if IntentMetadata.autonomous?(text)
+
+  refuse("intent.md does not record Delivery: autonomous: this change is step-by-step.")
+end
+
+def run_preflight
+  path = ENV.fetch("DELIVERY_PREFLIGHT") { File.join(HERE, "delivery-preflight") }
+  ran = system(path)
+  refuse("The delivery preflight found blockers (or could not run): Claude was not started.") unless ran
+end
+
+def inside_herdr?
+  ENV["HERDR_ENV"] == "1" && !ENV.fetch("HERDR_PANE_ID", "").empty?
+end
+
+def hand_to_pane(slug)
+  scripts = ENV.fetch("HERDR_SCRIPTS_DIR") { File.expand_path("~/.config/herdr/scripts") }
+  exec(File.join(scripts, "hand-off-plan.sh"), "deliver", slug)
+end
+
+def coordinator_prompt(slug, worktree, account)
+  <<~TEXT.gsub(/\s*\n\s*/, " ").strip
+    You are the Claude coordinator of the autonomous delivery of docs/changes/#{slug} in #{worktree}.
+    intent.md is accepted with Delivery: autonomous.
+    Read agents.md and CLAUDE.md first.
+    Follow ~/.claude/skills/intent/SKILL.md, section "Autonomous delivery", from its preflight on.
+    Run each stage's here backend in auto mode, in sequence, in this session.
+    Keep #{account} current after every stage; never merge.
+  TEXT
+end
+
+def start_claude(slug, worktree, account)
+  reader, writer = IO.pipe
+  pid = Process.spawn("claude", "--bg", "--model", "opus", "--name", "deliver-#{slug}",
+                      coordinator_prompt(slug, worktree, account),
+                      chdir: worktree, in: File::NULL, out: writer, err: writer)
+  writer.close
+  output = reader.read
+  Process.wait(pid)
+  [ output, $?.success? ]
+rescue Errno::ENOENT
+  refuse("claude is not on PATH: Claude was not started.")
+end
+
+def summary(worktree, output, account)
+  id = output[/session[ :]+([0-9a-zA-Z-]{6,})/i, 1] || "<session-id>"
+  <<~TEXT
+    Delivery coordinator started at #{Time.now.iso8601}.
+    Worktree: #{worktree}
+    Claude said:
+    #{output.strip}
+    Attach: claude attach #{id}
+    Logs: claude logs #{id}
+    Stop: claude stop #{id}
+    The account lands in #{account}
+  TEXT
+end
+
+def hand_to_background(slug, worktree, herdr_directory)
+  account = File.join(herdr_directory, "deliver-#{slug}.md")
+  output, success = start_claude(slug, worktree, account)
+  refuse("claude failed to start the coordinator:\n#{output}") unless success
+
+  text = summary(worktree, output, account)
+  File.write(File.join(herdr_directory, "deliver-#{slug}-handoff.md"), text)
+  puts(text)
+end
+
+check_origin
+folder = change_folder
+check_intent(committed_intent(folder))
+run_preflight
+slug = File.basename(folder)
+worktree = git!("rev-parse", "--show-toplevel")
+inside_herdr? && hand_to_pane(slug)
+herdr_directory = File.join(git!("rev-parse", "--path-format=absolute", "--git-common-dir"), "herdr")
+Dir.mkdir(herdr_directory) unless Dir.exist?(herdr_directory)
+hand_to_background(slug, worktree, herdr_directory)
