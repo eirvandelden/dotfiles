@@ -46,7 +46,7 @@ Most of this is enforced mechanically by the `rubocop-eirvandelden` gem. The rul
 ## Documentation comments
 
 - Work projects use YARD: short docs on classes always, on methods only when complex, never on private methods, no giant `@example` blocks.
-- Personal projects: no doc comments unless a non-obvious "why" needs recording.
+- Personal projects: a one-line summary comment on each class, inline RBS signatures (`#:` or `# @rbs`, RBS 4 syntax) on methods, no YARD tags, and other comments only for a non-obvious "why".
 
 ## Examples
 

@@ -1,4 +1,4 @@
-vim.lsp.enable({ "solargraph", "lua_ls", "herb_ls" })
+vim.lsp.enable({ "solargraph", "steep", "lua_ls", "herb_ls" })
 
 vim.diagnostic.config({
   virtual_lines = true,

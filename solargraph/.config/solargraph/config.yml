@@ -1,3 +1,6 @@
+---
+# Solargraph has no config key for RBS. It always loads core and standard library RBS from the
+# rbs gem. RBS for gems comes from a project's rbs_collection.yaml (rbs collection install).
 include:
   - app/**/*.rb
   - lib/**/*.rb

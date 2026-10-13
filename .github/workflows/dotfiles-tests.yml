@@ -20,7 +20,7 @@ jobs:
       # Latest releases, unpinned like the RUBY_GEMS list in packages.conf.
       - run: >-
           gem install --no-document rubocop rubocop-rails-omakase rubocop-capybara rubocop-minitest
-          rubocop-obsession rubocop-packaging rubocop-performance rubocop-rails rubocop-rspec rubocop-yard
+          rubocop-obsession rubocop-packaging rubocop-performance rubocop-rails rubocop-rspec rubocop-rbs_inline
       # editor_test.rb, rv_ci_fallback_test.rb and secrets_loader_test.rb source zsh scripts.
       - run: sudo apt-get update && sudo apt-get install -y zsh
       - name: Install lefthook

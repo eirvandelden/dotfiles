@@ -36,6 +36,34 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
+  YARD_FIXTURE_PATH = "lib/sample.rb".freeze
+  YARD_FIXTURE = <<~RUBY.freeze
+    # @param name [String]
+    class Sample
+    end
+  RUBY
+
+  # The fixtures avoid endless methods: in CI no .ruby-version sits above the config, so RuboCop
+  # parses as Ruby 2.7 and reports them as Lint/Syntax.
+  RBS_FIXTURE_PATH = "lib/typed.rb".freeze
+  RBS_COP_PATTERN = %r{\AStyle/RbsInline/}
+  VALID_RBS_FIXTURE = <<~RUBY.freeze
+    class Typed
+      attr_reader :count #: Integer
+
+      #: (Integer) -> String
+      def label(count)
+        count.to_s
+      end
+
+      # @rbs count: Integer
+      # @rbs return: String
+      def title(count)
+        count.to_s
+      end
+    end
+  RUBY
+
   def setup
     skip_unless_ci(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
 
@@ -63,7 +91,55 @@ class RubocopFallbackTest < Minitest::Test
     PLAIN_ASSERTIONS.each { |assertion| assert_includes(corrected_lines, assertion) }
   end
 
+  def test_fallback_reports_no_yard_cop
+    write_fixture(YARD_FIXTURE_PATH, YARD_FIXTURE)
+
+    report = run_fallback(path: YARD_FIXTURE_PATH)
+
+    assert_empty(cop_names(report).grep(%r{\AYARD/}))
+  end
+
+  def test_fallback_reports_malformed_rbs_inline_type
+    report = run_rbs_fixture("#: (Integer -> String\ndef label(count)\n  count.to_s\nend\n")
+
+    assert_includes(cop_names(report), "Style/RbsInline/InvalidTypes")
+  end
+
+  def test_fallback_reports_rbs_inline_comment_without_colon_prefix
+    report = run_rbs_fixture("# : (Integer) -> String\ndef label(count)\n  count.to_s\nend\n")
+
+    assert_includes(cop_names(report), "Style/RbsInline/InvalidComment")
+  end
+
+  def test_fallback_accepts_valid_rbs_inline_signature
+    report = run_rbs_fixture(VALID_RBS_FIXTURE)
+
+    assert_empty(cop_names(report))
+  end
+
+  def test_fallback_autocorrect_keeps_valid_rbs_inline_signature
+    run_rbs_fixture(VALID_RBS_FIXTURE, "-a")
+
+    assert_equal(VALID_RBS_FIXTURE, File.read(File.join(@project, RBS_FIXTURE_PATH)))
+  end
+
+  def test_fallback_leaves_nodoc_comment_alone
+    report = run_rbs_fixture("# :nodoc:\nclass Hidden\nend\n")
+
+    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+  end
+
   private
+
+  def run_rbs_fixture(source, *options)
+    write_fixture(RBS_FIXTURE_PATH, source)
+    run_fallback(*options, path: RBS_FIXTURE_PATH)
+  end
+
+  def write_fixture(path, content)
+    FileUtils.mkdir_p(File.dirname(File.join(@project, path)))
+    File.write(File.join(@project, path), content)
+  end
 
   def fixture_file
     File.join(@project, FIXTURE_PATH)
@@ -85,9 +161,9 @@ class RubocopFallbackTest < Minitest::Test
   # skip. Only status 2, RuboCop failing to load the config or its plugins, skips, and only
   # outside CI, since CI installs RuboCop and its plugins. Anything on stderr otherwise, such as a
   # cop crashing, fails.
-  def run_fallback(*options)
+  def run_fallback(*options, path: FIXTURE_PATH)
     stdout, stderr, status = Open3.capture3(
-      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, FIXTURE_PATH, chdir: @project
+      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, path, chdir: @project
     )
     skip_unless_ci("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
 

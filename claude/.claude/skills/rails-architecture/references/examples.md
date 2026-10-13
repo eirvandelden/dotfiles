@@ -146,7 +146,7 @@ def notify_recipients_now
 end
 ```
 
-## YARD `@action` / `@route` controller documentation
+## YARD `@action` / `@route` controller documentation (work-only)
 
 ```ruby
 # Creates a new board for the current account.
@@ -158,3 +158,17 @@ end
 ```
 
 On work projects, the prose line above the tags is optional for a simple action like this — the tags alone are enough. Keep the prose line when the action does something non-obvious.
+
+## Inline RBS signature (personal)
+
+```ruby
+# Represents a card in a board.
+class Card
+  #: (Board) -> void
+  def move_to(board)
+    # ...
+  end
+end
+```
+
+Personal projects use `#:` signatures instead of YARD tags, and no `@action` / `@route`.

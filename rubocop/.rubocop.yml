@@ -9,8 +9,8 @@ plugins:
   - rubocop-packaging
   - rubocop-performance
   - rubocop-rails
+  - rubocop-rbs_inline
   - rubocop-rspec
-  - rubocop-yard
 
 AllCops:
   # RuboCop has a bunch of cops enabled by default. This setting tells RuboCop
@@ -86,16 +86,32 @@ Rails/IndexBy:
 Rails/IndexWith:
   Enabled: true
 
-# Cops from YARD
-YARD/CollectionStyle:
+# Cops from rbs_inline
+# RBS 4 inline syntax and Steep's `inline: true` need no magic comment, so check every file.
+# Only cops that validate an existing annotation are on. The fallback lints repositories that
+# have no annotations yet, so the cops that demand annotations stay off.
+Style/RbsInline:
+  Mode: opt_out
+# rubocop-rails-omakase enables this cop, which reads `#:` as a comment missing its space.
+Layout/LeadingCommentSpace:
+  AllowRBSInlineAnnotation: true
+Style/RbsInline/InvalidComment:
   Enabled: true
-YARD/CollectionType:
+Style/RbsInline/InvalidTypes:
   Enabled: true
-YARD/MeaninglessTag:
+Style/RbsInline/KeywordSeparator:
   Enabled: true
-YARD/MismatchName:
+Style/RbsInline/ParametersSeparator:
   Enabled: true
-YARD/TagTypeSyntax:
+Style/RbsInline/UnmatchedAnnotations:
   Enabled: true
-YARD/TagTypePosition:
+Style/RbsInline/RedundantTypeAnnotation:
+  Enabled: true
+Style/RbsInline/MethodCommentSpacing:
+  Enabled: true
+Style/RbsInline/VariableCommentSpacing:
+  Enabled: true
+Style/RbsInline/EmbeddedRbsSpacing:
+  Enabled: true
+Style/RbsInline/RedundantAnnotationWithSkip:
   Enabled: true
