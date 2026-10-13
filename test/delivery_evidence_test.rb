@@ -171,7 +171,7 @@ class DeliveryEvidenceTest < Minitest::Test
 
   def test_command_output_is_never_persisted
     stdout, = evidence_in(@repo, "run", "--kind", "tests", "--name", "suite", "--",
-                          "sh", "-c", "echo output-marker-42")
+                          "sh", "-c", "echo $MARKER", env: { "MARKER" => "output-marker-42" })
 
     assert_match(/output-marker-42/, stdout)
     refute_match(/output-marker-42/, store_text)
@@ -241,7 +241,8 @@ class DeliveryEvidenceTest < Minitest::Test
   end
 
   def test_check_requires_a_browser_check_when_the_branch_touches_ui_paths
-    File.write(File.join(@repo, "app/new.html.erb"), "<p>hi</p>\n")
+    FileUtils.mkdir_p(File.join(@repo, "app/views"))
+    File.write(File.join(@repo, "app/views/new.html.erb"), "<p>hi</p>\n")
     record_suite
 
     _, stderr, status = evidence_in(@repo, "check")
