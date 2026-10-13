@@ -158,7 +158,8 @@ end
 # Closes the stage panes this change opened, once they are idle or done. hand-off-plan.sh and
 # start-review.sh list each one as "<pane_id> <terminal_id>" in <git-common-dir>/herdr/
 # stage-panes-<slug>. A pane closes only while its terminal id still matches (pane ids are reused),
-# and never when it is this pane or the intent pane the intent skill recorded.
+# and never when it is this pane or the intent pane the intent skill recorded. Best effort, like
+# the gh-dash pane: the PR exists by now, so a herdr failure only warns.
 class Panes
   include Shell
 
@@ -174,6 +175,8 @@ class Panes
 
     stale.each { |pane| system("herdr", "pane", "close", pane.fetch("pane_id")) }
     File.delete(@record)
+  rescue Refusal, JSON::ParserError => error
+    warn("The stage panes stay open: #{error.message}")
   end
 
   private
@@ -196,7 +199,12 @@ class Panes
   end
 
   def listed
-    JSON.parse(capture("herdr", "pane", "list", "--workspace", ENV.fetch("HERDR_WORKSPACE_ID", ""))).dig("result", "panes").to_a
+    JSON.parse(capture("herdr", "pane", "list", *workspace)).dig("result", "panes").to_a
+  end
+
+  def workspace
+    id = ENV.fetch("HERDR_WORKSPACE_ID", "")
+    id.empty? ? [] : [ "--workspace", id ]
   end
 end
 

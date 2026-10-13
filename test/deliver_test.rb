@@ -263,6 +263,31 @@ class DeliverTest < Minitest::Test
     assert_empty(closed_panes)
   end
 
+  def test_a_failed_pane_list_after_the_pr_exists_only_warns
+    commit_change_work
+    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
+    stub_response("herdr pane list", { "exit" => 1, "stderr" => "herdr: server not responding\n" })
+
+    stdout, stderr, status = deliver(herdr: true)
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, PR_URL)
+    assert_match(/server not responding/, stderr)
+    assert_empty(closed_panes)
+  end
+
+  def test_lists_panes_without_a_workspace_when_herdr_names_none
+    commit_change_work
+    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
+    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ pane("w1:pIdle", "claude", "idle") ] }) })
+
+    _, stderr, status = deliver(herdr: true, env: { "HERDR_WORKSPACE_ID" => nil })
+
+    assert(status.success?, stderr)
+    assert_includes(herdr_calls, "pane list")
+    assert_equal(%w[w1:pIdle], closed_panes)
+  end
+
   def test_resumes_after_a_failed_push_without_the_folder
     commit_change_work
     git("remote", "set-url", "--push", "origin", File.join(@origin, "does-not-exist"))
@@ -304,8 +329,8 @@ class DeliverTest < Minitest::Test
 
   private
 
-  def deliver(*arguments, herdr: false, scripts: @dash_scripts)
-    run_script(DELIVER, *arguments, herdr: herdr, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log })
+  def deliver(*arguments, herdr: false, scripts: @dash_scripts, env: {})
+    run_script(DELIVER, *arguments, herdr: herdr, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
   end
 
   def assert_refused_and_untouched(reason)
