@@ -68,3 +68,25 @@ Every test named in the plan's `## Proof` exists. No existing test was weakened,
 Source: `codex review --base origin/main`, transcribed. Codex found no actionable regression. It reports that the skill-source move and the Claude links resolve, and that the parity and related tests pass.
 
 No findings.
+
+## Round 5 — 2026-10-13T13:37:01Z — 5355c4bd
+
+The repository has no `REVIEW.md` or `REVIEW.local.md`, so this round uses the reviewer's default passes. There are no uncommitted changes. The three commits since round 4 (`1ed47af1`, `400d2d63`, `0b354ded`) close the round 3 nits correctly. Rubocop on `test-guard.rb`, `skill_parity_test.rb` and `skill_parity_hook_test.rb` reports no offenses. `skill_parity_hook_test.rb` passes (2 runs, 4 assertions). Test suite, partial: the first 23 of 44 files pass, through `lefthook_pull_hooks_test.rb`. Etienne asked not to wait for the remaining 21 files, so this round does not record their result.
+
+- [ ] Important: The branch is 32 commits behind `origin/main` again, which now includes PRs #198 and #201. Main changed four files that this branch moves: `new-repo-setup/SKILL.md`, `rails-architecture/SKILL.md`, `rails-architecture/references/examples.md` and `ruby-style/SKILL.md`. A dry run (`git merge-tree --write-tree origin/main HEAD`) carries the `ruby-style` and `rails-architecture` edits into `agents/.agents/skills/` by rename detection. It gives a content conflict in `agents/.agents/skills/new-repo-setup/SKILL.md`, where main added step 12 (Steep). Keep both sides: main's step 12, and this branch's `agents/.agents/skills/` path in step 11. Main also added `test/rbs_inline_tooling_test.rb` with `SKILLS = "claude/.claude/skills"`. It reads through the links, so it passes, but repoint it to `agents/.agents/skills` as round 1 did for `pull_request_flow_test.rb`, and add it to the plan's file list. After the rebase (rule 20), run the step 9 grep and the full suite again. — `agents/.agents/skills/new-repo-setup/SKILL.md:39`
+- [ ] Important: After the rebase, main's `test_every_test_file_requires_the_helper` (`test/isolated_git_test.rb`) fails. The new `test/skill_parity_hook_test.rb` has no `require_relative "isolated_git"` line. Add it. Evidence: the hook test passes with main's `isolated_git.rb` loaded (`ruby -Itest -I<copy> -risolated_git test/skill_parity_hook_test.rb`: 2 runs, 0 failures), so the line breaks nothing. — `test/skill_parity_hook_test.rb:4`
+- [ ] Nit: The plan's "Files that change" entry still says `test-guard.rb` sets `CHANGE_FOLDER_SCRIPT` to `../../../agents/.agents/skills/plan/scripts/change-folder`. Commit `400d2d63` changed it to `../skills/plan/scripts/change-folder`, the form `consent-guard.rb` uses. — `docs/changes/agnostic-skills/plan.md:42`
+
+### Security (round 5)
+
+The commits since round 4 add no secrets, credentials or work references. They take no new input from outside. `CHANGE_FOLDER_SCRIPT` in `test-guard.rb` now resolves through the `claude/.claude/skills/plan` link to the same script.
+
+### Compliance (round 5)
+
+- `claude/.claude/skills/` holds no skill source → unchanged since round 3; the parity tests pass. After the rebase, the new-repo-setup conflict must not bring back a real folder under `claude/.claude/skills/` (first Important finding).
+- A skill source added under `claude/.claude/skills/` fails the suite → unchanged since round 3; `evidence.md` records the probe.
+- Claude and Codex list every skill, `change-scope` prints `personal`, the herdr scripts find their files, no dangling link → post-restow checks (plan step 11); pending until after the merge.
+- The test suite and linters pass → linters green on the changed Ruby; suite partial (above); two failures expected after the rebase (both Important findings).
+- The four rule folders are gone → `test_unused_agent_rule_folders_are_gone`.
+
+No existing test was weakened, skipped or deleted. The `JOB_RAN` assertion is stricter than the `(skip)` check it replaces.
