@@ -18,7 +18,7 @@ require "pathname"
 REPRODUCTION_LINE = "Reproduction: committed".freeze
 PATCH_FILE_LINE = /^\*\*\* (?:Add File|Update File|Delete File|Move to): (.+)$/
 
-CHANGE_FOLDER_SCRIPT = File.expand_path("../../.claude/skills/plan/scripts/change-folder", __dir__)
+CHANGE_FOLDER_SCRIPT = File.expand_path("../../../agents/.agents/skills/plan/scripts/change-folder", __dir__)
 
 def test_path?(relative_path)
   return true if relative_path.start_with?("test/", "spec/", "__tests__/")

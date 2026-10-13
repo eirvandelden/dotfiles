@@ -65,13 +65,13 @@ reviewer=$(printf '%s' "$reviewer" | tr '[:upper:]' '[:lower:]')
 herdr agent start "$reviewer" --kind claude --pane "$pane" -- --model opus >/dev/null
 
 # No --wait: the reviewer works in its own pane while the caller carries on. It derives its own
-# change folder and report path (claude/.claude/skills/plan/scripts/change-folder), the same way
+# change folder and report path (~/.claude/skills/plan/scripts/change-folder), the same way
 # the reviewer agent does, rather than being handed one — a fixed path computed here would go
 # stale the moment the pane checks out a different worktree.
 herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origin first so the \
 comparison is against current work, then read git diff $base...HEAD for what is committed, and \
 git status plus git diff for the uncommitted changes on top of it. Run \
-claude/.claude/skills/plan/scripts/change-folder for this branch's change folder, then read \
+~/.claude/skills/plan/scripts/change-folder for this branch's change folder, then read \
 REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's intent.md and plan.md. \
 Run the Bugs, Security and Compliance passes REVIEW.md describes, worst first; rank Important \
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \

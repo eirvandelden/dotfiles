@@ -12,7 +12,7 @@
 #     any other non-blank line under "## Critique" is refused.
 # Exits 1 with a reason otherwise. It never commits.
 require "open3"
-require_relative "../../../hooks/remote_matcher"
+require_relative "../../../../../claude/.claude/hooks/remote_matcher"
 
 def refuse(reason)
   warn("auto-accept refused: #{reason}")

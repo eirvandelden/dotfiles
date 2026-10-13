@@ -4,7 +4,7 @@
 # allowlist file, exits 1 otherwise. The finish skill uses this instead of
 # guessing scope from the branch name or asking every time.
 require "open3"
-require_relative "../../../hooks/remote_matcher"
+require_relative "../../../../../claude/.claude/hooks/remote_matcher"
 
 def origin_url
   stdout, status = Open3.capture2("git", "remote", "get-url", "origin")
