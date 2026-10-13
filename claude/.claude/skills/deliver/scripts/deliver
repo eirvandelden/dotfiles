@@ -1,0 +1,271 @@
+#!/usr/bin/env ruby
+# Ends a change once its review is closed: removes docs/changes/<slug>/ in a commit of its own,
+# pushes the branch, opens (or updates) a draft PR with the filled body, then opens a gh-dash pane
+# and closes this change's idle stage panes. It asks no questions. `deliver --check` runs only the
+# preconditions and exits 0 when delivery may run, 1 with the reasons otherwise.
+#
+# The body and title are saved under <git-common-dir>/deliver/ so a delivery that fails after the
+# folder is removed (a failed push, say) resumes from the push instead of starting over.
+require "fileutils"
+require "json"
+require "open3"
+
+SKILLS_DIR = File.expand_path("../..", __dir__)
+TEMPLATES = %w[
+  .github/PULL_REQUEST_TEMPLATE.md .github/pull_request_template.md
+  PULL_REQUEST_TEMPLATE.md docs/pull_request_template.md
+].freeze
+
+class Refusal < StandardError; end
+
+# Runs one command and answers its stdout; a failure raises with the command's own message.
+module Shell
+  def capture(*command)
+    stdout, stderr, status = Open3.capture3(*command)
+    raise Refusal, "#{command.first(3).join(' ')} failed: #{stderr.strip}" unless status.success?
+
+    stdout
+  end
+
+  def succeeds?(*command)
+    _, _, status = Open3.capture3(*command)
+    status.success?
+  end
+end
+
+# What the review.md of a change says: whether it has a round, and which findings are still open.
+class Review
+  FINDING = /\A\s*- \[ \] (Important|Nit):/
+  ROUND = /^## Round /
+
+  def initialize(text)
+    @text = text
+  end
+
+  def rounds?
+    @text.match?(ROUND)
+  end
+
+  def open_findings
+    @text.lines.map(&:strip).select { |line| line.match?(FINDING) && !closed?(line) }
+  end
+
+  private
+
+  def closed?(line)
+    arrow = line.rindex("→")
+    !arrow.nil? && !line[(arrow + 1)..].strip.empty?
+  end
+end
+
+# The conditions delivery needs, each as a reason when it does not hold.
+class Preconditions
+  include Shell
+
+  def initialize(folder)
+    @folder = folder
+  end
+
+  def reasons
+    [ tree_reason, review_reasons, freshness_reason, scope_reason ].flatten.compact
+  end
+
+  private
+
+  def tree_reason
+    "The working tree has uncommitted changes; commit or remove them." unless capture("git", "status", "--porcelain").empty?
+  end
+
+  def review_reasons
+    path = File.join(@folder, "review.md")
+    return "No #{path}: run /review first." unless File.exist?(path)
+
+    review = Review.new(File.read(path))
+    return "#{path} has no round: run /review first." unless review.rounds?
+
+    review.open_findings.map { |line| "Open finding, close or dismiss it: #{line}" }
+  end
+
+  def freshness_reason
+    tool = File.join(ENV.fetch("WORKTREE_TOOLS_DIR", File.join(Dir.home, ".config/git/worktree-tools")), "review-report-fresh")
+    _, stderr, status = Open3.capture3(tool)
+    "The review is not fresh: run /review again.\n#{stderr.strip}" unless status.success?
+  end
+
+  def scope_reason
+    _, stderr, status = Open3.capture3(File.join(SKILLS_DIR, "finish/scripts/change-scope"))
+    stderr.strip unless status.success?
+  end
+end
+
+# The pull request already open for a branch, if any. Only an empty answer means "none".
+class PullRequestLookup
+  include Shell
+
+  def initialize(branch)
+    @branch = branch
+  end
+
+  def existing
+    json = capture("gh", "pr", "list", "--head", @branch, "--state", "open", "--json", "number,url,isDraft")
+    JSON.parse(json).first
+  end
+end
+
+# The body and title of the PR, kept in the git common dir until the PR exists.
+class Draft
+  include Shell
+
+  def initialize(slug, common_dir)
+    @directory = File.join(common_dir, "deliver")
+    @slug = slug
+  end
+
+  def body_path = File.join(@directory, "#{@slug}.body.md")
+  def title_path = File.join(@directory, "#{@slug}.title")
+
+  def saved?
+    File.exist?(body_path) && File.exist?(title_path)
+  end
+
+  def capture_from(folder)
+    FileUtils.mkdir_p(@directory)
+    File.write(body_path, capture(File.join(SKILLS_DIR, "finish/scripts/fill-pr-template"), template, *artifacts(folder)))
+    File.write(title_path, title(File.read(File.join(folder, "intent.md"))))
+  end
+
+  def title_text = File.read(title_path).strip
+
+  def discard
+    FileUtils.rm_f([ body_path, title_path ])
+  end
+
+  private
+
+  def artifacts(folder)
+    %w[intent.md plan.md].map { |name| File.join(folder, name) }
+  end
+
+  def template
+    TEMPLATES.find { |path| File.exist?(path) }.to_s
+  end
+
+  def title(intent)
+    intent[/^# Intent:\s*(.+)$/, 1].to_s.strip
+  end
+end
+
+# Closes this worktree's idle or done agent panes; never its own, a working one or an agentless one.
+class Panes
+  include Shell
+
+  def initialize(toplevel)
+    @toplevel = toplevel
+  end
+
+  def close_stale
+    return unless ENV["HERDR_ENV"] == "1"
+
+    stale.each { |pane| system("herdr", "pane", "close", pane.fetch("pane_id")) }
+  end
+
+  private
+
+  def stale
+    listed.select { |pane| stale?(pane) }
+  end
+
+  def stale?(pane)
+    pane["cwd"] == @toplevel && pane["agent"] && %w[idle done].include?(pane["agent_status"]) &&
+      pane["pane_id"] != ENV["HERDR_PANE_ID"]
+  end
+
+  def listed
+    JSON.parse(capture("herdr", "pane", "list", "--workspace", ENV.fetch("HERDR_WORKSPACE_ID", ""))).dig("result", "panes").to_a
+  end
+end
+
+class Delivery
+  include Shell
+
+  def initialize
+    @folder = capture(File.join(SKILLS_DIR, "plan/scripts/change-folder")).strip
+    @slug = File.basename(@folder)
+    @branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
+    @toplevel = File.realpath(capture("git", "rev-parse", "--show-toplevel").strip)
+    common = capture("git", "rev-parse", "--path-format=absolute", "--git-common-dir").strip
+    @draft = Draft.new(@slug, common)
+  end
+
+  def check
+    reasons = Preconditions.new(@folder).reasons
+    reasons.each { |reason| warn(reason) }
+    reasons.empty?
+  end
+
+  def run
+    existing = PullRequestLookup.new(@branch).existing
+    prepare unless resuming?
+    capture("git", "push", "-u", "origin", @branch)
+    url = publish(existing)
+    @draft.discard
+    puts(url)
+    finish(url)
+  end
+
+  private
+
+  def resuming?
+    !succeeds?("git", "cat-file", "-e", "HEAD:#{@folder}") && @draft.saved? && last_subject == removal_subject
+  end
+
+  def prepare
+    reasons = Preconditions.new(@folder).reasons
+    raise Refusal, reasons.join("\n") unless reasons.empty?
+
+    @draft.capture_from(@folder)
+    remove_folder
+  end
+
+  def remove_folder
+    capture("git", "rm", "-r", "--quiet", @folder)
+    FileUtils.rm_rf(@folder)
+    Dir.rmdir("docs/changes") if Dir.exist?("docs/changes") && Dir.empty?("docs/changes")
+    capture("git", "commit", "--quiet", "-m", removal_subject)
+  end
+
+  def removal_subject = "Remove change artifacts for #{@slug}"
+
+  def last_subject
+    capture("git", "log", "-1", "--format=%s").strip
+  end
+
+  def publish(existing)
+    return edit(existing) if existing
+
+    capture("gh", "pr", "create", "--draft", "--title", @draft.title_text, "--body-file", @draft.body_path).strip.lines.last.to_s.strip
+  end
+
+  def edit(existing)
+    capture("gh", "pr", "edit", existing.fetch("number").to_s, "--body-file", @draft.body_path)
+    existing.fetch("url")
+  end
+
+  def finish(url)
+    open_dash(url)
+    Panes.new(@toplevel).close_stale
+  end
+
+  def open_dash(url)
+    scripts = ENV.fetch("HERDR_SCRIPTS_DIR", File.join(Dir.home, ".config/herdr/scripts"))
+    system(File.join(scripts, "open-pr-dash.sh"), @slug, url) || warn("The gh-dash pane did not open; the PR is at #{url}.")
+  end
+end
+
+begin
+  delivery = Delivery.new
+  ARGV.include?("--check") ? exit(delivery.check ? 0 : 1) : delivery.run
+rescue Refusal => error
+  warn(error.message)
+  exit(1)
+end
