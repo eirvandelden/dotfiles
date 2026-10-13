@@ -1,6 +1,6 @@
 # Plan: Consent guard asks before any way of skipping the git hooks
 
-From `intent.md` (2026-10-07, amended 2026-10-12). Status: accepted.
+From `intent.md` (2026-10-07, amended 2026-10-12). Status: draft.
 
 ## Context
 
@@ -133,6 +133,16 @@ Test setup: the guard tests keep their helpers. `setup` makes a temporary reposi
 
 ---
 Domain skills applied: dotfiles-maintenance (stow layout, rule 12), object-oriented-design (module boundaries), ruby-style (method shape). No conflicts between them.
+
+## Coordinator decisions (2026-10-13)
+
+Main changed under this plan. #186 (`pr-only-via-finish`) and its follow-ups rewrote `claude/.claude/hooks/consent-guard.rb`: `words(command)` is now a tokenizer that splits `;`, `&`, `|`, newlines, comments and redirects outside quotes, and the guard gained `gh pr create`/`gh pr merge` checks. Revise the plan against `origin/main` (`c01d6282`), then run a new critique round.
+
+- Verified on main's guard: `git push --force origin feature; echo done` and `...&&echo done` exit 2; `git push --force-with-lease origin feature; echo done` exits 0; `echo "a;b --force"` exits 0. The splitting criterion already holds on main.
+- Drop `CommandPieces`. Build `HookBypass` on main's `words`. Keep a test for each splitting acceptance criterion, so it stays pinned.
+- The first implementation (on main before #186) is on the local branch `guard-hook-bypasses-impl1` (`a2dd2238`, `8a430c9d`, `2c62e6c6`). Reuse what still fits: `HookBypass`, the Codex rules, the parity test extension, the tests.
+- Unchanged: scope, out of scope and acceptance criteria in `intent.md`. Sequencer commits (`cherry-pick`, `am`) stay out of scope (Etienne: known gap). The mixed `--force-with-lease a; --force b` case stays an accepted risk.
+- `test/review_report_check_test.rb` is red on main for an unrelated reason; intent `review-report-test-bypasses-guard` fixes it. It is not this change's concern.
 
 ## Critique
 
