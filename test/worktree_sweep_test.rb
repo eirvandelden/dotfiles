@@ -22,6 +22,7 @@ class WorktreeSweepTest < Minitest::Test
 
   def teardown
     stop_waiter
+    stop_hanging_stubs
     FileUtils.rm_rf(@enclosing)
   end
 
@@ -162,7 +163,7 @@ class WorktreeSweepTest < Minitest::Test
     commit(merged, "more work")
     write_gh_states("merged-branch" => "MERGED")
     git(@repo, "remote", "set-url", "origin", "ssh://git.example.invalid/repo.git")
-    write_stub("hanging-ssh", "#!/bin/sh\nsleep 600\n")
+    write_stub("hanging-ssh", "#!/bin/sh\nps -o pgid= -p $$ >> \"$HANGING_GROUPS\"\nexec sleep 600\n")
     env = time_limit_env.merge("GIT_SSH_COMMAND" => File.join(@stub_bin, "hanging-ssh"))
 
     _, stderr, status = run_script_within_deadline(extra_env: env)
@@ -361,6 +362,23 @@ class WorktreeSweepTest < Minitest::Test
     File.join(@stub_bin, "gh-hang")
   end
 
+  def hanging_groups_file
+    File.join(@enclosing, "hanging-groups")
+  end
+
+  # The hanging stubs run in the process group of the call that started them (git fetch, or gh),
+  # which a missed deadline does not reach. Killing the group also stops git from starting ssh
+  # again.
+  def stop_hanging_stubs
+    return unless File.exist?(hanging_groups_file)
+
+    File.readlines(hanging_groups_file, chomp: true).uniq.each do |group|
+      Process.kill("KILL", -Integer(group))
+    rescue Errno::ESRCH
+      nil
+    end
+  end
+
   def time_limit_env
     { "WORKTREE_TOOLS_TIME_LIMIT" => "3" }
   end
@@ -369,7 +387,10 @@ class WorktreeSweepTest < Minitest::Test
     write_gh_states({})
     write_stub("gh", <<~'RUBY')
       #!/usr/bin/env ruby
-      sleep 600 if File.exist?(ENV["GH_STUB_HANG"].to_s)
+      if File.exist?(ENV["GH_STUB_HANG"].to_s)
+        File.write(ENV.fetch("HANGING_GROUPS"), "#{Process.getpgrp}\n", mode: "a")
+        sleep 600
+      end
       states = File.exist?(ENV["GH_STUB_STATES"].to_s) ? File.readlines(ENV["GH_STUB_STATES"], chomp: true) : []
       line = states.find { |entry| entry.start_with?("#{ARGV[2]}=") }
       exit 1 unless line
@@ -403,6 +424,7 @@ class WorktreeSweepTest < Minitest::Test
       "HOME" => @enclosing,
       "GH_STUB_STATES" => gh_states_file,
       "GH_STUB_HANG" => gh_hang_file,
+      "HANGING_GROUPS" => hanging_groups_file,
       "GIT_CALL_LOG" => File.join(@enclosing, "git-calls.log")
     }.merge(extra_env)
   end
