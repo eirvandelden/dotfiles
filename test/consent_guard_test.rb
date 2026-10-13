@@ -622,10 +622,10 @@ class ConsentGuardTest < Minitest::Test
   def test_a_cd_after_the_merge_does_not_move_the_question
     stub_gh(view: "eirvandelden\tdotfiles\tabc123\tpr-only-via-finish", tree: "Tree")
 
-    _, stderr, status = run_guard("gh pr merge 186 && cd /tmp")
+    _, stderr, status = run_guard("gh pr merge 186 && cd /after-the-merge")
 
     assert_equal(2, status.exitstatus, stderr)
-    refute_includes(File.read("#{@gh_log}.cwd"), "/tmp")
+    refute_includes(File.read("#{@gh_log}.cwd"), "/after-the-merge")
   end
 
   def test_gh_repo_in_the_environment_is_passed_on_to_the_question
