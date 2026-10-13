@@ -773,6 +773,22 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_operator(reviewer_prompt.index("at most twelve times"), :<, reviewer_prompt.index(/leave (your|this|the) pane open/i))
   end
 
+  def test_the_reviewer_runs_deliver_check_after_its_round
+    run_script(START_REVIEW)
+
+    assert_match(%r{deliver/scripts/deliver --check}, reviewer_prompt)
+    assert_operator(reviewer_prompt.index("deliver --check"), :>, reviewer_prompt.index("commit that file alone"))
+    assert_operator(reviewer_prompt.index("deliver --check"), :<, reviewer_prompt.index("Review ready:"))
+  end
+
+  def test_a_clean_check_reports_review_clean
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt, "Review clean:")
+    assert_operator(reviewer_prompt.index("Review clean:"), :>, reviewer_prompt.index("deliver --check"))
+    assert_match(/exit(s|ed)? 0|zero/i, reviewer_prompt)
+  end
+
   private
 
   def track_origin_head_on(branch)
