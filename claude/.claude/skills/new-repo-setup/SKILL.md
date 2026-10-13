@@ -36,6 +36,15 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
     .claude/scheduled_tasks.lock
     ```
 11. Review policy: copy `claude/.claude/skills/new-repo-setup/references/REVIEW.md` to the repo root as `REVIEW.md` and commit it. The `reviewer` agent and the `review` skill's pane backend read it before every review; a repo without one falls back to the same file's defaults undocumented in the repo itself.
+12. Types: inline RBS checked by Steep. Steep and RBS 4 need Ruby 3.3 or later. Steep comes from the global gem install in `packages.conf`, never the Gemfile. Add a `Steepfile` at the repo root with one target, `lib` only for a non-Rails project:
+
+    ```ruby
+    target :app do
+      check "app", "lib", inline: true
+    end
+    ```
+
+    Then run `rbs collection init` and `rbs collection install`, commit `rbs_collection.yaml` and `rbs_collection.lock.yaml`, and add `.gem_rbs_collection/` to the repo's `.gitignore`. The `inline: true` option is Steep 2 syntax. Run `steep check` to confirm.
 
 ## The repo context file
 
