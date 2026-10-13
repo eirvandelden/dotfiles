@@ -34,3 +34,9 @@ Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened
 - [ ] Important: The branch records no evidence for plan steps 6 and 7. These are the gh-dash launch, the `C` key press, and the live search checks per section. §7a requires recorded evidence, and two criteria rely on step 6 alone. The plan puts the evidence in "the implementation report", which is not on the branch, so this review cannot confirm it. — `docs/changes/gh-dash-attention-sections/plan.md:66` → fixed (docs: record live evidence for gh-dash-attention-sections)
 - [ ] Nit: `config` parses the YAML file again on every call. Most tests call it two or three times. `@config ||=` reads it once per test. — `test/gh_dash_config_test.rb:80` → fixed (Test: read the gh-dash config once and fetch keybindings)
 - [ ] Nit: If `keybindings.prs` is missing, `config.dig("keybindings", "prs").find` raises `NoMethodError` before the `refute_nil` message can explain the failure. `fetch` or `Array(...)` gives a clean assertion failure. — `test/gh_dash_config_test.rb:68` → fixed (Test: read the gh-dash config once and fetch keybindings)
+
+## Round 2 — 2026-10-13T09:20Z — 86519c6c (codex)
+
+`codex review --base origin/main`: the configuration and tests match the stated section order and filters; `ruby -Itest test/gh_dash_config_test.rb` passes (11 runs, 35 assertions).
+
+No findings.
