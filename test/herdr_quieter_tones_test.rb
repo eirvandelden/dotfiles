@@ -155,7 +155,9 @@ class HerdrQuieterTonesTest < Minitest::Test
   end
 
   def test_a_missing_ffmpeg_is_reported
-    _, stderr, status = run_script(source("milord.mp3"))
+    FileUtils.ln_s(bash_path, File.join(@stub_bin, "bash"))
+
+    _, stderr, status = run_script(source("milord.mp3"), path: @stub_bin)
 
     assert_equal(1, status.exitstatus)
     assert_match(/ffmpeg/i, stderr)
@@ -165,7 +167,7 @@ class HerdrQuieterTonesTest < Minitest::Test
     skip("ffmpeg is not installed") unless ffmpeg_installed?
     original = sine_tone
 
-    run_script(original, real: true)
+    convert(original)
 
     codec, = Open3.capture2("ffprobe", "-v", "error", "-show_entries", "stream=codec_name",
                             "-of", "csv=p=0", File.join(@copies, "sine.mp3"))
@@ -176,7 +178,7 @@ class HerdrQuieterTonesTest < Minitest::Test
     skip("ffmpeg is not installed") unless ffmpeg_installed?
     original = sine_tone
 
-    run_script(original, real: true)
+    convert(original)
 
     drop = mean_volume(File.join(@copies, "sine.mp3")) - mean_volume(original)
     assert_in_delta(20 * Math.log10(0.3), drop, 0.5)
@@ -187,16 +189,25 @@ class HerdrQuieterTonesTest < Minitest::Test
     original = sine_tone
     before = Digest::SHA256.file(original).hexdigest
 
-    run_script(original, real: true)
+    convert(original)
 
     assert_equal(before, Digest::SHA256.file(original).hexdigest)
   end
 
   private
 
-  def run_script(*arguments, real: false)
-    path = real ? ENV.fetch("PATH") : "#{@stub_bin}:#{SYSTEM_PATH}"
+  def run_script(*arguments, path: "#{@stub_bin}:#{SYSTEM_PATH}")
     Open3.capture3({ "HOME" => @home, "PATH" => path }, SCRIPT, *arguments)
+  end
+
+  def convert(original)
+    _, stderr, status = run_script(original, path: ENV.fetch("PATH"))
+    assert(status.success?, stderr)
+    assert(File.exist?(File.join(@copies, File.basename(original))), "no copy written")
+  end
+
+  def bash_path
+    ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "bash") }.find { |bash| File.executable?(bash) }
   end
 
   def source(name)
