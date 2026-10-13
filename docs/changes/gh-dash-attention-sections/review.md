@@ -172,4 +172,4 @@ Nothing found. A scan of every added line in the branch history finds only `org:
 
 Every acceptance criterion keeps the proof listed in round 3. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
 
-- [ ] Nit: `evidence.md` records the full suite as 42 of 43 files, with the `review_report_check_test.rb` failure left to branch `test-repos-ignore-global-git-setup`. That fix is now on `origin/main` (`0f009c61`, PR #198), and `test/` now has 51 files. After the rebase, run plan step 8 again and record the result. — `docs/changes/gh-dash-attention-sections/evidence.md:28`
+- [ ] Nit: `evidence.md` records the full suite as 42 of 43 files, with the `review_report_check_test.rb` failure left to branch `test-repos-ignore-global-git-setup`. That fix is now on `origin/main` (`0f009c61`, PR #198), and `test/` now has 51 files. After the rebase, run plan step 8 again and record the result. — `docs/changes/gh-dash-attention-sections/evidence.md:28` → dismissed: Etienne asked on 2026-10-13 not to wait for the slow local suite; CI runs the full suite on the pull request after the rebase onto 489b5988
