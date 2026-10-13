@@ -4,7 +4,7 @@ From `intent.md` (2026-10-13). Status: accepted.
 
 ## Design decisions
 
-- The config moves to `github/.config/gh-dash/config.yml`. The `github` stow package is already in `packages.conf` (`STOW` list), so no new package appears. Stow links the file into the existing real directory `~/.config/gh-dash/`, next to the untouched `config.yml.bak`.
+- The sections go into `github/.config/gh-dash/config.yml`, which `origin/main` already ships with the pager and `C` keybinding (found in review round 1; the plan stage assumed a new file). The `github` stow package is already in `packages.conf` (`STOW` list), so no new package appears. Stow links the file into the existing real directory `~/.config/gh-dash/`, next to the untouched `config.yml.bak`.
 - The `pager` block and the `C` keybinding are copied byte for byte from the live `~/.config/gh-dash/config.yml` (Etienne's machine, read on 2026-10-13). Their current text:
 
   ```yaml
@@ -59,9 +59,9 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
 
 ## Order of work
 
-1. Write `test/gh_dash_config_test.rb` with the acceptance test `test_pr_sections_put_what_needs_action_first`. Run `ruby -Itest test/gh_dash_config_test.rb`. Watch it fail because `github/.config/gh-dash/config.yml` does not exist.
+1. Write `test/gh_dash_config_test.rb` with the acceptance test `test_pr_sections_put_what_needs_action_first`. Run `ruby -Itest test/gh_dash_config_test.rb`. Watch it fail because the config has no sections yet.
 2. Add the other tests from `## Proof` to the same file. Run it; all fail for the same reason.
-3. Create `github/.config/gh-dash/config.yml`: the `prSections` and `issuesSections` from the table above, then the `pager` and `keybindings` blocks copied verbatim. Run the test file until green.
+3. Add the `prSections` and `issuesSections` from the table above to `github/.config/gh-dash/config.yml`, before its unchanged `pager` and `keybindings` blocks. Run the test file until green.
 4. Run `yamllint github/.config/gh-dash/config.yml` and `rubocop test/gh_dash_config_test.rb`. Fix every finding without disable comments.
 5. Preflight: run `gh auth status`. If it does not report an active, valid login, stop and report that Etienne must reauthenticate; do not skip steps 6 and 7.
 6. Run `gh dash --config github/.config/gh-dash/config.yml` in a herdr pane. Confirm it opens on "Work reviews" with no config error. Select a PR and press `C`: confirm a herdr pane opens below and runs `nvim -c 'silent Octo pr edit <number> <repo>'` for that PR. Switch to the issues view and confirm it opens on "Assigned to me". Record what you saw.
