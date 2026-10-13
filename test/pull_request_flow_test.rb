@@ -7,7 +7,7 @@ require "minitest/autorun"
 # prove the words exist, not that an agent obeys them.
 class PullRequestFlowTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  SKILLS = File.join(REPO_ROOT, "claude/.claude/skills")
+  SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
   FINISH = File.join(SKILLS, "finish/SKILL.md")
   DELIVER_DIR = File.join(SKILLS, "deliver")
   DELIVER_SCRIPT = File.join(DELIVER_DIR, "scripts/deliver")
