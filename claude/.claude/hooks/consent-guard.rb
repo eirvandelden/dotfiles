@@ -123,7 +123,7 @@ BUNDLER_INFO_FLAGS = %w[-v --version -h --help].freeze
 BUNDLER_COMMANDS = %w[add audit binstubs c check clean config console doctor e env ex exe exec fund gem help
                       info init inject issue licenses list lock ls open outdated platform plugin
                       pristine remove show tree update version viz].freeze
-COMMAND_PREFIXES = %w[command env exec nice nohup sudo time timeout].freeze
+COMMAND_PREFIXES = %w[env exec nice nohup sudo time timeout].freeze
 RV_RUN = %w[run r].freeze
 SHELL_KEYWORDS = %w[! { do elif else if then until while].freeze
 SEPARATORS = %w[; & | ( ) `].freeze
@@ -177,16 +177,20 @@ def next_position(position, word)
   return :command if SEPARATORS.include?(word)
   return :argument if position == :argument
   return rv_position(word) if position == :rv
+  return :lookup if word == "command"
   return :prefix if COMMAND_PREFIXES.include?(word) || (position == :option_value && !word.start_with?("-"))
-  return prefix_word_position(word) if %i[prefix option_value].include?(position)
+  return prefix_word_position(position, word) if %i[prefix option_value lookup].include?(position)
   return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
   return :rv if word == "rv"
 
   :argument
 end
 
-# `rv run` (alias `rv r`) runs the rest of the command with rv's Ruby.
+# `rv run` (alias `rv r`) runs the rest of the command with rv's Ruby. rv's own
+# flags may come before run (`rv -v run`).
 def rv_position(word)
+  return :rv if word.start_with?("-")
+
   RV_RUN.include?(word) ? :prefix : :argument
 end
 
@@ -194,8 +198,8 @@ end
 # may follow another (`sudo -E -u root`), and a duration or VAR=value word
 # (`timeout 600`, `env FOO=1`) still comes before the command. `command -v bundle`
 # only looks bundle up.
-def prefix_word_position(word)
-  return :argument if LOOKUP_FLAGS.include?(word)
+def prefix_word_position(position, word)
+  return :argument if position == :lookup && LOOKUP_FLAGS.include?(word)
   return :option_value if word.start_with?("-")
   return :prefix if word.match?(DURATION) || word.match?(ENV_ASSIGNMENT)
 

@@ -495,7 +495,8 @@ class ConsentGuardTest < Minitest::Test
       "nice -n 10 bundle install", "env -u FOO bundle install", "sudo -u root bundle install",
       "# don't forget the gems\nbundle install", "sudo -E -u root bundle install", "env -i -u FOO bundle install",
       "timeout --preserve-status -s KILL 60 bundle install", "rv run bundle install", "rv r bundle i",
-      "rv run --ruby 4.0 bundle install" ].each do |command|
+      "rv run --ruby 4.0 bundle install", "rv run -v bundle install", "rv r -v bundle i",
+      "rv -v run bundle install", "rv -q run bundle install" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)
@@ -506,7 +507,7 @@ class ConsentGuardTest < Minitest::Test
   def test_bundle_install_in_messages_heredocs_and_lookups_runs
     [ %(git commit -m "first line\nbundle install is refused now"),
       %(git commit -m "$(cat <<'EOF'\nUse "bi" now.\nbundle install is refused.\nEOF\n)"),
-      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "echo done\nbundle exec rake",
+      "cat > notes.md <<'EOF'\nbundle install\nEOF", "command -v bundle", "command -V bundle", "echo done\nbundle exec rake",
       "# run bundle install later\nbundle exec rake", "echo issue#12 && bundle exec rake",
       "timeout 600 bundle exec rake", "rv run bundle exec rake", "rv ci", "rv ruby list bundle" ].each do |command|
       _, stderr, status = run_guard(command)
