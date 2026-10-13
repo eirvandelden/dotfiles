@@ -56,11 +56,28 @@ class DeliveryContractTest < Minitest::Test
 
   def test_the_coordinator_delivers_then_ships_without_merging
     section = section_of(skill("intent"), "## Autonomous delivery")
+    step = line_with(section, "deliver/SKILL.md")
 
-    assert_includes(section, "~/.claude/skills/deliver/SKILL.md")
-    assert_includes(section, "finish/scripts/ship --no-merge")
-    assert_operator(section.index("deliver/SKILL.md"), :<, section.index("ship --no-merge"))
+    assert_includes(step, "~/.claude/skills/deliver/SKILL.md")
+    assert_match(%r{follow `~/\.claude/skills/finish/SKILL\.md` in its auto mode}, step)
+    assert_includes(step, "ship --no-merge")
+    assert_operator(step.index("deliver/SKILL.md"), :<, step.index("finish/SKILL.md"))
+    assert_operator(step.index("finish/SKILL.md"), :<, step.index("ship --no-merge"))
     assert_match(/never merge/i, section)
+  end
+
+  def test_the_coordinator_checks_the_autonomous_intent_before_deliver_removes_it
+    step = line_with(section_of(skill("intent"), "## Autonomous delivery"), "deliver/SKILL.md")
+
+    assert_includes(step, "`Delivery: autonomous`")
+    assert_operator(step.index("`Delivery: autonomous`"), :<, step.index("deliver/SKILL.md"))
+  end
+
+  def test_only_finish_auto_mode_names_the_ship_no_merge_script
+    offenders = %w[intent deliver].select { |name| skill(name).include?("finish/scripts/ship --no-merge") }
+
+    assert_empty(offenders)
+    assert_includes(section_of(skill("finish"), "## Auto mode"), "~/.claude/skills/finish/scripts/ship --no-merge")
   end
 
   def test_work_finish_runs_after_push_then_requests_reviewers

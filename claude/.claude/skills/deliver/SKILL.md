@@ -13,7 +13,7 @@ Other skills reach this one by path: `~/.claude/skills/deliver/SKILL.md`. Etienn
 ## When it runs
 
 - Outside auto mode: the `review` skill runs it without asking when a review reads `Review clean:`, or when `deliver --check` exits 0 in the `here` backend.
-- In auto mode: the coordinator runs it once a round of each reviewer leaves no open finding (intent skill, Autonomous delivery). Then it runs `~/.claude/skills/finish/scripts/ship --no-merge`.
+- In auto mode: the coordinator runs it once a round of each reviewer leaves no open finding (intent skill, Autonomous delivery). Then it follows `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`.
 
 ## Run it
 
@@ -49,4 +49,4 @@ Tell Etienne the PR URL, whether a gh-dash pane opened, and that `/finish` is th
 
 ## Codex
 
-Same script, same steps. Invoked as `$deliver`. A Codex coordinator runs it after a clean review round, then `ship --no-merge`.
+Same script, same steps. Invoked as `$deliver`. A Codex coordinator runs it after a clean review round, then follows `$finish` in its auto mode.
