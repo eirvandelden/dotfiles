@@ -1,0 +1,110 @@
+#!/bin/sh
+# Shim that `unlock` (zsh/.config/zsh/functions/secrets.zsh) puts first on PATH.
+#
+# Since Codex 0.160 a plain `codex` hands MCP servers and shell commands to a
+# shared app-server daemon, which keeps the environment it started with. This
+# shim runs sessions in-process (`--no-daemon`), so they inherit the unlocked
+# environment, and strips the mapped secrets from commands that may start or
+# reach the shared daemon, start the Desktop app or serve other sessions. Subcommand lists come from Codex 0.161.0.
+
+self_dir=$(cd "$(dirname "$0")" && pwd -P)
+
+find_real_codex() {
+  old_ifs=$IFS
+  IFS=:
+  for dir in $PATH; do
+    IFS=$old_ifs
+    [ -n "$dir" ] || dir=.
+    resolved=$(cd "$dir" 2>/dev/null && pwd -P) || continue
+    [ "$resolved" = "$self_dir" ] && continue
+    if [ -x "$dir/codex" ] && [ ! -d "$dir/codex" ]; then
+      printf '%s\n' "$dir/codex"
+      return 0
+    fi
+  done
+  IFS=$old_ifs
+  return 1
+}
+
+# Prints PATH without the entries that resolve to this shim's directory, so a
+# daemon that a daemon command starts never hands the shim to locked sessions.
+path_without_self() {
+  old_ifs=$IFS
+  IFS=:
+  kept=
+  for dir in $PATH; do
+    resolved=$(cd "${dir:-.}" 2>/dev/null && pwd -P)
+    [ "$resolved" = "$self_dir" ] && continue
+    kept="${kept:+$kept:}$dir"
+  done
+  IFS=$old_ifs
+  printf '%s\n' "$kept"
+}
+
+# Prints session, daemon or other. Looks at every word for --remote, then at
+# the first word that is not an option or its value.
+classify() {
+  for arg in "$@"; do
+    case $arg in
+      --) break ;;
+      --remote | --remote=*) echo daemon; return ;;
+    esac
+  done
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --) echo session; return ;;
+      -c | --config | --enable | --disable | --remote-auth-token-env | -i | --image | -m | --model | \
+        --local-provider | -p | --profile | -s | --sandbox | -C | --cd | --add-dir | -a | --ask-for-approval)
+        shift
+        [ $# -gt 0 ] && shift
+        ;;
+      -*) shift ;;
+      agents | queue | app-server | remote-control | update | app | exec-server) echo daemon; return ;;
+      resume | fork) echo session; return ;;
+      exec | e | review | login | logout | mcp | plugin | completion | doctor | sandbox | debug | apply | a | \
+        archive | delete | migrate-rollouts | unarchive | cloud | features | help)
+        echo other; return ;;
+      *) echo session; return ;;
+    esac
+  done
+  echo session
+}
+
+# Succeeds when the arguments before any -- already hold --no-daemon.
+has_no_daemon() {
+  for arg in "$@"; do
+    case $arg in
+      --) return 1 ;;
+      --no-daemon) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+# Prints the KEY of every KEY=... line in the two 1Password mapping files.
+mapped_names() {
+  secrets_dir="${XDG_CONFIG_HOME:-$HOME/.config}/secrets"
+  for file in "$secrets_dir/1password.env" "$secrets_dir/1password.work.env"; do
+    [ -f "$file" ] || continue
+    sed -n 's/^[[:space:]]*\([A-Za-z_][A-Za-z0-9_]*\)[[:space:]]*=.*/\1/p' "$file"
+  done
+}
+
+real_codex=$(find_real_codex) || {
+  echo "codex: no codex found on PATH besides $self_dir" >&2
+  exit 127
+}
+
+case $(classify "$@") in
+  session)
+    has_no_daemon "$@" && exec "$real_codex" "$@"
+    exec "$real_codex" --no-daemon "$@"
+    ;;
+  daemon)
+    for name in $(mapped_names) UNLOCKED_BIN; do unset "$name"; done
+    PATH=$(path_without_self)
+    export PATH
+    exec "$real_codex" "$@"
+    ;;
+  *) exec "$real_codex" "$@" ;;
+esac

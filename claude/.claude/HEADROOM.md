@@ -67,6 +67,10 @@ headroom wrap codex -- --model opus     # pass flags through to codex
 headroom unwrap codex                   # remove durable wrapping
 ```
 
+After `unlock`, `codex` and `headroom wrap codex` run in-process (`--no-daemon`) through the shim in `zsh/.config/zsh/unlocked-bin`, off the shared daemon, so they do not show in `codex agents`.
+
+Never start the background server from an unlocked session ("Start background server" in the agents overview, or a handoff to it). When no shared daemon runs, Codex starts it from that session's environment, and every later Codex session and ChatGPT.app agent then sees the secrets. To clear them, stop the daemon from a locked shell: `codex app-server daemon stop`. This interrupts the work that runs on it. The next `codex` from a locked shell starts a new daemon with that shell's environment.
+
 ### Meta commands
 
 ```bash
