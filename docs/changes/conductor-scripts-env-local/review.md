@@ -31,3 +31,27 @@ Nothing found. The diff touches only tests; no secrets, no external input.
 - Lint: `rubocop conductor/.config/conductor/scripts/test/scripts_test.rb` reports no offences.
 
 Totals: 1 Important, 1 Nit.
+
+## Round 2 — 2026-10-13T08:50Z — a277091d
+
+The repository has no `REVIEW.md` or `REVIEW.local.md`, so this round uses the reviewer's default passes: Bugs, Security, Compliance. No uncommitted changes.
+
+No findings.
+
+### Bugs
+
+- Round 1 Important holds fixed. `run_script("run", ..., env: { "DATABASE_NAME" => nil })` unsets the caller's value in `Open3`. Verified: `DATABASE_NAME=leaked ruby conductor/.config/conductor/scripts/test/scripts_test.rb` gives 10 runs, 22 assertions, 0 failures, 0 errors. — `conductor/.config/conductor/scripts/test/scripts_test.rb:105`
+- The fix keeps the test able to fail. In a scratch copy with the `eb296b4c^` `run`, `-n test_run_does_not_export_database_name_from_env_local` fails: `Expected "DATABASE_NAME=workspace_db\n" to include "DATABASE_NAME=\n"`.
+
+### Security
+
+Nothing found. The diff touches only tests and the change folder.
+
+### Compliance
+
+- Criterion 1: holds. `git ls-files git/.config/git/worktree-tools/test/conductor_scripts_test.rb` prints nothing. `git grep conductor_scripts_test` outside `docs/changes/` finds nothing. `ruby conductor/.config/conductor/scripts/test/scripts_test.rb` gives 10 runs, 0 failures, 0 errors.
+- Criterion 2: holds, as recorded in round 1; the round 2 change does not touch `setup` or `archive` tests.
+- Lint: `rubocop conductor/.config/conductor/scripts/test/scripts_test.rb` reports no offences.
+- Files changed still match the plan's list.
+
+Totals: 0 Important, 0 Nit.
