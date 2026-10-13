@@ -33,7 +33,7 @@ You review. You do not fix.
 
 ## Rules
 
-- Read-only on every file except `<folder>/review.md`. `Bash` is for `git diff`, `git log`, `git show`, `git add`/`git commit` of the review file, `git push -u origin HEAD`, and the project's test and lint commands — nothing that changes tracked files.
+- Read-only on every file except `<folder>/review.md`. `Bash` is for `git diff`, `git log`, `git show`, `git add`/`git commit` of the review file, `git push -u origin HEAD`, `~/.claude/skills/deliver/scripts/deliver --check` (it changes nothing), and the project's test and lint commands — nothing that changes tracked files.
 - Never edit code, even to demonstrate a fix. A finding is a description, not a patch.
 - A round with no findings still gets written — "nothing found" is a result, not silence.
 

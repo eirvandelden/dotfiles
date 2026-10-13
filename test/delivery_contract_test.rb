@@ -38,6 +38,14 @@ class DeliveryContractTest < Minitest::Test
     end
   end
 
+  def test_the_reviewer_rules_allow_the_deliver_check_its_output_asks_for
+    reviewer = File.read(File.join(REPO_ROOT, "claude/.claude/agents/reviewer.md"))
+    bash_rule = line_with(section_of(reviewer, "## Rules"), "`Bash` is for")
+
+    assert_includes(section_of(reviewer, "## Output"), "~/.claude/skills/deliver/scripts/deliver --check")
+    assert_includes(bash_rule, "`~/.claude/skills/deliver/scripts/deliver --check`")
+  end
+
   def test_intent_records_its_pane_on_accept
     section = section_of(skill("intent"), "## 4. Accept")
 
