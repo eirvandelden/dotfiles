@@ -101,10 +101,10 @@ def choice_list?(body)
   body.match?(CHOICE_LIST)
 end
 
-def appended_sections(appended_fill, filled_categories)
+def appended_sections(appended_fill, filled_categories, test_heading)
   APPEND_ORDER
     .reject { |category, _heading| filled_categories.include?(category) || appended_fill[category].to_s.empty? }
-    .map { |category, heading| "## #{heading}\n\n#{appended_fill[category]}" }
+    .map { |category, heading| "## #{category == :test ? test_heading : heading}\n\n#{appended_fill[category]}" }
     .join("\n\n")
 end
 
@@ -116,7 +116,7 @@ def category_for_section(section)
   choice_list?(section[:body]) ? nil : category_for(section[:title])
 end
 
-def fill_template(template, fill, appended_fill)
+def fill_template(template, fill, appended_fill, test_heading)
   preamble, sections = parse_sections(template)
   categories = sections.map { |section| category_for_section(section) }
 
@@ -153,20 +153,38 @@ def fill_template(template, fill, appended_fill)
   end
 
   body = (preamble + rebuilt.join).strip
-  joined(body, appended_sections(appended_fill, filled_categories))
+  joined(body, appended_sections(appended_fill, filled_categories, test_heading))
 end
 
-template_path, intent_path, plan_path = ARGV
+HANDOVER_SECTIONS = [ "Delivered behaviour", "Review", "Limitations" ].freeze
+
+def handover_sections(handover)
+  HANDOVER_SECTIONS.filter_map do |title|
+    body = section_body(handover, title)
+    "## #{title}\n\n#{body}" if body && !body.empty?
+  end
+end
+
+template_path, intent_path, plan_path, handover_path = ARGV
 unless intent_path && plan_path
-  warn("usage: fill-pr-template <template-path-or-empty> <intent.md> <plan.md>")
+  warn("usage: fill-pr-template <template-path-or-empty> <intent.md> <plan.md> [handover.md]")
   exit(1)
 end
 
 intent = File.read(intent_path)
 plan = File.read(plan_path)
+handover = handover_path && !handover_path.empty? ? File.read(handover_path) : nil
 fill = filler(intent, plan)
 appended_fill = appended_filler(intent, plan)
+test_heading = "Proof"
+
+if handover
+  verification = section_body(handover, "Verification") || ""
+  fill[:test] = verification
+  appended_fill[:test] = verification
+  test_heading = "Verification"
+end
 
 template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
 
-puts(fill_template(template, fill, appended_fill))
+puts(joined(fill_template(template, fill, appended_fill, test_heading), *(handover ? handover_sections(handover) : [])))
