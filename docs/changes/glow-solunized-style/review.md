@@ -95,3 +95,7 @@ No findings.
 - No existing test was weakened, skipped or deleted. The failed-write test changes how it forces the failure, not what it asserts.
 - Checks run: `glow_style_install_test.rb` (11 runs), `glow_package_test.rb` (4 runs) and `stow_package_roots_test.rb` (7 runs) pass. `shellcheck -x -S warning` and `rubocop` on the touched files are clean.
 - Outside this branch: `test/isolated_git_test.rb` still fails on `origin/main` (`31fbbd43`) with the same 18 files from round 3. Neither glow test file is in the list. The fix belongs on its own branch (playbook rule 25).
+
+## Round 6 — 2026-10-13T18:00Z — b7f054ee (codex)
+
+No findings.
