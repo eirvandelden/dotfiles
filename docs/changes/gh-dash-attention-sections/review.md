@@ -75,3 +75,22 @@ Nothing found. The section 5 filter `is:open org:nedap author:@me draft:false re
 Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted. The non-docs diff contains only the `org:nedap` work reference that the intent allows.
 
 - [ ] Nit: `plan.md` still lists the config as "new" and the intent still says the config lives outside dotfiles. The branch modifies the file that `origin/main` already ships (recorded in evidence.md under Base). A pull request body drafted from these files would describe the change wrongly. — `docs/changes/gh-dash-attention-sections/plan.md:56` → fixed (docs: describe the gh-dash config as extended, not new)
+
+## Round 4 — 2026-10-13T12:00Z — b5e2a4c9
+
+Checks run: `ruby -Itest test/gh_dash_config_test.rb` green (12 runs, 38 assertions, 0 failures); `yamllint github/.config/gh-dash/config.yml` and `rubocop test/gh_dash_config_test.rb` clean. The full `test/*_test.rb` loop was not run in this round. The branch is 45 commits behind `origin/main`; `git merge-tree` merges it cleanly, and `origin/main` has no new change to the gh-dash config or its test. No REVIEW.md or REVIEW.local.md exists, so the reviewer defaults apply.
+
+### Bugs
+
+Nothing found. The five new PR sections and the three issue sections match the plan's filter table token for token. The kept `pager` and `C` keybinding are unchanged from `origin/main`.
+
+### Security
+
+- [ ] Nit: `plan.md:42` names the bot `work-bot` next to `work PR I`. If that bot belongs to the work organisation, it is a work name in this public repository, which the intent does not allow (it allows only `org:nedap`). The round 3 relabel and plan step 9 (`':!docs'`) both miss it. Fix: say "a work bot" if it is internal; dismiss if the bot is public. — `docs/changes/gh-dash-attention-sections/plan.md:42`
+
+### Compliance
+
+Every acceptance criterion keeps the proof listed in round 3; this round adds no code. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
+
+- [ ] Nit: `plan.md` still says the config "moves to" `github/.config/gh-dash/config.yml` (line 7), that step 1 fails because the file "does not exist" (line 62), and that step 3 "Create"s it (line 64). Round 3's fix changed only line 56. `origin/main` already ships the file, so these lines describe a change that did not happen. — `docs/changes/gh-dash-attention-sections/plan.md:7`
+- [ ] Nit: Round 1 says `comments:` counts issue comments only, but `evidence.md:19` shows it counts inline review comments too (work PR G and work PR F have 0 issue comments and match `comments:>0`). The round 1 finding stays valid for a review body without inline comments, which section 5 now covers. No action beyond awareness when writing the pull request body. — `docs/changes/gh-dash-attention-sections/evidence.md:19`
