@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Reviews check the design as well as the code: a Design pass joins Bugs, Security and Compliance.
 class DesignReviewPassTest < Minitest::Test

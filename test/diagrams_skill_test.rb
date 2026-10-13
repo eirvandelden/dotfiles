@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require "open3"
 
 # The diagrams skill tells an agent how to draw the "before" picture and how to show a diagram

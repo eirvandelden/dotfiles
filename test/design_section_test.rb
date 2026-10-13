@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # The plan stage opens every plan with a design discussion. The skill text is the behaviour:
 # an agent writes the template it finds there and stops where the skill says to stop.
