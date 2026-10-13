@@ -90,3 +90,9 @@ The commits since round 4 add no secrets, credentials or work references. They t
 - The four rule folders are gone → `test_unused_agent_rule_folders_are_gone`.
 
 No existing test was weakened, skipped or deleted. The `JOB_RAN` assertion is stricter than the `(skip)` check it replaces.
+
+## Round 6 — 2026-10-13T13:30:00Z — 5355c4bd (codex)
+
+Source: `codex review --base origin/main`, transcribed.
+
+- [x] P1: Keep Claude skill links valid after stowing. Codex says the link `claude/.claude/skills/plan` lands at `~/.claude/skills/plan`, so its `../../../agents/...` target resolves to `/Users/agents/...`. The same pattern would affect every skill link. — `claude/.claude/skills/plan:1` → dismissed: stow does not copy a package-side link into `~`. It makes `~/.claude/skills/plan` a link to the package entry `~/Developer/dotfiles/claude/.claude/skills/plan`, so the relative target resolves from the repository folder, to `agents/.agents/skills/plan`. Evidence: today `~/.agents/skills/plan` already uses this double link (stowed link → package link `../../../claude/.claude/skills/plan`), and Codex loads the skill through it; `~/.agents/skills/ruby-upgrade/SKILL.md` resolves the same way. A stow-shaped link in a scratch home, pointing at the worktree's `claude/.claude/skills/plan`, has realpath `.../agents/.agents/skills/plan`, and its `SKILL.md` is readable.
