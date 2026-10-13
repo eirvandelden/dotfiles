@@ -20,3 +20,7 @@ Compliance (acceptance criteria from `intent.md`):
 Every test named in `plan.md` `## Proof` exists. No existing test was weakened, skipped or deleted: `run_fallback` gained a `path:` keyword with the old fixture as default.
 
 Checks: `test/rubocop_fallback_test.rb` and `test/rbs_inline_tooling_test.rb` green; RuboCop, yamllint and markdownlint (no-hardwrap) clean on the changed files. In the full suite, `test/agent_worktree_test.rb` and `test/review_report_check_test.rb` error on `git` calls inside their temporary repositories (status 128, and a global `no-push-to-main` hook firing on a temporary `main`). This branch does not touch those files or the code they cover.
+
+## Round 2 — 2026-10-13T10:47:16Z — 2b5b8d78 (codex)
+
+No findings. `codex review --base origin/main` could not run the fallback RuboCop tests, because its sandbox blocked the RuboCop cache writes; they pass locally.
