@@ -62,7 +62,8 @@ class Checks
     not_green = listed(watch_error).reject { |check| GREEN.include?(check["bucket"]) }
     return if not_green.empty?
 
-    [ unfinished_note(not_green, watch_error), *named(not_green) ].compact.join("\n")
+    red, unfinished = not_green.partition { |check| RED.include?(check["bucket"]) }
+    red.empty? ? unfinished_report(unfinished, watch_error) : failure_report(red, unfinished)
   end
 
   private
@@ -91,10 +92,15 @@ class Checks
     checks.map { |check| "#{check['name']}: #{check['link']}" }
   end
 
-  def unfinished_note(not_green, watch_error)
-    return if not_green.all? { |check| RED.include?(check["bucket"]) }
+  # A red check wins over a pending one: --fail-fast stops at the first failure, so siblings are
+  # often still running. Failed checks come first; pending ones follow under a note of their own.
+  def failure_report(red, unfinished)
+    pending = unfinished.empty? ? [] : [ "Still pending:", *named(unfinished) ]
+    [ "CI failed; PR left unmerged.", *named(red), *pending ].join("\n")
+  end
 
-    [ "CI has not finished; PR left unmerged.", watch_error ].compact.join("\n")
+  def unfinished_report(unfinished, watch_error)
+    [ "CI has not finished; PR left unmerged.", watch_error, *named(unfinished) ].compact.join("\n")
   end
 end
 

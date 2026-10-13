@@ -101,6 +101,22 @@ class ShipTest < Minitest::Test
     assert_includes(origin_branches, @branch)
   end
 
+  def test_a_failed_check_beside_a_pending_one_reports_the_failure_first
+    stub_response("gh pr checks watch", { "exit" => 1, "stdout" => "rspec\tfail\nbuild\tpending\n" })
+    stub_response("gh pr checks json", { "stdout" => JSON.generate(FAILING_CHECKS + PENDING_CHECKS) })
+
+    stdout, stderr, status = ship("--no-merge")
+    lines = (stdout + stderr).lines.map(&:strip)
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/fail/i, lines.first)
+    refute(lines.any? { |line| line.include?("not finished") }, lines.join("\n"))
+    assert_operator(lines.index("rspec: https://ci.example/run/9"), :<, lines.index("build: https://ci.example/run/4"))
+    assert_operator(lines.index("deploy-preview: https://ci.example/run/10"), :<, lines.index("build: https://ci.example/run/4"))
+    pending_note = lines.index { |line| line.match?(/pending/i) && !line.include?("\t") }
+    assert_operator(pending_note, :<, lines.index("build: https://ci.example/run/4"))
+  end
+
   def test_no_merge_marks_ready_waits_for_green_and_leaves_the_pr_open
     stdout, stderr, status = ship("--no-merge")
 
