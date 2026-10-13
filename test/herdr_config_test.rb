@@ -34,13 +34,14 @@ class HerdrConfigTest < Minitest::Test
   end
 
   def test_no_herdr_tone_is_tracked
-    tracked, status = Open3.capture2("git", "ls-files", chdir: File.expand_path("..", __dir__))
+    listing, status = Open3.capture2("git", "ls-files", "-z", chdir: File.expand_path("..", __dir__))
     assert(status.success?, "git ls-files failed")
-    herdr_audio = tracked.lines.grep(%r{\Aherdr/.*\.(mp3|wav|aiff|m4a|ogg|flac)\n?\z}i)
+    tracked = listing.split("\0")
+    herdr_audio = tracked.grep(%r{\Aherdr/.*\.(mp3|wav|aiff|m4a|ogg|flac)\z}i)
     tones = %w[ready-to-serve milord jobs-done ForTheMaster02]
 
     assert_empty(herdr_audio)
-    assert_empty(tracked.lines.select { |file| tones.any? { |tone| File.basename(file.chomp, ".*") == tone } })
+    assert_empty(tracked.select { |file| tones.any? { |tone| File.basename(file, ".*") == tone } })
   end
 
   private
