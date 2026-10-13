@@ -54,3 +54,23 @@ Compliance: unchanged from round 1. Criteria 1–5 each map to the named test in
 
 - [x] Nit: The branch is 79 commits behind `origin/main`. Playbook rule 20 asks for a rebase onto the latest `main` before the push; the remote branch also needs `--force-with-lease`, because it still holds the pre-rebase 436def72 — `lefthook.yml:27` → fixed (rebased onto origin/main ccb0f437; push uses --force-with-lease)
 - [x] Nit: The test's header comment still says the gem's git call "reads the project's repository". Round 1 corrected the same wording in `lefthook.yml` to name the relative `.git` case too. The test runs only in a linked worktree, so the sentence is true for the test, but not as the general cause it states — `test/lefthook_rubocop_git_gem_test.rb:9` → dismissed: the bugfix test guard protects the committed reproduction test, and Etienne chose to keep it unchanged; the sentence holds for the linked worktree the test uses.
+
+## Round 3 — 2026-10-13T08:45Z — b13ab605
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the default passes from `new-repo-setup/references/REVIEW.md` apply.
+
+Checks run:
+
+- `git fetch origin`: the merge base is `origin/main` ccb0f437, so the branch is 0 commits behind. `origin/fallback-rubocop-hook-git-dir` still holds the pre-rebase 436def72, so the next push needs `--force-with-lease`, as round 2 recorded.
+- `git range-diff` against round 2's 3d6f95de: the fix and the comment commits are identical after the rebase. Since round 2, only `review.md` changed.
+- `test/lefthook_rubocop_git_gem_test.rb`: 6 runs, 35 assertions, 0 failures (33 s).
+- With `LEFTHOOK_BIN` unset, after the rebase: `lefthook_global_hooks_sync_test.rb`, `lefthook_local_hooks_test.rb`, `lefthook_posix_sh_test.rb`, `lefthook_pull_hooks_test.rb` and `rubocop_fallback_test.rb` all pass. These are the tests that read `lefthook.yml` or the hook shims.
+- `yamllint lefthook.yml` and `rubocop test/lefthook_rubocop_git_gem_test.rb`: clean.
+
+Bugs: nothing Important found. The diff to `lefthook.yml` is unchanged from round 2.
+
+Security: nothing found.
+
+Compliance: unchanged from round 2. Criteria 1–5 each map to the named test in `plan.md`'s `## Proof`, and all six tests exist and pass. Criteria 6–9 follow after the merge by design. No existing test was weakened, skipped or deleted. Only the two planned files changed, plus the change folder. All round 1 and round 2 findings are closed.
+
+- [ ] Nit: Plan step 9 says "Push, and open a pull request against `origin`". The playbook now says only `finish` opens a pull request, after it removes the change folder, and the consent guard refuses `gh pr create` while the folder exists. Open the pull request through `finish`, and carry the round 1 red output (criterion 5) into its body — `docs/changes/fallback-rubocop-hook-git-dir/plan.md:59` →
