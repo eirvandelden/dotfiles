@@ -71,7 +71,7 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
    - Section 3: `work PR E` (draft) is present and is absent from section 1.
    - Section 4: `work PR G` (changes requested) is present; `work PR I` (team review requested, only bot and own comments) is absent from sections 3 and 4.
    - Approved: `is:open org:nedap author:@me review:approved` returned 0 on 2026-10-13. If it is still 0, say so; else confirm each is absent from section 4 and present in "My Pull Requests".
-   PR numbers come from the 2026-10-13 probe. Use whatever matching PRs exist at implementation time and say so if they changed.
+   - PR numbers come from the 2026-10-13 probe. Use whatever matching PRs exist at implementation time and say so if they changed.
 8. Run the full suite so a failure fails the command: `(set -e; for file in test/*_test.rb; do ruby -Itest "$file"; done)`.
 9. Grep the diff for work names: `git diff main -- . ':!docs' | grep -inE 'nedap|<work repo names>'`. Only the `org:nedap` filters may match.
 10. Commit test and config together: `gh-dash: version the config with attention sections`.
