@@ -43,6 +43,32 @@ module WorktreeTools
       exit(exit_code)
     end
 
+    # Runs a command and returns its output and status. Without a time limit the command shares
+    # the caller's process group, so Ctrl-C and terminal prompts reach it. With one (the
+    # background sweep, which has no terminal and holds the repository's lock) it runs in its own
+    # process group, which is killed, ssh included, once the limit passes.
+    def capture_output(*command, time_limit: nil)
+      return Open3.capture2(*command, err: File::NULL) unless time_limit
+
+      Open3.popen2(*command, err: File::NULL, pgroup: true) do |stdin, stdout, waiter|
+        stdin.close
+        reader = Thread.new { stdout.read }
+        reader.report_on_exception = false
+        return [ reader.value, waiter.value ] if waiter.join(time_limit)
+
+        kill_group(waiter.pid)
+        [ "", waiter.value ]
+      end
+    end
+
+    # The group can end between the time-out and the kill.
+    def kill_group(pid)
+      Process.kill("KILL", -pid)
+      nil
+    rescue Errno::ESRCH
+      nil
+    end
+
     # Git helpers
     def git_root(path = ".")
       # Use array form to avoid shell injection

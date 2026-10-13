@@ -288,7 +288,7 @@ pre-push:
       run: ~/.config/git/worktree-tools/review-report-fresh --skip-without-pr
       fail_text: Run /review, then push again. The check applies once a pull request is open, or when gh cannot tell.
 
-# Run installs and migrations after pull
+# Run installs and migrations after pull, and sweep merged worktrees in the background
 # The nested runs pass the file list with -z: lefthook splits --files-from-stdin on NUL only.
 post-merge:
   parallel: true
@@ -300,8 +300,11 @@ post-merge:
       run: git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
+    sweep-worktrees:
+      # Detached: the pull must not wait for the sweep. Silent when worktree-sweep is not stowed yet.
+      run: ~/.config/git/worktree-tools/worktree-sweep --detach >/dev/null 2>&1 || true
 
-# Run migrations after pull --rebase (post-merge skips rebase)
+# Run migrations after pull --rebase (post-merge skips rebase), and sweep merged worktrees
 post-rewrite:
   parallel: true
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
@@ -310,6 +313,9 @@ post-rewrite:
       run: git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
+    sweep-worktrees:
+      # Detached: the pull must not wait for the sweep. Silent when worktree-sweep is not stowed yet.
+      run: ~/.config/git/worktree-tools/worktree-sweep --detach >/dev/null 2>&1 || true
 
 # custom migrations command for running rails migrations
 # Lefthook applies `glob` only when `run` holds a file template (outside pre-commit/pre-push),

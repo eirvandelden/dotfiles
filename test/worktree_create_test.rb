@@ -10,6 +10,9 @@ require_relative "isolated_git"
 # branch. It shells out to git, gh (PR state) and, inside herdr, worktree-pane — all stubbed.
 class WorktreeCreateTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-create", __dir__)
+  # A job a non-interactive shell starts in the background inherits SIGINT as ignored, and a
+  # shell cannot undo that for its children; Ruby can. A terminal leaves SIGINT at its default.
+  RESTORE_SIGINT = 'trap("INT", "SYSTEM_DEFAULT"); exec("ruby", *ARGV)'.freeze
 
   def setup
     @enclosing = Dir.mktmpdir
@@ -23,6 +26,7 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def teardown
+    stop_waiter
     FileUtils.rm_rf([ @enclosing, @stub_bin, @gh_stub_bin, @state_home ])
   end
 
@@ -324,6 +328,100 @@ class WorktreeCreateTest < Minitest::Test
     assert_empty(herdr_calls.grep(/\Apane close /))
   end
 
+  def test_a_never_pushed_worktree_survives_the_sweep_after_origin_moved_on
+    add_worktree("never-pushed", from: "origin/main")
+    never_pushed = File.join(@repo, ".worktrees", "never-pushed")
+    advance_origin_main
+
+    _, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    assert(File.directory?(never_pushed))
+    assert(branch?(@repo, "never-pushed"))
+  end
+
+  def test_a_branch_pushed_under_its_own_name_goes_once_origin_holds_its_work
+    add_worktree("pushed", from: "origin/main")
+    pushed = File.join(@repo, ".worktrees", "pushed")
+    commit(pushed, "pushed work")
+    git(pushed, "push", "--quiet", "-u", "origin", "pushed")
+    git(@repo, "push", "--quiet", "origin", "pushed:main")
+    advance_origin_main
+
+    _, stderr, status = run_script("feature")
+
+    assert(status.success?, stderr)
+    refute(File.directory?(pushed))
+    refute(branch?(@repo, "pushed"))
+  end
+
+  def test_waits_for_a_running_sweep_before_it_fetches_or_creates
+    lock = File.join(@repo, ".git", "worktree-sweep.lock")
+    File.open(lock, File::RDWR | File::CREAT) do |file|
+      file.flock(File::LOCK_EX)
+      @waiter = waiter = Process.detach(Process.spawn(create_environment, "ruby", SCRIPT, "feature", "--no-pane",
+                                                      chdir: @repo, out: File::NULL, err: File::NULL))
+      # Its last git call before it takes the lock finds the lock file's directory.
+      deadline = Time.now + 20
+      sleep 0.05 until git_calls.any? { |call| call.include?("--git-common-dir") } || Time.now > deadline
+      refute_operator(Time.now, :>, deadline, "worktree-create never reached the lock")
+      sleep 0.5
+      assert(waiter.alive?, "worktree-create must wait while a sweep holds the lock")
+      refute(File.directory?(File.join(@repo, ".worktrees", "feature")))
+      assert_empty(git_calls.grep(/\Afetch /), "worktree-create must not fetch while a sweep holds the lock")
+    end
+
+    deadline = Time.now + 60
+    sleep 0.1 while @waiter.alive? && Time.now < deadline
+    refute(@waiter.alive?, "worktree-create did not finish after the lock was released")
+    assert(File.directory?(File.join(@repo, ".worktrees", "feature")))
+  end
+
+  def test_says_that_it_waits_for_a_running_sweep
+    lock = File.join(@repo, ".git", "worktree-sweep.lock")
+    stderr_log = File.join(@enclosing, "create-stderr.log")
+    File.open(lock, File::RDWR | File::CREAT) do |file|
+      file.flock(File::LOCK_EX)
+      @waiter = Process.detach(Process.spawn(create_environment, "ruby", SCRIPT, "feature", "--no-pane",
+                                             chdir: @repo, out: File::NULL, err: stderr_log))
+      deadline = Time.now + 20
+      sleep 0.05 until File.read(stderr_log).include?("waiting for a running worktree sweep") || Time.now > deadline
+      assert_includes(File.read(stderr_log), "worktree-create: waiting for a running worktree sweep to finish")
+    end
+
+    deadline = Time.now + 60
+    sleep 0.1 while @waiter.alive? && Time.now < deadline
+    refute(@waiter.alive?, "worktree-create did not finish after the lock was released")
+  end
+
+  # Only the background sweep has a time limit: worktree-create's own fetch runs as long as it
+  # takes, as before.
+  def test_a_fetch_slower_than_the_sweep_time_limit_still_brings_origin_main_up_to_date
+    advance_origin_main
+    environment = create_environment.merge("GIT_FETCH_DELAY" => "2", "WORKTREE_TOOLS_TIME_LIMIT" => "1")
+
+    stdout, stderr, status = Open3.capture3(environment, "ruby", SCRIPT, "feature", "--no-pane", chdir: @repo)
+
+    assert(status.success?, stderr)
+    assert_equal(git(@origin, "rev-parse", "main").strip, git(stdout.strip, "rev-parse", "HEAD").strip)
+  end
+
+  # A terminal sends Ctrl-C to its foreground process group; the fetch must be part of it.
+  def test_ctrl_c_ends_it_during_a_fetch
+    environment = create_environment.merge("GIT_FETCH_DELAY" => "30")
+    pid = Process.spawn(environment, "ruby", "-e", RESTORE_SIGINT, SCRIPT, "feature", "--no-pane",
+                        chdir: @repo, out: File::NULL, err: File::NULL, pgroup: true)
+    @waiter = Process.detach(pid)
+    deadline = Time.now + 20
+    sleep 0.05 until git_calls.any? { |call| call.start_with?("fetch ") } || Time.now > deadline
+    sleep 0.5
+    Process.kill("INT", -pid)
+
+    refute_nil(@waiter.join(10), "worktree-create kept running after Ctrl-C")
+  ensure
+    kill_group(pid) if @waiter&.alive?
+  end
+
   def test_the_shebang_does_not_depend_on_rv_being_on_path
     assert_equal("#!/usr/bin/env ruby\n", File.readlines(SCRIPT).first)
   end
@@ -445,6 +543,7 @@ class WorktreeCreateTest < Minitest::Test
       #!/bin/sh
       printf '%s\\n' "$*" >> "$GIT_CALL_LOG"
       printf 'git: %s\\n' "$*" >> "$ORDER_LOG"
+      if [ "$1" = fetch ] && [ -n "$GIT_FETCH_DELAY" ]; then sleep "$GIT_FETCH_DELAY"; fi
       exec /usr/bin/git "$@"
     SH
     FileUtils.chmod(0o755, recorder)
@@ -479,23 +578,30 @@ class WorktreeCreateTest < Minitest::Test
 
   def run_script(name, extra_args: [], pane_cwd: nil, pane_status: "idle", pane_agent: nil, chdir: @repo,
                  name_after_flag: false, without_gh: false, herdr_pane_id: nil, herdr_bin_path: nil)
-    environment = {
-      "XDG_STATE_HOME" => @state_home,
+    environment = create_environment(without_gh: without_gh).merge(
       "HERDR_PANE_ID" => herdr_pane_id,
       "HERDR_BIN_PATH" => herdr_bin_path,
+      "HERDR_STUB_PANE_STATUS" => pane_status
+    )
+    environment["HERDR_STUB_PANE_CWD"] = pane_cwd if pane_cwd
+    environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
+    arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
+    Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  def create_environment(without_gh: false)
+    {
+      "XDG_STATE_HOME" => @state_home,
+      "HERDR_PANE_ID" => nil,
+      "HERDR_BIN_PATH" => nil,
       "PATH" => without_gh ? path_without_gh : "#{@stub_bin}:#{@gh_stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GH_STUB_STATES" => gh_states_file,
       "HOME" => @enclosing,
       "HERDR_ENV" => "1",
-      "HERDR_STUB_PANE_STATUS" => pane_status,
       "GIT_CALL_LOG" => git_call_log,
       "ORDER_LOG" => order_log
     }
-    environment["HERDR_STUB_PANE_CWD"] = pane_cwd if pane_cwd
-    environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
-    arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
-    Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
   end
 
   def recorded(pane_file_name)
@@ -520,6 +626,21 @@ class WorktreeCreateTest < Minitest::Test
 
   def git_call_log
     @git_call_log ||= File.join(@stub_bin, "git-calls.log")
+  end
+
+  def kill_group(pid)
+    Process.kill("KILL", -pid) if pid
+  rescue Errno::ESRCH
+    nil
+  end
+
+  # A failed assertion inside the lock block releases the lock, and the waiting process would
+  # carry on while teardown deletes its directories.
+  def stop_waiter
+    return unless @waiter&.alive?
+
+    Process.kill("KILL", @waiter.pid)
+    @waiter.join
   end
 
   def git_calls

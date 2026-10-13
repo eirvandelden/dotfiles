@@ -48,7 +48,7 @@ fi
 
 Never type `git worktree add` yourself; use `worktree-create`. A hook refuses a `git worktree add` whose target is not `<main checkout>/.worktrees/<name>`.
 
-`worktree-create` prunes stale admin files, fetches `origin`'s default branch, sweeps worktrees that are merged, gone, or fast-forwarded into it — leaving anything dirty, with an open PR, or freshly branched with nothing committed yet — then branches the new worktree off `origin/<default>`, not the main checkout's current HEAD. That's deliberately different from the `spin()` shell function (`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout happens to have checked out: a fresh-from-remote base means the task never inherits a stale or dirty main checkout. It refuses if `.worktrees` isn't gitignored (`git check-ignore -q .worktrees` — already true on this machine via `~/.config/git/ignore.global`; on an unfamiliar machine or a fresh clone, add it to `.git/info/exclude` first, local-only) or if the name is empty. If a worktree's PR/merge check errors (no PR yet, branch not pushed, detached HEAD) it leaves it — never guessing, never removing unmerged work.
+`worktree-create` prunes stale admin files, fetches `origin`'s default branch, sweeps worktrees that are merged, gone, or fast-forwarded into it — leaving anything dirty, with an open PR, never pushed under its own name, or freshly branched with nothing committed yet — then branches the new worktree off `origin/<default>`, not the main checkout's current HEAD. That's deliberately different from the `spin()` shell function (`zsh/.config/zsh/functions/worktree.zsh`), which branches from whatever the main checkout happens to have checked out: a fresh-from-remote base means the task never inherits a stale or dirty main checkout. It refuses if `.worktrees` isn't gitignored (`git check-ignore -q .worktrees` — already true on this machine via `~/.config/git/ignore.global`; on an unfamiliar machine or a fresh clone, add it to `.git/info/exclude` first, local-only) or if the name is empty. If a worktree's PR/merge check errors (no PR yet, branch not pushed, detached HEAD) it leaves it — never guessing, never removing unmerged work.
 
 Inside herdr, a pane rooted in the new worktree opens below; focus it for the file viewer. A plain invocation still opens that pane.
 
@@ -64,7 +64,7 @@ worktree_path=$(~/.config/git/worktree-tools/worktree-create --no-pane "$branch"
 
 ## Step 3: work, commit, push — all from here
 
-Edits, commits, `git push` and `/finish` (the only step that opens a PR) all run with the worktree as `cwd`. Never `cd` back to the main checkout to commit or push. The worktree stays in place until a future task's Step 1 sweeps it, once its PR merges.
+Edits, commits, `git push` and `/finish` (the only step that opens a PR) all run with the worktree as `cwd`. Never `cd` back to the main checkout to commit or push. The worktree stays in place until its PR merges. Then a pull in the repository (`worktree-sweep`, started by the lefthook `post-merge` and `post-rewrite` hooks) or a future task's Step 1 sweeps it.
 
 ## Rails + SQLite projects
 

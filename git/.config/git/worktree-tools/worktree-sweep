@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+# Sweep the merged worktrees of the repository this runs in. The lefthook pull hooks call it.
+# Plain ruby, not rv: CI has no rv, and the hooks run it with whatever ruby is on PATH.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "repository"
+require "sweep"
+require "open3"
+
+module WorktreeTools
+  class SweepCommand
+    # Git exports these to its hooks; with GIT_DIR set, `git -C .worktrees/x` reads the wrong repository.
+    HOOK_ENVIRONMENT = %w[GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
+                          GIT_OBJECT_DIRECTORY].freeze
+    # Seconds before the fetch or a gh call gives up: a hung call would keep the lock forever.
+    TIME_LIMIT = Float(ENV.fetch("WORKTREE_TOOLS_TIME_LIMIT", "30"))
+
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    def run!(argv)
+      detach = !argv.delete("--detach").nil?
+      HOOK_ENVIRONMENT.each { |name| ENV.delete(name) }
+      ENV["GIT_TERMINAL_PROMPT"] = "0"
+      repository = Repository.new("worktree-sweep", time_limit: TIME_LIMIT)
+      kept = [ current_worktree ].compact
+      Dir.chdir(repository.root)
+      detach_from_caller(repository) if detach
+      sweep(repository, kept)
+    end
+
+    private
+
+    # The hook command ends when the parent exits: a new session, and stdin, stdout and stderr on
+    # /dev/null, so lefthook has no pipe left to wait for. The lock file exists before the parent
+    # returns, so its presence right after a pull shows that a sweep started.
+    def detach_from_caller(repository)
+      repository.touch_lock
+      Process.daemon(true)
+    end
+
+    def sweep(repository, kept)
+      default_branch = repository.default_branch
+      repository.exclusively do
+        repository.fetch_default_branch(default_branch)
+        Sweep.new("worktree-sweep", time_limit: TIME_LIMIT).run(default_branch: default_branch, keep: kept)
+      end
+    end
+
+    def current_worktree
+      output, status = Open3.capture2("git", "rev-parse", "--show-toplevel", err: File::NULL)
+      output.strip if status.success?
+    end
+  end
+end
+
+WorktreeTools::SweepCommand.run!(ARGV) if $PROGRAM_NAME == __FILE__
