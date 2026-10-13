@@ -61,8 +61,12 @@ module WorktreeTools
       end
     end
 
+    # The group can end between the time-out and the kill.
     def kill_group(pid)
       Process.kill("KILL", -pid)
+      nil
+    rescue Errno::ESRCH
+      nil
     end
 
     # Git helpers

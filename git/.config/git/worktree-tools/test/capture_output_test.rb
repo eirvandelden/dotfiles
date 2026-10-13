@@ -22,6 +22,14 @@ module WorktreeTools
       refute(status.success?)
     end
 
+    # The command's process group can end between the time-out and the kill.
+    def test_killing_a_process_group_that_already_ended_is_no_error
+      pid = Process.spawn("true", pgroup: true)
+      Process.wait(pid)
+
+      assert_nil(kill_group(pid))
+    end
+
     def test_without_a_time_limit_it_waits_for_the_command
       output, status = capture_output("sh", "-c", "sleep 0.3; printf late")
 
