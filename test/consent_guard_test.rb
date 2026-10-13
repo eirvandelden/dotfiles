@@ -496,7 +496,9 @@ class ConsentGuardTest < Minitest::Test
       "# don't forget the gems\nbundle install", "sudo -E -u root bundle install", "env -i -u FOO bundle install",
       "timeout --preserve-status -s KILL 60 bundle install", "rv run bundle install", "rv r bundle i",
       "rv run --ruby 4.0 bundle install", "rv run -v bundle install", "rv r -v bundle i",
-      "rv -v run bundle install", "rv -q run bundle install" ].each do |command|
+      "rv -v run bundle install", "rv -q run bundle install",
+      "timeout 600 rv run bundle install", "sudo rv run bundle install", "env rv run bundle install",
+      "nice -n 5 rv r bundle i", "exec rv run bundle install", "command -p bundle install" ].each do |command|
       _, stderr, status = run_guard(command)
 
       assert_equal(2, status.exitstatus, command)

@@ -177,11 +177,11 @@ def next_position(position, word)
   return :command if SEPARATORS.include?(word)
   return :argument if position == :argument
   return rv_position(word) if position == :rv
+  return :rv if word == "rv"
   return :lookup if word == "command"
   return :prefix if COMMAND_PREFIXES.include?(word) || (position == :option_value && !word.start_with?("-"))
   return prefix_word_position(position, word) if %i[prefix option_value lookup].include?(position)
   return position if SHELL_KEYWORDS.include?(word) || word.match?(ENV_ASSIGNMENT)
-  return :rv if word == "rv"
 
   :argument
 end
