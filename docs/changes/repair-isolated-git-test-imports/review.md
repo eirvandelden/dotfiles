@@ -59,3 +59,23 @@ No existing test is weakened, skipped or deleted.
 
 - [ ] Important: `origin/main` moved to 31fbbd43 and added five test files without the helper: `test/deliver_test.rb`, `test/delivery_contract_test.rb`, `test/gh_dash_config_test.rb`, `test/open_pr_dash_test.rb` and `test/ship_test.rb`. After a rebase the contract test fails again, and the pull request CI is red. Plan step 8 applies: rebase, list the missing files with `git grep -L`, add the helper, repeat steps 3 to 7. `test/pull_request_flow_test.rb` also changed on `main`; the merge is clean, but re-run it after the rebase. — `test/isolated_git_test.rb:84` → fixed (Require isolated_git in the delivery and gh-dash tests)
 - [ ] Nit: Design decisions still say "Each of the eleven files gets one line in that slot" and "so the list is eleven, not eight". The plan now lists thirteen files, and step 8 will add more. — `docs/changes/repair-isolated-git-test-imports/plan.md:9` → fixed (Require isolated_git in the delivery and gh-dash tests)
+
+## Round 6 — 2026-10-13T18:27:11Z — 9679aedb
+
+Nothing found. Bugs, Security and Compliance passes are clean.
+
+The branch is rebased on the current `origin/main` (31fbbd43; a fresh fetch shows no newer commit). The diff is eighteen one-line additions of `require_relative "isolated_git"` in the planned position, plus the change artifacts. The working tree is clean. RuboCop reports no offenses on the five new files.
+
+Round 5 closures:
+
+- Important (five files missing the helper after `main` moved): holds. `deliver_test.rb`, `delivery_contract_test.rb`, `gh_dash_config_test.rb`, `open_pr_dash_test.rb` and `ship_test.rb` now require the helper. `git grep -L '^require_relative "isolated_git"$' -- 'test/*_test.rb'` lists no file. `delivery_harness.rb` sets a repository-local identity and already passes `GIT_CONFIG_GLOBAL=/dev/null` to its children, so the three harness tests do not depend on the global git config. `pull_request_flow_test.rb` passes after the rebase.
+- Nit (Design decisions named "eleven"): holds. Design decisions now say "Each changed file gets one line in that slot" and "the first list was eleven, not eight; later `main` commits added more".
+
+Compliance:
+
+- The contract test lists no missing file → `test/isolated_git_test.rb` `IsolatedGitTest#test_every_test_file_requires_the_helper` (7 runs, 0 failures).
+- Each changed file passes on its own with the helper → plan `## Proof` loop (the five new files ran green: deliver 30 runs, delivery_contract 17, gh_dash_config 12, open_pr_dash 7, ship 21; the thirteen earlier files are covered by the full suite run below).
+- The full suite passes locally with the CI loop → plan `## Proof` loop (ran: 59 files, 0 failures).
+- The pull request's CI is green → `gh pr checks` (no pull request yet; pending `deliver`).
+
+No existing test is weakened, skipped or deleted.
