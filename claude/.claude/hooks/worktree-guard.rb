@@ -10,13 +10,19 @@
 # `sh`, `bash` or `zsh` with `-c` among its flags, that command text is checked too.
 # Variables are not expanded, so such a target is taken literally and usually blocks. `cd`,
 # `cd -P`, `cd --` and `pushd` move the directory and `popd` moves it back; inside `( … )` a
-# move ends with the subshell. Commands inside `$( … )` are not checked. Everything else errs
-# towards allowing: a false block stops legitimate work, and the written rule covers the rest.
+# move ends with the subshell, and so does `$( … )`. Everything else errs towards allowing: a
+# false block stops legitimate work, and the written rule covers the rest.
 #
-# Known gaps, each a command that passes although it should block:
+# Known gaps that pass although they should block:
 # - a `#` right after a closing quote (`-m "Fix "#12; git worktree add …`) starts a comment;
 # - a `<<` inside a one-line `"…$(…)…"` string starts a heredoc that never closes;
-# - `time`, `nice` and `timeout` before `bash -c "…"` hide the command word.
+# - `time`, `nice` and `timeout` before `bash -c "…"` hide the command word;
+# - a `)` that ends a `case` pattern also ends a subshell;
+# - a `cd` or `pushd` before `|` or a single `&` is followed, though it runs in a subshell.
+#
+# Known gaps that block although they should pass:
+# - a `cd` right after `$(` is not followed (`echo $(cd .worktrees/x && git worktree add …)`);
+# - a bare `pushd`, `pushd +N` and `popd +N` are not followed.
 #
 # Runs on whichever Ruby is on PATH, which is rv's. A hook that cannot run does not block
 # anything, so keep Ruby on PATH.
