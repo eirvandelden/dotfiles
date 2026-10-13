@@ -53,3 +53,9 @@ Closed findings checked against the code:
 Compliance: the acceptance-criteria mapping from round 1 still holds. Every test named in `plan.md` `## Proof` exists. Fix commits weakened, skipped or deleted no test. The removed `w1:pElsewhere` case is now outside the selection by construction, because unlisted panes are never closed.
 
 Checks: full suite green except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, which also errors on main. RuboCop, shellcheck and markdownlint (no-hardwrap) are clean on the changed files. The branch is 13 commits behind `origin/main` and rebases without conflicts.
+
+## Round 4 (Codex) — 2026-10-13T13:05Z — 00d1c0d5
+
+- [ ] Important: `deliver --check` treats any text after a finding's `→` as closed, so `→ still investigating` lets delivery proceed. The review skill allows only `fixed (<commit subject>)` or `dismissed: <reason>`; validate those markers instead of accepting any non-empty text — `claude/.claude/skills/deliver/scripts/deliver:57` →
+
+Checks: Codex ran the deliver, ship, pane and contract tests; all green. None covers an invalid close marker.
