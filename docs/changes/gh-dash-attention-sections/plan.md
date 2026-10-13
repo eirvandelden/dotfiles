@@ -30,7 +30,7 @@ From `intent.md` (2026-10-13). Status: accepted.
   | PRs | Work reviews | `is:open org:nedap review-requested:@me -reviewed-by:@me draft:false` (4) |
   | PRs | Personal PRs | `is:open user:eirvandelden draft:false` (76, of which 53 dependabot) |
   | PRs | My work drafts | `is:open org:nedap author:@me draft:true` (1) |
-  | PRs | My work: changes requested | `is:open org:nedap author:@me draft:false review:changes_requested` (1) |
+  | PRs | My work: needs reply | `is:open org:nedap author:@me draft:false comments:>0 -review:approved` (6) |
   | PRs | My Pull Requests | `is:open author:@me` |
   | PRs | Involved | `is:open involves:@me -author:@me` |
   | Issues | Assigned to me | `is:open assignee:@me` (9) |
@@ -38,8 +38,8 @@ From `intent.md` (2026-10-13). Status: accepted.
   | Issues | Involved | `is:open involves:@me -author:@me` |
 
 - `review-requested:@me` includes team requests: it returns 4 work PRs, `user-review-requested:@me` returns 0. That satisfies "team requests included".
-- Section 4 uses `review:changes_requested`, not the "changes requested or commented" of the in-scope list. Live search shows that a PR whose only reviews are `COMMENTED` matches `review:none` (`work PR F`, `work PR J`, `work PR H` all have commented reviews and match `review:none`). `review:commented` does not exist (0 results). The only qualifier that also catches commented reviews is `comments:>0`, and it also counts bot and self comments: `work PR I` has only `work-bot`, `github-actions` and own comments, no review, and matches `comments:>0`. That breaks the acceptance criterion "My open non-draft nedap PR with review requested but no review yet shows in neither the third nor the fourth section". The acceptance criteria are the binding contract, so this plan keeps `review:changes_requested` and raises the trade-off as a decision for Etienne (see Risks).
-- Section 4 adds `draft:false`, so a draft with changes requested shows only in section 3. The sections stay disjoint; no acceptance criterion depends on it.
+- Section 4 uses `comments:>0 -review:approved` (Etienne's decision, 2026-10-13, after the plan stage raised it). Live search shows that a PR whose only reviews are `COMMENTED` matches `review:none` (`work PR F`, `work PR J`, `work PR H` all have commented reviews and match `review:none`). `review:commented` does not exist (0 results). The only qualifier that also catches commented reviews is `comments:>0`, and it also counts bot and self comments: `work PR I` has only `work-bot`, `github-actions` and own comments, no review, and matches `comments:>0`. Etienne accepts that: the intent now says a PR with no comments and no review stays out of sections 3 and 4, and section 4 also shows PRs with only bot or own comments. `-review:approved` keeps approved PRs out.
+- Section 4 adds `draft:false`, so a commented draft shows only in section 3. The sections stay disjoint; no acceptance criterion depends on it.
 - The `org:nedap` reference is allowed in this public repository for this change only (intent constraint). No other work name enters the diff.
 
 ## Integration points
@@ -69,7 +69,7 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
    - Post-review exclusion: run the section 1 filter without `-reviewed-by:@me`, and list any PR it adds; each must have a review by me. If none exists today, say so.
    - Section 2: at least one `app/dependabot` PR in an `eirvandelden` repository; and the 2 open `eirvandelden` drafts are absent.
    - Section 3: `work PR E` (draft) is present and is absent from section 1.
-   - Section 4: `work PR G` (changes requested) is present; `work PR I` (team review requested, only bot and own comments) is absent from sections 3 and 4.
+   - Section 4: `work PR G` (changes requested) and `work PR F` (only commented reviews) are present; `work PR I` (only bot and own comments) is present too, as accepted. A non-draft work PR of mine with `comments:0` is absent from sections 3 and 4; if none exists today, say so.
    - Approved: `is:open org:nedap author:@me review:approved` returned 0 on 2026-10-13. If it is still 0, say so; else confirm each is absent from section 4 and present in "My Pull Requests".
    - PR numbers come from the 2026-10-13 probe. Use whatever matching PRs exist at implementation time and say so if they changed.
 8. Run the full suite so a failure fails the command: `(set -e; for file in test/*_test.rb; do ruby -Itest "$file"; done)`.
@@ -78,7 +78,7 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
 
 ## Risks
 
-- Section 4 misses my work PRs that have only commented reviews. Today that is 4 PRs (`work PR F`, `work PR J`, `work PR K`, `work PR H`), more than the 1 it shows. They still show in "My Pull Requests". The alternative `comments:>0 -review:approved` shows them, but also shows PRs with only bot or self comments, which breaks an acceptance criterion. This needs Etienne's decision; the plan does not guess.
+- Section 4 shows PRs whose only comments come from bots or from me (today `work PR I`). Accepted by Etienne in exchange for catching the 4 PRs with only commented reviews.
 - Stow conflict: `~/.config/gh-dash/config.yml` is a real file today. `stow github` refuses until Etienne trashes it. The implement stage never touches it.
 - `-reviewed-by:@me` hides a PR where my review was re-requested after I reviewed (accepted in intent).
 - `smartFilteringAtLaunch` stays on: inside a repository every section narrows to that repository, so a personal-repo run shows empty work sections. Accepted in intent.
@@ -93,9 +93,10 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
 - A draft nedap PR with a review request for me does not show in the first section → `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts` (`draft:false`); live: step 7.
 - A non-draft dependabot PR in an `eirvandelden` repository shows in the second section; a draft there does not → `test_personal_section_takes_every_ready_pr_in_my_repositories` (filter is `user:eirvandelden draft:false` with no `author:` qualifier); live: step 7.
 - My open nedap draft shows in the third section → `test_drafts_section_takes_my_open_work_drafts`; live: step 7.
-- My open nedap PR with "changes requested" shows in the fourth section → `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`; live: step 7.
-- My open approved nedap PR does not show in the fourth section; it shows in "My Pull Requests" → `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested` (only `review:changes_requested`) and `test_default_pr_sections_follow_with_their_gh_dash_filters`.
-- My open non-draft nedap PR with review requested but no review shows in neither section 3 nor 4 → `test_drafts_section_takes_my_open_work_drafts` (`draft:true`) and `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`; live: step 7 with `work PR I` or its current equivalent.
+- My open nedap PR with "changes requested" shows in the fourth section → `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`; live: step 7.
+- My open nedap PR with only commented reviews shows in the fourth section → `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved` (`comments:>0`); live: step 7 with `work PR F`.
+- My open approved nedap PR does not show in the fourth section; it shows in "My Pull Requests" → `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved` (`-review:approved`) and `test_default_pr_sections_follow_with_their_gh_dash_filters`.
+- My open non-draft nedap PR with no comments and no review shows in neither section 3 nor 4 → `test_drafts_section_takes_my_open_work_drafts` (`draft:true`) and `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved` (`comments:>0`); live: step 7.
 - The default "Needs My Review" is gone; "My Pull Requests" and "Involved" follow → `test_pr_sections_put_what_needs_action_first` and `test_default_pr_sections_follow_with_their_gh_dash_filters`.
 - The issues view opens on open issues assigned to me; "Assigned" is gone → `test_issue_sections_open_on_issues_assigned_to_me`.
 - The `C` keybinding still opens the PR in octo.nvim through herdr → `test_deep_review_keybinding_opens_octo_in_a_herdr_pane` (exact command text) and `test_diff_pager_stays_delta`; check: Order of work step 6 (press `C` on a PR).
@@ -104,7 +105,7 @@ No other file changes. `packages.conf` already lists `github` under `STOW`.
 
 Per changed file, the unit tests expected:
 
-- `test/gh_dash_config_test.rb`: `test_config_is_valid_yaml_inside_the_github_stow_package`, `test_pr_sections_put_what_needs_action_first`, `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts`, `test_personal_section_takes_every_ready_pr_in_my_repositories`, `test_drafts_section_takes_my_open_work_drafts`, `test_changes_requested_section_takes_my_ready_work_prs_with_changes_requested`, `test_default_pr_sections_follow_with_their_gh_dash_filters`, `test_issue_sections_open_on_issues_assigned_to_me`, `test_no_filter_uses_or`, `test_deep_review_keybinding_opens_octo_in_a_herdr_pane`, `test_diff_pager_stays_delta`.
+- `test/gh_dash_config_test.rb`: `test_config_is_valid_yaml_inside_the_github_stow_package`, `test_pr_sections_put_what_needs_action_first`, `test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts`, `test_personal_section_takes_every_ready_pr_in_my_repositories`, `test_drafts_section_takes_my_open_work_drafts`, `test_needs_reply_section_takes_my_ready_work_prs_with_comments_except_approved`, `test_default_pr_sections_follow_with_their_gh_dash_filters`, `test_issue_sections_open_on_issues_assigned_to_me`, `test_no_filter_uses_or`, `test_deep_review_keybinding_opens_octo_in_a_herdr_pane`, `test_diff_pager_stays_delta`.
 - `github/.config/gh-dash/config.yml`: covered by the test file above; no code of its own.
 
 Test setup: `YAML.safe_load_file` on `github/.config/gh-dash/config.yml`, path from `File.expand_path("../github/.config/gh-dash/config.yml", __dir__)`, like `test/herdr_config_test.rb`. Compare filters as whitespace-split token sets, so token order does not matter but no token is missing or extra. No network, no gh-dash binary in the unit tests; the live checks are Order of work steps 6 and 7 and their evidence is recorded in the implementation report.
@@ -123,7 +124,7 @@ Domain skills applied: dotfiles-maintenance (stow package layout, rule 12), rail
 
 ### Round 1 (codex exec -p terra)
 
-- Section 4 uses only `review:changes_requested`, which drops the "or commented" part of the accepted in-scope list; amend the intent with Etienne's choice → dismissed: the plan cannot change an accepted intent; it follows the binding acceptance criteria, records the live evidence, and raises the conflict as a decision for Etienne in Risks and in the stage report.
+- Section 4 uses only `review:changes_requested`, which drops the "or commented" part of the accepted in-scope list; amend the intent with Etienne's choice → dismissed: the plan cannot change an accepted intent; it follows the binding acceptance criteria, records the live evidence, and raises the conflict as a decision for Etienne in Risks and in the stage report. Etienne chose `comments:>0 -review:approved` on 2026-10-13; intent and plan now say so.
 - The AND-only constraint is not established, since GitHub documents `OR` for issue search; rerun the query before enforcing `test_no_filter_uses_or` → dismissed: the live GraphQL `search(type: ISSUE)` probe on 2026-10-13 returned 4 for `is:pr is:open org:nedap review-requested:@me` and 0 for the same with `OR draft:true`, so classic search does not honour `OR`; that result is recorded under Risks.
 - The full-suite loop with `|| break` exits 0 after a failed test → fixed (step 8 now runs the loop in a `set -e` subshell)
 - The `C` keybinding criterion has no runtime proof; the manual step never presses `C` → fixed (step 6 presses `C` on a PR and checks the herdr pane runs the Octo command; the Proof line names that check)

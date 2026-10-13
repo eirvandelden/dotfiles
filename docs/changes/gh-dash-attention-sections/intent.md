@@ -31,7 +31,7 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
   1. Work PRs (`org:nedap`) where my review is requested (team requests included), I have not reviewed yet, and the PR is not a draft.
   2. Open non-draft PRs in my personal repositories (`user:eirvandelden`), dependabot included.
   3. My own open work drafts.
-  4. My own open work PRs that have at least one review (changes requested or commented), excluding approved PRs.
+  4. My own open non-draft work PRs that have comments or reviews, excluding approved PRs.
   5. Default "My Pull Requests".
   6. Default "Involved".
 - Issues sections, in this order: issues assigned to me, default "My Issues", default "Involved".
@@ -51,8 +51,9 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
 - A non-draft dependabot PR in an `eirvandelden` repository shows in the second section; a draft there does not.
 - My open nedap draft shows in the third section.
 - My open nedap PR with "changes requested" shows in the fourth section.
+- My open nedap PR with only commented reviews shows in the fourth section.
 - My open approved nedap PR does not show in the fourth section; it shows in "My Pull Requests".
-- My open non-draft nedap PR with review requested but no review yet shows in neither the third nor the fourth section.
+- My open non-draft nedap PR with no comments and no review shows in neither the third nor the fourth section.
 - The default "Needs My Review" section is gone; "My Pull Requests" and "Involved" follow the new sections.
 - The issues view opens on open issues assigned to me; the default "Assigned" section is gone.
 - The `C` keybinding still opens the PR in octo.nvim through herdr.
@@ -60,7 +61,7 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
 
 ## Flagged concerns
 
-- A work PR with only plain comments (no review) and no draft status shows in no "needs action" section. Classic search cannot express "draft OR reviewed OR commented". Chosen side: two sections (drafts, and reviewed); plain-comment-only PRs are missed.
+- Classic search cannot express "draft OR reviewed OR commented", and it counts a PR with only commented reviews as `review:none`. Chosen side (Etienne, 2026-10-13, during the plan stage): two sections, and section 4 matches any comment. Section 4 therefore also shows PRs whose only comments come from bots or from me.
 - `-reviewed-by:@me` hides a PR where my review was re-requested after I reviewed. Chosen side: accept that, to keep handled team requests out.
 
 ## Open questions
