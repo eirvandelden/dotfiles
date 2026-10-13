@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 # Ends a change once its review is closed: removes docs/changes/<slug>/ in a commit of its own,
 # pushes the branch, opens (or updates) a draft PR with the filled body, then opens a gh-dash pane
-# and closes this change's idle stage panes. It asks no questions. `deliver --check` runs only the
-# preconditions and exits 0 when delivery may run, 1 with the reasons otherwise.
+# and closes the idle stage panes this change opened. It asks no questions. `deliver --check` runs
+# only the preconditions and exits 0 when delivery may run, 1 with the reasons otherwise.
 #
 # The body and title are saved under <git-common-dir>/deliver/ so a delivery that fails after the
 # folder is removed (a failed push, say) resumes from the push instead of starting over.
@@ -155,29 +155,44 @@ class Draft
   end
 end
 
-# Closes this worktree's idle or done agent panes; never its own, a working one or an agentless one.
+# Closes the stage panes this change opened, once they are idle or done. hand-off-plan.sh and
+# start-review.sh list each one as "<pane_id> <terminal_id>" in <git-common-dir>/herdr/
+# stage-panes-<slug>. A pane closes only while its terminal id still matches (pane ids are reused),
+# and never when it is this pane or the intent pane the intent skill recorded.
 class Panes
   include Shell
 
-  def initialize(toplevel)
-    @toplevel = toplevel
+  CLOSABLE = %w[idle done].freeze
+
+  def initialize(slug, common_dir)
+    @record = File.join(common_dir, "herdr", "stage-panes-#{slug}")
+    @intent_record = File.join(common_dir, "herdr", "intent-pane-#{slug}")
   end
 
   def close_stale
-    return unless ENV["HERDR_ENV"] == "1"
+    return unless ENV["HERDR_ENV"] == "1" && File.exist?(@record)
 
     stale.each { |pane| system("herdr", "pane", "close", pane.fetch("pane_id")) }
+    File.delete(@record)
   end
 
   private
 
   def stale
-    listed.select { |pane| stale?(pane) }
+    listed.select { |pane| recorded.include?([ pane["pane_id"], pane["terminal_id"] ]) && closable?(pane) }
   end
 
-  def stale?(pane)
-    pane["cwd"] == @toplevel && pane["agent"] && %w[idle done].include?(pane["agent_status"]) &&
-      pane["pane_id"] != ENV["HERDR_PANE_ID"]
+  def closable?(pane)
+    CLOSABLE.include?(pane["agent_status"]) && !kept.include?(pane["pane_id"])
+  end
+
+  def recorded
+    @recorded ||= File.readlines(@record).map(&:split).select { |fields| fields.size == 2 }
+  end
+
+  def kept
+    intent = File.exist?(@intent_record) ? File.readlines(@intent_record, chomp: true).first : nil
+    [ ENV["HERDR_PANE_ID"], intent ].compact
   end
 
   def listed
@@ -192,9 +207,8 @@ class Delivery
     @folder = capture(File.join(SKILLS_DIR, "plan/scripts/change-folder")).strip
     @slug = File.basename(@folder)
     @branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
-    @toplevel = File.realpath(capture("git", "rev-parse", "--show-toplevel").strip)
-    common = capture("git", "rev-parse", "--path-format=absolute", "--git-common-dir").strip
-    @draft = Draft.new(@slug, common)
+    @common = capture("git", "rev-parse", "--path-format=absolute", "--git-common-dir").strip
+    @draft = Draft.new(@slug, @common)
   end
 
   def check
@@ -253,7 +267,7 @@ class Delivery
 
   def finish(url)
     open_dash(url)
-    Panes.new(@toplevel).close_stale
+    Panes.new(@slug, @common).close_stale
   end
 
   def open_dash(url)

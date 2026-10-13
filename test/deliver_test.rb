@@ -207,24 +207,60 @@ class DeliverTest < Minitest::Test
     assert_includes(stdout, PR_URL)
   end
 
-  def test_closes_idle_and_done_agent_panes_in_this_worktree_only
+  def test_closes_the_idle_and_done_stage_panes_this_change_opened
     commit_change_work
+    record_stage_panes(panes_in_play)
     stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: panes_in_play }) })
 
     deliver(herdr: true)
 
     assert_includes(herdr_calls, "pane list --workspace w1")
-    assert_equal(%w[w1:pIdle w1:pDone], herdr_calls.grep(/\Apane close/).map { |call| call.split.last })
+    assert_equal(%w[w1:pIdle w1:pDone], closed_panes)
+    refute(File.exist?(stage_panes_file))
   end
 
   def test_never_closes_its_own_pane_or_a_working_or_agentless_pane
     commit_change_work
+    record_stage_panes(panes_in_play)
     stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: panes_in_play }) })
 
     deliver(herdr: true)
-    closed = herdr_calls.grep(/\Apane close/).map { |call| call.split.last }
 
-    %W[#{OWN_PANE} w1:pWorking w1:pShell w1:pElsewhere].each { |pane| refute_includes(closed, pane) }
+    %W[#{OWN_PANE} w1:pWorking w1:pShell].each { |pane| refute_includes(closed_panes, pane) }
+  end
+
+  def test_leaves_an_unrelated_idle_agent_in_the_worktree_open
+    commit_change_work
+    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
+    unrelated = pane("w1:pOther", "codex", "idle")
+    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ pane("w1:pIdle", "claude", "idle"), unrelated ] }) })
+
+    deliver(herdr: true)
+
+    assert_equal(%w[w1:pIdle], closed_panes)
+  end
+
+  def test_never_closes_the_intent_pane
+    commit_change_work
+    intent = pane("w1:pIntent", "claude", "idle")
+    record_stage_panes([ intent, pane("w1:pIdle", "claude", "idle") ])
+    record_intent_pane(intent)
+    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ intent, pane("w1:pIdle", "claude", "idle") ] }) })
+
+    deliver(herdr: true)
+
+    assert_equal(%w[w1:pIdle], closed_panes)
+  end
+
+  def test_leaves_a_recorded_pane_id_that_another_terminal_reuses
+    commit_change_work
+    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
+    reused = pane("w1:pIdle", "claude", "idle").merge(terminal_id: "term_later")
+    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ reused ] }) })
+
+    deliver(herdr: true)
+
+    assert_empty(closed_panes)
   end
 
   def test_resumes_after_a_failed_push_without_the_folder
@@ -289,12 +325,31 @@ class DeliverTest < Minitest::Test
     [
       pane("w1:pIdle", "claude", "idle"), pane("w1:pDone", "claude", "done"),
       pane(OWN_PANE, "claude", "idle"), pane("w1:pWorking", "claude", "working"),
-      pane("w1:pShell", nil, "unknown"), pane("w1:pElsewhere", "claude", "idle", cwd: "/somewhere/else")
+      pane("w1:pShell", nil, "unknown")
     ]
   end
 
-  def pane(id, agent, status, cwd: toplevel)
-    { pane_id: id, workspace_id: "w1", cwd: cwd, agent: agent, agent_status: status }
+  def pane(id, agent, status)
+    { pane_id: id, terminal_id: "term_#{id}", workspace_id: "w1", cwd: toplevel, agent: agent, agent_status: status }
+  end
+
+  # What hand-off-plan.sh and start-review.sh record: one "<pane_id> <terminal_id>" line per pane.
+  def record_stage_panes(panes)
+    FileUtils.mkdir_p(File.dirname(stage_panes_file))
+    File.write(stage_panes_file, panes.map { |entry| "#{entry[:pane_id]} #{entry[:terminal_id]}\n" }.join)
+  end
+
+  # What the intent skill records: the pane id, then the terminal id, one per line.
+  def record_intent_pane(entry)
+    File.write(File.join(common_dir, "herdr", "intent-pane-#{SLUG}"), "#{entry[:pane_id]}\n#{entry[:terminal_id]}\n")
+  end
+
+  def stage_panes_file
+    File.join(common_dir, "herdr", "stage-panes-#{SLUG}")
+  end
+
+  def closed_panes
+    herdr_calls.grep(/\Apane close/).map { |call| call.split.last }
   end
 
   def dash_log
