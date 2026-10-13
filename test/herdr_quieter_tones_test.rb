@@ -222,7 +222,8 @@ class HerdrQuieterTonesTest < Minitest::Test
   end
 
   def bash_path
-    ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "bash") }.find { |bash| File.executable?(bash) }
+    candidates = ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "bash") }
+    candidates.find { |bash| File.executable?(bash) }
   end
 
   def source(name)
