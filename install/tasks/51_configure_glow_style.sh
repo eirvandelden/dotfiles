@@ -28,12 +28,19 @@ set -euo pipefail
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/00_common.sh"
 
+# Escape the two characters that end or alter a double-quoted YAML scalar.
+yaml_escape() {
+  local text="${1//\\/\\\\}"
+
+  printf '%s' "${text//\"/\\\"}"
+}
+
 # Replace every `style:` line, or append one when none exists. The path goes in through ENVIRON
 # so awk applies no escape processing to it. Comment lines start with `#` and never match.
 rewrite_style() {
   local config="$1"
 
-  GLOW_STYLE_PATH="$2" awk '
+  GLOW_STYLE_PATH="$(yaml_escape "$2")" awk '
     /^style:/ { print "style: \"" ENVIRON["GLOW_STYLE_PATH"] "\""; seen = 1; next }
     { print }
     END { if (!seen) print "style: \"" ENVIRON["GLOW_STYLE_PATH"] "\"" }

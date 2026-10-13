@@ -45,6 +45,16 @@ class GlowStyleInstallTest < Minitest::Test
     assert_equal(first, config)
   end
 
+  def test_a_home_with_yaml_special_characters_is_escaped
+    @home_name = %(ho"me\\x)
+    FileUtils.mkdir_p(glow_dir)
+    FileUtils.touch(File.join(glow_dir, "solunized.json"))
+
+    run_step
+
+    assert_equal(%(style: "#{yaml_escaped(style_path)}"\n), config)
+  end
+
   def test_the_step_leaves_the_config_alone_outside_macos
     write_config(%(style: "auto"\n))
 
@@ -71,8 +81,7 @@ class GlowStyleInstallTest < Minitest::Test
   end
 
   def test_a_failed_write_leaves_no_temp_file_behind
-    write_config(%(style: "auto"\n))
-    FileUtils.chmod(0o444, config_path)
+    FileUtils.mkdir_p(config_path)
 
     _stdout, _stderr, status = run_step
 
@@ -107,13 +116,14 @@ class GlowStyleInstallTest < Minitest::Test
 
   private
 
-  def home = File.join(@tmp, "home")
+  def home = File.join(@tmp, @home_name || "home")
   def bin_dir = File.join(@tmp, "bin")
   def scratch_tmp = File.join(@tmp, "tmp")
   def glow_dir = File.join(home, "Library/Preferences/glow")
   def config_path = File.join(glow_dir, "glow.yml")
   def style_path = File.join(glow_dir, "solunized.json")
   def config = File.read(config_path)
+  def yaml_escaped(text) = text.gsub(/[\\"]/) { |character| "\\#{character}" }
 
   def write_config(content)
     File.write(config_path, content)
