@@ -85,6 +85,7 @@ class GlowStyleInstallTest < Minitest::Test
     stow = lines.index { |line| line.include?(%(run_task "50_stow_all.sh")) }
     glow = lines.index { |line| line.include?(%(run_task "51_configure_glow_style.sh")) }
 
+    refute_nil(stow)
     refute_nil(glow)
     assert_operator(glow, :>, stow)
   end
