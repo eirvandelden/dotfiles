@@ -145,6 +145,8 @@ Refuse to flip `Status:` to `accepted` while any of these holds, and name what i
 
 Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`).
 
+Inside herdr (`HERDR_ENV` set), record this pane for the delivery step. Run `herdr pane current` and write the `pane_id` field, then the `terminal_id` field, one per line, to `<git-common-dir>/herdr/intent-pane-<slug>` (create the directory). The delivery step opens its gh-dash pane directly left of this pane, and the terminal id tells this pane from a later pane that reuses its id.
+
 - `intent.md` has `Delivery: autonomous`: do not chain to the plan stage by hand. Follow "Autonomous delivery" below.
 - Otherwise, inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
 
@@ -157,8 +159,8 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
 5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and record both reports as that skill directs, committing each transcribed round alone and pushing the branch (`git push -u origin HEAD`). Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
-6. Follow `~/.claude/skills/finish/SKILL.md` in its auto mode.
-7. Write the account — behaviour delivered, evidence, check results, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge.
+6. Once a round of each reviewer leaves no open finding, follow `~/.claude/skills/deliver/SKILL.md`. It opens the draft PR. Then run `~/.claude/skills/finish/scripts/ship --no-merge`, which marks the PR ready and waits for green CI. Red CI stops the delivery: report the failed checks and their links.
+7. Write the account — behaviour delivered, evidence, check results, CI result, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge: Etienne's `/finish` is the merge approval.
 
 A stage pane started by `hand-off-plan.sh intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the account, as the single line `Delivery done: <account path>`, sent once the delivery ends; the account path also goes into the report file the starting prompt names.
 
