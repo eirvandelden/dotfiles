@@ -106,3 +106,22 @@ No findings.
 `codex review --base origin/main` after the round 3 fixes (pre-rewrite SHA): the configuration and tests match the stated section order and filters; the focused test passes (12 runs, 38 assertions).
 
 No findings.
+
+## Round 7 — 2026-10-13T13:14Z — 58cbea33
+
+Checks run: `ruby -Itest test/gh_dash_config_test.rb` green (12 runs, 38 assertions, 0 failures); `yamllint github/.config/gh-dash/config.yml` and `rubocop test/gh_dash_config_test.rb` clean. The full `test/*_test.rb` loop was not run in this round. No uncommitted changes. The branch is 73 commits behind `origin/main`; `git merge-tree` merges it cleanly, and `origin/main` has no new change to the gh-dash config or its test. Rebase before `finish` (rule 20). No REVIEW.md or REVIEW.local.md exists, so the reviewer defaults apply.
+
+### Bugs
+
+Nothing found. The five new PR sections and three issue sections match the plan's filter table token for token. The `pager` and `keybindings` blocks are unchanged from `origin/main`.
+
+### Security
+
+Nothing found. The non-docs diff names only `org:nedap`, as the intent allows. A scan of every added line in the branch history finds no work repository, colleague handle or work PR number; the only PR reference, `midagedev/bloomery#107`, is a public repository.
+
+### Compliance
+
+Every acceptance criterion keeps the proof listed in round 3. Every test named in `plan.md`'s `## Proof` exists. No existing test was weakened, skipped or deleted.
+
+- [ ] Nit: `plan.md` still says the `pager` block and `C` keybinding "are copied byte for byte from the live `~/.config/gh-dash/config.yml`". The branch copies nothing: both blocks come unchanged from the file `origin/main` already ships. — `docs/changes/gh-dash-attention-sections/plan.md:8` →
+- [ ] Nit: `plan.md` says the live-check evidence "is recorded in the implementation report". It is in `evidence.md` on the branch. — `docs/changes/gh-dash-attention-sections/plan.md:113` →
