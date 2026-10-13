@@ -59,6 +59,16 @@ class DeliverTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  def test_a_finding_without_a_valid_close_marker_is_open
+    markers = [ "still investigating", "fixed", "fixed in abc1234: rename", "fixed ()", "dismissed:", "dismissed" ]
+    commit_change_work(findings: markers.map { |marker| "- [ ] Nit: Case #{marker.inspect} — `lib/widget.rb:1` → #{marker}" })
+
+    _, stderr, status = deliver("--check")
+
+    assert_equal(1, status.exitstatus)
+    markers.each { |marker| assert_includes(stderr, "Case #{marker.inspect}") }
+  end
+
   def test_refuses_a_stale_review
     commit_change_work
     commit_file("lib/widget.rb", "class Widget; def late; end; end\n", "Change widget after review")

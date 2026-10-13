@@ -39,7 +39,7 @@ A push that fails leaves the folder removed and the saved files in place. Run `d
 
 - `review.md` exists and has a round.
 - `~/.config/git/worktree-tools/review-report-fresh` exits 0.
-- No finding is open. An open finding is a line `- [ ] Important: …` or `- [ ] Nit: …` with nothing after its last `→`.
+- No finding is open. A finding is a line `- [ ] Important: …` or `- [ ] Nit: …`. It is closed only when the text after its last `→` is `fixed (<commit subject>)` or `dismissed: <reason>` with a reason that is not empty. Any other text, or no text, leaves it open.
 - The working tree is clean.
 - `~/.claude/skills/finish/scripts/change-scope` prints `personal` or `work`.
 

@@ -37,7 +37,7 @@ Outside auto mode, read the signal and act on it:
 - `Review clean: <path>` (or, in the `here` backend, `~/.claude/skills/deliver/scripts/deliver --check` exiting 0): the review is closed. Read `~/.claude/skills/deliver/SKILL.md` and run `deliver` without asking. Report what it printed, as that skill says.
 - `Review ready: <path>`: read `docs/changes/<slug>/review.md`, summarise the round worst first, and stop. Do not start fixing anything until the user says so.
 
-The `code-review` skill implements fixes: it writes `fixed (<commit subject>)` or `dismissed: <reason>` on each finding's `→` slot, in the same commit as the fix or its own commit. The subject, not the SHA, because a rebase changes the SHA but not the subject line. Its last step re-reviews, and a clean re-review ends in `Review clean:`, so delivery follows the last fix without a further command.
+The `code-review` skill implements fixes: it writes `fixed (<commit subject>)` or `dismissed: <reason>` on each finding's `→` slot, in the same commit as the fix or its own commit. The subject, not the SHA, because a rebase changes the SHA but not the subject line. Any other text after the last `→`, or none, leaves the finding open. Its last step re-reviews, and a clean re-review ends in `Review clean:`, so delivery follows the last fix without a further command.
 
 A round left with an open finding and no newer round means the review is not closed; `deliver --check` exits 1 and this skill reports that plainly. The pre-push freshness check does not enforce closure, only recency.
 
