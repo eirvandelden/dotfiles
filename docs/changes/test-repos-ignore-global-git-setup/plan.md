@@ -110,3 +110,19 @@ Domain skills applied: rails-testing (Minitest conventions), ruby-style, dotfile
 - The AC1/AC2 tests run only two suites and rely on a source scan that misses indirect git use; run every git-using suite under both hostile configs from `git_isolation_test.rb` and drop the scan → dismissed: measured on 2026-10-13, the eleven git-using suites take 5 to 7 minutes per hostile config, so the proposal adds 10 to 14 minutes to every CI and local run. A fixed list also misses the next new test file, which the scan catches. The full-suite hostile-config check script still runs once as recorded evidence.
 - The full-suite check commands leave the config paths undefined, and `|| echo` masks failures → fixed (Proof now holds a concrete script that builds both configs, lists every failing file and exits non-zero on any failure)
 - The helper unit tests come after the helper exists and get their red by commenting the code out, which is not test-first → fixed (Order of work step 2 now writes both helper unit tests before step 3 creates the helper)
+
+## Re-scope (2026-10-13, after PR #198)
+
+PR #198 (`temp-repo-tests-ignore-global-hooks`) merged to main while this branch was in review. It adds its own `test/isolated_git.rb` (`GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` at `/dev/null`), requires it from every `test/*_test.rb`, and proves it in `test/isolated_git_test.rb` under a failing signing program and a failing global hook. That delivers AC1 and AC2. Keeping this branch's helper next to it would duplicate the mechanism, so the branch drops it: no `test/isolated_git.rb` change, no `test/git_isolation_test.rb`, no `require_relative` lines.
+
+What main still lacks is AC3: `repo_env` in `test/lefthook_local_hooks_test.rb` merges into the inherited environment, so a caller's `LEFTHOOK_BIN` reaches the global hook shim and bypasses the logging stub.
+
+New design for AC3: two regression tests inside `test/lefthook_local_hooks_test.rb`, `test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set` and `test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set`. Each sets `ENV["LEFTHOOK_BIN"]` to the real lefthook binary for the test's duration (restored in `ensure`), then runs the same steps as the existing logging tests. They are red on main whatever the caller's environment, and they cost a few seconds instead of a nested Minitest run. The fix stays `"LEFTHOOK_BIN" => nil` in `repo_env`.
+
+Revised Proof:
+
+- AC1 and AC2 → delivered by main (`test/isolated_git_test.rb`, `test_every_test_file_requires_the_helper`); this branch adds nothing. Check: the full suite under both hostile configs, re-run on this branch.
+- AC3 → `test/lefthook_local_hooks_test.rb` `test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set`, `test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set`.
+- AC4 → the `Dotfiles tests` workflow on the pull request.
+
+Order of work: write both tests, watch them error with `Errno::ENOENT … commands.log`, commit; add `"LEFTHOOK_BIN" => nil`, watch them pass, commit; rubocop; full suite plain and under both hostile configs.
