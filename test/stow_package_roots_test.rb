@@ -15,6 +15,10 @@ require_relative "isolated_git"
 class StowPackageRootsTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
 
+  # Non-dot directories that a named package may hold at its root because they are real $HOME
+  # directories. macOS keeps glow's config in ~/Library, so `glow/Library` is intended.
+  HOME_DIRECTORIES = { "glow" => [ "Library" ] }.freeze
+
   def test_a_package_of_only_dotfiles_is_accepted
     root = fixture_repository("tidy" => [ ".config", ".gitignore" ])
 
@@ -44,6 +48,18 @@ class StowPackageRootsTest < Minitest::Test
     assert_equal([ "declared/README.md" ], strays_in(root))
   end
 
+  def test_an_allowed_home_directory_at_its_package_root_is_accepted
+    root = fixture_repository("glow" => [ ".config", "Library" ])
+
+    assert_empty(strays_in(root))
+  end
+
+  def test_an_allowed_home_directory_at_another_package_root_is_rejected
+    root = fixture_repository("other" => [ "Library" ])
+
+    assert_equal([ "other/Library" ], strays_in(root))
+  end
+
   def test_every_stowed_package_root_holds_only_dotfiles
     strays = strays_in(REPO_ROOT)
 
@@ -68,7 +84,7 @@ class StowPackageRootsTest < Minitest::Test
       next [] unless File.directory?(directory)
 
       Dir.children(directory)
-        .reject { |entry| entry.start_with?(".") }
+        .reject { |entry| entry.start_with?(".") || HOME_DIRECTORIES.fetch(package, []).include?(entry) }
         .map { |entry| "#{package}/#{entry}" }
     }.sort
   end
