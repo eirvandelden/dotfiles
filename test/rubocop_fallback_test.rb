@@ -42,6 +42,8 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
+  # The fixtures avoid endless methods: in CI no .ruby-version sits above the config, so RuboCop
+  # parses as Ruby 2.7 and reports them as Lint/Syntax.
   RBS_FIXTURE_PATH = "lib/typed.rb".freeze
   RBS_COP_PATTERN = %r{\AStyle/RbsInline/}
   VALID_RBS_FIXTURE = <<~RUBY.freeze
@@ -49,7 +51,15 @@ class RubocopFallbackTest < Minitest::Test
       attr_reader :count #: Integer
 
       #: (Integer) -> String
-      def label(count) = count.to_s
+      def label(count)
+        count.to_s
+      end
+
+      # @rbs count: Integer
+      # @rbs return: String
+      def title(count)
+        count.to_s
+      end
     end
   RUBY
 
@@ -89,13 +99,13 @@ class RubocopFallbackTest < Minitest::Test
   end
 
   def test_fallback_reports_malformed_rbs_inline_type
-    report = run_rbs_fixture("#: (Integer -> String\ndef label(count) = count.to_s\n")
+    report = run_rbs_fixture("#: (Integer -> String\ndef label(count)\n  count.to_s\nend\n")
 
     assert_includes(cop_names(report), "Style/RbsInline/InvalidTypes")
   end
 
   def test_fallback_reports_rbs_inline_comment_without_colon_prefix
-    report = run_rbs_fixture("# : (Integer) -> String\ndef label(count) = count.to_s\n")
+    report = run_rbs_fixture("# : (Integer) -> String\ndef label(count)\n  count.to_s\nend\n")
 
     assert_includes(cop_names(report), "Style/RbsInline/InvalidComment")
   end
