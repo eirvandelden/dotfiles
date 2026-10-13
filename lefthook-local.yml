@@ -61,6 +61,7 @@ pre-push:
     skill-parity:
       tags: skills
       glob:
+        - "claude/.claude/skills/*"
         - "claude/.claude/skills/**/*"
         - "agents/.agents/skills/**/*"
         - "codex/.codex/skills/**/*"
