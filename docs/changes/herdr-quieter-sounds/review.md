@@ -146,3 +146,34 @@ Nothing found.
 Nothing found.
 
 Totals: 0 findings.
+
+## Round 7 — 2026-10-13T08:23Z — 40bb86e0
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root, so the reviewer defaults apply. Suite state before review: `test/herdr_quieter_tones_test.rb` 18 runs green (real-ffmpeg tests ran, none skipped), `test/herdr_config_test.rb` 5 runs green, shellcheck clean, rubocop clean on both test files, `git diff --check` clean, `herdr config check` on the worktree config prints `config: ok`. The four copies in `~/Documents/Tones/herdr/` are `-rw-r--r--`. The round 5 fixes hold: the tracked-audio test lists raw paths with `-z`, and `bash_path` fits the line limit.
+
+### Bugs
+
+- [ ] Nit: a relative source with a colon in its name fails inside ffmpeg, not in the refusals. ffmpeg reads `a:b.mp3` as protocol `a` and stops with "Protocol not found", exit status 8, after `mkdir -p` already ran. macOS stores a `/` typed in Finder as `:` on disk, so such names occur. Verified in a scratch `HOME`: `quieter-tones.sh a:b.mp3` exits 8; the absolute path to the same file exits 0. Nothing is damaged. Passing `file:$source` (or the `realpath` result) to `-i` makes both forms work. — `herdr/.config/herdr/scripts/quieter-tones.sh:48` →
+- [ ] Nit: a source whose name starts with `-` reaches `realpath` and `basename` as an option. `realpath` then fails inside the command substitution, the guard compares `.` against the copies folder, and the copy-of-a-copy check passes open. The run stops later only because `basename` fails too. Verified: `quieter-tones.sh -x.mp3` prints the `realpath` and `basename` usage texts and exits 1, with no copy written. `realpath -- "$source"` and `basename -- "$source"` remove the option reading; a failed `realpath` should refuse the source, not pass it. — `herdr/.config/herdr/scripts/quieter-tones.sh:34` →
+
+### Security
+
+Nothing found. Every path in the script is quoted. The source is only ever an ffmpeg input. The temporary file sits in the output folder and the `EXIT` trap removes it. No audio or secret enters the public repository.
+
+### Compliance
+
+| Acceptance criterion (intent.md) | Proof in the diff |
+| --- | --- |
+| "jobs done" plays at the 0.3 level | `test_each_sound_points_at_its_quieter_copy`, `test_the_copy_is_three_tenths_of_the_source_level`; playback unheard until Etienne's pre-merge audition (plan step 8) |
+| "milord" plays at the 0.3 level | same two tests; playback unheard |
+| default "ready to serve" plays at the 0.3 level | same two tests; playback unheard |
+| originals keep their checksums | `test_the_source_is_left_byte_for_byte_unchanged`; the step 4 `shasum … \| diff` evidence still needs to go in the pull request description |
+| one run after a swap to `ForTheMaster02.mp3` gives a 0.3 copy | `test_one_run_copies_every_source_given`, `test_the_commented_alternative_also_points_at_a_quieter_copy`; the copy exists on disk |
+| no mp3 file is in the repo (read as "this change adds no mp3") | `test_no_herdr_tone_is_tracked`; the diff adds no audio |
+| `herdr config check` reports no problems | `test_herdr_accepts_the_config` (existing, green); manual run prints `config: ok` |
+
+- Every test named in `plan.md` `## Proof` exists, plus `test_the_copy_is_readable_like_an_ordinary_file` and `test_a_link_to_a_quieter_copy_is_refused` from earlier fixes.
+- The diff changes only the files `plan.md` names, plus the change folder.
+- No existing test was weakened, skipped or deleted.
+
+Totals: 0 Important, 2 Nit.
