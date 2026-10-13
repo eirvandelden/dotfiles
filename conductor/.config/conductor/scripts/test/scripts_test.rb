@@ -102,7 +102,7 @@ class ConductorScriptTest < Minitest::Test
       echo "DATABASE_NAME=${DATABASE_NAME:-}" >> "#{@log_file}"
     SH
 
-    run_script("run", chdir: workspace)
+    run_script("run", chdir: workspace, env: { "DATABASE_NAME" => nil })
 
     assert_includes command_log, "DATABASE_NAME=\n"
     refute_includes command_log, "workspace_db"
