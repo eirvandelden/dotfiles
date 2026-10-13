@@ -18,6 +18,7 @@ class ShipTest < Minitest::Test
     { name: "deploy-preview", bucket: "cancel", link: "https://ci.example/run/10" }
   ].freeze
   PASSING_CHECKS = [ { name: "lint", bucket: "pass", link: "https://ci.example/run/1" } ].freeze
+  PENDING_CHECKS = [ { name: "build", bucket: "pending", link: "https://ci.example/run/4" } ].freeze
 
   def setup
     setup_harness
@@ -108,6 +109,54 @@ class ShipTest < Minitest::Test
     assert_equal(%w[ready watch checks], call_order)
     assert_empty(gh_calls.grep(/\Apr merge/))
     assert_includes(origin_branches, @branch)
+  end
+
+  def test_a_failed_watch_with_pending_checks_stops_unmerged
+    stub_response("gh pr checks watch", { "exit" => 1, "stderr" => "HTTP 502: Bad Gateway\n" })
+    stub_response("gh pr checks json", { "stdout" => JSON.generate(PASSING_CHECKS + PENDING_CHECKS) })
+
+    stdout, stderr, status = ship
+    output = stdout + stderr
+
+    assert_equal(1, status.exitstatus)
+    assert_includes(output, "build: https://ci.example/run/4")
+    assert_includes(output, "HTTP 502: Bad Gateway")
+    assert_empty(gh_calls.grep(/\Apr merge/))
+    assert_includes(origin_branches, @branch)
+  end
+
+  def test_no_merge_does_not_report_green_while_checks_are_pending
+    stub_response("gh pr checks watch", { "exit" => 1, "stderr" => "HTTP 401: Bad credentials\n" })
+    stub_response("gh pr checks json", { "stdout" => JSON.generate(PENDING_CHECKS) })
+
+    stdout, stderr, status = ship("--no-merge")
+
+    assert_equal(1, status.exitstatus)
+    refute_includes(stdout, "CI green")
+    assert_includes(stdout + stderr, "build: https://ci.example/run/4")
+  end
+
+  def test_a_failed_watch_stops_unmerged_when_the_checks_cannot_be_read
+    stub_response("gh pr checks watch", { "exit" => 1, "stderr" => "HTTP 502: Bad Gateway\n" })
+    stub_response("gh pr checks json", { "exit" => 1, "stderr" => "error connecting to api.github.com\n" })
+
+    stdout, stderr, status = ship
+    output = stdout + stderr
+
+    assert_equal(1, status.exitstatus)
+    assert_includes(output, "error connecting to api.github.com")
+    assert_includes(output, "PR left unmerged")
+    assert_empty(gh_calls.grep(/\Apr merge/))
+  end
+
+  def test_skipped_checks_count_as_green
+    skipped = [ { name: "deploy", bucket: "skipping", link: "https://ci.example/run/5" } ]
+    stub_response("gh pr checks json", { "stdout" => JSON.generate(PASSING_CHECKS + skipped) })
+
+    stdout, stderr, status = ship
+
+    assert(status.success?, stdout + stderr)
+    assert_includes(gh_calls, "pr merge 7 --merge")
   end
 
   def test_retries_while_no_checks_are_reported

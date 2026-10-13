@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 # Ships the draft PR that `deliver` opened: marks it ready, waits for CI, and merges it with a merge
 # commit, then deletes the remote branch. `--no-merge` stops after green CI, for the autonomous
-# coordinator, which never merges. Stops unmerged, with the reason, on any red or missing check.
+# coordinator, which never merges. Stops unmerged, with the reason, on any red, pending or missing
+# check.
 #
 # SHIP_CHECKS_GRACE (default 120 s): how long "no checks reported" is retried after the PR turns
 # ready. SHIP_MERGE_WAIT (default 900 s): how long to wait for the PR to read MERGED, which also
@@ -41,33 +42,58 @@ class Clock
   def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 end
 
-# Waits for the checks of one PR, then answers the ones that failed.
+# Waits for the checks of one PR, then answers why they are not green, or nil when they are. Only
+# pass and skipping count as green, so a watch that fails early (auth, network) never reads a
+# pending check as done.
 class Checks
   include Shell
 
   NONE = /no checks reported/i
+  GREEN = %w[pass skipping].freeze
+  RED = %w[fail cancel].freeze
 
   def initialize(number)
     @number = number.to_s
   end
 
-  def failed
-    wait
-    listed = JSON.parse(run!("gh", "pr", "checks", @number, "--json", "name,bucket,link"))
-    listed.select { |check| %w[fail cancel].include?(check["bucket"]) }
+  def problems
+    watch_error = wait
+    not_green = listed(watch_error).reject { |check| GREEN.include?(check["bucket"]) }
+    return if not_green.empty?
+
+    [ unfinished_note(not_green, watch_error), *named(not_green) ].compact.join("\n")
   end
 
   private
 
+  # Answers gh's reason when the watch failed for anything but "no checks reported", else nil.
   def wait
     clock = Clock.new(Float(ENV.fetch("SHIP_CHECKS_GRACE", "120")))
     loop do
       stdout, stderr, success = run("gh", "pr", "checks", @number, "--watch", "--fail-fast")
-      return if success || !(stdout + stderr).match?(NONE)
+      return if success
+      return (stdout + stderr).strip unless (stdout + stderr).match?(NONE)
       raise Stop, "no CI checks reported; merge by hand if that is expected." if clock.expired?
 
       clock.pause
     end
+  end
+
+  def listed(watch_error)
+    stdout, stderr, success = run("gh", "pr", "checks", @number, "--json", "name,bucket,link")
+    return JSON.parse(stdout) if success
+
+    raise Stop, [ "Cannot read the CI checks: #{stderr.strip}", watch_error, "PR left unmerged." ].compact.join("\n")
+  end
+
+  def named(checks)
+    checks.map { |check| "#{check['name']}: #{check['link']}" }
+  end
+
+  def unfinished_note(not_green, watch_error)
+    return if not_green.all? { |check| RED.include?(check["bucket"]) }
+
+    [ "CI has not finished; PR left unmerged.", watch_error ].compact.join("\n")
   end
 end
 
@@ -96,10 +122,8 @@ class Shipment
   end
 
   def verify_checks(number)
-    failed = Checks.new(number).failed
-    return if failed.empty?
-
-    raise Stop, failed.map { |check| "#{check['name']}: #{check['link']}" }.join("\n")
+    problems = Checks.new(number).problems
+    raise Stop, problems if problems
   end
 
   def merge(number)
