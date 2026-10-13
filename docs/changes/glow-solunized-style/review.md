@@ -49,7 +49,7 @@ No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes a
 
 No Important findings.
 
-- [ ] Nit: `test_a_failed_write_leaves_no_temp_file_behind` makes the write fail with `chmod 0444`. A process that runs as root ignores that mode, so the write succeeds and the test fails. GitHub's Ubuntu runner is not root, so CI passes today. — `test/glow_style_install_test.rb:76` →
+- [x] Nit: `test_a_failed_write_leaves_no_temp_file_behind` makes the write fail with `chmod 0444`. A process that runs as root ignores that mode, so the write succeeds and the test fails. GitHub's Ubuntu runner is not root, so CI passes today. — `test/glow_style_install_test.rb:76` → fixed (Escape the glow style path for YAML; make the failed-write test root-safe)
 
 ### Bugs
 
@@ -67,3 +67,7 @@ No Important findings.
 - No existing test was weakened, skipped or deleted.
 - Checks run: `glow_style_install_test.rb` (10 runs), `glow_package_test.rb` (4 runs) and `stow_package_roots_test.rb` (7 runs) pass. `shellcheck -x -S warning` and `rubocop` on the touched files are clean.
 - Outside this branch: `test/isolated_git_test.rb` fails on `origin/main` (`31fbbd43`, the merge base). 18 test files that this branch does not touch lack the helper, for example `bi_test.rb` and `deliver_test.rb`. Neither glow test file is in that list. Under playbook rule 25 that fix belongs on its own branch.
+
+## Round 4 — 2026-10-13T17:45Z — 565cd9b9 (codex)
+
+- [x] Important: Escape the style path for YAML. If `$HOME` contains `"` or `\`, the step writes an invalid or misinterpreted quoted YAML value, so Glow cannot load its config. — `install/tasks/51_configure_glow_style.sh:37` → fixed (Escape the glow style path for YAML; make the failed-write test root-safe)
