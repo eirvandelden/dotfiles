@@ -8,6 +8,8 @@ require_relative "lefthook_binary"
 class SkillParityHookTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   NATIVE_LEFTHOOK = LefthookBinary.locate
+  # Lefthook prints this summary line only for a job that ran, never for a skipped or missing one.
+  JOB_RAN = /skill-parity \(\d+(\.\d+)? seconds\)/
 
   def setup
     skip(LefthookBinary::MISSING_MESSAGE) unless NATIVE_LEFTHOOK
@@ -16,13 +18,13 @@ class SkillParityHookTest < Minitest::Test
   def test_a_pushed_claude_skill_link_runs_the_parity_job
     output = run_parity_job("claude/.claude/skills/sync")
 
-    refute_match(/skill-parity \(skip\)/, output)
+    assert_match(JOB_RAN, output)
   end
 
   def test_a_pushed_agents_skill_file_runs_the_parity_job
     output = run_parity_job("agents/.agents/skills/sync/SKILL.md")
 
-    refute_match(/skill-parity \(skip\)/, output)
+    assert_match(JOB_RAN, output)
   end
 
   private
