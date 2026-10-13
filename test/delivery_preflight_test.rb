@@ -285,6 +285,35 @@ class DeliveryPreflightTest < Minitest::Test
     assert_match(/^pass     runtime: .*not compared/, stdout)
   end
 
+  def test_runtime_files_are_read_from_the_repository_root_when_run_from_a_subdirectory
+    File.write(File.join(@repo, ".ruby-version"), "1.8.7\n")
+    FileUtils.mkdir_p(File.join(@repo, "app", "models"))
+
+    stdout, = run_script(dir: File.join(@repo, "app", "models"))
+
+    assert_match(/^missing  runtime: .*1\.8\.7/, stdout)
+  end
+
+  def test_a_version_one_lockfile_with_matching_versions_passes
+    write_package(dependencies: { "left-pad" => "^1.0.0" })
+    write_lockfile_v1("left-pad" => "1.3.0")
+    install_node_module("left-pad", "1.3.0")
+
+    stdout, = run_script
+
+    assert_match(/^pass     runtime: .*match the lockfile/, stdout)
+  end
+
+  def test_a_version_one_lockfile_with_a_mismatch_is_missing
+    write_package(dependencies: { "left-pad" => "^1.0.0" })
+    write_lockfile_v1("left-pad" => "1.3.0")
+    install_node_module("left-pad", "1.1.0")
+
+    stdout, = run_script
+
+    assert_match(/^missing  runtime: .*left-pad is 1\.1\.0, lockfile has 1\.3\.0/, stdout)
+  end
+
   def test_runtime_is_not_applicable_without_runtime_files
     stdout, = run_script
 
@@ -329,9 +358,9 @@ class DeliveryPreflightTest < Minitest::Test
 
   private
 
-  def run_script(*args)
+  def run_script(*args, dir: @repo)
     env = { "PATH" => @stub_bin, "HOME" => @home, "GIT_CONFIG_GLOBAL" => "/dev/null", "GIT_CONFIG_NOSYSTEM" => "1" }
-    Open3.capture3(env.merge(@env), SCRIPT, *args, chdir: @repo, unsetenv_others: true)
+    Open3.capture3(env.merge(@env), SCRIPT, *args, chdir: dir, unsetenv_others: true)
   end
 
   def check_names(stdout)
@@ -422,6 +451,11 @@ class DeliveryPreflightTest < Minitest::Test
   def write_lockfile(versions)
     packages = versions.to_h { |name, version| [ "node_modules/#{name}", { "version" => version } ] }
     File.write(File.join(@repo, "package-lock.json"), JSON.generate("lockfileVersion" => 3, "packages" => packages))
+  end
+
+  def write_lockfile_v1(versions)
+    dependencies = versions.to_h { |name, version| [ name, { "version" => version } ] }
+    File.write(File.join(@repo, "package-lock.json"), JSON.generate("lockfileVersion" => 1, "dependencies" => dependencies))
   end
 
   def install_node_module(name, version)

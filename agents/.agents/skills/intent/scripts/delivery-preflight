@@ -215,16 +215,22 @@ rescue Errno::ENOENT
   nil
 end
 
+# Name => version from package-lock.json. Lockfile v2 and v3 have a "packages" map keyed by
+# "node_modules/<name>"; v1 has only a top-level "dependencies" map.
 def locked_versions
   return nil unless File.file?("package-lock.json")
 
-  JSON.parse(File.read("package-lock.json")).fetch("packages", {})
+  lock = JSON.parse(File.read("package-lock.json"))
+  packages = lock["packages"]
+  return packages.to_h { |path, entry| [ path.delete_prefix("node_modules/"), entry["version"] ] } if packages
+
+  lock.fetch("dependencies", {}).transform_values { |entry| entry["version"] }
 end
 
 def node_dependency_problems(names, locked)
   names.filter_map do |name|
     installed = installed_version(name)
-    wanted = locked&.dig("node_modules/#{name}", "version")
+    wanted = locked&.dig(name)
     if installed.nil? then "#{name} is not installed"
     elsif locked && wanted.nil? then "#{name} is not in package-lock.json"
     elsif locked && installed != wanted then "#{name} is #{installed}, lockfile has #{wanted}"
@@ -310,7 +316,15 @@ def run_checks(needs)
   ORDER.to_h { |name| [ name, run_check(name, needs) ] }
 end
 
+# Repository files are read from the toplevel, wherever the script runs. Outside a repository the
+# current directory stays.
+def enter_repository_root
+  outcome = run("git", "rev-parse", "--show-toplevel")
+  Dir.chdir(outcome.output.strip) if outcome.ok && !outcome.output.strip.empty?
+end
+
 needs = parse_needs(ARGV.dup)
+enter_repository_root
 results = run_checks(needs)
 results.each { |name, (status, reason)| puts("#{status.ljust(9)}#{name}: #{reason}") }
 blockers = results.select { |_, (status, _)| status == "missing" }.keys
