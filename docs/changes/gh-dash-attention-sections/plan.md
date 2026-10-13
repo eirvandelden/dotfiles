@@ -53,7 +53,7 @@ From `intent.md` (2026-10-13). Status: accepted.
 ## Files that change
 
 - `test/gh_dash_config_test.rb` — new. Minitest that loads the YAML and checks the sections, filters, pager and keybinding.
-- `github/.config/gh-dash/config.yml` — new. The versioned gh-dash config.
+- `github/.config/gh-dash/config.yml` — extended. `origin/main` already ships it with the pager and `C` keybinding; this change adds the sections.
 
 No other file changes. `packages.conf` already lists `github` under `STOW`.
 

@@ -4,7 +4,7 @@ Author: Etienne van Delden de la Haije. Status: accepted (2026-10-13). Type: cho
 
 ## Problem
 
-gh-dash shows only its default sections. Work review requests, personal PRs that are ready, and my own work PRs that need a reply are mixed with everything else. I cannot see at a glance what needs my action. The gh-dash config also lives outside the dotfiles repository, so it is not versioned.
+gh-dash shows only its default sections. Work review requests, personal PRs that are ready, and my own work PRs that need a reply are mixed with everything else. I cannot see at a glance what needs my action. The gh-dash config on this machine is a plain file, not the stowed `github/.config/gh-dash/config.yml` that `origin/main` already ships with the pager and `C` keybinding (found in review round 1).
 
 ## Proposed outcome
 
@@ -26,7 +26,7 @@ The PR view opens on the work PRs that wait for my review. The next sections sho
 
 ## In scope
 
-- Move the gh-dash config into the `github` stow package, keeping the existing pager and `C` keybinding.
+- Extend `github/.config/gh-dash/config.yml` in the `github` stow package, keeping its pager and `C` keybinding.
 - PR sections, in this order:
   1. Work PRs (`org:nedap`) where my review is requested (team requests included), I have not reviewed yet, and the PR is not a draft.
   2. Open non-draft PRs in my personal repositories (`user:eirvandelden`), dependabot included.
