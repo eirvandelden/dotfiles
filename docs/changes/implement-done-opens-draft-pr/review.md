@@ -27,3 +27,9 @@ Compliance:
 - Changed existing tests: `consent_guard_test.rb` and `pull_request_flow_test.rb` were renamed from finish to deliver with equal strength. `autonomy_contract_test.rb` replaces the old finish body-confirmation test with a deliver equivalent. No test was skipped or deleted without a replacement.
 
 Checks: full suite green except `test/review_report_check_test.rb` `test_a_change_folder_passes_when_main_gains_a_commit_after_the_branch_point`, which also errors on main. RuboCop, shellcheck and markdownlint are clean on the changed files.
+
+## Round 2 (Codex) — 2026-10-13T11:34Z — cd9d1208
+
+- [ ] Important: `deliver` closes every idle or done agent pane whose `cwd` is this worktree. An unrelated agent sharing the worktree, and the recorded intent pane itself, match that filter, so delivery can close panes that are not this change's stage workers. Track the panes this change opened and close only those — `claude/.claude/skills/deliver/scripts/deliver:179` →
+
+Checks: Codex ran `deliver_test`, `ship_test`, `open_pr_dash_test` and `delivery_contract_test`; all green.
