@@ -1,7 +1,7 @@
 ---
 interface:
   display_name: "Finish"
-  short_description: "Closes a change once review is fresh — fills and opens the PR; work adds an ADR and reviewers"
+  short_description: "Ships the draft PR: ready, green CI, merge; work adds an ADR, board status and reviewers"
 
 policy:
   allow_implicit_invocation: false

@@ -1,0 +1,173 @@
+#!/usr/bin/env ruby
+# Ships the draft PR that `deliver` opened: marks it ready, waits for CI, and merges it with a merge
+# commit, then deletes the remote branch. `--no-merge` stops after green CI, for the autonomous
+# coordinator, which never merges. Stops unmerged, with the reason, on any red, pending or missing
+# check.
+#
+# SHIP_CHECKS_GRACE (default 120 s): how long "no checks reported" is retried after the PR turns
+# ready. SHIP_MERGE_WAIT (default 900 s): how long to wait for the PR to read MERGED, which also
+# covers a merge queue; a merge gh refuses, with no auto-merge set, stops at once with gh's reason.
+# SHIP_POLL_INTERVAL (default 10 s): the wait between retries and polls.
+require "json"
+require "open3"
+
+class Stop < StandardError; end
+
+# Runs gh or git and answers [stdout, stderr, success].
+module Shell
+  def run(*command)
+    stdout, stderr, status = Open3.capture3(*command)
+    [ stdout, stderr, status.success? ]
+  end
+
+  def run!(*command)
+    stdout, stderr, success = run(*command)
+    raise Stop, "#{command.first(3).join(' ')} failed: #{stderr.strip}" unless success
+
+    stdout
+  end
+end
+
+class Clock
+  def initialize(seconds)
+    @deadline = now + seconds
+    @interval = Float(ENV.fetch("SHIP_POLL_INTERVAL", "10"))
+  end
+
+  def expired? = now >= @deadline
+
+  def pause = sleep(@interval)
+
+  private
+
+  def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+end
+
+# Waits for the checks of one PR, then answers why they are not green, or nil when they are. Only
+# pass and skipping count as green, so a watch that fails early (auth, network) never reads a
+# pending check as done.
+class Checks
+  include Shell
+
+  NONE = /no checks reported/i
+  GREEN = %w[pass skipping].freeze
+  RED = %w[fail cancel].freeze
+
+  def initialize(number)
+    @number = number.to_s
+  end
+
+  def problems
+    watch_error = wait
+    not_green = listed(watch_error).reject { |check| GREEN.include?(check["bucket"]) }
+    return if not_green.empty?
+
+    red, unfinished = not_green.partition { |check| RED.include?(check["bucket"]) }
+    red.empty? ? unfinished_report(unfinished, watch_error) : failure_report(red, unfinished)
+  end
+
+  private
+
+  # Answers gh's reason when the watch failed for anything but "no checks reported", else nil.
+  def wait
+    clock = Clock.new(Float(ENV.fetch("SHIP_CHECKS_GRACE", "120")))
+    loop do
+      stdout, stderr, success = run("gh", "pr", "checks", @number, "--watch", "--fail-fast")
+      return if success
+      return (stdout + stderr).strip unless (stdout + stderr).match?(NONE)
+      raise Stop, "no CI checks reported; merge by hand if that is expected." if clock.expired?
+
+      clock.pause
+    end
+  end
+
+  def listed(watch_error)
+    stdout, stderr, success = run("gh", "pr", "checks", @number, "--json", "name,bucket,link")
+    return JSON.parse(stdout) if success
+
+    raise Stop, [ "Cannot read the CI checks: #{stderr.strip}", watch_error, "PR left unmerged." ].compact.join("\n")
+  end
+
+  def named(checks)
+    checks.map { |check| "#{check['name']}: #{check['link']}" }
+  end
+
+  # A red check wins over a pending one: --fail-fast stops at the first failure, so siblings are
+  # often still running. Failed checks come first; pending ones follow under a note of their own.
+  def failure_report(red, unfinished)
+    pending = unfinished.empty? ? [] : [ "Still pending:", *named(unfinished) ]
+    [ "CI failed; PR left unmerged.", *named(red), *pending ].join("\n")
+  end
+
+  def unfinished_report(unfinished, watch_error)
+    [ "CI has not finished; PR left unmerged.", watch_error, *named(unfinished) ].compact.join("\n")
+  end
+end
+
+class Shipment
+  include Shell
+
+  def initialize(merge:)
+    @merge = merge
+    @branch = run!("git", "rev-parse", "--abbrev-ref", "HEAD").strip
+  end
+
+  def run_all
+    pr = open_pr
+    run!("gh", "pr", "ready", pr["number"].to_s) if pr["isDraft"]
+    verify_checks(pr["number"].to_s)
+    return puts("CI green; PR left unmerged.") unless @merge
+
+    merge(pr["number"].to_s)
+  end
+
+  private
+
+  def open_pr
+    json = run!("gh", "pr", "list", "--head", @branch, "--state", "open", "--json", "number,url,isDraft")
+    JSON.parse(json).first || raise(Stop, "No pull request for this branch: the delivery step has not run.")
+  end
+
+  def verify_checks(number)
+    problems = Checks.new(number).problems
+    raise Stop, problems if problems
+  end
+
+  def merge(number)
+    _, stderr, success = run("gh", "pr", "merge", number, "--merge")
+    await_merged(number, success ? nil : stderr.strip)
+    delete_remote_branch
+    puts("Merged PR #{number}; remote branch #{@branch} deleted.")
+  end
+
+  # Polls until the PR reads MERGED. A merge that gh refused stops at once, with gh's reason,
+  # unless the PR merged anyway or waits in a merge queue (auto-merge set).
+  def await_merged(number, merge_error)
+    clock = Clock.new(Float(ENV.fetch("SHIP_MERGE_WAIT", "900")))
+    loop do
+      pr = JSON.parse(run!("gh", "pr", "view", number, "--json", "state,autoMergeRequest"))
+      return if pr["state"] == "MERGED"
+      raise Stop, not_merged(number, pr["state"], merge_error) if clock.expired? || refused?(pr, merge_error)
+
+      clock.pause
+    end
+  end
+
+  def refused?(pr, merge_error) = !merge_error.nil? && pr["autoMergeRequest"].nil?
+
+  def not_merged(number, state, merge_error)
+    [ "PR #{number} is #{state}, not merged; the remote branch stays.", merge_error ].compact.join("\n")
+  end
+
+  def delete_remote_branch
+    _, stderr, success = run("git", "push", "origin", "--delete", @branch)
+    raise Stop, "git push origin --delete failed: #{stderr.strip}" unless success || stderr.include?("remote ref does not exist")
+  end
+end
+
+begin
+  Shipment.new(merge: !ARGV.include?("--no-merge")).run_all
+rescue Stop => error
+  warn(error.message)
+  exit(1)
+end

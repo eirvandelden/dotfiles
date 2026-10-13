@@ -179,11 +179,11 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/work.*refuses/i, section)
   end
 
-  def test_finish_auto_mode_skips_the_actual_body_confirmation_step
-    section = section_of(skill("finish"), "## Auto mode")
+  def test_deliver_fills_the_body_without_asking_for_confirmation
+    text = skill("deliver")
 
-    assert_includes(section, "§3 step 3")
-    assert_match(/capture.*body.*without waiting for confirmation/i, section)
+    assert_includes(text, "The script asks no questions.")
+    assert_match(/Fill the PR body/, text)
   end
 
   def test_finish_auto_mode_requires_an_accepted_autonomous_intent

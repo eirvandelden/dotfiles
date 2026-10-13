@@ -1,0 +1,7 @@
+---
+interface:
+  display_name: "Deliver"
+  short_description: "Ends a closed review: removes the change folder, pushes, opens a draft PR and a gh-dash pane"
+
+policy:
+  allow_implicit_invocation: false

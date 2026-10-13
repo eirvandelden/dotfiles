@@ -93,11 +93,11 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 5. Pull request workflow:
    - Always target `origin` (personal fork or own work repo) over upstream.
    - Agents may push branches to `origin` without asking first, while implementing. Rule 6 still applies: never post/comment as Etienne on a PR without explicit instruction for that exact message.
-   - Only `finish` opens a pull request, after it removes `docs/changes/<slug>/`. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
+   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/`; `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
    - If the target repository is ambiguous, ask before proceeding.
    - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
-   - `docs/changes/<slug>/` artifacts are removed by the `finish` skill; never delete them by hand.
+   - `docs/changes/<slug>/` artifacts are removed by the delivery step (the `deliver` skill) once review is closed; never delete them by hand.
 6. GitHub identity and consent:
    - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit instruction for that exact message.
    - This includes issue comments, pull request comments, review comments, and replies.
@@ -148,7 +148,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - When asked to review work: read the project's `AGENTS.md` for what the application does and what its domain requires. This playbook already applies from the user config, so there is no fallback to look up.
     - Combine both with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
-    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `finish` checks it before it opens one.
+    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `deliver` checks it before it opens one.
 17. Plan before implementing:
     - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
     - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
@@ -191,7 +191,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Anything requiring judgement — reading a diff for correctness, choosing between designs, writing tests — stays on Opus or Sonnet.
 25. Pre-existing CI failures:
     - CI red on a branch or repo for reasons unrelated to the current task never gets ignored. Fix it.
-    - Workflow: new worktree → fix the CI failure there → push → `/finish` opens the PR (rules 5/6/19 consent still apply) → rebase the original in-progress work on top of that fix.
+    - Workflow: new worktree → fix the CI failure there → push → review → `deliver` opens the PR (rules 5/6/19 consent still apply) → rebase the original in-progress work on top of that fix.
     - Applies to personal and work projects both.
 26. Markdown prose:
     - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
@@ -201,12 +201,13 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
 
 - Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
-- One coordinator drives plan, implement, review, fixes and `finish`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
+- One coordinator drives plan, implement, review, fixes and `deliver`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
 - A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -p terra`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
 - Independent review: the Claude `reviewer` agent and the Codex CLI each review the diff. No open finding may remain before the pull request.
 - Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
 - Verify behaviour as a human would (rule 22) and record the evidence.
 - Stop and ask Etienne one concrete question when: a choice changes the agreed behaviour; a step needs permission under rules 8, 9, 11, 12 or 13; the coordinator makes three failed attempts at one problem; a review finding stays disputed after two rounds.
+- Delivery is a draft pull request: the coordinator runs `deliver`, marks the PR ready and waits for green CI, and never merges. Etienne's `/finish` is the merge approval.
 - Rules 6, 8, 9, 11, 12 and 13 stay in force. Opening the pull request is allowed; replying on it as Etienne is not.
 - The coordinator ends with a short account: behaviour delivered, evidence, check results, review outcome, pull request URL.
 

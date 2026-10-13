@@ -61,7 +61,7 @@ docs/changes/$slug/plan.md. Done means all tests green, all linters green, and a
 diff."
     acceptance_instruction="Once the skill is done, push the branch (git push -u origin HEAD); if \
 the push is refused, say so in your report and never use --no-verify. Then stop there and leave \
-the branch for the review pane and /finish to send onward."
+the branch for the review pane and the delivery step to send onward."
     report_instruction="Then write what you did, and anything you could not finish, as Markdown \
 to"
     ;;
@@ -156,6 +156,13 @@ worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$slug" --
 
 split=$(herdr pane split --current --direction down --cwd "$worker_cwd" --no-focus)
 pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
+
+# deliver closes this change's idle stage panes once the PR exists, and only the panes listed here.
+# The terminal id tells this pane from a later one that reuses its id; without it, nothing is listed.
+terminal=$(herdr pane get "$pane" 2>/dev/null | jq -r '.result.pane.terminal_id // empty' || true)
+if [ -n "$terminal" ]; then
+  printf '%s %s\n' "$pane" "$terminal" >>"$report_directory/stage-panes-$slug"
+fi
 
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
 # uppercase letters (w1:pV), which Herdr's agent names may not, hence the lowercasing. Two ids

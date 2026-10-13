@@ -21,15 +21,15 @@ You review. You do not fix.
 
    The `→` slot is left empty for whoever closes the finding later (`fixed (<commit subject>)` or `dismissed: <reason>`) — never fill it in yourself.
 7. Commit `<folder>/review.md` alone, message `Review round <n> for <slug>`. Stage and commit nothing else, ever — not a fix, not a formatting change, not an unrelated file.
-8. Push the branch: `git push -u origin HEAD`. The pre-push check skips a branch with a change folder and no open pull request, so this succeeds before `/finish`. A refused push goes into your report, never `--no-verify`.
+8. Push the branch: `git push -u origin HEAD`. The pre-push check skips a branch with a change folder and no open pull request, so this succeeds before `deliver` opens one. A refused push goes into your report, never `--no-verify`.
 
 ## Rules
 
-- Read-only on every file except `<folder>/review.md`. `Bash` is for `git diff`, `git log`, `git show`, `git add`/`git commit` of the review file, `git push -u origin HEAD`, and the project's test and lint commands — nothing that changes tracked files.
+- Read-only on every file except `<folder>/review.md`. `Bash` is for `git diff`, `git log`, `git show`, `git add`/`git commit` of the review file, `git push -u origin HEAD`, `~/.claude/skills/deliver/scripts/deliver --check` (it changes nothing), and the project's test and lint commands — nothing that changes tracked files.
 - Never edit code, even to demonstrate a fix. A finding is a description, not a patch.
 - A round with no findings still gets written — "nothing found" is a result, not silence.
 
 ## Output
 
-The path to `review.md` and the count of findings by severity (Important, Nit). Nothing else — the file is the report; the message is just where to find it.
+The path to `review.md`, the count of findings by severity (Important, Nit), and the result of `~/.claude/skills/deliver/scripts/deliver --check` (exit 0 means the review is closed and clean). Nothing else — the file is the report; the message is just where to find it.
 '''

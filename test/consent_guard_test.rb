@@ -547,17 +547,17 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
-  # Only /finish opens a pull request, and it removes docs/changes/<slug>/ first.
-  def test_creating_a_pull_request_while_the_change_folder_exists_is_refused_naming_finish
+  # Only deliver opens a pull request, and it removes docs/changes/<slug>/ first.
+  def test_creating_a_pull_request_while_the_change_folder_exists_is_refused_naming_deliver
     start_change("pr-only-via-finish")
 
     _, stderr, status = run_guard("gh pr create --fill")
 
     assert_equal(2, status.exitstatus, stderr)
-    assert_match(%r{/finish}, stderr)
+    assert_match(/Run deliver/, stderr)
   end
 
-  def test_creating_a_pull_request_once_finish_removed_the_change_folder_is_allowed
+  def test_creating_a_pull_request_once_deliver_removed_the_change_folder_is_allowed
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "rm", "-rfq", "--cached", "docs")
     FileUtils.rm_rf(File.join(@repo, "docs"))
@@ -633,7 +633,7 @@ class ConsentGuardTest < Minitest::Test
     _, stderr, status = run_codex_guard("gh pr create --fill")
 
     assert_equal(2, status.exitstatus, stderr)
-    assert_match(%r{/finish}, stderr)
+    assert_match(/Run deliver/, stderr)
   end
 
   def test_merging_a_pull_request_whose_head_has_docs_changes_is_refused
@@ -642,7 +642,7 @@ class ConsentGuardTest < Minitest::Test
     _, stderr, status = run_guard("gh pr merge 186 --squash")
 
     assert_equal(2, status.exitstatus, stderr)
-    assert_match(%r{/finish}, stderr)
+    assert_match(/Run deliver/, stderr)
   end
 
   def test_merging_a_pull_request_whose_head_has_no_docs_changes_is_allowed
