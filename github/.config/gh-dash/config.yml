@@ -1,4 +1,26 @@
 ---
+prSections:
+  - title: Work reviews
+    filters: is:open org:nedap review-requested:@me -reviewed-by:@me draft:false
+  - title: Personal PRs
+    filters: is:open user:eirvandelden draft:false
+  - title: My work drafts
+    filters: is:open org:nedap author:@me draft:true
+  - title: "My work: needs reply"
+    filters: is:open org:nedap author:@me draft:false comments:>0 -review:approved
+  - title: My Pull Requests
+    filters: is:open author:@me
+  - title: Involved
+    filters: is:open involves:@me -author:@me
+
+issuesSections:
+  - title: Assigned to me
+    filters: is:open assignee:@me
+  - title: My Issues
+    filters: is:open author:@me
+  - title: Involved
+    filters: is:open involves:@me -author:@me
+
 pager:
   diff: delta
 
