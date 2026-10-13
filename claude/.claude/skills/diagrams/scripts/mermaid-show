@@ -13,6 +13,7 @@ class MermaidShow
   HELPER = File.join(__dir__, "mermaid-ascii.mjs")
   USAGE = "usage: mermaid-show <file.mmd|file.md> | --markdown | --image <file>".freeze
   INSTALL_HINT = "mermaid-show needs beautiful-mermaid: npm install -g beautiful-mermaid".freeze
+  MISSING_PACKAGE = 3 # mermaid-ascii.mjs exits 3 when beautiful-mermaid is not installed
   OPENING_FENCE = /\A(`{3,}|~{3,})\s*(\S*)/
   Failure = Class.new(StandardError)
 
@@ -42,7 +43,8 @@ class MermaidShow
   #: (String source) -> String
   def text_for(source)
     stdout, stderr, status = Open3.capture3("node", HELPER, stdin_data: source)
-    raise Failure, "#{INSTALL_HINT}\n#{stderr}".strip unless status.success?
+    raise Failure, INSTALL_HINT if status.exitstatus == MISSING_PACKAGE
+    raise Failure, stderr.strip unless status.success?
 
     stdout.chomp
   end

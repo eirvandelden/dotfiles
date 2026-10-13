@@ -82,13 +82,24 @@ class MermaidShowTest < Minitest::Test
   end
 
   def test_a_missing_beautiful_mermaid_prints_the_install_hint_and_exits_1
-    stub("node", "exit 1")
+    stub("node", "echo 'stack trace' >&2; exit 3")
     path = write("card.mmd", DIAGRAM)
 
     result = run_script(path)
 
     assert_equal(1, result[:status].exitstatus)
-    assert_includes(result[:stdout] + result[:stderr], "npm install -g beautiful-mermaid")
+    assert_equal("mermaid-show needs beautiful-mermaid: npm install -g beautiful-mermaid", result[:stderr].strip)
+  end
+
+  def test_a_diagram_the_renderer_rejects_shows_its_error_without_the_install_hint
+    stub("node", "echo 'Parse error on line 2' >&2; exit 1")
+    path = write("card.mmd", DIAGRAM)
+
+    result = run_script(path)
+
+    assert_equal(1, result[:status].exitstatus)
+    assert_includes(result[:stderr], "Parse error on line 2")
+    refute_includes(result[:stderr], "npm install -g beautiful-mermaid")
   end
 
   def test_an_unknown_flag_prints_usage_and_exits_2
