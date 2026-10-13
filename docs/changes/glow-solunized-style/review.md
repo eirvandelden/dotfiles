@@ -42,3 +42,28 @@ No Important findings.
 ## Round 2 — 2026-10-13T16:40Z — 759b05d8 (codex)
 
 No findings.
+
+## Round 3 — 2026-10-13T17:31Z — 565cd9b9
+
+No `REVIEW.md` or `REVIEW.local.md` at the repository root; the default passes apply (Bugs, Security, Compliance). This round covers the commits since round 1: `233b699b`, `03de13ab`, `3355db13`, `565cd9b9`.
+
+No Important findings.
+
+- [ ] Nit: `test_a_failed_write_leaves_no_temp_file_behind` makes the write fail with `chmod 0444`. A process that runs as root ignores that mode, so the write succeeds and the test fails. GitHub's Ubuntu runner is not root, so CI passes today. — `test/glow_style_install_test.rb:76` →
+
+### Bugs
+
+- The `EXIT` trap replaces no other trap: neither `00_common.sh` nor the helpers this task calls set one. Probed with a scratch `HOME` and `TMPDIR`: a first run sets the style and leaves the scratch `TMPDIR` empty. A second run logs `style already set` and also leaves it empty.
+- `refute_nil(stow)` now fails with a clear message when the `50_stow_all.sh` line goes missing.
+
+### Security
+
+- Nothing found. The new commits add no input handling, secrets or work references.
+
+### Compliance
+
+- The acceptance-criteria table from round 1 still holds. `glow/` has not changed since `2dfa3fb7`, so the render and byte-identity checks from round 1 still apply.
+- `233b699b` adds `require_relative "isolated_git"` to both new test files. That makes them comply with main's `IsolatedGitTest#test_every_test_file_requires_the_helper`.
+- No existing test was weakened, skipped or deleted.
+- Checks run: `glow_style_install_test.rb` (10 runs), `glow_package_test.rb` (4 runs) and `stow_package_roots_test.rb` (7 runs) pass. `shellcheck -x -S warning` and `rubocop` on the touched files are clean.
+- Outside this branch: `test/isolated_git_test.rb` fails on `origin/main` (`31fbbd43`, the merge base). 18 test files that this branch does not touch lack the helper, for example `bi_test.rb` and `deliver_test.rb`. Neither glow test file is in that list. Under playbook rule 25 that fix belongs on its own branch.
