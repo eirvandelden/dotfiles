@@ -615,6 +615,41 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_match(/plan-w1-pv/, stdout)
   end
 
+  def test_handing_off_records_each_stage_pane_for_the_change
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
+
+    assert_equal([ "w1:pV term_V", "w1:pV term_V" ], stage_panes("some-change"))
+    assert_operator(herdr_calls.index("pane get w1:pV"), :<, herdr_calls.index { |call| call.start_with?("agent start") })
+  end
+
+  def test_handing_off_records_no_pane_when_its_terminal_cannot_be_read
+    worktree_creatable!
+
+    _, stderr, status = run_script(HAND_OFF_PLAN, "plan", "some-change", extra_env: { "STUB_PANE_GET_FAILS" => "1" })
+
+    assert(status.success?, stderr)
+    assert_empty(stage_panes("some-change"))
+  end
+
+  def test_reviewing_records_the_reviewer_pane_for_the_change
+    @repo = linked_worktree
+
+    _, stderr, status = run_script(START_REVIEW)
+
+    assert(status.success?, stderr)
+    assert_equal([ "w1:pW term_W" ], stage_panes("handed-over"))
+  end
+
+  def test_reviewing_without_a_change_folder_records_no_pane
+    _, stderr, status = run_script(START_REVIEW)
+
+    assert(status.success?, stderr)
+    assert_empty(Dir.glob(File.join(report_directory, "stage-panes-*")))
+  end
+
   def test_reviewing_outside_herdr_is_refused
     _, stderr, status = run_script(START_REVIEW, herdr_env: nil)
 
@@ -884,6 +919,10 @@ class HerdrWorkerScriptsTest < Minitest::Test
             *) echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
           esac
           ;;
+        "pane get")
+          [ -n "$STUB_PANE_GET_FAILS" ] && exit 1
+          printf '{"result":{"pane":{"pane_id":"%s","terminal_id":"term_%s"}}}\\n' "$3" "${3#w1:p}"
+          ;;
         "agent start")
           if [ ! -e "$REPORT_DIR/$3.md" ]; then state=missing
           elif [ -s "$REPORT_DIR/$3.md" ]; then state=holds-something
@@ -900,7 +939,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
   WORKTREE_TOOLS_DIR = File.expand_path("../git/.config/git/worktree-tools", __dir__)
 
-  def run_script(script, *arguments, herdr_env: "1", caller_pane: "w1:p1")
+  def run_script(script, *arguments, herdr_env: "1", caller_pane: "w1:p1", extra_env: {})
     environment = {
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
@@ -910,9 +949,15 @@ class HerdrWorkerScriptsTest < Minitest::Test
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1",
       "HERDR_PANE_ID" => caller_pane,
-      "WORKTREE_TOOLS_DIR" => WORKTREE_TOOLS_DIR
+      "WORKTREE_TOOLS_DIR" => WORKTREE_TOOLS_DIR,
+      "CLAUDE_SKILLS_DIR" => SKILLS_DIR
     }
-    Open3.capture3(environment, script, *arguments, chdir: @repo)
+    Open3.capture3(environment.merge(extra_env), script, *arguments, chdir: @repo)
+  end
+
+  def stage_panes(slug)
+    path = File.join(report_directory, "stage-panes-#{slug}")
+    File.exist?(path) ? File.readlines(path, chomp: true) : []
   end
 
   def call_log
