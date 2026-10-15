@@ -143,7 +143,7 @@ commit-msg:
         [ -e "$(git rev-parse --git-path MERGE_HEAD)" ] && exit 0
         git rev-parse --verify -q HEAD >/dev/null || exit 0
         git diff --cached --quiet HEAD -- || exit 0
-        echo "Direct commit to $branch is not allowed. Create a feature branch and open a PR."
+        echo "Direct commit to $branch is not allowed. Create a feature branch; deliver opens the PR."
         exit 1
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
 
