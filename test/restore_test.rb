@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "delivery_harness"
 
 # `restore` brings back a change folder that `deliver` removed, for a change request on an open pull

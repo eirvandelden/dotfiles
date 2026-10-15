@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "delivery_harness"
 
 # `commit-plan` commits intent.md and plan.md of a change together, once both are accepted, and

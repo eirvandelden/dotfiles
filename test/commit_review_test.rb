@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "delivery_harness"
 
 # `commit-review` commits docs/changes/<slug>/review.md only when the review has converged: it has a
