@@ -12,7 +12,13 @@
 [apply]
   whitespace = nowarn
 [credential]
-  helper = osxkeychain
+  # An empty helper clears every helper set before this file, Xcode's
+  # osxkeychain included, so no credential comes from the Keychain.
+  helper =
+[credential "https://github.com"]
+  helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"
+[credential "https://gist.github.com"]
+  helper = "!~/Developer/dotfiles/git/.config/git/credential-1password"
 [color]
   ui = true
   status = true
@@ -51,7 +57,6 @@
   tool = default-difftool
 [github]
   user = eirvandelden
-  token = !security 2>&1 >/dev/null find-generic-password -gs github.token | ruby -e 'print $1 if STDIN.gets =~ /^password: \\\"(.*)\\\"$/'
 [help]
   autoCorrect = immediate
 [pull]
