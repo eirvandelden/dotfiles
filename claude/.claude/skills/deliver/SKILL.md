@@ -50,3 +50,14 @@ Tell Etienne the PR URL, whether a gh-dash pane opened, and that `/finish` is th
 ## Codex
 
 Same script, same steps. Invoked as `$deliver`. A Codex coordinator runs it after a clean review round, then follows `$finish` in its auto mode.
+
+## Change requests after delivery
+
+A change request on an open pull request needs the removed documents back. Never recreate them by hand.
+
+1. Run `~/.claude/skills/deliver/scripts/restore`. It refuses unless the branch has an open pull request and a clean tree. It fetches the branch and its base, fast-forwards to the remote branch and drops the one `Remove change artifacts for <slug>` commit with a rebase. It refuses, with the branch unchanged, when that commit is not exactly a deletion of the whole folder or when later commits conflict.
+2. Push with `git push --force-with-lease -u origin HEAD`. `restore` prints the command and never runs it, so the consent guard judges the push. A plain `--force` is refused. While the pull request is open, the pre-push check refuses a push whose `review.md` is older than the last code commit; run `/review` until it converges, then push.
+3. Edit the restored `intent.md` and `plan.md` in place and commit them with `commit-plan`. Review rounds go through `commit-review`.
+4. Run `deliver` again. It edits the open pull request body.
+
+A merged branch, a squash-merged one included, is out of scope: start a new branch from `main`.
