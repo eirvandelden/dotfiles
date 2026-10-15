@@ -99,9 +99,21 @@ class WorktreeFirstSkillTest < Minitest::Test
   end
 
   def environment
-    path = ENV.fetch("PATH").split(File::PATH_SEPARATOR)
-    { "HOME" => @home, "PATH" => path.reject { |dir| File.executable?(File.join(dir, "gh")) }.join(":"),
+    { "HOME" => @home, "PATH" => [ gh_stub_dir, ENV.fetch("PATH") ].join(File::PATH_SEPARATOR),
       "HERDR_ENV" => nil, "GIT_CONFIG_GLOBAL" => "/dev/null", "CREATE_CALL_LOG" => create_call_log }
+  end
+
+  # A failing `gh` first on PATH. Dropping every PATH dir that holds `gh` also drops `bash` on CI,
+  # where both live in /usr/bin.
+  def gh_stub_dir
+    dir = File.join(@enclosing, "bin")
+    stub = File.join(dir, "gh")
+    return dir if File.exist?(stub)
+
+    FileUtils.mkdir_p(dir)
+    File.write(stub, "#!/bin/sh\nexit 1\n")
+    FileUtils.chmod(0o755, stub)
+    dir
   end
 
   def install_create_wrapper
