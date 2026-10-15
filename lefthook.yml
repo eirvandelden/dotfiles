@@ -284,7 +284,7 @@ pre-push:
         while read -r _local_ref _local_sha remote_ref _remote_sha; do
           case "$remote_ref" in
             refs/heads/main | refs/heads/master)
-              echo "Pushing to ${remote_ref#refs/heads/} is not allowed. Push a feature branch and open a PR."
+              echo "Pushing to ${remote_ref#refs/heads/} is not allowed. Push a feature branch; deliver opens the PR."
               exit 1
               ;;
           esac

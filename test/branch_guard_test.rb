@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "yaml"
 require "tmpdir"
+require_relative "isolated_git"
 require_relative "lefthook_binary"
 
 class BranchGuardTest < Minitest::Test
