@@ -171,16 +171,17 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(herdr_calls, "agent start implement-w1-pv --kind claude --pane w1:pV -- --model sonnet")
   end
 
-  def test_the_intent_worker_is_told_to_push_after_acceptance
-    worktree_creatable!
+def test_the_intent_worker_is_told_not_to_commit_or_push_intent_md
+  worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "intent", "some-change")
-    prompt = worker_prompt("intent")
+  run_script(HAND_OFF_PLAN, "intent", "some-change")
+  prompt = worker_prompt("intent")
 
-    assert_includes(prompt, "intent skill")
-    assert_told_accepted_then_committed_then_pushed(prompt)
-    assert_includes(prompt, "git push -u origin HEAD")
-  end
+  assert_includes(prompt, "intent skill")
+  assert_match(/accepted/i, prompt)
+  assert_match(/leave intent\.md uncommitted/, prompt)
+  refute_includes(prompt, "git push -u origin HEAD")
+end
 
   def test_the_intent_worker_is_told_to_invoke_the_intent_skill_with_no_upstream_artifact
     worktree_creatable!
@@ -198,17 +199,19 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_includes(worker_prompt("plan"), "touch nothing else")
   end
 
-  def test_the_plan_worker_is_told_to_push_after_acceptance
-    worktree_creatable!
+def test_the_plan_worker_commits_intent_and_plan_then_pushes
+  worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "plan", "some-change")
+  [ [], [ "--auto" ] ].each do |options|
+    run_script(HAND_OFF_PLAN, "plan", "some-change", *options)
     prompt = worker_prompt("plan")
 
     assert_includes(prompt, "plan skill's Write role, here backend")
     assert_includes(prompt, "docs/changes/some-change/intent.md")
-    assert_told_accepted_then_committed_then_pushed(prompt)
-    assert_includes(prompt, "git push -u origin HEAD")
+    assert_includes(prompt, "committed intent.md and plan.md")
+    assert_operator(prompt.index("committed intent.md and plan.md"), :<, prompt.index("git push -u origin HEAD"))
   end
+end
 
   def test_the_intent_and_plan_workers_are_told_accepted_or_agreed
     worktree_creatable!
@@ -737,7 +740,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_the_reviewer_is_told_to_push_its_round
     run_script(START_REVIEW)
 
-    assert_includes(reviewer_prompt, "push the branch (git push -u origin HEAD)")
+    assert_includes(reviewer_prompt, "the branch (git push -u origin HEAD) only when commit-review exits 0")
     assert_includes(reviewer_prompt, "never use --no-verify")
   end
 
@@ -812,8 +815,23 @@ class HerdrWorkerScriptsTest < Minitest::Test
     run_script(START_REVIEW)
 
     assert_match(%r{deliver/scripts/deliver --check}, reviewer_prompt)
-    assert_operator(reviewer_prompt.index("deliver --check"), :>, reviewer_prompt.index("commit that file alone"))
+    assert_operator(reviewer_prompt.index("deliver --check"), :>, reviewer_prompt.index("commit-review"))
     assert_operator(reviewer_prompt.index("deliver --check"), :<, reviewer_prompt.index("Review ready:"))
+  end
+
+  def test_the_reviewer_commits_only_through_commit_review
+    run_script(START_REVIEW)
+
+    assert_includes(reviewer_prompt, "review/scripts/commit-review")
+    refute_match(/commit that file alone/, reviewer_prompt)
+    assert_match(/leave review\.md uncommitted/, reviewer_prompt)
+  end
+
+  def test_the_reviewer_pushes_only_after_commit_review_exits_0
+    run_script(START_REVIEW)
+
+    assert_match(/only when commit-review exits 0/, reviewer_prompt)
+    assert_operator(reviewer_prompt.index("git push -u origin HEAD"), :>, reviewer_prompt.index("commit-review"))
   end
 
   def test_a_clean_check_reports_review_clean
@@ -976,17 +994,6 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def worktree_path(slug, checkout: @repo)
     path = File.join(checkout, ".worktrees", slug)
     File.directory?(path) ? File.realpath(path) : path
-  end
-
-  def assert_told_accepted_then_committed_then_pushed(prompt)
-    accepted_at = prompt =~ /accepted/i
-    committed_at = prompt =~ /commit/i
-    pushed_at = prompt =~ /push/i
-
-    assert(accepted_at && committed_at && pushed_at,
-           "expected \"accepted\", \"commit\" and \"push\" all in #{prompt.inspect}")
-    assert(accepted_at < committed_at && committed_at < pushed_at,
-           "expected accepted, then commit, then push, in that order, in #{prompt.inspect}")
   end
 
   def assert_path_survived(prompt, path)
