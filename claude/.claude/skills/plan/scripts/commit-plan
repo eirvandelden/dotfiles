@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+# Commits docs/changes/<slug>/intent.md and plan.md together, once both say "Status: accepted".
+# It stages those two paths and commits only them, so work staged elsewhere stays out. The subject
+# is "docs: intent and plan for <slug>" while intent.md has uncommitted changes, else
+# "docs: plan for <slug>". It never pushes; the caller pushes after it.
+require "open3"
+
+CHANGE_FOLDER = File.expand_path("change-folder", __dir__)
+
+def run(*command)
+  stdout, stderr, status = Open3.capture3(*command)
+  abort("#{command.first(3).join(' ')} failed: #{stderr.strip}") unless status.success?
+
+  stdout
+end
+
+def refuse(message)
+  warn(message)
+  exit(1)
+end
+
+# The first "Status:" in the file is the status line.
+def accepted?(path)
+  File.exist?(path) && File.read(path)[/Status: (\w+)/, 1] == "accepted"
+end
+
+folder = run(CHANGE_FOLDER).strip
+intent = File.join(folder, "intent.md")
+plan = File.join(folder, "plan.md")
+refuse("#{intent} is not accepted: accept the intent first.") unless accepted?(intent)
+refuse("#{plan} is not accepted: accept the plan first.") unless accepted?(plan)
+
+slug = File.basename(folder)
+fresh_intent = !run("git", "status", "--porcelain", "--", intent).empty?
+subject = fresh_intent ? "docs: intent and plan for #{slug}" : "docs: plan for #{slug}"
+run("git", "add", "--", intent, plan)
+run("git", "commit", "--quiet", "-m", subject, "--", intent, plan)
+puts(subject)
