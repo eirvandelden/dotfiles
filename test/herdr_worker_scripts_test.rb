@@ -811,7 +811,7 @@ end
     assert_operator(reviewer_prompt.index("at most twelve times"), :<, reviewer_prompt.index(/leave (your|this|the) pane open/i))
   end
 
-  def test_the_reviewer_runs_deliver_check_after_its_round
+  def test_the_reviewer_runs_deliver_check_after_commit_review
     run_script(START_REVIEW)
 
     assert_match(%r{deliver/scripts/deliver --check}, reviewer_prompt)
