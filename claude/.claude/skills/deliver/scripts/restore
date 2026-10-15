@@ -50,9 +50,7 @@ class Branch
 
   def sync
     capture("git", "fetch", "origin", @branch, base)
-    capture("git", "merge", "--ff-only", "origin/#{@branch}")
-  rescue Refusal
-    raise Refusal, "#{@branch} diverged from origin/#{@branch}, so it cannot fast-forward; sort that out first."
+    fast_forward
   end
 
   def merge_base
@@ -61,11 +59,19 @@ class Branch
 
   private
 
+  def fast_forward
+    capture("git", "merge", "--ff-only", "origin/#{@branch}")
+  rescue Refusal
+    raise Refusal, "#{@branch} diverged from origin/#{@branch}, so it cannot fast-forward; sort that out first."
+  end
+
   def base
-    @base ||= begin
-      head = Open3.capture3("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD").first.strip.delete_prefix("origin/")
-      head.empty? ? %w[main master].find { |name| succeeds?("git", "rev-parse", "--verify", "--quiet", "refs/heads/#{name}") } : head
-    end
+    @base ||= resolved_base || raise(Refusal, "No base branch found: origin/HEAD, main and master all fail to resolve.")
+  end
+
+  def resolved_base
+    head = Open3.capture3("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD").first.strip.delete_prefix("origin/")
+    head.empty? ? %w[main master].find { |name| succeeds?("git", "rev-parse", "--verify", "--quiet", "refs/heads/#{name}") } : head
   end
 
   def repository

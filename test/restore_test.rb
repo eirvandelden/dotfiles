@@ -107,6 +107,24 @@ class RestoreTest < Minitest::Test
     assert_refused(/boom|pull request/)
   end
 
+  def test_a_fetch_failure_is_not_reported_as_divergence
+    git("rm", "--quiet", "-r", FOLDER)
+    git("commit", "--quiet", "-m", REMOVAL_SUBJECT)
+
+    _, stderr, status = run_script(RESTORE)
+
+    assert_equal(1, status.exitstatus, stderr)
+    assert_match(/fetch/, stderr)
+    refute_match(/diverge/, stderr)
+  end
+
+  def test_refuses_when_no_base_branch_resolves
+    deliver_by_hand
+    git("branch", "--move", "main", "trunk")
+
+    assert_refused(/base branch/)
+  end
+
   def test_keeps_commits_made_after_delivery
     deliver_by_hand
     commit_file("after.txt", "x\n", "After delivery")
