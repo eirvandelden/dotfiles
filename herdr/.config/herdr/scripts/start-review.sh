@@ -3,9 +3,10 @@
 #
 # Opens a Claude reviewer beside the caller to look at this branch. Report-only: it reads
 # REVIEW.md, this branch's change folder, and the diff, then appends a round to
-# docs/changes/<slug>/review.md, commits that file alone and pushes the branch — the same
-# contract the `reviewer` agent follows for the in-session backend, so one location satisfies
-# the pre-push freshness check regardless of which backend produced it.
+# docs/changes/<slug>/review.md and leaves it uncommitted until the review converges, then commits it
+# through commit-review and pushes the branch — the same contract the `reviewer` agent follows for
+# the in-session backend, so one location satisfies the pre-push freshness check regardless of
+# which backend produced it.
 
 set -euo pipefail
 
@@ -74,9 +75,10 @@ claude/.claude/skills/plan/scripts/change-folder for this branch's change folder
 REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's intent.md and plan.md. \
 Run the Bugs, Security and Compliance passes REVIEW.md describes, worst first; rank Important \
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \
-first round) and commit that file alone — change no code, stage nothing else. Then push the \
-branch (git push -u origin HEAD); if the push is refused, say so in your report and never use \
---no-verify. Then run ~/.claude/skills/deliver/scripts/deliver --check, which changes nothing. \
+first round) and leave review.md uncommitted — change no code, stage nothing else. Then run \
+~/.claude/skills/review/scripts/commit-review, which commits that file alone only when no finding \
+is open. Push the branch (git push -u origin HEAD) only when commit-review exits 0; if the push is \
+refused, say so in your report and never use --no-verify. Then run ~/.claude/skills/deliver/scripts/deliver --check, which changes nothing. \
 Then report back to the agent that asked, with herdr agent prompt, sending pane $HERDR_PANE_ID \
 a single line: Review clean: when the check exits 0, else Review ready: when it exits non-zero, \
 followed in both cases by that file's path. Quote the path yourself. That call is rejected while \
@@ -84,6 +86,6 @@ the caller is blocked on a prompt of its own, so if it fails, wait a few seconds
 again, at most twelve times. Once the line gets through, on the first try or a retry, run herdr \
 pane close \$HERDR_PANE_ID (your own pane's id from your shell, not the caller's id above) to \
 close your own pane. If all twelve attempts fail, leave your pane open and say so there: the \
-report is committed on the branch, so nothing is lost." >/dev/null
+report is in the change folder's review.md, so nothing is lost." >/dev/null
 
 echo "Asked $reviewer to review this branch against $base. Findings will land in this branch's docs/changes/<slug>/review.md."
