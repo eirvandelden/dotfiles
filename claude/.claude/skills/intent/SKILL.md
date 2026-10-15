@@ -35,7 +35,7 @@ Resolve `<slug-or-issue>` into the final branch/folder slug the same way step 1 
 
 The script creates `.worktrees/<slug>`, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill for `docs/changes/<slug>` — there is no upstream artifact yet, so its interview is what creates `intent.md`. Tell the user which worker took it and where its report will land, then carry on: the interview that follows is that pane's own.
 
-The pane writes `intent.md`, and once Etienne says "accepted" or "agreed", commits it alone, pushes the branch, writes a short report to the shared git directory, and sends one line back: `Intent ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
+The pane writes `intent.md`, and once Etienne says "accepted" or "agreed", leaves it uncommitted for the plan stage to commit, writes a short report to the shared git directory, and sends one line back: `Intent ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
 
 ## Anti-pattern: "this one is too simple to need an intent"
 
@@ -143,12 +143,12 @@ Refuse to flip `Status:` to `accepted` while any of these holds, and name what i
 - `## Open questions` holds anything but "None.".
 - A flagged concern names no chosen side.
 
-Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted`, commit `intent.md` alone (`docs: intent for <slug>`), then push (`git push -u origin HEAD`).
+Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted` and leave `intent.md` uncommitted. Do not commit it and do not push: the plan stage commits `intent.md` and `plan.md` together, in the same worktree.
 
 Inside herdr (`HERDR_ENV` set), record this pane for the delivery step. Run `herdr pane current` and write the `pane_id` field, then the `terminal_id` field, one per line, to `<git-common-dir>/herdr/intent-pane-<slug>` (create the directory). The delivery step opens its gh-dash pane directly left of this pane, and the terminal id tells this pane from a later pane that reuses its id.
 
 - `intent.md` has `Delivery: autonomous`: do not chain to the plan stage by hand. Follow "Autonomous delivery" below.
-- Otherwise, inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push.
+- Otherwise, inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the acceptance.
 
 ## Autonomous delivery
 
@@ -158,7 +158,7 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
-5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and record both reports as that skill directs, committing each transcribed round alone and pushing the branch (`git push -u origin HEAD`). Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
+5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and the Claude round in that order (Codex round first, then the Claude round), transcribing each round and running `commit-review`, then pushing the branch when it exits 0 (`git push -u origin HEAD`). Rounds with open findings stay uncommitted. Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
 6. Once a round of each reviewer leaves no open finding, confirm that `intent.md` is accepted and records `Delivery: autonomous`, because `deliver` removes it. Then follow `~/.claude/skills/deliver/SKILL.md`. It opens the draft PR. After `deliver`, follow `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`: it marks the PR ready and waits for green CI. Red CI stops the delivery: report the failed checks and their links.
 7. Write the account — behaviour delivered, evidence, check results, CI result, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge: Etienne's `/finish` is the merge approval.
 
