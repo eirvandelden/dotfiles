@@ -46,7 +46,7 @@ Confirm a delete with the browser's native confirm, through `data-turbo-confirm`
 - The message comes from `t(...)` with the item's name. The i18n rule forbids a hardcoded string.
 - Never require the user to type the item's name to confirm a deletion.
 - The browser sets the buttons, their order and the `Return` default. The reference accepts them. The `OK` ban and the `Cancel` default do not apply to the native confirm.
-- The confirm runs only when Turbo handles the form, through Drive or a Turbo Frame. A `data-turbo="false"` on the delete form, on the `Delete…` button or on any ancestor deletes at once, with no confirm, so never set it there. With Drive off, the delete form needs `data-turbo="true"`.
+- The confirm runs only when Turbo handles the form, through Drive or a Turbo Frame. A `data-turbo="false"` on the delete form, on the `Delete…` button or on any ancestor deletes at once, with no confirm, so never set it there. With Drive off, put `data-turbo="true"` on both the delete form and the `Delete…` button. Turbo checks the form and the button that submits it, and on an edit page that button sits outside the delete form. A `button_to` button sits inside its own form, so there the form alone is enough.
 
 ### Where Delete lives
 

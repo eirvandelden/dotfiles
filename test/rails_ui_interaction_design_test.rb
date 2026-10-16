@@ -37,7 +37,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/browser sets[^.]*buttons[^.]*Return/i, section)
     assert_match(/data-turbo="false"/, section)
     assert_match(/data-turbo="false"`?[^.]*button[^.]*ancestor/i, section)
-    assert_match(/Drive[^.]*off[^.]*data-turbo="true"/i, section)
+    assert_match(/Drive[^.]*off[^.]*data-turbo="true"`? on both the delete form and the `Delete…` button/i, section)
   end
 
   def test_far_left_rule_is_scoped_to_edit_pages_and_save_sheets
