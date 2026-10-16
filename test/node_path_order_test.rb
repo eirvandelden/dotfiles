@@ -187,6 +187,14 @@ class NodePathOrderTest < Minitest::Test
     assert_first_node(node_bin("20.11.1"), "command -v node", chdir: project)
   end
 
+  def test_an_empty_project_node_version_is_skipped
+    project = mkdir(File.join(@home, "empty-project"))
+    File.write(File.join(project, ".node-version"), " \n")
+
+    assert_first_node(node_bin("22.21.1"), "command -v node", chdir: project, env: inherited_root("22.21.1"))
+    assert_first_node(node_bin("24.14.0"), "command -v node", chdir: project)
+  end
+
   def test_leaving_a_project_without_a_home_node_version_resets_the_node
     File.delete(File.join(@home, ".node-version"))
     result = run_zsh("cd #{@home}/project; command -v node; cd ../plain; command -v node")

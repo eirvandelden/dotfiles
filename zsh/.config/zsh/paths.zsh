@@ -56,13 +56,24 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
   typeset -g _inherited_chnode_root="${CHNODE_ROOT:-}"
   typeset -g _applied_node_source=""
 
-  # Sets REPLY to the nearest project .node-version, if any. No subshell, so
+  # Sets REPLY to the version in file $1, without whitespace (a CRLF file
+  # leaves a trailing \r) or a leading v. Fails when the file names none.
+  function _chnode_file_version() {
+    [[ -r "$1" ]] || return 1
+    read -r REPLY < "$1"
+    REPLY="${REPLY//[[:space:]]/}"
+    REPLY="${REPLY#v}"
+    [[ -n "$REPLY" ]]
+  }
+
+  # Sets REPLY to the nearest project .node-version that names a version, if
+  # any; an empty one is skipped, as chnode_auto did. No subshell, so
   # the per-prompt hook stays cheap. -ef: $PWD may spell HOME differently.
   function _chnode_project_file() {
     local dir="$PWD"
     REPLY=""
     while true; do
-      if [[ -r "$dir/.node-version" && ! "$dir/.node-version" -ef "$HOME/.node-version" ]]; then
+      if [[ ! "$dir/.node-version" -ef "$HOME/.node-version" ]] && _chnode_file_version "$dir/.node-version"; then
         REPLY="$dir/.node-version"
         return 0
       fi
@@ -73,7 +84,7 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
 
   # Sets reply to (source, chnode argument) for the rule above.
   function _chnode_wanted_node() {
-    local file version
+    local file
     reply=()
     if _chnode_project_file; then
       file="$REPLY"
@@ -83,11 +94,8 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
     else
       file="$HOME/.node-version"
     fi
-    [[ -r "$file" ]] || return 1
-    read -r version < "$file"
-    version="${version//[[:space:]]/}" # a CRLF file leaves a trailing \r
-    version="${version#v}"
-    [[ -n "$version" ]] && reply=("$file:$version" "$version")
+    _chnode_file_version "$file" || return 1
+    reply=("$file:$REPLY" "$REPLY")
   }
 
   # No version source left: undo the node this hook chose, as chnode_auto did.
