@@ -57,7 +57,7 @@ For a record with editable fields, Delete appears only on the edit page.
 - Never between other buttons. It stands apart, as described under Edit pages and sheets.
 - Inline editing of a single field does not move Delete. The record keeps its edit page, and Delete stays there.
 - A record with editable fields where every field is edited inline still gets an edit page. That page holds the fields and Delete.
-- A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its show page holds a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It uses `button_to` with `data-turbo-confirm` (`data: { turbo_confirm: … }`), because no edit form surrounds the row. It asks for the same native confirm.
+- A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its show page holds a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It uses `button_to` with `data-turbo-confirm` (`data: { turbo_confirm: … }`), because no edit form surrounds the row. `button_to` wraps the button in its own form, and that form is the flex item in the row. Give that form the far-left margin through `form_class:`, with a class that sets `margin-inline-end: auto`. It asks for the same native confirm.
 - Never put that `Delete…` inside an "Actions" menu or any other pull-down.
 - This exception does not let any other show page carry Delete.
 
@@ -69,7 +69,7 @@ For a record with editable fields, Delete appears only on the edit page.
 
 ## Default button
 
-The default button is the safest action for the context. `Return` activates it. Usually that is the forward action; in a destructive confirmation the app builds itself, it is `Cancel`.
+The default button is the safest action for the context. `Return` activates it. Usually that is the forward action.
 
 - On an edit page the default is `Save`: rightmost and filled.
 - In a destructive confirmation the app builds itself, the default is `Cancel`. The red `Delete` is never the default.

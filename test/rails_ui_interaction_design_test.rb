@@ -96,6 +96,8 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/show page/i, section)
     assert_match(/visible red `Delete…`/, section)
     assert_match(/`button_to`[^.]*data-turbo-confirm/, section)
+    assert_match(/`button_to`[^.]*own form[^.]*flex item/i, section)
+    assert_match(/form_class:[^.]*margin-inline-end: auto|margin-inline-end: auto[^.]*form_class:/, section)
     refute_match(/opens the confirmation dialog/, section)
     assert_match(/never[^.]*(menu|pull-down)/i, section)
   end
@@ -116,7 +118,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     refute_match(/safest forward action/i, section)
     assert_match(/`Save`/, section)
     assert_match(/`Cancel`/, section)
-    assert_match(/builds itself/, section)
+    assert_equal(1, section.scan(/builds itself/).length, "the Cancel default is stated more than once")
     assert_match(/never[^.]*`Delete`[^.]*default|`Delete`[^.]*never[^.]*default/i, section)
   end
 
