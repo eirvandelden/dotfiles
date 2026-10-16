@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "yaml"
+require_relative "isolated_git"
 
 # The rails-ui interaction-design reference is first-party guidance an agent acts on: where the action row
 # goes, where Delete lives and how a table fits the page (docs/changes/rails-ui-action-row-and-tables/plan.md).
