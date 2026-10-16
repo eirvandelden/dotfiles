@@ -197,10 +197,16 @@ class NodePathOrderTest < Minitest::Test
 
   def test_leaving_a_project_without_a_home_node_version_resets_the_node
     File.delete(File.join(@home, ".node-version"))
-    result = run_zsh("cd #{@home}/project; command -v node; cd ../plain; command -v node")
+    # Which node comes next depends on the machine (CI has /usr/local/bin/node), so
+    # assert that no chnode node is left rather than naming the one that follows.
+    script = "cd #{@home}/project; command -v node; cd ../plain; print -r -- \"root=${CHNODE_ROOT:-}\"; print -rl -- $path"
+    result = run_zsh(script)
+    first_node, root, *path = result[:stdout].lines.map(&:strip)
 
     assert_equal("", result[:stderr])
-    assert_equal([ node_bin("20.11.1"), File.join(@brew, "bin", "node") ], result[:stdout].lines.map(&:strip))
+    assert_equal(node_bin("20.11.1"), first_node)
+    assert_equal("root=", root)
+    assert_empty(path.grep(%r{\A#{Regexp.escape(File.join(@home, ".nodes"))}/}))
   end
 
   def test_rvs_ruby_stays_ahead_of_homebrews_ruby_in_a_login_shell
