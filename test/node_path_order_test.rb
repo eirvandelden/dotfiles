@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Proves which node a zsh resolves first, with a fake Homebrew node, a faithful
 # chnode 0.4.3 stub, and a stand-in for macOS path_helper.
@@ -131,6 +132,97 @@ class NodePathOrderTest < Minitest::Test
     [ true, false ].each do |login|
       assert_first_node(node_bin("22.21.1"), "command -v node", login:, env: inherited_root("22.21.1"))
     end
+  end
+
+  def test_a_non_login_shell_puts_chnodes_node_first
+    assert_first_node(node_bin("24.14.0"), "command -v node")
+  end
+
+  def test_interactive_login_and_non_login_shells_keep_chnodes_node_first_after_the_prompt_hook
+    [ true, false ].each do |login|
+      script = "apply_default_node_version; command -v node"
+
+      assert_first_node(node_bin("24.14.0"), script, login:, interactive: true)
+    end
+  end
+
+  def test_leaving_a_project_returns_to_the_inherited_node
+    script = "cd #{@home}/project; command -v node; cd ../plain; command -v node"
+    result = run_zsh(script, login: true, env: inherited_root("22.21.1"))
+
+    assert_equal("", result[:stderr])
+    assert_equal([ node_bin("20.11.1"), node_bin("22.21.1") ], result[:stdout].lines.map(&:strip))
+  end
+
+  def test_without_an_inherited_root_the_home_node_version_applies
+    [ true, false ].each do |login|
+      assert_first_node(node_bin("24.14.0"), "command -v node", login:)
+    end
+  end
+
+  def test_npm_and_npx_come_from_chnodes_node_in_a_login_shell
+    root = File.join(@home, ".nodes", "node-24.14.0")
+    result = run_zsh("command -v npx; npm root -g", login: true)
+
+    assert_equal("", result[:stderr])
+    assert_equal([ File.join(root, "bin", "npx"), File.join(root, "lib", "node_modules") ], result[:stdout].lines.map(&:strip))
+    assert(File.directory?(File.join(root, "lib", "node_modules", "beautiful-mermaid")))
+  end
+
+  def test_a_project_node_version_wins_in_a_login_shell
+    assert_first_node(node_bin("20.11.1"), "command -v node", login: true, chdir: File.join(@home, "project"))
+  end
+
+  def test_rvs_ruby_stays_ahead_of_homebrews_ruby_in_a_login_shell
+    assert_first_node(File.join(@rubies, "ruby"), "command -v ruby", login: true)
+  end
+
+  def test_the_unlocked_codex_shim_stays_first_in_a_login_shell
+    shim_dir = File.join(@tmpdir, "unlocked-bin")
+    write_exe(File.join(shim_dir, "codex"), "#!/bin/sh\nexit 0\n")
+
+    assert_first_node(File.join(shim_dir, "codex"), "command -v codex", login: true, env: { "UNLOCKED_BIN" => shim_dir })
+  end
+
+  def test_zprofile_leaves_path_alone_without_chnode_root
+    FileUtils.rm_f(File.join(@brew, "opt", "chnode", "share", "chnode", "chnode.sh"))
+
+    assert_first_node(File.join(@brew, "bin", "node"), "command -v node", login: true)
+  end
+
+  def test_the_home_node_version_reached_through_a_symlinked_path_is_not_a_project_file
+    link = File.join(@tmpdir, "home-link")
+    File.symlink(@home, link)
+    root = File.join(link, ".nodes", "node-22.21.1")
+    env = { "HOME" => link, "CHNODE_ROOT" => root, "PATH" => "#{@brew}/bin:#{root}/bin:/usr/bin:/bin" }
+
+    assert_first_node(File.join(root, "bin", "node"), "command -v node", login: true, env:)
+  end
+
+  def test_a_project_node_version_above_home_counts
+    outside = mkdir(File.join(@tmpdir, "outside"))
+    File.write(File.join(outside, ".node-version"), "20.11.1\n")
+
+    assert_first_node(node_bin("20.11.1"), "command -v node", login: true, chdir: mkdir(File.join(outside, "deep")),
+      env: inherited_root("22.21.1"))
+  end
+
+  def test_an_inherited_root_outside_the_nodes_dir_falls_back_to_the_home_node_version
+    elsewhere = File.join(@tmpdir, "elsewhere", "node-22.21.1")
+    write_node_root(elsewhere)
+    env = { "CHNODE_ROOT" => elsewhere, "PATH" => "#{@brew}/bin:#{elsewhere}/bin:/usr/bin:/bin" }
+
+    assert_first_node(node_bin("24.14.0"), "command -v node", login: true, env:)
+  end
+
+  def test_a_manual_chnode_choice_survives_the_next_prompt_hook
+    script = "chnode 20.11.1; apply_default_node_version; command -v node"
+
+    assert_first_node(node_bin("20.11.1"), script, interactive: true)
+  end
+
+  def test_inherited_root_is_selected_by_exact_directory_name
+    assert_first_node(node_bin("22.17.0"), "command -v node", login: true, env: inherited_root("22.17.0"))
   end
 
   private
