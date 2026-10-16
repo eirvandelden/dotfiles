@@ -124,12 +124,23 @@ class NodePathOrderTest < Minitest::Test
   end
 
   def test_a_login_shell_puts_chnodes_node_ahead_of_homebrews_after_path_helper
-    result = run_zsh("command -v node", login: true)
+    assert_first_node(node_bin("24.14.0"), "command -v node", login: true)
+  end
 
-    assert_equal(node_bin("24.14.0"), result[:stdout].strip)
+  def test_an_inherited_chnode_root_beats_the_home_node_version_in_login_and_non_login_shells
+    [ true, false ].each do |login|
+      assert_first_node(node_bin("22.21.1"), "command -v node", login:, env: inherited_root("22.21.1"))
+    end
   end
 
   private
+
+  def assert_first_node(expected, script, **options)
+    result = run_zsh(script, **options)
+
+    assert_equal("", result[:stderr])
+    assert_equal(expected, result[:stdout].lines.last.to_s.strip)
+  end
 
   def build_fixtures
     File.write(File.join(mkdir(@home), ".node-version"), "24.14.0\n")
@@ -173,6 +184,11 @@ class NodePathOrderTest < Minitest::Test
     mkdir(File.dirname(path))
     File.write(path, body)
     FileUtils.chmod("+x", path)
+  end
+
+  def inherited_root(version, dir: "node-#{version}")
+    root = File.join(@home, ".nodes", dir)
+    { "CHNODE_ROOT" => root, "PATH" => "#{@brew}/bin:#{root}/bin:/usr/bin:/bin" }
   end
 
   def node_bin(version)
