@@ -80,6 +80,9 @@ pre-commit:
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
+      # Vendored skill reference docs name the marker in upstream prose; they are never edited here.
+      exclude:
+        - "**/skills/*/references/**"
       run: |
         ! grep \
           --exclude="sorbet/**/*" \
@@ -292,6 +295,9 @@ pre-push:
       fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
+      # Vendored skill reference docs name the marker in upstream prose; they are never edited here.
+      exclude:
+        - "**/skills/*/references/**"
       run: |
         ! grep \
           --exclude="sorbet/**/*" \
