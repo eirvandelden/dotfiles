@@ -145,7 +145,7 @@ Etienne asked for this fix in this branch after the pre-push `no-fixme` hook ref
 - Design: add `exclude: ["**/skills/*/references/**"]` to `no-fixme` in both `pre-commit` and `pre-push` in `lefthook.yml`. lefthook filters the file template before `run`, so the glob covers both the `agents/` and the `claude/` paths. Vendored docs are never edited here, so a fix-me marker in them is never ours to fix. `no-nocommit` stays unchanged: no vendored doc names the no-commit marker.
 - Rejected: grepping only the branch's own diff from the merge-base. It changes what `{push_files}` means for one command and does not help the pre-commit hook when a new snapshot is vendored.
 - Files: `lefthook.yml`; new `test/lefthook_no_fixme_test.rb`.
-- Order: write the test (run `lefthook run <hook> --command no-fixme --file <path>` in a temporary repo with this `lefthook.yml`), watch the references case fail, add the exclude, watch it pass. Then push this branch.
+- Order: write the test, watch the references case fail, add the exclude, watch it pass. Then push this branch. The test runs `lefthook run <hook> --tag fixme` in a temporary repo with this `lefthook.yml` and a bare origin: the marked file is staged for pre-commit, and committed but not pushed for pre-push. `--file` bypasses `exclude:`, and `--command` exits 1 when the excluded job skips, so the test uses neither.
 
 Proof:
 
