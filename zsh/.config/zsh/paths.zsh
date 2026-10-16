@@ -90,12 +90,20 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
     [[ -n "$version" ]] && reply=("$file:$version" "$version")
   }
 
+  # No version source left: undo the node this hook chose, as chnode_auto did.
+  # A manual `chnode X` stays, since the hook did not choose it.
+  function _chnode_forget_applied_node() {
+    [[ -n "$_applied_node_source" ]] || return 0
+    _applied_node_source=""
+    chnode_reset
+  }
+
   # A manual `chnode X` stays until the version source changes. The helpers
   # write REPLY and reply; the locals keep the shell's own values intact.
   function apply_default_node_version() {
     local REPLY
     local -a reply
-    _chnode_wanted_node || return 0
+    _chnode_wanted_node || { _chnode_forget_applied_node; return 0; }
     [[ "${reply[1]:-}" == "$_applied_node_source" ]] && return 0
     [[ -n "${reply[2]:-}" ]] || return 0
 

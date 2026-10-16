@@ -188,6 +188,14 @@ class NodePathOrderTest < Minitest::Test
     assert_first_node(node_bin("20.11.1"), "command -v node", chdir: project)
   end
 
+  def test_leaving_a_project_without_a_home_node_version_resets_the_node
+    File.delete(File.join(@home, ".node-version"))
+    result = run_zsh("cd #{@home}/project; command -v node; cd ../plain; command -v node")
+
+    assert_equal("", result[:stderr])
+    assert_equal([ node_bin("20.11.1"), File.join(@brew, "bin", "node") ], result[:stdout].lines.map(&:strip))
+  end
+
   def test_rvs_ruby_stays_ahead_of_homebrews_ruby_in_a_login_shell
     assert_first_node(File.join(@rubies, "ruby"), "command -v ruby", login: true)
   end
