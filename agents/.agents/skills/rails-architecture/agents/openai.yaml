@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Rails Architecture"
+  short_description: "Place business logic and state transitions in Rails domain models"

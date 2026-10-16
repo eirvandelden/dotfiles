@@ -7,7 +7,7 @@ require_relative "isolated_git"
 # targeting rules read is behaviour an agent acts on (docs/changes/hotwire-native-agent-guidance/plan.md).
 class HotwireNativeSkillTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  SKILL_DIR = File.join(REPO_ROOT, "claude/.claude/skills/hotwire-native")
+  SKILL_DIR = File.join(REPO_ROOT, "agents/.agents/skills/hotwire-native")
   REFERENCES = %w[ios android].freeze
   SHARED_RULES = {
     path_configuration: /later matching rule overrides/i,
@@ -169,7 +169,7 @@ class HotwireNativeSkillTest < Minitest::Test
 
   def test_android_reference_validates_intents_and_exported_components_with_the_vendored_skill
     assert_rule("android", /incoming Intents/, /exported components/i,
-      links: %w[claude/.claude/skills/android-intent-security/SKILL.md
+      links: %w[agents/.agents/skills/android-intent-security/SKILL.md
                 developer.android.com/guide/topics/manifest/activity-element#exported])
   end
 

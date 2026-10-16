@@ -1,29 +1,25 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "open3"
+require "tmpdir"
+require "fileutils"
 require "yaml"
 require_relative "isolated_git"
 
-# Claude and Codex share skills from one source: a Claude skill folder under
-# claude/.claude/skills/<name>/, linked into agents/.agents/skills/<name> for
-# Codex to read (codex/.codex/skills/ is not scanned by Codex and must not
-# exist). This test is the drift guard: it reads repo paths, never `~`, so it
-# catches a skill added to one side and forgotten on the other before a stow
-# run would.
+# Claude and Codex share skills from one source: a skill folder under
+# agents/.agents/skills/<name>/, which Codex reads installed at ~/.agents/skills/.
+# claude/.claude/skills/<name> is a relative link to it, so Claude reads the same
+# folder at ~/.claude/skills/ (codex/.codex/skills/ is not scanned by Codex and
+# must not exist). This test is the drift guard: it reads repo paths, never `~`,
+# so it catches a skill source added on the wrong side before a stow run would.
 class SkillParityTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   CLAUDE_SKILLS = File.join(REPO_ROOT, "claude/.claude/skills")
   AGENTS_SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
   CODEX_SKILLS = File.join(REPO_ROOT, "codex/.codex/skills")
   PACKAGES_CONF = File.join(REPO_ROOT, "packages.conf")
+  UNUSED_AGENT_RULE_FOLDERS = %w[.clinerules .cursor .opencode .windsurf].freeze
 
-  # Process and domain skills not yet vendored onto the shared mechanism — a later
-  # phase decides, skill by skill, whether each is worth linking into Codex too.
-  CLAUDE_ONLY = %w[
-    dependencies dotfiles-maintenance new-repo-setup object-oriented-design
-    rails-api-design rails-architecture rails-ops rails-testing rails-ui
-    ruby-style sync
-  ].freeze
   # Skills that stay Codex-only, with the reason on record. Empty for now.
   CODEX_ONLY = [].freeze
   # Skills whose SKILL.md talks about this repository's own layout on purpose
@@ -36,16 +32,66 @@ class SkillParityTest < Minitest::Test
   # is the intended behaviour there.
   AGENT_INVOKED = %w[worktree-first].freeze
 
-  def test_agents_skills_are_symlinks_into_the_claude_skill_folder
+  def test_every_agents_skill_is_a_real_folder_with_a_skill_md
     assert(Dir.exist?(AGENTS_SKILLS), "#{AGENTS_SKILLS} does not exist")
 
-    skill_names(AGENTS_SKILLS).each do |name|
-      link = File.join(AGENTS_SKILLS, name)
-      assert(File.symlink?(link), "#{link} is not a symlink")
+    Dir.children(AGENTS_SKILLS).each do |name|
+      path = File.join(AGENTS_SKILLS, name)
+      refute(File.symlink?(path), "#{path} is a link; the agents package holds the source")
+      assert(File.exist?(File.join(path, "SKILL.md")), "#{path} has no SKILL.md")
+    end
+  end
 
-      target = File.realpath(link)
-      expected_target = File.realpath(File.join(CLAUDE_SKILLS, name))
-      assert_equal(expected_target, target, "#{link} does not resolve to the Claude #{name} skill")
+  def test_claude_skills_are_relative_links_into_the_agents_package
+    assert_empty(misplaced_claude_skills(CLAUDE_SKILLS), "claude/.claude/skills must only hold relative links")
+  end
+
+  def test_a_real_folder_under_claude_skills_is_reported
+    in_fixture do |claude, _agents|
+      FileUtils.mkdir_p(File.join(claude, "probe"))
+
+      assert_equal([ "probe" ], misplaced_claude_skills(claude))
+    end
+  end
+
+  def test_an_absolute_link_under_claude_skills_is_reported
+    in_fixture do |claude, agents|
+      FileUtils.mkdir_p(File.join(agents, "probe"))
+      File.symlink(File.join(agents, "probe"), File.join(claude, "probe"))
+
+      assert_equal([ "probe" ], misplaced_claude_skills(claude))
+    end
+  end
+
+  def test_a_dangling_link_under_claude_skills_is_reported
+    in_fixture do |claude, _agents|
+      File.symlink("../../../agents/.agents/skills/gone", File.join(claude, "gone"))
+
+      assert_equal([ "gone" ], misplaced_claude_skills(claude))
+    end
+  end
+
+  def test_a_plain_file_under_claude_skills_is_reported
+    in_fixture do |claude, _agents|
+      File.write(File.join(claude, "stray.md"), "")
+
+      assert_equal([ "stray.md" ], misplaced_claude_skills(claude))
+    end
+  end
+
+  def test_a_relative_link_into_the_agents_package_is_accepted
+    in_fixture do |claude, agents|
+      FileUtils.mkdir_p(File.join(agents, "probe"))
+      File.symlink("../../../agents/.agents/skills/probe", File.join(claude, "probe"))
+
+      assert_empty(misplaced_claude_skills(claude))
+    end
+  end
+
+  def test_every_agents_skill_has_an_openai_yaml
+    skill_names(AGENTS_SKILLS).each do |name|
+      openai_yaml = File.join(AGENTS_SKILLS, name, "agents/openai.yaml")
+      assert(File.exist?(openai_yaml), "#{name} has no agents/openai.yaml")
     end
   end
 
@@ -53,17 +99,17 @@ class SkillParityTest < Minitest::Test
     refute(Dir.exist?(CODEX_SKILLS), "#{CODEX_SKILLS} still exists; Codex does not read it")
   end
 
-  def test_shared_skill_names_match_on_both_sides
-    claude_names = skill_names(CLAUDE_SKILLS) - CLAUDE_ONLY
+  def test_skill_names_match_on_both_sides
+    claude_names = entry_names(CLAUDE_SKILLS)
     agents_names = skill_names(AGENTS_SKILLS) - CODEX_ONLY
 
-    assert_equal(claude_names.sort, agents_names.sort)
+    assert_equal(agents_names.sort, claude_names.sort)
   end
 
   def test_implicit_invocation_policy_matches_between_frontmatter_and_openai_yaml
     (skill_names(AGENTS_SKILLS) - AGENT_INVOKED).each do |name|
-      skill_md = File.join(CLAUDE_SKILLS, name, "SKILL.md")
-      openai_yaml = File.join(CLAUDE_SKILLS, name, "agents/openai.yaml")
+      skill_md = File.join(AGENTS_SKILLS, name, "SKILL.md")
+      openai_yaml = File.join(AGENTS_SKILLS, name, "agents/openai.yaml")
       assert(File.exist?(openai_yaml), "#{name} has no agents/openai.yaml")
 
       disabled_for_model = frontmatter(skill_md)["disable-model-invocation"] == true
@@ -91,9 +137,9 @@ class SkillParityTest < Minitest::Test
   end
 
   def test_no_skill_or_agent_body_names_a_repo_relative_path_as_a_command
-    pattern = %r{claude/\.claude/skills/|git/\.config/git/}
+    pattern = %r{claude/\.claude/skills/|agents/\.agents/skills/|git/\.config/git/}
 
-    (Dir.glob(File.join(CLAUDE_SKILLS, "*/SKILL.md")) + Dir.glob(File.join(REPO_ROOT, "claude/.claude/agents/*.md"))).each do |path|
+    (Dir.glob(File.join(AGENTS_SKILLS, "*/SKILL.md")) + Dir.glob(File.join(REPO_ROOT, "claude/.claude/agents/*.md"))).each do |path|
       next if REPO_LAYOUT_SKILLS.include?(File.basename(File.dirname(path)))
 
       body = File.read(path).gsub(/<!--.*?-->/m, "")
@@ -101,7 +147,37 @@ class SkillParityTest < Minitest::Test
     end
   end
 
+  def test_unused_agent_rule_folders_are_gone
+    UNUSED_AGENT_RULE_FOLDERS.each do |folder|
+      refute(Dir.exist?(File.join(REPO_ROOT, folder)), "#{folder} still exists; no agent reads it")
+    end
+  end
+
   private
+
+  # Names under the Claude skills folder that are not a resolving relative link into the agents package.
+  def misplaced_claude_skills(claude_dir)
+    entry_names(claude_dir).reject do |name|
+      path = File.join(claude_dir, name)
+      File.symlink?(path) && File.readlink(path) == "../../../agents/.agents/skills/#{name}" && File.directory?(path)
+    end
+  end
+
+  # Every entry except hidden ones such as .DS_Store, including plain files and dangling links.
+  def entry_names(dir)
+    return [] unless Dir.exist?(dir)
+
+    Dir.children(dir).reject { |name| name.start_with?(".") }
+  end
+
+  def in_fixture
+    Dir.mktmpdir do |root|
+      claude = File.join(root, "claude/.claude/skills")
+      agents = File.join(root, "agents/.agents/skills")
+      FileUtils.mkdir_p([ claude, agents ])
+      yield claude, agents
+    end
+  end
 
   def skill_names(dir)
     return [] unless Dir.exist?(dir)

@@ -10,10 +10,10 @@ class MobileTestingExceptionTest < Minitest::Test
   RAILS_PHRASE = "Rails and web code keep the test-first rule"
   INSTRUCTIONS = %w[
     agents.md
-    claude/.claude/skills/rails-testing/SKILL.md
-    claude/.claude/skills/code-review/SKILL.md
-    claude/.claude/skills/plan/SKILL.md
-    claude/.claude/skills/implement/SKILL.md
+    agents/.agents/skills/rails-testing/SKILL.md
+    agents/.agents/skills/code-review/SKILL.md
+    agents/.agents/skills/plan/SKILL.md
+    agents/.agents/skills/implement/SKILL.md
     claude/.claude/agents/test-writer.md
     claude/.claude/agents/implementer.md
   ].freeze
@@ -37,13 +37,13 @@ class MobileTestingExceptionTest < Minitest::Test
   end
 
   def test_rails_testing_still_requires_tests_first_for_rails_code
-    text = read("claude/.claude/skills/rails-testing/SKILL.md")
+    text = read("agents/.agents/skills/rails-testing/SKILL.md")
     assert(text.include?("create the test first"), "rails-testing lost its test-first line")
     assert(text.include?(RAILS_PHRASE), "rails-testing lacks the Rails-unchanged sentence")
   end
 
   def test_plan_skill_defines_the_check_proof_line
-    assert(read("claude/.claude/skills/plan/SKILL.md").include?("→ check:"), "plan skill lacks the check: Proof line form")
+    assert(read("agents/.agents/skills/plan/SKILL.md").include?("→ check:"), "plan skill lacks the check: Proof line form")
   end
 
   private

@@ -9,7 +9,7 @@ require_relative "isolated_git"
 # script is the one place that derivation happens — the intent, plan and
 # implement skills all shell out to it instead of re-deriving the slug.
 class ChangeFolderTest < Minitest::Test
-  SCRIPT = File.expand_path("../claude/.claude/skills/plan/scripts/change-folder", __dir__)
+  SCRIPT = File.expand_path("../agents/.agents/skills/plan/scripts/change-folder", __dir__)
 
   def setup
     @repo = Dir.mktmpdir

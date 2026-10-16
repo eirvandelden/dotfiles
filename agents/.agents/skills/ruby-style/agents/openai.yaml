@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Ruby Style"
+  short_description: "Ruby method shape, naming, guard clauses, visibility and doc comments"

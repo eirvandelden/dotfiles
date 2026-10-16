@@ -8,7 +8,7 @@ require "yaml"
 # agent obeys them.
 class DeliveryContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  SKILLS = File.join(REPO_ROOT, "claude/.claude/skills")
+  SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
   PLAYBOOK = File.read(File.join(REPO_ROOT, "agents.md"))
   CORE_VALUES = File.read(File.join(REPO_ROOT, "claude/.claude/core-values.yml"))
 

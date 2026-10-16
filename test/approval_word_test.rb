@@ -50,7 +50,7 @@ class ApprovalWordTest < Minitest::Test
   end
 
   def skill_text(name)
-    File.read(File.join(REPO_ROOT, "claude/.claude/skills/#{name}/SKILL.md"))
+    File.read(File.join(REPO_ROOT, "agents/.agents/skills/#{name}/SKILL.md"))
   end
 
   def section(skill, heading)

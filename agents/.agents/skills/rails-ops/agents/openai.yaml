@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Rails Ops"
+  short_description: "Decide deployment, error tracking and performance monitoring for a Rails app"

@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "New Repo Setup"
+  short_description: "Create or standardize a personal repository: context file, rv, lefthook, linters, CI"

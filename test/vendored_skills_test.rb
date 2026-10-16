@@ -7,7 +7,7 @@ require_relative "isolated_git"
 # SKILL.md carries an `<!-- upstream: ... -->` comment that does not name superpowers-ruby, which keeps its own convention.
 class VendoredSkillsTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  SKILLS = File.join(REPO_ROOT, "claude/.claude/skills")
+  SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
   MANIFEST = File.join(REPO_ROOT, "VENDORED-SKILLS.yml")
   REQUIRED_KEYS = %w[skill upstream tag commit licence snapshot_date paths].freeze
   LICENCE_FILES = %w[LICENSE LICENSE.txt LICENSE.md].freeze
@@ -52,7 +52,7 @@ class VendoredSkillsTest < Minitest::Test
   def test_skills_index_lists_every_new_mobile_skill
     index = File.read(File.join(REPO_ROOT, "SKILLS-INDEX.md"))
     NEW_MOBILE_SKILLS.each do |name|
-      assert(index.include?("claude/.claude/skills/#{name}/SKILL.md"), "SKILLS-INDEX.md lacks #{name}")
+      assert(index.include?("agents/.agents/skills/#{name}/SKILL.md"), "SKILLS-INDEX.md lacks #{name}")
     end
     assert(index.include?("VENDORED-SKILLS.yml"), "SKILLS-INDEX.md does not name VENDORED-SKILLS.yml")
   end

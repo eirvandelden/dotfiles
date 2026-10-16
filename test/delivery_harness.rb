@@ -18,8 +18,8 @@ require "tmpdir"
 # at call time, because the script under test may delete the file afterwards.
 module DeliveryHarness
   REPO_ROOT = File.expand_path("..", __dir__)
-  DELIVER = File.join(REPO_ROOT, "claude/.claude/skills/deliver/scripts/deliver")
-  SHIP = File.join(REPO_ROOT, "claude/.claude/skills/finish/scripts/ship")
+  DELIVER = File.join(REPO_ROOT, "agents/.agents/skills/deliver/scripts/deliver")
+  SHIP = File.join(REPO_ROOT, "agents/.agents/skills/finish/scripts/ship")
   HERDR_SCRIPTS = File.join(REPO_ROOT, "herdr/.config/herdr/scripts")
   OPEN_PR_DASH = File.join(HERDR_SCRIPTS, "open-pr-dash.sh")
   WORKTREE_TOOLS_DIR = File.join(REPO_ROOT, "git/.config/git/worktree-tools")

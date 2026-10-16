@@ -8,4 +8,4 @@ Mechanics: `worktree-first` skill. Explicitly invoke it yourself before starting
 
 ## Codex
 
-The skill lives at `agents/.agents/skills/worktree-first`, a symlink to `claude/.claude/skills/worktree-first`. Its `agents/openai.yaml` sets `allow_implicit_invocation: false`, so it never fires on its own here either.
+The skill lives at `agents/.agents/skills/worktree-first`, linked into `claude/.claude/skills/worktree-first`. Its `agents/openai.yaml` sets `allow_implicit_invocation: false`, so it never fires on its own here either.

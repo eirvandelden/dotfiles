@@ -10,7 +10,7 @@ require_relative "isolated_git"
 # status line only on a personal origin and only when every critique finding
 # is closed.
 class AutoAcceptTest < Minitest::Test
-  SCRIPT = File.expand_path("../claude/.claude/skills/plan/scripts/auto-accept", __dir__)
+  SCRIPT = File.expand_path("../agents/.agents/skills/plan/scripts/auto-accept", __dir__)
 
   CLOSED_CRITIQUE = <<~MD
     ## Critique

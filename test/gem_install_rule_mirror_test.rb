@@ -8,7 +8,7 @@ class GemInstallRuleMirrorTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   PLAYBOOK_PATH = File.join(REPO_ROOT, "agents.md")
   CORE_VALUES_PATH = File.join(REPO_ROOT, "claude/.claude/core-values.yml")
-  WORKTREE_FIRST_PATH = File.join(REPO_ROOT, "claude/.claude/skills/worktree-first/SKILL.md")
+  WORKTREE_FIRST_PATH = File.join(REPO_ROOT, "agents/.agents/skills/worktree-first/SKILL.md")
 
   def test_the_playbook_tells_agents_to_install_gems_with_bi
     assert_match(/install gems with `bi`/i, File.read(PLAYBOOK_PATH))
