@@ -19,7 +19,7 @@ Docs: [native.hotwired.dev](https://native.hotwired.dev) and [hotwire-native-and
 - Preserve cookies, authentication, session expiry and sign-out behaviour. Do not clear or replace the web view's cookie store to make a change work.
 - Never log tokens, cookies or sensitive bridge payloads.
 - Validate untrusted destinations. Authenticated web content never goes to an arbitrary origin, and external URLs open outside the app through the route decision handlers ([navigation](https://native.hotwired.dev/reference/navigation)).
-- Validate incoming Intents and exported components with the vendored skill at `claude/.claude/skills/android-intent-security/SKILL.md`. An activity is exported only on purpose ([exported](https://developer.android.com/guide/topics/manifest/activity-element#exported)).
+- Validate incoming Intents and exported components with the vendored skill at `agents/.agents/skills/android-intent-security/SKILL.md`. An activity is exported only on purpose ([exported](https://developer.android.com/guide/topics/manifest/activity-element#exported)).
 
 ## Lifecycle traps
 

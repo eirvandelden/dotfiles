@@ -169,7 +169,7 @@ class HotwireNativeSkillTest < Minitest::Test
 
   def test_android_reference_validates_intents_and_exported_components_with_the_vendored_skill
     assert_rule("android", /incoming Intents/, /exported components/i,
-      links: %w[claude/.claude/skills/android-intent-security/SKILL.md
+      links: %w[agents/.agents/skills/android-intent-security/SKILL.md
                 developer.android.com/guide/topics/manifest/activity-element#exported])
   end
 
