@@ -34,6 +34,7 @@ Every zsh started from these dotfiles resolves `node`, `npm` and `npx` to chnode
 - PATH order for node in login and non-login, interactive and non-interactive zsh.
 - A shell that inherits `CHNODE_ROOT` from its parent still puts that node ahead of Homebrew's.
 - Automated tests in `test/` that prove the order.
+- The `no-fixme` git hooks (pre-commit and pre-push) skip vendored skill reference docs, whose upstream prose names the fix-me marker. Etienne asked for this fix in this branch on 2026-10-16: after the rebase past PR #208, the pre-push hook flagged those docs and refused the push.
 
 ## Out of scope
 
@@ -54,6 +55,7 @@ Every zsh started from these dotfiles resolves `node`, `npm` and `npx` to chnode
 - In a directory with its own `.node-version`, the first `node` is that project's version.
 - After the change, `ruby` still resolves to rv's Ruby before any Homebrew Ruby.
 - After `unlock`, `codex` still resolves to the unlocked shim first.
+- A push or commit that includes a skill's `references/` doc with the fix-me marker passes `no-fixme`. A push or commit of any other file with the fix-me marker is still refused.
 
 ## Open questions
 

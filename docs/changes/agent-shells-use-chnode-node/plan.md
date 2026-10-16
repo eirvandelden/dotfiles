@@ -137,3 +137,17 @@ Domain skills applied: dotfiles-maintenance (stow and symlink rules), rails-test
 
 - The live check's temporary HOME runs `zsh/.zshenv`, whose macOS block calls `launchctl setenv ZDOTDIR` with the temporary path, a system change no rule approves; set `ZDOTDIR` to the worktree and keep the real HOME instead → fixed (step 7 now writes a plain `$T/.zshenv` that sets `ZDOTDIR` and sources the worktree's `.config/zsh/.zshenv`, so `launchctl` never runs, and checks `launchctl getenv ZDOTDIR` before and after)
   - The proposed alternative does not work as given: the worktree's `.config/zsh/.zshenv` sets `ZDOTDIR="$HOME/.config/zsh"`, so with the real HOME it would load the main checkout's `paths.zsh` and `.zprofile`, not the worktree's.
+
+## Addendum: no-fixme hook (coordinator, 2026-10-16)
+
+Etienne asked for this fix in this branch after the pre-push `no-fixme` hook refused the push. After the rebase past PR #208, lefthook's `{push_files}` is the diff against the old remote tip. It lists old `claude/.claude/skills/<name>/references/…` paths, which still resolve through the new `claude/.claude/skills/<name>` symlinks into `agents/.agents/skills/`. Two vendored docs there (`37signals-style/references/development-philosophy.md`, `rails-guides/references/command_line.md`) name the fix-me marker in upstream prose.
+
+- Design: add `exclude: ["**/skills/*/references/**"]` to `no-fixme` in both `pre-commit` and `pre-push` in `lefthook.yml`. lefthook filters the file template before `run`, so the glob covers both the `agents/` and the `claude/` paths. Vendored docs are never edited here, so a fix-me marker in them is never ours to fix. `no-nocommit` stays unchanged: no vendored doc names the no-commit marker.
+- Rejected: grepping only the branch's own diff from the merge-base. It changes what `{push_files}` means for one command and does not help the pre-commit hook when a new snapshot is vendored.
+- Files: `lefthook.yml`; new `test/lefthook_no_fixme_test.rb`.
+- Order: write the test (run `lefthook run <hook> --command no-fixme --file <path>` in a temporary repo with this `lefthook.yml`), watch the references case fail, add the exclude, watch it pass. Then push this branch.
+
+Proof:
+
+- A skill `references/` doc with the fix-me marker passes `no-fixme` → `test/lefthook_no_fixme_test.rb` `test_pre_push_no_fixme_skips_a_skill_reference_doc`, `test_pre_commit_no_fixme_skips_a_skill_reference_doc`
+- Any other file with the fix-me marker is still refused → `test/lefthook_no_fixme_test.rb` `test_pre_push_no_fixme_still_refuses_another_file`, `test_pre_commit_no_fixme_still_refuses_another_file`
