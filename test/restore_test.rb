@@ -10,7 +10,7 @@ class RestoreTest < Minitest::Test
   include DeliveryHarness
 
   SLUG = "my-change".freeze
-  RESTORE = File.join(DeliveryHarness::REPO_ROOT, "claude/.claude/skills/deliver/scripts/restore")
+  RESTORE = File.join(DeliveryHarness::REPO_ROOT, "agents/.agents/skills/deliver/scripts/restore")
   REMOVAL_SUBJECT = "Remove change artifacts for #{SLUG}".freeze
   FOLDER = "docs/changes/#{SLUG}".freeze
   PUSH = "git push --force-with-lease -u origin HEAD".freeze

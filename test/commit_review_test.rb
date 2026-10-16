@@ -9,7 +9,7 @@ class CommitReviewTest < Minitest::Test
   include DeliveryHarness
 
   SLUG = "my-change".freeze
-  COMMIT_REVIEW = File.join(DeliveryHarness::REPO_ROOT, "claude/.claude/skills/review/scripts/commit-review")
+  COMMIT_REVIEW = File.join(DeliveryHarness::REPO_ROOT, "agents/.agents/skills/review/scripts/commit-review")
   OPEN = "- [ ] Important: Widget leaks memory — `lib/widget.rb:1` →".freeze
   CLOSED = "- [ ] Important: Widget leaks memory — `lib/widget.rb:1` → fixed (Plug the leak)".freeze
 

@@ -9,7 +9,7 @@ class CommitPlanTest < Minitest::Test
   include DeliveryHarness
 
   SLUG = "my-change".freeze
-  COMMIT_PLAN = File.join(DeliveryHarness::REPO_ROOT, "claude/.claude/skills/plan/scripts/commit-plan")
+  COMMIT_PLAN = File.join(DeliveryHarness::REPO_ROOT, "agents/.agents/skills/plan/scripts/commit-plan")
 
   def setup
     setup_harness
