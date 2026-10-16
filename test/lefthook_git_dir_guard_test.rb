@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "yaml"
+require_relative "isolated_git"
 
 # Git exports GIT_DIR to hooks, and a gem installed from git then runs git against the wrong repository
 # while Bundler loads it (see LefthookBundlerGitGemTest). This guard fails closed: every lefthook job

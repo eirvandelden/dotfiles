@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "open3"
 require_relative "git_gem_fixture"
+require_relative "isolated_git"
 
 # Git exports GIT_DIR to hooks, and lefthook passes it to every job. A gem installed from git can run
 # git while Bundler loads its gemspec, so every job that loads the bundle must clear GIT_DIR first
