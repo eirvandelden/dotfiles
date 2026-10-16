@@ -173,6 +173,14 @@ class NodePathOrderTest < Minitest::Test
     assert_first_node(node_bin("20.11.1"), "command -v node", login: true, chdir: File.join(@home, "project"))
   end
 
+  def test_the_prompt_hook_keeps_the_shells_reply_variables
+    script = "REPLY=kept; reply=(also kept); apply_default_node_version; print -r -- \"$REPLY ${reply[*]}\""
+    result = run_zsh(script, chdir: File.join(@home, "project"))
+
+    assert_equal("", result[:stderr])
+    assert_equal("kept also kept", result[:stdout].strip)
+  end
+
   def test_rvs_ruby_stays_ahead_of_homebrews_ruby_in_a_login_shell
     assert_first_node(File.join(@rubies, "ruby"), "command -v ruby", login: true)
   end
