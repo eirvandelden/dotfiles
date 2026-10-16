@@ -81,3 +81,5 @@ Domain skills applied: dotfiles-maintenance (lefthook fallback and extends model
 - Step 2 overstates fallback coverage: no selected test pushes from fallback `main`, and 25 of 26 selected tests fail red, not a smaller set → fixed (step 2 now states the exact red result and that the fallback pre-push current-branch line is proven by the static test only)
 - Step 8 is not reproducible: a scratch repository needs `core.hooksPath`, and a refused staged commit leaves state that stops the empty commit from reaching `commit-msg` → fixed (step 8 now names one fresh repository per case and the full setup)
 - Step 7 claims to run the pre-push rubocop command, but that job unsets `GIT_DIR` and lints `{push_files}` → fixed (step 7 now runs `env -u GIT_DIR rubocop` and calls it the manual equivalent)
+
+Reproduction: committed

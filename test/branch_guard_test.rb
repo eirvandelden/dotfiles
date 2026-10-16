@@ -11,7 +11,12 @@ class BranchGuardTest < Minitest::Test
   NATIVE_LEFTHOOK = LefthookBinary.locate
   REPO_ROOT = File.expand_path("..", __dir__)
   GUARD_FILE = File.join(REPO_ROOT, "lefthook-branch-guard.yml")
-  REFUSAL = /Direct commit to (main|master) is not allowed/
+  REFUSAL = /Direct commit to (main|master) is not allowed\. Create a feature branch; deliver opens the PR\./
+
+  PUSH_REFUSAL = Regexp.union(
+    /Pushing to (main|master) is not allowed\. Push a feature branch; deliver opens the PR\./,
+    /Direct push to (main|master) is not allowed\. Create a feature branch; deliver opens the PR\./
+  )
 
   def setup
     skip(LefthookBinary::MISSING_MESSAGE) unless NATIVE_LEFTHOOK
@@ -365,7 +370,7 @@ class BranchGuardTest < Minitest::Test
   def assert_push_refused(*args)
     out, err, status = git("push", *args)
     refute(status.success?, "Expected `git push #{args.join(" ")}` to be refused")
-    assert_match(/Pushing to (main|master) is not allowed|Direct push to (main|master) is not allowed/, out + err)
+    assert_match(PUSH_REFUSAL, out + err)
   end
 
   def assert_push_allowed(refspec)
