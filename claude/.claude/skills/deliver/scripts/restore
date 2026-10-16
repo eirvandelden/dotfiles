@@ -1,0 +1,131 @@
+#!/usr/bin/env ruby
+# Brings back docs/changes/<slug>/ after `deliver` removed it, for a change request on an open pull
+# request. It fetches the branch and its base, fast-forwards to the remote branch, then drops the one
+# commit named "Remove change artifacts for <slug>" with a rebase. It prints the push command and
+# never pushes: the caller runs `git push --force-with-lease -u origin HEAD` so the consent guard
+# judges it. It refuses, leaving the branch as it was, whenever the removal commit is not exactly a
+# deletion of the whole folder.
+require "json"
+require "open3"
+
+CHANGE_FOLDER = File.expand_path("../../plan/scripts/change-folder", __dir__)
+DOCUMENTS = %w[intent.md plan.md review.md].freeze
+PUSH = "git push --force-with-lease -u origin HEAD".freeze
+
+class Refusal < StandardError; end
+
+# Runs a git or gh command and answers its stdout; a failure raises with the command's own message.
+module Shell
+  def capture(*command)
+    stdout, stderr, status = Open3.capture3(*command)
+    raise Refusal, "#{command.first(3).join(' ')} failed: #{stderr.strip}" unless status.success?
+
+    stdout
+  end
+
+  def succeeds?(*command)
+    Open3.capture3(*command).last.success?
+  end
+end
+
+# The branch and base of a change that has an open pull request, as remote-tracking refs.
+class Branch
+  include Shell
+
+  def initialize
+    @branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
+    @origin_url = Open3.capture3("git", "remote", "get-url", "origin").first
+  end
+
+  def name = @branch
+
+  def require_clean_tree
+    raise Refusal, "The working tree has uncommitted changes; commit or remove them." unless capture("git", "status", "--porcelain").empty?
+  end
+
+  def require_open_pull_request
+    json = capture("gh", "pr", "list", "--head", @branch, "--state", "open", *repository, "--json", "number")
+    raise Refusal, "#{@branch} has no open pull request: a change request needs one." if JSON.parse(json).empty?
+  end
+
+  def sync
+    capture("git", "fetch", "origin", @branch, base)
+    fast_forward
+  end
+
+  def merge_base
+    capture("git", "merge-base", "HEAD", "origin/#{base}").strip
+  end
+
+  private
+
+  def fast_forward
+    capture("git", "merge", "--ff-only", "origin/#{@branch}")
+  rescue Refusal
+    raise Refusal, "#{@branch} diverged from origin/#{@branch}, so it cannot fast-forward; sort that out first."
+  end
+
+  def base
+    @base ||= resolved_base || raise(Refusal, "No base branch found: origin/HEAD, main and master all fail to resolve.")
+  end
+
+  def resolved_base
+    head = Open3.capture3("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD").first.strip.delete_prefix("origin/")
+    head.empty? ? %w[main master].find { |name| succeeds?("git", "rev-parse", "--verify", "--quiet", "refs/heads/#{name}") } : head
+  end
+
+  def repository
+    path = @origin_url[%r{github\.com[:/](?<path>[^/\s]+/[^/\s]+?)(?:\.git)?\s*\z}, :path]
+    path ? [ "--repo", path ] : []
+  end
+end
+
+# The commit `deliver` made, checked to be a deletion of the whole folder and nothing else.
+class RemovalCommit
+  include Shell
+
+  def initialize(folder, range)
+    @folder = folder
+    @subject = "Remove change artifacts for #{File.basename(folder)}"
+    @range = range
+  end
+
+  def sha
+    commits = capture("git", "log", "--format=%H%x1f%s", @range).lines.map { |line| line.chomp.split("\x1f") }
+    found = commits.filter_map { |commit, subject| commit if subject == @subject }
+    raise Refusal, "Expected one removal commit named \"#{@subject}\", found #{found.size}." unless found.one?
+
+    found.first.tap { |commit| verify(commit) }
+  end
+
+  private
+
+  def verify(commit)
+    changes = capture("git", "diff-tree", "--no-commit-id", "--name-status", "-r", commit).lines
+    raise Refusal, "The removal commit touches other paths than #{@folder}/; refusing to drop it." unless changes.all? { |line| line.match?(%r{\AD\t#{Regexp.escape(@folder)}/}) }
+    raise Refusal, "The removal commit does not delete the whole folder; #{@folder}/ still has files after it." unless capture("git", "ls-tree", "-r", "--name-only", commit, "--", @folder).empty?
+
+    missing = DOCUMENTS.reject { |name| succeeds?("git", "cat-file", "-e", "#{commit}^:#{@folder}/#{name}") }
+    raise Refusal, "Before the removal commit #{@folder}/ lacks #{missing.join(', ')}." unless missing.empty?
+  end
+end
+
+begin
+  folder, error_text, folder_status = Open3.capture3(CHANGE_FOLDER)
+  raise Refusal, error_text.strip unless folder_status.success?
+
+  folder = folder.strip
+  branch = Branch.new
+  branch.require_clean_tree
+  branch.require_open_pull_request
+  branch.sync
+  removal = RemovalCommit.new(folder, "#{branch.merge_base}..HEAD").sha
+  unless system("git", "rebase", "--quiet", "--onto", "#{removal}^", removal, out: File::NULL, err: File::NULL)
+    system("git", "rebase", "--abort", out: File::NULL, err: File::NULL)
+    raise Refusal, "Dropping the removal commit hit a conflict with later commits; the branch is unchanged."
+  end
+  puts("Restored #{folder}/. Push it with: #{PUSH}")
+rescue Refusal => error
+  warn(error.message)
+  exit(1)
+end

@@ -5,6 +5,7 @@
 # Claude worker in a pane split below the caller.
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
+# The intent stage leaves intent.md uncommitted; the plan stage commits intent.md and plan.md together.
 # --auto (plan, implement; autonomous delivery on a personal repository): the worker runs the
 # skill in its auto mode, never waits for Etienne's word "accepted", never starts the next stage
 # (the coordinator does), and puts open decisions in its report as "Decision needed:" lines.
@@ -29,7 +30,9 @@ case "${3:-}" in
 esac
 
 accepted_then_push="Once Etienne says the literal word \"accepted\" or \"agreed\" and the skill has committed \
-the artifact, push the branch (git push -u origin HEAD)."
+intent.md and plan.md, push the branch (git push -u origin HEAD)."
+intent_accepted="Once Etienne says the literal word \"accepted\" or \"agreed\", the skill flips the status and \
+you leave intent.md uncommitted: do not commit it and do not push. The plan stage commits it."
 
 case "$stage" in
   intent)
@@ -37,7 +40,7 @@ case "$stage" in
     ready_word="Intent ready:"
     role_instruction="Invoke the intent skill for docs/changes/$slug; there is no upstream \
 artifact yet — this interview is what creates intent.md."
-    acceptance_instruction="$accepted_then_push"
+    acceptance_instruction="$intent_accepted"
     report_instruction="Then write what intent.md decided and anything Etienne deferred, as \
 Markdown to"
     ;;
@@ -97,8 +100,8 @@ self-reviewed diff."
   esac
   if [ "$stage" != "implement" ]; then
     acceptance_instruction="Do not wait for Etienne's word \"accepted\": the skill's auto mode \
-accepts the artifact itself after its recorded critique. Once the skill has committed the \
-artifact, push the branch (git push -u origin HEAD). Do not start the next stage."
+accepts the artifact itself after its recorded critique. Once the skill has committed intent.md \
+and plan.md, push the branch (git push -u origin HEAD). Do not start the next stage."
   fi
 fi
 

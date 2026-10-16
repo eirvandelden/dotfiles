@@ -29,7 +29,7 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
 
 ### When the worker finishes
 
-Like `intent` and `plan`, the implement pane pushes once done: `git push -u origin HEAD`. The pre-push freshness check skips a branch that has a change folder and no open pull request, so this work-in-progress push succeeds. A refused push goes into the report, never `--no-verify`. `/review` and the delivery step send the branch onward. The worker writes what it did, and anything it could not finish, to a Markdown file inside the repository's shared git directory, then sends one line: `Handoff done: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while this session is busy — but the report is never lost either way, since the script printed the path when it started.
+Like `plan`, the implement pane pushes once done: `git push -u origin HEAD`. The pre-push freshness check skips a branch that has a change folder and no open pull request, so this work-in-progress push succeeds. A refused push goes into the report, never `--no-verify`. `/review` and the delivery step send the branch onward. The worker writes what it did, and anything it could not finish, to a Markdown file inside the repository's shared git directory, then sends one line: `Handoff done: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while this session is busy — but the report is never lost either way, since the script printed the path when it started.
 
 Read the file and tell the user what came back. Do not pick up the leftovers unless asked. Reports pile up in that directory over time; nothing prunes it — that is the user's to clear.
 

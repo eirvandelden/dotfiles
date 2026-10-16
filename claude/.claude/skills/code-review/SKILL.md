@@ -15,7 +15,7 @@ When asked to implement fixes for issues found during a review (e.g. "implement 
 4. Run the full test suite. Only fix failures that are directly caused by your changes; do not fix pre-existing failures. Report any pre-existing failures explicitly.
 5. If linters or tests caused by your changes cannot be made green, proceed to re-review but explicitly report the failures.
 6. After fixes are applied, perform the review again using the same parameters.
-7. Loop verify → fix → lint → test → re-review until the review is clean or you are in a deadlock. On deadlock, stop and explain the remaining findings instead of making speculative changes. A clean re-review hands over to delivery (see the `review` skill, "After either backend"); this skill never pushes and never opens the PR itself.
+7. Loop verify → fix → lint → test → re-review until the review is clean or you are in a deadlock. On deadlock, stop and explain the remaining findings instead of making speculative changes. A clean re-review hands over to delivery (see the `review` skill, "After either backend"); this skill never pushes and never opens the PR itself. It writes finding closures into `review.md` in the working tree. Never commit `review.md`: stage fix paths by name (never `git add .`, never `git commit -a`), so `review.md` stays out of every fix commit until `commit-review` commits it at convergence.
 
 After a push (pushing itself needs explicit approval): wait for CI to finish, inspect the results, fix any failure, and repeat until all checks are green.
 

@@ -9,7 +9,7 @@ arguments:
 
 # Review
 
-Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or `REVIEW.local.md`), `docs/changes/<slug>/intent.md` and `plan.md`, and the diff — branch vs base plus the uncommitted changes on top — and appends a dated round to `docs/changes/<slug>/review.md`, which it commits alone and pushes. It never edits code.
+Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or `REVIEW.local.md`), `docs/changes/<slug>/intent.md` and `plan.md`, and the diff — branch vs base plus the uncommitted changes on top — and appends a dated round to `docs/changes/<slug>/review.md`, which it leaves uncommitted until the review converges, then commits alone through `commit-review` and pushes. It never edits code.
 
 ## Choosing a backend
 
@@ -24,7 +24,7 @@ Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or 
 
 Run it from the repository being reviewed: the reviewer inherits that directory. The script splits the current pane to the right, starts Claude on opus there, and points it at the `reviewer` agent's instructions — the single source both backends read, so a pane review and an in-session review ask the same questions. Tell the user which reviewer is looking at what, and where its report will land, then carry on with work outside this branch's files: the reviewer reads the uncommitted changes as they are now, so anything edited meanwhile makes its findings describe a state that no longer exists.
 
-The reviewer writes its round to `docs/changes/<slug>/review.md`, commits it and pushes the branch, then runs `deliver --check`. It sends one line back: `Review clean: <path>` when that exits 0 (no open finding, review fresh), else `Review ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the reviewer started.
+The reviewer writes its round to `docs/changes/<slug>/review.md` and leaves it uncommitted. It runs `~/.claude/skills/review/scripts/commit-review`, which commits that file alone only when no finding is open, and pushes the branch only when `commit-review` exits 0. Then it runs `deliver --check`. It sends one line back: `Review clean: <path>` when that exits 0 (no open finding, review fresh), else `Review ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the reviewer started.
 
 ## `here` backend
 
@@ -37,16 +37,16 @@ Outside auto mode, read the signal and act on it:
 - `Review clean: <path>` (or, in the `here` backend, `~/.claude/skills/deliver/scripts/deliver --check` exiting 0): the review is closed. Read `~/.claude/skills/deliver/SKILL.md` and run `deliver` without asking. Report what it printed, as that skill says.
 - `Review ready: <path>`: read `docs/changes/<slug>/review.md`, summarise the round worst first, and stop. Do not start fixing anything until the user says so.
 
-The `code-review` skill implements fixes: it writes `fixed (<commit subject>)` or `dismissed: <reason>` on each finding's `→` slot, in the same commit as the fix or its own commit. The subject, not the SHA, because a rebase changes the SHA but not the subject line. Any other text after the last `→`, or none, leaves the finding open. Its last step re-reviews, and a clean re-review ends in `Review clean:`, so delivery follows the last fix without a further command.
+The `code-review` skill implements fixes: it writes `fixed (<commit subject>)` or `dismissed: <reason>` on each finding's `→` slot, in the working tree, never in a commit of its own and never in the fix commit: `commit-review` commits `review.md` once the review converges. The subject, not the SHA, because a rebase changes the SHA but not the subject line. Any other text after the last `→`, or none, leaves the finding open. Its last step re-reviews, and a clean re-review ends in `Review clean:`, so delivery follows the last fix without a further command.
 
 A round left with an open finding and no newer round means the review is not closed; `deliver --check` exits 1 and this skill reports that plainly. The pre-push freshness check does not enforce closure, only recency.
 
 ## Auto mode
 
-Only valid when `intent.md` has `Delivery: autonomous`; the coordinator runs this, and "stop, do not start fixing" under "After either backend" does not apply, and this skill does not run `deliver`: the coordinator does, once a round of each reviewer is clean (intent skill, Autonomous delivery). Two independent reviewers look at the diff:
+Only valid when `intent.md` has `Delivery: autonomous`; the coordinator runs this, and "stop, do not start fixing" under "After either backend" does not apply, and this skill does not run `deliver`: the coordinator does, once a round of each reviewer is clean (intent skill, Autonomous delivery). Two independent reviewers look at the diff. Run the Codex round before the Claude round: the `reviewer` agent's own `commit-review` then sees both rounds, so a Codex finding never forces a second `review.md` commit.
 
 1. Claude: a Claude coordinator uses the `reviewer` agent through either backend above. A Codex coordinator uses the read-only Claude CLI backend below. A native Codex reviewer cannot replace this Claude round.
-2. The Codex CLI: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as ``- [ ] Important: <finding> — `<file>:<line>` →`` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Commit that file alone, then push the branch (`git push -u origin HEAD`).
+2. The Codex CLI: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as ``- [ ] Important: <finding> — `<file>:<line>` →`` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Leave it uncommitted. Run `commit-review`; push the branch (`git push -u origin HEAD`) only when it exits 0. A Codex coordinator transcribes both rounds itself, so it runs `commit-review` once after the second.
 
 Fix every finding through `code-review`, then run both reviewers again. Repeat until a round of each leaves no open finding. A finding disputed for two rounds goes to Etienne (see `code-review`).
 
@@ -54,12 +54,12 @@ Fix every finding through `code-review`, then run both reviewers again. Repeat u
 
 Run `claude -p --model opus --permission-mode plan "<review prompt>"` from the worktree being reviewed. Pass the resolved base and the accepted intent and plan paths. Tell Claude to read the `reviewer` agent instructions and the repository's review rules. It must review the branch diff and uncommitted changes using all three passes.
 
-State that this prompt replaces the reviewer's fetch step, write step, commit step and Output section. Do not fetch; diff against the passed base. Return findings to stdout in the round's line format, or `No findings.`. Never edit files, commit, or request plan approval. The coordinator writes and commits the report instead.
+State that this prompt replaces the reviewer's fetch step, write step, commit step and Output section. Do not fetch; diff against the passed base. Return findings to stdout in the round's line format, or `No findings.`. Never edit files, commit, or request plan approval. The coordinator writes the report instead and runs `commit-review`. This backend also runs the Codex round before the Claude round.
 
-The coordinator transcribes the output into `review.md`, using the round format above with `(claude)` after the heading. Commit that file alone, then push the branch (`git push -u origin HEAD`). If Claude is unavailable or the review does not complete, report `Decision needed:`. Keep delivery blocked until both model families complete their reviews.
+The coordinator transcribes the output into `review.md`, using the round format above with `(claude)` after the heading. Run `commit-review`; push the branch (`git push -u origin HEAD`) only when it exits 0. If Claude is unavailable or the review does not complete, report `Decision needed:`. Keep delivery blocked until both model families complete their reviews.
 
 ## Codex
 
-Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `intent.md`, `plan.md`, the diff, write the round, commit it — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr pane of its own.
+Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `intent.md`, `plan.md`, the diff, write the round, run `commit-review` — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr pane of its own.
 
 For autonomous delivery, follow Auto mode instead: run the read-only Claude CLI backend and the separate Codex review round.

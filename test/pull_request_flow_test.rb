@@ -79,16 +79,68 @@ class PullRequestFlowTest < Minitest::Test
     reviewer = File.read(File.join(REPO_ROOT, "claude/.claude/agents/reviewer.md"))
 
     assert_includes(reviewer, PUSH)
-    assert_match(/`git add`\/`git commit` of the review file, `#{Regexp.escape(PUSH)}`/, reviewer)
+    assert_match(/`commit-review`, `#{Regexp.escape(PUSH)}`/, reviewer)
   end
 
-  def test_the_coordinator_pushes_the_codex_round
+  def test_the_reviewer_agent_commits_only_through_commit_review
+    reviewer = File.read(File.join(REPO_ROOT, "claude/.claude/agents/reviewer.md"))
+
+    assert_includes(reviewer, "~/.claude/skills/review/scripts/commit-review")
+    assert_match(/leave `review\.md` uncommitted/i, reviewer)
+    refute_match(/commit `<folder>\/review\.md` alone/, reviewer)
+  end
+
+  def test_the_coordinator_commits_rounds_through_commit_review
     intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
     review = File.read(File.join(SKILLS, "review/SKILL.md"))
 
-    assert_match(/committing each transcribed round alone and pushing the branch/, intent[/^5\. Review\..*$/])
-    assert_match(/Commit that file alone, then push/, review[/^2\. The Codex CLI.*$/])
-    assert_match(/Commit that file alone, then push/, review[/transcribes the output into `review.md`.*$/])
+    assert_match(/transcribing each round and running `commit-review`, then pushing the branch when it exits 0/, intent[/^5\. Review\..*$/])
+    assert_match(/Run `commit-review`; push the branch/, review[/^2\. The Codex CLI.*$/])
+    assert_match(/Run `commit-review`; push the branch/, review[/transcribes the output into `review.md`.*$/])
+  end
+
+  def test_auto_review_runs_the_codex_round_before_the_claude_round
+    intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
+    review = File.read(File.join(SKILLS, "review/SKILL.md"))
+
+    assert_match(/Codex round first, then the Claude round/, intent[/^5\. Review\..*$/])
+    assert_match(/Codex round before the Claude round/, review[/^## Auto mode.*?(?=^## )/m])
+    assert_match(/Codex round before the Claude round/, review[/^### Read-only Claude CLI backend.*?(?=^## )/m])
+  end
+
+  def test_intent_accept_leaves_intent_md_uncommitted
+    intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
+
+    assert_match(/leave `intent\.md` uncommitted/, intent[/^Otherwise, on the words "accepted".*$/])
+    refute_match(/commit `intent\.md` alone/, intent)
+    refute_match(/commits it alone/, intent)
+  end
+
+  def test_plan_commits_through_commit_plan
+    plan = File.read(File.join(SKILLS, "plan/SKILL.md"))
+
+    assert_match(/plan\/scripts\/commit-plan/, plan[/^7\. `Status: accepted`.*$/])
+    assert_match(/commit-plan/, plan[/^5\. Run `[^`]*commit-plan`.*$/])
+    refute_match(/commits? `?plan\.md`? alone/, plan)
+  end
+
+  def test_code_review_never_commits_review_md
+    code_review = File.read(File.join(SKILLS, "code-review/SKILL.md"))
+
+    assert_match(/never commit `review\.md`/i, code_review)
+    assert_match(/stage fix paths by name/, code_review)
+  end
+
+  def test_deliver_documents_restore_with_force_with_lease
+    deliver = File.read(File.join(SKILLS, "deliver/SKILL.md"))
+    section = deliver[/^## Change requests after delivery.*?(?=^## |\z)/m]
+
+    assert_includes(section, "scripts/restore")
+    assert_includes(section, "git push --force-with-lease -u origin HEAD")
+  end
+
+  def test_the_playbook_names_restore_in_rule_5
+    assert_match(/`restore`/, rule(File.read(File.join(REPO_ROOT, "agents.md")), 5))
   end
 
   private

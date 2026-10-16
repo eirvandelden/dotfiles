@@ -66,6 +66,15 @@ class ConsentGuardTest < Minitest::Test
     assert_equal(0, status.exitstatus, stderr)
   end
 
+def test_the_restore_push_is_allowed_and_its_plain_force_twin_is_not
+  _, allowed_error, allowed = run_guard("git push --force-with-lease -u origin HEAD")
+  _, blocked_error, blocked = run_guard("git push --force -u origin HEAD")
+
+  assert_equal(0, allowed.exitstatus, allowed_error)
+  assert_equal(2, blocked.exitstatus)
+  assert_match(/force-with-lease/, blocked_error)
+end
+
   def test_consent_does_not_unlock_a_plain_force_push
     _, _, status = run_guard("I_HAVE_USER_CONSENT=1 git push --force origin my-branch")
 
