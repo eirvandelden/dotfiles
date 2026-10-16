@@ -95,7 +95,7 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
   function _chnode_forget_applied_node() {
     [[ -n "$_applied_node_source" ]] || return 0
     _applied_node_source=""
-    chnode_reset
+    chnode --reset
   }
 
   # A manual `chnode X` stays until the version source changes. The helpers
