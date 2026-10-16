@@ -16,15 +16,14 @@ These rules apply to user-facing action patterns across the UI, including modal 
 - The button immediately to its left is `Cancel` and aborts the action.
 - Pressing `Esc` must always trigger `Cancel`.
 - Pressing `Return` must trigger the safest operation for the context:
-  - If the action is destructive and there is no undo, default to `Cancel`.
+  - If the action is destructive and there is no undo, default to `Cancel`, in confirmation UI the app builds itself. The native confirm is exempt: the browser sets its default.
   - Otherwise, default to the preferred continuation action.
 - Label buttons with verbs (`Delete`, `Send`, `Proceed`, `Save`).
-- Avoid `OK`, `Yes`, and `No` labels in confirmation dialogs.
+- Avoid `OK`, `Yes`, and `No` labels in confirmation UI the app builds itself. The browser's native confirm is exempt: see Confirmation dialogs.
 - Back/Cancel control type:
   - Use `<a>` when Cancel/Back navigates to another page or URL.
   - Use `<button type="button">` when Cancel dismisses or resets in-place UI.
-  - Inside a `<form method="dialog">`, Cancel is a plain `<button>`. Its default submit closes the dialog without sending anything.
-- A destructive button gets a fixed place in two layouts only: see Edit pages and sheets, and Confirmation dialogs. The one exception is the show page of a record with no editable fields: see Where Delete lives. Do not invent another.
+- A destructive button gets one fixed place: see Edit pages and sheets. The one exception is the show page of a record with no editable fields: see Where Delete lives. The browser places the buttons of the native confirm: see Confirmation dialogs. Do not invent another.
 
 ### Edit pages and sheets
 
@@ -32,24 +31,23 @@ An edit page follows the macOS save sheet. The red `Delete…` button stands apa
 
 - `Save` is rightmost and is the default button: filled, primary style.
 - A three-button save sheet keeps the shape: `Don't Save` stands apart on the far left, then `Cancel`, then `Save`. `Don't Save` is a link or a `<button type="button">`, never a submit button.
-- Pressing Return in a text field presses the form's first submit button, so that button must be `Save`. Every button left of it is a link or a `<button type="button">`.
+- Pressing Return in a text field presses the form's first submit button, so that button must be `Save`. Every button left of it is a link, a `<button type="button">`, or a button that submits another form through its `form` attribute, which is not a submit button of this form.
 - The ellipsis in `Delete…` says that a confirmation follows. Translate the label, keep the ellipsis.
 - Build the row as a flex row with `justify-content: flex-end`, so `Cancel` and `Save` sit on the right even on a page without `Delete…`, such as a new page that shares the form partial. The destructive button takes `margin-inline-end: auto`, which keeps it apart on the left. Use `rem` sizes, and take mvpa.css styles first.
-- `Delete…` is a `<button type="button">`, because it opens in-place UI. It opens a `<dialog>` that holds the `button_to … method: :delete` form.
-- Put that `<dialog>` outside the edit `<form>`. HTML forbids nested forms.
-- Open the dialog with Invoker Commands: `commandfor` on the button and `command="show-modal"`. Add a small Stimulus controller as the fallback for browsers without them.
-- Never use `data-turbo-confirm` for this. The browser's `confirm()` shows an `OK` button, and it cannot colour Delete red.
+- `Delete…` is a `button_tag` that submits a separate delete form through its `form` attribute. It stays in the row and out of the edit form's own fields.
+- HTML forbids nested forms, so put the delete form after the edit `<form>`: `form_with(model: budget, method: :delete, id: dom_id(budget, :delete)) {}`. Point the button at it: `button_tag t(".delete"), form: dom_id(budget, :delete), data: { turbo_confirm: t(".confirm", name: budget.name) }`. Use one `dom_id(record, :delete)` call for both values, because a `form` value without a matching `id` submits nothing.
+- Return still presses `Save`: the form owner of `Delete…` is the delete form, so it is never the edit form's first submit button.
+- The `data-turbo-confirm` message asks the browser for its native confirm: see Confirmation dialogs.
 
 ### Confirmation dialogs
 
-Use a modal confirmation when an action is irreversible. The red `Delete` is rightmost and `Cancel` sits directly left of it, as in macOS confirmation dialogs. The far-left rule of an edit page never applies inside a confirmation dialog.
+Confirm a delete with the browser's native confirm, through `data-turbo-confirm` on the `Delete…` button. Build no custom confirmation `<dialog>`.
 
-- Name the confirm button with the action verb (`Delete`, not `OK`).
-- Describe the item and the result (for example: `Delete this budget? This cannot be undone.`). Avoid vague prompts such as `Are you sure?`.
-- `Cancel` carries `autofocus`, so `Return` triggers `Cancel`, never the red `Delete`.
-- A click on `Cancel` closes the dialog. Use `<button type="button" commandfor="…" command="close">`. Or put a plain `<button>` (a submit button, not `type="button"`) in a `<form method="dialog">`, which works without Invoker Commands.
-- `Esc` closes the dialog. The native `<dialog>` cancel event already does this.
-- Never require the user to type the item's name to confirm a deletion — a confirmation dialog is enough.
+- Describe the item and the result (for example: `Delete the budget "Groceries"? This cannot be undone.`). Never write `Are you sure?`.
+- The message comes from `t(...)` with the item's name. The i18n rule forbids a hardcoded string.
+- Never require the user to type the item's name to confirm a deletion.
+- The browser sets the buttons, their order and the `Return` default. The reference accepts them. The `OK` ban and the `Cancel` default do not apply to the native confirm.
+- The confirm runs only when Turbo handles the form, through Drive or a Turbo Frame. A form with `data-turbo="false"` deletes at once, so never set it on a delete form.
 
 ### Where Delete lives
 
@@ -60,7 +58,7 @@ For a record with editable fields, Delete appears only on the edit page.
 - Never between other buttons. It stands apart, as described under Edit pages and sheets.
 - Inline editing of a single field does not move Delete. The record keeps its edit page, and Delete stays there.
 - A record with editable fields where every field is edited inline still gets an edit page. That page holds the fields and Delete.
-- A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its show page holds a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It still opens the confirmation dialog.
+- A record with no editable fields (an account alias, a link between two records) gets no edit page only to hold Delete. Its show page holds a visible red `Delete…` button, in the same spot as on an edit page: apart, on the far left of the bottom action row. It uses `button_to` with `data-turbo-confirm` (`data: { turbo_confirm: … }`), because no edit form surrounds the row. It asks for the same native confirm.
 - Never put that `Delete…` inside an "Actions" menu or any other pull-down.
 - This exception does not let any other show page carry Delete.
 
@@ -72,10 +70,11 @@ For a record with editable fields, Delete appears only on the edit page.
 
 ## Default button
 
-The default button is the safest action for the context. `Return` activates it. Usually that is the forward action; in a destructive confirmation it is `Cancel`.
+The default button is the safest action for the context. `Return` activates it. Usually that is the forward action; in a destructive confirmation the app builds itself, it is `Cancel`.
 
 - On an edit page the default is `Save`: rightmost and filled.
-- In a destructive confirmation the default is `Cancel`. The red `Delete` is never the default.
+- In a destructive confirmation the app builds itself, the default is `Cancel`. The red `Delete` is never the default.
+- The native confirm is exempt: the browser sets its default.
 
 ## Tables
 

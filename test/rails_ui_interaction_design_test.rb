@@ -24,18 +24,17 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/without[^.]*`Delete…`|no `Delete…`/i, section)
   end
 
-  def test_confirmation_dialog_puts_cancel_directly_left_of_red_delete_and_return_triggers_cancel
+  def test_delete_confirmation_uses_the_native_confirm
     section = section(reference, "### Confirmation dialogs")
-    assert_match(/red `Delete`[^.]*rightmost/i, section)
-    assert_match(/`Cancel`[^.]*directly left of (it|the red)/i, section)
-    assert_match(/autofocus/, section)
-    assert_match(/`Return`[^.]*`Cancel`/, section)
-    assert_match(/far-left rule[^.]*never applies/i, section)
-    assert_match(/`Cancel`[^.]*closes the dialog/i, section)
-    assert_match(/command="close"/, section)
-    assert_match(/method="dialog"/, section)
-    assert_match(/<form method="dialog">[^.]*plain `<button>`|plain `<button>`[^.]*<form method="dialog">/, section)
-    assert_match(/<form method="dialog">[^.]*plain `<button>`/, section(reference, "## Action rows"))
+    assert_match(/native confirm/i, section)
+    assert_match(/data-turbo-confirm/, section)
+    assert_match(/no custom confirmation `<dialog>`|build no custom[^.]*`<dialog>`/i, section)
+    assert_match(/cannot be undone/i, section)
+    assert_match(/`Are you sure\?`/, section)
+    assert_match(/t\(/, section)
+    assert_match(/never[^.]*type the item's name/i, section)
+    assert_match(/browser sets[^.]*buttons[^.]*Return/i, section)
+    assert_match(/data-turbo="false"/, section)
   end
 
   def test_far_left_rule_is_scoped_to_edit_pages_and_save_sheets
@@ -50,13 +49,31 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/Where Delete lives/, shared)
   end
 
-  def test_delete_opens_a_dialog_outside_the_edit_form
-    text = section(reference, "### Edit pages and sheets") + section(reference, "### Confirmation dialogs")
-    assert_match(/<dialog>/, text)
-    assert_match(/commandfor/, text)
-    assert_match(/nested forms?/i, text)
-    assert_match(/data-turbo-confirm/, text)
-    assert_match(/never[^.]*data-turbo-confirm|not[^.]*data-turbo-confirm|no `?data-turbo-confirm/i, text)
+  def test_delete_button_submits_a_separate_form_through_its_form_attribute
+    section = section(reference, "### Edit pages and sheets")
+    assert_match(/nested forms?/i, section)
+    assert_match(/`form` attribute/, section)
+    assert_match(/dom_id\([^)]*:delete\)/, section)
+    assert_match(/button_tag/, section)
+    assert_match(/data-turbo-confirm/, section)
+    assert_match(/button that submits another form/i, section)
+  end
+
+  def test_native_confirm_is_exempt_from_the_ok_label_and_cancel_default_rules
+    actions = section(reference, "## Action rows")
+    assert_match(/builds itself/, actions)
+    assert_match(/native confirm[^.]*exempt|exempt[^.]*native confirm/i, actions)
+    default = section(reference, "## Default button")
+    assert_match(/builds itself/, default)
+    assert_match(/native confirm[^.]*exempt|exempt[^.]*native confirm/i, default)
+    refute_match(/never[^.\n]*data-turbo-confirm/i, reference)
+    refute_match(/`confirm\(\)` shows an `OK`/, reference)
+  end
+
+  def test_no_custom_confirmation_dialog_mechanics_remain
+    %w[commandfor show-modal autofocus Stimulus].each { |term| refute_includes(reference, term) }
+    refute_includes(reference, 'command="close"')
+    refute_includes(reference, 'method="dialog"')
   end
 
   def test_delete_lives_only_on_the_edit_page
@@ -75,6 +92,8 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/no editable fields/i, section)
     assert_match(/show page/i, section)
     assert_match(/visible red `Delete…`/, section)
+    assert_match(/`button_to`[^.]*data-turbo-confirm/, section)
+    refute_match(/opens the confirmation dialog/, section)
     assert_match(/never[^.]*(menu|pull-down)/i, section)
   end
 
@@ -94,6 +113,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     refute_match(/safest forward action/i, section)
     assert_match(/`Save`/, section)
     assert_match(/`Cancel`/, section)
+    assert_match(/builds itself/, section)
     assert_match(/never[^.]*`Delete`[^.]*default|`Delete`[^.]*never[^.]*default/i, section)
   end
 
@@ -147,6 +167,7 @@ class RailsUiInteractionDesignTest < Minitest::Test
     assert_match(/`OK`, `Yes`,? and `No`/, actions)
     assert_match(/<a>/, actions)
     assert_match(/<button type="button">/, actions)
+    refute_match(/<form method="dialog">/, actions)
 
     colors = section(reference, "## Color semantics")
     assert_match(/red/i, colors)
