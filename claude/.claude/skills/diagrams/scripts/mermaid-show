@@ -14,6 +14,7 @@ class MermaidShow
   USAGE = "usage: mermaid-show <file.mmd|file.md> | --markdown | --image <file>".freeze
   INSTALL_HINT = "mermaid-show needs beautiful-mermaid: npm install -g beautiful-mermaid".freeze
   MISSING_PACKAGE = 3 # mermaid-ascii.mjs exits 3 when beautiful-mermaid is not installed
+  TOOL_HINTS = { "node" => "install Node.js", "mmdc" => "brew install mermaid-cli", "timg" => "brew install timg" }.freeze
   OPENING_FENCE = /\A(`{3,}|~{3,})\s*(\S*)/
   Failure = Class.new(StandardError)
 
@@ -42,6 +43,7 @@ class MermaidShow
 
   #: (String source) -> String
   def text_for(source)
+    require_tool("node")
     stdout, stderr, status = Open3.capture3("node", HELPER, stdin_data: source)
     raise Failure, INSTALL_HINT if status.exitstatus == MISSING_PACKAGE
     raise Failure, stderr.strip unless status.success?
@@ -54,11 +56,20 @@ class MermaidShow
     Dir.mktmpdir("mermaid-show") do |dir|
       png = File.join(dir, "diagram.png")
       render_png(source, dir, png)
+      require_tool("timg")
       system("timg", png, out: @out) || raise(Failure, "timg could not show #{png}")
     end
   end
 
   private
+
+  # Checks PATH first, so a missing tool gives its install command rather than a spawn backtrace.
+  #: (String tool) -> void
+  def require_tool(tool)
+    return if ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, tool)) }
+
+    raise Failure, "mermaid-show needs #{tool}: #{TOOL_HINTS.fetch(tool)}"
+  end
 
   #: () -> void
   def dispatch
@@ -88,6 +99,7 @@ class MermaidShow
 
   #: (String source, String dir, String png) -> void
   def render_png(source, dir, png)
+    require_tool("mmdc")
     input = File.join(dir, "diagram.mmd")
     File.write(input, source)
     _, stderr, status = Open3.capture3("mmdc", "-q", "-i", input, "-o", png, "-b", "white", "-s", "2")

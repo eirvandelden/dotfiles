@@ -3,6 +3,7 @@ require "minitest/autorun"
 require_relative "isolated_git"
 require "fileutils"
 require "open3"
+require "rbconfig"
 require "tmpdir"
 
 # mermaid-show renders Mermaid as Unicode text (through a Node helper around beautiful-mermaid)
@@ -102,6 +103,30 @@ class MermaidShowTest < Minitest::Test
     refute_includes(result[:stderr], "npm install -g beautiful-mermaid")
   end
 
+  def test_a_missing_tool_is_named_with_its_install_command
+    path = write("card.mmd", DIAGRAM)
+    stub_mmdc
+    { [ path ] => "node", [ "--image", path ] => "mmdc" }.each do |args, tool|
+      File.delete(File.join(@bin_dir, tool)) if File.exist?(File.join(@bin_dir, tool))
+
+      result = run_script(*args, only_stubs: true)
+
+      assert_equal(1, result[:status].exitstatus)
+      assert_match(/^mermaid-show needs #{tool}: /, result[:stderr])
+      refute_match(/Errno|\.rb:\d+/, result[:stderr])
+    end
+  end
+
+  def test_a_missing_timg_is_named_with_its_install_command
+    stub_mmdc
+    path = write("card.mmd", DIAGRAM)
+
+    result = run_script("--image", path, only_stubs: true)
+
+    assert_equal(1, result[:status].exitstatus)
+    assert_equal("mermaid-show needs timg: brew install timg", result[:stderr].strip)
+  end
+
   def test_an_unknown_flag_prints_usage_and_exits_2
     result = run_script("--bogus")
 
@@ -160,9 +185,10 @@ class MermaidShowTest < Minitest::Test
     path
   end
 
-  def run_script(*args, stdin: "")
+  def run_script(*args, stdin: "", only_stubs: false)
     flunk("#{SCRIPT} does not exist") unless File.exist?(SCRIPT)
-    env = { "PATH" => "#{@bin_dir}:#{ENV.fetch("PATH")}", "HOME" => @tmpdir }
+    rest = only_stubs ? "#{File.dirname(RbConfig.ruby)}:/usr/bin:/bin" : ENV.fetch("PATH")
+    env = { "PATH" => "#{@bin_dir}:#{rest}", "HOME" => @tmpdir }
     stdout, stderr, status = Open3.capture3(env, SCRIPT, *args, stdin_data: stdin, chdir: @tmpdir)
     { stdout: stdout, stderr: stderr, status: status }
   end
