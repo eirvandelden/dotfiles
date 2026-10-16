@@ -6,7 +6,7 @@ require "yaml"
 # goes, where Delete lives and how a table fits the page (docs/changes/rails-ui-action-row-and-tables/plan.md).
 class RailsUiInteractionDesignTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  SKILL_DIR = File.join(REPO_ROOT, "claude/.claude/skills/rails-ui")
+  SKILL_DIR = File.join(REPO_ROOT, "agents/.agents/skills/rails-ui")
 
   def test_edit_page_puts_delete_far_left_and_cancel_then_save_on_the_right
     section = section(reference, "### Edit pages and sheets")
