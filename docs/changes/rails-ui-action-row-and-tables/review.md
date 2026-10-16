@@ -128,3 +128,120 @@ Compliance: the acceptance-criterion-to-test mapping from rounds 1 to 13 still h
 ## Round 16 — 2026-10-11T09:49:09Z — 79f2c0d8 (codex)
 
 No findings. `codex review --base origin/main`: the diff matches its stated scope, the tests pass, and the Codex skill symlink resolves.
+
+## Round 17 — 2026-10-16T15:02:12Z — 2923b87a (codex)
+
+No findings. `codex review --base origin/main`: the change matches its stated scope, and the focused interaction-design test passes (16 runs, 248 assertions).
+
+## Round 18 — 2026-10-16T15:59:54Z — 2923b87a
+
+- [x] Important: the full suite is red on the rebased branch. Main's `test/isolated_git_test.rb` `test_every_test_file_requires_the_helper` requires every `test/*_test.rb` to contain `require_relative "isolated_git"`, and the new test file does not. `ruby -Itest test/isolated_git_test.rb` fails with `Expected ["rails_ui_interaction_design_test.rb"] to be empty`, so the plan's full-suite proof check fails and CI's `dotfiles-tests.yml` goes red — `test/rails_ui_interaction_design_test.rb:2` → fixed (test: rails-ui interaction design test requires isolated_git)
+- [x] Nit: the `data-turbo="false"` warning names only the delete form. Turbo also skips the form when an ancestor element or the `Delete…` button itself carries `data-turbo="false"`, or when Drive is off and the form does not opt in. Any of these deletes with no confirm. The rule above it ("only when Turbo handles the form") covers this, but the concrete guard is narrower than the risk — `agents/.agents/skills/rails-ui/references/interaction-design.md:50` → fixed (rails-ui: close review round 18 nits)
+- [x] Nit: two bullets in Edit pages and sheets say the same thing. Line 34 already says a button that submits another form through its `form` attribute is not a submit button of the edit form. Line 39 says it again as "Return still presses `Save`". Merge them into one bullet — `agents/.agents/skills/rails-ui/references/interaction-design.md:39` → fixed (rails-ui: close review round 18 nits)
+
+Bugs: the Rails snippets hold. `form_with(...) {}` needs its empty block to close the form, and the snippet has one. `button_tag` passes `form:` and `data:` through as attributes. Turbo reads `data-turbo-confirm` from the submitter before the form. The HTML default button is the first submit button whose form owner is the form, so `Save` stays the default. On the show page, `button_to` puts `data:` on the button.
+
+Security: nothing found. The change is markdown and one prose test.
+
+Compliance, from `intent.md`:
+
+- Edit form: red `Delete…` far left, `Cancel` then `Save` on the right → `test_edit_page_puts_delete_far_left_and_cancel_then_save_on_the_right`
+- Delete has a `data-turbo-confirm` message with the item and "cannot be undone", and no custom `<dialog>` → `test_delete_confirmation_uses_the_native_confirm`, `test_delete_button_submits_a_separate_form_through_its_form_attribute`, `test_no_custom_confirmation_dialog_mechanics_remain`
+- No rule forbids `data-turbo-confirm` or says a native confirm breaks by `OK` or by its Return default → `test_native_confirm_is_exempt_from_the_ok_label_and_cancel_default_rules`
+- No Delete in index rows or on a show page → `test_delete_lives_only_on_the_edit_page`
+- Account alias show page: a visible red `Delete…`, in no menu, with the native confirm → `test_record_without_editable_fields_puts_delete_on_its_show_page_outside_menus`
+- Codex finds `rails-ui`, and the parity test passes → `test/skill_parity_test.rb` (main's version, 15 runs green), `test_codex_metadata_names_the_skill`
+- A ten-column table does not scroll sideways, and it stacks with labels → `test_tables_never_exceed_the_content_area_and_stack_with_data_labels`, `test_stacked_tables_keep_headers_for_screen_readers_and_add_table_roles`
+- No third button left of `Cancel`, and no Delete in a row → `test_no_rule_puts_a_third_button_left_of_cancel_or_delete_in_a_row`
+
+Every test that `plan.md` `## Proof` names exists. The two removed tests (`test_confirmation_dialog_puts_cancel_directly_left_of_red_delete_and_return_triggers_cancel` and `test_delete_opens_a_dialog_outside_the_edit_form`) are new on this branch, not on main. The amended plan replaces them, so no existing test is weakened.
+
+Checks: the focused test passes (16 runs, 248 assertions). markdownlint and the no-hardwrap check pass on `interaction-design.md` and the change folder. RuboCop is clean. `claude/.claude/skills/rails-ui` is still a link. The full suite fails only on `test/isolated_git_test.rb` (the Important finding above). `test/review_report_check_test.rb` passes, and the plan expected it to fail. The no-hardwrap errors in `SKILL.md` are on lines main already had, outside the pointer line this branch changes.
+
+## Round 19 — 2026-10-16T17:58:59Z — 0175b076 (codex)
+
+No findings. `codex review --base origin/main`: no actionable defects, and the focused interaction-design test passes (16 runs, 252 assertions).
+
+## Round 20 — 2026-10-16T18:28:27Z — 0175b076
+
+- [x] Important: the show-page `Delete…` cannot reach the far left as written. `button_to` wraps the button in its own `<form class="button_to">`, so the form is the flex item in the action row, not the button (actionview 8.1.4 `url_helper.rb:316`). Line 36 puts `margin-inline-end: auto` on "the destructive button". On the show page that margin sits on a button inside a block form and does nothing. With `justify-content: flex-end`, `Delete…` then lands on the right, next to the other buttons. That breaks "apart, on the far left" on line 60 and "Never between other buttons" on line 57. The plan rejected `button_to` on the edit page for this reason. Line 60 could put the margin on the form, for example through `button_to`'s `form_class:` or `form: { class: … }` option, and the test could pin it — `agents/.agents/skills/rails-ui/references/interaction-design.md:60` → fixed (rails-ui: close review round 20 findings)
+- [x] Nit: `## Default button` says the same rule twice. Line 72 ends "in a destructive confirmation the app builds itself, it is `Cancel`", and line 75 repeats it as a bullet. Keep one — `agents/.agents/skills/rails-ui/references/interaction-design.md:75` → fixed (rails-ui: close review round 20 findings)
+
+Round 18 fixes hold. Line 3 of the test requires `isolated_git`, and `test/isolated_git_test.rb` passes (7 runs). Line 49 names a `data-turbo="false"` on the delete form, the button or an ancestor, and the opt-in with Drive off. The test pins the button, the ancestor and the opt-in. Line 34 now carries the one Return bullet, and the duplicate is gone.
+
+Bugs: the edit-page snippets hold. `form_with(...) {}` closes the form. `button_tag` passes `form:` and `data:` through as attributes. Turbo reads `data-turbo-confirm` from the submitter first. `Save` stays the edit form's default button, because the form owner of `Delete…` is the delete form. The show-page `button_to` puts `data:` on the button, so the confirm works there; only its placement fails (the Important finding above).
+
+Security: nothing found. The change is markdown and one prose test.
+
+Compliance, from `intent.md`:
+
+- Edit form: red `Delete…` far left, `Cancel` then `Save` on the right → `test_edit_page_puts_delete_far_left_and_cancel_then_save_on_the_right`
+- Delete has a `data-turbo-confirm` message with the item and "cannot be undone", and no custom `<dialog>` → `test_delete_confirmation_uses_the_native_confirm`, `test_delete_button_submits_a_separate_form_through_its_form_attribute`, `test_no_custom_confirmation_dialog_mechanics_remain`
+- No rule forbids `data-turbo-confirm` or says a native confirm breaks by `OK` or by its Return default → `test_native_confirm_is_exempt_from_the_ok_label_and_cancel_default_rules`
+- No Delete in index rows or on a show page → `test_delete_lives_only_on_the_edit_page`
+- Account alias show page: a visible red `Delete…`, in no menu, with the native confirm → `test_record_without_editable_fields_puts_delete_on_its_show_page_outside_menus`
+- Codex finds `rails-ui`, and the parity test passes → `test/skill_parity_test.rb` (main's version), `test_codex_metadata_names_the_skill`
+- A ten-column table does not scroll sideways, and it stacks with labels → `test_tables_never_exceed_the_content_area_and_stack_with_data_labels`, `test_stacked_tables_keep_headers_for_screen_readers_and_add_table_roles`
+- No third button left of `Cancel`, and no Delete in a row → `test_no_rule_puts_a_third_button_left_of_cancel_or_delete_in_a_row`
+
+Every test that `plan.md` `## Proof` names exists. No test on main is weakened, skipped or deleted. The two removed tests were new on this branch.
+
+Checks: the focused test passes (16 runs, 252 assertions). The full suite passes, every `test/*_test.rb` file. RuboCop is clean. markdownlint passes on the reference, `SKILL.md` and the change folder. The no-hardwrap check passes on the reference and the change folder. It reports `SKILL.md` lines that main already had, outside the pointer line this branch changes. `claude/.claude/skills/rails-ui` is still a link.
+
+## Round 21 — 2026-10-16T18:56:44Z — 2b134d95 (codex)
+
+No findings. `codex review --base origin/main`: the changes match the documented intent, and the focused interaction-design test passes.
+
+## Round 22 — 2026-10-16T19:26:27Z — 2b134d95
+
+- [x] Important: the Drive-off guard is wrong for the edit page, and a delete there runs with no confirm. Line 49 says "With Drive off, the delete form needs `data-turbo="true"`." Turbo also checks the submitter: `submissionIsNavigatable(form, submitter)` returns `elementIsNavigatable(submitter) && elementIsNavigatable(form)`, and with Drive off and no frame, `elementIsNavigatable` is true only inside a `[data-turbo="true"]` container (turbo-rails 2.0.16 `turbo.js:4522`–`4548`). On the edit page the `Delete…` button sits inside the edit form, not inside the delete form, so `data-turbo="true"` on the delete form does not cover it. Turbo skips the submission, the browser submits the delete form natively, and the record is deleted with no confirm. The show page is fine, because the `button_to` button sits inside its own form. Line 49 must name both the delete form and the `Delete…` button (or a shared ancestor), and the test at `test/rails_ui_interaction_design_test.rb:40` pins only the form — `agents/.agents/skills/rails-ui/references/interaction-design.md:49` → fixed (rails-ui: close review round 22 finding)
+
+Round 20 fixes hold. Line 60 says the `button_to` form is the flex item and puts `margin-inline-end: auto` on it through `form_class:`; actionview 8.1.2 `url_helper.rb:317` reads `form_class` into the form's class. The test pins both phrases. `## Default button` states the Cancel default once, and the test now counts "builds itself" to keep it so.
+
+Bugs: one, the Important finding above. The other snippets hold. `form_with(..., id: dom_id(budget, :delete)) {}` closes the form and sets its id. `button_tag` passes `form:` and `data:` through. Turbo reads `data-turbo-confirm` from the submitter first, and the submit event fires on the delete form, so the confirm runs with Drive on. `Save` stays the edit form's default button.
+
+Security: nothing found beyond the Drive-off data-loss path above. The change is markdown and one prose test.
+
+Compliance, from `intent.md`:
+
+- Edit form: red `Delete…` far left, `Cancel` then `Save` on the right → `test_edit_page_puts_delete_far_left_and_cancel_then_save_on_the_right`
+- Delete has a `data-turbo-confirm` message with the item and "cannot be undone", and no custom `<dialog>` → `test_delete_confirmation_uses_the_native_confirm`, `test_delete_button_submits_a_separate_form_through_its_form_attribute`, `test_no_custom_confirmation_dialog_mechanics_remain`
+- No rule forbids `data-turbo-confirm` or says a native confirm breaks by `OK` or by its Return default → `test_native_confirm_is_exempt_from_the_ok_label_and_cancel_default_rules`
+- No Delete in index rows or on a show page → `test_delete_lives_only_on_the_edit_page`
+- Account alias show page: a visible red `Delete…`, in no menu, with the native confirm → `test_record_without_editable_fields_puts_delete_on_its_show_page_outside_menus`
+- Codex finds `rails-ui`, and the parity test passes → `test/skill_parity_test.rb` (main's version), `test_codex_metadata_names_the_skill`
+- A ten-column table does not scroll sideways, and it stacks with labels → `test_tables_never_exceed_the_content_area_and_stack_with_data_labels`, `test_stacked_tables_keep_headers_for_screen_readers_and_add_table_roles`
+- No third button left of `Cancel`, and no Delete in a row → `test_no_rule_puts_a_third_button_left_of_cancel_or_delete_in_a_row`
+
+Every test that `plan.md` `## Proof` names exists. No test on main is weakened, skipped or deleted.
+
+Checks: the focused test passes (16 runs, 255 assertions). The full suite passes, every `test/*_test.rb` file. RuboCop is clean. markdownlint passes on the reference, `SKILL.md` and the change folder. The no-hardwrap check passes on the reference and the change folder; its `SKILL.md` errors are on lines main already had. `claude/.claude/skills/rails-ui` is still a link.
+
+## Round 23 — 2026-10-16T19:29:50Z — 95d2f950 (codex)
+
+No findings. `codex review --base origin/main`: the form-submission, confirmation and table guidance is consistent, and the focused interaction-design test passes.
+
+## Round 24 — 2026-10-16T19:54:41Z — 95d2f950
+
+No findings.
+
+Round 22 fix holds. Line 49 now puts `data-turbo="true"` on both the delete form and the `Delete…` button with Drive off, and says why: Turbo checks the form and its submitter, and the edit-page button sits outside the delete form. turbo-rails 2.0.21 `turbo.js:4517`–`4544` confirms it: `submissionIsNavigatable` requires `elementIsNavigatable(submitter)` and `elementIsNavigatable(form)`, and with Drive off and no frame each needs its nearest `[data-turbo]` to be `"true"`. The `button_to` case holds too, because its button's nearest `[data-turbo]` is its own form. The test at `test/rails_ui_interaction_design_test.rb:40` now pins both elements.
+
+Bugs: nothing found. `form_with(..., id: dom_id(budget, :delete)) {}` closes the form and sets its id. `button_tag` passes `form:` and `data:` through as attributes. The submit event fires on the delete form with the outside button as `event.submitter`, and Turbo reads `data-turbo-confirm` from the submitter first. `Save` stays the edit form's default button. The show-page `button_to` gets its far-left margin on the form through `form_class:`. Turbo's forms opt-in mode is covered by the general rule "the confirm runs only when Turbo handles the form".
+
+Security: nothing found. The change is markdown and one prose test.
+
+Compliance, from `intent.md`:
+
+- Edit form: red `Delete…` far left, `Cancel` then `Save` on the right → `test_edit_page_puts_delete_far_left_and_cancel_then_save_on_the_right`
+- Delete has a `data-turbo-confirm` message with the item and "cannot be undone", and no custom `<dialog>` → `test_delete_confirmation_uses_the_native_confirm`, `test_delete_button_submits_a_separate_form_through_its_form_attribute`, `test_no_custom_confirmation_dialog_mechanics_remain`
+- No rule forbids `data-turbo-confirm` or says a native confirm breaks by `OK` or by its Return default → `test_native_confirm_is_exempt_from_the_ok_label_and_cancel_default_rules`
+- No Delete in index rows or on a show page → `test_delete_lives_only_on_the_edit_page`
+- Account alias show page: a visible red `Delete…`, in no menu, with the native confirm → `test_record_without_editable_fields_puts_delete_on_its_show_page_outside_menus`
+- Codex finds `rails-ui`, and the parity test passes → `test/skill_parity_test.rb` (main's version), `test_codex_metadata_names_the_skill`
+- A ten-column table does not scroll sideways, and it stacks with labels → `test_tables_never_exceed_the_content_area_and_stack_with_data_labels`, `test_stacked_tables_keep_headers_for_screen_readers_and_add_table_roles`
+- No third button left of `Cancel`, and no Delete in a row → `test_no_rule_puts_a_third_button_left_of_cancel_or_delete_in_a_row`
+
+Every test that `plan.md` `## Proof` names exists. No test on main is weakened, skipped or deleted. The diff against `origin/main` touches only `SKILL.md`, `interaction-design.md`, the new test and the change folder.
+
+Checks: the focused test passes (16 runs, 255 assertions). The full suite passes, every `test/*_test.rb` file. RuboCop is clean. markdownlint passes on the reference, `SKILL.md` and the change folder. The no-hardwrap check passes on the reference and the change folder; its `SKILL.md` errors are on lines main already had, not on the pointer line at 75. `claude/.claude/skills/rails-ui` is still a link.
