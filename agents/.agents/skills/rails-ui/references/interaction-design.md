@@ -36,7 +36,6 @@ An edit page follows the macOS save sheet. The red `Delete…` button stands apa
 - Build the row as a flex row with `justify-content: flex-end`, so `Cancel` and `Save` sit on the right even on a page without `Delete…`, such as a new page that shares the form partial. The destructive button takes `margin-inline-end: auto`, which keeps it apart on the left. Use `rem` sizes, and take mvpa.css styles first.
 - `Delete…` is a `button_tag` that submits a separate delete form through its `form` attribute. It stays in the row and out of the edit form's own fields.
 - HTML forbids nested forms, so put the delete form after the edit `<form>`: `form_with(model: budget, method: :delete, id: dom_id(budget, :delete)) {}`. Point the button at it: `button_tag t(".delete"), form: dom_id(budget, :delete), data: { turbo_confirm: t(".confirm", name: budget.name) }`. Use one `dom_id(record, :delete)` call for both values, because a `form` value without a matching `id` submits nothing.
-- Return still presses `Save`: the form owner of `Delete…` is the delete form, so it is never the edit form's first submit button.
 - The `data-turbo-confirm` message asks the browser for its native confirm: see Confirmation dialogs.
 
 ### Confirmation dialogs
@@ -47,7 +46,7 @@ Confirm a delete with the browser's native confirm, through `data-turbo-confirm`
 - The message comes from `t(...)` with the item's name. The i18n rule forbids a hardcoded string.
 - Never require the user to type the item's name to confirm a deletion.
 - The browser sets the buttons, their order and the `Return` default. The reference accepts them. The `OK` ban and the `Cancel` default do not apply to the native confirm.
-- The confirm runs only when Turbo handles the form, through Drive or a Turbo Frame. A form with `data-turbo="false"` deletes at once, so never set it on a delete form.
+- The confirm runs only when Turbo handles the form, through Drive or a Turbo Frame. A `data-turbo="false"` on the delete form, on the `Delete…` button or on any ancestor deletes at once, with no confirm, so never set it there. With Drive off, the delete form needs `data-turbo="true"`.
 
 ### Where Delete lives
 
