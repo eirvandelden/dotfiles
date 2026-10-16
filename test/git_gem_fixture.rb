@@ -175,6 +175,7 @@ module GitGemFixture
       path = File.join(dir, name)
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
+      FileUtils.chmod("+x", path) if name.start_with?("bin/")
     end
   end
 
