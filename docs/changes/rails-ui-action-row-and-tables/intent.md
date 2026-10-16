@@ -1,6 +1,6 @@
 # Intent: rails-ui action row and table width rules
 
-Author: Etienne van Delden de la Haije. Status: accepted (2026-10-11). Type: chore. Delivery: autonomous.
+Author: Etienne van Delden de la Haije. Status: accepted (2026-10-16). Type: chore. Delivery: autonomous.
 
 ## Problem
 
@@ -15,11 +15,11 @@ The `rails-ui` skill's interaction-design reference tells agents where buttons g
 An agent that follows the skill builds the layout Etienne chose in the journal_administration UI review on 2026-10-11:
 
 - An edit page's action row follows the macOS save-sheet layout. The red destructive button (`Delete…`) stands apart on the far left. `Cancel` and `Save` sit together on the right, with `Save` rightmost as the default button.
-- A delete confirmation dialog shows `Cancel` directly left of the red `Delete`. `Cancel` is the Return-key default there, as today.
+- A delete confirmation uses the browser's native confirm, through `data-turbo-confirm`. Its message names the item and the result. The browser sets its buttons and its Return-key default. The skill prescribes no custom confirmation `<dialog>`.
 - Delete appears only on the edit page, never in an index table row and never on a show page.
 - A table is never wider than the content area: the viewport width minus the sidebar. When a table needs more room than that, it becomes a responsive table below a breakpoint. Each row stacks into a block, and each cell shows its column name before its value, using a `data-label` attribute and `td::before { content: attr(data-label) }`. The techniques come from [Responsive Data Tables](https://css-tricks.com/responsive-data-tables/) and [Making Tables Responsive With Minimal CSS](https://css-tricks.com/making-tables-responsive-with-minimal-css/).
 - A stacked table keeps its header row available to screen readers, and adds ARIA table roles where a changed `display` drops the table semantics.
-- A record with no editable fields has no edit page. Its `Delete…` sits on the show page as a visible red button, not inside an "Acties" menu.
+- A record with no editable fields has no edit page. Its `Delete…` sits on the show page as a visible red button, not inside an "Acties" menu. It asks for the same native confirm.
 - Codex agents read the `rails-ui` skill too.
 
 ## Affected users and systems
@@ -31,14 +31,20 @@ An agent that follows the skill builds the layout Etienne chose in the journal_a
 ## Constraints
 
 - The rules apply to personal and work projects both.
-- The reference stays based on Apple's macOS guidance. The new action-row rule must match the macOS save-sheet layout, and the dialog rule must keep matching macOS confirmation dialogs.
-- Existing rules that still hold stay: Esc triggers Cancel, verb labels, no OK/Yes/No, the red/orange/primary colour semantics, the `<a>` versus `<button type="button">` rule, Cancel as the default in destructive confirmations.
+- The reference stays based on Apple's macOS guidance. The new action-row rule must match the macOS save-sheet layout.
+- The delete confirmation is the browser's native confirm (Etienne, 2026-10-16). Its `OK` label and its Return-key default come from the browser, and the reference accepts them.
+- Existing rules that still hold stay: Esc triggers Cancel, verb labels, the red/orange/primary colour semantics, the `<a>` versus `<button type="button">` rule. The ban on `OK`, `Yes` and `No` labels and the Cancel default in a destructive action stay for UI the app builds itself, and do not apply to the native confirm.
 - Markdown prose follows playbook rule 26 (one line per paragraph or list item) and the repository's markdownlint configuration.
 - No permissions are needed under playbook rules 8, 9, 11, 12 or 13. The change edits markdown in the dotfiles source only. It does not run `stow`.
 
 ## In scope
 
-- Rewrite the button-placement rules in `interaction-design.md` so edit pages and sheets use the macOS save-sheet layout, and confirmation dialogs keep `Cancel` directly left of the verb button.
+- Rewrite the button-placement rules in `interaction-design.md` so edit pages and sheets use the macOS save-sheet layout.
+- Make the native confirm (`data-turbo-confirm`) the way to confirm a delete. Remove the rule that forbids it, and the custom `<dialog>` mechanics: the dialog outside the edit form, Invoker Commands, the Stimulus fallback, `autofocus` on `Cancel`, `command="close"` and `method="dialog"`.
+- Keep in Confirmation dialogs only what applies to a native confirm: a message that names the item and the result, not `Are you sure?`, and no typing the item's name to confirm.
+- Exempt the native confirm from the `OK`/`Yes`/`No` ban and from the Cancel-default rule, because the browser sets both.
+- Keep the `Delete…` label with its ellipsis, because a confirmation still follows.
+- Keep `test/rails_ui_interaction_design_test.rb` in step with the wording.
 - Add the rule that Delete lives only on the edit page.
 - Add the table width rule and the responsive table technique, with links to the two CSS-Tricks articles and the accessibility caveats.
 - Adjust `rails-ui/SKILL.md` only where its pointer to the reference no longer describes the content.
@@ -47,7 +53,8 @@ An agent that follows the skill builds the layout Etienne chose in the journal_a
 
 ## Out of scope
 
-- Any change to journal_administration, mvpa.css or appkit. Those follow in their own changes.
+- Any change to journal_administration, mvpa.css or appkit. Those follow in their own changes. The custom Cancel | Delete dialog of appkit PR #20 is dropped.
+- A custom confirm through Turbo's confirm-method override.
 - The other UI review decisions (navigation hubs, Beheer, page anatomy).
 - Vendored skills and their references.
 - `core-values.yml`, which does not mirror these rules.
@@ -55,9 +62,10 @@ An agent that follows the skill builds the layout Etienne chose in the journal_a
 ## Acceptance criteria
 
 - An agent that reads the skill and builds an edit form for a budget places `Verwijderen…` in red on the far left, apart from the other buttons, and `Annuleren` then `Opslaan` together on the right.
-- An agent that builds a delete confirmation dialog places `Annuleren` directly left of a red `Verwijderen`, and Return triggers `Annuleren`.
+- An agent that builds the delete of a budget gives `Verwijderen…` a `data-turbo-confirm` message that names the budget and says the delete cannot be undone, and builds no custom confirmation `<dialog>`.
+- A reader of the reference finds no rule that forbids `data-turbo-confirm`, and no rule that a native confirm breaks by its `OK` label or its Return-key default.
 - An agent that builds a transactions index adds no Delete button to the rows, and a transaction's show page has no Delete button.
-- An agent that builds the show page of an account alias, which has no editable fields, puts a visible red `Verwijderen…` on that show page, not inside an "Acties" menu.
+- An agent that builds the show page of an account alias, which has no editable fields, puts a visible red `Verwijderen…` on that show page, not inside an "Acties" menu, and it asks for the native confirm.
 - A Codex agent finds the `rails-ui` skill, and the skill parity test passes with `rails-ui` no longer Claude-only.
 - An agent that builds a table with ten columns keeps the page from scrolling sideways at desktop width, and at phone width shows each transaction as a stacked block with `Bedrag`, `Datum` and the other column names before their values.
 - A reader of the reference finds no rule that still says the third button goes left of `Cancel` on an edit page, or that Delete may sit in a table row.
@@ -67,6 +75,8 @@ An agent that follows the skill builds the layout Etienne chose in the journal_a
 On 2026-10-11 the plan stage raised two decisions. Etienne chose to link `rails-ui` for Codex in this change, and to put Delete on the show page, outside any menu, for records with no editable fields. The sections above include both.
 
 On 2026-10-11 the review raised a third: a record whose fields are all edited inline has no edit page. Etienne chose that such a record still gets an edit page, which holds its fields and Delete.
+
+On 2026-10-16, after delivery, Etienne decided that the browser's native confirm is good enough for a delete confirmation, and dropped the custom Cancel | Delete dialog (appkit PR #20, closed). The native confirm is the default. The custom `<dialog>` rules go. The `OK` ban and the Cancel default do not apply to the native confirm. `Delete…` keeps its ellipsis. The sections above include this.
 
 ## Open questions
 
