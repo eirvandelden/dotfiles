@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Only deliver opens a pull request, and it removes docs/changes/<slug>/ first. The consent guard
 # enforces that mechanically (test/consent_guard_test.rb); these tests pin the skill, playbook and
@@ -42,7 +43,7 @@ class PullRequestFlowTest < Minitest::Test
   def test_lefthook_messages_send_pull_requests_through_deliver
     messages = File.readlines(File.join(REPO_ROOT, "lefthook.yml")).grep(/is not allowed\./)
 
-    assert_equal(2, messages.size)
+    assert_equal(4, messages.size)
     messages.each do |message|
       assert_includes(message, "deliver opens the PR")
       refute_match(/open a PR/, message)

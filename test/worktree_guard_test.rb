@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The worktree guard is a PreToolUse hook for Claude Code and Codex. It reads the tool call as
 # JSON on stdin and exits 2 (block, reason on stderr) when a hand-typed `git worktree add`

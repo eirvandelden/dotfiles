@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Git gets GitHub HTTPS credentials from 1Password and nothing from the
 # Keychain. Each test runs real `git credential` against the dotfiles git

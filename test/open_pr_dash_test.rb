@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "yaml"
 require_relative "delivery_harness"
+require_relative "isolated_git"
 
 # open-pr-dash.sh <slug> <pr-url> opens a herdr pane running gh-dash filtered to one PR, directly
 # left of the pane that wrote the intent. herdr 0.9.3 can only split right or down, so it splits

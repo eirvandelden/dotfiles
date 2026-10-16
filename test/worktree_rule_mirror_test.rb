@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # "Never type `git worktree add` yourself; use `worktree-create`" must be written in every place an
 # agent reads its rules, because the worktree guard hook is a no-op where it cannot run or is not

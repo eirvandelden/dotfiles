@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # Agents install gems with bi, never bundle install. A guard refuses the direct commands, and the
 # words that steer agents to bi live in the playbook (agents.md), in core-values.yml (re-injected

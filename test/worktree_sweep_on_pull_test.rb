@@ -6,6 +6,7 @@ require "open3"
 require "timeout"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "isolated_git"
 
 # A real `git pull` runs the global hook shims, the real lefthook binary and the repository's
 # lefthook.yml; the detached sweep it starts removes merged worktrees. gh and herdr are stubbed.

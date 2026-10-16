@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "yaml"
+require_relative "isolated_git"
 
 class GhDashConfigTest < Minitest::Test
   CONFIG_PATH = File.expand_path("../github/.config/gh-dash/config.yml", __dir__)

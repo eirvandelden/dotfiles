@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "delivery_harness"
+require_relative "isolated_git"
 
 # `ship` is the second half of delivery: mark the draft PR ready, wait for CI, and (without
 # --no-merge) merge it with a merge commit and delete the remote branch. gh is a stub; see

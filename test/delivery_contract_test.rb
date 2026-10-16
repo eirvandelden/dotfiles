@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "yaml"
+require_relative "isolated_git"
 
 # Delivery is mostly script behaviour (deliver_test, ship_test, open_pr_dash_test), but who runs
 # which script, and when, is skill and playbook text. These contract tests pin the text that carries

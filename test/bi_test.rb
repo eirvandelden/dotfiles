@@ -5,6 +5,7 @@ require "open3"
 require "rbconfig"
 require "timeout"
 require "tmpdir"
+require_relative "isolated_git"
 
 # `bi` installs gems with rv. Bundler only resolves the lockfile; rv does every install.
 # Each test builds a project in a temporary directory, with a HOME there and a PATH of

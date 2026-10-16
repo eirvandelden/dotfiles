@@ -4,6 +4,7 @@ require "digest"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # herdr plays each notification tone at full level and has no volume setting. quieter-tones.sh
 # writes a 0.3-level mp3 copy of each source tone into ~/Documents/Tones/herdr. Stub tests put a
