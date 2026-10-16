@@ -11,7 +11,7 @@ Use this skill in the plan stage, before the file-level plan. It tells you how t
 
 List the messages first: who asks whom to do what. Find the objects after that. An object exists because it receives a message. A class that receives no message has no reason to exist.
 
-Write each message as a public method signature in the design. The `plan` skill asks for inline RBS comments (`#:`) above each `def`, with a prose summary.
+Write each message as a public method signature in the design. The `plan` skill asks for a one-line summary per class and an inline RBS comment (`#:`) above each `def`, as `ruby-style` says.
 
 ## Deep modules
 

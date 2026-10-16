@@ -55,7 +55,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 
    ### Signatures
 
-   <public methods, each with a prose summary and an inline RBS comment>
+   <each touched class with its one-line summary, then its public methods, each with an inline RBS comment (`#:`), as `ruby-style` says>
 
    Checked by: steep check
 

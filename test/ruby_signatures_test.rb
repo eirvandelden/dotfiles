@@ -23,6 +23,20 @@ class RubySignaturesTest < Minitest::Test
     assert_match(%r{never in a hand-written `sig/\*\.rbs` file}, text)
   end
 
+  def test_design_templates_ask_for_a_class_summary_and_a_signature_per_method
+    templates = {
+      "plan/SKILL.md" => File.join(SKILLS, "plan/SKILL.md"),
+      "software-design/SKILL.md" => File.join(SKILLS, "software-design/SKILL.md"),
+      "architect.md" => File.join(ROOT, "claude/.claude/agents/architect.md")
+    }
+    templates.each do |name, path|
+      text = File.read(path)
+
+      refute_match(/prose summary/i, text, "#{name} asks for a prose summary per method")
+      assert_match(/one-line summary/i, text, "#{name} does not ask for the class summary")
+    end
+  end
+
   def test_signatures_are_checked_by_steep_or_marked_not_checked
     text = File.read(File.join(SKILLS, "plan/SKILL.md"))
 
