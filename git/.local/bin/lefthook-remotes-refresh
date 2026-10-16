@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+# Reset every lefthook remote cache of the dotfiles config under ~/Developer to origin's main.
+# Repositories that load lefthook.yml through `remotes` read these clones, and nothing refreshes them.
+# Plain ruby, not rv: it runs from any shell.
+#
+# One line per cache on stdout: `updated <repo>: <old> -> <new>` or `current <repo>`.
+# A cache whose fetch fails prints `failed <repo>: <reason>` on stderr; the rest still update and
+# the exit status is 1.
+require "open3"
+
+class LefthookRemotesRefresh
+  CACHES = File.join("*", ".git", "info", "lefthook-remotes", "dotfiles").freeze
+  HOOK_ENVIRONMENT = %w[GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR
+                        GIT_OBJECT_DIRECTORY].freeze
+  Failure = Class.new(StandardError)
+
+  def self.run!
+    new.run!
+  end
+
+  def run!
+    results = caches.map { |cache| refresh(cache) }
+    exit(results.all? ? 0 : 1)
+  end
+
+  private
+
+  def caches
+    Dir.glob(File.join(Dir.home, "Developer", CACHES)).sort
+  end
+
+  def refresh(cache)
+    before = state(cache)
+    reset_to_origin(cache)
+    report(cache, before)
+    true
+  rescue Failure => error
+    warn("failed #{repository(cache)}: #{error.message}")
+    false
+  end
+
+  def reset_to_origin(cache)
+    git(cache, "fetch", "--quiet", "--depth", "1", "origin", "main")
+    git(cache, "checkout", "--quiet", "--force", "-B", "main", "FETCH_HEAD")
+    git(cache, "clean", "-ffdxq")
+  end
+
+  def report(cache, before)
+    after = state(cache)
+    if after == before
+      puts("current #{repository(cache)}")
+    else
+      puts("updated #{repository(cache)}: #{before[:revision]} -> #{after[:revision]}")
+    end
+  end
+
+  def state(cache)
+    { revision: git(cache, "rev-parse", "--short=7", "HEAD").strip, status: git(cache, "status", "--porcelain") }
+  end
+
+  def repository(cache)
+    File.basename(File.expand_path("../../../..", cache))
+  end
+
+  def git(cache, *args)
+    output, error, status = Open3.capture3(environment, "git", "-C", cache, *args)
+    raise Failure, error.lines.first.to_s.strip unless status.success?
+
+    output
+  end
+
+  def environment
+    HOOK_ENVIRONMENT.to_h { |name| [ name, nil ] }.merge("GIT_TERMINAL_PROMPT" => "0")
+  end
+end
+
+LefthookRemotesRefresh.run! if $PROGRAM_NAME == __FILE__
