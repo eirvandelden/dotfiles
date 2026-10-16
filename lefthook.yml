@@ -84,6 +84,7 @@ pre-commit:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
+          --exclude="agents/.agents/skills/*/references/*" \
           --line-number \
           --with-filename \
           --fixed-strings \
@@ -296,6 +297,7 @@ pre-push:
         ! grep \
           --exclude="sorbet/**/*" \
           --exclude="lefthook.yml" \
+          --exclude="agents/.agents/skills/*/references/*" \
           --line-number \
           --with-filename \
           --fixed-strings \
