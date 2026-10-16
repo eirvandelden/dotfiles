@@ -102,7 +102,39 @@ Not checked: this repository has no Steep.
 ## Integration points
 
 - `auto-accept` reads the first `Status:` line and everything from `## Critique` to the end. `## Design` comes after the header and never holds a `## Critique` line.
-- `fill-pr-template` reads `## Files that change`, `## Order of work
+- `fill-pr-template` reads `## Files that change`, `## Order of work`, `## Proof` by heading, and now `## Design` with its subsections. Its `parse_sections` splits on every heading level, so `## Design` needs the new level-aware reader.
+- `test-writer`, `implementer` and `implement` read `## Proof`; design proof lines use the same arrow format.
+- `bin/generate-codex-agents` produces `codex/.codex/agents/architect.toml`; the drift test requires it committed.
+- `test/skill_parity_test.rb`: new skills need `agents/openai.yaml` and an `agents/.agents/skills/<name>` link; skill bodies may not name `claude/.claude/skills/` paths.
+- `test/artifact_chain_skills_test.rb` forbids a stage-shaped word "spec" in live paths.
+- `herdr/.config/herdr/scripts/start-review.sh` hardcodes the pass names in its prompt.
+- The `no-hardwrap` pre-commit hook: one line per paragraph and list item.
+
+## Files that change
+
+Restored 2026-10-13 from the plan stage's transcript and checked against the branch diff; the original section was lost in an edit before implementation.
+
+- `claude/.claude/skills/plan/SKILL.md` — `## Design` in the template; design gate step "Agree the design" (glossary check, architects in parallel, diagrams via `mermaid-show`, alternatives, wait for "agreed"/"accepted"); design proof lines; Signatures line; auto mode and critique cover the design; Codex section names the architect and the plain-text alternatives.
+- `claude/.claude/skills/intent/SKILL.md` — interview reads the glossary, challenges avoided words, records agreed terms; Accept commits the glossary separately in a personal repository.
+- `claude/.claude/skills/implement/SKILL.md` — follow `ruby-style` for signatures; run `steep check` where the plan says so; design proof lines are built like criteria.
+- `claude/.claude/skills/software-design/SKILL.md`, `agents/openai.yaml` — new.
+- `claude/.claude/skills/glossary/SKILL.md`, `agents/openai.yaml` — new.
+- `claude/.claude/skills/diagrams/SKILL.md`, `agents/openai.yaml`, `scripts/mermaid-show`, `scripts/mermaid-ascii.mjs` — new.
+- `agents/.agents/skills/{software-design,glossary,diagrams}` — new relative symlinks.
+- `claude/.claude/agents/architect.md` — new, tools `[Read, Grep, Glob]`: no `Bash`, so it cannot write in Claude, and the generator gives it the read-only sandbox in Codex. `codex/.codex/agents/architect.toml` — generated.
+- `claude/.claude/agents/reviewer.md` — a fourth pass, Design; `codex/.codex/agents/reviewer.toml` regenerated.
+- `claude/.claude/skills/new-repo-setup/references/REVIEW.md` — Design pass.
+- `herdr/.config/herdr/scripts/start-review.sh` — prompt names the Design pass.
+- `claude/.claude/skills/finish/scripts/fill-pr-template` — copies `## Design` into the Implementation part.
+- `claude/.claude/skills/object-oriented-design/SKILL.md` — points to `software-design` and to `ruby-style` for documentation.
+- `claude/.claude/skills/ruby-style/SKILL.md` — one personal line: signatures sit above the `def`, never in a hand-written `sig/*.rbs` file; the plan's `### Signatures` says whether Steep checks them. The rest of the documentation rule is #201's.
+- `SKILLS-INDEX.md` — entries for the three new skills.
+- `packages.conf` — `mermaid-cli`, `timg` in `BREW`; `beautiful-mermaid` in `NPM_PACKAGES`.
+- `git/.config/git/ignore.global` — `GLOSSARY.local.md`.
+- `herdr/.config/herdr/plugins/config/herdr-file-viewer/config.toml` — unchanged: step 14's check failed (see `evidence.md`).
+- Tests: new `test/design_section_test.rb`, `test/glossary_skill_test.rb`, `test/diagrams_skill_test.rb`, `test/mermaid_show_test.rb`, `test/architect_agent_test.rb`, `test/design_review_pass_test.rb`, `test/ruby_signatures_test.rb`; changed `test/approval_word_test.rb` (step 7 → 8), `test/skill_parity_test.rb` (Codex criterion), `test/fill_pr_template_test.rb` (design in the PR body).
+
+## Order of work
 
 Each numbered step is one commit. In every step the named tests are written first, run, and watched fail for the right reason before any skill, agent, script or config text changes. Run one file with `ruby -Itest test/<file>.rb`.
 
@@ -158,7 +190,7 @@ Each numbered step is one commit. In every step the named tests are written firs
 - An agreed term survives `finish` in `GLOSSARY.md` or `GLOSSARY.local.md` → `test/glossary_skill_test.rb` `test_the_glossary_lives_outside_the_change_folder_by_scope`
 - An avoided word gets the glossary term and a question → `test/glossary_skill_test.rb` `test_an_avoided_word_gets_the_glossary_term_and_a_question`
 - The before ERD comes from rails-erd, asks when missing, falls back to `db/schema.rb` → `test/diagrams_skill_test.rb` `test_the_before_erd_comes_from_rails_erd_or_schema_rb`
-- Mermaid class, ER, sequence and state diagrams print as text and show as an image → `test/mermaid_show_test.rb` `test_prints_a_diagram_as_text`, `test_image_mode_renders_a_png_and_shows_it_with_timg`; check: step 13 real render, recorded in `evidence.md`
+- Mermaid class, ER, sequence and state diagrams print as text and show as an image → `test/mermaid_show_test.rb` `test_prints_a_diagram_as_text`, `test_image_mode_calls_mmdc_then_timg`; check: step 13 real render, recorded in `evidence.md`
 - Two or three architects at once with different goals; Codex gets the same agent → `test/architect_agent_test.rb` `test_the_plan_runs_two_or_three_architects_with_different_goals`, `test_the_architect_is_read_only_and_generated_for_codex` (no `Bash`; `architect.toml` exists and matches the generator)
 - The reviewer reports unsigned public methods, Law of Demeter violations, N+1 loops, avoided words → `test/design_review_pass_test.rb` `test_the_design_pass_names_all_four_findings`
 - New Ruby code in a personal repository has a one-line class summary and an inline RBS signature per method, no YARD tags; work keeps YARD → #201's `test/rbs_inline_tooling_test.rb` (ruby-style and rails-architecture rules); `test/ruby_signatures_test.rb` `test_implement_and_object_oriented_design_defer_to_ruby_style`, `test_ruby_style_forbids_hand_written_sig_files`; `test/mermaid_show_test.rb` `test_every_method_has_an_inline_signature`
