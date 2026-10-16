@@ -15,7 +15,8 @@ class MermaidShow
   INSTALL_HINT = "mermaid-show needs beautiful-mermaid: npm install -g beautiful-mermaid".freeze
   MISSING_PACKAGE = 3 # mermaid-ascii.mjs exits 3 when beautiful-mermaid is not installed
   TOOL_HINTS = { "node" => "install Node.js", "mmdc" => "brew install mermaid-cli", "timg" => "brew install timg" }.freeze
-  OPENING_FENCE = /\A(`{3,}|~{3,})\s*(\S*)/
+  # A fence opens with up to any indent, so a fence inside a list item counts too.
+  OPENING_FENCE = /\A( *)(`{3,}|~{3,})(.*)\z/
   Failure = Class.new(StandardError)
 
   #: (Array[String] argv, ?out: IO, ?input: IO) -> void
@@ -36,8 +37,8 @@ class MermaidShow
 
   #: (String markdown) -> String
   def replace_fences(markdown)
-    fences(markdown).map do |kind, text|
-      kind == :mermaid ? "```text\n#{text_for(text)}\n```\n" : text
+    fences(markdown).map do |kind, text, indent|
+      kind == :mermaid ? indented("```text\n#{text_for(text)}\n```\n", indent) : text
     end.join
   end
 
@@ -94,7 +95,7 @@ class MermaidShow
     content = File.read(path)
     return [ content ] unless File.extname(path) == ".md"
 
-    fences(content).filter_map { |kind, text| text if kind == :mermaid }
+    fences(content).filter_map { |kind, text, _indent| text if kind == :mermaid }
   end
 
   #: (String source, String dir, String png) -> void
@@ -106,8 +107,8 @@ class MermaidShow
     raise Failure, "mmdc failed: #{stderr}".strip unless status.success?
   end
 
-  # Splits markdown into [:mermaid, source] and [:text, lines] chunks; the text chunks keep every byte.
-  #: (String markdown) -> Array[[Symbol, String]]
+  # Splits markdown into [:mermaid, source, indent] and [:text, lines, ""] chunks; text chunks keep every byte.
+  #: (String markdown) -> Array[[Symbol, String, String]]
   def fences(markdown)
     chunks = []
     open_fence = nil
@@ -118,7 +119,7 @@ class MermaidShow
   end
 
   # Handles one line: opens, extends or closes a fence; returns the fence still open.
-  #: (Array[[Symbol, String]] chunks, Hash[Symbol, untyped]? open_fence, String line) -> Hash[Symbol, untyped]?
+  #: (Array[[Symbol, String, String]] chunks, Hash[Symbol, untyped]? open_fence, String line) -> Hash[Symbol, untyped]?
   def advance(chunks, open_fence, line)
     return open_new(chunks, line) unless open_fence
 
@@ -129,18 +130,19 @@ class MermaidShow
     nil
   end
 
-  #: (Array[[Symbol, String]] chunks, String line) -> Hash[Symbol, untyped]?
+  # A backtick fence's info string cannot hold a backtick, so "```foo```" is text, not a fence.
+  #: (Array[[Symbol, String, String]] chunks, String line) -> Hash[Symbol, untyped]?
   def open_new(chunks, line)
-    match = line.match(OPENING_FENCE)
-    return add_text(chunks, line) unless match
+    match = line.chomp.match(OPENING_FENCE)
+    return add_text(chunks, line) if match.nil? || (match[2].start_with?("`") && match[3].include?("`"))
 
-    { marker: match[1], language: match[2], lines: [ line ] }
+    { indent: match[1], marker: match[2], language: match[3].strip.split.first.to_s, lines: [ line ] }
   end
 
   # Appends plain text to the last text chunk; returns nil because no fence is open.
-  #: (Array[[Symbol, String]] chunks, String line) -> nil
+  #: (Array[[Symbol, String, String]] chunks, String line) -> nil
   def add_text(chunks, line)
-    chunks.last&.first == :text ? chunks.last[1] += line : chunks << [ :text, +line ]
+    chunks.last&.first == :text ? chunks.last[1] += line : chunks << [ :text, +line, "" ]
     nil
   end
 
@@ -152,15 +154,26 @@ class MermaidShow
   end
 
   # Turns a finished fence into chunks; a Mermaid backtick fence becomes one :mermaid chunk.
-  #: (Hash[Symbol, untyped]? fence, ?closed: bool) -> Array[[Symbol, String]]
+  #: (Hash[Symbol, untyped]? fence, ?closed: bool) -> Array[[Symbol, String, String]]
   def flush(fence, closed: false)
     return [] unless fence
 
     if closed && fence[:language] == "mermaid" && fence[:marker].start_with?("`")
-      [ [ :mermaid, fence[:lines][1...-1].join ] ]
+      [ [ :mermaid, dedented(fence[:lines][1...-1], fence[:indent]), fence[:indent] ] ]
     else
-      [ [ :text, fence[:lines].join ] ]
+      [ [ :text, fence[:lines].join, "" ] ]
     end
+  end
+
+  # Removes the fence's indent from each source line, as far as the line has it.
+  #: (Array[String] lines, String indent) -> String
+  def dedented(lines, indent)
+    lines.map { |line| line.sub(/\A {0,#{indent.length}}/, "") }.join
+  end
+
+  #: (String text, String indent) -> String
+  def indented(text, indent)
+    text.each_line.map { |line| indent + line }.join
   end
 end
 

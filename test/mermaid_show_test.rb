@@ -69,6 +69,26 @@ class MermaidShowTest < Minitest::Test
     refute_match(/^node /, logged)
   end
 
+  def test_markdown_mode_renders_an_indented_fence_and_keeps_its_indent
+    stub("node", "cat")
+    markdown = "- item\n\n  ```mermaid\n  classDiagram\n    Card --> Closure\n  ```\n"
+
+    result = run_script("--markdown", stdin: markdown)
+
+    assert_predicate(result[:status], :success?, result[:stderr])
+    assert_equal("- item\n\n  ```text\n  classDiagram\n    Card --> Closure\n  ```\n", result[:stdout])
+  end
+
+  def test_a_backtick_line_with_a_backtick_in_its_info_string_opens_no_fence
+    stub_node
+    markdown = "```foo```\n\n```mermaid\n#{DIAGRAM}```\n"
+
+    result = run_script("--markdown", stdin: markdown)
+
+    assert_predicate(result[:status], :success?, result[:stderr])
+    assert_equal("```foo```\n\n```text\nTEXT-DIAGRAM\n```\n", result[:stdout])
+  end
+
   def test_image_mode_calls_mmdc_then_timg
     stub_mmdc
     stub_timg
