@@ -1,6 +1,8 @@
 # Plan: Agent shells use chnode's node
 
-From `intent.md` (2026-10-16). Status: accepted.
+From `intent.md` (2026-10-16). Status: draft.
+
+> Revision needed (coordinator, 2026-10-16): Etienne overruled the Round 1 dismissal of the inherited-root finding. `intent.md` now records that an inherited `CHNODE_ROOT` beats `~/.node-version` unless a project-local `.node-version` applies. Rework the design decisions, files, order of work and Proof for that rule, run a new critique round, and remove this note.
 
 ## Context
 
