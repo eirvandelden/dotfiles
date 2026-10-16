@@ -166,7 +166,6 @@ class NodePathOrderTest < Minitest::Test
 
     assert_equal("", result[:stderr])
     assert_equal([ File.join(root, "bin", "npx"), File.join(root, "lib", "node_modules") ], result[:stdout].lines.map(&:strip))
-    assert(File.directory?(File.join(root, "lib", "node_modules", "beautiful-mermaid")))
   end
 
   def test_a_project_node_version_wins_in_a_login_shell
@@ -269,7 +268,6 @@ class NodePathOrderTest < Minitest::Test
   def write_node_root(root)
     %w[node npx].each { |name| write_exe(File.join(root, "bin", name), "#!/bin/sh\nexit 0\n") }
     write_exe(File.join(root, "bin", "npm"), "#!/bin/sh\n[ \"$1 $2\" = 'root -g' ] && echo '#{root}/lib/node_modules'\n")
-    mkdir(File.join(root, "lib", "node_modules", "beautiful-mermaid"))
   end
 
   def write_homebrew
