@@ -85,6 +85,7 @@ if [[ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/chnode/share/chnode/chnode.sh" ]
     fi
     [[ -r "$file" ]] || return 1
     read -r version < "$file"
+    version="${version//[[:space:]]/}" # a CRLF file leaves a trailing \r
     version="${version#v}"
     [[ -n "$version" ]] && reply=("$file:$version" "$version")
   }

@@ -181,6 +181,13 @@ class NodePathOrderTest < Minitest::Test
     assert_equal("kept also kept", result[:stdout].strip)
   end
 
+  def test_a_project_node_version_with_crlf_line_endings_applies
+    project = mkdir(File.join(@home, "windows-project"))
+    File.write(File.join(project, ".node-version"), "20.11.1\r\n")
+
+    assert_first_node(node_bin("20.11.1"), "command -v node", chdir: project)
+  end
+
   def test_rvs_ruby_stays_ahead_of_homebrews_ruby_in_a_login_shell
     assert_first_node(File.join(@rubies, "ruby"), "command -v ruby", login: true)
   end
