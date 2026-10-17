@@ -215,10 +215,19 @@ class LefthookBranchFilesTest < Minitest::Test
     %w[pre-commit pre-push].each do |hook|
       File.symlink(File.join(@repo_root, "git/.config/git/hooks", hook), File.join(hooks, hook))
     end
-    File.symlink(File.join(@repo_root, "git/.config/git/worktree-tools"), File.join(@home, ".config", "git", "worktree-tools"))
-    dotfiles = File.join(@home, "Developer", "dotfiles")
-    FileUtils.mkdir_p(dotfiles)
-    FileUtils.cp(File.join(@repo_root, "lefthook.yml"), dotfiles)
+    link_worktree_tools
+  end
+
+  # The fallback config runs marker-check from the dotfiles checkout beside it, with no stow link;
+  # review-report-fresh is the only script still reached through ~/.config.
+  def link_worktree_tools
+    tools = File.join(@repo_root, "git/.config/git/worktree-tools")
+    FileUtils.mkdir_p(File.join(@home, ".config", "git", "worktree-tools"))
+    File.symlink(File.join(tools, "review-report-fresh"), File.join(@home, ".config", "git", "worktree-tools", "review-report-fresh"))
+    scripts = File.join(@home, "Developer", "dotfiles", "git", ".config", "git", "worktree-tools")
+    FileUtils.mkdir_p(scripts)
+    File.symlink(File.join(tools, "marker-check"), File.join(scripts, "marker-check"))
+    FileUtils.cp(File.join(@repo_root, "lefthook.yml"), File.join(@home, "Developer", "dotfiles"))
   end
 
   # gh reports no open pull request; shellcheck and yamllint log their arguments to $HOME/<name>.log.
