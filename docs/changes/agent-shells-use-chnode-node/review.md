@@ -51,3 +51,15 @@ No findings.
 Checks: every `test/*_test.rb` passes (67 files; `node_path_order_test.rb` has 20 runs). rubocop on the three changed test files, `shellcheck -S warning -s bash paths.zsh`, and `zsh -n` on `paths.zsh` and `.zprofile` are clean. The Round 6 fix holds: f6e8419d moves the version read into `_chnode_file_version`, and `_chnode_project_file` passes over a file that names no version. `test_an_empty_project_node_version_is_skipped` proves the fall-through to the inherited root and to `~/.node-version`. A probe with the real chnode 0.4.3 and the worktree's `paths.zsh` confirms three results. An empty file walks on to the parent's `.node-version`. A file with only a space and CRLF is skipped. An empty file with no project file above gives the inherited root, or `~/.node-version` without one. The whole branch diff was read again, and nothing new was found. Every test named in `plan.md`'s Proof and its addendum exists. Each acceptance criterion in `intent.md` maps to the test that Round 2 lists. No existing test is weakened, skipped or deleted.
 
 No findings.
+
+## Round 9 — 2026-10-16T20:17Z — d1501a32 (codex)
+
+`codex review --base origin/main`, after CI failed on PR #214 and the change folder was restored.
+
+No findings.
+
+## Round 10 — 2026-10-17T05:50Z — d1501a32 (claude reviewer)
+
+Checks: every `test/*_test.rb` passes; `node_path_order_test.rb` has 20 runs. rubocop on the three changed test files, `shellcheck -S warning -s bash paths.zsh`, and `zsh -n` on `paths.zsh` and `.zprofile` are clean. d1501a32 still proves the reset, independent of the machine. The test asserts that the project's node comes first inside the project. After `cd ../plain` it asserts that `CHNODE_ROOT` is empty and that no `PATH` entry is under `~/.nodes/`. It no longer names the node that follows, so `/usr/local/bin/node` from step 0 of `paths.zsh` on the Ubuntu runner cannot change the result. A mutation check confirms the test still has teeth: in a scratch copy with the `paths.zsh` from 3d6684fd (before the reset fix), the test fails, because `CHNODE_ROOT` stays on `node-20.11.1`. No other test in `node_path_order_test.rb` expects the stub Homebrew node in a non-login shell. The one test that names it runs as a login shell, where the path_helper stand-in puts it first. The whole branch diff was read again, and nothing new was found. Every test named in `plan.md`'s Proof and its addendum exists. Each acceptance criterion in `intent.md` maps to the test that Round 2 lists. No existing test is weakened, skipped or deleted; d1501a32 changes a test from this branch to a machine-independent form and keeps its proof.
+
+No findings.
