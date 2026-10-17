@@ -161,8 +161,8 @@ class LefthookRubocopGitGemTest < Minitest::Test
   end
 
   def stub_review_report_check
-    %w[review-report-fresh marker-check].each do |name|
-      stub = File.join(@home, ".config", "git", "worktree-tools", name)
+    { "review-report-fresh" => ".config", "marker-check" => "Developer/dotfiles/git/.config" }.each do |name, base|
+      stub = File.join(@home, base, "git", "worktree-tools", name)
       FileUtils.mkdir_p(File.dirname(stub))
       File.write(stub, "#!/bin/sh\nexit 0\n")
       FileUtils.chmod("+x", stub)
