@@ -163,7 +163,7 @@ class LefthookLocalHooksTest < Minitest::Test
 
   # The marker checks are not under test here; the stub keeps the fake home free of the stowed script.
   def stub_marker_check
-    stub = File.join(@tmpdir, ".config", "git", "worktree-tools", "marker-check")
+    stub = File.join(@tmpdir, "Developer", "dotfiles", "git", ".config", "git", "worktree-tools", "marker-check")
     FileUtils.mkdir_p(File.dirname(stub))
     File.write(stub, "#!/bin/sh\nexit 0\n")
     FileUtils.chmod("+x", stub)

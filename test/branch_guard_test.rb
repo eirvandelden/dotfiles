@@ -361,7 +361,8 @@ class BranchGuardTest < Minitest::Test
 
   def stub_worktree_tools(*names)
     names.each do |name|
-      stub = File.join(@tmpdir, ".config", "git", "worktree-tools", name)
+      base = name == "marker-check" ? File.join("Developer", "dotfiles", "git", ".config") : ".config"
+      stub = File.join(@tmpdir, base, "git", "worktree-tools", name)
       FileUtils.mkdir_p(File.dirname(stub))
       File.write(stub, "#!/bin/sh\nexit 0\n")
       FileUtils.chmod("+x", stub)
