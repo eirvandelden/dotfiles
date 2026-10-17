@@ -125,6 +125,34 @@ class LefthookBranchFilesTest < Minitest::Test
     assert_commits_and_pushes("third_party/notes.txt", "upstream says #{COMMIT_WORD}\n")
   end
 
+  def test_a_vendored_skill_file_with_a_marker_commits_and_pushes
+    use_the_dotfiles_vendored_list
+    skill_file = "agents/.agents/skills/37signals-style/references/development-philosophy.md"
+
+    assert_commits_and_pushes(skill_file, "Mark a rough spot with #{FIX_WORD} in prose.\n")
+  end
+
+  def test_a_marker_in_a_non_vendored_skill_blocks_the_push
+    use_the_dotfiles_vendored_list
+    commit_without_hooks("agents/.agents/skills/intent/SKILL.md", "# #{FIX_WORD}\n")
+
+    stdout, stderr, status = push
+
+    refute(status.success?)
+    assert_match(/agents\/\.agents\/skills\/intent\/SKILL\.md:1:/, stdout + stderr)
+  end
+
+  def test_a_vendored_shell_file_still_reaches_shellcheck
+    use_the_dotfiles_vendored_list
+    shell_file = "agents/.agents/skills/ruby/scripts/check.sh"
+    commit_without_hooks(shell_file, "# #{FIX_WORD}\n")
+
+    stdout, stderr, status = push
+
+    assert(status.success?, stdout + stderr)
+    assert_equal([ shell_file ], logged("shellcheck"))
+  end
+
   private
 
   def assert_commits_and_pushes(relative_path, content)
@@ -133,6 +161,12 @@ class LefthookBranchFilesTest < Minitest::Test
 
     stdout, stderr, status = push
     assert(status.success?, "push: #{stdout}#{stderr}")
+  end
+
+  # The repository's real .gitattributes, committed on the branch as the first commit.
+  def use_the_dotfiles_vendored_list
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+    commit_without_hooks(".gitattributes", File.read(File.join(@repo_root, ".gitattributes")))
   end
 
   def commit_without_hooks(relative_path, content)

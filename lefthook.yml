@@ -139,13 +139,17 @@ pre-push:
   parallel: true
   # The branch's own changes against origin's default branch, not lefthook's {push_files}: after a rebase
   # that list also holds every file main changed, and the checks then fail on files the branch never touched.
-  # Without an origin default branch it falls back to the push target, and to an empty list without that.
+  # Without an origin default branch it falls back to the push target, and to no changes without that.
+  # The last line is the HEAD file, which no glob matches and marker-check skips. Lefthook skips every
+  # command, no-push-to-main included, while the list is empty (a push that deletes a branch, a branch
+  # without changes), and it drops entries that are not existing files; the HEAD file keeps the list non-empty.
   files: |
     base=$(git rev-parse -q --verify refs/remotes/origin/HEAD ||
       git rev-parse -q --verify refs/remotes/origin/main ||
       git rev-parse -q --verify refs/remotes/origin/master) && base=$(git merge-base "$base" HEAD) ||
-      base=$(git rev-parse -q --verify '@{push}') || exit 0
-    git diff --name-only --diff-filter=d "$base" HEAD
+      base=$(git rev-parse -q --verify '@{push}') || base=
+    [ -z "$base" ] || git diff --name-only --diff-filter=d "$base" HEAD
+    git rev-parse --git-path HEAD
   commands:
     # Do not push without security checking
     brakeman:

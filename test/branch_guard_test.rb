@@ -355,11 +355,17 @@ class BranchGuardTest < Minitest::Test
     dotfiles = File.join(@tmpdir, "Developer", "dotfiles")
     FileUtils.mkdir_p(dotfiles)
     FileUtils.cp(File.join(REPO_ROOT, "lefthook.yml"), dotfiles)
-    stub = File.join(@tmpdir, ".config", "git", "worktree-tools", "review-report-fresh")
-    FileUtils.mkdir_p(File.dirname(stub))
-    File.write(stub, "#!/bin/sh\nexit 0\n")
-    FileUtils.chmod("+x", stub)
+    stub_worktree_tools("review-report-fresh", "marker-check")
     setup_repo(branch)
+  end
+
+  def stub_worktree_tools(*names)
+    names.each do |name|
+      stub = File.join(@tmpdir, ".config", "git", "worktree-tools", name)
+      FileUtils.mkdir_p(File.dirname(stub))
+      File.write(stub, "#!/bin/sh\nexit 0\n")
+      FileUtils.chmod("+x", stub)
+    end
   end
 
   def assert_push_refused(*args)
