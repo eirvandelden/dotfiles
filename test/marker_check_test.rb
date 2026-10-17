@@ -122,6 +122,15 @@ class MarkerCheckTest < Minitest::Test
     assert_equal(0, status.exitstatus)
   end
 
+  def test_skips_the_git_file_of_a_linked_worktree
+    FileUtils.rm_rf(File.join(@repo, ".git"))
+    write(".git", "gitdir: /repos/#{WORD}/.git/worktrees/x\n")
+
+    _, status = check(".git")
+
+    assert_equal(0, status.exitstatus)
+  end
+
   def test_handles_a_file_name_with_spaces
     write("my notes.txt", "# #{WORD}\n")
 
