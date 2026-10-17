@@ -16,7 +16,10 @@ pre-commit:
     erb_lint:
       tags: erb style
       glob: "*.{erb}"
-      run: erb_lint {staged_files}
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
+      run: |
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+        erb_lint {staged_files}
     eslint:
       tags: javascript linter
       glob: "*.{js,ts,jsx,tsx}"
@@ -160,7 +163,9 @@ pre-push:
       # Brakeman only understands Rails applications. Everywhere else it exits 4 with
       # "Please supply the path to a Rails application", which blocked the push in every
       # plain Ruby project and gem.
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
       run: |
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
         if [ -f config/application.rb ]; then
           brakeman --quiet --no-pager --no-progress --no-summary
         else
@@ -207,7 +212,10 @@ pre-push:
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: erb_lint {push_files}
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
+      run: |
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+        erb_lint {push_files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
@@ -225,7 +233,9 @@ pre-push:
         - tests
         - minitest
       glob: "app/**/*.rb"
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
       run: |
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
         for file in {push_files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
@@ -245,7 +255,9 @@ pre-push:
         - tests
         - rspec
       glob: "app/**/*.rb"
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
       run: |
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
         for file in {push_files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
@@ -358,15 +370,21 @@ migrations:
       priority: 1
       glob: "Gemfile*"
       # A deleted root Gemfile still reaches {files}; bi reports a missing Gemfile and exits 0.
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
       run: |
         : {files}
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
         bi
     migrate:
       priority: 2
       glob:
         - "db/migrate/*"
         - "db/schema.rb"
-      run: ": {files}; rails db:migrate"
+      # The hook's git variables are cleared for the reason given on the pre-commit rubocop job.
+      run: |
+        : {files}
+        unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+        rails db:migrate
     client-dependencies:
       priority: 3
       glob: "{yarn.lock,package-lock.json,package.json}"

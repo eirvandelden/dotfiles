@@ -155,7 +155,7 @@ A pull whose new commits change no files does not sweep. The hooks list the chan
 Rollout, after the merge, on each machine:
 
 - Restow: `cd ~/Developer/dotfiles && stow -t "$HOME" --ignore='hooks/(post-merge|pre-commit|pre-push)' git`. Until then the hook command does nothing and prints nothing.
-- In each repository that references the global config through `remotes`, refresh the clone by hand: `git -C <repo>/.git/info/lefthook-remotes/dotfiles pull`. The hook shims never refresh it.
+- To refresh the clone of the global config in every repository that references it through `remotes`, run `lefthook-remotes-refresh`. The hook shims never refresh it.
 
 ### How It Works
 
