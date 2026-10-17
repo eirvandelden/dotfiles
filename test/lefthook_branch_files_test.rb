@@ -39,7 +39,7 @@ class LefthookBranchFilesTest < Minitest::Test
     main_adds("notes/main-only.txt", "# #{FIX_WORD} main wrote this\n")
     rebase_over_main
 
-    stdout, stderr, status = push
+    stdout, stderr, status = push("--force-with-lease")
 
     assert(status.success?, stdout + stderr)
   end
@@ -117,8 +117,8 @@ class LefthookBranchFilesTest < Minitest::Test
     flunk("git #{arguments.join(' ')} failed: #{stderr}") unless status.success?
   end
 
-  def push
-    Open3.capture3(environment, "git", "-C", @work, "push", "-u", "origin", BRANCH)
+  def push(*options)
+    Open3.capture3(environment, "git", "-C", @work, "push", *options, "-u", "origin", BRANCH)
   end
 
   def environment
