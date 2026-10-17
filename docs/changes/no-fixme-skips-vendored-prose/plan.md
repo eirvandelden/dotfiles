@@ -109,5 +109,3 @@ Domain skills applied: dotfiles-maintenance (stow layout, global fallback config
 - A hook-level `files:` changes the glob gate of brakeman, bundle-audit, browserslist and the `lefthook-local.yml` commands too. → dismissed: the scratch run on lefthook 2.2.2 showed a template-less `glob: "Gemfile"` command skip with "no matching push files" while `{files}` held `Gemfile`, so their gate stays on the push files; the design note now cites that run.
 - Only shellcheck and yamllint are exercised, so a missed `{push_files}` elsewhere or a linter skipping vendored files would go unnoticed. → fixed (structural test that no pre-push command uses `{push_files}`, and a vendored `.sh` file must still reach the shellcheck stub)
 - The `@{push}` fallback runs `git diff` against an unresolved revision when there is no push target. → fixed (the fallback resolves `@{push}` with `git rev-parse -q --verify` first and exits 0 with no output when it fails; checked in the scratch repository; new test for a repository without an origin default branch)
-
-Reproduction: committed
