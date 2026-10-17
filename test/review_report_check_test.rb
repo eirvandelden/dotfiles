@@ -189,7 +189,7 @@ class ReviewReportCheckTest < Minitest::Test
   def test_the_pre_push_hook_runs_the_check_with_skip_without_pr
     lefthook = File.read(File.expand_path("../lefthook.yml", __dir__))
 
-    assert_match(%r{run: ~/\.config/git/worktree-tools/review-report-fresh --skip-without-pr$}, lefthook)
+    assert_match(%r{^\s+~/\.config/git/worktree-tools/review-report-fresh --skip-without-pr$}, lefthook)
   end
 
   def test_a_work_branch_with_untracked_artefacts_passes
