@@ -161,10 +161,12 @@ class LefthookRubocopGitGemTest < Minitest::Test
   end
 
   def stub_review_report_check
-    stub = File.join(@home, ".config", "git", "worktree-tools", "review-report-fresh")
-    FileUtils.mkdir_p(File.dirname(stub))
-    File.write(stub, "#!/bin/sh\nexit 0\n")
-    FileUtils.chmod("+x", stub)
+    %w[review-report-fresh marker-check].each do |name|
+      stub = File.join(@home, ".config", "git", "worktree-tools", name)
+      FileUtils.mkdir_p(File.dirname(stub))
+      File.write(stub, "#!/bin/sh\nexit 0\n")
+      FileUtils.chmod("+x", stub)
+    end
   end
 
   def write_global_gitconfig
