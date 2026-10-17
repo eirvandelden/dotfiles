@@ -80,17 +80,19 @@ pre-commit:
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
     # marker-check skips vendored files. A repository lists its vendored paths in .gitattributes with
     # linguist-vendored; a vendor/ directory is vendored without a line.
+    # This file is the global fallback config and lives in the dotfiles checkout. The script therefore
+    # runs from that checkout, not from a stow link that exists only after a restow.
     no-fixme:
       tags: fixme
       # Skill reference docs quote the marker as prose (vendored Rails docs among them).
       # First-party reference docs lose the check too; they hold no code.
       exclude:
         - "**/skills/*/references/**"
-      run: ~/.config/git/worktree-tools/marker-check FIXME {staged_files}
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check FIXME {staged_files}
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
-      run: ~/.config/git/worktree-tools/marker-check NOCOMMIT {staged_files}
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check NOCOMMIT {staged_files}
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
     no-merge-conflicts:
@@ -301,11 +303,11 @@ pre-push:
       # First-party reference docs lose the check too; they hold no code.
       exclude:
         - "**/skills/*/references/**"
-      run: ~/.config/git/worktree-tools/marker-check FIXME {files}
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check FIXME {files}
       fail_text: Your pushed files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
-      run: ~/.config/git/worktree-tools/marker-check NOCOMMIT {files}
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check NOCOMMIT {files}
       fail_text: Your pushed files include a NOCOMMIT. See above for details.
     review-report-fresh:
       tags: review
