@@ -287,11 +287,15 @@ class BranchGuardTest < Minitest::Test
     assert_push_refused("origin", "feature:feature", "HEAD:main")
   end
 
+  # The fallback's pre-push command passes the hook-level file list to a no-op, so it runs on an unchanged branch.
+  FILES_NO_OP = ": {files}\n"
+
   def test_the_fallback_config_duplicates_the_guard_commands_exactly
     fallback = YAML.safe_load_file(File.join(REPO_ROOT, "lefthook.yml"))
     guard = YAML.safe_load_file(GUARD_FILE)
     guard.each do |hook, section|
-      assert_equal(section["commands"]["no-push-to-main"], fallback.dig(hook, "commands", "no-push-to-main"), hook)
+      copy = fallback.dig(hook, "commands", "no-push-to-main")
+      assert_equal(section["commands"]["no-push-to-main"], copy.merge("run" => copy["run"].delete_prefix(FILES_NO_OP)), hook)
     end
   end
 
