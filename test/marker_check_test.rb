@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require "yaml"
 require_relative "isolated_git"
 
 # marker-check <word> <file>...: exits 1 and prints path:line:text for each file that holds the word,
@@ -11,6 +12,8 @@ require_relative "isolated_git"
 class MarkerCheckTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/marker-check", __dir__)
   WORD = "FIX" + "ME"
+  OTHER_WORD = "NO" + "COMMIT"
+  REPO_ROOT = File.expand_path("..", __dir__)
 
   def setup
     @repo = Dir.mktmpdir
@@ -82,6 +85,26 @@ class MarkerCheckTest < Minitest::Test
     assert_equal(0, status.exitstatus)
   end
 
+  def test_skips_lefthook_local_yml
+    write("lefthook-local.yml", "# #{WORD}\n")
+
+    _, status = check("lefthook-local.yml")
+
+    assert_equal(0, status.exitstatus)
+  end
+
+  def test_the_local_config_calls_the_repository_copy_for_all_four_checks
+    config = YAML.load_file(File.join(REPO_ROOT, "lefthook-local.yml"))
+    expected = { "pre-commit" => "{staged_files}", "pre-push" => "{files}" }
+
+    expected.each do |hook, files|
+      { "no-fixme" => WORD, "no-nocommit" => OTHER_WORD }.each do |name, word|
+        run = config.dig(hook, "commands", name, "run")
+        assert_equal("git/.config/git/worktree-tools/marker-check #{word} #{files}", run, "#{hook} #{name}")
+      end
+    end
+  end
+
   def test_skips_a_path_inside_the_git_directory
     write(".git/HEAD", "ref: refs/heads/#{WORD}-branch\n")
 
@@ -100,6 +123,12 @@ class MarkerCheckTest < Minitest::Test
   end
 
   private
+
+  # The run line of every marker-check command in a lefthook config, with the word in place.
+  def marker_commands(path)
+    YAML.load_file(path).values.grep(Hash).flat_map { |hook| hook.fetch("commands", {}).values }
+        .filter_map { |command| command["run"] if command["run"].to_s.include?("marker-check") }
+  end
 
   def write(relative_path, content)
     path = File.join(@repo, relative_path)
