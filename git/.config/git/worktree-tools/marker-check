@@ -3,12 +3,13 @@
 # The no-fixme and no-nocommit hooks call this. It prints path:line:text for every line that holds the
 # word, and exits 1 when it printed anything. It skips vendored files: a path marked linguist-vendored in
 # .gitattributes, or under a vendor/ directory unless the attribute says it is not vendored. It also skips
-# lefthook.yml, which names the words, and sorbet/ paths. Plain ruby, as the other worktree-tools scripts.
+# lefthook.yml, which names the words, sorbet/ paths and the git directory, whose HEAD file the pre-push
+# file list always carries. Plain ruby, as the other worktree-tools scripts.
 require "open3"
 
 class MarkerCheck
   VENDOR_DIRECTORY = %r{(\A|/)vendor/}
-  NEVER_CHECKED = %r{(\A|/)(lefthook\.yml\z|sorbet/)}
+  NEVER_CHECKED = %r{(\A|/)(lefthook\.yml\z|sorbet/|\.git/)}
 
   def initialize(word, paths)
     @word = word.b
