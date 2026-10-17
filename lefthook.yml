@@ -153,6 +153,15 @@ commit-msg:
 
 pre-push:
   parallel: true
+  # The branch's own changes against origin's default branch, not lefthook's {push_files}: after a rebase
+  # that list also holds every file main changed, and the checks then fail on files the branch never touched.
+  # Without an origin default branch it falls back to the push target, and to an empty list without that.
+  files: |
+    base=$(git rev-parse -q --verify refs/remotes/origin/HEAD ||
+      git rev-parse -q --verify refs/remotes/origin/main ||
+      git rev-parse -q --verify refs/remotes/origin/master) && base=$(git merge-base "$base" HEAD) ||
+      base=$(git rev-parse -q --verify '@{push}') || exit 0
+    git diff --name-only --diff-filter=d "$base" HEAD
   commands:
     # Do not push without security checking
     brakeman:
@@ -200,7 +209,7 @@ pre-push:
         If you need to ignore dependencies in the longer term,
         see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     stylelint:
-      run: npx --no stylelint {push_files}
+      run: npx --no stylelint {files}
       tags: css linter
       glob:
         - "*.{css,scss}"
@@ -211,18 +220,18 @@ pre-push:
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: erb_lint {push_files}
+      run: erb_lint {files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
-      run: npx --no eslint {push_files}
+      run: npx --no eslint {files}
     rubocop:
       tags: linter
       glob: "*.rb"
       # GIT_DIR is unset for the reason given on the pre-commit rubocop job.
       run: |
         unset GIT_DIR
-        rubocop --force-exclusion {push_files}
+        rubocop --force-exclusion {files}
     minitest:
       tags:
         - ruby
@@ -230,7 +239,7 @@ pre-push:
         - minitest
       glob: "app/**/*.rb"
       run: |
-        for file in {push_files}; do
+        for file in {files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
           test_file="test/${base_name}_test.rb"
@@ -250,7 +259,7 @@ pre-push:
         - rspec
       glob: "app/**/*.rb"
       run: |
-        for file in {push_files}; do
+        for file in {files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
           spec_file="spec/${base_name}_spec.rb"
@@ -266,15 +275,15 @@ pre-push:
     shellcheck:
       tags: shell linter
       glob: "*.{sh,bash}"
-      run: shellcheck -x -S warning {push_files}
+      run: shellcheck -x -S warning {files}
     shellcheck-zsh:
       tags: shell linter
       glob: "*.zsh"
-      run: shellcheck -S warning -s bash {push_files}
+      run: shellcheck -S warning -s bash {files}
     yamllint:
       tags: yaml linter
       glob: "*.{yml,yaml}"
-      run: yamllint {push_files}
+      run: yamllint {files}
     # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
     no-push-to-main:
       tags: branch-protection
@@ -307,7 +316,7 @@ pre-push:
           --line-number \
           --with-filename \
           --fixed-strings \
-          FIXME "{push_files}"
+          FIXME "{files}"
       fail_text: Your pushed files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
@@ -318,7 +327,7 @@ pre-push:
           --line-number \
           --with-filename \
           --fixed-strings \
-          NOCOMMIT "{push_files}"
+          NOCOMMIT "{files}"
       fail_text: Your pushed files include a NOCOMMIT. See above for details.
     review-report-fresh:
       tags: review
