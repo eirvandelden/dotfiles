@@ -153,6 +153,17 @@ class LefthookBranchFilesTest < Minitest::Test
     assert_equal([ shell_file ], logged("shellcheck"))
   end
 
+  def test_a_linked_worktree_without_own_changes_cannot_push_to_main
+    worktree = File.join(@home, "linked")
+    git(@work, "worktree", "add", "--quiet", "-b", BRANCH, worktree, "origin/#{TRUNK}")
+    git(worktree, "commit", "--quiet", "--allow-empty", "-m", "empty")
+
+    stdout, stderr, status = Open3.capture3(environment, "git", "-C", worktree, "push", "origin", "HEAD:main")
+
+    refute(status.success?, stdout + stderr)
+    assert_match(/Pushing to main is not allowed/, stdout + stderr)
+  end
+
   private
 
   def assert_commits_and_pushes(relative_path, content)
