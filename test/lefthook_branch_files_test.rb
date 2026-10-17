@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require "yaml"
 require_relative "lefthook_binary"
 require_relative "isolated_git"
 
@@ -44,7 +45,94 @@ class LefthookBranchFilesTest < Minitest::Test
     assert(status.success?, stdout + stderr)
   end
 
+  def test_a_marker_in_an_own_file_blocks_the_push_after_a_rebase
+    branch_pushed_before_main_moved
+    main_adds("notes/main-only.txt", "clean\n")
+    commit_without_hooks("notes/own.txt", "# #{FIX_WORD} mine\n")
+    rebase_over_main
+
+    stdout, stderr, status = push("--force-with-lease")
+
+    refute(status.success?)
+    assert_match(/notes\/own\.txt:1:/, stdout + stderr)
+  end
+
+  def test_a_marker_in_an_own_file_blocks_the_commit
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+
+    stdout, stderr, status = commit_with_hooks("notes/own.txt", "# #{FIX_WORD} mine\n")
+
+    refute(status.success?)
+    assert_match(/notes\/own\.txt:1:/, stdout + stderr)
+  end
+
+  def test_after_a_rebase_shellcheck_and_yamllint_check_only_own_files
+    branch_pushed_before_main_moved
+    main_adds("scripts/main.sh", "echo main\n")
+    main_adds("config/main.yml", "main: true\n")
+    commit_without_hooks("scripts/own.sh", "echo own\n")
+    commit_without_hooks("config/own.yml", "own: true\n")
+    rebase_over_main
+
+    stdout, stderr, status = push("--force-with-lease")
+
+    assert(status.success?, stdout + stderr)
+    assert_equal(%w[scripts/own.sh], logged("shellcheck"))
+    assert_equal(%w[config/own.yml], logged("yamllint"))
+  end
+
+  def test_no_pre_push_command_uses_push_files
+    pre_push = YAML.safe_load_file(File.join(@repo_root, "lefthook.yml")).fetch("pre-push")
+
+    pre_push.fetch("commands").each do |name, command|
+      refute_includes(command.fetch("run"), "{push_files}", "pre-push #{name} still reads {push_files}")
+    end
+  end
+
+  def test_a_fresh_branch_checks_exactly_its_own_files
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+    commit_without_hooks("scripts/own.sh", "echo own\n")
+    commit_without_hooks("config/own.yml", "own: true\n")
+
+    stdout, stderr, status = push
+
+    assert(status.success?, stdout + stderr)
+    assert_equal(%w[scripts/own.sh], logged("shellcheck"))
+    assert_equal(%w[config/own.yml], logged("yamllint"))
+  end
+
+  def test_a_repository_without_an_origin_default_branch_falls_back_to_the_push_target
+    branch_pushed_before_main_moved
+    git(@work, "remote", "set-head", "origin", "--delete")
+    commit_without_hooks("notes/own.txt", "# #{FIX_WORD} mine\n")
+
+    stdout, stderr, status = push
+
+    refute(status.success?)
+    assert_match(/notes\/own\.txt:1:/, stdout + stderr)
+  end
+
   private
+
+  def commit_without_hooks(relative_path, content)
+    commit(relative_path, content, "add #{relative_path}")
+  end
+
+  def commit_with_hooks(relative_path, content)
+    path = File.join(@work, relative_path)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, content)
+    git(@work, "add", relative_path)
+    Open3.capture3(environment, "git", "-C", @work, "commit", "--quiet", "-m", "add #{relative_path}")
+  end
+
+  # The file paths a stub linter received; its flags and their values are left out.
+  def logged(name)
+    path = File.join(@home, "#{name}.log")
+    return [] unless File.exist?(path)
+
+    File.read(path).split.reject { |argument| argument.start_with?("-") || argument == "warning" }
+  end
 
   def branch_pushed_before_main_moved
     git(@work, "checkout", "--quiet", "-b", BRANCH)
