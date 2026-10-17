@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # The journal_administration app answers MCP requests behind a per-user bearer token. Codex reads
 # the token from JOURNAL_ASSISTANT_TOKEN through its config; Claude gets it from a one-time
