@@ -41,12 +41,14 @@ class PullRequestFlowTest < Minitest::Test
   end
 
   def test_lefthook_messages_send_pull_requests_through_deliver
-    messages = File.readlines(File.join(REPO_ROOT, "lefthook.yml")).grep(/is not allowed\./)
+    %w[lefthook.yml lefthook-branch-guard.yml].each do |name|
+      messages = File.readlines(File.join(REPO_ROOT, name)).grep(/is not allowed\./)
 
-    assert_equal(4, messages.size)
-    messages.each do |message|
-      assert_includes(message, "deliver opens the PR")
-      refute_match(/open a PR/, message)
+      assert_equal(4, messages.size, "#{name} holds four refusal messages")
+      messages.each do |message|
+        assert_includes(message, "deliver opens the PR", "#{name}: #{message.strip}")
+        refute_match(/open a PR/, message, "#{name}: #{message.strip}")
+      end
     end
   end
 
