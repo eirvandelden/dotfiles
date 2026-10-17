@@ -51,7 +51,7 @@ class LefthookRemotesRefreshTest < Minitest::Test
     cache = build_cache("caren")
     File.write(File.join(cache, "local.txt"), "local\n")
     git(cache, "add", "local.txt")
-    git(cache, "commit", "--quiet", "-m", "Local commit")
+    git(cache, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "--quiet", "-m", "Local commit")
     File.write(File.join(cache, "lefthook.yml"), "edited\n")
     File.write(File.join(cache, "untracked.txt"), "untracked\n")
     new = advance_origin("caren")
