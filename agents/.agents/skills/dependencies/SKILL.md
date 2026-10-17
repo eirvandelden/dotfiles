@@ -10,7 +10,7 @@ Approval comes first: never add or remove a dependency without asking, and the r
 ## Sources
 
 - Personal: Gemfile source is `gem.coop`, not rubygems.org.
-- Node: use yarn, not npm. Prefer a gem over adding a JavaScript dependency.
+- Node: use npm, not yarn. Prefer a gem over adding a JavaScript dependency.
 
 ## Version constraints
 
