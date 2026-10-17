@@ -93,6 +93,15 @@ class MarkerCheckTest < Minitest::Test
     assert_equal(0, status.exitstatus)
   end
 
+  def test_the_fallback_config_calls_the_script_beside_it
+    commands = marker_commands(File.join(REPO_ROOT, "lefthook.yml"))
+
+    assert_equal(4, commands.size)
+    commands.each do |run|
+      assert_match(%r{\A\$HOME/Developer/dotfiles/git/\.config/git/worktree-tools/marker-check (#{WORD}|#{OTHER_WORD}) }, run)
+    end
+  end
+
   def test_the_local_config_calls_the_repository_copy_for_all_four_checks
     config = YAML.load_file(File.join(REPO_ROOT, "lefthook-local.yml"))
     expected = { "pre-commit" => "{staged_files}", "pre-push" => "{files}" }
