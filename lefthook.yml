@@ -78,31 +78,19 @@ pre-commit:
           exit 1
         fi
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
+    # marker-check skips vendored files. A repository lists its vendored paths in .gitattributes with
+    # linguist-vendored; a vendor/ directory is vendored without a line.
     no-fixme:
       tags: fixme
       # Skill reference docs quote the marker as prose (vendored Rails docs among them).
       # First-party reference docs lose the check too; they hold no code.
       exclude:
         - "**/skills/*/references/**"
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          FIXME "{staged_files}"
+      run: ~/.config/git/worktree-tools/marker-check FIXME {staged_files}
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          NOCOMMIT "{staged_files}"
+      run: ~/.config/git/worktree-tools/marker-check NOCOMMIT {staged_files}
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
     no-merge-conflicts:
@@ -309,25 +297,11 @@ pre-push:
       # First-party reference docs lose the check too; they hold no code.
       exclude:
         - "**/skills/*/references/**"
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          FIXME "{files}"
+      run: ~/.config/git/worktree-tools/marker-check FIXME {files}
       fail_text: Your pushed files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          NOCOMMIT "{files}"
+      run: ~/.config/git/worktree-tools/marker-check NOCOMMIT {files}
       fail_text: Your pushed files include a NOCOMMIT. See above for details.
     review-report-fresh:
       tags: review
