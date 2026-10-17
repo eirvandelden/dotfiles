@@ -112,7 +112,28 @@ class LefthookBranchFilesTest < Minitest::Test
     assert_match(/notes\/own\.txt:1:/, stdout + stderr)
   end
 
+  def test_a_marker_under_vendor_commits_and_pushes
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+
+    assert_commits_and_pushes("vendor/lib/notes.txt", "# #{FIX_WORD} upstream\n")
+  end
+
+  def test_a_nocommit_marker_in_a_listed_vendored_path_commits_and_pushes
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+    commit_without_hooks(".gitattributes", "third_party/** linguist-vendored\n")
+
+    assert_commits_and_pushes("third_party/notes.txt", "upstream says #{COMMIT_WORD}\n")
+  end
+
   private
+
+  def assert_commits_and_pushes(relative_path, content)
+    stdout, stderr, status = commit_with_hooks(relative_path, content)
+    assert(status.success?, "commit: #{stdout}#{stderr}")
+
+    stdout, stderr, status = push
+    assert(status.success?, "push: #{stdout}#{stderr}")
+  end
 
   def commit_without_hooks(relative_path, content)
     commit(relative_path, content, "add #{relative_path}")
