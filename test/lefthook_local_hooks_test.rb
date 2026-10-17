@@ -153,7 +153,31 @@ class LefthookLocalHooksTest < Minitest::Test
     refute_match(/Cannot load custom rule/, out + err)
   end
 
+  def test_pre_commit_stylelint_runs_through_npx_no
+    setup_repo("trunk")
+    stub_real_lefthook
+    stub_npx
+    stage_file("app.css", "a { color: red; }\n")
+    _out, _err, status = git("commit", "-m", "css")
+    assert(status.success?, "Expected the stubbed stylelint to pass")
+    assert_match(/^npx --no stylelint app\.css$/, File.read(@log_file))
+  end
+
+  def test_pre_commit_eslint_runs_through_npx_no
+    setup_repo("trunk")
+    stub_real_lefthook
+    stub_npx
+    stage_file("app.js", "export const answer = 42;\n")
+    _out, _err, status = git("commit", "-m", "js")
+    assert(status.success?, "Expected the stubbed eslint to pass")
+    assert_match(/^npx --no eslint app\.js$/, File.read(@log_file))
+  end
+
   private
+
+  def stub_npx
+    write_executable("npx", "#!/bin/sh\necho \"npx $*\" >> \"#{@log_file}\"\n")
+  end
 
   def hook_invocation(hook_name)
     invocation = File.readlines(@log_file, chomp: true).find { |line| line.start_with?("run #{hook_name}") }

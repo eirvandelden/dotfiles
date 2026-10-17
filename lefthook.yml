@@ -8,7 +8,7 @@ pre-commit:
     stylelint:
       tags: css linter
       glob: "*.{css,scss}"
-      run: yarn stylelint {staged_files}
+      run: npx --no stylelint {staged_files}
     browserslist:
       tags: css browserslist
       glob: ".browserslistrc"
@@ -20,7 +20,7 @@ pre-commit:
     eslint:
       tags: javascript linter
       glob: "*.{js,ts,jsx,tsx}"
-      run: yarn eslint {staged_files}
+      run: npx --no eslint {staged_files}
     rubocop:
       tags: ruby linter
       glob: "*.{rb}"
@@ -196,7 +196,7 @@ pre-push:
         If you need to ignore dependencies in the longer term,
         see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     stylelint:
-      run: yarn stylelint {push_files}
+      run: npx --no stylelint {push_files}
       tags: css linter
       glob:
         - "*.{css,scss}"
@@ -211,7 +211,7 @@ pre-push:
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
-      run: yarn eslint {push_files}
+      run: npx --no eslint {push_files}
     rubocop:
       tags: linter
       glob: "*.rb"
@@ -370,4 +370,4 @@ migrations:
     client-dependencies:
       priority: 3
       glob: "{yarn.lock,package-lock.json,package.json}"
-      run: ": {files}; yarn install"
+      run: ": {files}; if [ -f package-lock.json ]; then npm install; elif [ -f yarn.lock ]; then yarn install; fi"

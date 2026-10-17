@@ -10,6 +10,7 @@ class LefthookPullHooksTest < Minitest::Test
   TRUNK = "trunk"
   NATIVE_LEFTHOOK = LefthookBinary.locate
   MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
+  PACKAGE_LOCK = "{\"name\":\"app\",\"version\":\"1\"}".freeze
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
@@ -59,10 +60,38 @@ class LefthookPullHooksTest < Minitest::Test
     assert_command_ran("yarn install")
   end
 
-  def test_changed_package_lock_json_triggers_yarn_install
-    push_file("package-lock.json", "{\"name\":\"app\",\"version\":\"1\"}")
+  def test_changed_package_lock_json_triggers_npm_install
+    push_file("package-lock.json", PACKAGE_LOCK)
+    pull_in_puller
+    assert_command_ran("npm install")
+    refute_command_ran("yarn install")
+  end
+
+  def test_changed_package_json_beside_package_lock_triggers_npm_install
+    push_file("package-lock.json", PACKAGE_LOCK)
+    pull_in_puller
+    File.write(command_log_path, "")
+    push_file("package.json", "{\"name\":\"app\"}")
+    pull_in_puller
+    assert_command_ran("npm install")
+    refute_command_ran("yarn install")
+  end
+
+  def test_changed_package_json_beside_yarn_lock_triggers_yarn_install
+    push_file("yarn.lock", "# yarn lockfile v1\n")
+    pull_in_puller
+    File.write(command_log_path, "")
+    push_file("package.json", "{\"name\":\"app\"}")
     pull_in_puller
     assert_command_ran("yarn install")
+    refute_command_ran("npm install")
+  end
+
+  def test_changed_package_json_without_lockfile_installs_nothing
+    push_file("package.json", "{\"name\":\"app\"}")
+    pull_in_puller
+    refute_command_ran("yarn install")
+    refute_command_ran("npm install")
   end
 
   def test_pull_on_non_main_branch_still_fires_hooks
@@ -99,7 +128,7 @@ class LefthookPullHooksTest < Minitest::Test
   def test_pull_touching_only_readme_runs_no_migrations
     push_file("README.md", "changed")
     pull_in_puller
-    [ "bundle", "rv ci", "rails db:migrate", "yarn install" ].each { |cmd| refute_command_ran(cmd) }
+    [ "bundle", "rv ci", "rails db:migrate", "yarn install", "npm install" ].each { |cmd| refute_command_ran(cmd) }
   end
 
   def test_pull_touching_only_nested_gemfile_does_not_bundle
@@ -139,7 +168,7 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   def stub_commands
-    %w[rails yarn].each do |cmd|
+    %w[rails yarn npm].each do |cmd|
       write_executable(cmd, "#!/bin/sh\necho \"#{cmd} $*\" >> \"#{@log_file}\"\n")
     end
     write_executable("rv", "#!/bin/sh\necho \"rv $*\" >> \"#{@log_file}\"\n")
@@ -247,6 +276,10 @@ class LefthookPullHooksTest < Minitest::Test
       "GIT_COMMITTER_EMAIL" => "test@example.com",
       "LEFTHOOK_BIN" => NATIVE_LEFTHOOK.to_s
     }
+  end
+
+  def command_log_path
+    @log_file
   end
 
   def command_log
