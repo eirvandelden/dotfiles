@@ -118,8 +118,7 @@ class NoFixmeHookTest < Minitest::Test
   end
 
   def git_unchecked(*arguments, directory: @work)
-    flags = directory == @work ? [ "-C", @work ] : []
-    _, stderr, status = Open3.capture3(environment.merge("LEFTHOOK" => "0"), "git", *flags, *arguments)
+    _, stderr, status = Open3.capture3(environment.merge("LEFTHOOK" => "0"), "git", "-C", directory, *arguments)
     flunk("git #{arguments.join(' ')} failed: #{stderr}") unless status.success?
   end
 
