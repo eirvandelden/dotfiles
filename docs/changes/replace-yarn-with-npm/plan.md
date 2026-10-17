@@ -181,3 +181,8 @@ Domain skills applied: dependencies, rails-testing, dotfiles-maintenance.
 - The shared hook runs `npm install` when no lockfile exists, which can switch a lockless yarn project → fixed (npm only with `package-lock.json`, yarn only with `yarn.lock`, nothing otherwise; new test for the lockless case)
 - The node and npm versions in the plan do not match the critic's shell → fixed (the implementer records the versions per phase instead)
 - Step 3 checks only direct dependency versions → fixed (step 3 compares every `name@version` in `package-lock.json` against `yarn.lock`)
+
+## Decisions recorded (Etienne, 2026-10-17)
+
+- dm-adventure-book stays on yarn. Skip its phase; do not edit `config/environments/production.rb`.
+- The coordinator may fan out `intent.md` and `plan.md` into the other repos, one repo at a time.
