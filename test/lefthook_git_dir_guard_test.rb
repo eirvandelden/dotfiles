@@ -66,6 +66,25 @@ class LefthookGitDirGuardTest < Minitest::Test
     assert_equal(%w[pre-push/brakeman], unguarded_commands(config))
   end
 
+  def test_a_job_in_a_jobs_list_or_group_that_keeps_git_dir_fails_and_names_the_job
+    config = YAML.safe_load(<<~YAML)
+      pre-push:
+        jobs:
+          - name: brakeman
+            run: brakeman
+          - run: bin/rails test
+          - name: linters
+            group:
+              jobs:
+                - name: erb_lint
+                  run: erb_lint {push_files}
+                - name: rubocop
+                  run: env -u GIT_DIR rubocop
+    YAML
+
+    assert_equal(%w[pre-push/brakeman pre-push/1 pre-push/linters/erb_lint], unguarded_commands(config))
+  end
+
   def test_every_listed_bundle_free_job_still_exists
     existing = command_names(YAML.load_file(LEFTHOOK_YML))
     stale = bundle_free_names - existing
@@ -88,8 +107,20 @@ class LefthookGitDirGuardTest < Minitest::Test
   end
 
   def commands(config)
-    config.select { |_hook, body| body.is_a?(Hash) && body["commands"] }.flat_map do |hook, body|
-      body["commands"].map { |job, settings| [ "#{hook}/#{job}", settings["run"].to_s ] }
+    config.select { |_hook, body| body.is_a?(Hash) }.flat_map do |hook, body|
+      named_commands(hook, body["commands"]) + listed_jobs(hook, body["jobs"])
+    end
+  end
+
+  def named_commands(prefix, commands)
+    (commands || {}).map { |job, settings| [ "#{prefix}/#{job}", settings["run"].to_s ] }
+  end
+
+  # Lefthook also runs a hook's `jobs:` list, where a job may be unnamed or hold a nested group.
+  def listed_jobs(prefix, jobs)
+    (jobs || []).each_with_index.flat_map do |job, index|
+      name = "#{prefix}/#{job["name"] || index}"
+      job["group"] ? listed_jobs(name, job["group"]["jobs"]) : [ [ name, job["run"].to_s ] ]
     end
   end
 
