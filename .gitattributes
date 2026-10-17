@@ -1,0 +1,23 @@
+# Vendored content. GitHub Linguist reads linguist-vendored to leave these files out of the language
+# statistics, and git check-attr reads it for marker-check, which skips vendored files in the
+# no-fixme and no-nocommit hooks. The skill folders are the ones whose SKILL.md carries an
+# upstream comment; test/vendored_skills_test.rb keeps this list equal to that set.
+agents/.agents/skills/37signals-style/** linguist-vendored
+agents/.agents/skills/android-intent-security/** linguist-vendored
+agents/.agents/skills/brakeman/** linguist-vendored
+agents/.agents/skills/compound/** linguist-vendored
+agents/.agents/skills/hwc-forms-validation/** linguist-vendored
+agents/.agents/skills/hwc-media-content/** linguist-vendored
+agents/.agents/skills/hwc-navigation-content/** linguist-vendored
+agents/.agents/skills/hwc-realtime-streaming/** linguist-vendored
+agents/.agents/skills/hwc-stimulus-fundamentals/** linguist-vendored
+agents/.agents/skills/hwc-ux-feedback/** linguist-vendored
+agents/.agents/skills/mobilebuildmcp/** linguist-vendored
+agents/.agents/skills/rails-guides/** linguist-vendored
+agents/.agents/skills/rails-upgrade/** linguist-vendored
+agents/.agents/skills/ruby-upgrade/** linguist-vendored
+agents/.agents/skills/ruby/** linguist-vendored
+agents/.agents/skills/sandi-metz-rules/** linguist-vendored
+agents/.agents/skills/systematic-debugging/** linguist-vendored
+agents/.agents/skills/using-sqlite-worktrees/** linguist-vendored
+vim/.vim/colors/solarized.vim linguist-vendored

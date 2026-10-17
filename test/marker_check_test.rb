@@ -82,6 +82,14 @@ class MarkerCheckTest < Minitest::Test
     assert_equal(0, status.exitstatus)
   end
 
+  def test_skips_a_path_inside_the_git_directory
+    write(".git/HEAD", "ref: refs/heads/#{WORD}-branch\n")
+
+    _, status = check(".git/HEAD", "#{@repo}/.git/worktrees/x/HEAD")
+
+    assert_equal(0, status.exitstatus)
+  end
+
   def test_handles_a_file_name_with_spaces
     write("my notes.txt", "# #{WORD}\n")
 
