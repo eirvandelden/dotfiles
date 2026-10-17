@@ -216,7 +216,8 @@ class RvCiFallbackTest < Minitest::Test
   def base_env
     {
       "HOME" => @tmpdir,
-      "PATH" => "#{@bin_dir}:/usr/bin:/bin"
+      "PATH" => "#{@bin_dir}:/usr/bin:/bin",
+      "CHNODE_ROOT" => nil # an inherited root outranks ~/.node-version
     }
   end
 

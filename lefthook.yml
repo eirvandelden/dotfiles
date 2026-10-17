@@ -80,6 +80,10 @@ pre-commit:
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
+      # Skill reference docs quote the marker as prose (vendored Rails docs among them).
+      # First-party reference docs lose the check too; they hold no code.
+      exclude:
+        - "**/skills/*/references/**"
       run: |
         ! grep \
           --exclude="sorbet/**/*" \
@@ -292,6 +296,10 @@ pre-push:
       fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
+      # Skill reference docs quote the marker as prose (vendored Rails docs among them).
+      # First-party reference docs lose the check too; they hold no code.
+      exclude:
+        - "**/skills/*/references/**"
       run: |
         ! grep \
           --exclude="sorbet/**/*" \
