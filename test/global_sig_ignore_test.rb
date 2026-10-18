@@ -47,8 +47,20 @@ class GlobalSigIgnoreTest < Minitest::Test
 
     assert_includes(step, "!sig/")
     commands = YAML.safe_load(step[/```yaml\n(.*?)```/m, 1]).map { |item| item.fetch("run") }
-    assert_match(/rbs-inline --output=sig lib/, commands.fetch(0))
+    assert_match(/rbs-inline --opt-out --output=sig lib/, commands.fetch(0))
     assert_equal([ "git add --intent-to-add sig/", "git diff --exit-code sig/" ], commands.drop(1))
+  end
+
+  def test_gem_sig_ci_step_keeps_hand_written_manifest
+    assert_match(/`sig\/manifest\.yaml`.*hand-written/, step_twelve)
+    Dir.mktmpdir do |gem|
+      FileUtils.mkdir_p(File.join(gem, "sig/foo"))
+      %w[sig/manifest.yaml sig/stale.rbs sig/foo/stale.rbs].each { |path| File.write(File.join(gem, path), "") }
+
+      system(gem_sig_clean_command, chdir: gem, exception: true)
+
+      assert_equal([ "sig/manifest.yaml" ], Dir.glob("sig/**/*", base: gem).select { |path| File.file?(File.join(gem, path)) })
+    end
   end
 
   def test_ruby_style_says_sig_is_generated_except_in_a_gem
@@ -58,6 +70,10 @@ class GlobalSigIgnoreTest < Minitest::Test
   end
 
   private
+
+  def gem_sig_clean_command
+    YAML.safe_load(step_twelve[/```yaml\n(.*?)```/m, 1]).first.fetch("run").split(" && ").first
+  end
 
   def step_twelve
     File.read(File.join(REPO_ROOT, NEW_REPO_SETUP))[/^12\. Types:.*?(?=^## )/m]
