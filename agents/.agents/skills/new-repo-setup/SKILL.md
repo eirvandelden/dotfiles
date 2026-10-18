@@ -45,7 +45,15 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
     end
     ```
 
-    Then run `rbs collection init` and `rbs collection install`, commit `rbs_collection.yaml` and `rbs_collection.lock.yaml`, and add `.gem_rbs_collection/` to the repo's `.gitignore`. The `inline: true` option is Steep 2 syntax. Run `steep check` to confirm.
+    Then run `rbs collection init` and `rbs collection install`, commit `rbs_collection.yaml` and `rbs_collection.lock.yaml`. The global excludes file ignores `sig/` and `.gem_rbs_collection/`, so the repo needs no ignore line of its own. `sig/` is generated output and is never committed. The `inline: true` option is Steep 2 syntax. Run `steep check` to confirm.
+
+    A gem that publishes its types is the exception. Consumers load types only from `sig/` inside the gem package, so the gem commits a `sig/` generated from its inline comments. Add `!sig/` to the gem's `.gitignore` and `rbs-inline` as a development dependency in its Gemfile. CI regenerates `sig/` and fails when the committed copy differs:
+
+    ```yaml
+    - run: rm -rf sig && bundle exec rbs-inline --output=sig lib
+    - run: git add --intent-to-add sig/
+    - run: git diff --exit-code sig/
+    ```
 
 ## The repo context file
 
