@@ -70,7 +70,7 @@ class LefthookPullHooksTest < Minitest::Test
   def test_changed_package_json_beside_package_lock_triggers_npm_install
     push_file("package-lock.json", PACKAGE_LOCK)
     pull_in_puller
-    File.write(command_log_path, "")
+    File.write(@log_file, "")
     push_file("package.json", "{\"name\":\"app\"}")
     pull_in_puller
     assert_command_ran("npm install")
@@ -80,7 +80,7 @@ class LefthookPullHooksTest < Minitest::Test
   def test_changed_package_json_beside_yarn_lock_triggers_yarn_install
     push_file("yarn.lock", "# yarn lockfile v1\n")
     pull_in_puller
-    File.write(command_log_path, "")
+    File.write(@log_file, "")
     push_file("package.json", "{\"name\":\"app\"}")
     pull_in_puller
     assert_command_ran("yarn install")
@@ -276,10 +276,6 @@ class LefthookPullHooksTest < Minitest::Test
       "GIT_COMMITTER_EMAIL" => "test@example.com",
       "LEFTHOOK_BIN" => NATIVE_LEFTHOOK.to_s
     }
-  end
-
-  def command_log_path
-    @log_file
   end
 
   def command_log
