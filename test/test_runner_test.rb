@@ -85,7 +85,7 @@ class TestRunnerTest < Minitest::Test
     # Ends only after the output is closed, so the runner's report of it hits the broken pipe.
     later = write_test("later_test.rb", "def test_later = sleep(0.05) until File.exist?(#{closed.inspect})")
     reader, writer = IO.pipe
-    runner = Process.spawn(RbConfig.ruby, RUNNER, slow, later, chdir: ROOT, out: writer, err: File::NULL)
+    runner = Process.spawn(RbConfig.ruby, RUNNER, "-j", "2", slow, later, chdir: ROOT, out: writer, err: File::NULL)
     writer.close
     Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
     reader.close
