@@ -1,0 +1,138 @@
+{
+  "document": {
+    "block_prefix": "\n",
+    "block_suffix": "\n",
+    "margin": 2
+  },
+  "block_quote": {
+    "indent": 1,
+    "indent_token": "│ ",
+    "color": "7"
+  },
+  "paragraph": {},
+  "list": {
+    "level_indent": 2
+  },
+  "heading": {
+    "block_suffix": "\n",
+    "color": "4",
+    "bold": true
+  },
+  "h1": {
+    "prefix": "# "
+  },
+  "h2": {
+    "prefix": "## "
+  },
+  "h3": {
+    "prefix": "### "
+  },
+  "h4": {
+    "prefix": "#### "
+  },
+  "h5": {
+    "prefix": "##### "
+  },
+  "h6": {
+    "prefix": "###### ",
+    "color": "7",
+    "bold": false
+  },
+  "text": {},
+  "strikethrough": {
+    "crossed_out": true
+  },
+  "emph": {
+    "italic": true
+  },
+  "strong": {
+    "bold": true
+  },
+  "hr": {
+    "color": "7",
+    "format": "\n--------\n"
+  },
+  "item": {
+    "block_prefix": "• "
+  },
+  "enumeration": {
+    "block_prefix": ". "
+  },
+  "task": {
+    "ticked": "[✓] ",
+    "unticked": "[ ] "
+  },
+  "link": {
+    "color": "6",
+    "underline": true
+  },
+  "link_text": {
+    "color": "6",
+    "bold": true
+  },
+  "image": {
+    "color": "5",
+    "underline": true
+  },
+  "image_text": {
+    "color": "7",
+    "format": "Image: {{.text}} →"
+  },
+  "code": {
+    "color": "2"
+  },
+  "code_block": {
+    "margin": 2,
+    "chroma": {
+      "comment": {
+        "italic": true
+      },
+      "error": {
+        "color": "#ansidarkred"
+      },
+      "keyword": {
+        "color": "#ansidarkblue",
+        "bold": true
+      },
+      "keyword_constant": {
+        "color": "#ansipurple"
+      },
+      "keyword_type": {
+        "color": "#ansidarkblue"
+      },
+      "name_attribute": {
+        "color": "#ansidarkblue"
+      },
+      "name_builtin": {
+        "color": "#ansidarkgreen"
+      },
+      "name_class": {
+        "color": "#ansidarkgreen"
+      },
+      "name_constant": {
+        "color": "#ansipurple"
+      },
+      "name_function": {
+        "color": "#ansidarkgreen"
+      },
+      "name_tag": {
+        "color": "#ansidarkblue"
+      },
+      "literal_number": {
+        "color": "#ansipurple"
+      },
+      "literal_string": {
+        "color": "#ansiteal"
+      },
+      "generic_deleted": {
+        "color": "#ansidarkred"
+      },
+      "generic_inserted": {
+        "color": "#ansidarkgreen"
+      }
+    }
+  },
+  "definition_description": {
+    "block_prefix": "\n🠶 "
+  }
+}
