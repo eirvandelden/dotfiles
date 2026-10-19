@@ -146,6 +146,21 @@ class TestRunnerTest < Minitest::Test
     refute_includes(output, "helper.rb")
   end
 
+  def test_a_relative_file_argument_is_read_from_the_callers_directory
+    write_test("passing_test.rb", "def test_ok = assert(true)")
+
+    output, status = run_runner("passing_test.rb", chdir: @dir)
+
+    assert(status.success?, output)
+  end
+
+  def test_a_file_under_the_root_keeps_its_root_relative_name
+    output, status = run_runner(File.join(ROOT, "test", "approval_word_test.rb"), chdir: @dir)
+
+    assert(status.success?, output)
+    assert_match(%r{^=== test/approval_word_test\.rb \(}, output)
+  end
+
   def test_each_file_runs_with_the_standalone_command
     file = write_test("argv_test.rb", record_script("argv"))
 
@@ -214,7 +229,7 @@ class TestRunnerTest < Minitest::Test
     nil
   end
 
-  def run_runner(*arguments)
-    Open3.capture2e(RbConfig.ruby, RUNNER, *arguments, chdir: ROOT)
+  def run_runner(*arguments, chdir: ROOT)
+    Open3.capture2e(RbConfig.ruby, RUNNER, *arguments, chdir: chdir)
   end
 end

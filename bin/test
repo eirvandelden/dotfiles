@@ -109,6 +109,13 @@ $stdout.sync = true
 jobs = Etc.nprocessors
 OptionParser.new { |parser| parser.on("-j", "--jobs N", Integer) { |count| jobs = count } }.parse!
 abort("bin/test: -j must be at least 1, got #{jobs}") if jobs < 1
-root = File.expand_path("..", __dir__)
-files = ARGV.empty? ? Dir.chdir(root) { Dir.glob("test/*_test.rb").sort } : ARGV.dup
+root = File.realpath("..", __dir__)
+# A file argument is read from the caller's directory. Under the root it runs by its root-relative
+# name, the same command a full run uses.
+from_caller = ARGV.map do |file|
+  full = File.expand_path(file)
+  real = File.exist?(full) ? File.realpath(full) : full
+  real.start_with?("#{root}/") ? real.delete_prefix("#{root}/") : full
+end
+files = ARGV.empty? ? Dir.chdir(root) { Dir.glob("test/*_test.rb").sort } : from_caller
 exit(TestRun.new(files, root: root, jobs: jobs).call)
