@@ -164,13 +164,26 @@ class WorktreeSweepTest < Minitest::Test
     commit(merged, "more work")
     write_gh_states("merged-branch" => "MERGED")
     git(@repo, "remote", "set-url", "origin", "ssh://git.example.invalid/repo.git")
-    write_stub("hanging-ssh", "#!/bin/sh\nps -o pgid= -p $$ >> \"$HANGING_GROUPS\"\nexec sleep 600\n")
+    install_hanging_ssh
     env = time_limit_env.merge("GIT_SSH_COMMAND" => File.join(@stub_bin, "hanging-ssh"))
 
     _, stderr, status = run_script_within_deadline(extra_env: env)
 
     assert(status.success?, stderr)
     refute(File.directory?(merged))
+  end
+
+  def test_stopping_hanging_stubs_spares_processes_outside_them
+    install_hanging_ssh
+    stub = Process.spawn(script_environment, File.join(@stub_bin, "hanging-ssh"), pgroup: true)
+    bystander = Process.spawn("sleep", "30", pgroup: stub)
+
+    stop_hanging_stubs
+
+    assert_equal(stub, Process.wait(stub), "the stub should exit")
+    assert_nil(exited_within(bystander, 1), "the bystander must keep running")
+  ensure
+    reap(bystander)
   end
 
   def test_writes_nothing_to_stdout
@@ -283,6 +296,23 @@ class WorktreeSweepTest < Minitest::Test
     end
   end
 
+  def reap(pid)
+    Process.kill("KILL", pid)
+    Process.wait(pid)
+  rescue Errno::ESRCH, Errno::ECHILD, TypeError
+    nil
+  end
+
+  def exited_within(pid, seconds)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+    loop do
+      return pid if Process.wait(pid, Process::WNOHANG)
+      return nil if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      sleep 0.05
+    end
+  end
+
   def wait_until(what, deadline: DEADLINE)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
     until yield
@@ -363,22 +393,27 @@ class WorktreeSweepTest < Minitest::Test
     File.join(@stub_bin, "gh-hang")
   end
 
-  def hanging_groups_file
-    File.join(@enclosing, "hanging-groups")
+  def release_file
+    File.join(@enclosing, "release-hanging-stubs")
   end
 
   # The hanging stubs run in the process group of the call that started them (git fetch, or gh),
-  # which a missed deadline does not reach. Killing the group also stops git from starting ssh
-  # again. After a run that kept its deadline, the time limit already ended those groups, and
-  # their ids may belong to new processes by now.
+  # which a missed deadline does not reach. They wait for the release file, so this sends no
+  # signal: a stub that is already gone gets nothing, and no process outside the stubs can be hit.
+  # A stub started after the release sees the file and exits at once, so git cannot start ssh again.
   def stop_hanging_stubs
-    return unless File.exist?(hanging_groups_file)
+    FileUtils.touch(release_file)
+  end
 
-    File.readlines(hanging_groups_file, chomp: true).uniq.each do |group|
-      Process.kill("KILL", -Integer(group))
-    rescue Errno::ESRCH
-      nil
-    end
+  def install_hanging_ssh
+    write_stub("hanging-ssh", <<~'SH')
+      #!/bin/sh
+      waited=0
+      while [ ! -e "$RELEASE_HANGING_STUBS" ] && [ "$waited" -lt 3000 ]; do
+        sleep 0.2
+        waited=$((waited + 1))
+      done
+    SH
   end
 
   def time_limit_env
@@ -390,8 +425,8 @@ class WorktreeSweepTest < Minitest::Test
     write_stub("gh", <<~'RUBY')
       #!/usr/bin/env ruby
       if File.exist?(ENV["GH_STUB_HANG"].to_s)
-        File.write(ENV.fetch("HANGING_GROUPS"), "#{Process.getpgrp}\n", mode: "a")
-        sleep 600
+        3000.times { sleep 0.2 unless File.exist?(ENV.fetch("RELEASE_HANGING_STUBS")) }
+        exit 1
       end
       states = File.exist?(ENV["GH_STUB_STATES"].to_s) ? File.readlines(ENV["GH_STUB_STATES"], chomp: true) : []
       line = states.find { |entry| entry.start_with?("#{ARGV[2]}=") }
@@ -426,7 +461,7 @@ class WorktreeSweepTest < Minitest::Test
       "HOME" => @enclosing,
       "GH_STUB_STATES" => gh_states_file,
       "GH_STUB_HANG" => gh_hang_file,
-      "HANGING_GROUPS" => hanging_groups_file,
+      "RELEASE_HANGING_STUBS" => release_file,
       "GIT_CALL_LOG" => File.join(@enclosing, "git-calls.log")
     }.merge(extra_env)
   end
