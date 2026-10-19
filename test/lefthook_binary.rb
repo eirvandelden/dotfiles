@@ -45,13 +45,18 @@ module LefthookBinary
   end
 
   def self.native_in(gem_dir, platform)
+    return unless platform
+
     binary = File.join(gem_dir.call, "libexec", platform, "lefthook")
     binary if File.executable?(binary)
   rescue Gem::MissingSpecError
     nil
   end
 
+  # nil on a host lefthook ships no build for; the wrapper then stays.
   def self.platform_directory(host_os = RbConfig::CONFIG["host_os"], host_cpu = RbConfig::CONFIG["host_cpu"])
-    "lefthook-#{host_os[/darwin|linux/]}-#{CPUS.fetch(host_cpu)}"
+    os = host_os[/darwin|linux/]
+    cpu = CPUS[host_cpu]
+    "lefthook-#{os}-#{cpu}" if os && cpu
   end
 end

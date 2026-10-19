@@ -70,6 +70,16 @@ class LefthookBinaryTest < Minitest::Test
     assert_equal(%w[lefthook-darwin-arm64 lefthook-linux-x64 lefthook-linux-arm64], names)
   end
 
+  def test_a_platform_without_a_lefthook_build_keeps_the_wrapper
+    wrapper = write_executable("bin/lefthook", WRAPPER)
+    write_executable("lefthook-2.2.2/libexec/#{PLATFORM}/lefthook", "native")
+    unknown = LefthookBinary.platform_directory("linux", "riscv64")
+
+    found = LefthookBinary.locate(path_lookup: -> { wrapper }, gem_dir: gem_dir("lefthook-2.2.2"), platform: unknown)
+
+    assert_equal(wrapper, found)
+  end
+
   private
 
   def locate(on_path, gem_dir:)
