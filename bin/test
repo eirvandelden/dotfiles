@@ -5,6 +5,7 @@
 # on INT or TERM, 141 when its output is closed. Any early stop gives each running file INT, and KILL
 # when it still runs 5 seconds later.
 # test/test_runner_test.rb covers this script.
+require "English"
 require "etc"
 require "optparse"
 require "rbconfig"
@@ -55,12 +56,13 @@ class TestRun
     @running.each { |job| reap(job) }
   end
 
-  # The process groups with a member that has not exited; a zombie has exited. Without ps every
-  # group counts as live, so the full grace period runs.
+  # The process groups with a member that has not exited; a zombie has exited. When ps is missing
+  # or fails, every group counts as live, so the full grace period runs.
   def live_groups
-    IO.popen(%w[ps -A -o pgid=,stat=], err: File::NULL) do |ps|
-      ps.each_line.filter_map { |line| line.split.then { |pgid, stat| Integer(pgid) unless stat.start_with?("Z") } }
-    end
+    listing = IO.popen(%w[ps -A -o pgid=,stat=], err: File::NULL, &:read)
+    return @running.map(&:pid) unless $CHILD_STATUS.success?
+
+    listing.each_line.filter_map { |line| line.split.then { |pgid, stat| Integer(pgid) unless stat.start_with?("Z") } }
   rescue SystemCallError
     @running.map(&:pid)
   end

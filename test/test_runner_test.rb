@@ -105,6 +105,21 @@ class TestRunnerTest < Minitest::Test
     assert(gone?(Integer(File.read(started))), "the file kept running")
   end
 
+  def test_a_failing_ps_keeps_the_grace_period
+    started = File.join(@dir, "started")
+    cleaned = File.join(@dir, "cleaned")
+    file = write_test("slow_cleanup_test.rb", "def test_slow\n    File.write(#{started.inspect}, 'x')\n    " \
+                                              "sleep 30\n  ensure\n    sleep 0.5\n    File.write(#{cleaned.inspect}, '')\n  end")
+    stub_bin = File.join(@dir, "bin")
+    FileUtils.mkdir_p(stub_bin)
+    File.write(File.join(stub_bin, "ps"), "#!/bin/sh\nexit 1\n")
+    File.chmod(0o755, File.join(stub_bin, "ps"))
+
+    interrupt_runner_once(started, file, env: { "PATH" => "#{stub_bin}:#{ENV.fetch('PATH')}" })
+
+    assert_path_exists(cleaned, "the file was killed before its cleanup ended")
+  end
+
   def test_a_closed_output_stops_the_running_files
     started = File.join(@dir, "started")
     closed = File.join(@dir, "closed")
@@ -239,8 +254,8 @@ class TestRunnerTest < Minitest::Test
 
   # Starts the runner, waits until the file under test has started, sends INT, and returns the
   # runner's exit status. Fails when the runner does not end within 20 seconds.
-  def interrupt_runner_once(started, *arguments, signals: %w[INT])
-    runner = Process.spawn(RbConfig.ruby, RUNNER, *arguments, chdir: ROOT, out: File::NULL, err: File::NULL)
+  def interrupt_runner_once(started, *arguments, signals: %w[INT], env: {})
+    runner = Process.spawn(env, RbConfig.ruby, RUNNER, *arguments, chdir: ROOT, out: File::NULL, err: File::NULL)
     Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
     signals.each_with_index do |signal, index|
       sleep 0.2 if index.positive?
