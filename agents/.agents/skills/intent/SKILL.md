@@ -58,7 +58,7 @@ Every change gets one. A three-line intent for a one-line fix is still an intent
 
 **Scope check.** Before refining details, flag a request that bundles independent changes. Two changes are independent when either one could ship and be useful without the other. Propose the split, one intent per change, each with its own slug and worktree. Continue the interview with the first change only.
 
-**Depth by type.** Settle `Type:` early: from the issue labels, confirmed with the user, or asked. `bugfix` and `chore` with a clear cause ask 1–3 questions and defaults the rest; state those defaults in the draft. `feature` and `refactor` cover the seven topics and the full **Probe** list below. A bug fix whose cause or scope is unclear is not clear: probe it like a feature.
+**Depth by type.** Settle `Type:` early: from the issue labels, confirmed with the user, or asked. `bugfix` and `chore` with a clear cause ask 1–3 questions and default the rest; state those defaults in the draft. `feature` and `refactor` cover the seven topics and the full **Probe** list below. A bug fix whose cause or scope is unclear is not clear: probe it like a feature.
 
 One question at a time; prefer multiple choice (use `AskUserQuestion` where available). Explore the problem before any solution — if an answer describes a fix rather than a symptom, ask what a user or system cannot do today instead. For `feature` and `refactor` there is no fixed question count: keep asking until every template section below can be filled without guessing. Cover:
 
