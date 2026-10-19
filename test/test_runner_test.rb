@@ -41,6 +41,18 @@ class TestRunnerTest < Minitest::Test
     refute_includes(output, "FAILED")
   end
 
+  def test_a_job_count_below_one_is_refused_without_running_any_file
+    passing = write_test("passing_test.rb", record_script("passing"))
+
+    %w[0 -1].each do |count|
+      output, status = run_runner("-j", count, passing)
+
+      refute(status.success?, output)
+      assert_match(/at least 1/, output)
+      refute(File.exist?(File.join(@dir, "passing.record")), "ran a file with -j #{count}")
+    end
+  end
+
   def test_each_file_runs_in_its_own_process_group
     first = write_test("first_test.rb", record_script("first"))
     second = write_test("second_test.rb", record_script("second"))

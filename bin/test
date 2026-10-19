@@ -77,6 +77,7 @@ end
 
 jobs = Etc.nprocessors
 OptionParser.new { |parser| parser.on("-j", "--jobs N", Integer) { |count| jobs = count } }.parse!
+abort("bin/test: -j must be at least 1, got #{jobs}") if jobs < 1
 root = File.expand_path("..", __dir__)
 files = ARGV.empty? ? Dir.chdir(root) { Dir.glob("test/*_test.rb").sort } : ARGV.dup
 exit(TestRun.new(files, root: root, jobs: jobs).call)
