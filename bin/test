@@ -2,7 +2,8 @@
 # Runs test files in parallel, each as `ruby -Itest <file>` in its own process group, from the
 # repository root. Without file arguments it runs every test/*_test.rb. `-j N` sets how many run at once.
 # A file's output is printed as one block when it ends. The exit status is 1 when any file fails, 130
-# on INT or TERM: each running file gets INT, and KILL when it still runs 5 seconds later.
+# on INT or TERM, 141 when its output is closed. Any early stop gives each running file INT, and KILL
+# when it still runs 5 seconds later.
 # test/test_runner_test.rb covers this script.
 require "etc"
 require "optparse"
@@ -29,14 +30,18 @@ class TestRun
     summary
     @failed.empty? ? 0 : 1
   rescue Interrupt
-    stop_all
     130
+  rescue Errno::EPIPE
+    141
+  ensure
+    stop_all
   end
 
   private
 
-  # Each file has its own process group, so a Ctrl-C reaches only this runner. Pass it on, so
-  # each file runs its own cleanup, and kill the groups still running after the grace period.
+  # Each file has its own process group, so a Ctrl-C reaches only this runner, and a runner that
+  # stops early for any reason would leave the files running. Every way out passes INT on, so each
+  # file runs its own cleanup, and kills the groups still running after the grace period.
   def stop_all
     trap("INT", "IGNORE")
     @running.each { |job| signal_group("INT", job.pid) }
@@ -100,6 +105,7 @@ class TestRun
   end
 end
 
+$stdout.sync = true
 jobs = Etc.nprocessors
 OptionParser.new { |parser| parser.on("-j", "--jobs N", Integer) { |count| jobs = count } }.parse!
 abort("bin/test: -j must be at least 1, got #{jobs}") if jobs < 1

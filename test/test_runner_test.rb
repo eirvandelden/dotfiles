@@ -77,6 +77,27 @@ class TestRunnerTest < Minitest::Test
     assert_raises(Errno::ESRCH) { Process.kill(0, Integer(File.read(started))) }
   end
 
+  def test_a_closed_output_stops_the_running_files
+    started = File.join(@dir, "started")
+    closed = File.join(@dir, "closed")
+    slow = write_test("slow_test.rb", "def test_slow\n    File.write(#{started.inspect}, Process.pid.to_s)\n" \
+                                      "    sleep 60\n  end")
+    # Ends only after the output is closed, so the runner's report of it hits the broken pipe.
+    later = write_test("later_test.rb", "def test_later = sleep(0.05) until File.exist?(#{closed.inspect})")
+    reader, writer = IO.pipe
+    runner = Process.spawn(RbConfig.ruby, RUNNER, slow, later, chdir: ROOT, out: writer, err: File::NULL)
+    writer.close
+    Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
+    reader.close
+    FileUtils.touch(closed)
+
+    Timeout.timeout(20) { Process.wait(runner) }
+    runner = nil
+    assert_raises(Errno::ESRCH) { Process.kill(0, Integer(File.read(started))) }
+  ensure
+    reap(runner) if runner
+  end
+
   def test_each_file_runs_in_its_own_process_group
     first = write_test("first_test.rb", record_script("first"))
     second = write_test("second_test.rb", record_script("second"))
