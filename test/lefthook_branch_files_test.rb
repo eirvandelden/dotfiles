@@ -112,6 +112,17 @@ class LefthookBranchFilesTest < Minitest::Test
     assert_match(/notes\/own\.txt:1:/, stdout + stderr)
   end
 
+  def test_a_first_push_without_any_base_still_checks_every_file
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+    git(@work, "remote", "set-head", "origin", "--delete")
+    commit_without_hooks("notes/own.txt", "# #{FIX_WORD} mine\n")
+
+    stdout, stderr, status = push
+
+    refute(status.success?)
+    assert_match(/notes\/own\.txt:1:/, stdout + stderr)
+  end
+
   def test_a_marker_under_vendor_commits_and_pushes
     git(@work, "checkout", "--quiet", "-b", BRANCH)
 
