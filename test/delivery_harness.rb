@@ -7,9 +7,10 @@ require "tmpdir"
 # repository with a bare repository behind "origin", stubbed `gh` and `herdr` on PATH, and a HOME
 # of its own so no real configuration is read.
 #
-# The stubs are one Ruby program installed under both names. Each call appends its arguments, one
-# line per call, to <state>/gh.log or <state>/herdr.log. Its answer comes from <state>/scripts.json,
-# written by `stub_response`. The key is "<tool> <subcommand words>", longest match first:
+# The stubs are one Ruby program installed under both names. Its shebang passes --disable-gems, so a
+# call does not pay the RubyGems start-up (about 33 ms); it needs only fileutils and json. Each call
+# appends its arguments, one line per call, to <state>/gh.log or <state>/herdr.log. Its answer comes
+# from <state>/scripts.json, written by `stub_response`. The key is "<tool> <subcommand words>", longest match first:
 # "herdr pane get w1:pA", then "herdr pane get"; `gh pr checks` also answers to "gh pr checks watch"
 # (when --watch is given) and "gh pr checks json" (otherwise). The last key tried is "<tool> *". A
 # key with several responses plays them in order and repeats the last. A response is a hash with
@@ -29,7 +30,7 @@ module DeliveryHarness
   OWN_PANE = "w1:pOwn".freeze
 
   STUB_SOURCE = <<~'RUBY'.freeze
-    #!/usr/bin/env ruby
+    #!/usr/bin/env -S ruby --disable-gems
     require "fileutils"
     require "json"
 
