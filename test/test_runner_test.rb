@@ -94,6 +94,17 @@ class TestRunnerTest < Minitest::Test
     Process.kill("KILL", left) if left && !gone?(left)
   end
 
+  def test_a_second_term_does_not_cut_the_shutdown_short
+    started = File.join(@dir, "started")
+    file = write_test("stubborn_test.rb", "def test_stubborn\n    trap('INT') {}\n    " \
+                                          "File.write(#{started.inspect}, Process.pid.to_s)\n    sleep 60\n  end")
+
+    status = interrupt_runner_once(started, file, signals: %w[TERM TERM])
+
+    assert_equal(130, status.exitstatus)
+    assert(gone?(Integer(File.read(started))), "the file kept running")
+  end
+
   def test_a_closed_output_stops_the_running_files
     started = File.join(@dir, "started")
     closed = File.join(@dir, "closed")
@@ -228,10 +239,13 @@ class TestRunnerTest < Minitest::Test
 
   # Starts the runner, waits until the file under test has started, sends INT, and returns the
   # runner's exit status. Fails when the runner does not end within 20 seconds.
-  def interrupt_runner_once(started, *arguments)
+  def interrupt_runner_once(started, *arguments, signals: %w[INT])
     runner = Process.spawn(RbConfig.ruby, RUNNER, *arguments, chdir: ROOT, out: File::NULL, err: File::NULL)
     Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
-    Process.kill("INT", runner)
+    signals.each_with_index do |signal, index|
+      sleep 0.2 if index.positive?
+      Process.kill(signal, runner)
+    end
     status = Timeout.timeout(20) { Process.wait2(runner).last }
     runner = nil
     status

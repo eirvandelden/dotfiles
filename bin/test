@@ -47,7 +47,7 @@ class TestRun
   def stop_all
     return if @running.empty?
 
-    trap("INT", "IGNORE")
+    %w[INT TERM].each { |signal| trap(signal, "IGNORE") }
     @running.each { |job| signal_group("INT", job.pid) }
     deadline = monotonic_now + GRACE_SECONDS
     sleep(0.05) until (live_groups & @running.map(&:pid)).empty? || monotonic_now > deadline
