@@ -288,19 +288,22 @@ pre-push:
       use_stdin: true
       run: |
         : {files}
-        branch=$(git rev-parse --abbrev-ref HEAD)
-        if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-          echo "Direct push to $branch is not allowed. Create a feature branch; deliver opens the PR."
-          exit 1
-        fi
-        while read -r _local_ref _local_sha remote_ref _remote_sha; do
+        updates=
+        while read -r _local_ref local_sha remote_ref _remote_sha; do
           case "$remote_ref" in
             refs/heads/main | refs/heads/master)
               echo "Pushing to ${remote_ref#refs/heads/} is not allowed. Push a feature branch; deliver opens the PR."
               exit 1
               ;;
           esac
+          # A deletion sends an all-zero local sha; it does not push the checked-out branch.
+          case "$local_sha" in *[!0]*) updates=yes ;; esac
         done
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ -n "$updates" ] && { [ "$branch" = "main" ] || [ "$branch" = "master" ]; }; then
+          echo "Direct push to $branch is not allowed. Create a feature branch; deliver opens the PR."
+          exit 1
+        fi
       fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
