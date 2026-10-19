@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+# Runs test files in parallel, each as `ruby -Itest <file>` in its own process group, from the
+# repository root. Without file arguments it runs every test/*_test.rb. `-j N` sets how many run at once.
+# A file's output is printed as one block when it ends. The exit status is 1 when any file fails.
+# test/test_runner_test.rb covers this script.
+require "etc"
+require "optparse"
+require "rbconfig"
+require "tempfile"
+
+class TestRun
+  Job = Struct.new(:file, :pid, :output, :started)
+
+  def initialize(files, root:, jobs:)
+    @files = files.dup
+    @total = files.size
+    @root = root
+    @jobs = jobs
+    @running = []
+    @failed = []
+  end
+
+  def call
+    trap_signals
+    start_next while @running.size < @jobs && @files.any?
+    finish_one until @running.empty?
+    summary
+    @failed.empty? ? 0 : 1
+  end
+
+  private
+
+  def trap_signals
+    %w[INT TERM].each { |signal| trap(signal) { stop_all } }
+  end
+
+  def stop_all
+    @running.each { |job| kill_group(job.pid) }
+    exit(130)
+  end
+
+  def kill_group(pid)
+    Process.kill("KILL", -pid)
+  rescue Errno::ESRCH, Errno::EPERM
+    nil
+  end
+
+  def start_next
+    file = @files.shift
+    output = Tempfile.new("test-run")
+    pid = Process.spawn(RbConfig.ruby, "-Itest", file, chdir: @root, pgroup: true, in: File::NULL,
+                        out: output.fileno, err: output.fileno)
+    @running << Job.new(file, pid, output, Process.clock_gettime(Process::CLOCK_MONOTONIC))
+  end
+
+  def finish_one
+    pid, status = Process.wait2
+    job = @running.find { |candidate| candidate.pid == pid }
+    @running.delete(job)
+    report(job, status)
+    start_next if @files.any?
+  end
+
+  def report(job, status)
+    seconds = Process.clock_gettime(Process::CLOCK_MONOTONIC) - job.started
+    job.output.rewind
+    puts("=== #{job.file} (#{seconds.round(1)}s) ===", job.output.read)
+    job.output.close!
+    @failed << job.file unless status.success?
+  end
+
+  def summary
+    @failed.sort.each { |file| puts("FAILED: #{file}") }
+    puts("#{@total} files, #{@failed.size} failed")
+  end
+end
+
+jobs = Etc.nprocessors
+OptionParser.new { |parser| parser.on("-j", "--jobs N", Integer) { |count| jobs = count } }.parse!
+root = File.expand_path("..", __dir__)
+files = ARGV.empty? ? Dir.chdir(root) { Dir.glob("test/*_test.rb").sort } : ARGV.dup
+exit(TestRun.new(files, root: root, jobs: jobs).call)
