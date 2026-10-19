@@ -177,6 +177,16 @@ class LefthookBranchFilesTest < Minitest::Test
     assert_match(/Pushing to main is not allowed/, stdout + stderr)
   end
 
+  def test_deleting_a_feature_branch_from_an_unchanged_main_checkout_pushes
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+    git(@work, "push", "--quiet", "-u", "origin", BRANCH)
+    git(@work, "checkout", "--quiet", "-b", "main", "origin/#{TRUNK}")
+
+    stdout, stderr, status = Open3.capture3(environment, "git", "-C", @work, "push", "origin", "--delete", BRANCH)
+
+    assert(status.success?, stdout + stderr)
+  end
+
   private
 
   def assert_commits_and_pushes(relative_path, content)
