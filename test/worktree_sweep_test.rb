@@ -196,7 +196,9 @@ class WorktreeSweepTest < Minitest::Test
 
     FileUtils.rm_rf(@enclosing)
 
-    stubs.each { |stub| assert_equal(stub, exited_within(stub, 5), "a stub kept hanging") }
+    # exited_within reaps a stub that ended, so only the ones left may still be signalled.
+    stubs.reject! { |stub| exited_within(stub, 5) }
+    assert_empty(stubs, "a stub kept hanging")
   ensure
     stubs&.each { |stub| reap(stub) }
   end
