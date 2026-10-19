@@ -12,6 +12,8 @@ sections:
     - "Install gems with `bi`, never `bundle install`."
     - "Always target origin (fork or own repo) for PRs — never open a PR against upstream without explicit instruction."
     - "One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it."
+    - "Intent interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions."
+    - "Bug fixes and chores stay at 1–3 questions; features and refactors probe fully."
   verification:
     - "Verify by running the command, not by assuming it works."
     - "Fix what broke instead of weakening or deleting a test."

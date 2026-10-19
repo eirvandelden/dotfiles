@@ -34,7 +34,7 @@ The pane writes `plan.md`, and once Etienne says "accepted" or "agreed", commits
 Must run in plan mode — this is where the codebase gets read and the approach gets decided, so nothing is edited until the user accepts. Not already in plan mode: call `EnterPlanMode` before reading code (Codex: tell the user to run `/plan` first; there is no equivalent tool call).
 
 1. Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Refuse and say why unless `<folder>/intent.md` exists and is `Status: accepted`; then read it.
-2. Read the codebase enough to know which files change and in what order. Apply the domain skills that match the work (Rails architecture, API design, UI, dependencies, and so on). Flag conflicts they raise against each other or against the playbook in the plan, rather than silently picking a side.
+2. Read the codebase enough to know which files change and in what order. Apply the domain skills that match the work (Rails architecture, API design, UI, dependencies, and so on). Flag conflicts they raise against each other or against the playbook in the plan, rather than silently picking a side. Also read `intent.md`'s `## Decisions` and check every design decision and step against it. A conflict is never resolved silently: outside auto mode, name it in `## Design decisions` and raise it with the user before acceptance. An `intent.md` without `## Decisions` has nothing to check.
 3. Write `<folder>/plan.md`:
 
    ```markdown
@@ -44,7 +44,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 
    ## Design decisions
 
-   <choices made and why, only where intent left them open>
+   <choices made and why, only where intent left them open — and any conflict with intent's `## Decisions`>
 
    ## Integration points
 
@@ -93,7 +93,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 
 Plan mode does not apply: never call `EnterPlanMode` (Codex: never ask for `/plan`), because nobody is there to approve `ExitPlanMode`. This overrides the `here` backend's plan-mode step.
 
-Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh plan <slug> --auto`. It never asks Etienne anything and never starts the next stage; the coordinator does. A choice that would change the behaviour agreed in `intent.md` becomes a `Decision needed:` line in the report, not a guess.
+Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh plan <slug> --auto`. It never asks Etienne anything and never starts the next stage; the coordinator does. A choice that would change the behaviour agreed in `intent.md`, or a step that contradicts one of its `## Decisions`, becomes a `Decision needed:` line in the report, not a guess.
 
 1. Write `plan.md` as usual, with `Status: draft`.
 2. Run the critique with the other model family's local CLI. A Claude author uses Codex: `codex exec -p terra -s read-only -o <findings-file> "<prompt>"`. A Codex author uses Claude: `claude -p --model opus --permission-mode plan "<prompt>"`. The prompt asks it to read `plan.md` and the code it names, and to list disagreements with reasons.
@@ -105,7 +105,7 @@ A critique CLI that fails or is missing is a blocker: put it in the report as a 
 
 ## Critique
 
-Read the plan, then read the actual code it touches. Be critical: does the approach hold? Can it be done better? Verify the plan's claims against the code — a file it says exists, a pattern it says is already used, a test level it assumes. Report disagreements with reasons and propose the better alternative. Meant for a second model: `codex -p terra` reviewing a Claude-written plan, or an Opus session reviewing one Sonnet wrote.
+Read the plan, then read the actual code it touches. Be critical: does the approach hold? Can it be done better? Verify the plan's claims against the code — a file it says exists, a pattern it says is already used, a test level it assumes. Check the plan against `intent.md`'s `## Decisions` too, and report any step that contradicts one. Report disagreements with reasons and propose the better alternative. Meant for a second model: `codex -p terra` reviewing a Claude-written plan, or an Opus session reviewing one Sonnet wrote.
 
 ## Execute a handed-over plan
 

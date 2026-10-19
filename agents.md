@@ -153,6 +153,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
     - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
     - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them.
+    - Intent interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions. Bug fixes and chores stay at 1–3 questions; features and refactors probe fully.
     - Personal repositories only: in autonomous delivery a recorded cross-model critique replaces the word "accepted" on `plan.md`. See §7a. Every other repository keeps this rule unchanged.
 18. Commits:
     - Agents may create commits without asking first.
