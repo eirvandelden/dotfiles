@@ -46,13 +46,25 @@ class TestRun
     trap("INT", "IGNORE")
     @running.each { |job| signal_group("INT", job.pid) }
     deadline = monotonic_now + GRACE_SECONDS
-    sleep(0.05) until @running.all? { |job| ended?(job) } || monotonic_now > deadline
+    until @running.empty? || monotonic_now > deadline
+      @running.reject! { |job| ended?(job) }
+      sleep(0.05)
+    end
+    # Only leaders not yet reaped are left. Their pids stay taken, so no other group can have their ids.
     @running.each { |job| signal_group("KILL", job.pid) }
     @running.each { |job| reap(job) }
   end
 
+  # Reaps the file when it has exited.
   def ended?(job)
-    Process.wait(job.pid, Process::WNOHANG) ? true : false
+    return false unless reaped_now?(job.pid)
+
+    job.output.close!
+    true
+  end
+
+  def reaped_now?(pid)
+    Process.wait(pid, Process::WNOHANG) ? true : false
   rescue Errno::ECHILD
     true
   end
