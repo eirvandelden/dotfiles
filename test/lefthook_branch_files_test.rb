@@ -127,7 +127,7 @@ class LefthookBranchFilesTest < Minitest::Test
 
   def test_a_vendored_skill_file_with_a_marker_commits_and_pushes
     use_the_dotfiles_vendored_list
-    skill_file = "agents/.agents/skills/37signals-style/references/development-philosophy.md"
+    skill_file = "agents/.agents/skills/37signals-style/SKILL.md"
 
     assert_commits_and_pushes(skill_file, "Mark a rough spot with #{FIX_WORD} in prose.\n")
   end
