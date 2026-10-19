@@ -41,32 +41,28 @@ class TestRun
 
   # Each file has its own process group, so a Ctrl-C reaches only this runner, and a runner that
   # stops early for any reason would leave the files running. Every way out passes INT on, so each
-  # file runs its own cleanup, and kills the groups still running after the grace period.
+  # file runs its own cleanup, and kills what is left of each group after the grace period. No file
+  # is reaped before that KILL: an unreaped leader keeps its group id taken, so the KILL cannot reach
+  # a new group that reused the id.
   def stop_all
+    return if @running.empty?
+
     trap("INT", "IGNORE")
     @running.each { |job| signal_group("INT", job.pid) }
     deadline = monotonic_now + GRACE_SECONDS
-    until @running.empty? || monotonic_now > deadline
-      @running.reject! { |job| ended?(job) }
-      sleep(0.05)
-    end
-    # Only leaders not yet reaped are left. Their pids stay taken, so no other group can have their ids.
+    sleep(0.05) until (live_groups & @running.map(&:pid)).empty? || monotonic_now > deadline
     @running.each { |job| signal_group("KILL", job.pid) }
     @running.each { |job| reap(job) }
   end
 
-  # Reaps the file when it has exited.
-  def ended?(job)
-    return false unless reaped_now?(job.pid)
-
-    job.output.close!
-    true
-  end
-
-  def reaped_now?(pid)
-    Process.wait(pid, Process::WNOHANG) ? true : false
-  rescue Errno::ECHILD
-    true
+  # The process groups with a member that has not exited; a zombie has exited. Without ps every
+  # group counts as live, so the full grace period runs.
+  def live_groups
+    IO.popen(%w[ps -A -o pgid=,stat=], err: File::NULL) do |ps|
+      ps.each_line.filter_map { |line| line.split.then { |pgid, stat| Integer(pgid) unless stat.start_with?("Z") } }
+    end
+  rescue SystemCallError
+    @running.map(&:pid)
   end
 
   def reap(job)

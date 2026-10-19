@@ -77,6 +77,23 @@ class TestRunnerTest < Minitest::Test
     assert_raises(Errno::ESRCH) { Process.kill(0, Integer(File.read(started))) }
   end
 
+  def test_a_process_left_in_a_files_group_is_killed_after_the_grace_period
+    started = File.join(@dir, "started")
+    child = "trap('INT') {}; File.write(#{started.inspect}, Process.pid.to_s); sleep 60"
+    file = write_test("parent_test.rb", "def test_parent\n    spawn(#{RbConfig.ruby.inspect}, '-e', " \
+                                        "#{child.inspect})\n    sleep 60\n  end")
+
+    status = interrupt_runner_once(started, file)
+
+    assert_equal(130, status.exitstatus)
+    left = Integer(File.read(started))
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+    sleep 0.05 until gone?(left) || Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+    assert(gone?(left), "the child kept running")
+  ensure
+    Process.kill("KILL", left) if left && !gone?(left)
+  end
+
   def test_a_closed_output_stops_the_running_files
     started = File.join(@dir, "started")
     closed = File.join(@dir, "closed")
@@ -220,6 +237,14 @@ class TestRunnerTest < Minitest::Test
     status
   ensure
     reap(runner) if runner
+  end
+
+  # A process of another parent is gone once that parent's successor has reaped it.
+  def gone?(pid)
+    Process.kill(0, pid)
+    false
+  rescue Errno::ESRCH
+    true
   end
 
   def reap(pid)
