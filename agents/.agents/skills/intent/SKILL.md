@@ -9,11 +9,12 @@ arguments:
 <!--
 Interview technique adapted from the superpowers-ruby `brainstorming` skill
 (~/.claude/plugins/cache/superpowers-ruby/superpowers-ruby/7.5.0/skills/brainstorming/SKILL.md,
-2026-09 vendored version): one question at a time, multiple choice where possible, problem
+2026-10 vendored version): one question at a time, multiple choice where possible, problem
 before solution, the "too simple to need this" anti-pattern, the red-flags list, persist the
-draft as you go. Left out: the design/architecture exploration (that is the `plan` skill), the
-hand-off to `writing-plans` (that is the `plan` skill), and the visual companion. Re-sync against
-upstream by diffing this file's interview section against that one.
+draft as you go, explore project context first, the scope and decomposition check, and the spec self-review.
+Left out: the design/architecture exploration (that is the `plan` skill), the
+hand-off to `writing-plans` (that is the `plan` skill), the visual companion, and the fresh-context reviewer subagent.
+Re-sync against upstream by diffing this file's interview section against that one.
 -->
 
 # Intent
@@ -53,7 +54,13 @@ Every change gets one. A three-line intent for a one-line fix is still an intent
 
 ## 2. Interview
 
-One question at a time; prefer multiple choice (use `AskUserQuestion` where available). Explore the problem before any solution — if an answer describes a fix rather than a symptom, ask what a user or system cannot do today instead. There is no fixed question count: keep asking until every template section below can be filled without guessing. Cover:
+**Explore first.** Before the first interview question, `Type:` included, read what the repository already answers: the issue, the files the request names or implies, nearby docs, `git log --oneline -20` on those paths, and the current behaviour (run it when that is cheap and safe). State what you found as premises the user can correct. Ask only what the repository cannot answer.
+
+**Scope check.** Before refining details, flag a request that bundles independent changes. Two changes are independent when either one could ship and be useful without the other. Propose the split, one intent per change, each with its own slug and worktree. Continue the interview with the first change only.
+
+**Depth by type.** Settle `Type:` early: from the issue labels, confirmed with the user, or asked. `bugfix` and `chore` with a clear cause ask 1–3 questions and defaults the rest; state those defaults in the draft. `feature` and `refactor` cover the seven topics and the full **Probe** list below. A bug fix whose cause or scope is unclear is not clear: probe it like a feature.
+
+One question at a time; prefer multiple choice (use `AskUserQuestion` where available). Explore the problem before any solution — if an answer describes a fix rather than a symptom, ask what a user or system cannot do today instead. For `feature` and `refactor` there is no fixed question count: keep asking until every template section below can be filled without guessing. Cover:
 
 1. What can someone not do today? (the problem, in the domain's words, not the fix)
 2. What does better look like once this ships?
@@ -62,6 +69,17 @@ One question at a time; prefer multiple choice (use `AskUserQuestion` where avai
 5. What is in scope?
 6. What is explicitly out of scope?
 7. What are the acceptance criteria — one concrete example per behaviour, in the domain's words, as a sentence a domain expert would agree with ("Paying empties the basket", not "calls Basket#pay")? A criterion that cannot be written as an example is not clear enough yet: ask for the example.
+
+**Probe.** For `feature` and `refactor`, go beyond the seven topics until each of these is answered or ruled out:
+
+- Current behaviour today.
+- Edge cases: empty, one, many, boundary values, concurrent use.
+- Failure modes: a dependency that is missing, slow, refused or wrong.
+- Existing patterns in the repository to follow or to break.
+- One "what happens when X" question per acceptance criterion.
+- Compatibility with existing data, config and callers.
+
+**Record decisions.** Each time the user picks between options or overrides a default, add a line to `## Decisions` in the draft right away, as `- <decision, in the user's words or close to them> — <one-line rationale>`. A default you chose without asking is not a decision: it stays in the section it affects. Never invent a rationale: when the user gave no reason, ask for it in the same turn, and write "no reason given" if they decline.
 
 The interview ends when every template section can be filled without guessing. Until then, keep asking.
 
@@ -126,6 +144,12 @@ Author: <name>. Status: draft.
 
 <constraints that conflict, with the tradeoff named and the side chosen — omit the section if there are none>
 
+## Decisions
+
+<each explicit user decision, in their words or close to them, with a one-line rationale — or "None.">
+
+- <decision> — <one-line rationale>
+
 ## Open questions
 
 <anything unresolved — or "None.">
@@ -136,6 +160,10 @@ Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` (and, for aut
 Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
 ## 4. Accept
+
+**Self-review.** Before the read-back, scan the draft for placeholders (`<...>`, "TBD", "TODO"), contradictions between sections, scope (more than one independent change) and ambiguous wording (an acceptance criterion with no concrete example). Fix what you find.
+
+**Read-back.** Present the draft section by section, in template order, and correct each section the user disputes, updating the file. For `bugfix` and `chore`, send one message that lists every section in order and ends with the request for "accepted". For `feature` and `refactor`, confirm each section, or a small group of short sections, before moving on. The read-back is not counted as an interview question.
 
 Refuse to flip `Status:` to `accepted` while any of these holds, and name what is missing:
 
@@ -170,4 +198,4 @@ Outside herdr, or as a Codex coordinator, run each stage's `here` backend with t
 
 ## Codex
 
-Same interview and template. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `plan` and `implement` do today.
+Same interview and template. Explore first, the scope check, the probe list and the read-back apply unchanged; read files with Codex's own tools. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `plan` and `implement` do today.
