@@ -36,6 +36,8 @@ class LefthookNoFixmeTest < Minitest::Test
 
     @tmpdir = REPOSITORY.copy
     @repo_dir = File.join(@tmpdir, "repo")
+    @home = File.join(@tmpdir, "home")
+    link_marker_check
   end
 
   def teardown
@@ -81,6 +83,13 @@ class LefthookNoFixmeTest < Minitest::Test
     Open3.capture2e(lefthook_env, *command, chdir: @repo_dir)
   end
 
+  # lefthook.yml runs marker-check from the dotfiles checkout in $HOME; the fake home links the branch's copy.
+  def link_marker_check
+    scripts = File.join(@home, "Developer", "dotfiles", "git", ".config", "git", "worktree-tools")
+    FileUtils.mkdir_p(scripts)
+    File.symlink(File.expand_path("../git/.config/git/worktree-tools/marker-check", __dir__), File.join(scripts, "marker-check"))
+  end
+
   def write_marked_file(path)
     full_path = File.join(@repo_dir, path)
     FileUtils.mkdir_p(File.dirname(full_path))
@@ -88,7 +97,7 @@ class LefthookNoFixmeTest < Minitest::Test
   end
 
   def lefthook_env
-    { "LEFTHOOK_CONFIG" => nil, "LEFTHOOK" => nil, "LEFTHOOK_BIN" => nil }
+    { "HOME" => @home, "LEFTHOOK_CONFIG" => nil, "LEFTHOOK" => nil, "LEFTHOOK_BIN" => nil }
   end
 
   def run_git(*args)
