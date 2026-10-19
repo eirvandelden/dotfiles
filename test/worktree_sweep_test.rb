@@ -186,6 +186,21 @@ class WorktreeSweepTest < Minitest::Test
     reap(bystander)
   end
 
+  # teardown removes the folder right after the release; a stub that missed the release file
+  # between two polls must still end instead of hanging for ten minutes.
+  def test_hanging_stubs_end_once_their_folder_is_removed
+    install_hanging_ssh
+    FileUtils.touch(gh_hang_file)
+    stubs = %w[hanging-ssh gh].map { |name| Process.spawn(script_environment, File.join(@stub_bin, name)) }
+    sleep 0.5
+
+    FileUtils.rm_rf(@enclosing)
+
+    stubs.each { |stub| assert_equal(stub, exited_within(stub, 5), "a stub kept hanging") }
+  ensure
+    stubs&.each { |stub| reap(stub) }
+  end
+
   def test_writes_nothing_to_stdout
     merged = add_worktree("merged-branch")
     commit(merged, "more work")
@@ -401,6 +416,8 @@ class WorktreeSweepTest < Minitest::Test
   # which a missed deadline does not reach. They wait for the release file, so this sends no
   # signal: a stub that is already gone gets nothing, and no process outside the stubs can be hit.
   # A stub started after the release sees the file and exits at once, so git cannot start ssh again.
+  # A stub also ends once the folder of the release file is gone, so teardown's removal right
+  # after the release cannot leave one hanging.
   def stop_hanging_stubs
     FileUtils.touch(release_file)
   end
@@ -409,7 +426,7 @@ class WorktreeSweepTest < Minitest::Test
     write_stub("hanging-ssh", <<~'SH')
       #!/bin/sh
       waited=0
-      while [ ! -e "$RELEASE_HANGING_STUBS" ] && [ "$waited" -lt 3000 ]; do
+      while [ ! -e "$RELEASE_HANGING_STUBS" ] && [ -d "${RELEASE_HANGING_STUBS%/*}" ] && [ "$waited" -lt 3000 ]; do
         sleep 0.2
         waited=$((waited + 1))
       done
@@ -425,7 +442,12 @@ class WorktreeSweepTest < Minitest::Test
     write_stub("gh", <<~'RUBY')
       #!/usr/bin/env ruby
       if File.exist?(ENV["GH_STUB_HANG"].to_s)
-        3000.times { sleep 0.2 unless File.exist?(ENV.fetch("RELEASE_HANGING_STUBS")) }
+        release = ENV.fetch("RELEASE_HANGING_STUBS")
+        3000.times do
+          break if File.exist?(release) || !File.directory?(File.dirname(release))
+
+          sleep 0.2
+        end
         exit 1
       end
       states = File.exist?(ENV["GH_STUB_STATES"].to_s) ? File.readlines(ENV["GH_STUB_STATES"], chomp: true) : []
