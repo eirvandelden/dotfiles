@@ -101,15 +101,17 @@ class LefthookBranchFilesTest < Minitest::Test
     assert_equal(%w[config/own.yml], logged("yamllint"))
   end
 
+  # A marker the branch already pushed lies outside the push target diff; the empty tree would list it.
   def test_a_repository_without_an_origin_default_branch_falls_back_to_the_push_target
-    branch_pushed_before_main_moved
+    git(@work, "checkout", "--quiet", "-b", BRANCH)
+    commit_without_hooks("notes/earlier.txt", "# #{FIX_WORD} already pushed\n")
+    git(@work, "push", "--quiet", "-u", "origin", BRANCH)
     git(@work, "remote", "set-head", "origin", "--delete")
-    commit_without_hooks("notes/own.txt", "# #{FIX_WORD} mine\n")
+    commit_without_hooks("notes/own.txt", "mine\n")
 
     stdout, stderr, status = push
 
-    refute(status.success?)
-    assert_match(/notes\/own\.txt:1:/, stdout + stderr)
+    assert(status.success?, stdout + stderr)
   end
 
   def test_a_first_push_without_any_base_still_checks_every_file
