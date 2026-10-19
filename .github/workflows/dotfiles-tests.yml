@@ -40,9 +40,4 @@ jobs:
       - name: Install markdownlint-cli
         run: npm install -g markdownlint-cli@0.48.0
       - name: Run test/*_test.rb
-        run: |
-          set -o pipefail
-          for file in test/*_test.rb; do
-            echo "=== $file ==="
-            ruby -Itest "$file"
-          done
+        run: bin/test
