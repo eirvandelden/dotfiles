@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "rbconfig"
+require "timeout"
 require "tmpdir"
 require_relative "isolated_git"
 
@@ -51,6 +52,29 @@ class TestRunnerTest < Minitest::Test
       assert_match(/at least 1/, output)
       refute(File.exist?(File.join(@dir, "passing.record")), "ran a file with -j #{count}")
     end
+  end
+
+  def test_an_interrupt_lets_each_running_file_clean_up_and_exits_130
+    started = File.join(@dir, "started")
+    cleaned = File.join(@dir, "cleaned")
+    file = write_test("slow_test.rb", "def test_slow\n    File.write(#{started.inspect}, 'x')\n    sleep 30\n  " \
+                                      "ensure\n    File.write(#{cleaned.inspect}, '')\n  end")
+
+    status = interrupt_runner_once(started, file)
+
+    assert_equal(130, status.exitstatus)
+    assert_path_exists(cleaned, "the file's ensure block did not run")
+  end
+
+  def test_a_file_that_ignores_the_interrupt_is_killed_after_a_grace_period
+    started = File.join(@dir, "started")
+    file = write_test("stubborn_test.rb", "def test_stubborn\n    trap('INT') {}\n    " \
+                                          "File.write(#{started.inspect}, Process.pid.to_s)\n    sleep 60\n  end")
+
+    status = interrupt_runner_once(started, file)
+
+    assert_equal(130, status.exitstatus)
+    assert_raises(Errno::ESRCH) { Process.kill(0, Integer(File.read(started))) }
   end
 
   def test_each_file_runs_in_its_own_process_group
@@ -147,6 +171,26 @@ class TestRunnerTest < Minitest::Test
 
   def recorded_command(name)
     File.read(File.join(@dir, "#{name}.record")).split("\n")
+  end
+
+  # Starts the runner, waits until the file under test has started, sends INT, and returns the
+  # runner's exit status. Fails when the runner does not end within 20 seconds.
+  def interrupt_runner_once(started, *arguments)
+    runner = Process.spawn(RbConfig.ruby, RUNNER, *arguments, chdir: ROOT, out: File::NULL, err: File::NULL)
+    Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
+    Process.kill("INT", runner)
+    status = Timeout.timeout(20) { Process.wait2(runner).last }
+    runner = nil
+    status
+  ensure
+    reap(runner) if runner
+  end
+
+  def reap(pid)
+    Process.kill("KILL", pid)
+    Process.wait(pid)
+  rescue Errno::ESRCH, Errno::ECHILD
+    nil
   end
 
   def run_runner(*arguments)
