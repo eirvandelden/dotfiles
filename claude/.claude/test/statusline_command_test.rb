@@ -327,5 +327,11 @@ module Claude
     ensure
       File.chmod(0o755, @tmpdir)
     end
+
+    def test_shows_shipped_when_docs_changes_holds_only_a_hidden_directory
+      FileUtils.mkdir_p(File.join(@tmpdir, "docs", "changes", ".hidden"))
+
+      assert_equal "🎉 shipped | #{PR_URL}", render_in_tmpdir(pr: { url: PR_URL })
+    end
   end
 end

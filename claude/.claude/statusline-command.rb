@@ -13,7 +13,7 @@ class ChangeFolder
 
   def self.shipped?(current_dir)
     changes = File.join(current_dir, "docs", "changes")
-    Dir.children(changes).none? { |entry| File.directory?(File.join(changes, entry)) }
+    Dir.children(changes).none? { |entry| !entry.start_with?(".") && File.directory?(File.join(changes, entry)) }
   rescue Errno::ENOENT
     true
   end
