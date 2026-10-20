@@ -31,3 +31,15 @@ No findings.
 Closures checked: the round 4 nit holds (`[]`, `5`, `{"cwd":5}`, `/nonexistent` and unparsable input all exit 0 with no persona; tests and rubocop green). All earlier closures stand.
 
 No findings.
+
+
+## Round 7 — 2026-10-20 09:20Z — 25be16df (codex)
+
+No findings.
+
+
+## Round 8 — 2026-10-20 09:40Z — 25be16df (claude)
+
+No findings.
+
+Checked: catchphrase counts within the new cap of 8 (Peon 7, Deekin 6, minion 5); Thrall line removed; plan and test cap agree; new tests present; 29 tests green.
