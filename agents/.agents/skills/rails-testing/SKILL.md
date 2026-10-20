@@ -24,8 +24,10 @@ description: Use when writing or reviewing Ruby/Rails tests, choosing test data 
 - Delete or merge redundant tests when touching a file; near-identical tests are debt.
 - No meta-tests that assert code standards or repo plumbing (CI files, bin scripts exist) — hooks and CI guard those.
 - Write lots of integration tests (both personal and work): prefer request/integration/system tests for core flows. For APIs, test real HTTP requests, JSON parsing, status codes, and auth behavior.
-- Test-driven development: all generated code must be driven from tests. If no test exists for the code you're about to write, create the test first.
-- Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+- Every code change has tests. Configuration has no tests.
+- A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+- Test public methods and classes only. Private methods never get tests of their own.
+- Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
 
 ## Data setup
 

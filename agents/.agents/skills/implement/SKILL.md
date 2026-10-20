@@ -56,7 +56,12 @@ A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same co
 
 Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file; the branch pushed with `git push -u origin HEAD`. A refused push goes into the report, never `--no-verify`.
 
-Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+- Every code change has tests. Configuration has no tests.
+- A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+- Test public methods and classes only. Private methods never get tests of their own.
+- Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
+
+This pipeline still writes each test before its code, by design.
 
 A `## Proof` line of the form `→ check: <command or manual step>` is run after the code it covers, and its output is pasted. It is not written as a test. A check that needs Etienne (a device, an install) is listed as pending, never marked done.
 
