@@ -123,6 +123,15 @@ type = "command"
 command = '"$HOME/.claude/hooks/test-guard.rb"'
 timeout = 10
 
+# Persona for personal sessions: the same script Claude runs. Its stdout joins the model context.
+[[hooks.SessionStart]]
+matcher = "^(startup|resume|clear|compact|fork)$"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = '"$HOME/.claude/hooks/agent-voice.rb"'
+timeout = 10
+
 [mcp_servers.MobileBuildMCP]
 command = "npx"
 args = ["-y", "mobilebuildmcp@2.7.1", "mcp"]
