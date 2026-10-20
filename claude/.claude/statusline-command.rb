@@ -40,8 +40,9 @@ class ChangeFolder
   end
 
   def read(name)
-    file = File.join(@path, name)
-    File.read(file, encoding: Encoding::UTF_8).scrub if File.exist?(file)
+    File.read(File.join(@path, name), encoding: Encoding::UTF_8).scrub
+  rescue Errno::ENOENT
+    nil
   end
 end
 
