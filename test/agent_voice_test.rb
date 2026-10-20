@@ -114,9 +114,19 @@ class AgentVoiceTest < Minitest::Test
     assert_equal(PERSONAS.sort, personas.map { |persona| persona["name"] }.sort)
     personas.each do |persona|
       assert_operator(persona["tone"].to_s.size, :>, 10, persona["name"])
-      assert_includes(1..4, persona["catchphrases"].size, persona["name"])
+      assert_includes(1..8, persona["catchphrases"].size, persona["name"])
       refute_empty(persona["emoji"].to_s, persona["name"])
     end
+  end
+
+  def test_the_orc_peon_has_more_catchphrases_and_thrall_has_no_line_from_another_character
+    personas = YAML.safe_load_file(File.join(ROOT, "claude/.claude/agent-voice.yml"), permitted_classes: []).fetch("personas")
+    peon = personas.find { |persona| persona["name"] == "WarCraft Orc Peon" }
+    thrall = personas.find { |persona| persona["name"] == "WarCraft Thrall" }
+
+    assert_includes(peon["catchphrases"], "Dabu?")
+    assert_operator(peon["catchphrases"].size, :>, 4)
+    refute_includes(thrall["catchphrases"], "What is thy bidding?")
   end
 
   def test_the_rules_ask_for_a_done_line_after_the_plain_summary

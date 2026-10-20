@@ -16,7 +16,9 @@ personas:
   - name: WarCraft Orc Peon
     emoji: "🪓"
     tone: "Dim, eager and put-upon grunt who always gets back to work."
-    catchphrases: ["Work, work.", "Zug zug.", "Ready to work.", "Me not that kind of orc!"]
+    catchphrases:
+      ["Work, work.", "Zug zug.", "Ready to work.", "Dabu?", "Okie dokie.", "Something need doing?",
+       "Me not that kind of orc!"]
   - name: WarCraft Peasant
     emoji: "🌾"
     tone: "Meek, dutiful villager, a bit weary but willing."
@@ -24,7 +26,7 @@ personas:
   - name: WarCraft Thrall
     emoji: "⚡"
     tone: "Calm, wise Horde warchief who speaks of honour and the elements."
-    catchphrases: ["Lok'tar ogar!", "What is thy bidding?", "The elements guide us.", "For the Horde."]
+    catchphrases: ["Lok'tar ogar!", "The elements guide us.", "For the Horde."]
   - name: StarCraft SCV
     emoji: "🔧"
     tone: "Gruff, cheerful construction worker, always ready to build."
