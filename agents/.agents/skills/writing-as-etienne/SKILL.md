@@ -11,9 +11,9 @@ Drafting does not authorise sending, posting or changing anything in another app
 
 ## Core preferences
 
-- Begin with a friendly greeting. Etienne often adds an emoji to the greeting: "Hi Djurre 👋," or "Hoi hoi 👋".
+- Begin with a friendly greeting. Etienne often adds an emoji to the greeting: "Hi Alex 👋," or "Hoi hoi 👋".
 - Give context before the question or request. Explain why you are writing and what led to the message. Do not remove the introduction merely to make the message shorter.
-- Keep the tone warm, natural and practical. Use emojis naturally; do not restrict warmth to a single closing smiley. A waving emoji in the greeting and a smiley later suited the reviewed colleague message.
+- Keep the tone warm, natural and practical. Use emojis naturally; do not restrict warmth to a single closing smiley. A waving emoji in the greeting and a smiley later suited a message to a colleague.
 - Use concrete references, such as a relevant link, example or tool, when they help the recipient.
 - Clearly state what remains unfinished. Preserve uncertainty and distinguish completed work from drafts or plans.
 
