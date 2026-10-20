@@ -138,3 +138,7 @@ The viewer runs its `markdown` command without a shell, so the candidate is a wr
 - `-w 40`: glow wraps the text diagram's lines, and the boxes break apart.
 
 Result: fails the plan's criterion "the diagram does not wrap". The viewer config stays untouched; Mermaid fences in the viewer stay source. Use `mermaid-show <file.md>` in a pane to read a plan's diagrams.
+
+## Review round 1, finding 1: text mode in an agent shell
+
+After PR #214 merged and the branch rebased onto main, in a new session, `command -v node` prints `/Users/etienne.vandelden/.nodes/node-25.9.0/bin/node`. `agents/.agents/skills/diagrams/scripts/mermaid-show` on a three-node flowchart prints the boxed text diagram and no install hint.
