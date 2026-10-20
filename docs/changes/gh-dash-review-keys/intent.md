@@ -49,7 +49,7 @@ Reviewing pull requests in gh-dash is slow with Etienne's keyboard. He types Dvo
 
 - With a PR selected, `ctrl+↓` shows the next page of its description and `ctrl+↑` the previous one.
 - Pressing `d` on a PR shows its diff with the old and new code side by side.
-- In a repository with no setting, `ctrl+m` and Enter merge the PR with a merge commit and delete its branch. gh-dash shows the PR as merged, with no further prompt.
+- In a repository with no setting, `ctrl+m` and Enter merge the PR with a merge commit and delete its branch, with no further prompt. After `r`, gh-dash shows the PR as merged.
 - When the owner's setting says squash, `ctrl+m` and Enter squash-merge the PR.
 - When a repository's own setting says merge but its owner's says squash, the PR gets a merge commit.
 - `ctrl+m` followed by `n` and Enter leaves the PR open and shows no error.
@@ -64,6 +64,8 @@ Reviewing pull requests in gh-dash is slow with Etienne's keyboard. He types Dvo
 - The merge method comes from git config, overridable per repository — Etienne wants to set it per repository without naming work repositories in the public dotfiles.
 - Work repositories squash; all others use merge commits — the work convention and his personal one.
 - Document how to configure, change and remove the merge method, for humans and AI agents — both must be able to set it.
+- Press `r` after a merge to see the merged row (settled 2026-10-20) — gh-dash v4.26.2 cannot refresh the row after a custom command, and the builtin merge brings back the prompts.
+- Restow `github`, `agents` and `claude` is approved for the checks after implementation (settled 2026-10-20) — the script and skill reach `~` only through stow.
 - Autonomous delivery — Etienne's choice for this personal repository.
 - `ctrl+↑`/`ctrl+↓` for preview scrolling — vim keys do not fit Dvorak; plain arrows already move between PRs and sections.
 

@@ -24,7 +24,7 @@ gh-dash v4.26.2 runs as a `gh` extension. Its config is `github/.config/gh-dash/
 - Agent documentation: a new shared skill `pr-merge-method` in `agents/.agents/skills/pr-merge-method/` (with `agents/openai.yaml`), linked from `claude/.claude/skills/pr-merge-method`, and listed in `SKILLS-INDEX.md`. Its description triggers on "merge method", "squash-merge", "merge commit" and "gh-dash merge". A skill is how both Claude and Codex find guidance in any repository; a playbook line would load in every session for a rare task.
 - Human documentation: a new README section `## 🐙 gh-dash`, with the review keys and the merge-method recipes (owner, repository, change, remove, default). The skill points to the same commands; the README does not depend on the skill.
 - Tests: per playbook rule 3, configuration has no new tests. The script is code and gets an integration test. The existing `test_diff_pager_stays_delta` in `test/gh_dash_config_test.rb` pins the old pager value; it is updated to the new value as an intended behaviour change, not deleted.
-- No step contradicts intent's `## Decisions`. One conflict with the acceptance criteria remains: "gh-dash shows the PR as merged, with no further prompt" cannot hold in v4.26.2 with a custom command. After the merge the row stays listed as open until `r`. The plan meets every other part of that criterion and documents `r`. It is raised as `Decision needed` under Risks; the implementer does not change the criterion.
+- No step contradicts intent's `## Decisions`. One conflict with the acceptance criteria remains: "gh-dash shows the PR as merged, with no further prompt" cannot hold in v4.26.2 with a custom command. After the merge the row stays listed as open until `r`. The plan meets every other part of that criterion and documents `r`. Etienne settled it on 2026-10-20: press `r` after merging. `intent.md` records the amended criterion.
 
 ## Integration points
 
@@ -32,7 +32,7 @@ gh-dash v4.26.2 runs as a `gh` extension. Its config is `github/.config/gh-dash/
 - `gh pr merge` flags `--merge`, `--squash`, `--rebase`, `--delete-branch`, `-R`.
 - delta 0.20.1 flags `--paging always`, `--side-by-side`.
 - Git config include chain: `git/.config/git/config` → `~/.config/git/pr-merge.config` (machine-local, not in any repository).
-- Stow packages `github`, `agents`, `claude`: the new script and skill reach `~` only after a restow (rule 12 — Etienne runs it).
+- Stow packages `github`, `agents`, `claude`: the new script and skill reach `~` only after a restow (rule 12). Etienne approved the restow on 2026-10-20. A restow from the main checkout picks up the new files only after the merge. Before the merge, the manual checks use the worktree files: `gh dash --config <temp copy>` whose merge command points at the worktree script, and the agent check reads the skill from the worktree. After Etienne merges, `stow -R -t "$HOME" github agents claude` from the main checkout installs them.
 - Ghostty's kitty keyboard protocol for `ctrl+m`; herdr is unverified, which is why `M` exists.
 
 ## Files that change
@@ -61,7 +61,7 @@ gh-dash v4.26.2 runs as a `gh` extension. Its config is `github/.config/gh-dash/
 
 ## Risks
 
-- Decision needed: the criterion "gh-dash shows the PR as merged" cannot hold with a custom command in v4.26.2; the row stays until `r` (or the section's refetch). The plan documents "press `r` after merging". The alternative, the builtin `m`, brings back the three `gh` prompts.
+- Settled by Etienne on 2026-10-20: accept "press `r` after merging". The criterion "gh-dash shows the PR as merged" cannot hold with a custom command in v4.26.2; the row stays until `r` (or the section's refetch). The plan documents "press `r` after merging". The alternative, the builtin `m`, brings back the three `gh` prompts.
 - macOS binds `ctrl+↑`/`ctrl+↓` to Mission Control by default. On this machine those hotkeys use another modifier, so the keys reach the terminal. A machine with the defaults loses them; the README notes this.
 - herdr may not pass the kitty keyboard protocol through; then `ctrl+m` arrives as Enter and does nothing. `M` covers that.
 - `--side-by-side` in a narrow pane wraps long lines. Accepted; Etienne asked for side by side.
@@ -79,7 +79,7 @@ gh-dash v4.26.2 runs as a `gh` extension. Its config is `github/.config/gh-dash/
 - `ctrl+m`, `n`, Enter leaves the PR open and shows no error → `test/gh_dash_merge_test.rb` `test_any_answer_other_than_enter_cancels_without_error`; check: in gh-dash, `ctrl+m`, `n`, Enter; no error banner, PR still open.
 - `M` behaves exactly like `ctrl+m` → check: `ruby -ryaml -e` comparing the two `keybindings.prs` commands prints equal; in gh-dash, `M`, `n`, Enter shows the same prompt.
 - README alone: set owner squash, override one repository to merge, remove both → check: follow the README commands for `eirvandelden` and one of its repositories; after each step `ctrl+m` on a PR there shows the expected method in the prompt; answer `n`.
-- An agent in another repository sets squash from "squash-merge this repository's PRs from gh-dash" → check: after Etienne restows `agents` and `claude`, run `claude -p` with that prompt in a scratch clone of an `eirvandelden` repository; it loads `pr-merge-method` and writes `pr-merge.<owner>/<repo>.method squash` to `~/.config/git/pr-merge.config`; then unset it.
+- An agent in another repository sets squash from "squash-merge this repository's PRs from gh-dash" → check: before the merge, run `claude -p` with the worktree skill made available to it (not through stow) with that prompt in a scratch clone of an `eirvandelden` repository; it loads `pr-merge-method` and writes `pr-merge.<owner>/<repo>.method squash` to `~/.config/git/pr-merge.config`; then unset it.
 
 Per changed file, the unit tests expected:
 
