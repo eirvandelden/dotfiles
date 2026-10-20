@@ -1,6 +1,6 @@
 # Intent: Writing-as-Etienne skill
 
-Author: Etienne van Delden de la Haije. Status: accepted (2026-10-19). Type: feature. Delivery: step-by-step.
+Author: Etienne van Delden de la Haije. Status: draft. Type: feature. Delivery: step-by-step.
 
 ## Problem
 
@@ -8,7 +8,7 @@ Etienne confirmed a communication style on 2026-10-16. Agents have no shared cop
 
 ## Proposed outcome
 
-A shared skill, `writing-as-etienne`, holds the style guide. Claude loads it by relevance. Codex loads it only on request. The guide keeps its rule that drafting does not authorise sending.
+A shared skill, `writing-as-etienne`, holds the style guide. Claude and Codex both load it by relevance. The guide keeps its rule that drafting does not authorise sending.
 
 ## Affected users and systems
 
