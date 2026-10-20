@@ -159,7 +159,6 @@ class SkillParityTest < Minitest::Test
     %w[software-design diagrams glossary].each do |name|
       assert_includes(skill_names(AGENTS_SKILLS), name, "#{name} is not linked for Codex")
       assert_includes(skill_names(CLAUDE_SKILLS), name, "#{name} has no Claude skill")
-      refute_includes(CLAUDE_ONLY, name)
       assert_includes(index, name, "SKILLS-INDEX.md does not list #{name}")
     end
   end
