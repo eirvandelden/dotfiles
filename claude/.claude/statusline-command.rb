@@ -4,6 +4,38 @@ require "json"
 require "time"
 require "date"
 
+class ChangeFolder
+  ACCEPTED = /Status: accepted(?: \(\d{4}-\d{2}-\d{2}\))?(?=\.|\s|\z)/
+
+  def self.in(current_dir)
+    folders = Dir.glob(File.join(current_dir, "docs", "changes", "*", ""))
+    new(folders.first) if folders.one?
+  end
+
+  def initialize(path)
+    @path = path
+  end
+
+  def stage_label
+    return "🕵️ sleuthing" if read("review.md")
+    return "🛠️ hammering" if accepted?("plan.md")
+
+    accepted?("intent.md") ? "🧠 scheming" : "🤔 interviewing"
+  end
+
+  private
+
+  def accepted?(name)
+    status_line = read(name)&.lines&.find { |line| line.include?("Status:") }
+    ACCEPTED.match?(status_line.to_s)
+  end
+
+  def read(name)
+    file = File.join(@path, name)
+    File.read(file) if File.exist?(file)
+  end
+end
+
 module StatuslineCommand
   module_function
 
@@ -25,13 +57,25 @@ module StatuslineCommand
     nil
   end
 
+  def stage_label(current_dir, pr_url)
+    return unless current_dir.is_a?(String)
+
+    folder = ChangeFolder.in(current_dir)
+    return folder.stage_label if folder
+
+    "🎉 shipped" if pr_url && Dir.glob(File.join(current_dir, "docs", "changes", "*")).empty?
+  rescue SystemCallError
+    nil
+  end
+
   def render(json_input, today: Time.now.getlocal.to_date)
     data = JSON.parse(json_input)
     reply_time = format_local_time(last_assistant_timestamp(data["transcript_path"]), today: today)
     pr_url = data.dig("pr", "url")
+    label = stage_label(data.dig("workspace", "current_dir"), pr_url)
 
-    [ ("Last reply: #{reply_time}" if reply_time), pr_url ].compact.join(" | ")
-  rescue JSON::ParserError
+    [ label, ("Last reply: #{reply_time}" if reply_time), pr_url ].compact.join(" | ")
+  rescue JSON::ParserError, TypeError
     ""
   end
 end
