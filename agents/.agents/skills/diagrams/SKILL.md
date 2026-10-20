@@ -20,6 +20,7 @@ All diagrams are Mermaid. GitHub renders Mermaid fences in the plan and in the p
 - Keep a diagram under about 12 nodes. Wider diagrams do not fit a terminal pane.
 - Name nodes with the glossary terms. Never use a word from a term's `Avoid:` list.
 - Label every relationship with a verb or a cardinality.
+- Put a space on each side of every arrow (`A --> B`, never `A-->B`). The text renderer reads `A-->B` as one node named `A--` and prints no error.
 - Put the fence directly in `plan.md` under `### Diagrams`. Do not link to an image file.
 
 ## The "before" picture
