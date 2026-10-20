@@ -14,10 +14,19 @@ require_relative "remote_matcher"
 DATA_PATH = ENV.fetch("AGENT_VOICE_DATA") { File.expand_path("../agent-voice.yml", __dir__) }.freeze
 GREETING_SOURCES = %w[startup clear].freeze
 
+def valid_persona?(persona)
+  persona.is_a?(Hash) && %w[name emoji tone].all? { |key| persona[key].is_a?(String) } &&
+    persona["catchphrases"].is_a?(Array)
+end
+
+def valid_data?(data)
+  data.is_a?(Hash) && data["rules"].is_a?(Array) && data["personas"].is_a?(Array) &&
+    !data["personas"].empty? && data["personas"].all? { |persona| valid_persona?(persona) }
+end
+
 def load_data
   data = YAML.safe_load_file(DATA_PATH, permitted_classes: [], aliases: false)
-  raise "expected \"personas\" and \"rules\" lists" unless data.is_a?(Hash) && data["personas"].is_a?(Array) &&
-                                                          data["rules"].is_a?(Array)
+  raise "expected a rules list and personas with name, emoji, tone and catchphrases" unless valid_data?(data)
 
   data
 rescue StandardError => error
@@ -37,19 +46,21 @@ def origin_url(cwd)
   status.success? ? stdout.strip : nil
 end
 
-def inside_git?(cwd)
-  _stdout, _stderr, status = Open3.capture3("git", "-C", cwd, "rev-parse", "--git-dir")
-  status.success?
+def outside_git?(cwd)
+  return false unless File.directory?(cwd)
+
+  _stdout, stderr, status = Open3.capture3({ "LC_ALL" => "C" }, "git", "-C", cwd, "rev-parse", "--git-dir")
+  !status.success? && stderr.include?("not a git repository")
 end
 
 def personal?(cwd)
-  return !inside_git?(cwd) unless (url = origin_url(cwd))
+  return outside_git?(cwd) unless (url = origin_url(cwd))
 
   RemoteMatcher.personal?(url)
 end
 
 def pick(personas, session_id)
-  index = session_id ? Zlib.crc32(session_id) : Random.rand(personas.size)
+  index = session_id.to_s.empty? ? Random.rand(personas.size) : Zlib.crc32(session_id.to_s)
   personas[index % personas.size]
 end
 

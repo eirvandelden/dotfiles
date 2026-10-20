@@ -87,6 +87,19 @@ class AgentVoiceTest < Minitest::Test
     assert_includes(stdout, "Persona:")
   end
 
+  def test_a_directory_that_does_not_exist_prints_nothing
+    stdout, stderr, status = run_hook(cwd: File.join(@dir, "missing"))
+
+    assert_equal([ 0, "" ], [ status.exitstatus, stdout ], stderr)
+  end
+
+  def test_a_session_with_a_number_as_id_still_gets_a_persona
+    stdout, stderr, status = run_hook(cwd: repository("git@github.com:eirvandelden/e.git"), session_id: 5)
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes(stdout, "Persona:")
+  end
+
   def test_a_session_without_an_id_still_gets_a_persona
     stdout, stderr, status = run_hook(cwd: repository("git@github.com:eirvandelden/e.git"), session_id: nil)
 
@@ -142,6 +155,21 @@ class AgentVoiceTest < Minitest::Test
 
     assert_equal([ 0, "" ], [ status.exitstatus, stdout ])
     assert_match(/agent-voice:/, stderr)
+  end
+
+  def test_data_without_personas_or_catchphrases_warns_instead_of_crashing
+    [
+      "personas: []\nrules: [x]\n",
+      "personas:\n  - {name: A, emoji: x, tone: t}\nrules: [x]\n"
+    ].each do |yaml|
+      data = File.join(@dir, "partial.yml")
+      File.write(data, yaml)
+
+      stdout, stderr, status = run_hook(cwd: @dir, data: data)
+
+      assert_equal([ 0, "" ], [ status.exitstatus, stdout ], yaml)
+      assert_match(/agent-voice:/, stderr)
+    end
   end
 
   def test_unparseable_stdin_warns_and_prints_nothing
