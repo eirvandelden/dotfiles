@@ -35,7 +35,10 @@ rescue StandardError => error
 end
 
 def read_event
-  JSON.parse($stdin.read)
+  event = JSON.parse($stdin.read)
+  raise JSON::ParserError, "expected a JSON object" unless event.is_a?(Hash)
+
+  event
 rescue JSON::ParserError => error
   warn "agent-voice: could not parse hook input: #{error.message}"
   nil
@@ -77,7 +80,7 @@ event = read_event
 data = event && load_data
 exit 0 unless data
 
-cwd = event["cwd"] || Dir.pwd
-exit 0 unless personal?(cwd)
+cwd = event.fetch("cwd", Dir.pwd)
+exit 0 unless cwd.is_a?(String) && personal?(cwd)
 
 print_voice(data, pick(data["personas"], event["session_id"]), event["source"])

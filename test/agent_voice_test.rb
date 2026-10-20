@@ -179,6 +179,14 @@ class AgentVoiceTest < Minitest::Test
     assert_match(/agent-voice:/, stderr)
   end
 
+  def test_input_that_is_not_a_json_object_or_has_a_bad_cwd_prints_nothing_and_exits_zero
+    [ "[]", "5", '{"cwd":5}' ].each do |input|
+      stdout, _stderr, status = Open3.capture3(HOOK, stdin_data: input)
+
+      assert_equal([ 0, "" ], [ status.exitstatus, stdout ], input)
+    end
+  end
+
   def test_claude_runs_the_hook_on_session_start
     entry = hook_entry(JSON.parse(File.read(File.join(ROOT, "claude/.claude/settings.json"))), "SessionStart")
 
