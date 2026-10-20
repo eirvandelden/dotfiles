@@ -57,7 +57,7 @@ class TestRuleMirrorTest < Minitest::Test
   end
 
   def test_playbook_rule_3_tests_public_methods_and_classes_and_never_private_methods
-    line = rule_lines.grep(/private methods/).first
+    line = rule_lines.grep(/private methods/i).first
 
     assert_match(/Test public methods and classes only/, line)
     assert_match(/Private methods never get tests of their own/, line)
