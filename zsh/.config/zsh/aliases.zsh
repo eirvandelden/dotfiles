@@ -19,7 +19,6 @@ alias grb='git rebase'
 alias grbc='git rebase --continue'
 alias grbs='git rebase --skip'
 alias grba='git rebase --abort'
-alias gclean='git branch --merged | grep -v "*" | xargs -n 1 git branch -d | git remote prune origin'
 alias gitforce='git push --force-with-lease'
 
 # Rails
