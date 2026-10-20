@@ -114,20 +114,20 @@ Not checked: this repository has no Steep.
 
 Restored 2026-10-13 from the plan stage's transcript and checked against the branch diff; the original section was lost in an edit before implementation.
 
-- `claude/.claude/skills/plan/SKILL.md` — `## Design` in the template; design gate step "Agree the design" (glossary check, architects in parallel, diagrams via `mermaid-show`, alternatives, wait for "agreed"/"accepted"); design proof lines; Signatures line; auto mode and critique cover the design; Codex section names the architect and the plain-text alternatives.
-- `claude/.claude/skills/intent/SKILL.md` — interview reads the glossary, challenges avoided words, records agreed terms; Accept commits the glossary separately in a personal repository.
-- `claude/.claude/skills/implement/SKILL.md` — follow `ruby-style` for signatures; run `steep check` where the plan says so; design proof lines are built like criteria.
-- `claude/.claude/skills/software-design/SKILL.md`, `agents/openai.yaml` — new.
-- `claude/.claude/skills/glossary/SKILL.md`, `agents/openai.yaml` — new.
-- `claude/.claude/skills/diagrams/SKILL.md`, `agents/openai.yaml`, `scripts/mermaid-show`, `scripts/mermaid-ascii.mjs` — new.
-- `agents/.agents/skills/{software-design,glossary,diagrams}` — new relative symlinks.
+- `agents/.agents/skills/plan/SKILL.md` — `## Design` in the template; design gate step "Agree the design" (glossary check, architects in parallel, diagrams via `mermaid-show`, alternatives, wait for "agreed"/"accepted"); design proof lines; Signatures line; auto mode and critique cover the design; Codex section names the architect and the plain-text alternatives.
+- `agents/.agents/skills/intent/SKILL.md` — interview reads the glossary, challenges avoided words, records agreed terms; Accept commits the glossary separately in a personal repository.
+- `agents/.agents/skills/implement/SKILL.md` — follow `ruby-style` for signatures; run `steep check` where the plan says so; design proof lines are built like criteria.
+- `agents/.agents/skills/software-design/SKILL.md`, `agents/openai.yaml` — new.
+- `agents/.agents/skills/glossary/SKILL.md`, `agents/openai.yaml` — new.
+- `agents/.agents/skills/diagrams/SKILL.md`, `agents/openai.yaml`, `scripts/mermaid-show`, `scripts/mermaid-ascii.mjs` — new.
+- `claude/.claude/skills/{software-design,glossary,diagrams}` — new relative symlinks to the agents package.
 - `claude/.claude/agents/architect.md` — new, tools `[Read, Grep, Glob]`: no `Bash`, so it cannot write in Claude, and the generator gives it the read-only sandbox in Codex. `codex/.codex/agents/architect.toml` — generated.
 - `claude/.claude/agents/reviewer.md` — a fourth pass, Design; `codex/.codex/agents/reviewer.toml` regenerated.
-- `claude/.claude/skills/new-repo-setup/references/REVIEW.md` — Design pass.
+- `agents/.agents/skills/new-repo-setup/references/REVIEW.md` — Design pass.
 - `herdr/.config/herdr/scripts/start-review.sh` — prompt names the Design pass.
-- `claude/.claude/skills/finish/scripts/fill-pr-template` — copies `## Design` into the Implementation part.
-- `claude/.claude/skills/object-oriented-design/SKILL.md` — points to `software-design` and to `ruby-style` for documentation.
-- `claude/.claude/skills/ruby-style/SKILL.md` — one personal line: signatures sit above the `def`, never in a hand-written `sig/*.rbs` file; the plan's `### Signatures` says whether Steep checks them. The rest of the documentation rule is #201's.
+- `agents/.agents/skills/finish/scripts/fill-pr-template` — copies `## Design` into the Implementation part.
+- `agents/.agents/skills/object-oriented-design/SKILL.md` — points to `software-design` and to `ruby-style` for documentation.
+- `agents/.agents/skills/ruby-style/SKILL.md` — one personal line: signatures sit above the `def`, never in a hand-written `sig/*.rbs` file; the plan's `### Signatures` says whether Steep checks them. The rest of the documentation rule is #201's.
 - `SKILLS-INDEX.md` — entries for the three new skills.
 - `packages.conf` — `mermaid-cli`, `timg` in `BREW`; `beautiful-mermaid` in `NPM_PACKAGES`.
 - `git/.config/git/ignore.global` — `GLOSSARY.local.md`.
@@ -200,11 +200,11 @@ Each numbered step is one commit. In every step the named tests are written firs
 - Invariant: `--markdown` changes only Mermaid fences, enforced by the fence scanner → `test/mermaid_show_test.rb` `test_markdown_mode_leaves_everything_but_mermaid_fences_alone`
 
 Per changed file, the unit tests expected, named as behaviour:
-- `claude/.claude/skills/diagrams/scripts/mermaid-show`: `prints a .mmd file as text`, `prints each fence of a .md file`, `markdown mode replaces only mermaid fences`, `image mode calls mmdc then timg`, `a missing beautiful-mermaid prints the install hint and exits 1`, `an unknown flag prints usage and exits 2`.
+- `agents/.agents/skills/diagrams/scripts/mermaid-show`: `prints a .mmd file as text`, `prints each fence of a .md file`, `markdown mode replaces only mermaid fences`, `image mode calls mmdc then timg`, `a missing beautiful-mermaid prints the install hint and exits 1`, `an unknown flag prints usage and exits 2`.
 - `claude/.claude/agents/architect.md`: `has no Bash`, `is read-only`, `takes one design goal`, `returns the design section format`, `generated toml matches`.
 - `claude/.claude/agents/reviewer.md`: `runs a Design pass`, `still runs Bugs, Security, Compliance`.
 - `herdr/.config/herdr/scripts/start-review.sh`: `prompt names the Design pass`.
-- `claude/.claude/skills/finish/scripts/fill-pr-template`: `copies Design with its subsections`, `keeps a Mermaid fence intact`, `a plan without Design fills as before`.
+- `agents/.agents/skills/finish/scripts/fill-pr-template`: `copies Design with its subsections`, `keeps a Mermaid fence intact`, `a plan without Design fills as before`.
 
 Test setup: plain Minitest text-contract tests that read skill and agent text, like `test/artifact_chain_skills_test.rb`. `mermaid-show` tests run the script with `Open3` in a temp dir with stub `node`, `mmdc` and `timg` on `PATH` that log their arguments, like `test/editor_test.rb`.
 

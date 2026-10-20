@@ -33,7 +33,7 @@ class DiagramsSkillTest < Minitest::Test
   private
 
   def diagrams_skill
-    path = File.join(ROOT, "claude/.claude/skills/diagrams/SKILL.md")
+    path = File.join(ROOT, "agents/.agents/skills/diagrams/SKILL.md")
     flunk("#{path} does not exist") unless File.exist?(path)
     File.read(path)
   end

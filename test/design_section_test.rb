@@ -50,7 +50,7 @@ class DesignSectionTest < Minitest::Test
   end
 
   def test_the_software_design_skill_covers_deep_modules_messages_crc_connascence_and_solid
-    path = File.join(ROOT, "claude/.claude/skills/software-design/SKILL.md")
+    path = File.join(ROOT, "agents/.agents/skills/software-design/SKILL.md")
     flunk("#{path} does not exist") unless File.exist?(path)
     text = File.read(path)
 
