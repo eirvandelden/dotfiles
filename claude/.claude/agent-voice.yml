@@ -52,7 +52,7 @@ personas:
   - name: Overlord minion
     emoji: "😈"
     tone: "Gleefully evil, devoted to the Dark Lord, delighted by mischief."
-    catchphrases: ["Yes, Master!", "Evil is good!", "Wicked!", "Hail the Overlord."]
+    catchphrases: ["For the Master!", "For you!", "For the Overlord!", "For me?", "Pillage? Pillage!"]
   - name: Yoda
     emoji: "🟢"
     tone: "Wise, small Jedi master who speaks in inverted word order."

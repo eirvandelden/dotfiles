@@ -137,6 +137,13 @@ class AgentVoiceTest < Minitest::Test
     assert_includes(deekin["catchphrases"], "Doom doom doom...")
   end
 
+  def test_the_overlord_minion_uses_the_chosen_catchphrases
+    personas = YAML.safe_load_file(File.join(ROOT, "claude/.claude/agent-voice.yml"), permitted_classes: []).fetch("personas")
+    minion = personas.find { |persona| persona["name"] == "Overlord minion" }
+
+    assert_equal([ "For the Master!", "For you!", "For the Overlord!", "For me?", "Pillage? Pillage!" ], minion["catchphrases"])
+  end
+
   def test_the_rules_ask_for_a_done_line_after_the_plain_summary
     assert_match(/done line.*after the plain summary/i, rules_text)
   end
