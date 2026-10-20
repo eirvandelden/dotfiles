@@ -308,5 +308,24 @@ module Claude
     ensure
       File.chmod(0o755, folder)
     end
+
+    def test_shows_no_label_when_docs_is_unsearchable
+      folder = change_folder(intent: accepted_intent)
+      docs = File.expand_path("../..", folder)
+      File.chmod(0o000, docs)
+
+      assert_equal PR_URL, render_in_tmpdir(pr: { url: PR_URL })
+    ensure
+      File.chmod(0o755, docs)
+    end
+
+    def test_shows_no_label_when_current_dir_is_unsearchable
+      change_folder(intent: accepted_intent)
+      File.chmod(0o000, @tmpdir)
+
+      assert_equal PR_URL, render_in_tmpdir(pr: { url: PR_URL })
+    ensure
+      File.chmod(0o755, @tmpdir)
+    end
   end
 end

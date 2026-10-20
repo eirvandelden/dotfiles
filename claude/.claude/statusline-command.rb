@@ -13,7 +13,9 @@ class ChangeFolder
 
   def self.shipped?(current_dir)
     changes = File.join(current_dir, "docs", "changes")
-    !File.exist?(changes) || (File.readable?(changes) && folders_in(current_dir).empty?)
+    Dir.children(changes).none? { |entry| File.directory?(File.join(changes, entry)) }
+  rescue Errno::ENOENT
+    true
   end
 
   def self.in(current_dir)
