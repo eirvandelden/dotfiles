@@ -1,6 +1,6 @@
 # Intent: Writing-as-Etienne skill
 
-Author: Etienne van Delden de la Haije. Status: draft. Type: feature. Delivery: step-by-step.
+Author: Etienne van Delden de la Haije. Status: accepted (2026-10-20). Type: feature. Delivery: step-by-step.
 
 ## Problem
 
