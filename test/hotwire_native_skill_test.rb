@@ -35,18 +35,27 @@ class HotwireNativeSkillTest < Minitest::Test
     assert_match(/never[^.]*(migrat|bump|upgrade)[^.]*unless the task asks/i, skill)
   end
 
-  def test_matrix_validates_native_ui_with_build_lint_and_a_device_check
-    row = matrix_row("Native UI or configuration")
+  def test_matrix_validates_native_ui_with_an_automated_test_and_a_device_check
+    row = matrix_row("Native UI")
+    assert_match(/automated test/i, row)
     assert_match(/build/i, row)
     assert_match(/lint/i, row)
     assert_match(/simulator or device/i, row)
-    refute_match(/unit test/i, row)
+  end
+
+  def test_matrix_validates_configuration_with_build_lint_and_a_device_check_and_no_test
+    row = matrix_row("Configuration")
+    assert_match(/build/i, row)
+    assert_match(/lint/i, row)
+    assert_match(/simulator or device/i, row)
+    assert_match(/needs no test/i, row)
   end
 
   def test_matrix_names_a_web_side_and_a_native_side_check_for_bridge_components
     web = matrix_row("Bridge component, web side")
     native = matrix_row("Bridge component, native side")
     assert_match(/Stimulus|markup/i, web)
+    assert_match(/automated test/i, native)
     assert_match(/build/i, native)
     assert_match(/simulator or device/i, native)
   end
@@ -218,7 +227,7 @@ class HotwireNativeSkillTest < Minitest::Test
     assert_equal([ :path_configuration ], gaps)
   end
 
-  def test_references_leave_the_testing_rule_to_the_mobile_exception
+  def test_references_leave_the_testing_rule_to_the_playbook
     each_reference do |file|
       refute_match(/regression test (comes )?first/i, reference(file))
       refute_match(/(every|any) behaviou?r change/i, reference(file))
