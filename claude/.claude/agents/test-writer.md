@@ -29,7 +29,12 @@ Run the full set. Every new test must fail, and fail for the reason its criterio
 
 Commit everything with `Tests for <slug>`.
 
-Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+- Every code change has tests. Configuration has no tests.
+- A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+- Test public methods and classes only. Private methods never get tests of their own.
+- Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
+
+This pipeline still writes each test before its code, by design.
 
 Skip every `## Proof` line of the form `→ check: ...`. List each one in your output as not written.
 

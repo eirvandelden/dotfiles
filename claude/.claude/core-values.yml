@@ -17,6 +17,10 @@ sections:
   verification:
     - "Verify by running the command, not by assuming it works."
     - "Fix what broke instead of weakening or deleting a test."
+    - "Every code change has tests. Configuration has no tests."
+    - "A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes."
+    - "Test public methods and classes only. Private methods never get tests of their own."
+    - "Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix."
     - "Run the narrowest test first, then the full suite."
   consent:
     - "Never post, comment, or reply on GitHub as the user without explicit approval for that exact message."

@@ -85,9 +85,11 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - Run linters on every file touched.
    - Fix all issues before considering the task done.
    - NEVER add linter disable comments.
-3. Test-driven development:
-   - Write the test first; never generate code without a corresponding test.
-   - Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+3. Tests:
+   - Every code change has tests. Configuration has no tests.
+   - A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+   - Test public methods and classes only. Private methods never get tests of their own.
+   - Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
    - Run tests after every change and fix failures before finishing.
    - A task is only done when all tests are green, all linters are green, and you have re-read your own diff and adjusted.
 4. Ask for clarification when the playbook does not cover something.

@@ -41,16 +41,22 @@ Never guess the target. Before any build or device command, name these three, re
 
 ## Validation matrix
 
-Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+- Every code change has tests. Configuration has no tests.
+- A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+- Test public methods and classes only. Private methods never get tests of their own.
+- Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
+
+The matrix below names what "done" means per change.
 
 | Change | Done when |
 | --- | --- |
-| Native UI or configuration | Build passes, lint passes, and a simulator or device check shows the change. A test written first is not required. |
-| Simple wiring | Build passes, lint passes, and a simulator or device check exercises the wired path. |
+| Native UI | An automated test covers it. Build passes, lint passes, and a simulator or device check shows the change. |
+| Configuration | Build passes, lint passes, and a simulator or device check shows the change. It needs no test. |
+| Simple wiring | An automated test covers it. Build passes, lint passes, and a simulator or device check exercises the wired path. |
 | Bridge component, web side | The Stimulus controller and its markup follow the web testing policy, and the web page still works in a plain browser. |
-| Bridge component, native side | Build passes, lint passes, and a simulator or device check sends a real message through the component. |
-| Meaningful logic | An automated test covers it, written first. |
-| Security-sensitive behaviour | An automated test covers it, written first. Review the boundary by hand as well. |
+| Bridge component, native side | An automated test covers it. Build passes, lint passes, and a simulator or device check sends a real message through the component. |
+| Meaningful logic | An automated test covers it. |
+| Security-sensitive behaviour | An automated test covers it. Review the boundary by hand as well. |
 | Regression fix | An automated test reproduces the bug and fails first, then the fix makes it pass. The regression test comes first. |
 
 A check that needs a person (a physical device, an install) is reported as pending, never as done.

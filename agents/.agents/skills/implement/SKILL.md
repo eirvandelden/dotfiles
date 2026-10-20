@@ -46,7 +46,7 @@ Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<fo
 
 ### 3. Single-session build
 
-Outer loop, once per acceptance criterion in `## Proof`: write the failing acceptance test, run it, confirm it fails for the reason the criterion implies — a test green on first run is broken.
+Outer loop, once per acceptance criterion in `## Proof` that names a test: write the failing acceptance test, run it, confirm it fails for the reason the criterion implies — a test green on first run is broken.
 
 Inner loop, per unit test named under the file being changed: red, green, refactor, commit on green.
 
@@ -56,7 +56,12 @@ A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same co
 
 Done: every test named in `## Proof` exists, passes, and its output is pasted; linters clean on every touched file; the branch pushed with `git push -u origin HEAD`. A refused push goes into the report, never `--no-verify`.
 
-Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+- Every code change has tests. Configuration has no tests.
+- A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+- Test public methods and classes only. Private methods never get tests of their own.
+- Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
+
+This pipeline still writes each test before its code, by design.
 
 A `## Proof` line of the form `→ check: <command or manual step>` is run after the code it covers, and its output is pasted. It is not written as a test. A check that needs Etienne (a device, an install) is listed as pending, never marked done.
 
@@ -65,7 +70,7 @@ A `## Proof` line of the form `→ check: <command or manual step>` is run after
 Same worktree, sequential, never both at once:
 
 1. `test-writer` agent: reads only `intent.md`'s acceptance criteria and `plan.md`'s `## Proof` — never production code beyond what a test needs to compile. Writes every acceptance test and every named unit test, runs them, confirms each fails for the reason its criterion implies (a new test that passes is reported as a finding, not silently fixed). Commits `Tests for <slug>`.
-2. Confirm here: the commit landed, the suite is red, and it is red for the right reasons.
+2. Confirm here: the commit landed, the suite is red, and it is red for the right reasons. A plan whose `## Proof` has only `→ check:` lines has no test-writer commit: skip to step 3.
 3. `implementer` agent: reads `plan.md` and the failing tests. Red/green/refactor on production code only, one unit test at a time, commit on green. A `PreToolUse` hook denies its writes under test paths regardless of what it thinks it needs. A unit test it needs but cannot write becomes a line in `plan.md`'s Proof and a line in its report.
 4. Run the full suite here and read both reports. If the implementer's report lists tests it needed but couldn't write, run `test-writer` again for those, then `implementer` again.
 
