@@ -270,5 +270,12 @@ module Claude
     def test_is_blank_instead_of_raising_when_pr_or_workspace_is_not_an_object
       assert_equal "", StatuslineCommand.render({ pr: "x", workspace: 5 }.to_json)
     end
+
+    def test_shows_the_label_when_the_status_line_holds_invalid_bytes
+      folder = change_folder
+      File.binwrite(File.join(folder, "intent.md"), "Author: \xFF. Status: accepted.\n")
+
+      assert_equal "🧠 scheming", render_in_tmpdir
+    end
   end
 end
