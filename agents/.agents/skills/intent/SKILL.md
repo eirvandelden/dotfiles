@@ -156,7 +156,7 @@ Author: <name>. Status: draft.
 <anything unresolved — or "None.">
 ```
 
-Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` (and, for autonomous delivery, `Delivery: autonomous`) — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
+Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` (and, for autonomous delivery, `Delivery: autonomous` and `Codex review: yes|no`) — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
 
 Create the folder (`mkdir -p`) if it does not exist. Write the file.
 

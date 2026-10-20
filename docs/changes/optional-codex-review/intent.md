@@ -4,18 +4,15 @@ Author: Etienne van Delden. Status: accepted. Type: chore. Delivery: step-by-ste
 
 ## Problem
 
-Autonomous delivery always runs two reviewers, the Claude `reviewer` agent and `codex review --base`.
-The second reviewer costs extra tokens on every change, and Etienne cannot opt out.
+Autonomous delivery always runs two reviewers, the Claude `reviewer` agent and `codex review --base`. The second reviewer costs extra tokens on every change, and Etienne cannot opt out.
 
 ## Proposed outcome
 
-Autonomous review runs the Claude reviewer only.
-Etienne can choose to add Codex as an extra reviewer, per change.
+Autonomous review runs the Claude reviewer only. Etienne can choose to add Codex as an extra reviewer, per change.
 
 ## Affected users and systems
 
-Etienne, as the user of autonomous delivery on personal repositories.
-The `intent`, `review` and `deliver` skills, playbook §7a, and the contract tests that pin their text.
+Etienne, as the user of autonomous delivery on personal repositories. The `intent`, `review` and `deliver` skills, playbook §7a, and the contract tests that pin their text.
 
 ## Constraints
 

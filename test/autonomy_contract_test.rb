@@ -245,6 +245,18 @@ class AutonomyContractTest < Minitest::Test
     end
   end
 
+  def test_code_review_codex_section_gates_the_codex_findings_on_the_opt_in
+    codex = section_of(skill("code-review"), "## Codex")
+
+    assert_includes(codex, "`Codex review: yes`")
+  end
+
+  def test_intent_template_step_names_the_codex_review_field
+    line = skill("intent").lines.find { |entry| entry.include?("for autonomous delivery, `Delivery: autonomous`") }
+
+    assert_includes(line, "`Codex review: yes|no`")
+  end
+
   private
 
   def assert_critique_contract(section)
