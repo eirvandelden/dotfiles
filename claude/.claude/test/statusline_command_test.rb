@@ -277,5 +277,9 @@ module Claude
 
       assert_equal "🧠 scheming", render_in_tmpdir
     end
+
+    def test_shows_no_label_when_current_dir_holds_a_null_byte
+      assert_equal "", StatuslineCommand.render({ workspace: { current_dir: "/tmp/a\u0000b" } }.to_json)
+    end
   end
 end

@@ -68,7 +68,7 @@ module StatuslineCommand
     return folder.stage_label if folder
 
     "🎉 shipped" if pr_url && ChangeFolder.folders_in(current_dir).empty?
-  rescue SystemCallError
+  rescue SystemCallError, ArgumentError
     nil
   end
 
