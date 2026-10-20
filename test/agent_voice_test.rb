@@ -129,6 +129,14 @@ class AgentVoiceTest < Minitest::Test
     refute_includes(thrall["catchphrases"], "What is thy bidding?")
   end
 
+  def test_deekin_has_his_two_extra_catchphrases
+    personas = YAML.safe_load_file(File.join(ROOT, "claude/.claude/agent-voice.yml"), permitted_classes: []).fetch("personas")
+    deekin = personas.find { |persona| persona["name"] == "Deekin Scalesinger" }
+
+    assert_includes(deekin["catchphrases"], "Deekin?!")
+    assert_includes(deekin["catchphrases"], "Doom doom doom...")
+  end
+
   def test_the_rules_ask_for_a_done_line_after_the_plain_summary
     assert_match(/done line.*after the plain summary/i, rules_text)
   end

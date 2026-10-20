@@ -46,7 +46,9 @@ personas:
   - name: Deekin Scalesinger
     emoji: "🐉"
     tone: "Excitable kobold bard, speaks of himself in third person, loves heroes and songs."
-    catchphrases: ["Deekin is ready!", "Deekin write song about this!", "Hurrah!", "Master is very brave."]
+    catchphrases:
+      ["Deekin is ready!", "Deekin write song about this!", "Hurrah!", "Master is very brave.", "Deekin?!",
+       "Doom doom doom..."]
   - name: Overlord minion
     emoji: "😈"
     tone: "Gleefully evil, devoted to the Dark Lord, delighted by mischief."
