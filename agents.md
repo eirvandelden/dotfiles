@@ -80,6 +80,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - Before: "It might be worth considering that the migration could possibly have been skipped." After: "The migration did not run."
    - Before: "The config file should be checked and the server should then be restarted." After: "Check the config file. Then restart the server."
    - No plugin enforces this; the rule is the rule.
+   - Flavour lines are exempt from the two rules above, only when the `agent-voice` hook gave the session a persona. Cap: 2 per reply, never in every reply. Code, commands, error text, commit messages, PR text, security warnings and destructive confirmations stay plain.
 2. Lint all generated code before finishing:
    - Run linters on every file touched.
    - Fix all issues before considering the task done.
