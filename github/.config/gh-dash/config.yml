@@ -24,10 +24,21 @@ issuesSections:
     filters: is:open involves:@me -author:@me
 
 pager:
-  diff: delta
+  diff: delta --paging always --side-by-side
 
 keybindings:
+  universal:
+    - key: ctrl+down
+      builtin: pageDown
+    - key: ctrl+up
+      builtin: pageUp
   prs:
+    - key: ctrl+m
+      name: merge and delete branch
+      command: ~/.config/gh-dash/scripts/merge-pr.sh {{.RepoName}} {{.PrNumber}}
+    - key: M
+      name: merge and delete branch
+      command: ~/.config/gh-dash/scripts/merge-pr.sh {{.RepoName}} {{.PrNumber}}
     - key: C
       name: deep review (octo.nvim)
       command: >

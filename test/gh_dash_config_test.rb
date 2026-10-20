@@ -78,8 +78,8 @@ class GhDashConfigTest < Minitest::Test
     assert_equal(DEEP_REVIEW_COMMAND, keybinding["command"].strip)
   end
 
-  def test_diff_pager_stays_delta
-    assert_equal("delta", config.dig("pager", "diff"))
+  def test_diff_pager_is_delta_side_by_side
+    assert_equal("delta --paging always --side-by-side", config.dig("pager", "diff"))
   end
 
   private
