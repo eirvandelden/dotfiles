@@ -46,7 +46,7 @@ Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<fo
 
 ### 3. Single-session build
 
-Outer loop, once per acceptance criterion in `## Proof`: write the failing acceptance test, run it, confirm it fails for the reason the criterion implies — a test green on first run is broken.
+Outer loop, once per acceptance criterion in `## Proof` that names a test: write the failing acceptance test, run it, confirm it fails for the reason the criterion implies — a test green on first run is broken.
 
 Inner loop, per unit test named under the file being changed: red, green, refactor, commit on green.
 
@@ -70,7 +70,7 @@ A `## Proof` line of the form `→ check: <command or manual step>` is run after
 Same worktree, sequential, never both at once:
 
 1. `test-writer` agent: reads only `intent.md`'s acceptance criteria and `plan.md`'s `## Proof` — never production code beyond what a test needs to compile. Writes every acceptance test and every named unit test, runs them, confirms each fails for the reason its criterion implies (a new test that passes is reported as a finding, not silently fixed). Commits `Tests for <slug>`.
-2. Confirm here: the commit landed, the suite is red, and it is red for the right reasons.
+2. Confirm here: the commit landed, the suite is red, and it is red for the right reasons. A plan whose `## Proof` has only `→ check:` lines has no test-writer commit: skip to step 3.
 3. `implementer` agent: reads `plan.md` and the failing tests. Red/green/refactor on production code only, one unit test at a time, commit on green. A `PreToolUse` hook denies its writes under test paths regardless of what it thinks it needs. A unit test it needs but cannot write becomes a line in `plan.md`'s Proof and a line in its report.
 4. Run the full suite here and read both reports. If the implementer's report lists tests it needed but couldn't write, run `test-writer` again for those, then `implementer` again.
 
