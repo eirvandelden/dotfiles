@@ -11,7 +11,7 @@ require "tmpdir"
 # their arguments, the way editor_test.rb stubs its binaries.
 class MermaidShowTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  SCRIPT = File.join(REPO_ROOT, "claude/.claude/skills/diagrams/scripts/mermaid-show")
+  SCRIPT = File.join(REPO_ROOT, "agents/.agents/skills/diagrams/scripts/mermaid-show")
   DIAGRAM = "classDiagram\n  Card --> Closure\n"
 
   def setup
@@ -60,7 +60,7 @@ class MermaidShowTest < Minitest::Test
 
   def test_markdown_mode_leaves_everything_but_mermaid_fences_alone
     stub_node
-    markdown = "# Title\n\n  trailing  \n\n| a | b |\n|---|---|\n\n~~~mermaid\nnot a backtick fence\n~~~\n\n- item\n\n```sh\necho hi\n```\n"
+    markdown = "# Title\n\n  trailing  \n\n| a | b |\n|---|---|\n\n~~~ruby\nnot a mermaid fence\n~~~\n\n- item\n\n```sh\necho hi\n```\n"
 
     result = run_script("--markdown", stdin: markdown)
 
@@ -87,6 +87,16 @@ class MermaidShowTest < Minitest::Test
 
     assert_predicate(result[:status], :success?, result[:stderr])
     assert_equal("```foo```\n\n```text\nTEXT-DIAGRAM\n```\n", result[:stdout])
+  end
+
+  def test_markdown_mode_renders_a_tilde_fence
+    stub_node
+    markdown = "~~~mermaid\n#{DIAGRAM}~~~\n"
+
+    result = run_script("--markdown", stdin: markdown)
+
+    assert_predicate(result[:status], :success?, result[:stderr])
+    assert_equal("```text\nTEXT-DIAGRAM\n```\n", result[:stdout])
   end
 
   def test_image_mode_calls_mmdc_then_timg
@@ -121,6 +131,16 @@ class MermaidShowTest < Minitest::Test
     assert_equal(1, result[:status].exitstatus)
     assert_includes(result[:stderr], "Parse error on line 2")
     refute_includes(result[:stderr], "npm install -g beautiful-mermaid")
+  end
+
+  def test_a_rejected_diagram_reports_the_error_line_and_names_the_fence_without_a_stack_trace
+    stub("node", "echo 'Error: Parse error on line 2' >&2; echo '    at parse (file.js:1:1)' >&2; exit 1")
+    markdown = "```mermaid\n#{DIAGRAM}```\n\n```mermaid\n#{DIAGRAM}```\n"
+
+    result = run_script("--markdown", stdin: markdown)
+
+    assert_equal(1, result[:status].exitstatus)
+    assert_equal("mermaid-show: diagram 1: Error: Parse error on line 2\n", result[:stderr])
   end
 
   def test_a_missing_tool_is_named_with_its_install_command
