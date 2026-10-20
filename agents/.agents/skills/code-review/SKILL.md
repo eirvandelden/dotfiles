@@ -10,7 +10,7 @@ When asked to review work: read the project's `AGENTS.md` for what the applicati
 When asked to implement fixes for issues found during a review (e.g. "implement fixes for the issues you've found", "verify and fix the above findings", "implement a fix for issue X"):
 
 1. Verify each finding before touching code — confirm it is real using systematic debugging; write a failing test that demonstrates it where possible. Report findings that do not hold instead of "fixing" them.
-2. Fix the verified findings Follow the playbook test rule:
+2. Fix the verified findings. Follow the playbook test rule:
    - Every code change has tests. Configuration has no tests.
    - A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
    - Test public methods and classes only. Private methods never get tests of their own.
