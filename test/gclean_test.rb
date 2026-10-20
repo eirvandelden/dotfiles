@@ -14,7 +14,6 @@ class GcleanTest < Minitest::Test
   def setup
     @tmpdir = File.realpath(Dir.mktmpdir)
     @repo = File.join(@tmpdir, "repo")
-    @sweep_log = File.join(@tmpdir, "sweep.log")
     FileUtils.mkdir_p(@repo)
     git("init", "--quiet", "--initial-branch=main")
     git("commit", "--quiet", "--allow-empty", "-m", "initial")
@@ -54,7 +53,7 @@ class GcleanTest < Minitest::Test
     refute_match(/branch '\+' not found|used by worktree/, stderr)
   end
 
-  def test_keeps_main_and_the_current_branch
+  def test_keeps_main
     git("branch", "merged-branch")
 
     run_gclean
@@ -62,10 +61,33 @@ class GcleanTest < Minitest::Test
     assert(branch?("main"))
   end
 
-  def test_sweeps_merged_worktrees_before_deleting_branches
+  def test_keeps_the_current_branch
+    git("switch", "--quiet", "-c", "current-branch")
+
     run_gclean
 
-    assert_equal("swept\n", File.read(@sweep_log))
+    assert(branch?("current-branch"))
+  end
+
+  def test_deletes_the_branch_of_a_worktree_that_the_sweep_removed
+    git("worktree", "add", "--quiet", File.join(".worktrees", "swept"), "-b", "swept-branch")
+    install_sweep_stub("git worktree remove .worktrees/swept")
+
+    run_gclean
+
+    refute(branch?("swept-branch"))
+  end
+
+  def test_deletes_a_branch_merged_into_the_default_branch_that_the_checkout_lacks
+    git("commit", "--quiet", "--allow-empty", "-m", "merged upstream")
+    git("push", "--quiet", "origin", "main")
+    git("remote", "set-head", "origin", "main")
+    git("branch", "merged-upstream")
+    git("reset", "--quiet", "--hard", "HEAD~1")
+
+    run_gclean
+
+    refute(branch?("merged-upstream"))
   end
 
   def test_no_alias_shadows_the_function
@@ -86,9 +108,9 @@ class GcleanTest < Minitest::Test
     git("push", "--quiet", "origin", "main")
   end
 
-  def install_sweep_stub
+  def install_sweep_stub(command = "true")
     path = File.join(@tmpdir, "sweep")
-    File.write(path, "#!/bin/sh\necho swept >> '#{@sweep_log}'\n")
+    File.write(path, "#!/bin/sh\n#{command}\n")
     File.chmod(0o755, path)
   end
 
