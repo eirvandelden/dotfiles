@@ -265,6 +265,26 @@ class AutoAcceptTest < Minitest::Test
     assert(status.success?, stderr)
   end
 
+  def test_accepts_an_intent_that_records_codex_review_inline
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nAuthor: E. Status: accepted. Delivery: autonomous. Codex review: yes.\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
+  def test_accepts_an_intent_with_codex_review_on_its_own_line
+    add_remote("git@github.com:eirvandelden/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+    File.write(File.join(@repo, "intent.md"), "# Intent: x\n\nAuthor: E. Status: accepted. Type: feature.\nCodex review: no\nDelivery: autonomous\n")
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   def test_accepts_an_undated_status_followed_by_delivery_and_type
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)

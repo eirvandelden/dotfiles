@@ -13,7 +13,7 @@ Other skills reach this one by path: `~/.claude/skills/deliver/SKILL.md`. Etienn
 ## When it runs
 
 - Outside auto mode: the `review` skill runs it without asking when a review reads `Review clean:`, or when `deliver --check` exits 0 in the `here` backend.
-- In auto mode: the coordinator runs it once a round of each reviewer leaves no open finding (intent skill, Autonomous delivery). Then it follows `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`.
+- In auto mode: the coordinator runs it once a round of each enabled reviewer leaves no open finding (intent skill, Autonomous delivery). Then it follows `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`.
 
 ## Run it
 

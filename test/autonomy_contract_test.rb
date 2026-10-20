@@ -111,11 +111,11 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section_of(skill("plan"), "## Auto mode"), "auto-accept <folder>/plan.md")
   end
 
-  def test_coordinator_reviews_again_until_both_reviewers_are_clean
+  def test_coordinator_reviews_again_until_each_enabled_reviewer_is_clean
     section = section_of(skill("intent"), "## Autonomous delivery")
 
-    assert_match(/run both reviewers again/i, section)
-    assert_match(/a round of each .*no open finding/i, section)
+    assert_match(/run each enabled reviewer again/i, section)
+    assert_match(/a round of each enabled reviewer .*no open finding/i, section)
   end
 
   def test_codex_coordinator_uses_the_claude_cli_review_backend
@@ -129,13 +129,41 @@ class AutonomyContractTest < Minitest::Test
     assert_critique_contract(section_of(skill("plan"), "## Auto mode"))
   end
 
-  def test_review_auto_mode_runs_claude_and_codex_reviewers
+  def test_review_auto_mode_skips_codex_unless_the_intent_opts_in
     section = section_of(skill("review"), "## Auto mode")
 
     assert_includes(section, "start-review.sh")
-    assert_includes(section, "codex review --base")
     assert_includes(section, "code-review")
     assert_match(/transcribe/i, section)
+    assert_match(/Codex round only when .*`Codex review: yes`/i, section)
+    assert_match(/never .*`codex review`/i, section)
+  end
+
+  def test_review_auto_mode_runs_codex_first_when_the_intent_opts_in
+    section = section_of(skill("review"), "## Auto mode")
+
+    assert_includes(section, "codex review --base")
+    assert_match(/`Codex review: yes`.*Codex round before the Claude round/m, section)
+  end
+
+  def test_intent_offers_codex_review_only_for_autonomous_delivery_defaulting_to_no
+    delivery = section_of(skill("intent"), "## 2. Interview")[/\*\*Delivery mode\.\*\*.*?(?=^Batch )/m]
+
+    assert_match(/Also review with Codex\?.*default: no/i, delivery)
+    assert_includes(delivery, "`Codex review: yes`")
+    assert_match(/only .*autonomous/i, delivery)
+  end
+
+  def test_autonomous_delivery_waits_for_each_enabled_reviewer
+    assert_match(/each enabled reviewer/i, section_of(skill("intent"), "## Autonomous delivery"))
+    assert_match(/each enabled reviewer/i, skill("deliver"))
+  end
+
+  def test_playbook_names_codex_as_an_opt_in_reviewer
+    line = PLAYBOOK.lines.find { |entry| entry.start_with?("- Independent review") }
+
+    assert_match(/Claude `reviewer` agent.*always/i, line)
+    assert_includes(line, "`Codex review: yes`")
   end
 
   def test_codex_auto_review_uses_a_read_only_claude_cli_backend
