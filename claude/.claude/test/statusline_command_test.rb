@@ -289,5 +289,15 @@ module Claude
         assert_equal PR_URL, StatuslineCommand.render({ workspace: { current_dir: "" }, pr: { url: PR_URL } }.to_json)
       end
     end
+
+    def test_shows_no_label_when_docs_changes_is_unreadable
+      folder = change_folder(intent: accepted_intent)
+      changes = File.dirname(folder)
+      File.chmod(0o000, changes)
+
+      assert_equal PR_URL, render_in_tmpdir(pr: { url: PR_URL })
+    ensure
+      File.chmod(0o755, changes)
+    end
   end
 end

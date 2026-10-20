@@ -11,6 +11,11 @@ class ChangeFolder
     Dir.glob("docs/changes/*/", base: current_dir).map { |folder| File.join(current_dir, folder) }
   end
 
+  def self.shipped?(current_dir)
+    changes = File.join(current_dir, "docs", "changes")
+    !File.exist?(changes) || (File.readable?(changes) && folders_in(current_dir).empty?)
+  end
+
   def self.in(current_dir)
     folders = folders_in(current_dir)
     new(folders.first) if folders.one?
@@ -67,7 +72,7 @@ module StatuslineCommand
     folder = ChangeFolder.in(current_dir)
     return folder.stage_label if folder
 
-    "🎉 shipped" if pr_url && ChangeFolder.folders_in(current_dir).empty?
+    "🎉 shipped" if pr_url && ChangeFolder.shipped?(current_dir)
   rescue SystemCallError, ArgumentError
     nil
   end
