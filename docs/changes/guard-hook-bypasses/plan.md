@@ -91,6 +91,7 @@ A first implementation exists on the local, unpushed branch `guard-hook-bypasses
 - The `--force` check stays word-presence: `git push --force-with-lease a; git push --force b` still passes it, as it does on main. The coordinator kept this as an accepted risk.
 - A `LEFTHOOK*` value with an escaped space, `LEFTHOOK_CONFIG=/tmp/a\ b.yml`, holds whitespace after tokenizing and has no quote, so it goes through. Accepted: rare, and the prose constraint needs the whitespace rule.
 - A one-word quoted message, `git commit -m "LEFTHOOK=0"`, holds no whitespace and asks. Accepted: it is not prose.
+- A heredoc body is unquoted, so its lines become words. `git commit -F - <<'EOF'` with the line `Refuse LEFTHOOK=0 and git commit -n` asks. The `-m "$(cat <<'EOF' … EOF)"` form stays one quoted word and goes through. Accepted: the error is a question, not a miss, the same as `--no-verify` on main.
 - Only the `ci` alias is known. A commit alias defined in a repository's own config is not seen; the alias test keeps the global file in step.
 - The `-n` cluster rule asks for `git log -n 5 && git commit -m x` and for `git commit -mn` (message "n"). Accepted: the error is a question, not a miss.
 - A bare read, `git config core.hooksPath`, asks. Use `--get` or `get` to read without a question.
