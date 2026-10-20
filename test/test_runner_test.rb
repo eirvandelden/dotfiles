@@ -276,7 +276,12 @@ class TestRunnerTest < Minitest::Test
     true
   end
 
+  # Stops a runner this test started, which then stops its own files; a KILL would leave them running
+  # in their groups. The KILL comes only when the runner's own shutdown overruns.
   def reap(pid)
+    Process.kill("TERM", pid)
+    Timeout.timeout(15) { Process.wait(pid) }
+  rescue Timeout::Error
     Process.kill("KILL", pid)
     Process.wait(pid)
   rescue Errno::ESRCH, Errno::ECHILD
