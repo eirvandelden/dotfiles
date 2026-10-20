@@ -62,7 +62,7 @@ module StatuslineCommand
   end
 
   def stage_label(current_dir, pr_url)
-    return unless current_dir.is_a?(String)
+    return unless current_dir.is_a?(String) && !current_dir.empty?
 
     folder = ChangeFolder.in(current_dir)
     return folder.stage_label if folder

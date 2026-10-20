@@ -281,5 +281,13 @@ module Claude
     def test_shows_no_label_when_current_dir_holds_a_null_byte
       assert_equal "", StatuslineCommand.render({ workspace: { current_dir: "/tmp/a\u0000b" } }.to_json)
     end
+
+    def test_shows_no_label_when_current_dir_is_empty
+      change_folder(intent: accepted_intent)
+
+      Dir.chdir(@tmpdir) do
+        assert_equal PR_URL, StatuslineCommand.render({ workspace: { current_dir: "" }, pr: { url: PR_URL } }.to_json)
+      end
+    end
   end
 end
