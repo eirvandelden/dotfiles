@@ -87,10 +87,11 @@ The interview ends when every template section can be filled without guessing. U
 
 1. Which permissions will the change need? List gems or packages, system tools, migrations that drop or remove, and deploy files (playbook rules 8, 9, 11, 12, 13). Each one is approved now, or becomes a stop-and-ask later.
 2. Autonomous delivery (playbook §7a: agents carry the change to a verified PR; you approve the intent and the merge) or step-by-step (you accept the plan too)?
+3. Only when autonomous is chosen: also review with Codex? Ask "Also review with Codex?" (default: no). Codex adds a second reviewer and costs extra tokens.
 
-Autonomous adds `Delivery: autonomous` in the same paragraph as `Status:` in `intent.md`. Put it on the status line or immediately below, without a blank line. Record approved permissions under `## Constraints`.
+Autonomous adds `Delivery: autonomous` in the same paragraph as `Status:` in `intent.md`. Put it on the status line or immediately below, without a blank line. When autonomous is chosen, add `Codex review: yes` or `Codex review: no` the same way; the question applies only to autonomous delivery, so step-by-step intents carry no such field. Record approved permissions under `## Constraints`.
 
-Header fields are `Author:`, `Status:`, `Type:` and `Delivery:`. Start each line at column zero; separate inline fields with a period and a space. An accepted status is `accepted` or `accepted (YYYY-MM-DD)`. Delivery is `autonomous` or `step-by-step`. Conflicting Status or Delivery values refuse automatic acceptance.
+Header fields are `Author:`, `Status:`, `Type:`, `Delivery:` and `Codex review:`. Start each line at column zero; separate inline fields with a period and a space. An accepted status is `accepted` or `accepted (YYYY-MM-DD)`. Delivery is `autonomous` or `step-by-step`. Codex review is `yes` or `no`; a missing field means `no`. Conflicting Status or Delivery values refuse automatic acceptance.
 
 Batch independent multiple-choice questions (up to 4) only when none of them would change another's answer; otherwise ask one at a time.
 
@@ -155,7 +156,7 @@ Author: <name>. Status: draft.
 <anything unresolved — or "None.">
 ```
 
-Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` (and, for autonomous delivery, `Delivery: autonomous`) — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
+Add a `Type: feature|bugfix|refactor|chore` line next to `Status:` (and, for autonomous delivery, `Delivery: autonomous` and `Codex review: yes|no`) — ask, or infer from the issue's labels and confirm before writing it; a bugfix drives a stricter test rule later in `implement`.
 
 Create the folder (`mkdir -p`) if it does not exist. Write the file.
 
@@ -186,8 +187,8 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
-5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the separate Codex round and the Claude round in that order (Codex round first, then the Claude round), transcribing each round and running `commit-review`, then pushing the branch when it exits 0 (`git push -u origin HEAD`). Rounds with open findings stay uncommitted. Fix findings through `code-review`, then run both reviewers again. Repeat until a round of each reviewer leaves no open finding.
-6. Once a round of each reviewer leaves no open finding, confirm that `intent.md` is accepted and records `Delivery: autonomous`, because `deliver` removes it. Then follow `~/.claude/skills/deliver/SKILL.md`. It opens the draft PR. After `deliver`, follow `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`: it marks the PR ready and waits for green CI. Red CI stops the delivery: report the failed checks and their links.
+5. Review. Follow the `review` skill in auto mode. A Codex coordinator uses its read-only Claude CLI backend for the Claude round. A Claude coordinator chooses its pane or `here` backend according to the session. Run the Claude round and, only when `intent.md` records `Codex review: yes`, the separate Codex round before it (Codex round first, then the Claude round), transcribing each round and running `commit-review`, then pushing the branch when it exits 0 (`git push -u origin HEAD`). Rounds with open findings stay uncommitted. Fix findings through `code-review`, then run each enabled reviewer again. Repeat until a round of each enabled reviewer leaves no open finding.
+6. Once a round of each enabled reviewer leaves no open finding, confirm that `intent.md` is accepted and records `Delivery: autonomous`, because `deliver` removes it. Then follow `~/.claude/skills/deliver/SKILL.md`. It opens the draft PR. After `deliver`, follow `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`: it marks the PR ready and waits for green CI. Red CI stops the delivery: report the failed checks and their links.
 7. Write the account — behaviour delivered, evidence, check results, CI result, review outcome, PR URL — to `<git-common-dir>/herdr/deliver-<slug>.md` and tell Etienne. Never merge: Etienne's `/finish` is the merge approval.
 
 A stage pane started by `hand-off-plan.sh intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the account, as the single line `Delivery done: <account path>`, sent once the delivery ends; the account path also goes into the report file the starting prompt names.
