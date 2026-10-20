@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "shellwords"
+require_relative "isolated_git"
 require_relative "../claude/.claude/hooks/hook_bypass"
 
 # HookBypass.reason names the way a command skips the git hooks, or is nil.
