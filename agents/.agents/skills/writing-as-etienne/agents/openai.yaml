@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Writing as Etienne"
+  short_description: "Draft messages in Etienne's voice when he has asked for a draft"

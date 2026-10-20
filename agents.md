@@ -104,6 +104,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - This includes issue comments, pull request comments, review comments, and replies.
    - Do not infer permission from approval to open a PR, push code, request review, or perform any other GitHub action.
    - If GitHub communication is needed, draft the proposed text in chat first and wait for explicit approval before posting it.
+   - Draft in Etienne's voice with the `writing-as-etienne` skill.
 7. Branch protection:
    - NEVER commit directly to `main` or `master`.
    - Always create a feature branch; merge via pull request.
