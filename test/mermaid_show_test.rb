@@ -143,6 +143,15 @@ class MermaidShowTest < Minitest::Test
     assert_equal("mermaid-show: diagram 1: Error: Parse error on line 2\n", result[:stderr])
   end
 
+  def test_a_crash_that_prints_its_location_first_still_reports_the_error_message
+    stub("node", "echo 'file:///helper.mjs:15' >&2; echo '    throw new TypeError(1);' >&2; echo 'TypeError: x is not a function' >&2; exit 1")
+    path = write("card.mmd", DIAGRAM)
+
+    result = run_script(path)
+
+    assert_equal("mermaid-show: diagram 1: TypeError: x is not a function\n", result[:stderr])
+  end
+
   def test_a_missing_tool_is_named_with_its_install_command
     path = write("card.mmd", DIAGRAM)
     stub_mmdc

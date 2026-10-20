@@ -56,11 +56,11 @@ class MermaidShow
     stdout.chomp
   end
 
-  # Picks the "Error:" line out of a Node failure, else its first line, so no stack trace reaches the user.
+  # Picks the "...Error:" line out of a Node failure, else its first line, so no stack trace reaches the user.
   #: (String stderr) -> String
   def error_line(stderr)
     lines = stderr.lines.map(&:strip).reject(&:empty?)
-    lines.find { |line| line.start_with?("Error") } || lines.first.to_s
+    lines.find { |line| line.match?(/\A\w*Error\b/) } || lines.first.to_s
   end
 
   #: (String source) -> void
@@ -164,7 +164,7 @@ class MermaidShow
     line.strip.match?(/\A#{Regexp.escape(marker[0])}{#{marker.length},}\z/)
   end
 
-  # Turns a finished fence into chunks; a Mermaid backtick fence becomes one :mermaid chunk.
+  # Turns a finished fence into chunks; a Mermaid fence, backtick or tilde, becomes one :mermaid chunk.
   #: (Hash[Symbol, untyped]? fence, ?closed: bool) -> Array[[Symbol, String, String]]
   def flush(fence, closed: false)
     return [] unless fence
