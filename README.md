@@ -249,6 +249,30 @@ It opens wherever the focused pane is, which is usually the main checkout — pr
 For complete documentation, see:
 - [herdr README](herdr/.config/herdr/README.md)
 
+## 🐙 gh-dash
+
+Keys for reviewing pull requests in gh-dash:
+
+- `ctrl+↓` / `ctrl+↑` — page the PR preview down and up (half a page per press). macOS binds these to Mission Control by default; free them in System Settings, Keyboard Shortcuts.
+- `d` — diff, side by side in delta.
+- `ctrl+m` or `M` — merge the selected PR and delete its remote branch. The prompt names the method; Enter merges, anything else cancels. Press `r` afterwards to refresh the list. `M` exists for terminals that cannot tell `ctrl+m` from Enter.
+
+The merge method comes from git config: `merge` (a merge commit) unless a setting says otherwise. A repository setting wins over an owner setting. Write settings to the machine-local `~/.config/git/pr-merge.config`, never with `--global`: that file is a link into this public repository.
+
+```bash
+# Squash every repository of an owner
+git config --file ~/.config/git/pr-merge.config pr-merge.OWNER.method squash
+
+# Merge commits for one repository (overrides the owner setting)
+git config --file ~/.config/git/pr-merge.config pr-merge.OWNER/REPO.method merge
+
+# Remove a setting; with none left the default is merge
+git config --file ~/.config/git/pr-merge.config --unset pr-merge.OWNER.method
+git config --file ~/.config/git/pr-merge.config --unset pr-merge.OWNER/REPO.method
+```
+
+Valid values are `merge`, `squash` and `rebase`. AI agents find the same steps in the `pr-merge-method` skill.
+
 ## 😔Manual installation
 
 - [zsh-notify](https://github.com/eirvandelden/zsh-notify)

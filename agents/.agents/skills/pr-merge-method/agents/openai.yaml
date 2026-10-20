@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "PR merge method"
+  short_description: "Set, change or remove the gh-dash merge method per owner or repository"
