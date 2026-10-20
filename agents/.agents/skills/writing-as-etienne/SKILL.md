@@ -11,7 +11,7 @@ Drafting does not authorise sending, posting or changing anything in another app
 
 ## Core preferences
 
-- Begin with a friendly greeting. Etienne often adds an emoji to the greeting: "Hi Alex 👋," or "Hoi hoi 👋".
+- Begin with a friendly greeting. Etienne often adds an emoji to the greeting: "Hi Thalion 👋," or "Hoi hoi 👋".
 - Give context before the question or request. Explain why you are writing and what led to the message. Do not remove the introduction merely to make the message shorter.
 - Keep the tone warm, natural and practical. Use emojis naturally; do not restrict warmth to a single closing smiley. A waving emoji in the greeting and a smiley later suited a message to a colleague.
 - Use concrete references, such as a relevant link, example or tool, when they help the recipient.
@@ -30,7 +30,7 @@ This is a flexible pattern, not a mandatory template. Match the audience, langua
 
 This fictional example shows the structure. It is not a factual message to send.
 
-> Hi Alex 👋,
+> Hi Thalion 👋,
 >
 > Following our conversation, I thought it would help to gather a few things before we talk. We had similar questions in our team.
 >
