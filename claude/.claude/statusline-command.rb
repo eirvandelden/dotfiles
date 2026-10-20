@@ -7,8 +7,12 @@ require "date"
 class ChangeFolder
   ACCEPTED = /Status: accepted(?: \(\d{4}-\d{2}-\d{2}\))?(?=\.|\s|\z)/
 
+  def self.folders_in(current_dir)
+    Dir.glob("docs/changes/*/", base: current_dir).map { |folder| File.join(current_dir, folder) }
+  end
+
   def self.in(current_dir)
-    folders = Dir.glob(File.join(current_dir, "docs", "changes", "*", ""))
+    folders = folders_in(current_dir)
     new(folders.first) if folders.one?
   end
 
@@ -63,13 +67,15 @@ module StatuslineCommand
     folder = ChangeFolder.in(current_dir)
     return folder.stage_label if folder
 
-    "🎉 shipped" if pr_url && Dir.glob(File.join(current_dir, "docs", "changes", "*")).empty?
+    "🎉 shipped" if pr_url && ChangeFolder.folders_in(current_dir).empty?
   rescue SystemCallError
     nil
   end
 
   def render(json_input, today: Time.now.getlocal.to_date)
     data = JSON.parse(json_input)
+    return "" unless data.is_a?(Hash)
+
     reply_time = format_local_time(last_assistant_timestamp(data["transcript_path"]), today: today)
     pr_url = data.dig("pr", "url")
     label = stage_label(data.dig("workspace", "current_dir"), pr_url)

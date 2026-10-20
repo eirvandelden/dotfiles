@@ -9,13 +9,13 @@ require_relative "../statusline-command"
 module Claude
   class StatuslineCommandTest < Minitest::Test
     def setup
-      @tmpdir = Dir.mktmpdir
+      @root = @tmpdir = Dir.mktmpdir
       @previous_tz = ENV["TZ"]
       ENV["TZ"] = "UTC"
     end
 
     def teardown
-      FileUtils.rm_rf(@tmpdir)
+      FileUtils.rm_rf(@root)
       ENV["TZ"] = @previous_tz
     end
 
@@ -245,6 +245,30 @@ module Claude
 
     def test_is_blank_instead_of_raising_when_the_input_is_a_json_array
       assert_equal "", StatuslineCommand.render("[]")
+    end
+
+    def test_is_blank_instead_of_raising_when_the_input_is_json_null_a_string_or_a_boolean
+      %w[null "abc" true 42].each do |input|
+        assert_equal "", StatuslineCommand.render(input), "input #{input}"
+      end
+    end
+
+    def test_shows_the_label_when_current_dir_contains_glob_characters
+      @tmpdir = File.join(@tmpdir, "proj[1]")
+      change_folder(intent: accepted_intent)
+
+      assert_equal "🧠 scheming", render_in_tmpdir
+    end
+
+    def test_shows_shipped_when_docs_changes_holds_only_plain_files
+      FileUtils.mkdir_p(File.join(@tmpdir, "docs", "changes"))
+      File.write(File.join(@tmpdir, "docs", "changes", "README.md"), "Notes\n")
+
+      assert_equal "🎉 shipped | #{PR_URL}", render_in_tmpdir(pr: { url: PR_URL })
+    end
+
+    def test_is_blank_instead_of_raising_when_pr_or_workspace_is_not_an_object
+      assert_equal "", StatuslineCommand.render({ pr: "x", workspace: 5 }.to_json)
     end
   end
 end
