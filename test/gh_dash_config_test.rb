@@ -23,7 +23,7 @@ class GhDashConfigTest < Minitest::Test
   end
 
   def test_work_reviews_section_takes_team_requests_i_have_not_reviewed_and_skips_drafts
-    expected = %w[is:open org:nedap review-requested:@me -reviewed-by:@me draft:false]
+    expected = %w[is:open org:nedap review-requested:@me -reviewed-by:@me draft:false sort:updated-asc]
 
     assert_equal(expected.sort, filter_tokens("prSections", "Work reviews"))
   end

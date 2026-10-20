@@ -1,7 +1,7 @@
 ---
 prSections:
   - title: Work reviews
-    filters: is:open org:nedap review-requested:@me -reviewed-by:@me draft:false
+    filters: is:open org:nedap review-requested:@me -reviewed-by:@me draft:false sort:updated-asc
   - title: Personal PRs
     filters: is:open user:eirvandelden draft:false
   - title: My work drafts
