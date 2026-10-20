@@ -86,7 +86,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
    - Test public methods and classes only. Private methods never get tests of their own.
    - Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
 
-   A criterion that needs no test, such as a configuration change, has no test to name. Its Proof line names the check instead: `- <criterion> → check: <exact command or manual step>`. Step 1 of `## Order of work` is then the first check, run before the change.
+   A criterion that needs no test, such as a configuration change, has no test to name. Its Proof line names the check instead: `- <criterion> → check: <exact command or manual step>`. `## Order of work` then starts with the change, and the check runs after it.
 4. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, a fresh worker pane, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
 5. Before offering acceptance, ask the user at least one interrogation question — "what could break", "what did you reject", "what's riskiest" — so the plan gets challenged before it is frozen.
 6. For anything non-trivial, offer a second-model critique (below) before acceptance.
