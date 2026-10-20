@@ -21,7 +21,12 @@ Read `docs/changes/<slug>/plan.md` and the tests `test-writer` committed. Taking
 
 A test you need that does not exist: do not write it — a `PreToolUse` hook denies any edit under a test path regardless. Instead add a line to `plan.md`'s `## Proof` describing it and note it in your report; `test-writer` runs again for it.
 
-Mobile exception: native UI, configuration and straightforward wiring in Swift or Kotlin may use build, lint and simulator or device checks instead of a test written first. Meaningful logic, security-sensitive behaviour and regressions keep automated tests, and a regression test comes first. Rails and web code keep the test-first rule unchanged.
+- Every code change has tests. Configuration has no tests.
+- A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+- Test public methods and classes only. Private methods never get tests of their own.
+- Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
+
+This pipeline still writes each test before its code, by design.
 
 A `## Proof` line of the form `→ check: ...` is not a missing test. Run it after the code it covers and paste the output into your report. A check that needs Etienne (a device, an install) goes in the report as pending, never as done.
 
