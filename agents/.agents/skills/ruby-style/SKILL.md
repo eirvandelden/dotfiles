@@ -46,7 +46,7 @@ Most of this is enforced mechanically by the `rubocop-eirvandelden` gem. The rul
 ## Documentation comments
 
 - Work projects use YARD: short docs on classes always, on methods only when complex, never on private methods, no giant `@example` blocks.
-- Personal projects: a one-line summary comment on each class, inline RBS signatures (`#:` or `# @rbs`, RBS 4 syntax) on methods, no YARD tags, and other comments only for a non-obvious "why".
+- Personal projects: a one-line summary comment on each class, an inline RBS method type signature in RBS 4 syntax, such as `#: (String) -> String`, on each method, no YARD tags, and other comments only for a non-obvious "why".
 - Personal: the signature sits directly above the `def`, never in a hand-written `sig/*.rbs` file. The `plan` skill's `### Signatures` subsection says whether Steep checks it.
 - `sig/` is generated output and is never committed, except in a gem that publishes its types, which commits a `sig/` generated from its inline comments.
 
