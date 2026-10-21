@@ -287,11 +287,15 @@ class BranchGuardTest < Minitest::Test
     assert_push_refused("origin", "feature:feature", "HEAD:main")
   end
 
+  # The fallback's pre-push command passes the hook-level file list to a no-op, so it runs on an unchanged branch.
+  FILES_NO_OP = ": {files}\n"
+
   def test_the_fallback_config_duplicates_the_guard_commands_exactly
     fallback = YAML.safe_load_file(File.join(REPO_ROOT, "lefthook.yml"))
     guard = YAML.safe_load_file(GUARD_FILE)
     guard.each do |hook, section|
-      assert_equal(section["commands"]["no-push-to-main"], fallback.dig(hook, "commands", "no-push-to-main"), hook)
+      copy = fallback.dig(hook, "commands", "no-push-to-main")
+      assert_equal(section["commands"]["no-push-to-main"], copy.merge("run" => copy["run"].delete_prefix(FILES_NO_OP)), hook)
     end
   end
 
@@ -360,11 +364,18 @@ class BranchGuardTest < Minitest::Test
     dotfiles = File.join(@tmpdir, "Developer", "dotfiles")
     FileUtils.mkdir_p(dotfiles)
     FileUtils.cp(File.join(REPO_ROOT, "lefthook.yml"), dotfiles)
-    stub = File.join(@tmpdir, ".config", "git", "worktree-tools", "review-report-fresh")
-    FileUtils.mkdir_p(File.dirname(stub))
-    File.write(stub, "#!/bin/sh\nexit 0\n")
-    FileUtils.chmod("+x", stub)
+    stub_worktree_tools("review-report-fresh", "marker-check")
     setup_repo(branch)
+  end
+
+  def stub_worktree_tools(*names)
+    names.each do |name|
+      base = name == "marker-check" ? File.join("Developer", "dotfiles", "git", ".config") : ".config"
+      stub = File.join(@tmpdir, base, "git", "worktree-tools", name)
+      FileUtils.mkdir_p(File.dirname(stub))
+      File.write(stub, "#!/bin/sh\nexit 0\n")
+      FileUtils.chmod("+x", stub)
+    end
   end
 
   def assert_push_refused(*args)

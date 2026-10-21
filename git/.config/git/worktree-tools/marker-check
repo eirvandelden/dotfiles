@@ -1,0 +1,54 @@
+#!/usr/bin/env ruby
+# Usage: marker-check <word> <file>...
+# The no-fixme and no-nocommit hooks call this. It prints path:line:text for every line that holds the
+# word, and exits 1 when it printed anything. It skips vendored files: a path marked linguist-vendored in
+# .gitattributes, or under a vendor/ directory unless the attribute says it is not vendored. It also skips
+# lefthook.yml and lefthook-local.yml, which name the words, sorbet/ paths, and the git directory or the
+# .git file, which the pre-push file list always carries. Plain ruby, as the other worktree-tools scripts.
+require "open3"
+
+class MarkerCheck
+  VENDOR_DIRECTORY = %r{(\A|/)vendor/}
+  NEVER_CHECKED = %r{(\A|/)(lefthook(-local)?\.yml\z|sorbet/|\.git(/|\z))}
+
+  def initialize(word, paths)
+    @word = word.b
+    @paths = paths.reject { |path| path.match?(NEVER_CHECKED) || !File.file?(path) }
+  end
+
+  def hits
+    (@paths - vendored).flat_map { |path| hits_in(path) }
+  end
+
+  private
+
+  def hits_in(path)
+    File.binread(path).lines.each_with_index.filter_map do |line, index|
+      "#{path}:#{index + 1}:#{line.chomp}" if line.include?(@word)
+    end
+  end
+
+  def vendored
+    @paths.select { |path| vendored?(path, attributes.fetch(path, "unspecified")) }
+  end
+
+  def vendored?(path, attribute)
+    return %w[set true].include?(attribute) unless attribute == "unspecified"
+
+    path.match?(VENDOR_DIRECTORY)
+  end
+
+  # The linguist-vendored value of every path, read with -z so any file name is safe.
+  def attributes
+    @attributes ||= begin
+      stdout, status = Open3.capture2("git", "check-attr", "-z", "--stdin", "linguist-vendored",
+                                      stdin_data: @paths.join("\0"))
+      status.success? ? stdout.split("\0").each_slice(3).to_h { |path, _name, value| [ path, value ] } : {}
+    end
+  end
+end
+
+word, *paths = ARGV
+hits = MarkerCheck.new(word, paths).hits
+puts(hits)
+exit(hits.empty? ? 0 : 1)

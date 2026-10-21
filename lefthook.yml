@@ -78,31 +78,21 @@ pre-commit:
           exit 1
         fi
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
+    # marker-check skips vendored files. A repository lists its vendored paths in .gitattributes with
+    # linguist-vendored; a vendor/ directory is vendored without a line.
+    # This file is the global fallback config and lives in the dotfiles checkout. The script therefore
+    # runs from that checkout, not from a stow link that exists only after a restow.
     no-fixme:
       tags: fixme
       # Skill reference docs quote the marker as prose (vendored Rails docs among them).
       # First-party reference docs lose the check too; they hold no code.
       exclude:
         - "**/skills/*/references/**"
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          FIXME "{staged_files}"
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check FIXME {staged_files}
       fail_text: Your staged files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          NOCOMMIT "{staged_files}"
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check NOCOMMIT {staged_files}
       fail_text: Your staged files include a NOCOMMIT. See above for details.
 
     no-merge-conflicts:
@@ -153,6 +143,23 @@ commit-msg:
 
 pre-push:
   parallel: true
+  # The branch's own changes against origin's default branch, not lefthook's {push_files}: after a rebase
+  # that list also holds every file main changed, and the checks then fail on files the branch never touched.
+  # Without an origin default branch it falls back to the push target. Without that, as on a first push,
+  # it compares with the empty tree and lists every file, as lefthook itself does.
+  # The last line is a file that no glob matches and marker-check skips: the .git file of a linked worktree
+  # or submodule, else the HEAD file. Lefthook skips every command, no-push-to-main included, while the
+  # list is empty (a push that deletes a branch, a branch without changes). It also drops entries that are
+  # not existing files inside the repository root. This last line keeps the list non-empty.
+  # A command without a file template also skips when lefthook's own push file list is empty. no-push-to-main
+  # and review-report-fresh therefore pass {files} to the no-op `:`, so they read this list instead.
+  files: |
+    base=$(git rev-parse -q --verify refs/remotes/origin/HEAD ||
+      git rev-parse -q --verify refs/remotes/origin/main ||
+      git rev-parse -q --verify refs/remotes/origin/master) && base=$(git merge-base "$base" HEAD) ||
+      base=$(git rev-parse -q --verify '@{push}') || base=$(git hash-object -t tree /dev/null)
+    git diff --name-only --diff-filter=d "$base" HEAD
+    if [ -f .git ]; then echo .git; else git rev-parse --git-path HEAD; fi
   commands:
     # Do not push without security checking
     brakeman:
@@ -200,7 +207,7 @@ pre-push:
         If you need to ignore dependencies in the longer term,
         see https://rubydoc.info/gems/bundler-audit/frames#configuration-file
     stylelint:
-      run: npx --no stylelint {push_files}
+      run: npx --no stylelint {files}
       tags: css linter
       glob:
         - "*.{css,scss}"
@@ -211,18 +218,18 @@ pre-push:
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: erb_lint {push_files}
+      run: erb_lint {files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
-      run: npx --no eslint {push_files}
+      run: npx --no eslint {files}
     rubocop:
       tags: linter
       glob: "*.rb"
       # GIT_DIR is unset for the reason given on the pre-commit rubocop job.
       run: |
         unset GIT_DIR
-        rubocop --force-exclusion {push_files}
+        rubocop --force-exclusion {files}
     minitest:
       tags:
         - ruby
@@ -230,7 +237,7 @@ pre-push:
         - minitest
       glob: "app/**/*.rb"
       run: |
-        for file in {push_files}; do
+        for file in {files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
           test_file="test/${base_name}_test.rb"
@@ -250,7 +257,7 @@ pre-push:
         - rspec
       glob: "app/**/*.rb"
       run: |
-        for file in {push_files}; do
+        for file in {files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
           spec_file="spec/${base_name}_spec.rb"
@@ -266,33 +273,37 @@ pre-push:
     shellcheck:
       tags: shell linter
       glob: "*.{sh,bash}"
-      run: shellcheck -x -S warning {push_files}
+      run: shellcheck -x -S warning {files}
     shellcheck-zsh:
       tags: shell linter
       glob: "*.zsh"
-      run: shellcheck -S warning -s bash {push_files}
+      run: shellcheck -S warning -s bash {files}
     yamllint:
       tags: yaml linter
       glob: "*.{yml,yaml}"
-      run: yamllint {push_files}
+      run: yamllint {files}
     # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
     no-push-to-main:
       tags: branch-protection
       use_stdin: true
       run: |
-        branch=$(git rev-parse --abbrev-ref HEAD)
-        if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-          echo "Direct push to $branch is not allowed. Create a feature branch; deliver opens the PR."
-          exit 1
-        fi
-        while read -r _local_ref _local_sha remote_ref _remote_sha; do
+        : {files}
+        updates=
+        while read -r _local_ref local_sha remote_ref _remote_sha; do
           case "$remote_ref" in
             refs/heads/main | refs/heads/master)
               echo "Pushing to ${remote_ref#refs/heads/} is not allowed. Push a feature branch; deliver opens the PR."
               exit 1
               ;;
           esac
+          # A deletion sends an all-zero local sha; it does not push the checked-out branch.
+          case "$local_sha" in *[!0]*) updates=yes ;; esac
         done
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ -n "$updates" ] && { [ "$branch" = "main" ] || [ "$branch" = "master" ]; }; then
+          echo "Direct push to $branch is not allowed. Create a feature branch; deliver opens the PR."
+          exit 1
+        fi
       fail_text: Direct pushes to main/master are blocked. Create a feature branch first.
     no-fixme:
       tags: fixme
@@ -300,29 +311,17 @@ pre-push:
       # First-party reference docs lose the check too; they hold no code.
       exclude:
         - "**/skills/*/references/**"
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          FIXME "{push_files}"
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check FIXME {files}
       fail_text: Your pushed files include a FIXME. See above for details.
     no-nocommit:
       tags: nocommit
-      run: |
-        ! grep \
-          --exclude="sorbet/**/*" \
-          --exclude="lefthook.yml" \
-          --line-number \
-          --with-filename \
-          --fixed-strings \
-          NOCOMMIT "{push_files}"
+      run: $HOME/Developer/dotfiles/git/.config/git/worktree-tools/marker-check NOCOMMIT {files}
       fail_text: Your pushed files include a NOCOMMIT. See above for details.
     review-report-fresh:
       tags: review
-      run: ~/.config/git/worktree-tools/review-report-fresh --skip-without-pr
+      run: |
+        : {files}
+        ~/.config/git/worktree-tools/review-report-fresh --skip-without-pr
       fail_text: Run /review, then push again. The check applies once a pull request is open, or when gh cannot tell.
 
 # Run installs and migrations after pull, and sweep merged worktrees in the background

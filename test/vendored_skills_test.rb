@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require "open3"
 require "yaml"
 require_relative "isolated_git"
 
@@ -57,6 +58,23 @@ class VendoredSkillsTest < Minitest::Test
     assert(index.include?("VENDORED-SKILLS.yml"), "SKILLS-INDEX.md does not name VENDORED-SKILLS.yml")
   end
 
+  def test_every_upstream_skill_folder_is_marked_vendored
+    vendored_skill_names.each do |name|
+      assert_equal("set", vendored_attribute("agents/.agents/skills/#{name}/SKILL.md"), "#{name} is not marked vendored")
+      assert_equal("set", vendored_attribute("agents/.agents/skills/#{name}/nested/file.md"), "#{name} marks only SKILL.md")
+    end
+  end
+
+  def test_no_own_skill_folder_is_marked_vendored
+    (Dir.children(SKILLS) - vendored_skill_names).each do |name|
+      assert_equal("unspecified", vendored_attribute("agents/.agents/skills/#{name}/SKILL.md"), "#{name} is marked vendored")
+    end
+  end
+
+  def test_solarized_colour_scheme_is_marked_vendored
+    assert_equal("set", vendored_attribute("vim/.vim/colors/solarized.vim"))
+  end
+
   private
 
   def manifest
@@ -73,5 +91,18 @@ class VendoredSkillsTest < Minitest::Test
       comment = File.read(skill_md)[/<!-- upstream:.*?-->/m]
       comment && !comment.include?("lucianghinda/superpowers-ruby")
     end
+  end
+
+  # Every skill folder whose SKILL.md carries an upstream comment, superpowers-ruby included.
+  def vendored_skill_names
+    Dir.children(SKILLS).select do |name|
+      skill_md = File.join(SKILLS, name, "SKILL.md")
+      File.exist?(skill_md) && File.read(skill_md).match?(/<!-- upstream:.*?-->/m)
+    end
+  end
+
+  def vendored_attribute(relative_path)
+    stdout, = Open3.capture2("git", "-C", REPO_ROOT, "check-attr", "linguist-vendored", "--", relative_path)
+    stdout.strip.split(": ").last
   end
 end

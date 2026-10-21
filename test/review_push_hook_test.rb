@@ -61,7 +61,8 @@ class ReviewPushHookTest < Minitest::Test
     File.symlink(File.join(@repo_root, "git/.config/git/hooks/pre-push"), File.join(hooks, "pre-push"))
     File.symlink(File.join(@repo_root, "git/.config/git/worktree-tools"), File.join(@home, ".config", "git", "worktree-tools"))
     dotfiles = File.join(@home, "Developer", "dotfiles")
-    FileUtils.mkdir_p(dotfiles)
+    FileUtils.mkdir_p(File.join(dotfiles, "git", ".config", "git"))
+    File.symlink(File.join(@repo_root, "git/.config/git/worktree-tools"), File.join(dotfiles, "git", ".config", "git", "worktree-tools"))
     FileUtils.cp(File.join(@repo_root, "lefthook.yml"), dotfiles)
   end
 
