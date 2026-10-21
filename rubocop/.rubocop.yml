@@ -88,30 +88,56 @@ Rails/IndexWith:
 
 # Cops from rbs_inline
 # RBS 4 inline syntax and Steep's `inline: true` need no magic comment, so check every file.
-# Only cops that validate an existing annotation are on. The fallback lints repositories that
-# have no annotations yet, so the cops that demand annotations stay off.
+# `# rbs_inline: disabled` is the only way out; a leftover `# rbs_inline: enabled` is flagged.
+# Public methods, attr_* and Data/Struct attributes must carry a `#:` type. This mirrors
+# rubocop-eirvandelden's config/default.yml and config/rails.yml; change both together.
 Style/RbsInline:
   Mode: opt_out
 # rubocop-rails-omakase enables this cop, which reads `#:` as a comment missing its space.
 Layout/LeadingCommentSpace:
   AllowRBSInlineAnnotation: true
+Style/RbsInline/DataClassCommentAlignment:
+  Enabled: true
+Style/RbsInline/DataDefineWithBlock:
+  Enabled: true
+Style/RbsInline/EmbeddedRbsSpacing:
+  Enabled: true
 Style/RbsInline/InvalidComment:
   Enabled: true
 Style/RbsInline/InvalidTypes:
   Enabled: true
 Style/RbsInline/KeywordSeparator:
   Enabled: true
+Style/RbsInline/MethodCommentSpacing:
+  Enabled: true
+Style/RbsInline/MissingDataClassAnnotation:
+  Enabled: true
+Style/RbsInline/MissingStructClassAnnotation:
+  Enabled: true
+# Migrations are generated, run once and never called from code.
+Style/RbsInline/MissingTypeAnnotation:
+  Enabled: true
+  EnforcedStyle: method_type_signature
+  Visibility: public
+  Exclude:
+    - '**/db/migrate/**/*'
 Style/RbsInline/ParametersSeparator:
+  Enabled: true
+Style/RbsInline/RedundantAnnotationWithSkip:
+  Enabled: true
+Style/RbsInline/RedundantInstanceVariableAnnotation:
+  Enabled: true
+# The default doc_style would make autocorrect delete a `#:` signature beside `# @rbs` lines.
+Style/RbsInline/RedundantTypeAnnotation:
+  Enabled: true
+  EnforcedStyle: method_type_signature
+Style/RbsInline/RequireRbsInlineComment:
+  Enabled: true
+Style/RbsInline/StructClassCommentAlignment:
+  Enabled: true
+Style/RbsInline/StructNewWithBlock:
   Enabled: true
 Style/RbsInline/UnmatchedAnnotations:
   Enabled: true
-Style/RbsInline/RedundantTypeAnnotation:
-  Enabled: true
-Style/RbsInline/MethodCommentSpacing:
-  Enabled: true
 Style/RbsInline/VariableCommentSpacing:
-  Enabled: true
-Style/RbsInline/EmbeddedRbsSpacing:
-  Enabled: true
-Style/RbsInline/RedundantAnnotationWithSkip:
   Enabled: true
