@@ -44,4 +44,8 @@ Only talk to your immediate neighbours — avoid reaching through a chain of obj
 
 Prefer expressing behavior as resources with standard verbs (create/read/update/delete-style operations) over bespoke, one-off procedures bolted on for each new action. Model a state transition as its own resource/object rather than a boolean flag or a custom RPC-style call. This applies whether the interface is Rails routes, a Django REST endpoint, a plain HTTP handler in Go, or an internal library's public API. For the Rails-specific mechanics (nested resource routes, the standard seven controller actions), see the `rails-architecture` and `rails-api-design` skills.
 
+For Ruby documentation comments and inline RBS signatures, see the `ruby-style` skill.
+
+To design a change before building it, use the `software-design` skill.
+
 See `references/examples.md` for a worked example of each principle above.

@@ -153,6 +153,16 @@ class SkillParityTest < Minitest::Test
     end
   end
 
+  def test_codex_gets_the_design_diagrams_and_glossary_skills
+    index = File.read(File.join(REPO_ROOT, "SKILLS-INDEX.md"))
+
+    %w[software-design diagrams glossary].each do |name|
+      assert_includes(skill_names(AGENTS_SKILLS), name, "#{name} is not linked for Codex")
+      assert_includes(skill_names(CLAUDE_SKILLS), name, "#{name} has no Claude skill")
+      assert_includes(index, name, "SKILLS-INDEX.md does not list #{name}")
+    end
+  end
+
   private
 
   # Names under the Claude skills folder that are not a resolving relative link into the agents package.

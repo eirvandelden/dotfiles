@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Diagrams"
+  short_description: "Mermaid conventions, the before ERD from code, and terminal rendering as text or image"

@@ -122,7 +122,7 @@ class PullRequestFlowTest < Minitest::Test
   def test_plan_commits_through_commit_plan
     plan = File.read(File.join(SKILLS, "plan/SKILL.md"))
 
-    assert_match(/plan\/scripts\/commit-plan/, plan[/^7\. `Status: accepted`.*$/])
+    assert_match(/plan\/scripts\/commit-plan/, plan[/^8\. `Status: accepted`.*$/])
     assert_match(/commit-plan/, plan[/^5\. Run `[^`]*commit-plan`.*$/])
     refute_match(/commits? `?plan\.md`? alone/, plan)
   end

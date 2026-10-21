@@ -10,6 +10,9 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 
 ## Design and architecture
 
+- Designing a change before building it — the plan's Design section: deep modules, messages first, CRC cards, connascence, SOLID without service objects: `agents/.agents/skills/software-design/SKILL.md`
+- Mermaid diagrams — class, ER, sequence and state conventions, the "before" ERD from rails-erd or `db/schema.rb`, terminal rendering with `mermaid-show`: `agents/.agents/skills/diagrams/SKILL.md`
+- The domain glossary — agreed terms and words to avoid in `GLOSSARY.md` (personal) or `GLOSSARY.local.md` (work), and when a decision earns an ADR: `agents/.agents/skills/glossary/SKILL.md`
 - Object-oriented design in any language — class/method responsibilities, dependency injection, composition vs inheritance, avoiding anemic models: `agents/.agents/skills/object-oriented-design/SKILL.md`
 - Rails domain modeling specifically — where logic and state transitions live in an ActiveRecord app: `agents/.agents/skills/rails-architecture/SKILL.md`
 - REST endpoints, JSON responses, API authentication, pagination and versioning: `agents/.agents/skills/rails-api-design/SKILL.md`
@@ -18,7 +21,7 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 
 ## Writing code
 
-- Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc comments: `agents/.agents/skills/ruby-style/SKILL.md`
+- Ruby method style and formatting — method shape, naming, guard clauses, visibility, doc comments and inline RBS signatures: `agents/.agents/skills/ruby-style/SKILL.md`
 - Idiomatic modern Ruby — pattern matching, `Data.define`, error handling, memoization, performance idioms: `agents/.agents/skills/ruby/SKILL.md`
 - The official Rails guides, for any Rails-specific topic: `agents/.agents/skills/rails-guides/SKILL.md`
 - Views, Hotwire/Stimulus, CSS, HTML, forms, i18n, accessibility, dialog and UX rules: `agents/.agents/skills/rails-ui/SKILL.md`

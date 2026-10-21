@@ -7,7 +7,9 @@
 # that ends up with no heading filled — no heading matched it, or the one
 # that did is a checkbox list — is appended at the end under its own
 # heading, with trimmed content; with no template at all, or no matching
-# heading anywhere, that means all three.
+# heading anywhere, that means all three. The plan's `## Design` section, its
+# `###` subsections and Mermaid fences included, opens the Implementation part,
+# so GitHub renders the diagrams after finish removes the change folder.
 CATEGORIES = [
   [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /\bwhy|\bmotivation/i ],
@@ -55,6 +57,16 @@ def section_body(markdown, title)
   match && match[:body].strip
 end
 
+def section_with_subsections(markdown, title)
+  _preamble, sections = parse_sections(markdown)
+  index = sections.index { |section| section[:title].casecmp?(title) }
+  return unless index
+
+  level = heading_level(sections[index][:heading])
+  nested = sections.drop(index + 1).take_while { |section| heading_level(section[:heading]) > level }
+  joined(sections[index][:body].strip, *nested.map { |section| "#{section[:heading]}#{section[:body]}".strip })
+end
+
 def joined(*parts)
   parts.compact.reject(&:empty?).join("\n\n")
 end
@@ -67,7 +79,9 @@ def filler(intent, plan)
   {
     summary: summary_text(intent),
     why: section_body(intent, "Problem") || "",
-    implementation: joined(section_body(plan, "Files that change"), section_body(plan, "Order of work")),
+    implementation: joined(
+      section_with_subsections(plan, "Design"), section_body(plan, "Files that change"), section_body(plan, "Order of work")
+    ),
     test: section_body(plan, "Proof") || ""
   }
 end
@@ -84,7 +98,7 @@ end
 def appended_filler(intent, plan)
   {
     summary: summary_text(intent),
-    implementation: section_body(plan, "Files that change") || "",
+    implementation: joined(section_with_subsections(plan, "Design"), section_body(plan, "Files that change")),
     test: acceptance_criteria(plan)
   }
 end

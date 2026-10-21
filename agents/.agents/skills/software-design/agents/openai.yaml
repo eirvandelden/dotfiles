@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Software design"
+  short_description: "Design a change before building it: deep modules, messages, CRC cards, connascence, SOLID"

@@ -193,3 +193,6 @@ lefthook-local.yml
 # Claude Code local state
 **/.claude/settings.local.json
 **/.claude/.cc-writes/
+
+# Domain glossary kept per work repository, never committed
+GLOSSARY.local.md

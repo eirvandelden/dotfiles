@@ -4,11 +4,12 @@ Read by the `reviewer` agent (and the `review` skill's pane backend) alongside `
 
 ## Passes
 
-Every review runs three passes, in this order:
+Every review runs four passes, in this order:
 
 1. **Bugs.** Logic errors, edge cases, incorrect assumptions, race conditions, off-by-one errors — anything that makes the code do the wrong thing.
 2. **Security.** Injection, unsafe deserialization, missing authorization checks, secrets in code or logs, unsafe external input handling.
 3. **Compliance.** The diff matches `plan.md`: every file it named changed the way it said, nothing unplanned crept in. Behaviour matches `intent.md`: every acceptance criterion has a test in the diff that proves it, or is reported as missing. Every test named in the plan's `## Proof` exists. No existing test was weakened, skipped, or deleted. Code follows the playbook and this repository's `AGENTS.md`.
+4. **Design.** The code matches `plan.md`'s `## Design`. Report each public method the plan did not sign or that lacks an inline RBS signature, each Law of Demeter violation, each N+1 query loop, and each word the glossary lists under `Avoid:`.
 
 ## What Important means here
 
