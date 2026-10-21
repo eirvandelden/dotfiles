@@ -163,13 +163,16 @@ rescue ArgumentError
   segment.split
 end
 
-#: (String directory, *String arguments) -> [String, untyped]
+# Stands in for Process::Status when git cannot even start.
+FailedStatus = Struct.new(
+  :success? #: bool
+)
+
+#: (String directory, *String arguments) -> [String, Process::Status | FailedStatus]
 def git(directory, *arguments)
   Open3.capture2("git", "-C", directory, *arguments, err: File::NULL)
 rescue SystemCallError
-  [ "", Struct.new(
-    :success? #: bool
-  ).new(false) ]
+  [ "", FailedStatus.new(false) ]
 end
 
 # Where git was pointed and what `worktree add` was given, or nil when the segment is not one.
