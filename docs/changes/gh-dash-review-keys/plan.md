@@ -57,7 +57,7 @@ gh-dash v4.26.2 runs as a `gh` extension. Its config is `github/.config/gh-dash/
 6. Write the `pr-merge-method` skill, its `openai.yaml`, the Claude link and the `SKILLS-INDEX.md` line. Run `ruby test/skill_parity_test.rb` and `ruby test/vendored_skills_test.rb`.
 7. Write the README section. Run the repository's markdown hooks on it (no hard wrap).
 8. Manual checks in Ghostty, below in Proof, with a temporary copy of `config.yml` whose command paths point at this worktree's script: `gh dash --config <copy>`. Record the results in the change folder.
-9. Run the full suite: `for f in test/*_test.rb; do ruby "$f" || exit 1; done`. Grep the diff for work names (`git diff main | grep -i -E 'nedap|caren'` must print nothing new).
+9. Run the full suite: `for f in test/*_test.rb; do ruby "$f" || exit 1; done`. Grep the diff for the work names listed in the no-work-references memory note; it must print nothing new.
 
 ## Risks
 
