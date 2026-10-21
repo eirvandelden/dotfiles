@@ -7,10 +7,12 @@ require "date"
 class ChangeFolder
   ACCEPTED = /Status: accepted(?: \(\d{4}-\d{2}-\d{2}\))?(?=\.|\s|\z)/
 
+  #: (String current_dir) -> Array[String]
   def self.folders_in(current_dir)
     Dir.glob("docs/changes/*/", base: current_dir).map { |folder| File.join(current_dir, folder) }
   end
 
+  #: (String current_dir) -> bool
   def self.shipped?(current_dir)
     changes = File.join(current_dir, "docs", "changes")
     Dir.children(changes).none? { |entry| !entry.start_with?(".") && File.directory?(File.join(changes, entry)) }
@@ -18,15 +20,18 @@ class ChangeFolder
     true
   end
 
+  #: (String current_dir) -> ChangeFolder?
   def self.in(current_dir)
     folders = folders_in(current_dir)
     new(folders.first) if folders.one?
   end
 
+  #: (String path) -> void
   def initialize(path)
     @path = path
   end
 
+  #: -> String
   def stage_label
     return "🕵️ sleuthing" if read("review.md")
     return "🛠️ hammering" if accepted?("plan.md")
@@ -51,6 +56,7 @@ end
 module StatuslineCommand
   module_function
 
+  #: (String? transcript_path) -> String?
   def last_assistant_timestamp(transcript_path)
     return nil unless transcript_path && File.exist?(transcript_path)
 
@@ -60,6 +66,7 @@ module StatuslineCommand
     nil
   end
 
+  #: (String? timestamp, today: Date) -> String?
   def format_local_time(timestamp, today:)
     return nil unless timestamp
 
@@ -69,6 +76,7 @@ module StatuslineCommand
     nil
   end
 
+  #: (String? current_dir, String? pr_url) -> String?
   def stage_label(current_dir, pr_url)
     return unless current_dir.is_a?(String) && !current_dir.empty?
 
@@ -80,6 +88,7 @@ module StatuslineCommand
     nil
   end
 
+  #: (String json_input, ?today: Date) -> String
   def render(json_input, today: Time.now.getlocal.to_date)
     data = JSON.parse(json_input)
     return "" unless data.is_a?(Hash)
