@@ -18,10 +18,18 @@ lowercase() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
 }
 
+# git config exits 1 when nothing matches; any other failure means it cannot read its files.
+settings_status=0
+settings=$(git config --get-regexp '^pr-merge\..+\.method$' 2>/dev/null) || settings_status=$?
+if [ "$settings_status" -gt 1 ]; then
+  echo "merge-pr: cannot read the merge method from git config (exit $settings_status); nothing merged" >&2
+  exit 2
+fi
+
 configured_method() {
   local wanted
   wanted=$(lowercase "$1")
-  git config --get-regexp '^pr-merge\..+\.method$' 2>/dev/null | while IFS=" " read -r key value; do
+  printf '%s\n' "$settings" | while IFS=" " read -r key value; do
     subsection=${key#pr-merge.}
     subsection=${subsection%.method}
     if [ "$(lowercase "$subsection")" = "$wanted" ]; then

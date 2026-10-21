@@ -103,6 +103,17 @@ class GhDashMergeTest < Minitest::Test
     assert_empty(gh_calls)
   end
 
+  def test_unreadable_git_config_fails_without_merging
+    File.write(@git_config, "[pr-merge \"eirvandelden\"]\n\tmethod = squash\n[broken\n")
+
+    stdout, stderr, status = run_script("\n")
+
+    assert_equal(2, status.exitstatus)
+    assert_includes(stderr, "merge-pr: cannot read the merge method from git config")
+    refute_includes(stdout, "Merge ")
+    assert_empty(gh_calls)
+  end
+
   def test_prompt_names_the_pull_request_and_the_method
     set("pr-merge.eirvandelden.method", "squash")
 
