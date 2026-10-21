@@ -11,6 +11,7 @@ module WorktreeTools
   class Pane
     include Helpers
 
+    #: (Array[String] argv) -> void
     def self.run!(argv)
       new.run!(argv)
     end
@@ -18,6 +19,7 @@ module WorktreeTools
     USAGE = "Usage: worktree-pane open|close <path> | label <path> <pane-id>"
     COMMANDS = %w[open close label].freeze
 
+    #: (Array[String] argv) -> void
     def run!(argv)
       command, path, pane_id = argv
       return unless herdr_env?

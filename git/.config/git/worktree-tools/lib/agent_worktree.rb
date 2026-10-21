@@ -7,12 +7,14 @@ module WorktreeTools
   class AgentWorktree
     include Helpers
 
+    #: (String pane_id, String terminal_id, String path) -> Integer
     def record(pane_id, terminal_id, path)
       file = record_file(pane_id)
       FileUtils.mkdir_p(File.dirname(file))
       File.write(file, JSON.generate("terminal_id" => terminal_id, "path" => path))
     end
 
+    #: (String pane_id, String terminal_id, beside: String) -> String?
     def usable_for(pane_id, terminal_id, beside:)
       stored = read(pane_id)
       return unless stored && stored["terminal_id"] == terminal_id

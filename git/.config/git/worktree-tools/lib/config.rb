@@ -9,8 +9,12 @@ module WorktreeTools
   class WorktreeConfig
     include Helpers
 
-    attr_reader :path, :detector, :config, :config_file
+    attr_reader :path #: Pathname
+    attr_reader :detector #: ProjectDetector
+    attr_reader :config #: Hash[String, untyped]
+    attr_reader :config_file #: Pathname?
 
+    #: (?(String | Pathname) path, ?ProjectDetector? detector) -> void
     def initialize(path = ".", detector = nil)
       @path = Pathname.new(File.expand_path(path))
       @detector = detector || ProjectDetector.new(@path).detect!
@@ -18,6 +22,7 @@ module WorktreeTools
       @config_file = nil
     end
 
+    #: -> self
     def load!
       @config_file = find_config_file
       file_config = @config_file ? load_yaml(@config_file) : {}
@@ -28,58 +33,72 @@ module WorktreeTools
       self
     end
 
+    #: (String key) -> untyped
     def [](key)
       @config[key]
     end
 
+    #: -> String
     def project_name
       @config.dig("project", "name") || @detector.project_info[:name] || "unknown"
     end
 
+    #: -> Symbol
     def project_type
       @config.dig("project", "type")&.to_sym || @detector.project_type
     end
 
+    #: -> bool
     def stow_enabled?
       @config.dig("stow", "enabled") == true
     end
 
+    #: -> Array[String]
     def stow_packages
       @config.dig("stow", "packages") || []
     end
 
+    #: -> String?
     def stow_source_dir
       @config.dig("stow", "source_dir")
     end
 
+    #: -> String?
     def stow_target
       @config.dig("stow", "target")
     end
 
+    #: -> bool
     def puma_dev_enabled?
       @config.dig("puma_dev", "enabled") == true
     end
 
+    #: -> String?
     def puma_dev_name
       @config.dig("puma_dev", "name")
     end
 
+    #: -> String
     def puma_dev_domain
       @config.dig("puma_dev", "domain") || "test"
     end
 
+    #: -> String?
     def puma_dev_dir
       @config.dig("puma_dev", "dir")
     end
 
+    #: -> Integer
     def base_port
       @config.dig("port", "base") || 3000
     end
 
+    #: -> Integer?
     def manual_port
       @config.dig("port", "manual")
     end
 
+    #: ((String | Pathname) path) -> Integer?
     def calculated_port(path)
       path = Pathname.new(File.expand_path(path))
 
@@ -92,31 +111,38 @@ module WorktreeTools
       base_port + (hash_value % 1000)
     end
 
+    #: -> bool
     def caddy_enabled?
       @config.dig("caddy", "enabled") == true
     end
 
+    #: -> String?
     def caddy_name
       @config.dig("caddy", "name")
     end
 
+    #: -> String
     def caddy_tld
       @config.dig("caddy", "tld") || "localhost"
     end
 
+    #: -> String
     def caddy_project_name
       root = find_git_repo_root
       root ? root.basename.to_s : project_name
     end
 
+    #: -> String?
     def caddy_tls_cert
       @config.dig("caddy", "tls_cert")
     end
 
+    #: -> String?
     def caddy_tls_key
       @config.dig("caddy", "tls_key")
     end
 
+    #: -> String?
     def caddy_config_dir
       @config.dig("caddy", "config_dir")
     end

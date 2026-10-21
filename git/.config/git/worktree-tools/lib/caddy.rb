@@ -7,11 +7,13 @@ module WorktreeTools
     include Helpers
     MARKER_PREFIX = "worktree-tools:source_path=".freeze
 
+    #: (WorktreeConfig config, ?(String | Pathname) path) -> void
     def initialize(config, path = ".")
       @config = config
       @path = Pathname.new(File.expand_path(path))
     end
 
+    #: -> void
     def setup!
       return unless @config.caddy_enabled?
 
@@ -30,6 +32,7 @@ module WorktreeTools
       log "Caddy setup complete"
     end
 
+    #: -> void
     def remove!
       removed_files = remove_generated_files
 

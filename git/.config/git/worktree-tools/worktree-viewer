@@ -20,10 +20,12 @@ module WorktreeTools
     SCRIPTS = { "split" => "open-file-viewer.sh", "tab" => "open-file-viewer-tab.sh" }.freeze
     DECISION_FLAGS = { "split" => "--launch-decision", "tab" => "--launch-decision-tab" }.freeze
 
+    #: (Array[String] argv) -> void
     def self.run!(argv)
       new.run!(argv)
     end
 
+    #: (Array[String] argv) -> void
     def run!(argv)
       @mode = argv.first
       die(USAGE) unless SCRIPTS.key?(@mode)

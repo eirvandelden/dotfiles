@@ -19,6 +19,7 @@ require "time"
 
 CHANGE_FOLDER_SCRIPT = File.expand_path("../../../../agents/.agents/skills/plan/scripts/change-folder", __dir__)
 
+#: (*String command) -> String
 def capture(*command)
   stdout, status = Open3.capture2(*command)
   raise "#{command.join(' ')} failed" unless status.success?
@@ -26,6 +27,7 @@ def capture(*command)
   stdout
 end
 
+#: -> String
 def folder
   stdout, status = Open3.capture2(CHANGE_FOLDER_SCRIPT)
   exit(0) unless status.success?
@@ -33,11 +35,13 @@ def folder
   stdout.strip
 end
 
+#: (String folder) -> bool
 def folder_in_head?(folder)
   _, status = Open3.capture2("git", "cat-file", "-e", "HEAD:#{folder}")
   status.success?
 end
 
+#: -> bool
 def no_open_pull_request?
   branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
   count, _stderr, status = Open3.capture3("gh", "pr", "list", "--head", branch, "--state", "open",
@@ -52,12 +56,14 @@ rescue SystemCallError
 end
 
 # gh picks the repository itself, and with an `upstream` remote that is not origin. Pin it to origin.
+#: -> Array[String]
 def origin_repository
   url, _stderr, status = Open3.capture3("git", "remote", "get-url", "origin")
   path = url[%r{github\.com[:/](?<path>[^/\s]+/[^/\s]+?)(?:\.git)?\s*\z}, :path] if status.success?
   path ? [ "--repo", path ] : []
 end
 
+#: (Array[String] pathspec, ?range: String?) -> Hash[Symbol, String]?
 def latest_commit(pathspec, range: nil)
   format = "%H\x1f%s\x1f%cI"
   command = [ "git", "log", "-1", "--format=#{format}" ]
@@ -70,6 +76,7 @@ def latest_commit(pathspec, range: nil)
   { sha: sha, subject: subject, date: Time.iso8601(date).strftime("%Y-%m-%d") }
 end
 
+#: -> String?
 def resolved_base_branch
   stdout, _stderr, status = Open3.capture3("git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
   candidate = stdout.strip if status.success?
@@ -78,15 +85,18 @@ def resolved_base_branch
   %w[main master].find { |name| local_branch?(name) }
 end
 
+#: (String ref) -> bool
 def ref_exists?(ref)
   _, _stderr, status = Open3.capture3("git", "rev-parse", "--verify", "--quiet", ref)
   status.success?
 end
 
+#: (String name) -> bool
 def local_branch?(name)
   ref_exists?("refs/heads/#{name}")
 end
 
+#: (String? base_branch) -> String?
 def own_commit_range(base_branch)
   return nil if base_branch.nil?
 
@@ -96,14 +106,17 @@ def own_commit_range(base_branch)
   "#{stdout.strip}..HEAD"
 end
 
+#: (String folder, String? range) -> Hash[Symbol, String]?
 def code_commit(folder, range)
   latest_commit([ ".", ":(exclude,glob)#{folder}/**" ], range: range)
 end
 
+#: (String folder) -> Hash[Symbol, String]?
 def review_commit(folder)
   latest_commit([ "#{folder}/review.md" ])
 end
 
+#: (Hash[Symbol, String]? code, Hash[Symbol, String]? review) -> bool?
 def review_covers_code?(code, review)
   return true if code.nil?
   return false if review.nil?
@@ -112,6 +125,7 @@ def review_covers_code?(code, review)
     system("git", "merge-base", "--is-ancestor", code[:sha], review[:sha])
 end
 
+#: (String folder) -> Array[String]
 def uncommitted_paths_outside(folder)
   capture("git", "status", "--porcelain", "--untracked-files=all").lines.filter_map do |line|
     path = line[3..].strip.delete_prefix('"').delete_suffix('"')
@@ -119,12 +133,14 @@ def uncommitted_paths_outside(folder)
   end
 end
 
+#: (Hash[Symbol, String]? commit, String label) -> String
 def describe(commit, label)
   return "no #{label}" if commit.nil?
 
   "#{label}: \"#{commit[:subject]}\" (#{commit[:date]})"
 end
 
+#: (String folder, Hash[Symbol, String]? code, Hash[Symbol, String]? review, Array[String] dirty_paths) -> bot
 def refuse(folder, code, review, dirty_paths)
   lines = [ "Change folder #{folder} is not covered by a fresh review." ]
   lines << describe(code, "last code commit")

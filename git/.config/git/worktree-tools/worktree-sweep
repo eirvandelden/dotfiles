@@ -15,10 +15,12 @@ module WorktreeTools
     # Seconds before the fetch or a gh call gives up: a hung call would keep the lock forever.
     TIME_LIMIT = Float(ENV.fetch("WORKTREE_TOOLS_TIME_LIMIT", "30"))
 
+    #: (Array[String] argv) -> void
     def self.run!(argv)
       new.run!(argv)
     end
 
+    #: (Array[String] argv) -> void
     def run!(argv)
       detach = !argv.delete("--detach").nil?
       HOOK_ENVIRONMENT.each { |name| ENV.delete(name) }
