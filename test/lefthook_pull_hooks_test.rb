@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "hook_scripts"
 require_relative "isolated_git"
 
 class LefthookPullHooksTest < Minitest::Test
@@ -22,7 +23,7 @@ class LefthookPullHooksTest < Minitest::Test
     @origin_dir = File.join(@tmpdir, "origin.git")
     @pusher_dir = File.join(@tmpdir, "pusher")
     @puller_dir = File.join(@tmpdir, "puller")
-    @hooks_dir = File.join(@tmpdir, "hooks")
+    @hooks_dir = HookScripts.directory
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
     stub_commands
@@ -184,7 +185,6 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   def setup_git_repos
-    FileUtils.cp_r(File.join(@repo_root, "git/.config/git/hooks"), @hooks_dir)
     write_global_gitconfig
 
     run_git("init", "--bare", @origin_dir, "--quiet")

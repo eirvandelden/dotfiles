@@ -6,6 +6,7 @@ require "open3"
 require "timeout"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "hook_scripts"
 require_relative "isolated_git"
 
 # A real `git pull` runs the global hook shims, the real lefthook binary and the repository's
@@ -170,8 +171,7 @@ class WorktreeSweepOnPullTest < Minitest::Test
     FileUtils.mkdir_p(File.join(@home, ".config", "git"))
     File.symlink(File.join(@repo_root, "git/.config/git/worktree-tools"),
                  File.join(@home, ".config", "git", "worktree-tools"))
-    @hooks = File.join(@tmp, "hooks")
-    FileUtils.cp_r(File.join(@repo_root, "git/.config/git/hooks"), @hooks)
+    @hooks = HookScripts.directory
   end
 
   def write_gitconfig

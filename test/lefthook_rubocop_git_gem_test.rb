@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "hook_scripts"
 require_relative "isolated_git"
 
 # Git exports GIT_DIR to hooks and lefthook passes it to every job. A gem installed from git can run
@@ -155,7 +156,6 @@ class LefthookRubocopGitGemTest < Minitest::Test
     dotfiles = File.join(@home, "Developer", "dotfiles")
     FileUtils.mkdir_p(dotfiles)
     FileUtils.cp(File.join(REPO_ROOT, "lefthook.yml"), dotfiles)
-    FileUtils.cp_r(File.join(REPO_ROOT, "git/.config/git/hooks"), File.join(@tmpdir, "hooks"))
     stub_review_report_check
     write_global_gitconfig
   end
@@ -170,7 +170,7 @@ class LefthookRubocopGitGemTest < Minitest::Test
   def write_global_gitconfig
     File.write(File.join(@tmpdir, "gitconfig"), <<~INI)
       [core]
-        hooksPath = #{File.join(@tmpdir, "hooks")}
+        hooksPath = #{HookScripts.directory}
       [user]
         name = Test
         email = test@example.com

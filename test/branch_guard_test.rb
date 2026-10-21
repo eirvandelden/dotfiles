@@ -5,6 +5,7 @@ require "open3"
 require "yaml"
 require "tmpdir"
 require_relative "isolated_git"
+require_relative "hook_scripts"
 require_relative "lefthook_binary"
 
 class BranchGuardTest < Minitest::Test
@@ -24,7 +25,7 @@ class BranchGuardTest < Minitest::Test
     @tmpdir = Dir.mktmpdir
     @repo_dir = File.join(@tmpdir, "repo")
     @origin_dir = File.join(@tmpdir, "origin.git")
-    @hooks_dir = File.join(@tmpdir, "hooks")
+    @hooks_dir = HookScripts.directory
     @log_file = File.join(@tmpdir, "pre-push.log")
   end
 
@@ -461,7 +462,6 @@ class BranchGuardTest < Minitest::Test
   end
 
   def setup_bare_repo(branch)
-    FileUtils.cp_r(File.join(REPO_ROOT, "git/.config/git/hooks"), @hooks_dir)
     run_git(@tmpdir, "init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
     run_git(@repo_dir, "config", "core.hooksPath", @hooks_dir)
     run_git(@repo_dir, "config", "user.name", "Test")
@@ -486,7 +486,6 @@ class BranchGuardTest < Minitest::Test
   end
 
   def setup_repo(branch)
-    FileUtils.cp_r(File.join(REPO_ROOT, "git/.config/git/hooks"), @hooks_dir)
     run_git(@tmpdir, "init", "--bare", "--quiet", @origin_dir)
     run_git(@tmpdir, "init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
     run_git(@repo_dir, "config", "core.hooksPath", @hooks_dir)
