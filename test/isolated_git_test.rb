@@ -31,12 +31,23 @@ class IsolatedGitTest < Minitest::Test
     FileUtils.rm_rf(@config_home)
   end
 
-  def test_review_report_check_passes_under_the_global_no_push_to_main_hook
+  def test_a_test_file_with_the_helper_commits_under_the_global_no_push_to_main_hook
     write_hostile_config(hook: true)
+    fixture = write_fixture_test(with_helper: true)
 
-    output, status = run_child(RbConfig.ruby, "-Itest", "test/review_report_check_test.rb")
+    output, status = run_child(RbConfig.ruby, fixture)
 
     assert(status.success?, output)
+  end
+
+  def test_a_test_file_without_the_helper_fails_under_the_global_no_push_to_main_hook
+    write_hostile_config(hook: true)
+    fixture = write_fixture_test(with_helper: false)
+
+    output, status = run_child(RbConfig.ruby, fixture)
+
+    assert_match(/global hook refused main/, output)
+    refute(status.success?)
   end
 
   def test_a_commit_ignores_the_global_no_push_to_main_hook
@@ -90,6 +101,24 @@ class IsolatedGitTest < Minitest::Test
   end
 
   private
+
+  # A minimal Minitest file whose one test commits twice on main, with or without the helper line
+  # every real test file has. The real helper is copied beside it so that line loads it.
+  def write_fixture_test(with_helper:)
+    directory = File.join(@config_home, "fixture-#{with_helper ? 'with' : 'without'}")
+    FileUtils.mkdir_p(directory)
+    FileUtils.cp(File.join(ROOT, "test", "isolated_git.rb"), directory)
+    File.write(File.join(directory, "commit_test.rb"), <<~RUBY)
+      require "minitest/autorun"
+      #{'require_relative "isolated_git"' if with_helper}
+      class CommitTest < Minitest::Test
+        def test_commits_twice_on_main
+          #{COMMIT_SCRIPT.lines.map(&:chomp).join("\n      ")}
+        end
+      end
+    RUBY
+    File.join(directory, "commit_test.rb")
+  end
 
   def run_commit_script(*flags)
     run_child(RbConfig.ruby, *flags, "-e", COMMIT_SCRIPT)

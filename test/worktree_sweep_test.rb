@@ -10,7 +10,9 @@ require_relative "isolated_git"
 # (PR state) and, inside herdr, worktree-pane; gh and herdr are stubbed.
 class WorktreeSweepTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-sweep", __dir__)
-  DEADLINE = 20
+  # Guards against a hang, not a slow machine: a hanging stub waits ten minutes, and a full
+  # parallel run on a loaded Mac can take a sweep past 20 seconds.
+  DEADLINE = 60
 
   def setup
     @enclosing = File.realpath(Dir.mktmpdir)
@@ -164,13 +166,43 @@ class WorktreeSweepTest < Minitest::Test
     commit(merged, "more work")
     write_gh_states("merged-branch" => "MERGED")
     git(@repo, "remote", "set-url", "origin", "ssh://git.example.invalid/repo.git")
-    write_stub("hanging-ssh", "#!/bin/sh\nps -o pgid= -p $$ >> \"$HANGING_GROUPS\"\nexec sleep 600\n")
+    install_hanging_ssh
     env = time_limit_env.merge("GIT_SSH_COMMAND" => File.join(@stub_bin, "hanging-ssh"))
 
     _, stderr, status = run_script_within_deadline(extra_env: env)
 
     assert(status.success?, stderr)
     refute(File.directory?(merged))
+  end
+
+  def test_stopping_hanging_stubs_spares_processes_outside_them
+    install_hanging_ssh
+    stub = Process.spawn(script_environment, File.join(@stub_bin, "hanging-ssh"), pgroup: true)
+    bystander = Process.spawn("sleep", "30", pgroup: stub)
+
+    stop_hanging_stubs
+
+    assert_equal(stub, Process.wait(stub), "the stub should exit")
+    assert_nil(exited_within(bystander, 1), "the bystander must keep running")
+  ensure
+    reap(bystander)
+  end
+
+  # teardown removes the folder right after the release; a stub that missed the release file
+  # between two polls must still end instead of hanging for ten minutes.
+  def test_hanging_stubs_end_once_their_folder_is_removed
+    install_hanging_ssh
+    FileUtils.touch(gh_hang_file)
+    stubs = %w[hanging-ssh gh].map { |name| Process.spawn(script_environment, File.join(@stub_bin, name)) }
+    wait_until("the stubs to start waiting") { %w[ssh gh].all? { |name| File.exist?("#{release_file}.#{name}-ready") } }
+
+    FileUtils.rm_rf(@enclosing)
+
+    # exited_within reaps a stub that ended, so only the ones left may still be signalled.
+    stubs.reject! { |stub| exited_within(stub, 5) }
+    assert_empty(stubs, "a stub kept hanging")
+  ensure
+    stubs&.each { |stub| reap(stub) }
   end
 
   def test_writes_nothing_to_stdout
@@ -283,6 +315,23 @@ class WorktreeSweepTest < Minitest::Test
     end
   end
 
+  def reap(pid)
+    Process.kill("KILL", pid)
+    Process.wait(pid)
+  rescue Errno::ESRCH, Errno::ECHILD, TypeError
+    nil
+  end
+
+  def exited_within(pid, seconds)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+    loop do
+      return pid if Process.wait(pid, Process::WNOHANG)
+      return nil if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      sleep 0.05
+    end
+  end
+
   def wait_until(what, deadline: DEADLINE)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + deadline
     until yield
@@ -363,22 +412,30 @@ class WorktreeSweepTest < Minitest::Test
     File.join(@stub_bin, "gh-hang")
   end
 
-  def hanging_groups_file
-    File.join(@enclosing, "hanging-groups")
+  def release_file
+    File.join(@enclosing, "release-hanging-stubs")
   end
 
   # The hanging stubs run in the process group of the call that started them (git fetch, or gh),
-  # which a missed deadline does not reach. Killing the group also stops git from starting ssh
-  # again. After a run that kept its deadline, the time limit already ended those groups, and
-  # their ids may belong to new processes by now.
+  # which a missed deadline does not reach. They wait for the release file, so this sends no
+  # signal: a stub that is already gone gets nothing, and no process outside the stubs can be hit.
+  # A stub started after the release sees the file and exits at once, so git cannot start ssh again.
+  # A stub also ends once the folder of the release file is gone, so teardown's removal right
+  # after the release cannot leave one hanging.
   def stop_hanging_stubs
-    return unless File.exist?(hanging_groups_file)
+    FileUtils.touch(release_file)
+  end
 
-    File.readlines(hanging_groups_file, chomp: true).uniq.each do |group|
-      Process.kill("KILL", -Integer(group))
-    rescue Errno::ESRCH
-      nil
-    end
+  def install_hanging_ssh
+    write_stub("hanging-ssh", <<~'SH')
+      #!/bin/sh
+      : > "$RELEASE_HANGING_STUBS.ssh-ready"
+      waited=0
+      while [ ! -e "$RELEASE_HANGING_STUBS" ] && [ -d "${RELEASE_HANGING_STUBS%/*}" ] && [ "$waited" -lt 3000 ]; do
+        sleep 0.2
+        waited=$((waited + 1))
+      done
+    SH
   end
 
   def time_limit_env
@@ -390,8 +447,14 @@ class WorktreeSweepTest < Minitest::Test
     write_stub("gh", <<~'RUBY')
       #!/usr/bin/env ruby
       if File.exist?(ENV["GH_STUB_HANG"].to_s)
-        File.write(ENV.fetch("HANGING_GROUPS"), "#{Process.getpgrp}\n", mode: "a")
-        sleep 600
+        release = ENV.fetch("RELEASE_HANGING_STUBS")
+        File.write("#{release}.gh-ready", "")
+        3000.times do
+          break if File.exist?(release) || !File.directory?(File.dirname(release))
+
+          sleep 0.2
+        end
+        exit 1
       end
       states = File.exist?(ENV["GH_STUB_STATES"].to_s) ? File.readlines(ENV["GH_STUB_STATES"], chomp: true) : []
       line = states.find { |entry| entry.start_with?("#{ARGV[2]}=") }
@@ -426,7 +489,7 @@ class WorktreeSweepTest < Minitest::Test
       "HOME" => @enclosing,
       "GH_STUB_STATES" => gh_states_file,
       "GH_STUB_HANG" => gh_hang_file,
-      "HANGING_GROUPS" => hanging_groups_file,
+      "RELEASE_HANGING_STUBS" => release_file,
       "GIT_CALL_LOG" => File.join(@enclosing, "git-calls.log")
     }.merge(extra_env)
   end

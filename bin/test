@@ -1,0 +1,148 @@
+#!/usr/bin/env ruby
+# Runs test files in parallel, each as `ruby -Itest <file>` in its own process group, from the
+# repository root. Without file arguments it runs every test/*_test.rb. `-j N` sets how many run at once.
+# A file's output is printed as one block when it ends. The exit status is 1 when any file fails, 130
+# on INT or TERM, 141 when its output is closed. Any early stop gives each running file INT, and KILL
+# when it still runs 5 seconds later.
+# test/test_runner_test.rb covers this script.
+require "English"
+require "etc"
+require "optparse"
+require "rbconfig"
+require "tempfile"
+
+class TestRun
+  Job = Struct.new(:file, :pid, :output, :started)
+  GRACE_SECONDS = 5
+
+  def initialize(files, root:, jobs:)
+    @files = files.dup
+    @total = files.size
+    @root = root
+    @jobs = jobs
+    @running = []
+    @failed = []
+  end
+
+  # INT and TERM only set a flag, which the run checks between steps. An exception raised at any
+  # point could fall between starting or reaping a file and recording it.
+  def call
+    %w[INT TERM].each { |signal| trap(signal) { @stopping = true } }
+    run_all
+    return 130 if @stopping
+
+    summary
+    @failed.empty? ? 0 : 1
+  rescue Errno::EPIPE
+    141
+  ensure
+    stop_all
+  end
+
+  private
+
+  # Each file has its own process group, so a Ctrl-C reaches only this runner, and a runner that
+  # stops early for any reason would leave the files running. Every way out passes INT on, so each
+  # file runs its own cleanup, and kills what is left of each group after the grace period. No file
+  # is reaped before that KILL: an unreaped leader keeps its group id taken, so the KILL cannot reach
+  # a new group that reused the id.
+  def stop_all
+    return if @running.empty?
+
+    %w[INT TERM].each { |signal| trap(signal, "IGNORE") }
+    @running.each { |job| signal_group("INT", job.pid) }
+    deadline = monotonic_now + GRACE_SECONDS
+    sleep(0.05) until (live_groups & @running.map(&:pid)).empty? || monotonic_now > deadline
+    @running.each { |job| signal_group("KILL", job.pid) }
+    @running.each { |job| reap(job) }
+  end
+
+  # The process groups with a member that has not exited; a zombie has exited. When ps is missing
+  # or fails, every group counts as live, so the full grace period runs.
+  def live_groups
+    listing = IO.popen(%w[ps -A -o pgid=,stat=], err: File::NULL, &:read)
+    return @running.map(&:pid) unless $CHILD_STATUS.success?
+
+    listing.each_line.filter_map { |line| line.split.then { |pgid, stat| Integer(pgid) unless stat.start_with?("Z") } }
+  rescue SystemCallError
+    @running.map(&:pid)
+  end
+
+  def reap(job)
+    Process.wait(job.pid)
+  rescue Errno::ECHILD
+    nil
+  ensure
+    job.output.close!
+  end
+
+  def signal_group(signal, pid)
+    Process.kill(signal, -pid)
+  rescue Errno::ESRCH, Errno::EPERM
+    nil
+  end
+
+  def monotonic_now
+    Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  end
+
+  def start_next
+    file = @files.shift
+    output = Tempfile.new("test-run")
+    pid = Process.spawn(RbConfig.ruby, "-Itest", file, chdir: @root, pgroup: true, in: File::NULL,
+                        out: output.fileno, err: output.fileno)
+    @running << Job.new(file, pid, output, monotonic_now)
+  end
+
+  def run_all
+    until @stopping || (@files.empty? && @running.empty?)
+      start_next while @running.size < @jobs && @files.any? && !@stopping
+      exited = next_exit
+      finish(*exited) if exited
+    end
+  end
+
+  # nil once a stop is asked for.
+  def next_exit
+    until @stopping
+      exited = Process.wait2(-1, Process::WNOHANG)
+      return exited if exited
+
+      sleep(0.05)
+    end
+  end
+
+  def finish(pid, status)
+    job = @running.find { |candidate| candidate.pid == pid }
+    @running.delete(job)
+    report(job, status)
+  end
+
+  def report(job, status)
+    seconds = monotonic_now - job.started
+    job.output.rewind
+    puts("=== #{job.file} (#{seconds.round(1)}s) ===", job.output.read)
+    job.output.close!
+    @failed << job.file unless status.success?
+  end
+
+  def summary
+    @failed.sort.each { |file| puts("FAILED: #{file}") }
+    puts("#{@total} files, #{@failed.size} failed")
+  end
+end
+
+$stdout.sync = true
+jobs = Etc.nprocessors
+OptionParser.new { |parser| parser.on("-j", "--jobs N", Integer) { |count| jobs = count } }.parse!
+abort("bin/test: -j must be at least 1, got #{jobs}") if jobs < 1
+root = File.realpath("..", __dir__)
+# A file argument is read from the caller's directory. Under the root it runs by its root-relative
+# name, the same command a full run uses.
+from_caller = ARGV.map do |file|
+  full = File.expand_path(file)
+  real = File.exist?(full) ? File.realpath(full) : full
+  real.start_with?("#{root}/") ? real.delete_prefix("#{root}/") : full
+end
+files = ARGV.empty? ? Dir.chdir(root) { Dir.glob("test/*_test.rb").sort } : from_caller
+exit(TestRun.new(files, root: root, jobs: jobs).call)
