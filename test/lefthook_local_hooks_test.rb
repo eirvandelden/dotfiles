@@ -109,20 +109,23 @@ class LefthookLocalHooksTest < Minitest::Test
     refute_match(/error no-hardwrap/, out + err)
   end
 
-  def test_pre_commit_skips_the_hardwrap_check_without_markdownlint_or_a_stowed_package
+  def test_pre_commit_skips_the_hardwrap_check_without_markdownlint
     setup_repo("trunk")
     stub_real_lefthook
-    # markdownlint missing from PATH
     stage_file("notes.md", "This is line one\nand line two.\n")
     out, err, status = git("commit", "-m", "notes", markdownlint: false)
     assert(status.success?, "Expected the commit to succeed when markdownlint is missing")
     assert_match(/no-hardwrap: markdownlint not found on PATH, skipping/, out + err)
+  end
+
+  def test_pre_commit_skips_the_hardwrap_check_when_the_markdownlint_package_is_not_stowed
     skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
 
-    # markdownlint package not stowed
     File.unlink(File.join(@tmpdir, ".config", "markdownlint"))
-    stage_file("second.md", "This is line one\nand line two.\n")
-    out, err, status = git("commit", "-m", "second")
+    setup_repo("trunk")
+    stub_real_lefthook
+    stage_file("notes.md", "This is line one\nand line two.\n")
+    out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected the commit to succeed when the package is not stowed")
     assert_match(/no-hardwrap: .*no-hardwrap\.cjs not found, skipping/, out + err)
     refute_match(/Cannot load custom rule/, out + err)
