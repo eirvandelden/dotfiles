@@ -83,6 +83,43 @@ class ConductorScriptTest < Minitest::Test
     assert_includes command_log, "worktree-remove #{workspace}"
   end
 
+  def test_setup_leaves_env_local_unchanged
+    workspace = rails_workspace("my-app")
+    env_local = File.join(workspace, ".env.local")
+    File.write(env_local, "EXISTING=value\n")
+    write_executable("worktree-setup", "#!/bin/sh\necho 'worktree-setup' >> \"#{@log_file}\"\n")
+
+    run_script("setup", chdir: workspace)
+
+    assert_equal "EXISTING=value\n", File.read(env_local)
+  end
+
+  def test_run_does_not_export_database_name_from_env_local
+    workspace = rails_workspace("bin-dev-app", bin_dev: true)
+    File.write(File.join(workspace, ".env.local"), "DATABASE_NAME=workspace_db\n")
+    File.write(File.join(workspace, "bin", "dev"), <<~SH)
+      #!/bin/sh
+      echo "DATABASE_NAME=${DATABASE_NAME:-}" >> "#{@log_file}"
+    SH
+
+    run_script("run", chdir: workspace, env: { "DATABASE_NAME" => nil })
+
+    assert_includes command_log, "DATABASE_NAME=\n"
+    refute_includes command_log, "workspace_db"
+  end
+
+  def test_archive_runs_no_database_command
+    workspace = rails_workspace("my-app")
+    File.write(File.join(workspace, ".env.local"), "DATABASE_NAME=workspace_db\n")
+    %w[bundle rails].each do |name|
+      write_executable(name, "#!/bin/sh\necho \"#{name} $*\" >> \"#{@log_file}\"\n")
+    end
+
+    run_script("archive", chdir: workspace)
+
+    refute_match(/^(bundle|rails)\b/, command_log)
+  end
+
   private
 
   def rails_workspace(name, bin_dev: false, procfile: false)
