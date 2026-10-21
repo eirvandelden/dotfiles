@@ -24,14 +24,15 @@ class TestRun
     @failed = []
   end
 
+  # INT and TERM only set a flag, which the run checks between steps. An exception raised at any
+  # point could fall between starting or reaping a file and recording it.
   def call
-    trap("TERM") { raise Interrupt }
-    start_next while @running.size < @jobs && @files.any?
-    finish_one until @running.empty?
+    %w[INT TERM].each { |signal| trap(signal) { @stopping = true } }
+    run_all
+    return 130 if @stopping
+
     summary
     @failed.empty? ? 0 : 1
-  rescue Interrupt
-    130
   rescue Errno::EPIPE
     141
   ensure
@@ -93,12 +94,28 @@ class TestRun
     @running << Job.new(file, pid, output, monotonic_now)
   end
 
-  def finish_one
-    pid, status = Process.wait2
+  def run_all
+    until @stopping || (@files.empty? && @running.empty?)
+      start_next while @running.size < @jobs && @files.any? && !@stopping
+      exited = next_exit
+      finish(*exited) if exited
+    end
+  end
+
+  # nil once a stop is asked for.
+  def next_exit
+    until @stopping
+      exited = Process.wait2(-1, Process::WNOHANG)
+      return exited if exited
+
+      sleep(0.05)
+    end
+  end
+
+  def finish(pid, status)
     job = @running.find { |candidate| candidate.pid == pid }
     @running.delete(job)
     report(job, status)
-    start_next if @files.any?
   end
 
   def report(job, status)
