@@ -32,16 +32,8 @@ class ReviewPushHookTest < Minitest::Test
     FileUtils.rm_rf(@home)
   end
 
-  def test_a_push_with_a_change_folder_and_no_pull_request_succeeds_without_a_fresh_review
-    stale_branch
-    open_pull_requests("0")
-
-    stdout, stderr, status = push
-
-    assert(status.success?, stdout + stderr)
-  end
-
-  def test_a_push_with_a_change_folder_and_an_open_pull_request_needs_a_fresh_review
+  # One repository runs both former tests: the refused push changes nothing, so the second push sees the same branch.
+  def test_a_push_with_a_change_folder_needs_a_fresh_review_only_while_a_pull_request_is_open
     stale_branch
     open_pull_requests("1")
 
@@ -49,6 +41,11 @@ class ReviewPushHookTest < Minitest::Test
 
     refute(status.success?)
     assert_match(/not covered by a fresh review/, stdout + stderr)
+    open_pull_requests("0")
+
+    stdout, stderr, status = push
+
+    assert(status.success?, stdout + stderr)
   end
 
   private
