@@ -180,16 +180,20 @@ class RubocopFallbackTest < Minitest::Test
     assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
   end
 
-  def test_fallback_does_not_demand_a_signature_in_a_nested_test_folder
-    report = run_with_project_fallback("tools/test/greeter_test.rb", UNTYPED_GREETER)
+  def test_fallback_does_not_demand_a_signature_in_a_nested_test_or_spec_folder
+    [ "tools/test/greeter_test.rb", "tools/spec/greeter_spec.rb" ].each do |path|
+      report = run_with_project_fallback(path, UNTYPED_GREETER)
 
-    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+      assert_empty(cop_names(report).grep(RBS_COP_PATTERN), path)
+    end
   end
 
-  def test_fallback_does_not_demand_a_signature_in_a_test_folder_below_a_hidden_folder
-    report = run_with_project_fallback("tools/.config/kit/test/greeter_test.rb", UNTYPED_GREETER)
+  def test_fallback_does_not_demand_a_signature_in_a_test_or_spec_folder_below_a_hidden_folder
+    [ "tools/.config/kit/test/greeter_test.rb", "tools/.config/kit/spec/greeter_spec.rb" ].each do |path|
+      report = run_with_project_fallback(path, UNTYPED_GREETER)
 
-    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+      assert_empty(cop_names(report).grep(RBS_COP_PATTERN), path)
+    end
   end
 
   def test_fallback_does_not_demand_a_signature_on_a_migration
