@@ -63,6 +63,14 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
+  UNTYPED_GREETER = <<~RUBY.freeze
+    class Greeter
+      def greet(name)
+        name
+      end
+    end
+  RUBY
+
   PRIVATE_METHOD_FIXTURE = <<~RUBY.freeze
     class Greeter
       private
@@ -142,7 +150,7 @@ class RubocopFallbackTest < Minitest::Test
   end
 
   def test_fallback_reports_public_method_without_signature
-    report = run_rbs_fixture("class Greeter\n  def greet(name)\n    name\n  end\nend\n")
+    report = run_rbs_fixture(UNTYPED_GREETER)
 
     assert_includes(cop_names(report), "Style/RbsInline/MissingTypeAnnotation")
   end
@@ -167,19 +175,19 @@ class RubocopFallbackTest < Minitest::Test
   end
 
   def test_fallback_skips_a_file_that_opts_out
-    report = run_rbs_fixture("# rbs_inline: disabled\n\nclass Greeter\n  def greet(name)\n    name\n  end\nend\n")
+    report = run_rbs_fixture("# rbs_inline: disabled\n\n#{UNTYPED_GREETER}")
 
     assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
   end
 
   def test_fallback_does_not_demand_a_signature_in_a_nested_test_folder
-    report = run_with_project_fallback("tools/test/greeter_test.rb", "class Greeter\n  def greet(name)\n    name\n  end\nend\n")
+    report = run_with_project_fallback("tools/test/greeter_test.rb", UNTYPED_GREETER)
 
     assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
   end
 
   def test_fallback_does_not_demand_a_signature_in_a_test_folder_below_a_hidden_folder
-    report = run_with_project_fallback("tools/.config/kit/test/greeter_test.rb", "class Greeter\n  def greet(name)\n    name\n  end\nend\n")
+    report = run_with_project_fallback("tools/.config/kit/test/greeter_test.rb", UNTYPED_GREETER)
 
     assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
   end
