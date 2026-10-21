@@ -194,7 +194,7 @@ class WorktreeSweepTest < Minitest::Test
     install_hanging_ssh
     FileUtils.touch(gh_hang_file)
     stubs = %w[hanging-ssh gh].map { |name| Process.spawn(script_environment, File.join(@stub_bin, name)) }
-    sleep 0.5
+    wait_until("the stubs to start waiting") { %w[ssh gh].all? { |name| File.exist?("#{release_file}.#{name}-ready") } }
 
     FileUtils.rm_rf(@enclosing)
 
@@ -429,6 +429,7 @@ class WorktreeSweepTest < Minitest::Test
   def install_hanging_ssh
     write_stub("hanging-ssh", <<~'SH')
       #!/bin/sh
+      : > "$RELEASE_HANGING_STUBS.ssh-ready"
       waited=0
       while [ ! -e "$RELEASE_HANGING_STUBS" ] && [ -d "${RELEASE_HANGING_STUBS%/*}" ] && [ "$waited" -lt 3000 ]; do
         sleep 0.2
@@ -447,6 +448,7 @@ class WorktreeSweepTest < Minitest::Test
       #!/usr/bin/env ruby
       if File.exist?(ENV["GH_STUB_HANG"].to_s)
         release = ENV.fetch("RELEASE_HANGING_STUBS")
+        File.write("#{release}.gh-ready", "")
         3000.times do
           break if File.exist?(release) || !File.directory?(File.dirname(release))
 
