@@ -37,20 +37,31 @@ class LefthookLocalHooksTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir)
   end
 
-  def test_pre_commit_uses_global_fallback_and_rejects_conflict_markers
+  # Each test below runs the steps of several former single-behaviour tests in one repository. Every step commits
+  # its own file, and a refused commit comes last so its staged file never reaches the next step.
+
+  def test_pre_commit_uses_global_fallback_to_commit_an_unknown_word_and_a_binary_change_and_reject_conflicts
     setup_repo("trunk")
     stub_real_lefthook
+    stage_file("notes.txt", "zzqxklmnop is not a real word\n")
+    _out, _err, status = git("commit", "-m", "notes")
+    assert(status.success?, "Expected an unknown word to be committed through the global fallback")
+    stage_binary_file("icon.png", "\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR".b)
+    _out, _err, status = git("commit", "-m", "add icon")
+    assert(status.success?, "Expected a binary-only commit to succeed")
     stage_file("conflict.txt", conflict_markers)
     _out, _err, status = git("commit", "-m", "conflict")
     refute(status.success?, "Expected a commit with conflict markers to be rejected by the global fallback")
   end
 
-  def test_pre_commit_calls_lefthook_with_no_auto_install
+  def test_hooks_call_lefthook_with_no_auto_install
     setup_repo("trunk")
     stub_logging_lefthook
     stage_file("clean.txt", "hello\n")
     git("commit", "-m", "clean")
     assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
+    push
+    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
   def test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme
@@ -59,13 +70,6 @@ class LefthookLocalHooksTest < Minitest::Test
     commit_file("todo.txt", "FIX" + "ME: something\n")
     _out, _err, status = push
     refute(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
-  end
-
-  def test_pre_push_calls_lefthook_with_no_auto_install
-    setup_repo("trunk")
-    stub_logging_lefthook
-    push
-    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
   def test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set
@@ -83,78 +87,48 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
-  def test_pre_commit_uses_global_fallback_and_commits_an_unknown_word
-    setup_repo("trunk")
-    stub_real_lefthook
-    stage_file("notes.txt", "zzqxklmnop is not a real word\n")
-    _out, _err, status = git("commit", "-m", "notes")
-    assert(status.success?, "Expected an unknown word to be committed through the global fallback")
-  end
-
-  def test_pre_commit_still_commits_a_binary_only_change
-    setup_repo("trunk")
-    stub_real_lefthook
-    stage_binary_file("icon.png", "\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR".b)
-    _out, _err, status = git("commit", "-m", "add icon")
-    assert(status.success?, "Expected a binary-only commit to succeed")
-  end
-
-  def test_pre_commit_warns_about_a_wrapped_paragraph_and_still_commits
+  def test_pre_commit_warns_about_wrapped_paragraphs_in_markdown_files_and_still_commits
     skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
 
     setup_repo("trunk")
     stub_real_lefthook
+    # a wrapped paragraph in a .md file
     stage_file("notes.md", "This is line one\nand line two.\n")
     out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected a wrapped paragraph to warn, not block, the commit")
     assert_match(/error no-hardwrap/, out + err)
-  end
-
-  def test_pre_commit_warns_about_a_wrapped_paragraph_in_a_markdown_extension_file
-    skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
-
-    setup_repo("trunk")
-    stub_real_lefthook
+    # a wrapped paragraph in a .markdown file
     stage_file("notes.markdown", "This is line one\nand line two.\n")
     out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected a wrapped paragraph to warn, not block, the commit")
     assert_match(/error no-hardwrap/, out + err)
-  end
-
-  def test_pre_commit_prints_no_hardwrap_warning_for_one_line_paragraphs
-    skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
-
-    setup_repo("trunk")
-    stub_real_lefthook
-    stage_file("notes.md", "One line paragraph.\n")
-    out, err, status = git("commit", "-m", "notes")
+    # a one-line paragraph prints no warning
+    stage_file("single.md", "One line paragraph.\n")
+    out, err, status = git("commit", "-m", "single")
     assert(status.success?, "Expected a clean commit to succeed")
     refute_match(/error no-hardwrap/, out + err)
   end
 
-  def test_pre_commit_skips_the_hardwrap_check_without_markdownlint
+  def test_pre_commit_skips_the_hardwrap_check_without_markdownlint_or_a_stowed_package
     setup_repo("trunk")
     stub_real_lefthook
+    # markdownlint missing from PATH
     stage_file("notes.md", "This is line one\nand line two.\n")
     out, err, status = git("commit", "-m", "notes", markdownlint: false)
     assert(status.success?, "Expected the commit to succeed when markdownlint is missing")
     assert_match(/no-hardwrap: markdownlint not found on PATH, skipping/, out + err)
-  end
-
-  def test_pre_commit_skips_the_hardwrap_check_when_the_markdownlint_package_is_not_stowed
     skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
 
+    # markdownlint package not stowed
     File.unlink(File.join(@tmpdir, ".config", "markdownlint"))
-    setup_repo("trunk")
-    stub_real_lefthook
-    stage_file("notes.md", "This is line one\nand line two.\n")
-    out, err, status = git("commit", "-m", "notes")
+    stage_file("second.md", "This is line one\nand line two.\n")
+    out, err, status = git("commit", "-m", "second")
     assert(status.success?, "Expected the commit to succeed when the package is not stowed")
     assert_match(/no-hardwrap: .*no-hardwrap\.cjs not found, skipping/, out + err)
     refute_match(/Cannot load custom rule/, out + err)
   end
 
-  def test_pre_commit_stylelint_runs_through_npx_no
+  def test_pre_commit_runs_stylelint_and_eslint_through_npx_no
     setup_repo("trunk")
     stub_real_lefthook
     stub_npx
@@ -162,12 +136,6 @@ class LefthookLocalHooksTest < Minitest::Test
     _out, _err, status = git("commit", "-m", "css")
     assert(status.success?, "Expected the stubbed stylelint to pass")
     assert_match(/^npx --no stylelint app\.css$/, File.read(@log_file))
-  end
-
-  def test_pre_commit_eslint_runs_through_npx_no
-    setup_repo("trunk")
-    stub_real_lefthook
-    stub_npx
     stage_file("app.js", "export const answer = 42;\n")
     _out, _err, status = git("commit", "-m", "js")
     assert(status.success?, "Expected the stubbed eslint to pass")
