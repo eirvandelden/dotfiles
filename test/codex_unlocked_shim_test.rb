@@ -164,7 +164,9 @@ class CodexUnlockedShimTest < Minitest::Test
     Open3.capture3(shim_env.merge(extra_env), SHIM, *args, unsetenv_others: true)
   end
 
-  def run_with_deadline(command, extra_env, seconds: 10)
+  # Guards against a shim that runs itself forever, not a slow machine: a parallel run on a
+  # loaded Mac can take a single call past 10 seconds.
+  def run_with_deadline(command, extra_env, seconds: 60)
     pid = Process.spawn(shim_env.merge(extra_env), command, unsetenv_others: true, out: File::NULL, err: File::NULL)
     deadline = Time.now + seconds
     loop do
