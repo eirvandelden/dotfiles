@@ -92,6 +92,16 @@ class GhDashMergeTest < Minitest::Test
     assert_empty(gh_calls)
   end
 
+  def test_method_without_a_value_names_its_setting_in_the_error
+    File.write(@git_config, "[pr-merge \"eirvandelden\"]\n\tmethod\n")
+
+    _, stderr, status = run_script("\n")
+
+    assert_equal(2, status.exitstatus)
+    assert_includes(stderr, "merge-pr: unknown merge method '' in pr-merge.eirvandelden.method")
+    assert_empty(gh_calls)
+  end
+
   def test_prompt_names_the_pull_request_and_the_method
     set("pr-merge.eirvandelden.method", "squash")
 

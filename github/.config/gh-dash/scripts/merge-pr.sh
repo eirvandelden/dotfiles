@@ -8,6 +8,9 @@
 # Valid values: merge, squash, rebase. Names match case-insensitively.
 set -euo pipefail
 
+# Field separator for method and subsection. Unlike a tab, it keeps an empty method as a field.
+sep=$'\x1f'
+
 repo=${1:?usage: merge-pr.sh <owner/repo> <number>}
 number=${2:?usage: merge-pr.sh <owner/repo> <number>}
 
@@ -22,7 +25,7 @@ configured_method() {
     subsection=${key#pr-merge.}
     subsection=${subsection%.method}
     if [ "$(lowercase "$subsection")" = "$wanted" ]; then
-      printf '%s\t%s\n' "$value" "$subsection"
+      printf '%s%s%s\n' "$value" "$sep" "$subsection"
     fi
   done | tail -n 1
 }
@@ -36,10 +39,10 @@ method_for() {
       return
     fi
   done
-  printf 'merge\t\n'
+  printf 'merge%s\n' "$sep"
 }
 
-IFS=$'\t' read -r method subsection <<< "$(method_for)"
+IFS=$sep read -r method subsection <<< "$(method_for)"
 
 case "$method" in
   merge | squash | rebase) ;;
