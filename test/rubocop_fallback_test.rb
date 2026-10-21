@@ -178,6 +178,12 @@ class RubocopFallbackTest < Minitest::Test
     assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
   end
 
+  def test_fallback_does_not_demand_a_signature_in_a_test_folder_below_a_hidden_folder
+    report = run_with_project_fallback("tools/.config/kit/test/greeter_test.rb", "class Greeter\n  def greet(name)\n    name\n  end\nend\n")
+
+    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+  end
+
   def test_fallback_does_not_demand_a_signature_on_a_migration
     report = run_with_project_fallback(MIGRATION_PATH, MIGRATION_FIXTURE)
 

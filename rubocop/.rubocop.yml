@@ -92,9 +92,12 @@ Rails/IndexWith:
 # Public methods, attr_* and Data/Struct attributes must carry a `#:` type. This mirrors
 # rubocop-eirvandelden's config/default.yml and config/rails.yml; change both together.
 # The plugin skips only the root `test/` and `spec/`; the leading `**/` also skips nested ones.
+# `**` never enters a dot-folder, so `.*/**/` covers tests below `.claude` or `.config`.
 Style/RbsInline:
   Mode: opt_out
   Exclude:
+    - '**/.*/**/spec/**/*'
+    - '**/.*/**/test/**/*'
     - '**/spec/**/*'
     - '**/test/**/*'
 # rubocop-rails-omakase enables this cop, which reads `#:` as a comment missing its space.
