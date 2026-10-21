@@ -51,8 +51,8 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
 
     ```yaml
     - run: find sig -name '*.rbs' -delete && bundle exec rbs-inline --opt-out --output=sig lib
-    - run: git add --intent-to-add sig/
-    - run: git diff --exit-code sig/
+    - run: git diff --exit-code -- sig/
+    - run: test -z "$(git ls-files --others --exclude-standard -- sig/)"
     ```
 
 ## The repo context file

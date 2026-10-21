@@ -48,7 +48,29 @@ class GlobalSigIgnoreTest < Minitest::Test
     assert_includes(step, "!sig/")
     commands = YAML.safe_load(step[/```yaml\n(.*?)```/m, 1]).map { |item| item.fetch("run") }
     assert_match(/rbs-inline --opt-out --output=sig lib/, commands.fetch(0))
-    assert_equal([ "git add --intent-to-add sig/", "git diff --exit-code sig/" ], commands.drop(1))
+    assert_equal([ "git diff --exit-code -- sig/", %(test -z "$(git ls-files --others --exclude-standard -- sig/)") ], commands.drop(1))
+  end
+
+  def test_gem_sig_ci_step_fails_on_a_deleted_source
+    with_gem_repo do
+      File.delete("repo/sig/foo.rbs")
+
+      refute_predicate(run_gem_sig_checks, :success?)
+    end
+  end
+
+  def test_gem_sig_ci_step_fails_on_a_generated_file_git_does_not_hold
+    with_gem_repo do
+      write("sig/new.rbs")
+
+      refute_predicate(run_gem_sig_checks, :success?)
+    end
+  end
+
+  def test_gem_sig_ci_step_passes_when_sig_matches_what_git_holds
+    with_gem_repo do
+      assert_predicate(run_gem_sig_checks, :success?)
+    end
   end
 
   def test_gem_sig_ci_step_keeps_hand_written_manifest
@@ -70,6 +92,26 @@ class GlobalSigIgnoreTest < Minitest::Test
   end
 
   private
+
+  # A gem repository holding one committed sig/foo.rbs, with the gem's own !sig/ line.
+  def with_gem_repo
+    with_repo do
+      File.write("repo/.gitignore", "!sig/\n")
+      write("sig/foo.rbs")
+      git("add", ".")
+      git("-c", "user.name=Test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false",
+        "-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", "Add signatures")
+      yield
+    end
+  end
+
+  # Runs the recipe's checks after its regenerate step: the commands that follow the first one.
+  def run_gem_sig_checks
+    commands = YAML.safe_load(step_twelve[/```yaml\n(.*?)```/m, 1]).map { |item| item.fetch("run") }.drop(1)
+    environment = { "HOME" => @home, "GIT_CONFIG_GLOBAL" => GIT_CONFIG }
+    _, status = Open3.capture2e(environment, "sh", "-c", commands.join(" && "), chdir: "repo")
+    status
+  end
 
   def gem_sig_clean_command
     YAML.safe_load(step_twelve[/```yaml\n(.*?)```/m, 1]).first.fetch("run").split(" && ").first
