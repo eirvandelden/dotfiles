@@ -2,6 +2,16 @@
 
 From `intent.md` (2026-10-21). Status: accepted.
 
+## Amendment 2026-10-21
+
+PR #229 merged to `main` after this plan was accepted. It ships `bin/test` (`TestRun`, `-j N`, process groups, INT and TERM handling), `LefthookBinary.locate(path_lookup:, gem_dir:, platform:)` and a CI step that runs `bin/test`. Etienne chose to keep main's versions. This amendment replaces the parts of the plan below that conflict with it.
+
+Dropped from the plan: the `LefthookBinary` rewrite and its test, `bin/test`, `TestSuite`, `TestFile` and `test/test_suite_test.rb`, and invariants I1, I4 and I5 with their proof. The earlier review finding about `platform_dir` is moot.
+
+Kept: `HookScripts.directory` and its test (I2, I3), the chained and deleted hook tests (I6, I7), `deleted-tests.md` and the mutation evidence, and `timing.md` re-measured against `origin/main`.
+
+Order of work now: the hooks copy, the six chained files, `deleted-tests.md`, then `timing.md`. The Proof items for the dropped parts no longer apply.
+
 ## Design
 
 ### Domain terms
