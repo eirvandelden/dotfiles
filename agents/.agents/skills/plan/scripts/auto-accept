@@ -14,11 +14,13 @@
 require "open3"
 require_relative "../../../../../claude/.claude/hooks/remote_matcher"
 
+#: (String reason) -> bot
 def refuse(reason)
   warn("auto-accept refused: #{reason}")
   exit(1)
 end
 
+#: -> String?
 def origin_url
   stdout, status = Open3.capture2("git", "remote", "get-url", "origin", err: File::NULL)
   status.success? ? stdout.strip : nil
@@ -26,6 +28,7 @@ end
 
 # The critique is the last thing in the file and runs to its end, so a second "## Critique", a
 # later section or a footer after it is a line the allow-list below refuses, never a blind spot.
+#: (String text) -> String?
 def critique_section(text)
   text[/^## Critique\s*$.*\z/m]
 end
@@ -41,16 +44,19 @@ INTENT_FIELD = /\A(Author|Status|Type|Delivery|Codex review): (.*)\z/
 INTENT_SEPARATOR = /\. (?=(?:Author|Status|Type|Delivery|Codex review): )/
 INTENT_ACCEPTED = /\Aaccepted(?: \(\d{4}-\d{2}-\d{2}\))?\z/
 
+#: (String line) -> bool
 def closed?(line)
   line.include?("→") && line.split("→", -1).last.match?(CLOSED_SLOT)
 end
 
 # The non-blank lines after the "## Critique" heading, one group per round. A group that does
 # not start with a Round heading is text before the first round.
+#: (String critique) -> Array[Array[String]]
 def rounds(critique)
   critique.lines.drop(1).reject { |line| line.strip.empty? }.slice_before { |line| line.match?(ROUND) }
 end
 
+#: (Array[String] group) -> Array[String]
 def round_problems(group)
   return group unless group.first.match?(ROUND)
 
@@ -63,6 +69,7 @@ end
 
 # An allow-list, so any shape this script does not know fails closed: a closed top-level finding,
 # or an indented item explaining the closed finding above it. Anything else is reported.
+#: (Array[String] entries) -> Array[String]
 def unreadable_entries(entries)
   parent_closed = false
   entries.reject do |line|
@@ -71,14 +78,17 @@ def unreadable_entries(entries)
   end
 end
 
+#: (String critique) -> Array[String]
 def open_findings(critique)
   rounds(critique).flat_map { |group| round_problems(group) }
 end
 
+#: (String text) -> String?
 def status_line(text)
   text[/^.*Status:.*$/]
 end
 
+#: (String text) -> String
 def intent_header(text)
   return "" unless text.lines.first&.match?(/\A# Intent: \S/)
 
@@ -86,11 +96,13 @@ def intent_header(text)
   metadata.take_while { |line| line.match?(/\A(?:Author|Status|Type|Delivery|Codex review): /) }.join
 end
 
+#: (String header) -> Array[Array[String]]
 def intent_fields(header)
   fields = header.lines.flat_map { |line| line.chomp.split(INTENT_SEPARATOR) }
   fields.filter_map { |field| field.match(INTENT_FIELD)&.captures }
 end
 
+#: (Array[Array[String]] fields, String name) -> Array[String]
 def intent_values(fields, name)
   fields.filter_map { |key, value| value.delete_suffix(".") if key == name }.uniq
 end

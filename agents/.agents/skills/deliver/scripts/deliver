@@ -21,6 +21,7 @@ class Refusal < StandardError; end
 
 # Runs one command and answers its stdout; a failure raises with the command's own message.
 module Shell
+  #: (*String command) -> String
   def capture(*command)
     stdout, stderr, status = Open3.capture3(*command)
     raise Refusal, "#{command.first(3).join(' ')} failed: #{stderr.strip}" unless status.success?
@@ -28,6 +29,7 @@ module Shell
     stdout
   end
 
+  #: (*String command) -> bool
   def succeeds?(*command)
     _, _, status = Open3.capture3(*command)
     status.success?
@@ -38,10 +40,12 @@ end
 class Preconditions
   include Shell
 
+  #: (String folder) -> void
   def initialize(folder)
     @folder = folder
   end
 
+  #: -> Array[String]
   def reasons
     [ tree_reason, review_reasons, freshness_reason, scope_reason ].flatten.compact
   end
@@ -78,10 +82,12 @@ end
 class PullRequestLookup
   include Shell
 
+  #: (String branch) -> void
   def initialize(branch)
     @branch = branch
   end
 
+  #: -> Hash[String, untyped]?
   def existing
     json = capture("gh", "pr", "list", "--head", @branch, "--state", "open", "--json", "number,url,isDraft")
     JSON.parse(json).first
@@ -92,26 +98,33 @@ end
 class Draft
   include Shell
 
+  #: (String slug, String common_dir) -> void
   def initialize(slug, common_dir)
     @directory = File.join(common_dir, "deliver")
     @slug = slug
   end
 
+  #: -> String
   def body_path = File.join(@directory, "#{@slug}.body.md")
+  #: -> String
   def title_path = File.join(@directory, "#{@slug}.title")
 
+  #: -> bool
   def saved?
     File.exist?(body_path) && File.exist?(title_path)
   end
 
+  #: (String folder) -> void
   def capture_from(folder)
     FileUtils.mkdir_p(@directory)
     File.write(body_path, capture(File.join(SKILLS_DIR, "finish/scripts/fill-pr-template"), template, *artifacts(folder)))
     File.write(title_path, title(File.read(File.join(folder, "intent.md"))))
   end
 
+  #: -> String
   def title_text = File.read(title_path).strip
 
+  #: -> void
   def discard
     FileUtils.rm_f([ body_path, title_path ])
   end
@@ -141,11 +154,13 @@ class Panes
 
   CLOSABLE = %w[idle done].freeze
 
+  #: (String slug, String common_dir) -> void
   def initialize(slug, common_dir)
     @record = File.join(common_dir, "herdr", "stage-panes-#{slug}")
     @intent_record = File.join(common_dir, "herdr", "intent-pane-#{slug}")
   end
 
+  #: -> void
   def close_stale
     return unless ENV["HERDR_ENV"] == "1" && File.exist?(@record)
 
@@ -187,6 +202,7 @@ end
 class Delivery
   include Shell
 
+  #: -> void
   def initialize
     @folder = capture(File.join(SKILLS_DIR, "plan/scripts/change-folder")).strip
     @slug = File.basename(@folder)
@@ -195,12 +211,14 @@ class Delivery
     @draft = Draft.new(@slug, @common)
   end
 
+  #: -> bool
   def check
     reasons = Preconditions.new(@folder).reasons
     reasons.each { |reason| warn(reason) }
     reasons.empty?
   end
 
+  #: -> void
   def run
     existing = PullRequestLookup.new(@branch).existing
     prepare unless resuming?

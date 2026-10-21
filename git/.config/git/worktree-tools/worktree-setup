@@ -15,10 +15,12 @@ module WorktreeTools
   class Setup
     include Helpers
 
+    #: (?String path) -> void
     def initialize(path = '.')
       @path = File.expand_path(path)
     end
 
+    #: -> void
     def run!
       log "Worktree setup for: #{@path}"
       log ""

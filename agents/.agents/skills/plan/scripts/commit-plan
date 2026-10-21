@@ -7,6 +7,7 @@ require "open3"
 
 CHANGE_FOLDER = File.expand_path("change-folder", __dir__)
 
+#: (*String command) -> String
 def run(*command)
   stdout, stderr, status = Open3.capture3(*command)
   abort("#{command.first(3).join(' ')} failed: #{stderr.strip}") unless status.success?
@@ -14,12 +15,14 @@ def run(*command)
   stdout
 end
 
+#: (String message) -> bot
 def refuse(message)
   warn(message)
   exit(1)
 end
 
 # The first "Status:" in the file is the status line.
+#: (String path) -> bool
 def accepted?(path)
   File.exist?(path) && File.read(path)[/Status: (\w+)/, 1] == "accepted"
 end

@@ -13,10 +13,12 @@ module WorktreeTools
   class Remove
     include Helpers
 
+    #: (?String path) -> void
     def initialize(path = '.')
       @path = File.expand_path(path)
     end
 
+    #: -> void
     def run!
       log "Worktree cleanup for: #{@path}"
       log ""

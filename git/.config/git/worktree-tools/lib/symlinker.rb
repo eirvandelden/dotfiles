@@ -10,12 +10,14 @@ module WorktreeTools
   class Symlinker
     include Helpers
 
-    attr_reader :config
+    attr_reader :config #: WorktreeConfig
 
+    #: (WorktreeConfig config) -> void
     def initialize(config)
       @config = config
     end
 
+    #: -> void
     def setup!
       unless @config.stow_enabled?
         log "Stow is disabled, skipping symlink setup"
@@ -36,6 +38,7 @@ module WorktreeTools
       log "Symlinks setup complete"
     end
 
+    #: -> void
     def remove!
       unless @config.stow_enabled?
         return

@@ -1,3 +1,6 @@
+# Vendored from superpowers-ruby and kept close to upstream, so it carries no RBS signatures.
+# rbs_inline: disabled
+
 # Complete implementation of condition-based waiting utilities
 # Adapted from: test infrastructure improvements (2025-10-03)
 # Context: Fixed 15 flaky tests by replacing arbitrary sleeps

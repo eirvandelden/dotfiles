@@ -17,6 +17,21 @@ class RubySignaturesTest < Minitest::Test
     end
   end
 
+  def test_ruby_style_asks_for_a_colon_signature_above_each_method
+    section = File.read(File.join(SKILLS, "ruby-style/SKILL.md"))[/^## Documentation comments.*?(?=^## |\z)/m]
+
+    assert_includes(section, "`#: (String) -> String`")
+    refute_includes(section, "# @rbs")
+  end
+
+  def test_rails_architecture_and_plan_ask_for_colon_signatures_only
+    %w[rails-architecture/SKILL.md plan/SKILL.md].each do |relative|
+      text = File.read(File.join(SKILLS, relative))
+
+      refute_match(/`#:` (or|and) `# @rbs`/, text, "#{relative} still offers `# @rbs` as a method signature")
+    end
+  end
+
   def test_ruby_style_forbids_hand_written_sig_files
     text = File.read(File.join(SKILLS, "ruby-style/SKILL.md"))
 

@@ -7,13 +7,16 @@ module WorktreeTools
   class PumaDev
     include Helpers
 
-    attr_reader :config, :path
+    attr_reader :config #: WorktreeConfig
+    attr_reader :path #: Pathname
 
+    #: (WorktreeConfig config, ?(String | Pathname) path) -> void
     def initialize(config, path = '.')
       @config = config
       @path = Pathname.new(File.expand_path(path))
     end
 
+    #: -> void
     def setup!
       unless @config.puma_dev_enabled?
         log "Puma-dev is disabled, skipping setup"
@@ -39,6 +42,7 @@ module WorktreeTools
       log "Puma-dev setup complete"
     end
 
+    #: -> void
     def remove!
       puma_dev_dir = Pathname.new(@config.puma_dev_dir)
       symlink_name = @config.puma_dev_name

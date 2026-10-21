@@ -6,6 +6,7 @@
 require "yaml"
 require "fileutils"
 
+#: (String markdown) -> [Hash[String, untyped], String]
 def frontmatter_and_body(markdown)
   match = markdown.match(/\A---\n(.*?)\n---\n(.*)\z/m)
   raise "no frontmatter in #{markdown[0, 40].inspect}" unless match
@@ -13,15 +14,18 @@ def frontmatter_and_body(markdown)
   [ YAML.safe_load(match[1]), match[2].strip ]
 end
 
+#: (untyped tools) -> bool
 def read_only?(tools)
   Array(tools).none? { |tool| %w[Edit Write MultiEdit].include?(tool) }
 end
 
+#: (String value) -> String
 def toml_string(value)
   escaped = value.gsub(/[\\"]/) { |char| "\\#{char}" }
   %("#{escaped}")
 end
 
+#: (String value) -> String
 def toml_literal_block(value)
   raise "body contains a triple single-quote, which would break the TOML literal string" \
     if value.include?("'''")
@@ -29,6 +33,7 @@ def toml_literal_block(value)
   "'''\n#{value}\n'''"
 end
 
+#: (String body, Hash[String, untyped] frontmatter) -> String
 def with_hook_disclaimer(body, frontmatter)
   return body unless frontmatter["hooks"]
 
@@ -36,6 +41,7 @@ def with_hook_disclaimer(body, frontmatter)
     "above is an instruction here, backstopped by the `review` skill's compliance check."
 end
 
+#: (String name, Hash[String, untyped] frontmatter, String body) -> String
 def render(name, frontmatter, body)
   lines = []
   lines << "name = #{toml_string(name)}"

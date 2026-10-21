@@ -110,7 +110,7 @@ Must run in plan mode — this is where the codebase gets read and the approach 
    Domain skills applied: <list, or "None">.
    ```
 
-   `## Design` comes first, before `## Design decisions`. A subsection the change does not touch is one line: `Not affected: <why>.` A config tweak therefore shows six short lines. `### Signatures` ends with `Checked by: steep check`, or with `Not checked: <project> declined Steep and rbs_rails.` when the project declined. Signatures are inline RBS (`#:` and `# @rbs` comments above each `def`), never `sig/*.rbs` files.
+   `## Design` comes first, before `## Design decisions`. A subsection the change does not touch is one line: `Not affected: <why>.` A config tweak therefore shows six short lines. `### Signatures` ends with `Checked by: steep check`, or with `Not checked: <project> declined Steep and rbs_rails.` when the project declined. Signatures are inline RBS `#:` method type signatures above each `def`, never `sig/*.rbs` files.
 
    Each design claim gets a Proof line after the acceptance criteria. A complexity claim about queries gets a `Query count:` line that names a query-count test. An invariant gets an `Invariant:` line that names where it is enforced and the test that proves it. `implement` builds these lines like any criterion.
 

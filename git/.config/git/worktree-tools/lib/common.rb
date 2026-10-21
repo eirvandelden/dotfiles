@@ -21,23 +21,28 @@ module WorktreeTools
 
   module Helpers
     # Logging methods
+    #: (String message) -> void
     def log(message)
       puts message
     end
 
+    #: (String message) -> void
     def debug(message)
       return unless ENV["DEBUG"]
       $stderr.puts "debug: #{message}"
     end
 
+    #: (String message) -> void
     def warn(message)
       $stderr.puts "warning: #{message}"
     end
 
+    #: (String message) -> void
     def error(message)
       $stderr.puts "error: #{message}"
     end
 
+    #: (String message, ?Integer exit_code) -> bot
     def die(message, exit_code = EXIT_ERROR)
       error(message)
       exit(exit_code)
@@ -47,6 +52,7 @@ module WorktreeTools
     # the caller's process group, so Ctrl-C and terminal prompts reach it. With one (the
     # background sweep, which has no terminal and holds the repository's lock) it runs in its own
     # process group, which is killed, ssh included, once the limit passes.
+    #: (*String command, ?time_limit: Numeric?) -> [String, Process::Status]
     def capture_output(*command, time_limit: nil)
       return Open3.capture2(*command, err: File::NULL) unless time_limit
 
@@ -62,6 +68,7 @@ module WorktreeTools
     end
 
     # The group can end between the time-out and the kill.
+    #: (Integer pid) -> nil
     def kill_group(pid)
       Process.kill("KILL", -pid)
       nil
@@ -70,6 +77,7 @@ module WorktreeTools
     end
 
     # Git helpers
+    #: (?(String | Pathname) path) -> Pathname?
     def git_root(path = ".")
       # Use array form to avoid shell injection
       output, status = Open3.capture2("git", "-C", path.to_s, "rev-parse", "--show-toplevel", err: "/dev/null")
@@ -77,6 +85,7 @@ module WorktreeTools
       Pathname.new(output.strip)
     end
 
+    #: (?(String | Pathname) path) -> String?
     def worktree_name(path = ".")
       repo_root = git_root(path)
       return nil unless repo_root
@@ -85,6 +94,7 @@ module WorktreeTools
       current_path.basename.to_s
     end
 
+    #: (?(String | Pathname) path) -> bool
     def main_worktree?(path = ".")
       git_dir = git_absolute_dir(path)
       common_dir = git_common_dir(path)
@@ -93,6 +103,7 @@ module WorktreeTools
       git_dir.realpath == common_dir.realpath
     end
 
+    #: (?(String | Pathname) path) -> Pathname?
     def git_absolute_dir(path = ".")
       output, status = Open3.capture2("git", "-C", path.to_s, "rev-parse", "--absolute-git-dir", err: "/dev/null")
       return nil if status.exitstatus != 0 || output.strip.empty?
@@ -100,6 +111,7 @@ module WorktreeTools
       Pathname.new(output.strip)
     end
 
+    #: (?(String | Pathname) path) -> Pathname?
     def git_common_dir(path = ".")
       output, status = Open3.capture2("git", "-C", path.to_s, "rev-parse", "--git-common-dir", err: "/dev/null")
       return nil if status.exitstatus != 0 || output.strip.empty?
@@ -114,21 +126,25 @@ module WorktreeTools
     end
 
     # Conductor detection
+    #: -> bool
     def in_conductor?
       !ENV["CONDUCTOR_ROOT_PATH"].nil? && !ENV["CONDUCTOR_ROOT_PATH"].empty?
     end
 
+    #: -> Pathname?
     def conductor_root
       return nil unless in_conductor?
       Pathname.new(ENV["CONDUCTOR_ROOT_PATH"])
     end
 
+    #: -> Pathname?
     def conductor_workspace_path
       return nil unless in_conductor?
       path = ENV["CONDUCTOR_WORKSPACE_PATH"]
       path ? Pathname.new(path) : nil
     end
 
+    #: -> Integer?
     def conductor_port
       return nil unless in_conductor?
       raw_port = ENV["CONDUCTOR_PORT"]
@@ -140,12 +156,14 @@ module WorktreeTools
       port
     end
 
+    #: -> String?
     def conductor_workspace_name
       return nil unless in_conductor?
       ENV["CONDUCTOR_WORKSPACE_NAME"]
     end
 
     # Command detection
+    #: (String | Symbol command) -> bool
     def command_exists?(command)
       # Use array form to avoid shell injection
       _output, status = Open3.capture2("which", command.to_s, err: "/dev/null", out: "/dev/null")
@@ -153,10 +171,12 @@ module WorktreeTools
     end
 
     # The herdr plugin scripts prefer HERDR_BIN_PATH over PATH; worktree-create and worktree-viewer match them.
+    #: -> String
     def herdr_bin
       ENV["HERDR_BIN_PATH"].to_s.empty? ? "herdr" : ENV["HERDR_BIN_PATH"]
     end
 
+    #: (String command, ?String? error_message) -> true
     def require_command(command, error_message = nil)
       return true if command_exists?(command)
 
@@ -165,6 +185,7 @@ module WorktreeTools
     end
 
     # Path helpers
+    #: ((String | Pathname)? path, ?String base_dir) -> String?
     def expand_path(path, base_dir = Dir.pwd)
       return nil if path.nil?
 
@@ -178,6 +199,7 @@ module WorktreeTools
       end
     end
 
+    #: ((String | Pathname) path) -> void
     def ensure_directory(path)
       FileUtils.mkdir_p(path) unless Dir.exist?(path)
     end

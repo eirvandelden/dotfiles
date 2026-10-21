@@ -20,18 +20,21 @@ PATCH_FILE_LINE = /^\*\*\* (?:Add File|Update File|Delete File|Move to): (.+)$/
 
 CHANGE_FOLDER_SCRIPT = File.expand_path("../skills/plan/scripts/change-folder", __dir__)
 
+#: (String relative_path) -> bool
 def test_path?(relative_path)
   return true if relative_path.start_with?("test/", "spec/", "__tests__/")
 
   relative_path.match?(/(_test|_spec)\.rb\z/) || relative_path.match?(/\.test\.[^.\/]+\z/)
 end
 
+#: (Hash[String, untyped] tool_input) -> Array[String]
 def edited_paths(tool_input)
   return [ tool_input["file_path"] ] if tool_input["file_path"]
 
   tool_input.fetch("command", "").scan(PATCH_FILE_LINE).flatten.map(&:strip)
 end
 
+#: (String file_path, String cwd) -> String
 def relative_to_repo(file_path, cwd)
   return file_path unless file_path.start_with?("/")
 
@@ -43,6 +46,7 @@ rescue ArgumentError
   file_path
 end
 
+#: (String cwd) -> String?
 def change_folder(cwd)
   stdout, status = Open3.capture2(CHANGE_FOLDER_SCRIPT, chdir: cwd)
   return nil unless status.success?
@@ -50,6 +54,7 @@ def change_folder(cwd)
   stdout.strip
 end
 
+#: (String cwd) -> bool
 def reproduction_in_progress?(cwd)
   folder = change_folder(cwd)
   return false unless folder
@@ -60,6 +65,7 @@ def reproduction_in_progress?(cwd)
   File.read(plan_path).include?(REPRODUCTION_LINE)
 end
 
+#: (String message) -> bot
 def block(message)
   warn "Blocked: #{message}"
   exit 2

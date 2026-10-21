@@ -46,6 +46,6 @@ Rule specifics (single responsibility, bang/predicate methods, guard clauses, li
 ## Documentation
 
 - Both: write a short one-line summary comment for every class. Keep it concise and direct — speak directly about the thing being documented ("Represents a card in a board"), never verbose patterns like "Domain model for Card".
-- Personal: type every method with an inline RBS signature (`#:` or `# @rbs`, RBS 4 syntax), which Steep checks. No YARD tags and no `@action` / `@route`. Other comments only for a non-obvious "why". See `references/examples.md`.
+- Personal: type every public method and `attr_*` with an inline RBS method type signature (`#: (String) -> String`, RBS 4 syntax), which Steep checks; private helpers need none. No YARD tags and no `@action` / `@route`. Other comments only for a non-obvious "why". See `references/examples.md`.
 - Work: use YARD. Only document a method when it's non-obvious — a complex algorithm, an unusual side effect, or a tricky business rule. Simple, self-explanatory methods get no doc comment.
 - Work: for Rails controller actions, use custom YARD tags `@action` (HTTP method) and `@route` (URL path) to document routing — this stays mandatory regardless of method complexity, since it documents routing rather than behavior. See `references/examples.md`.

@@ -12,14 +12,17 @@ RULE_PATH = File.join(CONFIG_DIR, "no-hardwrap.cjs")
 CHECK_CONFIG_PATH = File.join(CONFIG_DIR, "no-hardwrap.json")
 FIX_COMMAND = "markdownlint -c ~/.config/markdownlint/unwrap.json -r ~/.config/markdownlint/no-hardwrap.cjs --fix"
 
+#: (String file_path) -> bool
 def markdown_file?(file_path)
   file_path.match?(/\.(md|markdown)\z/i)
 end
 
+#: -> bool?
 def markdownlint_available?
   system("markdownlint", "--version", out: File::NULL, err: File::NULL)
 end
 
+#: (String file_path) -> Array[Hash[String, untyped]]
 def findings_for(file_path)
   _stdout, stderr, _status =
     Open3.capture3("markdownlint", "-j", "--config", CHECK_CONFIG_PATH, "--rules", RULE_PATH, file_path)
@@ -28,6 +31,7 @@ rescue JSON::ParserError
   []
 end
 
+#: (String file_path, Array[Hash[String, untyped]] findings) -> void
 def tell_claude(file_path, findings)
   lines = findings.map { |finding| "line #{finding['lineNumber']}: #{finding['errorDetail']}" }.join("; ")
   context = "#{file_path} hardwraps markdown (#{lines}). Join each paragraph onto one line, " \

@@ -18,10 +18,12 @@ module WorktreeTools
     PANE = File.expand_path("worktree-pane", __dir__)
     WAITING = "worktree-create: waiting for a running worktree sweep to finish".freeze
 
+    #: (Array[String] argv) -> void
     def self.run!(argv)
       new.run!(argv)
     end
 
+    #: (Array[String] argv) -> void
     def run!(argv)
       no_pane = !argv.delete("--no-pane").nil?
       name = argv.shift

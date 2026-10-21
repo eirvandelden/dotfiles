@@ -15,11 +15,13 @@ class Stop < StandardError; end
 
 # Runs gh or git and answers [stdout, stderr, success].
 module Shell
+  #: (*String command) -> [String, String, bool]
   def run(*command)
     stdout, stderr, status = Open3.capture3(*command)
     [ stdout, stderr, status.success? ]
   end
 
+  #: (*String command) -> String
   def run!(*command)
     stdout, stderr, success = run(*command)
     raise Stop, "#{command.first(3).join(' ')} failed: #{stderr.strip}" unless success
@@ -29,13 +31,16 @@ module Shell
 end
 
 class Clock
+  #: (Numeric seconds) -> void
   def initialize(seconds)
     @deadline = now + seconds
     @interval = Float(ENV.fetch("SHIP_POLL_INTERVAL", "10"))
   end
 
+  #: -> bool
   def expired? = now >= @deadline
 
+  #: -> Integer
   def pause = sleep(@interval)
 
   private
@@ -53,10 +58,12 @@ class Checks
   GREEN = %w[pass skipping].freeze
   RED = %w[fail cancel].freeze
 
+  #: (Integer | String number) -> void
   def initialize(number)
     @number = number.to_s
   end
 
+  #: -> String?
   def problems
     watch_error = wait
     not_green = listed(watch_error).reject { |check| GREEN.include?(check["bucket"]) }
@@ -107,11 +114,13 @@ end
 class Shipment
   include Shell
 
+  #: (merge: bool) -> void
   def initialize(merge:)
     @merge = merge
     @branch = run!("git", "rev-parse", "--abbrev-ref", "HEAD").strip
   end
 
+  #: -> void
   def run_all
     pr = open_pr
     run!("gh", "pr", "ready", pr["number"].to_s) if pr["isDraft"]

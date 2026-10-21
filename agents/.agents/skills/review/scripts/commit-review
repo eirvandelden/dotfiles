@@ -8,6 +8,7 @@ require_relative "review_file"
 
 SKILLS_DIR = File.expand_path("../..", __dir__)
 
+#: (*String command) -> String
 def run(*command)
   stdout, stderr, status = Open3.capture3(*command)
   abort("#{command.first(3).join(' ')} failed: #{stderr.strip}") unless status.success?
@@ -15,6 +16,7 @@ def run(*command)
   stdout
 end
 
+#: (String | Array[String] lines) -> bot
 def refuse(lines)
   warn(lines)
   exit(1)

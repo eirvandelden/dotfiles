@@ -57,7 +57,11 @@ ASSIGNMENT = /\A[A-Za-z_]\w*=/
 DIRECTORY_CHANGES = %w[cd pushd].freeze
 PARENS = %i[open close].freeze
 # The words of one simple command, and how many subshells it opens and closes.
-Segment = Struct.new(:words, :opens, :closes)
+Segment = Struct.new(
+  :words,  #: Array[String]
+  :opens,  #: Integer
+  :closes  #: Integer
+)
 BLOCK_MESSAGE = <<~MESSAGE.freeze
   Blocked: this `git worktree add` does not target <main checkout>/.worktrees/<name>.
   Never type `git worktree add` yourself; use `worktree-create` (see the `worktree-first` skill).
@@ -65,6 +69,7 @@ MESSAGE
 
 # The words of each simple command. Separators inside quotes and heredoc bodies are text, not
 # commands. A quote left open falls back to splitting on every separator.
+#: (String command) -> Array[Segment]
 def segments(command)
   text = without_heredoc_bodies(command).gsub(LINE_CONTINUATION, "")
   pieces = tokens(text)
@@ -75,10 +80,12 @@ def segments(command)
         .map { |chunk| Segment.new(join_words(chunk - PARENS), chunk.count(:open), chunk.count(:close)) }
 end
 
+#: (String text) -> Array[Segment]
 def split_on_every_separator(text)
   text.split(SEGMENT_SEPARATOR).map { |part| Segment.new(words(part), part.count("("), part.count(")")) }
 end
 
+#: (String command) -> String
 def without_heredoc_bodies(command)
   delimiters = []
   command.lines.each_with_object(+"") do |line, kept|
@@ -91,6 +98,7 @@ def without_heredoc_bodies(command)
   end
 end
 
+#: (String line) -> Array[String]
 def heredoc_delimiters(line)
   no_heredoc = match_spans(line, NO_HEREDOC_ON_LINE)
   comment_at = comment_start(line, no_heredoc)
@@ -100,21 +108,25 @@ def heredoc_delimiters(line)
 end
 
 # Where an unquoted `#` starts a comment, or the line's length when it has none.
+#: (String line, Array[MatchData] quoted) -> Integer
 def comment_start(line, quoted)
   starts = match_spans(line, COMMENT_START).map { |match| match.begin(0) }
   starts.find { |at| !inside?(at, quoted) } || line.length
 end
 
+#: (Integer at, Array[MatchData] spans) -> bool
 def inside?(at, spans)
   spans.any? { |span| at.between?(span.begin(0) + 1, span.end(0) - 1) }
 end
 
+#: (String line, Regexp pattern) -> Array[MatchData]
 def match_spans(line, pattern)
   line.to_enum(:scan, pattern).map { Regexp.last_match }
 end
 
 # Quoted text, escapes and plain text as strings; :space and :separator between them. Nil when
 # a quote is left open.
+#: (String text) -> Array[String | Symbol]?
 def tokens(text)
   scanner = StringScanner.new(text)
   pieces = []
@@ -128,6 +140,7 @@ end
 
 # Unquoted text also yields an :open or :close for each `(` or `)` in it, so a subshell can be
 # told apart from a parenthesis inside quotes.
+#: (StringScanner scanner) -> Array[String | Symbol]
 def pieces_of(scanner)
   return [ :separator ] if scanner[:separator]
   return [ :space ] if scanner[:space] || scanner[:comment]
@@ -138,23 +151,32 @@ def pieces_of(scanner)
   [ plain, *Array.new(plain.count("("), :open), *Array.new(plain.count(")"), :close) ]
 end
 
+#: (Array[String | Symbol] pieces) -> Array[String]
 def join_words(pieces)
   pieces.chunk { |piece| piece != :space }.filter_map { |is_word, parts| parts.join if is_word }
 end
 
+#: (String segment) -> Array[String]
 def words(segment)
   Shellwords.split(segment)
 rescue ArgumentError
   segment.split
 end
 
+# Stands in for Process::Status when git cannot even start.
+FailedStatus = Struct.new(
+  :success? #: bool
+)
+
+#: (String directory, *String arguments) -> [String, Process::Status | FailedStatus]
 def git(directory, *arguments)
   Open3.capture2("git", "-C", directory, *arguments, err: File::NULL)
 rescue SystemCallError
-  [ "", Struct.new(:success?).new(false) ]
+  [ "", FailedStatus.new(false) ]
 end
 
 # Where git was pointed and what `worktree add` was given, or nil when the segment is not one.
+#: (Array[String] segment_words, String directory) -> [String, String]?
 def worktree_add(segment_words, directory)
   start = segment_words.index { |word| word == "git" || word.end_with?("/git") }
   return nil unless start
@@ -167,6 +189,7 @@ def worktree_add(segment_words, directory)
 end
 
 # The directory git's global options select, and the words after those options.
+#: (Array[String] words, String directory) -> [String, Array[String]]
 def after_global_options(words, directory)
   option, *rest = words
   return [ directory, words ] unless option&.start_with?("-")
@@ -175,6 +198,7 @@ def after_global_options(words, directory)
   after_global_options(GLOBAL_OPTIONS_WITH_VALUE.include?(option) ? rest.drop(1) : rest, directory)
 end
 
+#: (Array[String] arguments) -> String?
 def add_target(arguments)
   argument, *rest = arguments
   return nil unless argument
@@ -186,6 +210,7 @@ end
 
 # Ported from worktree-create's repo_root!. The first `worktree` line is the main working tree,
 # except inside a submodule, where it is the submodule's git directory; core.worktree resolves it.
+#: (String directory) -> String?
 def main_checkout(directory)
   output, status = git(directory, "worktree", "list", "--porcelain")
   first = status.success? && output.lines.find { |line| line.start_with?("worktree ") }
@@ -195,11 +220,13 @@ def main_checkout(directory)
   working_tree?(candidate) ? candidate : submodule_checkout(candidate)
 end
 
+#: (String path) -> bool
 def working_tree?(path)
   output, status = git(path, "rev-parse", "--is-inside-work-tree")
   status.success? && output.strip == "true"
 end
 
+#: (String git_dir) -> String?
 def submodule_checkout(git_dir)
   output, status = git(git_dir, "config", "--get", "core.worktree")
   return nil unless status.success? && !output.strip.empty?
@@ -209,6 +236,7 @@ end
 
 # The real path of a target that may not exist yet: symlinks are resolved component by component
 # for the part that exists, the rest is appended as written.
+#: (String target, String directory) -> String
 def real_target(target, directory)
   start = target.start_with?("/") ? "/" : File.realpath(directory)
   target.split("/").reject(&:empty?).reduce(start) do |current, part|
@@ -220,6 +248,7 @@ def real_target(target, directory)
   end
 end
 
+#: (String directory, String target) -> bool
 def misplaced_worktree?(directory, target)
   root = main_checkout(directory)
   return false unless root
@@ -228,6 +257,7 @@ def misplaced_worktree?(directory, target)
 end
 
 # The command text a segment hands to another shell (`bash -c "<command>"`) or to `eval`.
+#: (Array[String] segment_words) -> String?
 def handed_on_command(segment_words)
   command_at = command_word_index(segment_words)
   return nil unless command_at
@@ -240,6 +270,7 @@ def handed_on_command(segment_words)
 end
 
 # Where the command word is: past variable assignments, and past wrappers with their options.
+#: (Array[String] words, ?Integer index) -> Integer?
 def command_word_index(words, index = 0)
   word = words[index]
   return nil unless word
@@ -249,6 +280,7 @@ def command_word_index(words, index = 0)
   command_word_index(words, past_options(words, index + 1))
 end
 
+#: (Array[String] words, Integer index) -> Integer
 def past_options(words, index)
   return index unless words[index]&.start_with?("-")
 
@@ -257,6 +289,7 @@ end
 
 # `-c` may share a cluster with other short flags (`-lc`) or follow them (`-e -c`); the command
 # text is the first word after the flags.
+#: (Array[String] arguments) -> String?
 def shell_command_text(arguments)
   flags = arguments.take_while { |word| word.start_with?("-") }
   arguments[flags.length] if flags.any? { |flag| flag.match?(/\A-[A-Za-z]*c[A-Za-z]*\z/) }
@@ -265,30 +298,37 @@ end
 # Where the shell is while the guard reads a command. Each subshell level has its own `pushd`
 # stack, a copy of the one around it; the last entry of the innermost stack is the directory.
 class ShellPosition
+  #: (String directory) -> void
   def initialize(directory)
     @stacks = [ [ directory ] ]
   end
 
+  #: -> String
   def directory
     @stacks.last.last
   end
 
+  #: -> Array[Array[String]]
   def enter_subshell
     @stacks.push(@stacks.last.dup)
   end
 
+  #: -> Array[String]?
   def leave_subshell
     @stacks.pop if @stacks.length > 1
   end
 
+  #: (String path) -> String
   def cd(path)
     @stacks.last[-1] = path
   end
 
+  #: (String path) -> Array[String]
   def pushd(path)
     @stacks.last.push(path)
   end
 
+  #: -> String?
   def popd
     @stacks.last.pop if @stacks.last.length > 1
   end
@@ -296,6 +336,7 @@ end
 
 # A `cd` inside `( … )` ends with the subshell, so each unquoted `(` enters a subshell level and
 # each `)` leaves one. A balanced `$(pwd)` enters and leaves in the same segment.
+#: (String command, String directory) -> bool
 def blocked?(command, directory)
   position = ShellPosition.new(directory)
   segments(command).any? do |segment|
@@ -308,11 +349,13 @@ def blocked?(command, directory)
   end
 end
 
+#: (Array[String] words, String directory) -> bool
 def segment_blocked?(words, directory)
   handed_on = handed_on_command(words)
   (handed_on && blocked?(handed_on, directory)) || misplaced_add?(words, directory)
 end
 
+#: (Array[String] words) -> Array[String]
 def without_subshell_parens(words)
   return words if words.empty?
 
@@ -320,6 +363,7 @@ def without_subshell_parens(words)
   [ *inner[0...-1], inner.last.delete_suffix(")") ].reject(&:empty?)
 end
 
+#: (Array[String] words, ShellPosition position) -> void
 def follow_directory_change(words, position)
   return position.popd if words.first == "popd"
   return unless DIRECTORY_CHANGES.include?(words.first)
@@ -329,6 +373,7 @@ def follow_directory_change(words, position)
 end
 
 # The directory `cd` or `pushd` is given, past its options; nil for `cd -` or a bare `cd`.
+#: (Array[String] arguments) -> String?
 def change_destination(arguments)
   argument, *rest = arguments
   return nil if argument.nil? || argument == "-"
@@ -340,12 +385,14 @@ end
 
 # Nil when there is no destination or it does not exist: a failed `cd` or `pushd` leaves the
 # shell where it was.
+#: (Array[String] arguments, String directory) -> String?
 def existing_destination(arguments, directory)
   destination = change_destination(arguments)
   path = destination && File.expand_path(destination, directory)
   path if path && File.directory?(path)
 end
 
+#: (Array[String] segment_words, String directory) -> bool
 def misplaced_add?(segment_words, directory)
   found_directory, target = worktree_add(segment_words, directory)
   target && File.directory?(found_directory) && misplaced_worktree?(found_directory, target)

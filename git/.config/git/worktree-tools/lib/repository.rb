@@ -7,6 +7,7 @@ module WorktreeTools
   class Repository
     include Helpers
 
+    #: (String program, ?time_limit: Numeric?) -> void
     def initialize(program, time_limit: nil)
       @program = program
       @time_limit = time_limit
@@ -17,6 +18,7 @@ module WorktreeTools
     # git 2.54.0) — from the submodule's own checkout and from any linked worktree of it alike.
     # That git directory's core.worktree points back at the submodule checkout, resolved
     # relative to the git directory itself, so it works from both.
+    #: -> String
     def root
       output, status = git("worktree", "list", "--porcelain")
       die("#{@program}: not inside a git repository") unless status.success?
@@ -30,12 +32,14 @@ module WorktreeTools
       submodule_checkout(candidate) || toplevel
     end
 
+    #: -> String
     def default_branch
       branch = symbolic_ref_default_branch || remote_show_default_branch
       die("#{@program}: cannot determine default branch") if branch.to_s.empty? || branch == "(unknown)"
       branch
     end
 
+    #: -> String
     def common_dir
       output, status = git("rev-parse", "--path-format=absolute", "--git-common-dir")
       die("#{@program}: not inside a git repository") unless status.success?
@@ -45,17 +49,20 @@ module WorktreeTools
 
     # A pull in the main checkout reads FETCH_HEAD between its own fetch and its merge, so a
     # sweep running beside it must not rewrite that file.
+    #: (String branch) -> [String, Process::Status]
     def fetch_default_branch(branch)
       capture_output("git", "fetch", "--no-write-fetch-head", "origin", branch, time_limit: @time_limit)
     end
 
     # Creates the lock file, so its presence shows that a sweep started.
+    #: -> void
     def touch_lock
       File.open(lock_path, File::RDWR | File::CREAT) { nil }
     end
 
     # One sweep or create at a time per repository: another caller waits here, and says so
     # first when it has a waiting message.
+    #: (?waiting_message: String?) { () -> untyped } -> untyped
     def exclusively(waiting_message: nil)
       File.open(lock_path, File::RDWR | File::CREAT) do |lock|
         wait_for(lock, waiting_message) unless lock.flock(File::LOCK_EX | File::LOCK_NB)
