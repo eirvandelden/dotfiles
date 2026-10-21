@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "hook_scripts"
+require_relative "isolated_git"
 
 class HookScriptsTest < Minitest::Test
   def test_directory_is_not_the_tracked_directory
