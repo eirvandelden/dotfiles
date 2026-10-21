@@ -226,7 +226,7 @@ Merges and deletions, by file:
 - Deleted (master twins and fallback twins). Every `master` clause keeps one test: the pre-commit clause (B commit), the commit-msg clause (B empty commit), the pre-push branch clause (B push) and the pre-push `refs/heads/master` arm (A `feature:master`). `MERGE_HEAD` does not depend on the branch name.
 
 | Deleted test | Covering test |
-|---|---|
+| --- | --- |
 | `…refuses_an_amend_that_stages_a_change_on_master` | B commit (pre-commit master clause) + A amend with change |
 | `…refuses_an_amend_that_stages_no_change_on_master` | B empty commit (commit-msg master clause) + A no-change amend |
 | `…refuses_a_squash_merge_commit_on_master` | B commit + C squash step |
