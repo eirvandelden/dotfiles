@@ -1,6 +1,6 @@
 # Plan: Ignore generated signature folders globally
 
-From `intent.md` (2026-10-18). Status: accepted.
+From `intent.md` (2026-10-18). Status: accepted (amended 2026-10-21).
 
 ## Context
 
@@ -47,6 +47,16 @@ Steep, `rbs collection` and rbs-inline write `sig/` and `.gem_rbs_collection/` i
 9. Run `rubocop test/global_sig_ignore_test.rb` and markdownlint with the no-hardwrap rule on both `SKILL.md` files. Fix every finding.
 10. Verify by hand in a scratch repository under the scratchpad, with the same `HOME` and `GIT_CONFIG_GLOBAL` setup as the test: `git init`, `mkdir sig .gem_rbs_collection`, `touch sig/foo.rbs .gem_rbs_collection/x`, `git status --porcelain --untracked-files=all` shows neither; add `!sig/` to `.gitignore` and confirm `sig/foo.rbs` shows and `git add sig/foo.rbs` succeeds. Record the output as evidence.
 11. Re-read the full diff. Commit in small steps: the ignore lines with their test, then each skill change with its tests.
+
+## Amendment 2026-10-21: stale signatures must fail the gem CI step
+
+The gem CI recipe in step 12 runs `git add --intent-to-add sig/` before `git diff --exit-code sig/`. Checked in a scratch repository: after a source file is deleted, regeneration drops its `.rbs`, `git add --intent-to-add sig/` stages that deletion, and `git diff` then reports nothing. The stale committed signature passes CI. A plain `git diff --exit-code -- sig/` fails correctly, as appkit's `rbs:check` does.
+
+New recipe, three lines: regenerate, `git diff --exit-code -- sig/` for modified and deleted files, and `test -z "$(git ls-files --others --exclude-standard -- sig/)"` for generated files git does not hold yet. `!sig/` in the gem's `.gitignore` makes `--exclude-standard` list the new files.
+
+- Files that change: `agents/.agents/skills/new-repo-setup/SKILL.md` (the yaml block in step 12) and `test/global_sig_ignore_test.rb` (the commands assertion, plus one new behaviour test).
+- Order: A1. Change `test_new_repo_setup_shows_gem_sig_ci_step` to expect the three commands; run it; watch it fail. A2. Add `test_gem_sig_ci_step_fails_on_a_deleted_source`, which runs the recipe's last two commands in a temporary gem and expects failure when a tracked `.rbs` has no source; run it; watch it fail against the old recipe, as an `--intent-to-add` variant. A3. Edit the yaml block; both pass. A4. Full suite, rubocop, no-hardwrap check, re-read the diff, commit the test and the skill change together.
+- Proof: A stale committed `.rbs`, whose source is gone, fails the gem CI step → `test/global_sig_ignore_test.rb` `test_gem_sig_ci_step_fails_on_a_deleted_source`. A new generated `.rbs` that git does not hold fails it too → the same test, second case.
 
 ## Risks
 
