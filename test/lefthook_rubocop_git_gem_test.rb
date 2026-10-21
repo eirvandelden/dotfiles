@@ -85,35 +85,25 @@ class LefthookRubocopGitGemTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir) if @tmpdir
   end
 
-  def test_committing_a_clean_ruby_file_passes_after_rubocop_inspects_it
-    output, status = commit_ruby(CLEAN_RUBY)
+  # Each test below runs the steps of several former tests in one fixture, every step with its own file. The commit
+  # that must be blocked comes last, so its staged offense never meets the "nothing unstaged" assertion.
+  def test_committing_passes_clean_and_fixable_files_and_blocks_an_unfixable_offense
+    # a clean ruby file passes after rubocop inspects it
+    output, status = commit_ruby(CLEAN_RUBY, path: "lib/clean.rb")
 
     assert_predicate(status, :success?, "Expected the commit to pass:\n#{output}")
-    assert_includes(git("show", "--name-only", "--format=", "HEAD").first, RUBY_PATH)
+    assert_includes(git("show", "--name-only", "--format=", "HEAD").first, "lib/clean.rb")
     assert_includes(output, "1 file inspected")
-  end
-
-  def test_committing_a_fixable_offense_commits_the_fixed_file_with_nothing_unstaged
-    output, status = commit_ruby(FIXABLE_RUBY)
+    # a fixable offense is committed fixed with nothing unstaged
+    output, status = commit_ruby(FIXABLE_RUBY, path: "lib/fixable.rb")
 
     assert_predicate(status, :success?, "Expected the commit to pass:\n#{output}")
-    assert_equal(CLEAN_RUBY, git("show", "HEAD:#{RUBY_PATH}").first)
-    assert_equal(CLEAN_RUBY, File.read(File.join(@worktree_dir, RUBY_PATH)))
+    assert_equal(CLEAN_RUBY, git("show", "HEAD:lib/fixable.rb").first)
+    assert_equal(CLEAN_RUBY, File.read(File.join(@worktree_dir, "lib/fixable.rb")))
     assert_empty(git("status", "--porcelain").first)
-  end
-
-  def test_pushing_a_clean_ruby_file_passes_after_rubocop_inspects_it
-    commit_ruby(CLEAN_RUBY, hooks: false)
-    output, status = push
-
-    assert_predicate(status, :success?, "Expected the push to pass:\n#{output}")
-    assert_equal(head, remote_feature)
-    assert_includes(output, "1 file inspected")
-  end
-
-  def test_an_unfixable_offense_blocks_the_commit
+    # an unfixable offense blocks the commit
     before = head
-    output, status = commit_ruby(UNFIXABLE_RUBY)
+    output, status = commit_ruby(UNFIXABLE_RUBY, path: "lib/unfixable.rb")
 
     refute_predicate(status, :success?, "Expected the commit to be blocked:\n#{output}")
     assert_equal(before, head)
@@ -121,8 +111,16 @@ class LefthookRubocopGitGemTest < Minitest::Test
     refute_includes(output, "Unable to find gem")
   end
 
-  def test_an_unfixable_offense_blocks_the_push
-    commit_ruby(UNFIXABLE_RUBY, hooks: false)
+  def test_pushing_passes_a_clean_file_and_blocks_an_unfixable_offense
+    # a clean ruby file passes after rubocop inspects it
+    commit_ruby(CLEAN_RUBY, hooks: false, path: "lib/clean.rb")
+    output, status = push
+
+    assert_predicate(status, :success?, "Expected the push to pass:\n#{output}")
+    assert_equal(head, remote_feature)
+    assert_includes(output, "1 file inspected")
+    # an unfixable offense blocks the push
+    commit_ruby(UNFIXABLE_RUBY, hooks: false, path: "lib/unfixable.rb")
     before = remote_feature
     output, status = push
 
@@ -271,13 +269,13 @@ class LefthookRubocopGitGemTest < Minitest::Test
     Open3.capture2e(env, "git", *args, chdir: @worktree_dir)
   end
 
-  def write_ruby(content)
-    write_files(@worktree_dir, RUBY_PATH => content)
+  def write_ruby(content, path: RUBY_PATH)
+    write_files(@worktree_dir, path => content)
   end
 
-  def commit_ruby(content, hooks: true)
-    write_ruby(content)
-    git("add", RUBY_PATH, hooks: false)
+  def commit_ruby(content, hooks: true, path: RUBY_PATH)
+    write_ruby(content, path: path)
+    git("add", path, hooks: false)
     git("commit", "--quiet", "-m", "Add example", hooks: hooks)
   end
 
