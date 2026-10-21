@@ -11,6 +11,9 @@ require_relative "isolated_git"
 class TestRunnerTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   RUNNER = File.join(ROOT, "bin", "test")
+  # Guards against a hang, not a slow machine: a parallel run on a loaded Mac can take a
+  # runner's start or shutdown past 20 seconds.
+  HANG_GUARD = 60
 
   def setup
     @dir = Dir.mktmpdir
@@ -130,11 +133,11 @@ class TestRunnerTest < Minitest::Test
     reader, writer = IO.pipe
     runner = Process.spawn(RbConfig.ruby, RUNNER, "-j", "2", slow, later, chdir: ROOT, out: writer, err: File::NULL)
     writer.close
-    Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
+    Timeout.timeout(HANG_GUARD) { sleep 0.05 until File.size?(started) }
     reader.close
     FileUtils.touch(closed)
 
-    Timeout.timeout(20) { Process.wait(runner) }
+    Timeout.timeout(HANG_GUARD) { Process.wait(runner) }
     runner = nil
     assert_raises(Errno::ESRCH) { Process.kill(0, Integer(File.read(started))) }
   ensure
@@ -253,15 +256,15 @@ class TestRunnerTest < Minitest::Test
   end
 
   # Starts the runner, waits until the file under test has started, sends INT, and returns the
-  # runner's exit status. Fails when the runner does not end within 20 seconds.
+  # runner's exit status. Fails when the runner does not end within HANG_GUARD seconds.
   def interrupt_runner_once(started, *arguments, signals: %w[INT], env: {})
     runner = Process.spawn(env, RbConfig.ruby, RUNNER, *arguments, chdir: ROOT, out: File::NULL, err: File::NULL)
-    Timeout.timeout(20) { sleep 0.05 until File.size?(started) }
+    Timeout.timeout(HANG_GUARD) { sleep 0.05 until File.size?(started) }
     signals.each_with_index do |signal, index|
       sleep 0.2 if index.positive?
       Process.kill(signal, runner)
     end
-    status = Timeout.timeout(20) { Process.wait2(runner).last }
+    status = Timeout.timeout(HANG_GUARD) { Process.wait2(runner).last }
     runner = nil
     status
   ensure
