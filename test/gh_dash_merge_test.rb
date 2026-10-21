@@ -59,10 +59,11 @@ class GhDashMergeTest < Minitest::Test
 
   def test_settings_match_owner_and_repository_case_insensitively
     set("pr-merge.EirVanDelden.method", "squash")
+    set("pr-merge.EirVanDelden/DotFiles.method", "rebase")
 
     run_script("\n")
 
-    assert_equal([ "pr merge 7 -R eirvandelden/dotfiles --squash --delete-branch" ], gh_calls)
+    assert_equal([ "pr merge 7 -R eirvandelden/dotfiles --rebase --delete-branch" ], gh_calls)
   end
 
   def test_any_answer_other_than_enter_cancels_without_error
