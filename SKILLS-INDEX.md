@@ -44,6 +44,7 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 - Isolating a new-code task into its own git worktree instead of the main checkout: `agents/.agents/skills/worktree-first/SKILL.md`
 - Copying a Rails app's SQLite development databases into a new worktree: `agents/.agents/skills/using-sqlite-worktrees/SKILL.md`
 - Syncing a branch with main — fetch, rebase, conflict resolution, force-with-lease push: `agents/.agents/skills/sync/SKILL.md`
+- Setting, changing or removing the merge method (merge, squash, rebase) the gh-dash merge key uses, per owner or repository: `agents/.agents/skills/pr-merge-method/SKILL.md`
 - Reviewing a pull request, or implementing review feedback: `agents/.agents/skills/code-review/SKILL.md`
 - Review of the current branch before pushing — a fresh reviewer in a herdr pane, or in-session with `here`; findings land in `docs/changes/<slug>/review.md`, and a clean review hands over to delivery: `agents/.agents/skills/review/SKILL.md`. The review policy template (passes, what "Important" means, nit cap, do-not-report list) ships at `agents/.agents/skills/new-repo-setup/references/REVIEW.md`; `new-repo-setup` copies it to a personal repo's root as `REVIEW.md`.
 - Ending a change once review is closed — removes `docs/changes/<slug>/`, fills the PR body, pushes, opens a draft PR and a gh-dash pane; runs on its own after a clean review: `agents/.agents/skills/deliver/SKILL.md`

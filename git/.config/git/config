@@ -77,3 +77,6 @@
 # employer. Git ignores an include whose file is missing.
 [include]
   path = ~/.config/git/work-remotes.config
+# Machine-local merge methods for gh-dash (pr-merge.<owner>.method); names no owner here.
+[include]
+  path = ~/.config/git/pr-merge.config
