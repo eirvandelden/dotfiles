@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+# Vendored from superpowers-ruby and kept close to upstream, so it carries no RBS signatures.
+# rbs_inline: disabled
+
 # Brakeman Workflow Helper
 # Provides common Brakeman scanning workflows with best practices
 
