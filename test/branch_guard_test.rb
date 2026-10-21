@@ -5,6 +5,7 @@ require "open3"
 require "yaml"
 require "tmpdir"
 require_relative "isolated_git"
+require_relative "hook_scripts"
 require_relative "lefthook_binary"
 
 class BranchGuardTest < Minitest::Test
@@ -24,7 +25,7 @@ class BranchGuardTest < Minitest::Test
     @tmpdir = Dir.mktmpdir
     @repo_dir = File.join(@tmpdir, "repo")
     @origin_dir = File.join(@tmpdir, "origin.git")
-    @hooks_dir = File.join(@tmpdir, "hooks")
+    @hooks_dir = HookScripts.directory
     @log_file = File.join(@tmpdir, "pre-push.log")
   end
 
@@ -32,47 +33,108 @@ class BranchGuardTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir) if @tmpdir
   end
 
-  def test_a_lefthook_local_extending_the_guard_refuses_a_commit_on_main
+  # Each chain below runs the steps of several former single-behaviour tests in one repository, in an order
+  # that keeps every step's starting state: a refused commit or push changes nothing, so the next step sees
+  # what its former test saw.
+
+  def test_a_lefthook_local_extending_the_guard_on_main_refuses_commits_and_pushes_and_allows_feature_work
     setup_extending_repo("main")
+    # empty commit on a clean index: commit-msg refuses it
+    assert_empty_commit_refused
+    # amend that stages no change: commit-msg refuses it
+    assert_amend_without_change_refused
+    # a commit with a staged file: pre-commit refuses it
     stage_file("change.txt", "change\n")
     out, err, status = git("commit", "-m", "change")
     refute(status.success?, "Expected a commit on main to be refused")
     assert_match(REFUSAL, out + err)
+    assert_amend_with_change_refused
+    assert_push_refused("origin", "main")
+    switch_to_feature
+    assert_push_refused("origin", "feature:main")
+    assert_push_refused("origin", "feature:master")
+    assert_push_refused("origin", "HEAD:main")
+    assert_push_refused("origin", "feature:feature", "HEAD:main")
+    publish_branch("main")
+    assert_push_refused("origin", "--delete", "main")
+    # a feature branch commit and a same-name push go through; the extending repo's own pre-push runs once
+    stage_file("change.txt", "change\n")
+    _out, err, status = git("commit", "-m", "change")
+    assert(status.success?, "Expected a feature branch commit to go through:\n#{err}")
+    File.write(@log_file, "")
+    assert_push_allowed("feature:feature")
+    assert_equal("own-check\n", File.read(@log_file))
+    _out, err, status = git("commit", "--allow-empty", "-m", "empty")
+    assert(status.success?, "Expected an empty commit on a feature branch to go through:\n#{err}")
+    assert_push_allowed("feature:main-fix")
+    assert_push_allowed("feature:mainline")
+    assert_tag_push_allowed
   end
 
-  def test_a_lefthook_local_extending_the_guard_refuses_a_commit_on_master
+  def test_a_lefthook_local_extending_the_guard_on_master_refuses_commits_and_pushes
     setup_extending_repo("master")
+    # empty commit first, on a clean index, so commit-msg and not pre-commit refuses it
+    assert_empty_commit_refused
     stage_file("change.txt", "change\n")
     out, err, status = git("commit", "-m", "change")
     refute(status.success?, "Expected a commit on master to be refused")
     assert_match(REFUSAL, out + err)
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_on_main
-    setup_extending_repo("main")
-    assert_push_refused("origin", "main")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_on_master
-    setup_extending_repo("master")
     assert_push_refused("origin", "master")
   end
 
-  def test_a_lefthook_local_extending_the_guard_allows_a_feature_branch_commit_and_push
+  def test_a_lefthook_local_extending_the_guard_lets_merges_through_on_main_and_refuses_a_squash
     setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    stage_file("change.txt", "change\n")
-    _out, err, status = git("commit", "-m", "change")
-    assert(status.success?, "Expected a feature branch commit to go through:\n#{err}")
-    _out, err, status = git("push", "origin", "feature:feature")
-    assert(status.success?, "Expected a same-name push to go through:\n#{err}")
+    # every merge scenario has its own diverged branch, so none is already up to date
+    diverge("merge-a")
+    assert_merge_allowed(@repo_dir, "merge-a", "--no-ff", "-m", "merge")
+    diverge("merge-b")
+    assert_merge_allowed(@repo_dir, "merge-b", "--no-ff", "-s", "ours", "-m", "merge")
+    conflicting_branch("conflict")
+    assert_conflicted_merge_concludes(@repo_dir, "conflict")
+    # last, because the squash leaves staged changes behind
+    assert_squash_commit_refused("squash")
   end
 
-  def test_a_lefthook_local_extending_the_guard_keeps_the_extending_repos_own_pre_push_commands
+  def test_a_lefthook_local_extending_the_guard_lets_merges_through_on_main_in_a_linked_worktree
     setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    git("push", "origin", "feature:feature")
-    assert_equal("own-check\n", File.read(@log_file))
+    diverge("merge-a")
+    diverge("merge-b")
+    conflicting_branch("conflict")
+    worktree = add_worktree
+    assert_merge_allowed(worktree, "merge-a", "--no-ff", "-m", "merge")
+    assert_merge_allowed(worktree, "merge-b", "--no-ff", "-s", "ours", "-m", "merge")
+    assert_conflicted_merge_concludes(worktree, "conflict")
+  end
+
+  def test_no_verify_lets_an_empty_commit_and_a_no_change_amend_through_on_main_with_the_extending_guard
+    setup_extending_repo("main")
+    # amend first: git itself refuses to amend an empty commit into another empty one
+    _out, err, status = git("commit", "--no-verify", "--amend", "-m", "reworded")
+    assert(status.success?, "Expected --no-verify to let a no-change amend through:\n#{err}")
+    _out, err, status = git("commit", "--no-verify", "--allow-empty", "-m", "empty")
+    assert(status.success?, "Expected --no-verify to let an empty commit through:\n#{err}")
+  end
+
+  def test_the_fallback_config_on_main_refuses_commits_and_pushes_and_allows_other_pushes
+    setup_fallback_repo("main")
+    assert_empty_commit_refused
+    assert_amend_with_change_refused
+    switch_to_feature
+    assert_push_refused("origin", "feature:main")
+    assert_push_refused("origin", "feature:feature", "HEAD:main")
+    publish_branch("main")
+    assert_push_refused("origin", "--delete", "main")
+    assert_push_allowed("feature:main-fix")
+    assert_push_allowed("feature:mainline")
+    assert_tag_push_allowed
+  end
+
+  def test_the_fallback_config_lets_merges_through_on_main
+    setup_fallback_repo("main")
+    diverge("merge-a")
+    assert_merge_allowed(@repo_dir, "merge-a", "--no-ff", "-m", "merge")
+    conflicting_branch("conflict")
+    assert_conflicted_merge_concludes(@repo_dir, "conflict")
   end
 
   def test_a_change_to_the_guard_file_reaches_a_repo_that_extends_it
@@ -89,69 +151,10 @@ class BranchGuardTest < Minitest::Test
     assert_match(/Direct commit to main is changed/, out + err)
   end
 
-  def test_no_verify_lets_an_empty_commit_through_on_main_with_the_extending_guard
-    setup_extending_repo("main")
-    _out, err, status = git("commit", "--no-verify", "--allow-empty", "-m", "empty")
-    assert(status.success?, "Expected --no-verify to let an empty commit through:\n#{err}")
-  end
-
-  def test_no_verify_lets_an_amend_that_stages_no_change_through_on_main_with_the_extending_guard
-    setup_extending_repo("main")
-    _out, err, status = git("commit", "--no-verify", "--amend", "-m", "reworded")
-    assert(status.success?, "Expected --no-verify to let a no-change amend through:\n#{err}")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_pushing_a_branch_named_main_fix
-    setup_extending_repo("main")
-    assert_push_allowed("feature:main-fix")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_pushing_a_branch_named_mainline
-    setup_extending_repo("main")
-    assert_push_allowed("feature:mainline")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_pushing_a_tag
-    setup_extending_repo("main")
-    assert_tag_push_allowed
-  end
-
-  def test_the_fallback_config_allows_pushing_a_branch_named_main_fix
-    setup_fallback_repo("main")
-    assert_push_allowed("feature:main-fix")
-  end
-
-  def test_the_fallback_config_allows_pushing_a_branch_named_mainline
-    setup_fallback_repo("main")
-    assert_push_allowed("feature:mainline")
-  end
-
-  def test_the_fallback_config_allows_pushing_a_tag
-    setup_fallback_repo("main")
-    assert_tag_push_allowed
-  end
-
   def test_the_guard_file_defines_only_the_guard_commands
     config = YAML.safe_load_file(GUARD_FILE)
     assert_equal(%w[pre-commit commit-msg pre-push].sort, config.keys.sort)
     config.each_value { |hook| assert_equal(%w[no-push-to-main], hook["commands"].keys) }
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_an_empty_commit_on_main
-    setup_extending_repo("main")
-    assert_empty_commit_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_an_empty_commit_on_master
-    setup_extending_repo("master")
-    assert_empty_commit_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_an_empty_commit_on_a_feature_branch
-    setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    _out, err, status = git("commit", "--allow-empty", "-m", "empty")
-    assert(status.success?, "Expected an empty commit on a feature branch to go through:\n#{err}")
   end
 
   def test_a_lefthook_local_extending_the_guard_lets_the_first_empty_commit_on_an_unborn_main_through
@@ -162,196 +165,12 @@ class BranchGuardTest < Minitest::Test
     assert(status.success?, "Expected the first empty commit on an unborn main to go through:\n#{err}")
   end
 
-  def test_a_lefthook_local_extending_the_guard_allows_a_merge_commit_on_main
-    setup_extending_repo("main")
-    diverge
-    _out, err, status = git("merge", "--no-ff", "-m", "merge", "feature")
-    assert(status.success?, "Expected a merge commit on main to go through:\n#{err}")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_a_merge_commit_on_master
-    setup_extending_repo("master")
-    diverge
-    _out, err, status = git("merge", "--no-ff", "-m", "merge", "feature")
-    assert(status.success?, "Expected a merge commit on master to go through:\n#{err}")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_a_merge_commit_on_main_that_changes_no_files
-    setup_extending_repo("main")
-    diverge
-    _out, err, status = git("merge", "--no-ff", "-s", "ours", "-m", "merge", "feature")
-    assert(status.success?, "Expected a no-change merge commit on main to go through:\n#{err}")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_a_merge_commit_on_main_in_a_linked_worktree
-    setup_extending_repo("main")
-    diverge
-    worktree = add_worktree
-    _out, err, status = git("merge", "--no-ff", "-m", "merge", "feature", dir: worktree)
-    assert(status.success?, "Expected a merge commit on main in a linked worktree to go through:\n#{err}")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_a_merge_commit_on_main_in_a_linked_worktree_that_changes_no_files
-    setup_extending_repo("main")
-    diverge
-    worktree = add_worktree
-    _out, err, status = git("merge", "--no-ff", "-s", "ours", "-m", "merge", "feature", dir: worktree)
-    assert(status.success?, "Expected a no-change merge commit in a linked worktree to go through:\n#{err}")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_concluding_a_conflicted_merge_on_main
-    setup_extending_repo("main")
-    assert_conflicted_merge_concludes(:main_checkout)
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_concluding_a_conflicted_merge_on_master
-    setup_extending_repo("master")
-    assert_conflicted_merge_concludes(:main_checkout)
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_concluding_a_conflicted_merge_on_main_in_a_linked_worktree
-    setup_extending_repo("main")
-    assert_conflicted_merge_concludes(:linked)
-  end
-
-  def test_a_lefthook_local_extending_the_guard_allows_concluding_a_conflicted_merge_on_master_in_a_linked_worktree
-    setup_extending_repo("master")
-    assert_conflicted_merge_concludes(:linked)
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_an_amend_that_stages_a_change_on_main
-    setup_extending_repo("main")
-    assert_amend_with_change_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_an_amend_that_stages_a_change_on_master
-    setup_extending_repo("master")
-    assert_amend_with_change_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_an_amend_that_stages_no_change_on_main
-    setup_extending_repo("main")
-    assert_amend_without_change_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_an_amend_that_stages_no_change_on_master
-    setup_extending_repo("master")
-    assert_amend_without_change_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_squash_merge_commit_on_main
-    setup_extending_repo("main")
-    assert_squash_commit_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_squash_merge_commit_on_master
-    setup_extending_repo("master")
-    assert_squash_commit_refused
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_of_a_feature_branch_to_main
-    setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "feature:main")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_of_a_feature_branch_to_master
-    setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "feature:master")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_of_head_to_main
-    setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "HEAD:main")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_deleting_main
-    setup_extending_repo("main")
-    publish_branch("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "--delete", "main")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_deleting_master
-    setup_extending_repo("main")
-    publish_branch("main:master")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "--delete", "master")
-  end
-
-  def test_a_lefthook_local_extending_the_guard_refuses_a_push_that_updates_main_among_other_refs
-    setup_extending_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "feature:feature", "HEAD:main")
-  end
-
   def test_the_fallback_config_duplicates_the_guard_commands_exactly
     fallback = YAML.safe_load_file(File.join(REPO_ROOT, "lefthook.yml"))
     guard = YAML.safe_load_file(GUARD_FILE)
     guard.each do |hook, section|
       assert_equal(section["commands"]["no-push-to-main"], fallback.dig(hook, "commands", "no-push-to-main"), hook)
     end
-  end
-
-  def test_the_fallback_config_refuses_an_empty_commit_on_main
-    setup_fallback_repo("main")
-    assert_empty_commit_refused
-  end
-
-  def test_the_fallback_config_refuses_an_empty_commit_on_master
-    setup_fallback_repo("master")
-    assert_empty_commit_refused
-  end
-
-  def test_the_fallback_config_allows_a_merge_commit_on_main
-    setup_fallback_repo("main")
-    diverge
-    _out, err, status = git("merge", "--no-ff", "-m", "merge", "feature")
-    assert(status.success?, "Expected a merge commit on main to go through:\n#{err}")
-  end
-
-  def test_the_fallback_config_allows_concluding_a_conflicted_merge_on_main
-    setup_fallback_repo("main")
-    assert_conflicted_merge_concludes(:main_checkout)
-  end
-
-  def test_the_fallback_config_refuses_an_amend_that_stages_a_change_on_main
-    setup_fallback_repo("main")
-    assert_amend_with_change_refused
-  end
-
-  def test_the_fallback_config_refuses_a_push_of_a_feature_branch_to_main
-    setup_fallback_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "feature:main")
-  end
-
-  def test_the_fallback_config_refuses_a_push_of_a_feature_branch_to_master
-    setup_fallback_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "feature:master")
-  end
-
-  def test_the_fallback_config_refuses_a_push_deleting_main
-    setup_fallback_repo("main")
-    publish_branch("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "--delete", "main")
-  end
-
-  def test_the_fallback_config_refuses_a_push_deleting_master
-    setup_fallback_repo("main")
-    publish_branch("main:master")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "--delete", "master")
-  end
-
-  def test_the_fallback_config_refuses_a_push_that_updates_main_among_other_refs
-    setup_fallback_repo("main")
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    assert_push_refused("origin", "feature:feature", "HEAD:main")
   end
 
   private
@@ -374,16 +193,18 @@ class BranchGuardTest < Minitest::Test
   end
 
   def assert_push_allowed(refspec)
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
     _out, err, status = git("push", "origin", refspec)
     assert(status.success?, "Expected `git push origin #{refspec}` to go through:\n#{err}")
   end
 
   def assert_tag_push_allowed
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
     run_git(@repo_dir, "tag", "v1")
     _out, err, status = git("push", "origin", "v1")
     assert(status.success?, "Expected a tag push to go through:\n#{err}")
+  end
+
+  def switch_to_feature
+    run_git(@repo_dir, "switch", "-q", "-c", "feature")
   end
 
   def assert_empty_commit_refused
@@ -405,28 +226,35 @@ class BranchGuardTest < Minitest::Test
     assert_match(REFUSAL, out + err)
   end
 
-  def assert_squash_commit_refused
-    diverge
-    run_git(@repo_dir, "merge", "--squash", "feature")
+  def assert_squash_commit_refused(branch)
+    diverge(branch)
+    run_git(@repo_dir, "merge", "--squash", branch)
     out, err, status = git("commit", "-m", "squash")
     refute(status.success?, "Expected a squash commit to be refused")
     assert_match(REFUSAL, out + err)
   end
 
-  def assert_conflicted_merge_concludes(where)
-    default = run_git(@repo_dir, "rev-parse", "--abbrev-ref", "HEAD").strip
-    conflicting_branch("feature")
-    dir = where == :linked ? add_worktree(default) : @repo_dir
+  def assert_merge_allowed(dir, branch, *options)
+    _out, err, status = git("merge", *options, branch, dir: dir)
+    assert(status.success?, "Expected a merge commit of #{branch} to go through:\n#{err}")
+    assert_two_parents(dir)
+  end
+
+  def assert_two_parents(dir)
+    assert_equal(2, run_git(dir, "rev-list", "--parents", "-n", "1", "HEAD").split.size - 1)
+  end
+
+  def assert_conflicted_merge_concludes(dir, branch)
     File.write(File.join(dir, "shared.txt"), "main\n")
     run_git(dir, "add", "shared.txt")
     run_git(dir, "commit", "-q", "-m", "main side", env: { "LEFTHOOK" => "0" })
-    _out, _err, merged = git("merge", "feature", dir: dir)
+    _out, _err, merged = git("merge", branch, dir: dir)
     refute(merged.success?, "Expected the merge to conflict")
     File.write(File.join(dir, "shared.txt"), "resolved\n")
     run_git(dir, "add", "shared.txt")
     _out, err, status = git("commit", "--no-edit", dir: dir)
     assert(status.success?, "Expected concluding the conflicted merge to go through:\n#{err}")
-    assert_equal(2, run_git(dir, "rev-list", "--parents", "-n", "1", "HEAD").split.size - 1)
+    assert_two_parents(dir)
   end
 
   def conflicting_branch(name)
@@ -437,16 +265,18 @@ class BranchGuardTest < Minitest::Test
     run_git(@repo_dir, "switch", "-q", "-")
   end
 
-  def diverge
+  def diverge(branch)
     default = run_git(@repo_dir, "rev-parse", "--abbrev-ref", "HEAD").strip
-    run_git(@repo_dir, "switch", "-q", "-c", "feature")
-    File.write(File.join(@repo_dir, "feature.txt"), "feature\n")
-    run_git(@repo_dir, "add", "feature.txt")
-    run_git(@repo_dir, "commit", "-q", "-m", "feature", env: { "LEFTHOOK" => "0" })
+    run_git(@repo_dir, "switch", "-q", "-c", branch)
+    commit_file_unguarded("#{branch}.txt", branch)
     run_git(@repo_dir, "switch", "-q", default)
-    File.write(File.join(@repo_dir, "trunk.txt"), "trunk\n")
-    run_git(@repo_dir, "add", "trunk.txt")
-    run_git(@repo_dir, "commit", "-q", "-m", "trunk", env: { "LEFTHOOK" => "0" })
+    commit_file_unguarded("trunk-#{branch}.txt", "trunk")
+  end
+
+  def commit_file_unguarded(name, message)
+    File.write(File.join(@repo_dir, name), "#{message}\n")
+    run_git(@repo_dir, "add", name)
+    run_git(@repo_dir, "commit", "-q", "-m", message, env: { "LEFTHOOK" => "0" })
   end
 
   def add_worktree(branch = "main")
@@ -461,7 +291,6 @@ class BranchGuardTest < Minitest::Test
   end
 
   def setup_bare_repo(branch)
-    FileUtils.cp_r(File.join(REPO_ROOT, "git/.config/git/hooks"), @hooks_dir)
     run_git(@tmpdir, "init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
     run_git(@repo_dir, "config", "core.hooksPath", @hooks_dir)
     run_git(@repo_dir, "config", "user.name", "Test")
@@ -486,7 +315,6 @@ class BranchGuardTest < Minitest::Test
   end
 
   def setup_repo(branch)
-    FileUtils.cp_r(File.join(REPO_ROOT, "git/.config/git/hooks"), @hooks_dir)
     run_git(@tmpdir, "init", "--bare", "--quiet", @origin_dir)
     run_git(@tmpdir, "init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
     run_git(@repo_dir, "config", "core.hooksPath", @hooks_dir)

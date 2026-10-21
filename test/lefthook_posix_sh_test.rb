@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "hook_scripts"
 require_relative "isolated_git"
 
 class LefthookPosixShTest < Minitest::Test
@@ -24,7 +25,7 @@ class LefthookPosixShTest < Minitest::Test
     @tmpdir = Dir.mktmpdir
     @bin_dir = File.join(@tmpdir, "bin")
     @repo_dir = File.join(@tmpdir, "repo")
-    @hooks_dir = File.join(@tmpdir, "hooks")
+    @hooks_dir = HookScripts.directory
     @origin_dir = File.join(@tmpdir, "origin.git")
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
@@ -34,33 +35,25 @@ class LefthookPosixShTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir)
   end
 
-  def test_pre_push_rejects_a_push_from_main_when_sh_is_dash
+  # One repository runs the steps of the three former tests; a refused commit or push changes nothing.
+  def test_the_guard_rejects_commits_and_pushes_to_main_when_sh_is_dash
     setup_repo("main")
     stub_real_lefthook
     stub_dash_as_sh
-    commit_file("todo.txt", "hello\n")
-    _out, _err, status = push
-    refute(status.success?, "Expected a push from main to be rejected by no-push-to-main under dash")
-  end
-
-  def test_pre_push_rejects_a_push_of_a_feature_branch_to_main_when_sh_is_dash
-    setup_repo("main")
-    stub_real_lefthook
-    stub_dash_as_sh
-    run_git("-C", @repo_dir, "switch", "-q", "-c", "feature")
-    commit_file("todo.txt", "hello\n")
-    out, err, status = git("push", "origin", "feature:main")
-    refute(status.success?, "Expected a push of a feature branch to main to be rejected under dash")
-    assert_match(/Pushing to main is not allowed/, out + err)
-  end
-
-  def test_commit_msg_rejects_an_empty_commit_on_main_when_sh_is_dash
-    setup_repo("main")
-    stub_real_lefthook
-    stub_dash_as_sh
+    # an empty commit on main: commit-msg refuses it
     out, err, status = git("commit", "--allow-empty", "-m", "empty")
     refute(status.success?, "Expected an empty commit on main to be rejected under dash")
     assert_match(/Direct commit to main is not allowed/, out + err)
+    # a push from main
+    commit_file("todo.txt", "hello\n")
+    _out, _err, status = push
+    refute(status.success?, "Expected a push from main to be rejected by no-push-to-main under dash")
+    # a push of a feature branch to main
+    run_git("-C", @repo_dir, "switch", "-q", "-c", "feature")
+    commit_file("feature.txt", "hello\n")
+    out, err, status = git("push", "origin", "feature:main")
+    refute(status.success?, "Expected a push of a feature branch to main to be rejected under dash")
+    assert_match(/Pushing to main is not allowed/, out + err)
   end
 
   private
@@ -72,7 +65,6 @@ class LefthookPosixShTest < Minitest::Test
   end
 
   def setup_repo(branch)
-    FileUtils.cp_r(File.join(@repo_root, "git/.config/git/hooks"), @hooks_dir)
     run_git("init", "--bare", "--quiet", @origin_dir)
     run_git("init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
     run_git("-C", @repo_dir, "config", "core.hooksPath", @hooks_dir)

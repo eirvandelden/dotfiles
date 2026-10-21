@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "hook_scripts"
 require_relative "isolated_git"
 
 class LefthookLocalHooksTest < Minitest::Test
@@ -25,7 +26,7 @@ class LefthookLocalHooksTest < Minitest::Test
     @bin_dir = File.join(@tmpdir, "bin")
     @log_file = File.join(@tmpdir, "commands.log")
     @repo_dir = File.join(@tmpdir, "repo")
-    @hooks_dir = File.join(@tmpdir, "hooks")
+    @hooks_dir = HookScripts.directory
     @origin_dir = File.join(@tmpdir, "origin.git")
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
@@ -36,50 +37,15 @@ class LefthookLocalHooksTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir)
   end
 
+  # Each test below runs the steps of several former single-behaviour tests in one repository. Every step commits
+  # its own file, and a refused commit comes last so its staged file never reaches the next step.
+
   def test_pre_commit_uses_global_fallback_and_rejects_conflict_markers
     setup_repo("trunk")
     stub_real_lefthook
     stage_file("conflict.txt", conflict_markers)
     _out, _err, status = git("commit", "-m", "conflict")
     refute(status.success?, "Expected a commit with conflict markers to be rejected by the global fallback")
-  end
-
-  def test_pre_commit_calls_lefthook_with_no_auto_install
-    setup_repo("trunk")
-    stub_logging_lefthook
-    stage_file("clean.txt", "hello\n")
-    git("commit", "-m", "clean")
-    assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
-  end
-
-  def test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme
-    setup_repo("trunk")
-    stub_real_lefthook
-    commit_file("todo.txt", "FIX" + "ME: something\n")
-    _out, _err, status = push
-    refute(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
-  end
-
-  def test_pre_push_calls_lefthook_with_no_auto_install
-    setup_repo("trunk")
-    stub_logging_lefthook
-    push
-    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
-  end
-
-  def test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set
-    setup_repo("trunk")
-    stub_logging_lefthook
-    stage_file("clean.txt", "hello\n")
-    with_lefthook_bin_set { git("commit", "-m", "clean") }
-    assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
-  end
-
-  def test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set
-    setup_repo("trunk")
-    stub_logging_lefthook
-    with_lefthook_bin_set { push }
-    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
   def test_pre_commit_uses_global_fallback_and_commits_an_unknown_word
@@ -98,35 +64,57 @@ class LefthookLocalHooksTest < Minitest::Test
     assert(status.success?, "Expected a binary-only commit to succeed")
   end
 
-  def test_pre_commit_warns_about_a_wrapped_paragraph_and_still_commits
+  def test_hooks_call_lefthook_with_no_auto_install
+    setup_repo("trunk")
+    stub_logging_lefthook
+    stage_file("clean.txt", "hello\n")
+    git("commit", "-m", "clean")
+    assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
+    push
+    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
+  end
+
+  def test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme
+    setup_repo("trunk")
+    stub_real_lefthook
+    commit_file("todo.txt", "FIX" + "ME: something\n")
+    _out, _err, status = push
+    refute(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
+  end
+
+  def test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set
+    setup_repo("trunk")
+    stub_logging_lefthook
+    stage_file("clean.txt", "hello\n")
+    with_lefthook_bin_set { git("commit", "-m", "clean") }
+    assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
+  end
+
+  def test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set
+    setup_repo("trunk")
+    stub_logging_lefthook
+    with_lefthook_bin_set { push }
+    assert_match(/--no-auto-install/, hook_invocation("pre-push"))
+  end
+
+  def test_pre_commit_warns_about_wrapped_paragraphs_in_markdown_files_and_still_commits
     skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
 
     setup_repo("trunk")
     stub_real_lefthook
+    # a wrapped paragraph in a .md file
     stage_file("notes.md", "This is line one\nand line two.\n")
     out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected a wrapped paragraph to warn, not block, the commit")
     assert_match(/error no-hardwrap/, out + err)
-  end
-
-  def test_pre_commit_warns_about_a_wrapped_paragraph_in_a_markdown_extension_file
-    skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
-
-    setup_repo("trunk")
-    stub_real_lefthook
+    # a wrapped paragraph in a .markdown file
     stage_file("notes.markdown", "This is line one\nand line two.\n")
     out, err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected a wrapped paragraph to warn, not block, the commit")
     assert_match(/error no-hardwrap/, out + err)
-  end
-
-  def test_pre_commit_prints_no_hardwrap_warning_for_one_line_paragraphs
-    skip("markdownlint not found on PATH") unless MARKDOWNLINT_DIR
-
-    setup_repo("trunk")
-    stub_real_lefthook
-    stage_file("notes.md", "One line paragraph.\n")
-    out, err, status = git("commit", "-m", "notes")
+    # a one-line paragraph prints no warning
+    stage_file("single.md", "One line paragraph.\n")
+    out, err, status = git("commit", "-m", "single")
     assert(status.success?, "Expected a clean commit to succeed")
     refute_match(/error no-hardwrap/, out + err)
   end
@@ -153,7 +141,7 @@ class LefthookLocalHooksTest < Minitest::Test
     refute_match(/Cannot load custom rule/, out + err)
   end
 
-  def test_pre_commit_stylelint_runs_through_npx_no
+  def test_pre_commit_runs_stylelint_and_eslint_through_npx_no
     setup_repo("trunk")
     stub_real_lefthook
     stub_npx
@@ -161,12 +149,6 @@ class LefthookLocalHooksTest < Minitest::Test
     _out, _err, status = git("commit", "-m", "css")
     assert(status.success?, "Expected the stubbed stylelint to pass")
     assert_match(/^npx --no stylelint app\.css$/, File.read(@log_file))
-  end
-
-  def test_pre_commit_eslint_runs_through_npx_no
-    setup_repo("trunk")
-    stub_real_lefthook
-    stub_npx
     stage_file("app.js", "export const answer = 42;\n")
     _out, _err, status = git("commit", "-m", "js")
     assert(status.success?, "Expected the stubbed eslint to pass")
@@ -209,7 +191,6 @@ class LefthookLocalHooksTest < Minitest::Test
   end
 
   def setup_repo(branch)
-    FileUtils.cp_r(File.join(@repo_root, "git/.config/git/hooks"), @hooks_dir)
     run_git("init", "--bare", "--quiet", @origin_dir)
     run_git("init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
     run_git("-C", @repo_dir, "config", "core.hooksPath", @hooks_dir)

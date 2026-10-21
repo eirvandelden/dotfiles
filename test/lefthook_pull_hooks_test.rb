@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "hook_scripts"
 require_relative "isolated_git"
 
 class LefthookPullHooksTest < Minitest::Test
@@ -22,7 +23,7 @@ class LefthookPullHooksTest < Minitest::Test
     @origin_dir = File.join(@tmpdir, "origin.git")
     @pusher_dir = File.join(@tmpdir, "pusher")
     @puller_dir = File.join(@tmpdir, "puller")
-    @hooks_dir = File.join(@tmpdir, "hooks")
+    @hooks_dir = HookScripts.directory
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
     stub_commands
@@ -33,71 +34,81 @@ class LefthookPullHooksTest < Minitest::Test
     FileUtils.rm_rf(@tmpdir)
   end
 
-  def test_new_migration_file_triggers_db_migrate
+  # Each test below runs the steps of several former single-behaviour tests in one pair of repositories. The log is
+  # emptied before every pull, so a step sees only what its own pull ran.
+
+  def test_pulling_migrations_runs_db_migrate_and_a_hostile_migration_name_runs_nothing
+    # new migration file
     push_file("db/migrate/20260731000000_add_thing.rb", "# migration")
-    pull_in_puller
+    pull_logged
     assert_command_ran("rails db:migrate")
-  end
-
-  def test_changed_schema_triggers_db_migrate
+    # changed schema
     push_file("db/schema.rb", "ActiveRecord::Schema.define(version: 1) {}")
-    pull_in_puller
+    pull_logged
     assert_command_ran("rails db:migrate")
+    # migration name with a command on a new line
+    push_file("db/migrate/a\ntouch PWNED\n", "")
+    pull_logged
+    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
   end
 
-  def test_changed_gemfile_lock_installs_through_bi
+  def test_pulling_in_a_yarn_repository_installs_with_yarn_only_beside_a_yarn_lock
+    # package.json with no lockfile installs nothing
+    push_file("package.json", "{\"name\":\"app\"}")
+    pull_logged
+    refute_command_ran("yarn install")
+    refute_command_ran("npm install")
+    # changed yarn.lock
+    push_file("yarn.lock", "# yarn lockfile v1\n")
+    pull_logged
+    assert_command_ran("yarn install")
+    # changed package.json beside yarn.lock
+    push_file("package.json", "{\"name\":\"app\",\"version\":\"2\"}")
+    pull_logged
+    assert_command_ran("yarn install")
+    refute_command_ran("npm install")
+  end
+
+  def test_pulling_in_an_npm_repository_installs_with_npm_only
+    # changed package-lock.json
+    push_file("package-lock.json", PACKAGE_LOCK)
+    pull_logged
+    assert_command_ran("npm install")
+    refute_command_ran("yarn install")
+    # changed package.json beside package-lock.json
+    push_file("package.json", "{\"name\":\"app\"}")
+    pull_logged
+    assert_command_ran("npm install")
+    refute_command_ran("yarn install")
+  end
+
+  def test_pulling_gemfiles_installs_through_bi_and_ignores_deleted_nested_and_hostile_gemfiles
+    # changed Gemfile.lock installs through bi
     push_file("Gemfile", "source \"https://rubygems.org\"\n")
     push_file("Gemfile.lock", "GEM\n  specs:\n")
-    pull_in_puller
+    pull_logged
     assert_command_ran("bundle lock")
     assert_command_ran("rv ci")
     refute_command_ran("bundle install")
+    # deleting the root Gemfile does not bundle install
+    push_deletion_with_readme_change("Gemfile")
+    pull_logged
+    refute_command_ran("bundle install")
+    # a nested Gemfile does not bundle
+    push_file("bundler/Gemfile", "source \"https://rubygems.org\"\n")
+    pull_logged
+    refute_command_ran("bundle")
+    refute_command_ran("rv ci")
+    # Gemfile name with a command on a new line
+    push_file("Gemfile\ntouch PWNED\n", "")
+    pull_logged
+    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
   end
 
-  def test_changed_yarn_lock_triggers_yarn_install
-    push_file("yarn.lock", "# yarn lockfile v1\n")
+  def test_pull_touching_only_readme_runs_no_migrations
+    push_file("README.md", "changed")
     pull_in_puller
-    assert_command_ran("yarn install")
-  end
-
-  def test_changed_package_lock_json_triggers_npm_install
-    push_file("package-lock.json", PACKAGE_LOCK)
-    pull_in_puller
-    assert_command_ran("npm install")
-    refute_command_ran("yarn install")
-  end
-
-  def test_changed_package_json_beside_package_lock_triggers_npm_install
-    push_file("package-lock.json", PACKAGE_LOCK)
-    pull_in_puller
-    File.write(@log_file, "")
-    push_file("package.json", "{\"name\":\"app\"}")
-    pull_in_puller
-    assert_command_ran("npm install")
-    refute_command_ran("yarn install")
-  end
-
-  def test_changed_package_json_beside_yarn_lock_triggers_yarn_install
-    push_file("yarn.lock", "# yarn lockfile v1\n")
-    pull_in_puller
-    File.write(@log_file, "")
-    push_file("package.json", "{\"name\":\"app\"}")
-    pull_in_puller
-    assert_command_ran("yarn install")
-    refute_command_ran("npm install")
-  end
-
-  def test_changed_package_json_without_lockfile_installs_nothing
-    push_file("package.json", "{\"name\":\"app\"}")
-    pull_in_puller
-    refute_command_ran("yarn install")
-    refute_command_ran("npm install")
-  end
-
-  def test_pull_on_non_main_branch_still_fires_hooks
-    push_file("db/migrate/20260731000001_add_other.rb", "# migration")
-    pull_in_puller
-    assert_command_ran("rails db:migrate")
+    [ "bundle", "rv ci", "rails db:migrate", "yarn install", "npm install" ].each { |cmd| refute_command_ran(cmd) }
   end
 
   def test_pull_with_local_commit_uses_rebase_path_and_migrates
@@ -125,40 +136,6 @@ class LefthookPullHooksTest < Minitest::Test
     refute_command_ran("rails db:migrate")
   end
 
-  def test_pull_touching_only_readme_runs_no_migrations
-    push_file("README.md", "changed")
-    pull_in_puller
-    [ "bundle", "rv ci", "rails db:migrate", "yarn install", "npm install" ].each { |cmd| refute_command_ran(cmd) }
-  end
-
-  def test_pull_touching_only_nested_gemfile_does_not_bundle
-    push_file("bundler/Gemfile", "source \"https://rubygems.org\"\n")
-    pull_in_puller
-    refute_command_ran("bundle")
-    refute_command_ran("rv ci")
-  end
-
-  def test_pulled_gemfile_name_with_a_command_on_a_new_line_does_not_run_it
-    push_file("Gemfile\ntouch PWNED\n", "")
-    pull_in_puller
-    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
-  end
-
-  def test_pulled_migration_name_with_a_command_on_a_new_line_does_not_run_it
-    push_file("db/migrate/a\ntouch PWNED\n", "")
-    pull_in_puller
-    refute_path_exists(File.join(@puller_dir, "PWNED"), "A pulled file name ran a shell command")
-  end
-
-  def test_pull_deleting_root_gemfile_does_not_bundle_install
-    push_file("Gemfile", "source \"https://rubygems.org\"\n")
-    pull_in_puller
-    FileUtils.rm_f(@log_file)
-    push_deletion_with_readme_change("Gemfile")
-    pull_in_puller
-    refute_command_ran("bundle install")
-  end
-
   private
 
   def setup_dotfiles_home
@@ -184,7 +161,6 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   def setup_git_repos
-    FileUtils.cp_r(File.join(@repo_root, "git/.config/git/hooks"), @hooks_dir)
     write_global_gitconfig
 
     run_git("init", "--bare", @origin_dir, "--quiet")
@@ -242,6 +218,11 @@ class LefthookPullHooksTest < Minitest::Test
     return if status.success?
 
     flunk "git pull failed (exit #{status.exitstatus}):\nstdout: #{stdout}\nstderr: #{stderr}"
+  end
+
+  def pull_logged
+    File.write(@log_file, "")
+    pull_in_puller
   end
 
   def run_git(*args, env: {})
