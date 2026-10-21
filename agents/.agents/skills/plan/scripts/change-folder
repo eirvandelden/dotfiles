@@ -5,6 +5,7 @@
 # skills call this script rather than re-deriving the slug themselves.
 require "open3"
 
+#: -> String
 def current_branch
   branch, status = Open3.capture2("git", "rev-parse", "--abbrev-ref", "HEAD")
   raise "not a git repository" unless status.success?
@@ -12,6 +13,7 @@ def current_branch
   branch.strip
 end
 
+#: (String message) -> bot
 def refuse(message)
   warn(message)
   exit(1)

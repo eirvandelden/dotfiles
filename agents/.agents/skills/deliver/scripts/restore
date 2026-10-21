@@ -16,6 +16,7 @@ class Refusal < StandardError; end
 
 # Runs a git or gh command and answers its stdout; a failure raises with the command's own message.
 module Shell
+  #: (*String command) -> String
   def capture(*command)
     stdout, stderr, status = Open3.capture3(*command)
     raise Refusal, "#{command.first(3).join(' ')} failed: #{stderr.strip}" unless status.success?
@@ -23,6 +24,7 @@ module Shell
     stdout
   end
 
+  #: (*String command) -> bool
   def succeeds?(*command)
     Open3.capture3(*command).last.success?
   end
@@ -32,27 +34,33 @@ end
 class Branch
   include Shell
 
+  #: -> void
   def initialize
     @branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
     @origin_url = Open3.capture3("git", "remote", "get-url", "origin").first
   end
 
+  #: -> String
   def name = @branch
 
+  #: -> void
   def require_clean_tree
     raise Refusal, "The working tree has uncommitted changes; commit or remove them." unless capture("git", "status", "--porcelain").empty?
   end
 
+  #: -> void
   def require_open_pull_request
     json = capture("gh", "pr", "list", "--head", @branch, "--state", "open", *repository, "--json", "number")
     raise Refusal, "#{@branch} has no open pull request: a change request needs one." if JSON.parse(json).empty?
   end
 
+  #: -> void
   def sync
     capture("git", "fetch", "origin", @branch, base)
     fast_forward
   end
 
+  #: -> String
   def merge_base
     capture("git", "merge-base", "HEAD", "origin/#{base}").strip
   end
@@ -84,12 +92,14 @@ end
 class RemovalCommit
   include Shell
 
+  #: (String folder, String range) -> void
   def initialize(folder, range)
     @folder = folder
     @subject = "Remove change artifacts for #{File.basename(folder)}"
     @range = range
   end
 
+  #: -> String
   def sha
     commits = capture("git", "log", "--format=%H%x1f%s", @range).lines.map { |line| line.chomp.split("\x1f") }
     found = commits.filter_map { |commit, subject| commit if subject == @subject }
