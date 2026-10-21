@@ -98,19 +98,19 @@ Each row names the covering tests. Every `master` clause of the guard keeps a te
 | `test/lefthook_pull_hooks_test.rb` | `test_pulled_gemfile_name_with_a_command_on_a_new_line_does_not_run_it` | `test_pulling_gemfiles_installs_through_bi_and_ignores_deleted_nested_and_hostile_gemfiles` | merged |
 | `test/lefthook_pull_hooks_test.rb` | `test_pulled_migration_name_with_a_command_on_a_new_line_does_not_run_it` | `test_pulling_migrations_runs_db_migrate_and_a_hostile_migration_name_runs_nothing` | merged |
 | `test/lefthook_pull_hooks_test.rb` | `test_pull_deleting_root_gemfile_does_not_bundle_install` | `test_pulling_gemfiles_installs_through_bi_and_ignores_deleted_nested_and_hostile_gemfiles` | merged |
-| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_uses_global_fallback_and_rejects_conflict_markers` | `test_pre_commit_uses_global_fallback_to_commit_an_unknown_word_and_a_binary_change_and_reject_conflicts` | merged |
+| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_uses_global_fallback_and_rejects_conflict_markers` | `test_pre_commit_uses_global_fallback_and_rejects_conflict_markers` | unchanged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_calls_lefthook_with_no_auto_install` | `test_hooks_call_lefthook_with_no_auto_install` | merged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme` | `test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme` | unchanged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_push_calls_lefthook_with_no_auto_install` | `test_hooks_call_lefthook_with_no_auto_install` | merged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set` | `test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set` | unchanged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set` | `test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set` | unchanged |
-| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_uses_global_fallback_and_commits_an_unknown_word` | `test_pre_commit_uses_global_fallback_to_commit_an_unknown_word_and_a_binary_change_and_reject_conflicts` | merged |
-| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_still_commits_a_binary_only_change` | `test_pre_commit_uses_global_fallback_to_commit_an_unknown_word_and_a_binary_change_and_reject_conflicts` | merged |
+| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_uses_global_fallback_and_commits_an_unknown_word` | `test_pre_commit_uses_global_fallback_and_commits_an_unknown_word` | unchanged |
+| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_still_commits_a_binary_only_change` | `test_pre_commit_still_commits_a_binary_only_change` | unchanged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_warns_about_a_wrapped_paragraph_and_still_commits` | `test_pre_commit_warns_about_wrapped_paragraphs_in_markdown_files_and_still_commits` | merged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_warns_about_a_wrapped_paragraph_in_a_markdown_extension_file` | `test_pre_commit_warns_about_wrapped_paragraphs_in_markdown_files_and_still_commits` | merged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_prints_no_hardwrap_warning_for_one_line_paragraphs` | `test_pre_commit_warns_about_wrapped_paragraphs_in_markdown_files_and_still_commits` | merged |
-| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_skips_the_hardwrap_check_without_markdownlint` | `test_pre_commit_skips_the_hardwrap_check_without_markdownlint_or_a_stowed_package` | merged |
-| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_skips_the_hardwrap_check_when_the_markdownlint_package_is_not_stowed` | `test_pre_commit_skips_the_hardwrap_check_without_markdownlint_or_a_stowed_package` | merged |
+| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_skips_the_hardwrap_check_without_markdownlint` | `test_pre_commit_skips_the_hardwrap_check_without_markdownlint` | unchanged |
+| `test/lefthook_local_hooks_test.rb` | `test_pre_commit_skips_the_hardwrap_check_when_the_markdownlint_package_is_not_stowed` | `test_pre_commit_skips_the_hardwrap_check_when_the_markdownlint_package_is_not_stowed` | unchanged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_stylelint_runs_through_npx_no` | `test_pre_commit_runs_stylelint_and_eslint_through_npx_no` | merged |
 | `test/lefthook_local_hooks_test.rb` | `test_pre_commit_eslint_runs_through_npx_no` | `test_pre_commit_runs_stylelint_and_eslint_through_npx_no` | merged |
 | `test/lefthook_posix_sh_test.rb` | `test_pre_push_rejects_a_push_from_main_when_sh_is_dash` | `test_the_guard_rejects_commits_and_pushes_to_main_when_sh_is_dash` | merged |
@@ -129,7 +129,23 @@ Each row names the covering tests. Every `master` clause of the guard keeps a te
 
 A mutation changes the hook configuration or a stub on a scratch copy of the repository, never on a tracked file. The scratch copy runs the former test files (commit e5cc5e70) and the new ones. The rule: if a mutation fails a former test, a covering test must fail in the new files. Chained tests stop at their first failing step, so a later step is only proved to fail when its chain fails.
 
-Result: no mutation failed a former test without failing a covering test. Mutations marked `old kills 0, new kills 0` are not seen by either version: the former tests never saw them, so no coverage was lost.
+Result: no mutation failed a former test without failing a covering test.
+
+A row marked `old kills 0, new kills 0` is not evidence for any merged step, and review round 1 asked for better ones. This is what each such row turned out to be:
+
+- `p6-bi-unfiltered` and `p8-deps-unfiltered` change only the no-op `: {files}` prefix, which lefthook's glob already covers. They are equivalent mutations: no test can fail them.
+- `p9-bundle-glob-lock-only`: no former test changes a `Gemfile` without a `Gemfile.lock`. No former test saw it, so no coverage was lost.
+- `p1-swap-npm-yarn` swaps the check order, and no test has both lockfiles. The stronger mutations `p1a-npm-ci` and `p1b-yarn-add` break each branch. They fail the former npm and yarn tests and the new `test_pulling_in_an_npm_repository_installs_with_npm_only` and `test_pulling_in_a_yarn_repository_installs_with_yarn_only_beside_a_yarn_lock`.
+- `l1-merge-conflict-regex` changed one of three alternatives, and the `=======` line still matched. The stronger `l1b-conflict-regex-dead` kills the former conflict-marker test.
+- `l10-binary-grep` and the unknown-word step: no mutation of the hook configuration fails the binary-only or unknown-word commit, because no hook reads binary content. By the plan's rule these two former tests stay separate, and so does the conflict-marker test they were chained with.
+- `l6-fixme-push` and the stronger `l6b-fixme-push-pattern` fail no test in either version. The unchanged `test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme` passes for another reason than the fixme check. This was true before the change and is not fixed here.
+
+| Mutation | Former kills | New kills |
+| --- | --- | --- |
+| `p1a-npm-ci` | 2 | 1 |
+| `p1b-yarn-add` | 2 | 1 |
+| `l1b-conflict-regex-dead` | 1 | 1 |
+| `l6b-fixme-push-pattern` | 0 | 0 |
 
 The `g:` prefix mutates `lefthook-branch-guard.yml` (the extending repository). The `f:` prefix mutates `lefthook.yml` (the fallback config). Without a prefix, the mutation targets `lefthook.yml` or a hook script, or the own-check stub in the test file for `t1-own-check`.
 

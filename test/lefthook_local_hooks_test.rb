@@ -40,18 +40,28 @@ class LefthookLocalHooksTest < Minitest::Test
   # Each test below runs the steps of several former single-behaviour tests in one repository. Every step commits
   # its own file, and a refused commit comes last so its staged file never reaches the next step.
 
-  def test_pre_commit_uses_global_fallback_to_commit_an_unknown_word_and_a_binary_change_and_reject_conflicts
+  def test_pre_commit_uses_global_fallback_and_rejects_conflict_markers
+    setup_repo("trunk")
+    stub_real_lefthook
+    stage_file("conflict.txt", conflict_markers)
+    _out, _err, status = git("commit", "-m", "conflict")
+    refute(status.success?, "Expected a commit with conflict markers to be rejected by the global fallback")
+  end
+
+  def test_pre_commit_uses_global_fallback_and_commits_an_unknown_word
     setup_repo("trunk")
     stub_real_lefthook
     stage_file("notes.txt", "zzqxklmnop is not a real word\n")
     _out, _err, status = git("commit", "-m", "notes")
     assert(status.success?, "Expected an unknown word to be committed through the global fallback")
+  end
+
+  def test_pre_commit_still_commits_a_binary_only_change
+    setup_repo("trunk")
+    stub_real_lefthook
     stage_binary_file("icon.png", "\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR".b)
     _out, _err, status = git("commit", "-m", "add icon")
     assert(status.success?, "Expected a binary-only commit to succeed")
-    stage_file("conflict.txt", conflict_markers)
-    _out, _err, status = git("commit", "-m", "conflict")
-    refute(status.success?, "Expected a commit with conflict markers to be rejected by the global fallback")
   end
 
   def test_hooks_call_lefthook_with_no_auto_install
