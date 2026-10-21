@@ -10,7 +10,9 @@ require_relative "isolated_git"
 # (PR state) and, inside herdr, worktree-pane; gh and herdr are stubbed.
 class WorktreeSweepTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-sweep", __dir__)
-  DEADLINE = 20
+  # Guards against a hang, not a slow machine: a hanging stub waits ten minutes, and a full
+  # parallel run on a loaded Mac can take a sweep past 20 seconds.
+  DEADLINE = 60
 
   def setup
     @enclosing = File.realpath(Dir.mktmpdir)
