@@ -91,8 +91,12 @@ Rails/IndexWith:
 # `# rbs_inline: disabled` is the only way out; a leftover `# rbs_inline: enabled` is flagged.
 # Public methods, attr_* and Data/Struct attributes must carry a `#:` type. This mirrors
 # rubocop-eirvandelden's config/default.yml and config/rails.yml; change both together.
+# The plugin skips only the root `test/` and `spec/`; the leading `**/` also skips nested ones.
 Style/RbsInline:
   Mode: opt_out
+  Exclude:
+    - '**/spec/**/*'
+    - '**/test/**/*'
 # rubocop-rails-omakase enables this cop, which reads `#:` as a comment missing its space.
 Layout/LeadingCommentSpace:
   AllowRBSInlineAnnotation: true
