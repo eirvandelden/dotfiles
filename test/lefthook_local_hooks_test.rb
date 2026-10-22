@@ -173,6 +173,25 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/^npx --no eslint app\.js$/, File.read(@log_file))
   end
 
+  def test_pre_commit_browserslist_runs_through_npx_no
+    setup_repo("trunk")
+    stub_real_lefthook
+    stub_npx
+    stage_file(".browserslistrc", "defaults\n")
+    _out, _err, status = git("commit", "-m", "browserslist")
+    assert(status.success?, "Expected the stubbed browserslist to pass")
+    assert_match(/^npx --no browserslist$/, File.read(@log_file))
+  end
+
+  def test_pre_push_browserslist_runs_through_npx_no
+    setup_repo("trunk")
+    stub_real_lefthook
+    stub_npx
+    commit_file(".browserslistrc", "defaults\n")
+    push
+    assert_match(/^npx --no browserslist$/, File.read(@log_file))
+  end
+
   private
 
   def stub_npx
