@@ -8,4 +8,6 @@
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
+- **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
+- **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Test file** — one `test/*_test.rb`, run as its own process.
