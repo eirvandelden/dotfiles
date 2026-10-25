@@ -77,6 +77,9 @@ class LefthookLocalHooksTest < Minitest::Test
   def test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme
     setup_repo("trunk")
     stub_real_lefthook
+    commit_file("clean.txt", "hello\n")
+    _out, _err, status = push
+    assert(status.success?, "Expected a clean push to pass the global fallback")
     commit_file("todo.txt", "FIX" + "ME: something\n")
     _out, _err, status = push
     refute(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")

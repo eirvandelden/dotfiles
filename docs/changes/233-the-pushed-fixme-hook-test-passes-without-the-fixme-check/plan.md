@@ -169,3 +169,5 @@ Domain skills applied: software-design, rails-testing (Minitest conventions), ru
 
 - The plan said not to add inline RBS, but the ruby-style skill requires signatures on methods in personal projects → fixed (Signatures, Design decisions and Order of work step 2 now add a void inline RBS signature above both changed methods)
 - Restoring the mutated lefthook.yml with git checkout can discard concurrent uncommitted work in the worktree → fixed (Order of work step 4 now runs every mutation in a disposable scratch copy)
+
+Reproduction: committed
