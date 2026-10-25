@@ -74,6 +74,7 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-push"))
   end
 
+  #: () -> void
   def test_pre_push_uses_global_fallback_and_rejects_a_pushed_fixme
     setup_repo("trunk")
     stub_real_lefthook
@@ -81,8 +82,9 @@ class LefthookLocalHooksTest < Minitest::Test
     _out, _err, status = push
     assert(status.success?, "Expected a clean push to pass the global fallback")
     commit_file("todo.txt", "FIX" + "ME: something\n")
-    _out, _err, status = push
+    out, err, status = push
     refute(status.success?, "Expected a pushed fixme marker to be rejected by the global fallback")
+    assert_match(/todo\.txt:1:/, out + err)
   end
 
   def test_pre_commit_reaches_the_logging_stub_when_lefthook_bin_is_set
@@ -170,6 +172,9 @@ class LefthookLocalHooksTest < Minitest::Test
     invocation
   end
 
+  # Copies the global fallback into the test HOME, links the markdownlint config and writes the
+  # review-report stub, so a pre-push runs every other job on its own merits.
+  #: () -> void
   def setup_dotfiles_home
     dotfiles_dir = File.join(@tmpdir, "Developer", "dotfiles")
     FileUtils.mkdir_p(dotfiles_dir)
@@ -179,6 +184,10 @@ class LefthookLocalHooksTest < Minitest::Test
       File.join(@repo_root, "markdownlint/.config/markdownlint"),
       File.join(@tmpdir, ".config", "markdownlint")
     )
+    stub = File.join(@tmpdir, ".config", "git", "worktree-tools", "review-report-fresh")
+    FileUtils.mkdir_p(File.dirname(stub))
+    File.write(stub, "#!/bin/sh\nexit 0\n")
+    FileUtils.chmod("+x", stub)
   end
 
   # markdownlint lives in an npm bin directory with other binaries and needs node on PATH via its
