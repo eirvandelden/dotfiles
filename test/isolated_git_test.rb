@@ -23,6 +23,24 @@ class IsolatedGitTest < Minitest::Test
     end
   RUBY
 
+  SETTINGS_SCRIPT = <<~'RUBY'.freeze
+    %w[maintenance.auto gc.auto].each do |key|
+      puts IO.popen(["git", "config", "--show-scope", "--get", key], &:read).split.join("\t")
+    end
+  RUBY
+
+  INIT_SCRIPT = <<~'RUBY'.freeze
+    require "tmpdir"
+    Dir.mktmpdir do |dir|
+      { "work" => [], "bare" => [ "--bare" ] }.each do |label, flags|
+        target = File.join(dir, label)
+        system("git", "init", "--quiet", *flags, target, exception: true)
+        git_dir = label == "bare" ? target : File.join(target, ".git")
+        %w[info hooks].each { |name| puts "#{label} #{name} #{Dir.children(File.join(git_dir, name)).size}" }
+      end
+    end
+  RUBY
+
   def setup
     @config_home = Dir.mktmpdir
   end
@@ -92,6 +110,72 @@ class IsolatedGitTest < Minitest::Test
     assert_equal([ "/dev/null", "/dev/null" ], output.lines.map(&:chomp))
   end
 
+  def test_the_helper_turns_off_automatic_maintenance_and_gc
+    output, status = run_child(RbConfig.ruby, "-Itest", "-risolated_git", "-e", SETTINGS_SCRIPT)
+
+    assert(status.success?, output)
+    assert_equal([ "command\tfalse", "command\t0" ], output.lines.map(&:chomp))
+  end
+
+  def test_the_quiet_settings_win_over_a_childs_own_global_config
+    own_config = File.join(@config_home, "own-config")
+    File.write(own_config, "[maintenance]\n\tauto = true\n[gc]\n\tauto = 6700\n")
+
+    output, status = run_child({ "GIT_CONFIG_GLOBAL" => own_config }, RbConfig.ruby, "-Itest", "-risolated_git", "-e",
+                               SETTINGS_SCRIPT)
+
+    assert(status.success?, output)
+    assert_equal([ "command\tfalse", "command\t0" ], output.lines.map(&:chomp))
+  end
+
+  def test_a_commit_under_the_helper_starts_no_maintenance
+    trace = File.join(@config_home, "trace")
+
+    output, status = run_child({ "GIT_TRACE" => trace }, RbConfig.ruby, "-Itest", "-risolated_git", "-e", COMMIT_SCRIPT)
+
+    assert(status.success?, output)
+    refute_match(/maintenance run/, File.read(trace))
+  end
+
+  def test_git_init_under_the_helper_copies_no_sample_hooks
+    output, status = run_child(RbConfig.ruby, "-Itest", "-risolated_git", "-e", INIT_SCRIPT)
+
+    assert(status.success?, output)
+    assert_equal([ "work info 0", "work hooks 0", "bare info 0", "bare hooks 0" ], output.lines.map(&:chomp))
+  end
+
+  def test_the_helper_keeps_earlier_git_config_count_entries
+    inherited = { "GIT_CONFIG_COUNT" => "1", "GIT_CONFIG_KEY_0" => "user.name", "GIT_CONFIG_VALUE_0" => "Inherited" }
+
+    output, status = run_child(inherited, RbConfig.ruby, "-Itest", "-risolated_git", "-e",
+                               "puts IO.popen(%w[git config --get user.name], &:read)")
+
+    assert(status.success?, output)
+    assert_equal("Inherited\n", output)
+  end
+
+  def test_the_quiet_settings_win_over_an_inherited_conflicting_entry
+    inherited = { "GIT_CONFIG_COUNT" => "1", "GIT_CONFIG_KEY_0" => "maintenance.auto", "GIT_CONFIG_VALUE_0" => "true" }
+
+    output, status = run_child(inherited, RbConfig.ruby, "-Itest", "-risolated_git", "-e",
+                               "puts IO.popen(%w[git config --get maintenance.auto], &:read)")
+
+    assert(status.success?, output)
+    assert_equal("false\n", output)
+  end
+
+  def test_the_helper_loads_on_its_own
+    directory = File.join(@config_home, "alone")
+    FileUtils.mkdir_p(directory)
+    FileUtils.cp(File.join(ROOT, "test", "isolated_git.rb"), directory)
+
+    output, status = run_child(RbConfig.ruby, "-r./isolated_git", "-e", "puts ENV.fetch('GIT_TEMPLATE_DIR')",
+                               chdir: directory)
+
+    assert(status.success?, output)
+    refute(File.exist?(output.chomp), "the template directory outlives its process")
+  end
+
   def test_every_test_file_requires_the_helper
     missing = Dir.glob(File.join(ROOT, "test", "*_test.rb")).reject do |file|
       File.read(file).match?(/^require_relative "isolated_git"$/)
@@ -158,10 +242,12 @@ class IsolatedGitTest < Minitest::Test
     File.chmod(0o755, path)
   end
 
-  def run_child(*command)
+  def run_child(*command, chdir: ROOT)
     # HOME points at the temporary directory too, so a real ~/.gitconfig cannot override the hostile one.
     environment = { "HOME" => @config_home, "XDG_CONFIG_HOME" => @config_home,
-                    "GIT_CONFIG_GLOBAL" => nil, "GIT_CONFIG_SYSTEM" => nil }
-    Open3.capture2e(environment, *command, chdir: ROOT)
+                    "GIT_CONFIG_GLOBAL" => nil, "GIT_CONFIG_SYSTEM" => nil,
+                    "GIT_CONFIG_COUNT" => nil, "GIT_TEMPLATE_DIR" => nil }
+    environment = environment.merge(command.shift) if command.first.is_a?(Hash)
+    Open3.capture2e(environment, *command, chdir: chdir)
   end
 end
