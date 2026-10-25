@@ -6,11 +6,13 @@
 require "open3"
 require_relative "../../../../../claude/.claude/hooks/remote_matcher"
 
+#: -> String?
 def origin_url
   stdout, status = Open3.capture2("git", "remote", "get-url", "origin")
   status.success? ? stdout.strip : nil
 end
 
+#: -> bot
 def refuse
   warn("unknown remote; finish refuses to guess.")
   exit(1)

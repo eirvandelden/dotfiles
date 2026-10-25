@@ -21,6 +21,7 @@ module WorktreeTools
 
     STOW_IGNORE_FILE = '.stow-local-ignore'
 
+    #: (String source_dir, String target_dir, (Array[String] | String) packages) -> void
     def initialize(source_dir, target_dir, packages)
       @source_dir = File.expand_path(source_dir)
       @target_dir = File.expand_path(target_dir)
@@ -30,6 +31,7 @@ module WorktreeTools
     # Clean conflicting files from target directory
     #
     # @return [Array<String>] List of deleted file paths
+    #: -> Array[String]
     def clean!
       deleted_files = []
 

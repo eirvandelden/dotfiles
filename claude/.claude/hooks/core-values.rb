@@ -10,6 +10,7 @@ require "yaml"
 
 CONFIG_PATH = File.expand_path("~/.claude/core-values.yml").freeze
 
+#: -> (Hash[String, untyped] | Symbol)?
 def load_config
   YAML.safe_load_file(CONFIG_PATH, permitted_classes: [], aliases: false)
 rescue StandardError => error
@@ -17,10 +18,12 @@ rescue StandardError => error
   :unreadable
 end
 
+#: (String? motto) -> void
 def print_motto(motto)
   puts "Core value: #{motto}" if motto
 end
 
+#: (Hash[String, untyped] config) -> void
 def print_full(config)
   puts "CORE VALUES ACTIVE — #{config["motto"]}"
 

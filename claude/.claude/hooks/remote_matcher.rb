@@ -10,18 +10,22 @@ module RemoteMatcher
 
   module_function
 
+  #: (String url) -> bool
   def personal?(url)
     BUILTIN_REMOTES.any? { |pattern| url.match?(pattern) }
   end
 
+  #: (String url) -> bool
   def allowlisted?(url)
     listed_remotes.any? { |pattern| url.match?(pattern) }
   end
 
+  #: -> Array[Regexp]
   def allowed_remotes
     BUILTIN_REMOTES + listed_remotes
   end
 
+  #: -> Array[Regexp]
   def listed_remotes
     path = File.expand_path(ALLOWLIST_FILE)
     return [] unless File.exist?(path)
@@ -29,6 +33,7 @@ module RemoteMatcher
     File.readlines(path, chomp: true).filter_map { |line| remote_pattern(line.strip) }
   end
 
+  #: (String entry) -> Regexp?
   def remote_pattern(entry)
     return nil if entry.empty? || entry.start_with?("#")
     return %r{github\.com[:/]#{Regexp.escape(entry)}} if entry.end_with?("/")

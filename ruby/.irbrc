@@ -22,11 +22,13 @@ else
 end
 
 # Custom aliases
+#: (String string) -> nil
 def cp(string)
   `echo "#{string}" | pbcopy`
   puts "copied in clipboard"
 end
 
+#: -> untyped
 def me
   @me ||= User.find_by(email: `git config user.email`.strip)
 end

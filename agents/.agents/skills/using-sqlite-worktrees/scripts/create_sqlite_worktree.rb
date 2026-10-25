@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+# Vendored from superpowers-ruby and kept close to upstream, so it carries no RBS signatures.
+# rbs_inline: disabled
+
 # Copies the main working tree's development SQLite databases into an
 # existing git worktree's storage/ directory, handling Rails 8 multi-DB
 # (Solid Queue/Cache/Cable) layouts and WAL journal mode.

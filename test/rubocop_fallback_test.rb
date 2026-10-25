@@ -56,10 +56,36 @@ class RubocopFallbackTest < Minitest::Test
         count.to_s
       end
 
-      # @rbs count: Integer
-      # @rbs return: String
+      #: (Integer) -> String
       def title(count)
         count.to_s
+      end
+    end
+  RUBY
+
+  UNTYPED_GREETER = <<~RUBY.freeze
+    class Greeter
+      def greet(name)
+        name
+      end
+    end
+  RUBY
+
+  PRIVATE_METHOD_FIXTURE = <<~RUBY.freeze
+    class Greeter
+      private
+
+      def greet(name)
+        name
+      end
+    end
+  RUBY
+
+  MIGRATION_PATH = "db/migrate/20260101000000_create_greetings.rb".freeze
+  MIGRATION_FIXTURE = <<~RUBY.freeze
+    class CreateGreetings < ActiveRecord::Migration[8.0]
+      def change
+        create_table :greetings
       end
     end
   RUBY
@@ -123,6 +149,60 @@ class RubocopFallbackTest < Minitest::Test
     assert_equal(VALID_RBS_FIXTURE, File.read(File.join(@project, RBS_FIXTURE_PATH)))
   end
 
+  def test_fallback_reports_public_method_without_signature
+    report = run_rbs_fixture(UNTYPED_GREETER)
+
+    assert_includes(cop_names(report), "Style/RbsInline/MissingTypeAnnotation")
+  end
+
+  def test_fallback_accepts_an_unannotated_private_method
+    report = run_rbs_fixture(PRIVATE_METHOD_FIXTURE)
+
+    assert_empty(cop_names(report))
+  end
+
+  def test_fallback_reports_untyped_data_and_struct_attributes
+    report = run_rbs_fixture("Point = Data.define(:x, :y)\nPair = Struct.new(:left, :right)\n")
+
+    assert_includes(cop_names(report), "Style/RbsInline/MissingDataClassAnnotation")
+    assert_includes(cop_names(report), "Style/RbsInline/MissingStructClassAnnotation")
+  end
+
+  def test_fallback_reports_a_leftover_rbs_inline_magic_comment
+    report = run_rbs_fixture("# rbs_inline: enabled\n\n#{VALID_RBS_FIXTURE}")
+
+    assert_includes(cop_names(report), "Style/RbsInline/RequireRbsInlineComment")
+  end
+
+  def test_fallback_skips_a_file_that_opts_out
+    report = run_rbs_fixture("# rbs_inline: disabled\n\n#{UNTYPED_GREETER}")
+
+    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+  end
+
+  def test_fallback_does_not_demand_a_signature_in_a_nested_test_or_spec_folder
+    [ "tools/test/greeter_test.rb", "tools/spec/greeter_spec.rb" ].each do |path|
+      report = run_with_project_fallback(path, UNTYPED_GREETER)
+
+      assert_empty(cop_names(report).grep(RBS_COP_PATTERN), path)
+    end
+  end
+
+  def test_fallback_does_not_demand_a_signature_in_a_test_or_spec_folder_below_a_hidden_folder
+    [ "tools/.config/kit/test/greeter_test.rb", "tools/.config/kit/spec/greeter_spec.rb" ].each do |path|
+      report = run_with_project_fallback(path, UNTYPED_GREETER)
+
+      assert_empty(cop_names(report).grep(RBS_COP_PATTERN), path)
+    end
+  end
+
+  def test_fallback_does_not_demand_a_signature_on_a_migration
+    report = run_with_project_fallback(MIGRATION_PATH, MIGRATION_FIXTURE)
+
+    assert_equal([ MIGRATION_PATH ], inspected_paths(report))
+    assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
+  end
+
   def test_fallback_leaves_nodoc_comment_alone
     report = run_rbs_fixture("# :nodoc:\nclass Hidden\nend\n")
 
@@ -134,6 +214,18 @@ class RubocopFallbackTest < Minitest::Test
   def run_rbs_fixture(source, *options)
     write_fixture(RBS_FIXTURE_PATH, source)
     run_fallback(*options, path: RBS_FIXTURE_PATH)
+  end
+
+  # Copies the fallback into the temporary project as .rubocop.yml and lints with it there.
+  # The fallback's Exclude globs resolve against the directory that holds it, as `~/.rubocop.yml` does.
+  def run_with_project_fallback(path, source)
+    write_fixture(path, source)
+    FileUtils.cp(FALLBACK_CONFIG, File.join(@project, ".rubocop.yml"))
+    stdout, stderr, status = Open3.capture3(RUBOCOP, "--format", "json", path, chdir: @project)
+    skip_unless_ci("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
+
+    assert_empty(stderr)
+    JSON.parse(stdout)
   end
 
   def write_fixture(path, content)

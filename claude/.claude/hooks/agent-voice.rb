@@ -14,16 +14,19 @@ require_relative "remote_matcher"
 DATA_PATH = ENV.fetch("AGENT_VOICE_DATA") { File.expand_path("../agent-voice.yml", __dir__) }.freeze
 GREETING_SOURCES = %w[startup clear].freeze
 
+#: (untyped persona) -> bool
 def valid_persona?(persona)
   persona.is_a?(Hash) && %w[name emoji tone].all? { |key| persona[key].is_a?(String) } &&
     persona["catchphrases"].is_a?(Array)
 end
 
+#: (untyped data) -> bool
 def valid_data?(data)
   data.is_a?(Hash) && data["rules"].is_a?(Array) && data["personas"].is_a?(Array) &&
     !data["personas"].empty? && data["personas"].all? { |persona| valid_persona?(persona) }
 end
 
+#: -> Hash[String, untyped]?
 def load_data
   data = YAML.safe_load_file(DATA_PATH, permitted_classes: [], aliases: false)
   raise "expected a rules list and personas with name, emoji, tone and catchphrases" unless valid_data?(data)
@@ -34,6 +37,7 @@ rescue StandardError => error
   nil
 end
 
+#: -> Hash[String, untyped]?
 def read_event
   event = JSON.parse($stdin.read)
   raise JSON::ParserError, "expected a JSON object" unless event.is_a?(Hash)
@@ -44,11 +48,13 @@ rescue JSON::ParserError => error
   nil
 end
 
+#: (String cwd) -> String?
 def origin_url(cwd)
   stdout, _stderr, status = Open3.capture3("git", "-C", cwd, "remote", "get-url", "origin")
   status.success? ? stdout.strip : nil
 end
 
+#: (String cwd) -> bool
 def outside_git?(cwd)
   return false unless File.directory?(cwd)
 
@@ -56,17 +62,20 @@ def outside_git?(cwd)
   !status.success? && stderr.include?("not a git repository")
 end
 
+#: (String cwd) -> bool
 def personal?(cwd)
   return outside_git?(cwd) unless (url = origin_url(cwd))
 
   RemoteMatcher.personal?(url)
 end
 
+#: (Array[Hash[String, untyped]] personas, String? session_id) -> Hash[String, untyped]
 def pick(personas, session_id)
   index = session_id.to_s.empty? ? Random.rand(personas.size) : Zlib.crc32(session_id.to_s)
   personas[index % personas.size]
 end
 
+#: (Hash[String, untyped] data, Hash[String, untyped] persona, String? source) -> void
 def print_voice(data, persona, source)
   puts "Persona: #{persona["name"]} #{persona["emoji"]}"
   puts "Tone: #{persona["tone"]}"

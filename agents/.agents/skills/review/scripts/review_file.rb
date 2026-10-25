@@ -6,14 +6,17 @@ class Review
   ROUND = /^## Round /
   CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
 
+  #: (String text) -> void
   def initialize(text)
     @text = text
   end
 
+  #: -> bool
   def rounds?
     @text.match?(ROUND)
   end
 
+  #: -> Array[String]
   def open_findings
     @text.lines.map(&:strip).select { |line| line.match?(FINDING) && !closed?(line) }
   end

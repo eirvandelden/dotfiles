@@ -10,11 +10,13 @@ module WorktreeTools
     PANE = File.expand_path("../worktree-pane", __dir__)
     REMOVE = File.expand_path("../worktree-remove", __dir__)
 
+    #: (String program, ?time_limit: Numeric?) -> void
     def initialize(program, time_limit: nil)
       @program = program
       @time_limit = time_limit
     end
 
+    #: (default_branch: String, ?keep: Array[String]) -> void
     def run(default_branch:, keep: [])
       kept = keep.map { |path| File.realpath(path) }
       Dir.glob(".worktrees/*/").each do |dir|

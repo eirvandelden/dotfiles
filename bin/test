@@ -12,9 +12,15 @@ require "rbconfig"
 require "tempfile"
 
 class TestRun
-  Job = Struct.new(:file, :pid, :output, :started)
+  Job = Struct.new(
+    :file,    #: String
+    :pid,     #: Integer
+    :output,  #: Tempfile
+    :started  #: Float
+  )
   GRACE_SECONDS = 5
 
+  #: (Array[String] files, root: String, jobs: Integer) -> void
   def initialize(files, root:, jobs:)
     @files = files.dup
     @total = files.size
@@ -26,6 +32,7 @@ class TestRun
 
   # INT and TERM only set a flag, which the run checks between steps. An exception raised at any
   # point could fall between starting or reaping a file and recording it.
+  #: -> Integer
   def call
     %w[INT TERM].each { |signal| trap(signal) { @stopping = true } }
     run_all

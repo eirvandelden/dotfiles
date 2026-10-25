@@ -29,6 +29,7 @@ CHOICE_LIST = /^-\s*\[[ xX]\]/.freeze
 HEADING = /^(#+\s+.*)$/.freeze
 FENCE = /^(`{3,}|~{3,})/.freeze
 
+#: (String markdown) -> [String, Array[Hash[Symbol, String]]]
 def parse_sections(markdown)
   preamble = ""
   sections = []
@@ -51,12 +52,14 @@ def parse_sections(markdown)
   [ preamble, sections ]
 end
 
+#: (String markdown, String title) -> String?
 def section_body(markdown, title)
   _preamble, sections = parse_sections(markdown)
   match = sections.find { |section| section[:title].casecmp?(title) }
   match && match[:body].strip
 end
 
+#: (String markdown, String title) -> String?
 def section_with_subsections(markdown, title)
   _preamble, sections = parse_sections(markdown)
   index = sections.index { |section| section[:title].casecmp?(title) }
@@ -67,14 +70,17 @@ def section_with_subsections(markdown, title)
   joined(sections[index][:body].strip, *nested.map { |section| "#{section[:heading]}#{section[:body]}".strip })
 end
 
+#: (*String? parts) -> String
 def joined(*parts)
   parts.compact.reject(&:empty?).join("\n\n")
 end
 
+#: (String intent) -> String
 def summary_text(intent)
   joined(section_body(intent, "Problem"), section_body(intent, "Proposed outcome"))
 end
 
+#: (String intent, String plan) -> Hash[Symbol, String]
 def filler(intent, plan)
   {
     summary: summary_text(intent),
@@ -86,6 +92,7 @@ def filler(intent, plan)
   }
 end
 
+#: (String plan) -> String
 def acceptance_criteria(plan)
   proof_lines = (section_body(plan, "Proof") || "").lines
   criteria_lines = proof_lines.take_while { |line| !line.match?(/^(?:Per changed file|Test setup)/) }
@@ -95,6 +102,7 @@ def acceptance_criteria(plan)
   (with_arrows.empty? ? bullets : with_arrows).join.strip
 end
 
+#: (String intent, String plan) -> Hash[Symbol, String]
 def appended_filler(intent, plan)
   {
     summary: summary_text(intent),
@@ -103,6 +111,7 @@ def appended_filler(intent, plan)
   }
 end
 
+#: (String title) -> Symbol?
 def category_for(title)
   CATEGORIES.find do |name, pattern|
     next false if name == :summary && title.match?(TYPE_HEADING)
@@ -111,10 +120,12 @@ def category_for(title)
   end&.first
 end
 
+#: (String body) -> bool
 def choice_list?(body)
   body.match?(CHOICE_LIST)
 end
 
+#: (Hash[Symbol, String] appended_fill, Array[Symbol] filled_categories) -> String
 def appended_sections(appended_fill, filled_categories)
   APPEND_ORDER
     .reject { |category, _heading| filled_categories.include?(category) || appended_fill[category].to_s.empty? }
@@ -122,14 +133,17 @@ def appended_sections(appended_fill, filled_categories)
     .join("\n\n")
 end
 
+#: (String heading) -> Integer
 def heading_level(heading)
   heading[/^#+/].length
 end
 
+#: (Hash[Symbol, String] section) -> Symbol?
 def category_for_section(section)
   choice_list?(section[:body]) ? nil : category_for(section[:title])
 end
 
+#: (String template, Hash[Symbol, String] fill, Hash[Symbol, String] appended_fill) -> String
 def fill_template(template, fill, appended_fill)
   preamble, sections = parse_sections(template)
   categories = sections.map { |section| category_for_section(section) }

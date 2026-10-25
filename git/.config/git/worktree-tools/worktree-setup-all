@@ -11,11 +11,13 @@ module WorktreeTools
   class SetupAll
     include Helpers
 
+    #: -> void
     def initialize
       @successes = []
       @failures = []
     end
 
+    #: -> void
     def run!
       log "Setting up all worktrees..."
       log ""
