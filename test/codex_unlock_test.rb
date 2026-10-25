@@ -62,7 +62,7 @@ class CodexUnlockTest < Minitest::Test
   def test_after_unlock_headroom_finds_the_shim_and_its_session_runs_off_the_shared_daemon_with_the_secrets
     url = "http://127.0.0.1:8787/v1"
     _, stderr, status = run_zsh(<<~SH)
-      unlock
+      unlock both
       resolved="$(command -v codex)"
       test "$resolved" = "#{SHIM}" || { echo "headroom would run $resolved" >&2; exit 9; }
       OPENAI_BASE_URL=#{url} "$resolved" --config openai_base_url="#{url}"
@@ -101,7 +101,7 @@ class CodexUnlockTest < Minitest::Test
   private
 
   def unlock_then(commands)
-    _, stderr, status = run_zsh("unlock\n#{commands}")
+    _, stderr, status = run_zsh("unlock both\n#{commands}")
     assert_equal(0, status.exitstatus, stderr)
   end
 end
