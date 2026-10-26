@@ -105,9 +105,9 @@ class HerdrWorkerScriptsTest < Minitest::Test
   def test_an_autonomous_delivery_builds_the_row_intent_plan_implement
     worktree_creatable!
     split_ids("w1:pA", "w1:pB", "w1:pC")
-    cwd = worktree_path("some-change")
 
     run_script(HAND_OFF_PLAN, "intent", "some-change", extra_env: split_ids_env)
+    cwd = worktree_path("some-change")
     run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto", caller_pane: "w1:pA", extra_env: split_ids_env)
     run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto", caller_pane: "w1:pA", extra_env: split_ids_env)
 
