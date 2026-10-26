@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Proves paths.zsh puts QMK's keg-only ARM compiler on PATH, but only when its
 # Homebrew directories exist.
