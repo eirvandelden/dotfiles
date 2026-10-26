@@ -134,6 +134,14 @@ class SkillParityTest < Minitest::Test
     end
   end
 
+  def test_deliver_and_finish_stay_disabled_for_model_invocation
+    %w[deliver finish].each do |name|
+      skill_md = File.join(AGENTS_SKILLS, name, "SKILL.md")
+
+      assert_equal(true, frontmatter(skill_md)["disable-model-invocation"], "#{name} lost disable-model-invocation")
+    end
+  end
+
   def test_codex_worktrees_doc_resolves_to_the_claude_one
     codex_doc = File.join(REPO_ROOT, "codex/.codex/WORKTREES.md")
     claude_doc = File.join(REPO_ROOT, "claude/.claude/WORKTREES.md")

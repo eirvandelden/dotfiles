@@ -81,6 +81,13 @@ class DeliveryContractTest < Minitest::Test
     assert_includes(section_of(skill("finish"), "## Auto mode"), "~/.claude/skills/finish/scripts/ship --no-merge")
   end
 
+  def test_review_names_no_merge_command
+    text = skill("review")
+
+    refute_includes(text, "gh pr merge")
+    refute_includes(text, "finish/scripts/ship")
+  end
+
   def test_work_finish_runs_after_push_then_requests_reviewers
     text = skill("finish")
 
