@@ -22,6 +22,13 @@ class DeliveryContractTest < Minitest::Test
     assert_match(/without asking/i, section)
   end
 
+  def test_review_hands_over_to_deliver_only_for_a_review_the_user_typed
+    line = line_with(section_of(skill("review"), "## After either backend"), "Review clean:")
+
+    assert_match(/only when .*typed/i, line)
+    assert_match(/started it yourself/i, line)
+  end
+
   def test_review_on_review_ready_only_summarises
     line = line_with(section_of(skill("review"), "## After either backend"), "Review ready:")
 
