@@ -21,6 +21,11 @@ fi
 # 2. Extra PATH entries
 export PATH="/opt/homebrew/opt/curl/bin:$PATH"
 export PATH="$PATH:$HOME/.rd/bin:$HOME/.local/bin" # .rd = Rancher Desktop
+# QMK's ARM compiler (Keyboardio Model 100). Homebrew installs both kegs keg-only.
+for _qmk_bin in "${HOMEBREW_PREFIX:-}"/opt/{arm-none-eabi-gcc@8,arm-none-eabi-binutils}/bin; do
+  [[ -d "$_qmk_bin" ]] && path+=("$_qmk_bin")
+done
+unset _qmk_bin
 
 # 3. SSL certificate configuration (depends on HOMEBREW_PREFIX from step 1)
 export SSL_CERT_FILE="$HOMEBREW_PREFIX/etc/openssl@3/cert.pem"
