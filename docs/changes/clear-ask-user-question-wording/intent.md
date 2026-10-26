@@ -37,7 +37,7 @@ Every question and option names its actor. Etienne reads an option and knows wha
 - A `PreToolUse` hook on `AskUserQuestion`, registered in `settings.json`, with tests.
 - The hook checks the question text and the option labels only. It denies the call and tells Claude to rewrite.
 - Default hook behaviour, stated rather than asked:
-  - Match whole words, ignoring case: I, I'll, I'm, I've, me, my, you, you'll, your, yours.
+  - Match whole words, ignoring case: I, I'll, I'm, I've, I'd, me, my, you, you'll, you're, you'd, you've, your, yours.
   - Ignore text inside backticks.
   - Allow the call when the hook input is malformed or the hook errors. A broken hook never blocks Etienne.
 - The same wording rules apply to Codex's numbered plain-text options, through the shared playbook.
@@ -76,6 +76,8 @@ None.
 - Previews are for single-select questions with side effects — previews only where they pay off.
 - No extra permission is needed — the change stays inside the repository.
 - Delivery is autonomous, without Codex review — two gates, fewer tokens.
+- The banned list also holds I'd, you're, you'd and you've (added after the plan stage) — they carry the same I/you confusion as I'll and you'll.
+- No GLOSSARY.md for this change — the terms are internal to one hook module.
 
 ## Open questions
 
