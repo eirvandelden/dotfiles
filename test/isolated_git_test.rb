@@ -38,6 +38,19 @@ class IsolatedGitTest < Minitest::Test
     end
   RUBY
 
+  # A Minitest file that prints the template path and checks the template is still there while its
+  # test runs.
+  TEMPLATE_TEST = <<~'RUBY'.freeze
+    require "minitest/autorun"
+    require_relative "isolated_git"
+    class TemplateTest < Minitest::Test
+      def test_the_template_is_there_while_the_test_runs
+        puts "template #{ENV.fetch('GIT_TEMPLATE_DIR')}"
+        assert(File.directory?(File.join(ENV.fetch("GIT_TEMPLATE_DIR"), "hooks")))
+      end
+    end
+  RUBY
+
   INIT_SCRIPT = <<~'RUBY'.freeze
     require "tmpdir"
     Dir.mktmpdir do |dir|
@@ -173,15 +186,25 @@ class IsolatedGitTest < Minitest::Test
   end
 
   def test_the_helper_loads_on_its_own
-    directory = File.join(@config_home, "alone")
-    FileUtils.mkdir_p(directory)
-    FileUtils.cp(File.join(ROOT, "test", "isolated_git.rb"), directory)
+    directory = directory_with_helper("alone")
 
     output, status = run_child(RbConfig.ruby, "-r./isolated_git", "-e", "puts ENV.fetch('GIT_TEMPLATE_DIR')",
                                chdir: directory)
 
     assert(status.success?, output)
     refute(File.exist?(output.chomp), "the template directory outlives its process")
+  end
+
+  def test_a_test_file_keeps_the_template_until_its_tests_end
+    directory = directory_with_helper("after-run")
+    File.write(File.join(directory, "template_test.rb"), TEMPLATE_TEST)
+
+    output, status = run_child(RbConfig.ruby, "template_test.rb", chdir: directory)
+    template = output[/^template (.+)$/, 1]
+
+    assert(status.success?, output)
+    refute_nil(template, output)
+    refute(File.exist?(template), "the template directory outlives its tests")
   end
 
   def test_every_test_file_requires_the_helper
@@ -197,9 +220,7 @@ class IsolatedGitTest < Minitest::Test
   # A minimal Minitest file whose one test commits twice on main, with or without the helper line
   # every real test file has. The real helper is copied beside it so that line loads it.
   def write_fixture_test(with_helper:)
-    directory = File.join(@config_home, "fixture-#{with_helper ? 'with' : 'without'}")
-    FileUtils.mkdir_p(directory)
-    FileUtils.cp(File.join(ROOT, "test", "isolated_git.rb"), directory)
+    directory = directory_with_helper("fixture-#{with_helper ? 'with' : 'without'}")
     File.write(File.join(directory, "commit_test.rb"), <<~RUBY)
       require "minitest/autorun"
       #{'require_relative "isolated_git"' if with_helper}
@@ -210,6 +231,14 @@ class IsolatedGitTest < Minitest::Test
       end
     RUBY
     File.join(directory, "commit_test.rb")
+  end
+
+  # A new directory under @config_home holding a copy of the real helper.
+  def directory_with_helper(name)
+    directory = File.join(@config_home, name)
+    FileUtils.mkdir_p(directory)
+    FileUtils.cp(File.join(ROOT, "test", "isolated_git.rb"), directory)
+    directory
   end
 
   def run_commit_script(*flags)
