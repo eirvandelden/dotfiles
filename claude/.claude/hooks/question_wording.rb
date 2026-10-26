@@ -10,6 +10,7 @@ module QuestionWording
   # A run of N backticks up to the next run of exactly N. A backtick after a backslash opens no span.
   CODE_SPAN = /(?<![`\\])(`+)(?!`).*?(?<!`)\1(?!`)/m
   WORD = /[\p{L}\p{N}_]+(?:['’][\p{L}\p{N}_]+)*/
+  private_constant :BANNED, :CODE_SPAN, :WORD
 
   module_function
 
@@ -62,4 +63,6 @@ module QuestionWording
       Text inside backticks is not checked. Option descriptions are not checked, so "You do:" lines stay.
     TEXT
   end
+
+  private_class_method :checked_texts, :question_texts, :banned_words_in, :message
 end

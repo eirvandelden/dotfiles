@@ -90,6 +90,11 @@ class QuestionWordingTest < Minitest::Test
     assert_raises(KeyError) { QuestionWording.denial({}) }
   end
 
+  def test_denial_is_the_only_public_surface
+    assert_equal([ :denial ], QuestionWording.singleton_methods)
+    assert_empty(QuestionWording.constants)
+  end
+
   private
 
   def option(label)
