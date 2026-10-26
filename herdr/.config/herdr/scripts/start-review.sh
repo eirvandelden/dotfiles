@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # start-review.sh
 #
-# Opens a Claude reviewer beside the caller to look at this branch. Report-only: it reads
+# Opens a Claude reviewer as the next column of the change's row, right of its last pane, to look at
+# this branch. Report-only: it reads
 # REVIEW.md, this branch's change folder, and the diff, then appends a round to
 # docs/changes/<slug>/review.md and leaves it uncommitted until the review converges, then commits it
 # through commit-review and pushes the branch — the same contract the `reviewer` agent follows for
@@ -40,21 +41,13 @@ if [ -z "$base" ]; then
   exit 1
 fi
 
-split=$(herdr pane split --current --direction right --cwd "$PWD" --no-focus)
-pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
-
 # deliver closes this change's idle stage panes once the PR exists, and only the panes listed in
-# <git-common-dir>/herdr/stage-panes-<slug>. The terminal id tells this pane from a later one that
-# reuses its id. A branch with no change folder (main, a detached HEAD) lists nothing.
+# <git-common-dir>/herdr/stage-panes-<slug>; open-column.sh lists this one. A branch with no change
+# folder (main, a detached HEAD) opens right of the caller and lists nothing.
 skills_dir="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
-if folder=$("$skills_dir/plan/scripts/change-folder" 2>/dev/null); then
-  terminal=$(herdr pane get "$pane" 2>/dev/null | jq -r '.result.pane.terminal_id // empty' || true)
-  if [ -n "$terminal" ]; then
-    panes_directory="$(git rev-parse --path-format=absolute --git-common-dir)/herdr"
-    mkdir -p "$panes_directory"
-    printf '%s %s\n' "$pane" "$terminal" >>"$panes_directory/stage-panes-${folder##*/}"
-  fi
-fi
+folder=$("$skills_dir/plan/scripts/change-folder" 2>/dev/null || true)
+scripts_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+pane=$("$scripts_dir/open-column.sh" "$PWD" ${folder:+--row "${folder##*/}"})
 
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
 # uppercase letters (w1:pV), which Herdr's agent names may not, hence the lowercasing. Two ids
