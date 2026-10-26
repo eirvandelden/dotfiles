@@ -63,6 +63,20 @@ class SecretsScopeMenuTest < Minitest::Test
     assert_equal 1, output.scan(PROMPT).length
   end
 
+  def test_unlock_personal_on_a_terminal_skips_the_menu
+    output = run_on_terminal('unlock personal; print -r -- "pat=${FIZZY_PAT-unset} work=${MCP_EMAIL_SERVER_AUTH_TOKEN-unset}"')
+
+    refute_match PROMPT, output
+    assert_includes output, "pat=a-secret-value work=unset"
+  end
+
+  def test_unlock_work_on_a_terminal_skips_the_menu
+    output = run_on_terminal('unlock work; print -r -- "pat=${FIZZY_PAT-unset} work=${MCP_EMAIL_SERVER_AUTH_TOKEN-unset}"')
+
+    refute_match PROMPT, output
+    assert_includes output, "pat=unset work=a-secret-value"
+  end
+
   def test_eval_secrets_on_a_terminal_shows_the_menu_on_stderr_and_evals_only_exports
     output = run_on_terminal('eval "$(secrets)"; print -r -- "status=$? pat=${FIZZY_PAT-unset}"', "2")
 
@@ -73,23 +87,38 @@ class SecretsScopeMenuTest < Minitest::Test
   private
 
   # Runs the script in zsh on a pseudo-terminal, sending one answer per prompt.
-  # Returns everything zsh wrote.
+  # Returns everything zsh wrote. A missing prompt or a hung shell fails the
+  # test after 5 seconds instead of blocking the suite.
   def run_on_terminal(script, *answers)
     output = +""
     PTY.spawn(shell_env, "zsh", "-f", "-c", "source #{LOADER}\n#{script}") do |reader, writer, pid|
       answers.each do |answer|
-        output << (reader.expect(PROMPT, 5)&.first.to_s)
+        output << expect_prompt(reader, pid)
         writer.print("#{answer}\r")
       end
-      output << drain(reader)
+      output << drain(reader, pid)
       Process.wait(pid)
     end
     output
   end
 
-  def drain(reader)
-    reader.read
-  rescue Errno::EIO
-    ""
+  def expect_prompt(reader, pid)
+    reader.expect(PROMPT, 5)&.first || stop_shell(pid, "no prompt within 5 seconds")
+  end
+
+  def drain(reader, pid)
+    output = +""
+    loop do
+      stop_shell(pid, "still running after 5 seconds: #{output}") unless reader.wait_readable(5)
+      output << reader.read_nonblock(4096)
+    end
+  rescue EOFError, Errno::EIO
+    output
+  end
+
+  def stop_shell(pid, message)
+    Process.kill("KILL", pid)
+    Process.wait(pid)
+    flunk "zsh #{message}"
   end
 end

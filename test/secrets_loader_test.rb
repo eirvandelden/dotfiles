@@ -269,7 +269,7 @@ class SecretsLoaderTest < Minitest::Test
     write_work_overlay
 
     stdout, stderr, status = run_unlock('unlock work; print -r -- "status=$? work=${WORK_TOKEN-unset} path=$PATH"',
-                                        "SECRETS_WORK_OP_ACCOUNT" => "")
+                                        "SECRETS_WORK_OP_ACCOUNT" => nil)
 
     assert_equal(0, status.exitstatus)
     assert_includes stderr, "SECRETS_WORK_OP_ACCOUNT"
