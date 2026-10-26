@@ -68,23 +68,80 @@ class HerdrWorkerScriptsTest < Minitest::Test
                     "#{worktree_path('some-change')} --no-focus")
   end
 
-  def test_handing_off_a_plan_stage_splits_a_pane_below_here
+  def test_handing_off_a_plan_stage_splits_right_of_the_intent_pane
     worktree_creatable!
+    record_row("some-change", "w1:pI term_I")
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split w1:pI --direction right --cwd " \
                     "#{worktree_path('some-change')} --no-focus")
   end
 
-  def test_handing_off_an_implement_stage_splits_a_pane_below_here
+  def test_handing_off_an_implement_stage_splits_right_of_the_plan_pane
     worktree_creatable!
+    record_row("some-change", "w1:pI term_I", "w1:pP term_P")
 
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split w1:pP --direction right --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
+    assert_empty(herdr_calls.grep(/\Apane split w1:pI/))
+  end
+
+  def test_handing_off_a_plan_stage_falls_back_to_the_caller_when_the_row_end_is_gone
+    worktree_creatable!
+    record_row("some-change", "w1:pI term_I")
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", extra_env: { "STUB_GONE_PANES" => "w1:pI" })
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction right --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
+  end
+
+  def test_an_autonomous_delivery_builds_the_row_intent_plan_implement
+    worktree_creatable!
+    split_ids("w1:pA", "w1:pB", "w1:pC")
+    cwd = worktree_path("some-change")
+
+    run_script(HAND_OFF_PLAN, "intent", "some-change", extra_env: split_ids_env)
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto", caller_pane: "w1:pA", extra_env: split_ids_env)
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto", caller_pane: "w1:pA", extra_env: split_ids_env)
+
+    assert_equal([ "pane split --current --direction down --cwd #{cwd} --no-focus",
+                   "pane split w1:pA --direction right --cwd #{cwd} --no-focus",
+                   "pane split w1:pB --direction right --cwd #{cwd} --no-focus" ],
+                 herdr_calls.grep(/\Apane split /))
+  end
+
+  def test_an_autonomous_implement_after_the_plan_pane_closed_opens_right_of_the_intent_pane
+    worktree_creatable!
+    record_row("some-change", "w1:pA term_A", "w1:pB term_B")
+
+    run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto", caller_pane: "w1:pA",
+                                                                    extra_env: { "STUB_GONE_PANES" => "w1:pB" })
+
+    assert_includes(herdr_calls,
+                    "pane split --current --direction right --cwd " \
+                    "#{worktree_path('some-change')} --no-focus")
+    assert_empty(herdr_calls.grep(/\Apane split w1:pB/))
+  end
+
+  def test_a_linked_hand_off_script_finds_open_column_beside_its_real_path
+    worktree_creatable!
+    linked_dir = Dir.mktmpdir
+    @extra_dirs << linked_dir
+    link = File.join(linked_dir, "hand-off-plan.sh")
+    File.symlink(HAND_OFF_PLAN, link)
+
+    _, stderr, status = run_script(link, "plan", "some-change")
+
+    assert(status.success?, stderr)
+    assert_includes(herdr_calls,
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change')} --no-focus")
   end
 
@@ -101,7 +158,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_includes(herdr_calls, "agent start plan-w1-pv --kind claude --pane w1:pV -- --model opus")
+    assert_includes(herdr_calls, "agent start plan-w1-pw --kind claude --pane w1:pW -- --model opus")
     assert_empty(herdr_calls.grep(/permission-mode/))
   end
 
@@ -134,7 +191,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
     assert_equal(1, herdr_calls.count { |call| call.start_with?("agent start intent-w1-pv ") })
   end
 
-  def test_every_stage_splits_its_pane_below
+  def test_only_the_intent_stage_splits_down
     worktree_creatable!
 
     %w[intent plan implement].each do |stage|
@@ -143,7 +200,8 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     splits = herdr_calls.grep(/\Apane split /)
     assert_equal(3, splits.size)
-    assert(splits.all? { |call| call.include?("--direction down") }, splits.inspect)
+    assert_includes(splits.first, "--direction down")
+    assert(splits.drop(1).all? { |call| call.include?("--direction right") }, splits.inspect)
   end
 
   def test_the_usage_message_lists_intent_plan_and_implement
@@ -158,7 +216,7 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_includes(herdr_calls, "agent start implement-w1-pv --kind claude --pane w1:pV -- --model sonnet")
+    assert_includes(herdr_calls, "agent start implement-w1-pw --kind claude --pane w1:pW -- --model sonnet")
   end
 
   def test_names_the_worker_stage_dash_pane
@@ -166,9 +224,9 @@ class HerdrWorkerScriptsTest < Minitest::Test
 
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert(herdr_calls.any? { |call| call.start_with?("agent prompt implement-w1-pv ") },
-           "expected a prompt sent to a worker named implement-w1-pv")
-    assert_includes(herdr_calls, "agent start implement-w1-pv --kind claude --pane w1:pV -- --model sonnet")
+    assert(herdr_calls.any? { |call| call.start_with?("agent prompt implement-w1-pw ") },
+           "expected a prompt sent to a worker named implement-w1-pw")
+    assert_includes(herdr_calls, "agent start implement-w1-pw --kind claude --pane w1:pW -- --model sonnet")
   end
 
 def test_the_intent_worker_is_told_not_to_commit_or_push_intent_md
@@ -474,9 +532,9 @@ end
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_includes(worker_prompt("plan"), report_path("plan-w1-pv"))
+    assert_includes(worker_prompt("plan"), report_path("plan-w1-pw"))
     assert_includes(worker_prompt("plan"), "pane w1:p1")
-    assert(File.directory?(File.dirname(report_path("plan-w1-pv"))),
+    assert(File.directory?(File.dirname(report_path("plan-w1-pw"))),
            "the worker cannot write a report into a directory that is not there")
   end
 
@@ -499,7 +557,7 @@ end
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change', checkout: main_checkout)} --no-focus")
   end
 
@@ -511,7 +569,7 @@ end
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change', checkout: submodule)} --no-focus")
   end
 
@@ -526,7 +584,7 @@ end
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{worktree_path('some-change', checkout: submodule)} --no-focus")
   end
 
@@ -536,18 +594,18 @@ end
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_path_survived(worker_prompt("plan"), report_path("plan-w1-pv"))
+    assert_path_survived(worker_prompt("plan"), report_path("plan-w1-pw"))
   end
 
   def test_clears_a_stale_report_left_by_an_earlier_session
     worktree_creatable!
-    stale = report_path("plan-w1-pv")
+    stale = report_path("plan-w1-pw")
     FileUtils.mkdir_p(File.dirname(stale))
     File.write(stale, "an earlier worker's notes\n")
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_includes(report_state_at_agent_start, "plan-w1-pv empty")
+    assert_includes(report_state_at_agent_start, "plan-w1-pw empty")
   end
 
   def test_stops_before_spawning_anything_when_the_report_directory_cant_be_created
@@ -593,7 +651,7 @@ end
     assert(status.success?, stderr)
     assert(File.directory?(worktree))
     assert_includes(herdr_calls,
-                    "pane split --current --direction down --cwd " \
+                    "pane split --current --direction right --cwd " \
                     "#{File.realpath(worktree)} --no-focus")
   end
 
@@ -615,7 +673,7 @@ end
     stdout, = run_script(HAND_OFF_PLAN, "plan", "some-change")
 
     assert_equal(1, stdout.lines.count, stdout)
-    assert_match(/plan-w1-pv/, stdout)
+    assert_match(/plan-w1-pw/, stdout)
   end
 
   def test_handing_off_records_each_stage_pane_for_the_change
@@ -624,8 +682,8 @@ end
     run_script(HAND_OFF_PLAN, "plan", "some-change")
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_equal([ "w1:pV term_V", "w1:pV term_V" ], stage_panes("some-change"))
-    assert_operator(herdr_calls.index("pane get w1:pV"), :<, herdr_calls.index { |call| call.start_with?("agent start") })
+    assert_equal([ "w1:pW term_W", "w1:pW term_W" ], stage_panes("some-change"))
+    assert_operator(herdr_calls.index("pane get w1:pW"), :<, herdr_calls.index { |call| call.start_with?("agent start") })
   end
 
   def test_handing_off_records_no_pane_when_its_terminal_cannot_be_read
@@ -665,6 +723,26 @@ end
 
     assert_includes(herdr_calls,
                     "pane split --current --direction right --cwd #{File.realpath(@repo)} --no-focus")
+  end
+
+  def test_reviewing_splits_right_of_the_last_stage_pane_of_the_change
+    @repo = linked_worktree
+    record_row("handed-over", "w1:pI term_I", "w1:pP term_P")
+
+    _, stderr, status = run_script(START_REVIEW)
+
+    assert(status.success?, stderr)
+    assert_includes(herdr_calls, "pane split w1:pP --direction right --cwd #{File.realpath(@repo)} --no-focus")
+  end
+
+  def test_reviewing_a_feature_branch_without_a_row_record_splits_right_of_the_caller
+    git("checkout", "--quiet", "-b", "feature")
+
+    _, stderr, status = run_script(START_REVIEW)
+
+    assert(status.success?, stderr)
+    assert_includes(herdr_calls, "pane split --current --direction right --cwd #{File.realpath(@repo)} --no-focus")
+    assert_equal([ "w1:pW term_W" ], stage_panes("feature"))
   end
 
   def test_reviewing_starts_claude_on_opus_in_the_new_pane
@@ -932,13 +1010,21 @@ end
       printf '%s\\n' "$*" >> "$HERDR_CALL_LOG"
       case "$1 $2" in
         "pane split")
-          case "$*" in
-            *"--direction down"*) echo '{"result":{"pane":{"pane_id":"w1:pV"}}}' ;;
-            *) echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
-          esac
+          case " $STUB_GONE_PANES " in *" $3 "*) exit 1 ;; esac
+          if [ -n "$STUB_SPLIT_IDS" ]; then
+            id=$(head -n 1 "$STUB_SPLIT_IDS")
+            tail -n +2 "$STUB_SPLIT_IDS" > "$STUB_SPLIT_IDS.next" && mv "$STUB_SPLIT_IDS.next" "$STUB_SPLIT_IDS"
+            printf '{"result":{"pane":{"pane_id":"%s"}}}\\n' "$id"
+          else
+            case "$*" in
+              *"--direction down"*) echo '{"result":{"pane":{"pane_id":"w1:pV"}}}' ;;
+              *) echo '{"result":{"pane":{"pane_id":"w1:pW"}}}' ;;
+            esac
+          fi
           ;;
         "pane get")
           [ -n "$STUB_PANE_GET_FAILS" ] && exit 1
+          case " $STUB_GONE_PANES " in *" $3 "*) exit 1 ;; esac
           printf '{"result":{"pane":{"pane_id":"%s","terminal_id":"term_%s"}}}\\n' "$3" "${3#w1:p}"
           ;;
         "agent start")
@@ -982,9 +1068,23 @@ end
     @call_log ||= File.join(@stub_bin, "calls.log")
   end
 
-  # every stage splits its pane downward, so they share one stubbed pane id (w1:pV).
+  # the intent stage splits down (stubbed pane w1:pV); every later stage splits right (w1:pW).
   def worker_name(stage)
-    "#{stage}-w1-pv"
+    stage == "intent" ? "intent-w1-pv" : "#{stage}-w1-pw"
+  end
+
+  def record_row(slug, *lines)
+    FileUtils.mkdir_p(report_directory)
+    File.write(File.join(report_directory, "stage-panes-#{slug}"), lines.map { |line| "#{line}\n" }.join)
+  end
+
+  def split_ids(*ids)
+    @split_ids_file = File.join(@stub_bin, "split-ids")
+    File.write(@split_ids_file, ids.map { |id| "#{id}\n" }.join)
+  end
+
+  def split_ids_env
+    { "STUB_SPLIT_IDS" => @split_ids_file }
   end
 
   def worker_prompt(stage)
