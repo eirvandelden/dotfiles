@@ -259,3 +259,7 @@ Domain skills applied: software-design, glossary, diagrams, object-oriented-desi
 - Replacing the RubyGems test drops its Gem assertion, against intent's no-lost-assertion constraint → fixed (the test keeps its name, probe and claim; it asserts the probe file is absent, so no RubyGems loaded)
 - The stub invariant promises equal stderr for every call while the missing-key message changes → fixed (invariant limited to registered calls; unmatched calls exit non-zero, text recorded as different in Risks)
 - Rejecting tab and newline keys silently narrows stub_response → fixed (recorded as a Design decision with a test_a_key_with_a_tab_or_newline_is_refused test)
+
+## Departures
+
+Steps 6 and 7 changed out when the gate ran: the shell stub (two designs) and the `--disable-gems` shebang in `worktree_create_test.rb` did not beat the run-to-run spread, so neither is in the branch. The git quiet settings and the hookless template stayed. `timings.md` has the three pair tables. The gate also moved to interleaved base/branch pairs because the machine load swamped separate runs; `timings.md` explains.
