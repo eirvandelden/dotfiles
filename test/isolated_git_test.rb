@@ -29,6 +29,15 @@ class IsolatedGitTest < Minitest::Test
     end
   RUBY
 
+  # Runs git the way a test does when it gives a child its own config: GIT_CONFIG_GLOBAL set on the git
+  # process itself, after the helper loaded. user.name proves git reads that file at all.
+  OWN_CONFIG_SCRIPT = <<~'RUBY'.freeze
+    own = { "GIT_CONFIG_GLOBAL" => ARGV.fetch(0) }
+    %w[user.name maintenance.auto gc.auto].each do |key|
+      puts IO.popen(own, ["git", "config", "--show-scope", "--get", key], &:read).split.join("\t")
+    end
+  RUBY
+
   INIT_SCRIPT = <<~'RUBY'.freeze
     require "tmpdir"
     Dir.mktmpdir do |dir|
@@ -119,13 +128,12 @@ class IsolatedGitTest < Minitest::Test
 
   def test_the_quiet_settings_win_over_a_childs_own_global_config
     own_config = File.join(@config_home, "own-config")
-    File.write(own_config, "[maintenance]\n\tauto = true\n[gc]\n\tauto = 6700\n")
+    File.write(own_config, "[user]\n\tname = Own\n[maintenance]\n\tauto = true\n[gc]\n\tauto = 6700\n")
 
-    output, status = run_child({ "GIT_CONFIG_GLOBAL" => own_config }, RbConfig.ruby, "-Itest", "-risolated_git", "-e",
-                               SETTINGS_SCRIPT)
+    output, status = run_child(RbConfig.ruby, "-Itest", "-risolated_git", "-e", OWN_CONFIG_SCRIPT, own_config)
 
     assert(status.success?, output)
-    assert_equal([ "command\tfalse", "command\t0" ], output.lines.map(&:chomp))
+    assert_equal([ "global\tOwn", "command\tfalse", "command\t0" ], output.lines.map(&:chomp))
   end
 
   def test_a_commit_under_the_helper_starts_no_maintenance
