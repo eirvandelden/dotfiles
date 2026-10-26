@@ -255,7 +255,7 @@ class IsolatedGitTest < Minitest::Test
     environment = { "HOME" => @config_home, "XDG_CONFIG_HOME" => @config_home,
                     "GIT_CONFIG_GLOBAL" => nil, "GIT_CONFIG_SYSTEM" => nil,
                     "GIT_CONFIG_COUNT" => nil, "GIT_TEMPLATE_DIR" => nil }
-    environment = environment.merge(command.shift) if command.first.is_a?(Hash)
-    Open3.capture2e(environment, *command, chdir: chdir)
+    overrides, *arguments = command.first.is_a?(Hash) ? command : [ {}, *command ]
+    Open3.capture2e(environment.merge(overrides), *arguments, chdir: chdir)
   end
 end
