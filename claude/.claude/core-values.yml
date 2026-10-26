@@ -26,3 +26,10 @@ sections:
     - "Never post, comment, or reply on GitHub as the user without explicit approval for that exact message."
     - "Ask before adding or removing a dependency."
     - "In autonomous delivery, agents never merge a pull request; Etienne's /finish is the merge approval."
+  questions:
+    - "Name the actor, Claude or Etienne. Never write \"I\" or \"you\" in a question or an option label."
+    - "Write each option label as an order to Claude."
+    - "Give each option description three lines: \"Claude does:\", \"You do:\" and \"Result:\"."
+    - "Put the recommended option first, with one reason."
+    - "Give a single-select question with side effects (push, delete, install, config, deploy) a preview with `[Claude]` and `[You]` tagged lines. Codex puts that preview in a fenced block under the option."
+    - "In Claude Code, the `question-wording-guard.rb` hook denies a question or an option label that holds I, I'll, I'm, I've, I'd, me, my, you, you'll, you're, you'd, you've, your or yours outside backticks."
