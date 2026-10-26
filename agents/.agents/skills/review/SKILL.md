@@ -1,7 +1,6 @@
 ---
 name: review
 description: Reviews this branch — a fresh reviewer in a herdr pane by default, or the reviewer agent forked in-session with "here". The reviewer stays report-only; a clean review hands over to the deliver skill, which opens the draft PR.
-disable-model-invocation: true
 arguments:
   - name: backend
     description: "(default) a fresh reviewer in a herdr pane via start-review.sh; \"here\": the reviewer agent forked in-session instead."
