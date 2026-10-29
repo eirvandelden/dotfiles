@@ -44,7 +44,7 @@ classDiagram
 
 ### Signatures
 
-No production Ruby changes. The production change is one frontmatter line in `agents/.agents/skills/review/SKILL.md`.
+No production Ruby changes. The production change is one frontmatter line in `agents/.agents/skills/review/SKILL.md`, plus the hand-over gate and description wording added after review rounds 1 to 3.
 
 - `SkillParityTest` — the drift guard between Claude and Codex skill folders.
   - `AGENT_INVOKED = %w[review worktree-first].freeze`
@@ -52,6 +52,8 @@ No production Ruby changes. The production change is one frontmatter line in `ag
   - `test_deliver_and_finish_stay_disabled_for_model_invocation` (new)
 - `DeliveryContractTest` — pins the skill text that carries each hand-over.
   - `test_review_names_no_merge_command` (new)
+  - `test_review_hands_over_to_deliver_only_for_a_review_the_user_typed` (new)
+  - `test_review_description_gates_the_deliver_hand_over_on_a_review_the_user_started` (new)
 
 The surrounding test files carry no inline RBS comments, so the new test methods carry none either.
 
@@ -78,7 +80,7 @@ Not affected: the new tests read a few small files each, with no subprocess and 
 
 - The regression test iterates `AGENT_INVOKED` rather than naming `review` alone. It is red before the fix because `review` still carries the flag, and it also covers `worktree-first`.
 - `test_review_names_no_merge_command` lives in `DeliveryContractTest`, beside the other merge-text guards (`test_only_finish_auto_mode_names_the_ship_no_merge_script`). It refutes `gh pr merge` and `finish/scripts/ship` in `review/SKILL.md`.
-- No other text describes `review` as model-disabled. A search of `agents/`, `claude/`, `codex/`, `SKILLS-INDEX.md`, `agents.md` and `test/` finds the flag only in the three frontmatters and the parity test. The only text update is the comment above `AGENT_INVOKED`.
+- No other text describes `review` as model-disabled. A search of `agents/`, `claude/`, `codex/`, `SKILLS-INDEX.md`, `agents.md` and `test/` finds the flag only in the three frontmatters and the parity test. The text updates are the comment above `AGENT_INVOKED`, and, after review rounds 1 to 3, the `Review clean:` line and the `description` in `review/SKILL.md`, which gate the `deliver` hand-over on a review the user started.
 - No conflict with `intent.md`'s `## Decisions`: the flag is dropped, `intent/SKILL.md` keeps its wording, and the Codex `allow_implicit_invocation: false` stays.
 
 ## Integration points
@@ -90,8 +92,8 @@ Not affected: the new tests read a few small files each, with no subprocess and 
 ## Files that change
 
 - `test/skill_parity_test.rb` — add `review` to `AGENT_INVOKED`, extend the comment above it, add the two new tests.
-- `test/delivery_contract_test.rb` — add `test_review_names_no_merge_command` and `test_review_hands_over_to_deliver_only_for_a_review_the_user_typed`.
-- `agents/.agents/skills/review/SKILL.md` — also gate the `Review clean:` hand-over to `deliver` on a review the user started (review round 1).
+- `test/delivery_contract_test.rb` — add `test_review_names_no_merge_command`, `test_review_hands_over_to_deliver_only_for_a_review_the_user_typed` and `test_review_description_gates_the_deliver_hand_over_on_a_review_the_user_started`.
+- `agents/.agents/skills/review/SKILL.md` — also gate the `Review clean:` hand-over to `deliver` on a review the user started, and qualify the `description` the same way (review rounds 1 to 3).
 - `agents/.agents/skills/review/SKILL.md` — delete the line `disable-model-invocation: true`.
 
 ## Order of work
