@@ -3,7 +3,7 @@ name: plan
 description: Use once intent.md is accepted, before any code — writes docs/changes/<slug>/plan.md in plan mode, critically reviews an existing plan, or absorbs a plan another agent should execute.
 arguments:
   - name: backend
-    description: "(default) a fresh Opus pane below via hand-off-plan.sh; \"here\": write in this session instead; \"here auto\": write, critique and accept without Etienne on a personal autonomous change."
+    description: "(default) a fresh Opus pane as the next column of the change's row via hand-off-plan.sh; \"here\": write in this session instead; \"here auto\": write, critique and accept without Etienne on a personal autonomous change."
 ---
 
 # Plan
@@ -23,7 +23,7 @@ Three roles. Do only the one asked for.
 ~/.config/herdr/scripts/hand-off-plan.sh plan <slug>
 ```
 
-Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>` — and, in the same prompt, to write `plan.md` and touch nothing else in that worktree until Etienne says the literal word "accepted" or "agreed." Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
+Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, opens a pane as the next column of the change's row, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>` — and, in the same prompt, to write `plan.md` and touch nothing else in that worktree until Etienne says the literal word "accepted" or "agreed." Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 

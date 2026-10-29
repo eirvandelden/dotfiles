@@ -2,7 +2,8 @@
 # hand-off-plan.sh <stage> <change-slug> [--auto]
 #
 # Hands a stage (intent, plan, or implement) of docs/changes/<change-slug> to a fresh
-# Claude worker in a pane split below the caller.
+# Claude worker. The intent stage opens in a pane below the caller, a new row; plan and implement
+# open as the next column of the change's row, right of its last pane (open-column.sh).
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
 # The intent stage leaves intent.md uncommitted; the plan stage commits intent.md and plan.md together.
@@ -157,15 +158,16 @@ fi
 worktree_tools="${WORKTREE_TOOLS_DIR:-$HOME/.config/git/worktree-tools}"
 worker_cwd=$(cd "$main_checkout" && "$worktree_tools/worktree-create" "$slug" --no-pane)
 
-split=$(herdr pane split --current --direction down --cwd "$worker_cwd" --no-focus)
-pane=$(printf '%s' "$split" | jq -r '.result.pane.pane_id')
-
-# deliver closes this change's idle stage panes once the PR exists, and only the panes listed here.
-# The terminal id tells this pane from a later one that reuses its id; without it, nothing is listed.
-terminal=$(herdr pane get "$pane" 2>/dev/null | jq -r '.result.pane.terminal_id // empty' || true)
-if [ -n "$terminal" ]; then
-  printf '%s %s\n' "$pane" "$terminal" >>"$report_directory/stage-panes-$slug"
+# open-column.sh places the pane and lists it in the row record, which deliver reads to close this
+# change's idle stage panes once the PR exists.
+scripts_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")")
+placement=""
+position="in the next column of its row"
+if [ "$stage" = "intent" ]; then
+  placement="--new-row"
+  position="in a pane below"
 fi
+pane=$("$scripts_dir/open-column.sh" "$worker_cwd" --row "$slug" $placement)
 
 # Pane ids are unique for the life of the session, so they make a good name. They also carry
 # uppercase letters (w1:pV), which Herdr's agent names may not, hence the lowercasing. Two ids
@@ -222,5 +224,5 @@ Whether that report line gets through or not, then run herdr pane close \$HERDR_
 own pane's id from your shell, not the coordinator's id above) to close your own pane; the \
 report is on disk regardless, so nothing is lost." >/dev/null
 
-echo "Handed the $stage stage of docs/changes/$slug to $worker in a pane below. Its \
+echo "Handed the $stage stage of docs/changes/$slug to $worker $position. Its \
 report will land in $report."
