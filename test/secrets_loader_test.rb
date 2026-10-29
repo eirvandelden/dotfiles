@@ -39,12 +39,13 @@ class SecretsLoaderTest < Minitest::Test
     assert_includes op_calls, "op://Work/token/credential --account employer"
   end
 
-  def test_unlock_both_without_the_work_account_warns_and_loads_personal
+  def test_secrets_both_without_the_work_account_warns_and_loads_personal
     write_work_overlay
 
     stdout, stderr, status = run_secrets("both", "SECRETS_WORK_OP_ACCOUNT" => "")
 
     assert_equal(0, status.exitstatus, stderr)
+    assert_includes stdout, "export PERSONAL_TOKEN="
     assert_equal [], stdout.lines.grep(/WORK_TOKEN/)
     assert_includes stderr, "SECRETS_WORK_OP_ACCOUNT"
   end
@@ -289,12 +290,14 @@ class SecretsLoaderTest < Minitest::Test
   end
 
   def test_unlock_work_without_the_work_overlay_fails_and_applies_nothing
-    stdout, stderr, status = run_unlock('unlock work; print -r -- "status=$? path=$PATH"', "SECRETS_WORK_OP_ACCOUNT" => "employer")
+    stdout, stderr, status = run_unlock('unlock work; print -r -- "status=$? work=${WORK_TOKEN-unset} path=$PATH"',
+                                        "SECRETS_WORK_OP_ACCOUNT" => "employer")
 
     assert_equal(0, status.exitstatus)
     assert_includes stderr, "secrets: config not found:"
-    assert_includes stdout, "status=1"
+    assert_includes stdout, "status=1 work=unset"
     refute_includes stdout, SHIM_DIR
+    assert_equal "", op_calls
   end
 
   def test_unlock_personal_ignores_the_work_overlay_without_a_work_account
