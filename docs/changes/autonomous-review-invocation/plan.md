@@ -123,7 +123,7 @@ Not affected: the new tests read a few small files each, with no subprocess and 
 
 Per changed file, the unit tests expected, named as behaviour:
 - `test/skill_parity_test.rb`: `agent-invoked skills are model-invocable on Claude and deny implicit invocation on Codex`, `deliver and finish stay disabled for model invocation`.
-- `test/delivery_contract_test.rb`: `review names no merge command`.
+- `test/delivery_contract_test.rb`: `review names no merge command` (no skill in autonomous mode runs a merge), `review hands over to deliver only for a review the user typed` and `review description gates the deliver hand over on a review the user started` (a Claude-started review never runs `deliver`).
 - `agents/.agents/skills/review/SKILL.md`: covered by the parity tests above.
 
 Test setup: the tests read the real repository files through the existing `frontmatter` and `skill` helpers. No fixtures, no subprocess.

@@ -47,6 +47,12 @@ class DeliveryContractTest < Minitest::Test
     end
   end
 
+  def test_review_description_gates_the_deliver_hand_over_on_a_review_the_user_started
+    description = frontmatter(File.join(SKILLS, "review/SKILL.md")).fetch("description")
+
+    assert_match(/a clean review the user started hands over to the deliver skill/i, description)
+  end
+
   def test_the_reviewer_rules_allow_the_deliver_check_its_output_asks_for
     reviewer = File.read(File.join(REPO_ROOT, "claude/.claude/agents/reviewer.md"))
     bash_rule = line_with(section_of(reviewer, "## Rules"), "`Bash` is for")
