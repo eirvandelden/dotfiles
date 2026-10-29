@@ -4,12 +4,12 @@ require_relative "isolated_git"
 
 # The journal_administration app answers MCP requests behind a per-user bearer token. Codex reads
 # the token from JOURNAL_ASSISTANT_TOKEN through its config; Claude gets it from a one-time
-# `claude mcp add` command documented in HEADROOM.md. Both files are read as text: Ruby has
+# `claude mcp add` command documented in MCP.md. Both files are read as text: Ruby has
 # no TOML parser in its standard library, and a gem would be a new dependency.
 class JournalMcpTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   CODEX_CONFIG = File.join(REPO_ROOT, "codex/.codex/config.toml")
-  HEADROOM = File.join(REPO_ROOT, "claude/.claude/HEADROOM.md")
+  MCP_DOC = File.join(REPO_ROOT, "claude/.claude/MCP.md")
   URL = "http://finances.home.arpa/mcp".freeze
 
   def test_codex_declares_journal_with_its_url_and_token_variable
@@ -29,16 +29,16 @@ class JournalMcpTest < Minitest::Test
     assert_empty tool_tables
   end
 
-  def test_headroom_registers_journal_for_claude_with_the_token_left_unexpanded
-    section = headroom_section_naming("journal")
+  def test_mcp_doc_registers_journal_for_claude_with_the_token_left_unexpanded
+    section = mcp_doc_section_naming("journal")
     command = "claude mcp add --scope user --transport http journal #{URL} \\\n" \
               "  --header 'Authorization: Bearer ${JOURNAL_ASSISTANT_TOKEN}'"
 
     assert_includes section, command
   end
 
-  def test_headroom_says_to_unlock_before_starting_claude_for_journal
-    section = headroom_section_naming("journal")
+  def test_mcp_doc_says_to_unlock_before_starting_claude_for_journal
+    section = mcp_doc_section_naming("journal")
 
     assert_match(/run `unlock` before `claude`/, section)
   end
@@ -61,8 +61,8 @@ class JournalMcpTest < Minitest::Test
     end
   end
 
-  def headroom_section_naming(name)
-    File.read(HEADROOM).split(/^(?=### )/).find { |section| section.lines.first.include?(name) } ||
-      flunk("HEADROOM.md has no ### section naming #{name}")
+  def mcp_doc_section_naming(name)
+    File.read(MCP_DOC).split(/^(?=### )/).find { |section| section.lines.first.include?(name) } ||
+      flunk("MCP.md has no ### section naming #{name}")
   end
 end

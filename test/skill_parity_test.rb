@@ -150,6 +150,14 @@ class SkillParityTest < Minitest::Test
     assert_equal(File.realpath(claude_doc), File.realpath(codex_doc))
   end
 
+  def test_codex_mcp_doc_resolves_to_the_claude_one
+    codex_doc = File.join(REPO_ROOT, "codex/.codex/MCP.md")
+    claude_doc = File.join(REPO_ROOT, "claude/.claude/MCP.md")
+
+    assert(File.symlink?(codex_doc), "#{codex_doc} is not a symlink")
+    assert_equal(File.realpath(claude_doc), File.realpath(codex_doc))
+  end
+
   def test_packages_conf_lists_agents_in_stow_and_stow_shared
     assert_includes(bash_array("STOW"), "agents")
     assert_includes(bash_array("STOW_SHARED"), "agents")

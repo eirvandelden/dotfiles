@@ -1,24 +1,8 @@
-# Headroom
+# MCP
 
-Context compression layer for Claude Code and Codex sessions.
+One-time MCP server setup for Claude Code and Codex, and the Codex daemon rules after `unlock`.
 
 ## Claude
-
-### Launch
-
-```bash
-headroom wrap claude                    # full integration (preferred)
-headroom wrap claude -- --model opus    # pass flags through to claude
-headroom unwrap claude                  # remove durable wrapping
-```
-
-### Meta commands
-
-```bash
-headroom stats                          # token savings
-headroom update                         # self-update
-headroom learn                          # mine session learnings → CLAUDE.md
-```
 
 ### Semble (semantic code search MCP)
 
@@ -62,25 +46,11 @@ Then start `claude`, run `/mcp`, and log in once on TREK's consent screen.
 
 ## Codex
 
-### Launch
+### Unlocked sessions
 
-```bash
-headroom wrap codex                     # full integration (preferred)
-headroom wrap codex -- --model opus     # pass flags through to codex
-headroom unwrap codex                   # remove durable wrapping
-```
-
-After `unlock`, `codex` and `headroom wrap codex` run in-process (`--no-daemon`) through the shim in `zsh/.config/zsh/unlocked-bin`, off the shared daemon, so they do not show in `codex agents`.
+After `unlock`, `codex` runs in-process (`--no-daemon`) through `zsh/.config/zsh/unlocked-bin/codex`, off the shared daemon, so its sessions do not show in `codex agents`.
 
 Never start the background server from an unlocked session ("Start background server" in the agents overview, or a handoff to it). When no shared daemon runs, Codex starts it from that session's environment, and every later Codex session and ChatGPT.app agent then sees the secrets. To clear them, stop the daemon from a locked shell: `codex app-server daemon stop`. This interrupts the work that runs on it. The next `codex` from a locked shell starts a new daemon with that shell's environment.
-
-### Meta commands
-
-```bash
-headroom stats                          # token savings
-headroom update                         # self-update
-headroom learn                          # mine session learnings
-```
 
 ### TREK MCP login
 
