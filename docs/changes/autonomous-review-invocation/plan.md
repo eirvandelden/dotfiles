@@ -90,7 +90,8 @@ Not affected: the new tests read a few small files each, with no subprocess and 
 ## Files that change
 
 - `test/skill_parity_test.rb` — add `review` to `AGENT_INVOKED`, extend the comment above it, add the two new tests.
-- `test/delivery_contract_test.rb` — add `test_review_names_no_merge_command`.
+- `test/delivery_contract_test.rb` — add `test_review_names_no_merge_command` and `test_review_hands_over_to_deliver_only_for_a_review_the_user_typed`.
+- `agents/.agents/skills/review/SKILL.md` — also gate the `Review clean:` hand-over to `deliver` on a review the user started (review round 1).
 - `agents/.agents/skills/review/SKILL.md` — delete the line `disable-model-invocation: true`.
 
 ## Order of work
@@ -107,7 +108,7 @@ Not affected: the new tests read a few small files each, with no subprocess and 
 ## Risks
 
 - In step-by-step mode Claude may now start `/review` on its own. `intent.md` accepts this: the skill is report-only.
-- A Claude coordinator that runs the `review` skill in step-by-step mode reaches "run `deliver` without asking" under "After either backend". This is unchanged behaviour and already true for a typed `/review`.
+- A Claude coordinator that runs the `review` skill in step-by-step mode reaches "run `deliver` without asking" under "After either backend". Review round 1 found this routes around `deliver`'s flag, so commit 14817b86 gates the hand-over on a review the user started: a typed `/review`, or a re-review inside a `/code-review` the user asked for. A review Claude starts on its own reports and stops. `test_review_hands_over_to_deliver_only_for_a_review_the_user_typed` pins it.
 - The tests prove the frontmatter, not the Skill tool's runtime behaviour. The live skill path links to the main checkout, so the runtime check can run only after the merge. Rejected: a pre-merge probe with a disposable `CLAUDE_CONFIG_DIR`, because it is not deterministic and needs its own credentials setup. The structural test is the formal proof, and the live check is a required post-merge validation (see `## Proof`).
 - Out of scope: `deliver` and `finish` flags and behaviour, the review skill's backends and auto-mode steps, the reviewer agent, and the wording of `intent/SKILL.md`.
 

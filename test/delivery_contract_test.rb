@@ -25,8 +25,9 @@ class DeliveryContractTest < Minitest::Test
   def test_review_hands_over_to_deliver_only_for_a_review_the_user_typed
     line = line_with(section_of(skill("review"), "## After either backend"), "Review clean:")
 
-    assert_match(/only when .*typed/i, line)
+    assert_match(/only when the user started this review, by typing `\/review`/i, line)
     assert_match(/started it yourself/i, line)
+    assert_match(/re-review inside a `\/code-review` the user asked for/i, line)
   end
 
   def test_review_on_review_ready_only_summarises
