@@ -2,12 +2,11 @@
 # start-review.sh
 #
 # Opens a Claude reviewer as the next column of the change's row, right of its last pane, to look at
-# this branch. Report-only: it reads
-# REVIEW.md, this branch's change folder, and the diff, then appends a round to
-# docs/changes/<slug>/review.md and leaves it uncommitted until the review converges, then commits it
-# through commit-review and pushes the branch — the same contract the `reviewer` agent follows for
-# the in-session backend, so one location satisfies the pre-push freshness check regardless of
-# which backend produced it.
+# this branch. Report-only: it reads REVIEW.md, this branch's change folder, and the diff, then
+# appends a round to docs/changes/<slug>/review.md and leaves it uncommitted until the review
+# converges, then commits it through commit-review and pushes the branch — the same contract the
+# `reviewer` agent follows for the in-session backend, so one location satisfies the pre-push
+# freshness check regardless of which backend produced it.
 
 set -euo pipefail
 

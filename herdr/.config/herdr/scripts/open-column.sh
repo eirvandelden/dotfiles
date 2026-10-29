@@ -47,10 +47,11 @@ done
 if [ -z "$slug" ] && { [ "$new_row" = 1 ] || [ "$unlisted" = 1 ]; }; then usage; fi
 if [ "$new_row" = 1 ] && [ "$unlisted" = 1 ]; then usage; fi
 
-# Prints the pane id of a split, or nothing when herdr refuses it.
+# Prints the pane id of a split, or nothing when herdr refuses it. herdr's own reason goes to
+# stderr; the caller silences it for a split that has a fallback.
 split_pane() {
   local answer
-  answer=$(herdr pane split "$@" --cwd "$cwd" --no-focus 2>/dev/null) || return 0
+  answer=$(herdr pane split "$@" --cwd "$cwd" --no-focus) || return 0
   printf '%s' "$answer" | jq -r '.result.pane.pane_id // empty' 2>/dev/null || true
 }
 
@@ -78,7 +79,7 @@ if [ "$new_row" = 1 ]; then
   pane=$(split_pane --current --direction down)
 else
   anchor=$(row_end)
-  [ -z "$anchor" ] || pane=$(split_pane "$anchor" --direction right)
+  [ -z "$anchor" ] || pane=$(split_pane "$anchor" --direction right 2>/dev/null)
   [ -n "$pane" ] || pane=$(split_pane --current --direction right)
 fi
 

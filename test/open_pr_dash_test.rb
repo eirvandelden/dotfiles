@@ -67,7 +67,9 @@ class OpenPrDashTest < Minitest::Test
   end
 
   def test_falls_back_to_the_caller_when_no_pane_of_the_change_is_live
-    stub_response("herdr pane get w1:pB", { "exit" => 1, "stderr" => "pane w1:pB not found\n" })
+    %w[w1:pA w1:pB].each do |pane|
+      stub_response("herdr pane get #{pane}", { "exit" => 1, "stderr" => "pane #{pane} not found\n" })
+    end
 
     assert_anchored_on_the_caller_pane
   end
