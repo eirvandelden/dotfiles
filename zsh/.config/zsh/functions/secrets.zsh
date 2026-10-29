@@ -3,12 +3,17 @@
 # Minimal secrets loader for zsh + 1Password CLI.
 #
 # Usage (sets vars in the CURRENT shell):
-#   unlock             # exports the secrets and puts unlocked-bin/ first on PATH
-#   eval "$(secrets)"  # exports only
+#   unlock [personal|work|both]             # exports the secrets and puts unlocked-bin/ first on PATH
+#   eval "$(secrets [personal|work|both])"  # exports only
+#
+# A bare call on a terminal shows a menu on stderr: cancel, personal, work, both.
+# A bare call without a terminal prints a usage line and loads nothing.
 #
 # Reads:
-#   ~/.config/secrets/1password.env
-#   ~/.config/secrets/1password.work.env (optional; loaded if present)
+#   personal: ~/.config/secrets/1password.env, from the personal account
+#   work:     ~/.config/secrets/1password.work.env, from $SECRETS_WORK_OP_ACCOUNT
+#   both:     both files; the work file is optional and skipped with a warning
+#             when the account is unset
 #
 # File format (one per line):
 #   VAR_NAME=op://<vault>/<item>/<field>
@@ -18,20 +23,63 @@
 # - This function prints shell-safe `export` statements (no secret values echoed
 #   except via the exports you eval into your shell).
 
+# Turns the caller's arguments into one valid scope on stdout.
+# Args:
+#   1: caller name (unlock or secrets), for messages
+#   2: optional scope word (personal, work or both)
+# Status: 0 scope printed, 1 cancelled at the menu, 2 usage error.
+_secrets_scope() {
+  emulate -L zsh
+
+  local caller="$1"
+  if (( $# == 1 )) && [[ -t 0 ]]; then
+    _secrets_scope_menu "$caller"
+    return $?
+  fi
+
+  if (( $# == 2 )); then
+    case "$2" in
+      personal|work|both) print -r -- "$2"; return 0 ;;
+    esac
+  fi
+
+  print -u2 "usage: $caller [personal|work|both]"
+  return 2
+}
+
+# Shows the scope menu on stderr and prints the chosen scope on stdout.
+# Args:
+#   1: caller name, for the prompt and messages
+# Status: 0 scope printed, 1 cancelled or end of input.
+_secrets_scope_menu() {
+  emulate -L zsh
+
+  # `select` reads PROMPT3; -x tells shellcheck it is used.
+  local -x PROMPT3="$1: scope? "
+  local choice
+  select choice in cancel personal work both; do
+    [[ -n "$choice" ]] && break
+  done
+
+  if [[ -z "$choice" || "$choice" == cancel ]]; then
+    print -u2 "$1: cancelled"
+    return 1
+  fi
+  print -r -- "$choice"
+}
+
 secrets() {
   emulate -L zsh
   set -euo pipefail
+
+  local scope
+  scope="$(_secrets_scope secrets "$@")" || return $?
 
   local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/secrets/1password.env"
   local cfg_work="${XDG_CONFIG_HOME:-$HOME/.config}/secrets/1password.work.env"
 
   if ! command -v op >/dev/null 2>&1; then
     print -u2 "secrets: 1Password CLI not found: op"
-    return 1
-  fi
-
-  if [[ ! -f "$cfg" ]]; then
-    print -u2 "secrets: config not found: $cfg"
     return 1
   fi
 
@@ -107,26 +155,56 @@ secrets() {
   local personal_account="vandelden"
   local work_account="${SECRETS_WORK_OP_ACCOUNT:-}"
 
-  _secrets_emit_file "$cfg" "base" "$personal_account" || return 1
+  _secrets_load_personal() {
+    if [[ ! -f "$cfg" ]]; then
+      print -u2 "secrets: config not found: $cfg"
+      return 1
+    fi
+    _secrets_emit_file "$cfg" "base" "$personal_account"
+  }
+
+  _secrets_load_work() {
+    if [[ -z "$work_account" ]]; then
+      print -u2 "secrets: SECRETS_WORK_OP_ACCOUNT is unset; the work scope needs it"
+      return 1
+    fi
+    if [[ ! -f "$cfg_work" ]]; then
+      print -u2 "secrets: config not found: $cfg_work"
+      return 1
+    fi
+    _secrets_emit_file "$cfg_work" "work" "$work_account"
+  }
 
   # Optional overlay (not required, typically gitignored). Without an account
   # the references would be read from the personal one, so skip it instead.
-  if [[ -f "$cfg_work" && -z "$work_account" ]]; then
-    print -u2 "secrets: SECRETS_WORK_OP_ACCOUNT is unset, skipping $cfg_work"
-  elif [[ -f "$cfg_work" ]]; then
-    _secrets_emit_file "$cfg_work" "work" "$work_account" || return 1
-  fi
+  _secrets_load_overlay() {
+    if [[ -f "$cfg_work" && -z "$work_account" ]]; then
+      print -u2 "secrets: SECRETS_WORK_OP_ACCOUNT is unset, skipping $cfg_work"
+    elif [[ -f "$cfg_work" ]]; then
+      _secrets_emit_file "$cfg_work" "work" "$work_account"
+    fi
+  }
+
+  case "$scope" in
+    personal) _secrets_load_personal || return 1 ;;
+    work) _secrets_load_work || return 1 ;;
+    both)
+      _secrets_load_personal || return 1
+      _secrets_load_overlay || return 1
+      ;;
+  esac
 }
 
-# Exports the secrets into the current shell and puts unlocked-bin/ first on
-# PATH, so the `codex` shim there keeps Codex sessions off the shared daemon
+# Exports one scope of the secrets into the current shell and puts unlocked-bin/
+# first on PATH, so the `codex` shim there keeps Codex sessions off the shared daemon
 # (Codex 0.160+) and the unlocked environment reaches their MCP servers.
-# Nothing is applied when `secrets` fails.
+# Nothing is applied when the scope is cancelled or `secrets` fails.
 unlock() {
-  local exports
+  local exports scope
   local shim_dir="${ZDOTDIR:-$HOME/.config/zsh}/unlocked-bin"
 
-  exports="$(secrets)" || return 1
+  scope="$(_secrets_scope unlock "$@")" || return $?
+  exports="$(secrets "$scope")" || return 1
   eval "$exports"
 
   if [[ ! -x "$shim_dir/codex" ]]; then
