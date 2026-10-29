@@ -200,6 +200,13 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Applies to personal and work projects both.
 26. Markdown prose:
     - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
+27. Agent questions, in `AskUserQuestion` and in Codex's numbered plain-text options:
+    - Name the actor, Claude or Etienne. Never write "I" or "you" in a question or an option label.
+    - Write each option label as an order to Claude.
+    - Give each option description three lines: "Claude does:", "You do:" and "Result:".
+    - Put the recommended option first, with one reason.
+    - Give a single-select question with side effects (push, delete, install, config, deploy) a preview with `[Claude]` and `[You]` tagged lines. Codex puts that preview in a fenced block under the option.
+    - In Claude Code, the `question-wording-guard.rb` hook denies a question or an option label that holds I, I'll, I'm, I've, I'd, me, my, you, you'll, you're, you'd, you've, your or yours outside backticks.
 
 ## 7a. Autonomous delivery (Personal)
 
