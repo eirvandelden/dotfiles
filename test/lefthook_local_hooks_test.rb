@@ -160,6 +160,7 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/^npx --no eslint app\.js$/, File.read(@log_file))
   end
 
+  #: () -> void
   def test_pre_commit_browserslist_runs_through_npx_no
     setup_repo("trunk")
     stub_real_lefthook
@@ -170,6 +171,7 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/^npx --no browserslist$/, File.read(@log_file))
   end
 
+  #: () -> void
   def test_pre_push_browserslist_runs_through_npx_no
     setup_repo("trunk")
     stub_real_lefthook
