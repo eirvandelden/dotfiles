@@ -22,6 +22,14 @@ class DeliveryContractTest < Minitest::Test
     assert_match(/without asking/i, section)
   end
 
+  def test_review_hands_over_to_deliver_only_for_a_review_the_user_typed
+    line = line_with(section_of(skill("review"), "## After either backend"), "Review clean:")
+
+    assert_match(/only when the user started this review, by typing `\/review`/i, line)
+    assert_match(/started it yourself/i, line)
+    assert_match(/re-review inside a `\/code-review` the user asked for/i, line)
+  end
+
   def test_review_on_review_ready_only_summarises
     line = line_with(section_of(skill("review"), "## After either backend"), "Review ready:")
 
@@ -37,6 +45,12 @@ class DeliveryContractTest < Minitest::Test
       assert_match(/deliver/i, description)
       refute_match(/\AReport-only review of this branch/, description)
     end
+  end
+
+  def test_review_description_gates_the_deliver_hand_over_on_a_review_the_user_started
+    description = frontmatter(File.join(SKILLS, "review/SKILL.md")).fetch("description")
+
+    assert_match(/a clean review the user started hands over to the deliver skill/i, description)
   end
 
   def test_the_reviewer_rules_allow_the_deliver_check_its_output_asks_for
@@ -79,6 +93,13 @@ class DeliveryContractTest < Minitest::Test
 
     assert_empty(offenders)
     assert_includes(section_of(skill("finish"), "## Auto mode"), "~/.claude/skills/finish/scripts/ship --no-merge")
+  end
+
+  def test_review_names_no_merge_command
+    text = skill("review")
+
+    refute_includes(text, "gh pr merge")
+    refute_includes(text, "finish/scripts/ship")
   end
 
   def test_work_finish_runs_after_push_then_requests_reviewers

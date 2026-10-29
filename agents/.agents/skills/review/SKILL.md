@@ -1,7 +1,6 @@
 ---
 name: review
-description: Reviews this branch — a fresh reviewer in a herdr pane by default, or the reviewer agent forked in-session with "here". The reviewer stays report-only; a clean review hands over to the deliver skill, which opens the draft PR.
-disable-model-invocation: true
+description: Reviews this branch — a fresh reviewer in a herdr pane by default, or the reviewer agent forked in-session with "here". The reviewer stays report-only; a clean review the user started hands over to the deliver skill, which opens the draft PR.
 arguments:
   - name: backend
     description: "(default) a fresh reviewer in a herdr pane via start-review.sh; \"here\": the reviewer agent forked in-session instead."
@@ -34,7 +33,7 @@ Dispatch the `reviewer` agent as a fork of this session. Give it the branch's ba
 
 Outside auto mode, read the signal and act on it:
 
-- `Review clean: <path>` (or, in the `here` backend, `~/.claude/skills/deliver/scripts/deliver --check` exiting 0): the review is closed. Read `~/.claude/skills/deliver/SKILL.md` and run `deliver` without asking. Report what it printed, as that skill says.
+- `Review clean: <path>` (or, in the `here` backend, `~/.claude/skills/deliver/scripts/deliver --check` exiting 0): the review is closed. Only when the user started this review, by typing `/review` or by asking for a `/code-review` (a re-review inside a `/code-review` the user asked for counts): read `~/.claude/skills/deliver/SKILL.md` and run `deliver` without asking, then report what it printed, as that skill says. If you started it yourself, report the clean review and stop: `deliver` stays a command the user starts.
 - `Review ready: <path>`: read `docs/changes/<slug>/review.md`, summarise the round worst first, and stop. Do not start fixing anything until the user says so.
 
 The `code-review` skill implements fixes: it writes `fixed (<commit subject>)` or `dismissed: <reason>` on each finding's `→` slot, in the working tree, never in a commit of its own and never in the fix commit: `commit-review` commits `review.md` once the review converges. The subject, not the SHA, because a rebase changes the SHA but not the subject line. Any other text after the last `→`, or none, leaves the finding open. Its last step re-reviews, and a clean re-review ends in `Review clean:`, so delivery follows the last fix without a further command.

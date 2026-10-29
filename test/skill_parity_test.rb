@@ -27,10 +27,11 @@ class SkillParityTest < Minitest::Test
   # there is documentation, not a command another checkout is meant to run.
   REPO_LAYOUT_SKILLS = %w[dotfiles-maintenance new-repo-setup].freeze
   # Skills where the two flags intentionally disagree: worktree-first must stay
-  # model-invocable on Claude (WORKTREES.md and the intent skill call it), while
-  # Codex's allow_implicit_invocation only disables automatic triggering, which
-  # is the intended behaviour there.
-  AGENT_INVOKED = %w[worktree-first].freeze
+  # model-invocable on Claude (WORKTREES.md and the intent skill call it), and so
+  # must review (the autonomous coordinator calls it through the Skill tool; Codex
+  # coordinators follow the file). Codex's allow_implicit_invocation only disables
+  # automatic triggering, which is the intended behaviour there.
+  AGENT_INVOKED = %w[review worktree-first].freeze
 
   def test_every_agents_skill_is_a_real_folder_with_a_skill_md
     assert(Dir.exist?(AGENTS_SKILLS), "#{AGENTS_SKILLS} does not exist")
@@ -120,6 +121,24 @@ class SkillParityTest < Minitest::Test
         denied_implicit_invocation,
         "#{name}: disable-model-invocation and allow_implicit_invocation disagree"
       )
+    end
+  end
+
+  def test_agent_invoked_skills_are_model_invocable_on_claude_and_deny_implicit_invocation_on_codex
+    AGENT_INVOKED.each do |name|
+      skill_md = File.join(AGENTS_SKILLS, name, "SKILL.md")
+      openai_yaml = File.join(AGENTS_SKILLS, name, "agents/openai.yaml")
+
+      refute_equal(true, frontmatter(skill_md)["disable-model-invocation"], "#{name} is disabled for the model")
+      assert_equal(false, YAML.load_file(openai_yaml).dig("policy", "allow_implicit_invocation"), "#{name} allows implicit invocation")
+    end
+  end
+
+  def test_deliver_and_finish_stay_disabled_for_model_invocation
+    %w[deliver finish].each do |name|
+      skill_md = File.join(AGENTS_SKILLS, name, "SKILL.md")
+
+      assert_equal(true, frontmatter(skill_md)["disable-model-invocation"], "#{name} lost disable-model-invocation")
     end
   end
 
