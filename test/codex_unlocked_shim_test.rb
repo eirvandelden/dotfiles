@@ -36,7 +36,7 @@ class CodexUnlockedShimTest < Minitest::Test
     assert_equal [ %w[--no-daemon resume --last], %w[--no-daemon fork] ], codex_calls.map { |call| call[:args] }
   end
 
-  def test_headroom_config_prefix_still_starts_a_session_with_no_daemon
+  def test_a_config_prefix_still_starts_a_session_with_no_daemon
     run_shim("--config", "openai_base_url=http://127.0.0.1:8787/v1")
 
     assert_equal %w[--no-daemon --config openai_base_url=http://127.0.0.1:8787/v1], single_call[:args]
