@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # finish needs to know which of its two behaviours applies before doing
@@ -12,9 +13,12 @@ require_relative "isolated_git"
 class ChangeScopeTest < Minitest::Test
   SCRIPT = File.expand_path("../agents/.agents/skills/finish/scripts/change-scope", __dir__)
 
+  REPOSITORY = GitFixture.new do |repo|
+    system("git", "-C", repo, "init", "--quiet", "--initial-branch=main", exception: true)
+  end
+
   def setup
-    @repo = Dir.mktmpdir
-    system("git", "-C", @repo, "init", "--quiet", "--initial-branch=main")
+    @repo = REPOSITORY.copy
     # A home of its own, so the script reads the allowlist this test wrote and
     # never the one installed on the machine running the suite.
     @home = Dir.mktmpdir

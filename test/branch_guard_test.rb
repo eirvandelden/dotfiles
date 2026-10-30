@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "yaml"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 require_relative "hook_scripts"
 require_relative "lefthook_binary"
@@ -19,6 +20,25 @@ class BranchGuardTest < Minitest::Test
     /Direct push to (main|master) is not allowed\. Create a feature branch; deliver opens the PR\./
   )
 
+  # One fixture per branch name: a repository at <root>/repo with one commit made with the hooks off,
+  # the hooks copy as core.hooksPath and a bare origin at <root>/origin.git.
+  REPOSITORIES = Hash.new do |fixtures, branch|
+    fixtures[branch] = GitFixture.new do |root|
+      repo = File.join(root, "repo")
+      origin = File.join(root, "origin.git")
+      git = [ "git", "-C", repo ]
+      system("git", "init", "--bare", "--quiet", origin, exception: true)
+      system("git", "init", "--quiet", "--initial-branch=#{branch}", repo, exception: true)
+      { "core.hooksPath" => HookScripts.directory, "user.name" => "Test", "user.email" => "test@example.com" }
+        .each { |key, value| system(*git, "config", key, value, exception: true) }
+      system(*git, "remote", "add", "origin", origin, exception: true)
+      File.write(File.join(repo, "README.md"), "init\n")
+      system(*git, "add", "README.md", exception: true)
+      system({ "LEFTHOOK" => "0" }, *git, "commit", "-q", "-m", "setup", exception: true)
+    end
+  end
+  private_constant :REPOSITORIES
+
   def setup
     skip(LefthookBinary::MISSING_MESSAGE) unless NATIVE_LEFTHOOK
 
@@ -30,7 +50,7 @@ class BranchGuardTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_rf(@tmpdir) if @tmpdir
+    FileUtils.rm_rf([ @tmpdir, @repository_copy ].compact)
   end
 
   # Each chain below runs the steps of several former single-behaviour tests in one repository, in an order
@@ -314,15 +334,11 @@ class BranchGuardTest < Minitest::Test
     YAML
   end
 
+  # Points @repo_dir and @origin_dir into a copy of the fixture for the branch.
   def setup_repo(branch)
-    run_git(@tmpdir, "init", "--bare", "--quiet", @origin_dir)
-    run_git(@tmpdir, "init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
-    run_git(@repo_dir, "config", "core.hooksPath", @hooks_dir)
-    run_git(@repo_dir, "config", "user.name", "Test")
-    run_git(@repo_dir, "config", "user.email", "test@example.com")
-    run_git(@repo_dir, "remote", "add", "origin", @origin_dir)
-    File.write(File.join(@repo_dir, "README.md"), "init\n")
-    commit_unguarded("README.md")
+    @repository_copy = REPOSITORIES[branch].copy
+    @repo_dir = File.join(@repository_copy, "repo")
+    @origin_dir = File.join(@repository_copy, "origin.git")
   end
 
   def commit_unguarded(*paths)

@@ -4,12 +4,23 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # worktree-pane opens or closes the herdr pane rooted in a worktree's directory. It talks to
 # herdr only, never to git worktree state, so a stub herdr on PATH is enough to test it.
 class WorktreePaneTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-pane", __dir__)
+
+  # A repository at <root>/dotfiles with one empty commit and a linked worktree on feature at <root>/worktree.
+  REPOSITORY = GitFixture.new do |root|
+    repo = File.join(root, "dotfiles")
+    git = [ "git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.email=test@example.com",
+            "-c", "user.name=Test" ]
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    system(*git, "commit", "--quiet", "--allow-empty", "-m", "initial", exception: true)
+    system(*git, "worktree", "add", "--quiet", "-b", "feature", File.join(root, "worktree"), exception: true)
+  end
 
   def setup
     @stub_bin = Dir.mktmpdir
@@ -182,17 +193,9 @@ class WorktreePaneTest < Minitest::Test
   private
 
   def repo_worktree
-    enclosing = Dir.mktmpdir
+    enclosing = REPOSITORY.copy
     @extra_dirs << enclosing
-
-    repo = File.join(enclosing, "dotfiles")
-    FileUtils.mkdir_p(repo)
-    git(repo, "init", "--quiet", "--initial-branch=main")
-    git(repo, "commit", "--quiet", "--allow-empty", "-m", "initial")
-
-    worktree = File.join(enclosing, "worktree")
-    git(repo, "worktree", "add", "--quiet", "-b", "feature", worktree)
-    worktree
+    File.join(enclosing, "worktree")
   end
 
   def git(repo, *arguments)

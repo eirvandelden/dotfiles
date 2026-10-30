@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # In autonomous delivery a recorded critique replaces Etienne's word "accepted"
@@ -21,9 +22,12 @@ class AutoAcceptTest < Minitest::Test
     - Naming is vague → dismissed: the name matches the existing module
   MD
 
+  REPOSITORY = GitFixture.new do |repo|
+    system("git", "-C", repo, "init", "--quiet", "--initial-branch=main", exception: true)
+  end
+
   def setup
-    @repo = Dir.mktmpdir
-    system("git", "-C", @repo, "init", "--quiet", "--initial-branch=main")
+    @repo = REPOSITORY.copy
     @home = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(@home, ".claude"))
     @artifact = File.join(@repo, "plan.md")

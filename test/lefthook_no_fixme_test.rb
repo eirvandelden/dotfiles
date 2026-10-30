@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # The no-fixme hooks skip vendored skill reference docs, whose upstream prose names the marker,
@@ -14,13 +15,27 @@ class LefthookNoFixmeTest < Minitest::Test
   REFERENCE_DOC = "agents/.agents/skills/rails-guides/references/command_line.md"
   OTHER_FILE = "zsh/.config/zsh/paths.zsh"
 
+  # A repository at <root>/repo on feature, with lefthook.yml committed and pushed to <root>/origin.git.
+  REPOSITORY = GitFixture.new do |root|
+    repo = File.join(root, "repo")
+    origin = File.join(root, "origin.git")
+    identity = { "GIT_AUTHOR_NAME" => "Test", "GIT_AUTHOR_EMAIL" => "test@example.com",
+                 "GIT_COMMITTER_NAME" => "Test", "GIT_COMMITTER_EMAIL" => "test@example.com" }
+    git = ->(*arguments) { system(identity, "git", "-C", repo, *arguments, exception: true) }
+    system("git", "init", "--bare", "--quiet", origin, exception: true)
+    system("git", "init", "--quiet", "--initial-branch=feature", repo, exception: true)
+    FileUtils.cp(File.expand_path("../lefthook.yml", __dir__), File.join(repo, "lefthook.yml"))
+    git.call("add", "lefthook.yml")
+    git.call("commit", "--quiet", "-m", "Add lefthook.yml")
+    git.call("remote", "add", "origin", origin)
+    git.call("push", "--quiet", "-u", "origin", "feature")
+  end
+
   def setup
     skip(LefthookBinary::MISSING_MESSAGE) unless LEFTHOOK
 
-    @repo_root = File.expand_path("..", __dir__)
-    @tmpdir = Dir.mktmpdir
+    @tmpdir = REPOSITORY.copy
     @repo_dir = File.join(@tmpdir, "repo")
-    setup_repo_with_origin
   end
 
   def teardown
@@ -64,17 +79,6 @@ class LefthookNoFixmeTest < Minitest::Test
     run_git("commit", "--quiet", "-m", "Add #{path}") if hook == "pre-push"
     command = [ LEFTHOOK, "run", hook, "--tag", "fixme", "--no-auto-install", "--no-tty" ]
     Open3.capture2e(lefthook_env, *command, chdir: @repo_dir)
-  end
-
-  def setup_repo_with_origin
-    origin_dir = File.join(@tmpdir, "origin.git")
-    run_git("init", "--bare", "--quiet", origin_dir)
-    run_git("init", "--quiet", "--initial-branch=feature", @repo_dir)
-    FileUtils.cp(File.join(@repo_root, "lefthook.yml"), File.join(@repo_dir, "lefthook.yml"))
-    run_git("add", "lefthook.yml")
-    run_git("commit", "--quiet", "-m", "Add lefthook.yml")
-    run_git("remote", "add", "origin", origin_dir)
-    run_git("push", "--quiet", "-u", "origin", "feature")
   end
 
   def write_marked_file(path)

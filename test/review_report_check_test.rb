@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # Deterministic pre-push backstop (playbook's "skill makes violations rare, hook makes them
@@ -12,11 +13,18 @@ require_relative "isolated_git"
 class ReviewReportCheckTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/review-report-fresh", __dir__)
 
+  REPOSITORY = GitFixture.new do |repo|
+    git = [ "git", "-C", repo, "-c", "commit.gpgsign=false", "-c", "user.email=test@example.com", "-c", "user.name=Test" ]
+    system(*git, "init", "--quiet", "--initial-branch=main", exception: true)
+    FileUtils.mkdir_p(File.join(repo, "app"))
+    File.write(File.join(repo, "app/existing.rb"), "class Existing; end\n")
+    system(*git, "add", "app/existing.rb", exception: true)
+    system(*git, "commit", "--quiet", "-m", "initial", exception: true)
+    system(*git, "checkout", "--quiet", "-b", "claims-status", exception: true)
+  end
+
   def setup
-    @repo = Dir.mktmpdir
-    git("init", "--quiet", "--initial-branch=main")
-    write_and_commit("app/existing.rb", "class Existing; end\n", "initial")
-    git("checkout", "--quiet", "-b", "claims-status")
+    @repo = REPOSITORY.copy
   end
 
   def teardown

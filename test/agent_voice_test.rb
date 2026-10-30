@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require "yaml"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # The agent voice hook gives a personal session one playful persona on SessionStart. Work
@@ -19,12 +20,22 @@ class AgentVoiceTest < Minitest::Test
   ].freeze
   SOURCES = "startup|resume|clear|compact|fork".freeze
 
+  # One fixture per origin URL: an empty repository whose origin remote is that URL.
+  REPOSITORIES = Hash.new do |fixtures, origin|
+    fixtures[origin] = GitFixture.new do |repo|
+      system("git", "init", "-q", repo, exception: true)
+      system("git", "-C", repo, "remote", "add", "origin", origin, exception: true)
+    end
+  end
+  private_constant :REPOSITORIES
+
   def setup
     @dir = Dir.mktmpdir
+    @copies = []
   end
 
   def teardown
-    FileUtils.rm_rf(@dir)
+    FileUtils.rm_rf([ @dir, *@copies ])
   end
 
   def test_a_personal_repository_session_gets_a_persona_with_a_greeting
@@ -259,11 +270,7 @@ class AgentVoiceTest < Minitest::Test
   private
 
   def repository(origin)
-    path = File.join(@dir, "repo-#{origin.hash.abs}")
-    FileUtils.mkdir_p(path)
-    system("git", "init", "-q", path, exception: true)
-    system("git", "-C", path, "remote", "add", "origin", origin, exception: true)
-    path
+    REPOSITORIES[origin].copy.tap { |copy| @copies << copy }
   end
 
   def run_hook(cwd:, session_id: "s-1", source: "startup", data: :default, hook: HOOK)

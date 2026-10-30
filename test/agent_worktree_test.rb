@@ -6,23 +6,35 @@ require "tmpdir"
 
 $LOAD_PATH.unshift(File.expand_path("../git/.config/git/worktree-tools/lib", __dir__))
 require "agent_worktree"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # AgentWorktree remembers, per herdr pane, the worktree its agent created or reused last.
 class AgentWorktreeTest < Minitest::Test
+  # A repository at <root>/main with one empty commit and a linked worktree on feature at
+  # <root>/main/.worktrees/feature.
+  REPOSITORY = GitFixture.new do |root|
+    repo = File.join(root, "main")
+    git = [ "git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=Test", "-c", "user.email=test@example.com" ]
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    system(*git, "commit", "--quiet", "--allow-empty", "-m", "initial", exception: true)
+    system(*git, "worktree", "add", "--quiet", File.join(repo, ".worktrees", "feature"), "-b", "feature", exception: true)
+  end
+
   def setup
     @root = Dir.mktmpdir
     @state_home = File.join(@root, "state")
     @previous_state_home = ENV["XDG_STATE_HOME"]
     ENV["XDG_STATE_HOME"] = @state_home
-    @main = create_repository("main")
-    @worktree = add_worktree(@main, "feature")
+    @copy = REPOSITORY.copy
+    @main = File.join(@copy, "main")
+    @worktree = File.join(@main, ".worktrees", "feature")
     @records = WorktreeTools::AgentWorktree.new
   end
 
   def teardown
     ENV["XDG_STATE_HOME"] = @previous_state_home
-    FileUtils.rm_rf(@root)
+    FileUtils.rm_rf([ @root, @copy ].compact)
   end
 
   def test_usable_for_returns_nil_without_a_record

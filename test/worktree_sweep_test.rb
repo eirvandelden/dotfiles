@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "timeout"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # worktree-sweep removes merged worktrees of the repository it runs in. It shells out to git, gh
@@ -14,8 +15,26 @@ class WorktreeSweepTest < Minitest::Test
   # parallel run on a loaded Mac can take a sweep past 20 seconds.
   DEADLINE = 60
 
+  # <root>/origin.git (bare, main), <root>/seed (clone that pushed the first commit) and <root>/repo (clone
+  # of the origin with .worktrees excluded).
+  ORIGIN_AND_CLONE = GitFixture.new do |root|
+    origin = File.join(root, "origin.git")
+    git = lambda do |directory, *arguments|
+      system("git", "-C", directory, "-c", "core.hooksPath=/dev/null", "-c", "user.email=test@example.com",
+             "-c", "user.name=Test", *arguments, err: File::NULL, exception: true)
+    end
+    git.call(root, "init", "--quiet", "--bare", "--initial-branch=main", origin)
+    git.call(root, "clone", "--quiet", origin, File.join(root, "seed"))
+    File.write(File.join(root, "seed", "file-initial.txt"), "initial")
+    git.call(File.join(root, "seed"), "add", "-A")
+    git.call(File.join(root, "seed"), "commit", "--quiet", "-m", "initial")
+    git.call(File.join(root, "seed"), "push", "--quiet", "origin", "main")
+    git.call(root, "clone", "--quiet", origin, File.join(root, "repo"))
+    File.write(File.join(root, "repo", ".git", "info", "exclude"), ".worktrees\n")
+  end
+
   def setup
-    @enclosing = File.realpath(Dir.mktmpdir)
+    @enclosing = ORIGIN_AND_CLONE.copy
     @stub_bin = File.join(@enclosing, "bin")
     FileUtils.mkdir_p(@stub_bin)
     install_gh_stub
@@ -356,17 +375,7 @@ class WorktreeSweepTest < Minitest::Test
   end
 
   def origin_and_clone
-    origin = File.join(@enclosing, "origin.git")
-    FileUtils.mkdir_p(origin)
-    hookless_git(origin, "init", "--quiet", "--bare", "--initial-branch=main")
-    seed = File.join(@enclosing, "seed")
-    hookless_git(@enclosing, "clone", "--quiet", origin, seed)
-    commit(seed, "initial")
-    hookless_git(seed, "push", "--quiet", "origin", "main")
-    repo = File.join(@enclosing, "repo")
-    hookless_git(@enclosing, "clone", "--quiet", origin, repo)
-    File.write(File.join(repo, ".git", "info", "exclude"), ".worktrees\n")
-    [ origin, repo ]
+    [ File.join(@enclosing, "origin.git"), File.join(@enclosing, "repo") ]
   end
 
   def hookless_git(dir, *arguments)

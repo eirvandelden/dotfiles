@@ -7,6 +7,7 @@ require "timeout"
 require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "hook_scripts"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # A real `git pull` runs the global hook shims, the real lefthook binary and the repository's
@@ -14,6 +15,26 @@ require_relative "isolated_git"
 class WorktreeSweepOnPullTest < Minitest::Test
   DEADLINE = 20
   NATIVE_LEFTHOOK = LefthookBinary.locate
+
+  # <root>/origin.git (bare, main), <root>/seed (clone that pushed the first commit) and <root>/repo (clone
+  # of the origin with .worktrees excluded).
+  ORIGIN_AND_CLONE = GitFixture.new do |root|
+    origin = File.join(root, "origin.git")
+    seed = File.join(root, "seed")
+    git = lambda do |directory, *arguments|
+      system({ "GIT_CONFIG_GLOBAL" => "/dev/null", "LEFTHOOK" => "0" }, "git", "-C", directory,
+             "-c", "user.email=test@example.com", "-c", "user.name=Test", *arguments,
+             err: File::NULL, exception: true)
+    end
+    git.call(root, "init", "--quiet", "--bare", "--initial-branch=main", origin)
+    git.call(root, "clone", "--quiet", origin, seed)
+    File.write(File.join(seed, "file-initial.txt"), "initial")
+    git.call(seed, "add", "-A")
+    git.call(seed, "commit", "--quiet", "-m", "initial")
+    git.call(seed, "push", "--quiet", "origin", "main")
+    git.call(root, "clone", "--quiet", origin, File.join(root, "repo"))
+    File.write(File.join(root, "repo", ".git", "info", "exclude"), ".worktrees\n")
+  end
 
   def setup
     skip(LefthookBinary::MISSING_MESSAGE) unless NATIVE_LEFTHOOK
@@ -26,6 +47,7 @@ class WorktreeSweepOnPullTest < Minitest::Test
     install_home
     install_stubs
     write_gitconfig
+    @copies = []
     @origin, @repo = origin_and_clone
   end
 
@@ -34,7 +56,7 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
     FileUtils.touch(release_file)
     wait_for_sweep_to_finish if @repo && File.exist?(lock_file(@repo))
-    FileUtils.rm_rf(@tmp)
+    FileUtils.rm_rf([ @tmp, *@copies ])
   end
 
   def test_a_pull_on_main_in_the_main_checkout_removes_a_merged_worktree_its_branch_and_its_pane
@@ -103,7 +125,7 @@ class WorktreeSweepOnPullTest < Minitest::Test
   end
 
   def test_a_pull_in_one_repository_leaves_another_repositorys_worktrees_alone
-    other_origin, other_repo = origin_and_clone(prefix: "other-")
+    other_origin, other_repo = origin_and_clone
     foo = merged_worktree("foo")
     foreign = merged_worktree("foreign", repo: other_repo, origin: other_origin)
 
@@ -272,17 +294,11 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
   # --- repositories ------------------------------------------------------------------------
 
-  def origin_and_clone(prefix: "")
-    origin = File.join(@tmp, "#{prefix}origin.git")
-    run_git(@tmp, "init", "--quiet", "--bare", "--initial-branch=main", origin)
-    seed = File.join(@tmp, "#{prefix}seed")
-    run_git(@tmp, "clone", "--quiet", origin, seed)
-    commit(seed, "initial")
-    run_git(seed, "push", "--quiet", "origin", "main")
-    repo = File.join(@tmp, "#{prefix}repo")
-    run_git(@tmp, "clone", "--quiet", origin, repo)
-    File.write(File.join(repo, ".git", "info", "exclude"), ".worktrees\n")
-    [ origin, repo ]
+  # A copy of the fixture, so a second call gives a second, separate origin and clone.
+  def origin_and_clone
+    copy = ORIGIN_AND_CLONE.copy
+    @copies << copy
+    [ File.join(copy, "origin.git"), File.join(copy, "repo") ]
   end
 
   # A worktree whose branch was pushed with -u, has a MERGED PR, and whose commit origin/main

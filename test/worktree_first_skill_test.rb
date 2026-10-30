@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # The worktree-first skill is prose plus a shell snippet. Step 1's snippet decides whether to
@@ -13,8 +14,26 @@ class WorktreeFirstSkillTest < Minitest::Test
   CREATE = File.expand_path("../git/.config/git/worktree-tools/worktree-create", __dir__)
   WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
+  # <root>/origin.git (bare, main), <root>/seed (clone that pushed the first commit) and <root>/repo (clone
+  # of the origin with .worktrees excluded).
+  ORIGIN_AND_CLONE = GitFixture.new do |root|
+    origin = File.join(root, "origin.git")
+    git = lambda do |directory, *arguments|
+      system("git", "-C", directory, "-c", "core.hooksPath=/dev/null", "-c", "user.email=test@example.com",
+             "-c", "user.name=Test", *arguments, err: File::NULL, exception: true)
+    end
+    git.call(root, "init", "--quiet", "--bare", "--initial-branch=main", origin)
+    git.call(root, "clone", "--quiet", origin, File.join(root, "seed"))
+    File.write(File.join(root, "seed", "file-initial.txt"), "initial")
+    git.call(File.join(root, "seed"), "add", "-A")
+    git.call(File.join(root, "seed"), "commit", "--quiet", "-m", "initial")
+    git.call(File.join(root, "seed"), "push", "--quiet", "origin", "main")
+    git.call(root, "clone", "--quiet", origin, File.join(root, "repo"))
+    File.write(File.join(root, "repo", ".git", "info", "exclude"), ".worktrees\n")
+  end
+
   def setup
-    @enclosing = Dir.mktmpdir
+    @enclosing = ORIGIN_AND_CLONE.copy
     @home = File.join(@enclosing, "home")
     @origin, @repo = origin_and_clone
     install_create_wrapper
@@ -136,19 +155,7 @@ class WorktreeFirstSkillTest < Minitest::Test
   end
 
   def origin_and_clone
-    origin = File.join(@enclosing, "origin.git")
-    FileUtils.mkdir_p(origin)
-    git(origin, "init", "--quiet", "--bare", "--initial-branch=main")
-
-    seed = File.join(@enclosing, "seed")
-    git(@enclosing, "clone", "--quiet", origin, seed)
-    commit(seed, "initial")
-    git(seed, "push", "--quiet", "origin", "main")
-
-    repo = File.join(@enclosing, "repo")
-    git(@enclosing, "clone", "--quiet", origin, repo)
-    File.write(File.join(repo, ".git", "info", "exclude"), ".worktrees\n")
-    [ origin, repo ]
+    [ File.join(@enclosing, "origin.git"), File.join(@enclosing, "repo") ]
   end
 
   def add_worktree(parent, name)

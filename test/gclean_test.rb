@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # gclean sweeps merged worktrees, then deletes merged local branches. It never touches a branch
@@ -11,13 +12,21 @@ class GcleanTest < Minitest::Test
   FUNCTION = File.expand_path("../zsh/.config/zsh/functions/worktree.zsh", __dir__)
   ALIASES = File.expand_path("../zsh/.config/zsh/aliases.zsh", __dir__)
 
+  # A repository at <root>/repo on main, pushed to a bare origin at <root>/origin.git.
+  REPOSITORY = GitFixture.new do |root|
+    repo = File.join(root, "repo")
+    origin = File.join(root, "origin.git")
+    git = [ "git", "-C", repo, "-c", "user.email=test@example.com", "-c", "user.name=Test" ]
+    system("git", "init", "--quiet", "--bare", origin, exception: true)
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    system(*git, "commit", "--quiet", "--allow-empty", "-m", "initial", exception: true)
+    system(*git, "remote", "add", "origin", origin, exception: true)
+    system(*git, "push", "--quiet", "origin", "main", exception: true)
+  end
+
   def setup
-    @tmpdir = File.realpath(Dir.mktmpdir)
+    @tmpdir = REPOSITORY.copy
     @repo = File.join(@tmpdir, "repo")
-    FileUtils.mkdir_p(@repo)
-    git("init", "--quiet", "--initial-branch=main")
-    git("commit", "--quiet", "--allow-empty", "-m", "initial")
-    add_origin
     install_sweep_stub
   end
 
@@ -99,13 +108,6 @@ class GcleanTest < Minitest::Test
   def run_gclean
     script = "source '#{FUNCTION}'; gclean"
     Open3.capture3({ "GCLEAN_SWEEP" => File.join(@tmpdir, "sweep") }, "zsh", "-f", "-c", script, chdir: @repo)
-  end
-
-  def add_origin
-    origin = File.join(@tmpdir, "origin.git")
-    Open3.capture2e("git", "init", "--quiet", "--bare", origin)
-    git("remote", "add", "origin", origin)
-    git("push", "--quiet", "origin", "main")
   end
 
   def install_sweep_stub(command = "true")

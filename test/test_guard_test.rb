@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # Claude Code PreToolUse hook (same stdin/exit contract as consent-guard.rb): while a bugfix's
@@ -14,11 +15,15 @@ require_relative "isolated_git"
 class TestGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/test-guard.rb", __dir__)
 
+  REPOSITORY = GitFixture.new do |repo|
+    system("git", "-C", repo, "init", "--quiet", "--initial-branch=main", exception: true)
+    system("git", "-C", repo, "-c", "commit.gpgsign=false", "-c", "user.email=test@example.com", "-c", "user.name=Test",
+           "commit", "--quiet", "--allow-empty", "-m", "initial", exception: true)
+    system("git", "-C", repo, "checkout", "--quiet", "-b", "claims-status", exception: true)
+  end
+
   def setup
-    @repo = Dir.mktmpdir
-    git("init", "--quiet", "--initial-branch=main")
-    git("commit", "--quiet", "--allow-empty", "-m", "initial")
-    git("checkout", "--quiet", "-b", "claims-status")
+    @repo = REPOSITORY.copy
   end
 
   def teardown

@@ -31,6 +31,30 @@ class DeliveryHarnessTest < Minitest::Test
     end
   end
 
+  def test_build_repo_gives_each_test_its_own_repository_and_origin
+    build_repo
+    first_repo = @repo
+    commit_file("extra.txt", "x", "extra")
+    git("push", "--quiet", "origin", "HEAD:refs/heads/pushed")
+    assert_includes(origin_branches, "pushed")
+    teardown_harness
+
+    setup_harness
+    build_repo
+
+    refute_equal(first_repo, @repo)
+    refute_path_exists(File.join(@repo, "extra.txt"))
+    refute_includes(origin_branches, "pushed")
+    assert_equal(@branch, git("branch", "--show-current").strip)
+  end
+
+  def test_build_repo_with_another_branch_builds_another_fixture
+    build_repo(branch: "other-change")
+
+    assert_equal("other-change", git("branch", "--show-current").strip)
+    assert_equal([ "main" ], origin_branches)
+  end
+
   private
 
   def call_stub(name)
