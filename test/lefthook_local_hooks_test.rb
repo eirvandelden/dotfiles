@@ -5,6 +5,7 @@ require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "hook_scripts"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 class LefthookLocalHooksTest < Minitest::Test
@@ -17,6 +18,25 @@ class LefthookLocalHooksTest < Minitest::Test
   end
 
   MARKDOWNLINT_DIR = locate_markdownlint_dir
+
+  # One fixture per branch name: a repository with one commit, the hooks copy as core.hooksPath and a
+  # bare origin that nothing is pushed to.
+  REPOSITORIES = Hash.new do |fixtures, branch|
+    fixtures[branch] = GitFixture.new do |root|
+      repo = File.join(root, "repo")
+      origin = File.join(root, "origin.git")
+      git = [ "git", "-C", repo ]
+      system("git", "init", "--bare", "--quiet", origin, exception: true)
+      system("git", "init", "--quiet", "--initial-branch=#{branch}", repo, exception: true)
+      { "core.hooksPath" => HookScripts.directory, "user.name" => "Test", "user.email" => "test@example.com" }
+        .each { |key, value| system(*git, "config", key, value, exception: true) }
+      system(*git, "remote", "add", "origin", origin, exception: true)
+      File.write(File.join(repo, "README.md"), "init\n")
+      system(*git, "add", ".", exception: true)
+      system({ "LEFTHOOK" => "0" }, *git, "commit", "-q", "-m", "init", exception: true)
+    end
+  end
+  private_constant :REPOSITORIES
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
@@ -34,7 +54,7 @@ class LefthookLocalHooksTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_rf(@tmpdir)
+    FileUtils.rm_rf([ @tmpdir, @repository_copy ].compact)
   end
 
   # Each test below runs the steps of several former single-behaviour tests in one repository. Every step commits
@@ -202,16 +222,12 @@ class LefthookLocalHooksTest < Minitest::Test
     File.symlink(`which node`.strip, File.join(@markdownlint_only_dir, "node"))
   end
 
+  # A copy of the fixture for the branch, which holds the repository at <copy>/repo and a bare origin
+  # at <copy>/origin.git; this test's @repo_dir and @origin_dir point into it.
   def setup_repo(branch)
-    run_git("init", "--bare", "--quiet", @origin_dir)
-    run_git("init", "--quiet", "--initial-branch=#{branch}", @repo_dir)
-    run_git("-C", @repo_dir, "config", "core.hooksPath", @hooks_dir)
-    run_git("-C", @repo_dir, "config", "user.name", "Test")
-    run_git("-C", @repo_dir, "config", "user.email", "test@example.com")
-    run_git("-C", @repo_dir, "remote", "add", "origin", @origin_dir)
-    File.write(File.join(@repo_dir, "README.md"), "init\n")
-    run_git("-C", @repo_dir, "add", ".")
-    run_git("-C", @repo_dir, "commit", "-q", "-m", "init", env: { "LEFTHOOK" => "0" })
+    @repository_copy = REPOSITORIES[branch].copy
+    @repo_dir = File.join(@repository_copy, "repo")
+    @origin_dir = File.join(@repository_copy, "origin.git")
   end
 
   def conflict_markers
