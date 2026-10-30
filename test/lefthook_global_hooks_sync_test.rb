@@ -5,12 +5,37 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 class LefthookGlobalHooksSyncTest < Minitest::Test
   TRUNK = "trunk"
   NATIVE_LEFTHOOK = LefthookBinary.locate
   MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
+
+  # One fixture per own_config: <root>/origin.git on trunk, <root>/pusher with the first commit pushed
+  # (lefthook.yml in it when own_config) and <root>/puller cloned from it.
+  REPOSITORIES = Hash.new do |fixtures, own_config|
+    fixtures[own_config] = GitFixture.new do |root|
+      origin = File.join(root, "origin.git")
+      pusher = File.join(root, "pusher")
+      puller = File.join(root, "puller")
+      identity = { "LEFTHOOK" => "0", "GIT_AUTHOR_NAME" => "Test", "GIT_AUTHOR_EMAIL" => "test@example.com",
+                   "GIT_COMMITTER_NAME" => "Test", "GIT_COMMITTER_EMAIL" => "test@example.com" }
+      git = ->(*arguments) { system(identity, "git", *arguments, exception: true) }
+      git.call("init", "--bare", origin, "--quiet")
+      git.call("-C", origin, "symbolic-ref", "HEAD", "refs/heads/#{TRUNK}")
+      git.call("clone", origin, pusher, "--quiet")
+      File.write(File.join(pusher, "README.md"), "initial")
+      FileUtils.cp(File.expand_path("../lefthook.yml", __dir__), pusher) if own_config
+      git.call("-C", pusher, "add", ".")
+      git.call("-C", pusher, "commit", "-m", "init", "--quiet")
+      git.call("-C", pusher, "push", "origin", TRUNK, "--quiet")
+      git.call("clone", origin, puller, "--quiet")
+      git.call("-C", puller, "config", "pull.rebase", "true")
+    end
+  end
+  private_constant :REPOSITORIES
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
@@ -19,9 +44,6 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
     @home = Dir.mktmpdir
     @bin_dir = File.join(@home, "bin")
     @log_file = File.join(@home, "commands.log")
-    @origin_dir = File.join(@home, "origin.git")
-    @pusher_dir = File.join(@home, "pusher")
-    @puller_dir = File.join(@home, "puller")
     @global_hooks_dir = File.join(@home, ".config", "git", "hooks")
     write_git_config_files
     stow_hooks_as_links
@@ -29,7 +51,7 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_rf(@home)
+    FileUtils.rm_rf([ @home, @repository_copy ].compact)
   end
 
   def test_pull_in_dotfiles_repo_keeps_global_hooks_linked
@@ -95,19 +117,10 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
   end
 
   def setup_git_repos(own_config:)
-    run_git("init", "--bare", @origin_dir, "--quiet")
-    run_git("-C", @origin_dir, "symbolic-ref", "HEAD", "refs/heads/#{TRUNK}")
-    run_git("clone", @origin_dir, @pusher_dir, "--quiet")
-    commit_initial_files(own_config)
-    run_git("clone", @origin_dir, @puller_dir, "--quiet")
-    run_git("-C", @puller_dir, "config", "pull.rebase", "true")
-  end
-
-  def commit_initial_files(own_config)
-    File.write(File.join(@pusher_dir, "README.md"), "initial")
-    FileUtils.cp(File.join(@repo_root, "lefthook.yml"), @pusher_dir) if own_config
-    commit_in(@pusher_dir, "init")
-    run_git("-C", @pusher_dir, "push", "origin", TRUNK)
+    @repository_copy = REPOSITORIES[own_config].copy
+    @origin_dir = File.join(@repository_copy, "origin.git")
+    @pusher_dir = File.join(@repository_copy, "pusher")
+    @puller_dir = File.join(@repository_copy, "puller")
   end
 
   def commit_in(dir, message)
