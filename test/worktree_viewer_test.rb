@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "shellwords"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # worktree-viewer opens the herdr-file-viewer plugin's program at the worktree an agent works in.
@@ -14,6 +15,16 @@ class WorktreeViewerTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-viewer", __dir__)
   README = File.expand_path("../herdr/.config/herdr/README.md", __dir__)
   HERDR_CONFIG = File.expand_path("../herdr/.config/herdr/config.toml", __dir__)
+
+  # A repository at <root>/repo with one empty commit and a linked worktree on feature at
+  # <root>/repo/.worktrees/feature.
+  REPOSITORY = GitFixture.new do |root|
+    repo = File.join(root, "repo")
+    git = [ "git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=Test", "-c", "user.email=test@example.com" ]
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    system(*git, "commit", "--quiet", "--allow-empty", "-m", "initial", exception: true)
+    system(*git, "worktree", "add", "--quiet", File.join(repo, ".worktrees", "feature"), "-b", "feature", exception: true)
+  end
 
   def setup
     @root = Dir.mktmpdir
@@ -27,13 +38,14 @@ class WorktreeViewerTest < Minitest::Test
     install_herdr_stub
     install_plugin_program
     install_plugin_scripts
-    @repo = create_repository("repo")
-    @worktree = add_worktree(@repo, "feature")
+    @copy = REPOSITORY.copy
+    @repo = File.join(@copy, "repo")
+    @worktree = File.join(@repo, ".worktrees", "feature")
     focus_pane(cwd: @repo)
   end
 
   def teardown
-    FileUtils.rm_rf(@root)
+    FileUtils.rm_rf([ @root, @copy ].compact)
   end
 
   def test_a_pane_without_an_agent_hands_over_to_the_plugins_own_launchers
