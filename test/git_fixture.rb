@@ -18,6 +18,7 @@ class GitFixture
   #: () { (String root) -> void } -> void
   def initialize(&build)
     @build = build
+    Minitest.after_run { remove }
   end
 
   # A new real-path directory that holds a copy of the original. The first call builds the original.
@@ -39,7 +40,6 @@ class GitFixture
     return @original if @original
 
     @directory = File.realpath(Dir.mktmpdir("git-fixture"))
-    Minitest.after_run { remove }
     @original = File.join(@directory, "original")
     FileUtils.mkdir(@original)
     @build.call(@original)
