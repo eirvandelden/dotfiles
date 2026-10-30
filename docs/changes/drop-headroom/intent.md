@@ -60,6 +60,8 @@ Nothing in the dotfiles installs, calls or documents headroom. The MCP registrat
 - Review with Codex as well as Claude — Etienne chose "Add a Codex review".
 - Drop headroom completely — "lets drop it", after the savings figures showed 43.6k tokens, $0.004 and no Claude usage.
 
+- Move the shared doc to `agents/.agents/MCP.md`, imported by both tools directly — Etienne: everything both agents use belongs in an agent-neutral folder; supersedes the two renames to `claude/.claude/MCP.md` and `codex/.codex/MCP.md` above (change request after delivery, 2026-10-30).
+
 ## Open questions
 
 None.

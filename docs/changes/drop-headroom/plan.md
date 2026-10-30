@@ -180,3 +180,14 @@ Domain skills applied: dotfiles-maintenance, software-design, glossary, diagrams
 - Replacing the tracked Codex symlink breaks the rule against modifying symlinks directly → fixed (Design decisions record that the accepted intent names this rename as the explicit instruction, and that only the in-package link changes, never a stowed link in `~/`)
 - The markdownlint check omits the changed `CLAUDE.md` and `AGENTS.md` → fixed (Proof lint command now lists `claude/.claude/CLAUDE.md` and `codex/.codex/AGENTS.md`)
 - The grep check excludes every change folder and expects exit 1, which can hide a stray reference → fixed (step 8 and Proof now run `! git grep -i headroom -- ':!docs/changes/drop-headroom'`, which exits 0 when clean)
+
+## Amendment: agent-neutral location (2026-10-30)
+
+Change request from Etienne after delivery. It supersedes every `claude/.claude/MCP.md`, `codex/.codex/MCP.md` and "Codex link" statement above.
+
+- The MCP doc lives at `agents/.agents/MCP.md`, the only copy. Stowing `agents` installs it at `~/.agents/MCP.md`.
+- `claude/.claude/CLAUDE.md` imports `@~/.agents/MCP.md`. `codex/.codex/AGENTS.md` imports `@/Users/etienne.vandelden/.agents/MCP.md`.
+- The Codex link `codex/.codex/MCP.md` is deleted. `SkillParityTest#test_codex_mcp_doc_resolves_to_the_claude_one` becomes `test_claude_and_codex_import_the_one_agent_neutral_mcp_doc`: the file exists and both imports name it.
+- The two MCP tests read `agents/.agents/MCP.md`. The `dotfiles-maintenance` skill points there.
+- Proof: `ruby -Itest test/skill_parity_test.rb`, the two MCP tests, `bin/test`, rubocop, markdownlint on the changed Markdown. The daemon-warning `grep` runs on `agents/.agents/MCP.md`.
+- Etienne restows `claude`, `codex` and `agents` after the merge.
