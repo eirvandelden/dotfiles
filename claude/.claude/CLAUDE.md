@@ -1,1 +1,1 @@
-@PLAYBOOK.md @HEADROOM.md @WORKTREES.md @TOKENS.md
+@PLAYBOOK.md @~/.agents/MCP.md @WORKTREES.md @TOKENS.md

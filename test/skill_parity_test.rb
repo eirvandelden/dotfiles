@@ -150,6 +150,12 @@ class SkillParityTest < Minitest::Test
     assert_equal(File.realpath(claude_doc), File.realpath(codex_doc))
   end
 
+  def test_claude_and_codex_import_the_one_agent_neutral_mcp_doc
+    assert(File.file?(File.join(REPO_ROOT, "agents/.agents/MCP.md")), "agents/.agents/MCP.md is missing")
+    assert_includes(File.read(File.join(REPO_ROOT, "claude/.claude/CLAUDE.md")), "@~/.agents/MCP.md")
+    assert_includes(File.read(File.join(REPO_ROOT, "codex/.codex/AGENTS.md")), "@/Users/etienne.vandelden/.agents/MCP.md")
+  end
+
   def test_packages_conf_lists_agents_in_stow_and_stow_shared
     assert_includes(bash_array("STOW"), "agents")
     assert_includes(bash_array("STOW_SHARED"), "agents")
