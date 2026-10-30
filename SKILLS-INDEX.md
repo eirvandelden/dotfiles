@@ -49,6 +49,7 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 - Review of the current branch before pushing — a fresh reviewer in a herdr pane, or in-session with `here`; findings land in `docs/changes/<slug>/review.md`, and a clean review hands over to delivery: `agents/.agents/skills/review/SKILL.md`. The review policy template (passes, what "Important" means, nit cap, do-not-report list) ships at `agents/.agents/skills/new-repo-setup/references/REVIEW.md`; `new-repo-setup` copies it to a personal repo's root as `REVIEW.md`.
 - Ending a change once review is closed — removes `docs/changes/<slug>/`, fills the PR body, pushes, opens a draft PR and a gh-dash pane; runs on its own after a clean review: `agents/.agents/skills/deliver/SKILL.md`
 - Shipping the draft PR (`/finish`) — marks it ready, waits for green CI and merges; work also sets the review board status and requests reviewers: `agents/.agents/skills/finish/SKILL.md`
+- Running a rolling speed run (`/speed-run`) — parallel worktree implementers, adversarial review, pushed integration and delivery to a chosen target; explicit invocation only: `agents/.agents/skills/speed-run/SKILL.md`
 - Drafting a message in Etienne's voice, where he has allowed it — greeting, context first, warm tone, unfinished work stated; drafting never authorises sending: `agents/.agents/skills/writing-as-etienne/SKILL.md`
 
 ## Mobile
