@@ -12,7 +12,7 @@ pre-commit:
     browserslist:
       tags: css browserslist
       glob: ".browserslistrc"
-      run: npx browserslist
+      run: npx --no browserslist
     erb_lint:
       tags: erb style
       glob: "*.{erb}"
@@ -207,7 +207,7 @@ pre-push:
     browserslist:
       tags: css browserslist
       glob: ".browserslistrc"
-      run: npx browserslist
+      run: npx --no browserslist
     erb_lint:
       tags: linter
       glob: "*.erb"
