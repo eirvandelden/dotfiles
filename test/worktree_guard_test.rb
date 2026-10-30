@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # The worktree guard is a PreToolUse hook for Claude Code and Codex. It reads the tool call as
@@ -14,14 +15,23 @@ class WorktreeGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/worktree-guard.rb", __dir__)
   WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
+  # A repository at <root>/repo with one commit, .worktrees excluded and a linked worktree on foo.
+  REPOSITORY = GitFixture.new do |root|
+    repo = File.join(root, "repo")
+    git = [ "git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.email=test@example.com",
+            "-c", "user.name=Test" ]
+    system({ "GIT_CONFIG_GLOBAL" => "/dev/null" }, "git", "init", "--quiet", "--initial-branch=main", repo,
+           exception: true)
+    File.write(File.join(repo, "file-initial.txt"), "initial")
+    system(*git, "add", "-A", exception: true)
+    system(*git, "commit", "--quiet", "-m", "initial", exception: true)
+    File.write(File.join(repo, ".git", "info", "exclude"), ".worktrees\n")
+    system(*git, "worktree", "add", "--quiet", File.join(".worktrees", "foo"), "-b", "foo", exception: true)
+  end
+
   def setup
-    @enclosing = Dir.mktmpdir
+    @enclosing = REPOSITORY.copy
     @repo = File.join(@enclosing, "repo")
-    FileUtils.mkdir_p(@repo)
-    git(@repo, "init", "--quiet", "--initial-branch=main")
-    commit(@repo, "initial")
-    File.write(File.join(@repo, ".git", "info", "exclude"), ".worktrees\n")
-    git(@repo, "worktree", "add", "--quiet", File.join(".worktrees", "foo"), "-b", "foo")
     @foo = File.join(@repo, ".worktrees", "foo")
   end
 
