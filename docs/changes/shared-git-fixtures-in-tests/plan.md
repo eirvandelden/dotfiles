@@ -201,6 +201,8 @@ Stay as they are, with the run root only:
 - Tests `git init` itself: `isolated_git_test.rb`.
 - No git repository in the temporary directory: `isolated_git.rb`, `hook_scripts.rb`, `codex_shim_support.rb`, `architect_agent_test.rb`, `codex_agent_generation_test.rb`, `codex_config_test.rb`, `core_values_test.rb`, `editor_test.rb`, `fill_pr_template_test.rb`, `git_credential_helper_test.rb`, `gh_dash_merge_test.rb`, `glow_style_install_test.rb`, `herdr_quieter_tones_test.rb`, `lefthook_binary_test.rb`, `markdown_hardwrap_hook_test.rb`, `mermaid_show_test.rb`, `node_path_order_test.rb`, `no_hardwrap_rule_test.rb`, `question_rule_mirror_test.rb`, `rubocop_fallback_test.rb`, `rv_ci_fallback_test.rb`, `secrets_loader_test.rb`, `skill_parity_test.rb`, `stow_package_roots_test.rb`, `test_runner_test.rb`.
 
+Departure while building: `lefthook_rubocop_git_gem_test.rb` stays as it is. It already builds one shared fixture per process (`shared_root`), so a `GitFixture` would add nothing.
+
 A file in the move list that fails to pass alone and in the full run after its move, and cannot be fixed within the test's fixture code, goes back to its fresh build. The implementer records it in the PR body with the reason.
 
 ## Integration points
