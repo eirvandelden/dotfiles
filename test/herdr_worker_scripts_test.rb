@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # Two scripts spawn a Claude worker inside the running Herdr session: one starts a stage
@@ -13,6 +14,42 @@ class HerdrWorkerScriptsTest < Minitest::Test
   HAND_OFF_PLAN = File.join(SCRIPTS, "hand-off-plan.sh")
   START_REVIEW = File.join(SCRIPTS, "start-review.sh")
   SKILLS_DIR = File.expand_path("../agents/.agents/skills", __dir__)
+
+  # Git runs with no hooks, a fixed identity and no signing, in any directory.
+  #: (String directory, *String arguments) -> bool
+  def self.run_git(directory, *arguments)
+    system("git", "-C", directory, "-c", "core.hooksPath=/dev/null",
+           "-c", "user.email=test@example.com", "-c", "user.name=Test",
+           "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false",
+           "-c", "tag.forceSignAnnotated=false", *arguments) ||
+      raise("git #{arguments.join(' ')} failed")
+  end
+
+  #: (String directory, String branch) -> void
+  def self.init_repository(directory, branch)
+    run_git(directory, "init", "--quiet", "--initial-branch=#{branch}")
+    run_git(directory, "commit", "--quiet", "--allow-empty", "-m", "initial")
+  end
+
+  # One repository per branch, with an empty commit, at the root of each copy.
+  REPOSITORIES = Hash.new do |fixtures, branch|
+    fixtures[branch] = GitFixture.new { |root| init_repository(root, branch) }
+  end
+  private_constant :REPOSITORIES
+
+  # A repository on main at <copy>/repo whose bare origin at <copy>/origin holds main, and whose
+  # .worktrees directory is excluded, so a worktree can be created from it.
+  WITH_ORIGIN = GitFixture.new do |root|
+    repo = File.join(root, "repo")
+    origin = File.join(root, "origin")
+    FileUtils.mkdir(repo)
+    init_repository(repo, "main")
+    system("git", "init", "--quiet", "--bare", "--initial-branch=main", origin, exception: true)
+    run_git(repo, "remote", "add", "origin", origin)
+    run_git(repo, "push", "--quiet", "origin", "main")
+    File.write(File.join(repo, ".git", "info", "exclude"), ".worktrees\n")
+  end
+  private_constant :WITH_ORIGIN
 
   def setup
     @stub_bin = Dir.mktmpdir
@@ -590,7 +627,7 @@ end
 
   def test_survives_an_awkward_repository_path_intact
     @repo = repo_on("main", inside: "o'brien's work files")
-    worktree_creatable!
+    add_origin_in_place
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
@@ -928,7 +965,16 @@ end
     git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/#{branch}")
   end
 
+  # Replaces the repository of setup with a copy that has an origin and an excluded .worktrees.
   def worktree_creatable!
+    FileUtils.rm_rf(@repo)
+    copy = WITH_ORIGIN.copy
+    @extra_dirs << copy
+    @repo = File.join(copy, "repo")
+  end
+
+  # The same, for a repository that must stay where it is.
+  def add_origin_in_place
     origin = Dir.mktmpdir
     @extra_dirs << origin
     system("git", "init", "--quiet", "--bare", "--initial-branch=main", origin) ||
@@ -977,19 +1023,16 @@ end
   end
 
   def repo_on(branch, inside: nil)
-    @repo = inside ? Dir.mktmpdir(nil, awkward_parent(inside)) : Dir.mktmpdir
+    return @repo = REPOSITORIES[branch].copy.tap { |copy| @extra_dirs << copy } unless inside
+
+    @repo = Dir.mktmpdir(nil, awkward_parent(inside))
     @extra_dirs << @repo
-    git("init", "--quiet", "--initial-branch=#{branch}")
-    git("commit", "--quiet", "--allow-empty", "-m", "initial")
+    self.class.init_repository(@repo, branch)
     @repo
   end
 
   def git(*arguments)
-    system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null",
-           "-c", "user.email=test@example.com", "-c", "user.name=Test",
-           "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false",
-           "-c", "tag.forceSignAnnotated=false", *arguments) ||
-      raise("git #{arguments.join(' ')} failed")
+    self.class.run_git(@repo, *arguments)
   end
 
   # Records what the scripts ask git to do, then hands the call to the real git.
