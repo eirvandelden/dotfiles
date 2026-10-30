@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # The consent guard is a Claude Code PreToolUse hook. It reads the tool call as
@@ -17,10 +18,13 @@ require_relative "isolated_git"
 class ConsentGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/consent-guard.rb", __dir__)
 
+  REPOSITORY = GitFixture.new do |repo|
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    system("git", "-C", repo, "remote", "add", "origin", "git@github.com:eirvandelden/dotfiles.git", exception: true)
+  end
+
   def setup
-    @repo = Dir.mktmpdir
-    system("git", "init", "--quiet", "--initial-branch=main", @repo)
-    add_remote("origin", "git@github.com:eirvandelden/dotfiles.git")
+    @repo = REPOSITORY.copy
     # A home of its own, so the guard reads the allowlist this test wrote and
     # never the one installed on the machine running the suite.
     @home = Dir.mktmpdir
