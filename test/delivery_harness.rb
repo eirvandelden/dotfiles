@@ -2,6 +2,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 
 # Shared setup for the delivery scripts' tests (deliver, ship, open-pr-dash.sh): a temporary git
 # repository with a bare repository behind "origin", stubbed `gh` and `herdr` on PATH, and a HOME
@@ -17,6 +18,9 @@ require "tmpdir"
 # "stdout", "stderr", "exit", and "jq_stdout" (printed instead of stdout when -q or --jq is given).
 # `--body-file` and `--title` values are copied to <state>/captured/<tool>-<a>-<b>.body and .title
 # at call time, because the script under test may delete the file afterwards.
+#
+# The repository and its bare origin are built once per branch and origin URL in each test process,
+# as a GitFixture, and every `build_repo` call gives the test its own copy of them.
 module DeliveryHarness
   REPO_ROOT = File.expand_path("..", __dir__)
   DELIVER = File.join(REPO_ROOT, "agents/.agents/skills/deliver/scripts/deliver")
@@ -66,41 +70,58 @@ module DeliveryHarness
     exit(response["exit"].to_i)
   RUBY
 
+  # One GitFixture for each [branch, origin_url].
+  FIXTURES = Hash.new do |fixtures, key|
+    fixtures[key] = GitFixture.new { |root| DeliveryHarness.build_original(root, *key) }
+  end
+  private_constant :FIXTURES
+
+  # A bare origin at <root>/origin and a work repository at <root>/repo on the branch, with one
+  # commit pushed as main. It runs git with explicit paths, because it has no test instance.
+  #: (String root, String branch, String origin_url) -> void
+  def self.build_original(root, branch, origin_url)
+    origin = File.join(root, "origin")
+    repo = File.join(root, "repo")
+    system("git", "init", "--quiet", "--bare", "--initial-branch=main", origin, exception: true)
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    configure_original(repo, origin, origin_url)
+    File.write(File.join(repo, "README.md"), "readme\n")
+    [ %w[add README.md], %w[commit --quiet -m initial], %w[push --quiet origin main], [ "checkout", "--quiet", "-b", branch ] ]
+      .each { |arguments| system("git", "-C", repo, *arguments, exception: true) }
+  end
+
+  #: (String repo, String origin, String origin_url) -> void
+  def self.configure_original(repo, origin, origin_url)
+    { "user.email" => "test@example.com", "user.name" => "Test", "commit.gpgsign" => "false",
+      "core.hooksPath" => "/dev/null" }.each { |key, value| system("git", "-C", repo, "config", key, value, exception: true) }
+    system("git", "-C", repo, "remote", "add", "origin", origin_url, exception: true)
+    system("git", "-C", repo, "remote", "set-url", "--push", "origin", origin, exception: true)
+  end
+  private_class_method :configure_original
+
   def setup_harness
     @state = Dir.mktmpdir
     @stub_bin = Dir.mktmpdir
     @home = Dir.mktmpdir
-    @origin = Dir.mktmpdir
-    @repo = Dir.mktmpdir
     @scripts = {}
     install_stubs
     default_responses
   end
 
   def teardown_harness
-    FileUtils.rm_rf([ @state, @stub_bin, @home, @origin, @repo ].compact)
+    FileUtils.rm_rf([ @state, @stub_bin, @home, @fixture_copy ].compact)
   end
 
   # A repository on a feature branch whose origin pushes to a bare repository. The origin URL
   # reads as the user's own GitHub account so `change-scope` answers "personal"; only the push URL
-  # points at the bare repository, because that is the only place a push may go.
+  # points at the bare repository, because that is the only place a push may go. Sets @origin and
+  # @repo inside a copy that belongs to this test.
+  #: (?branch: String, ?origin_url: String) -> void
   def build_repo(branch: "my-change", origin_url: PERSONAL_URL)
     @branch = branch
-    system("git", "init", "--quiet", "--bare", "--initial-branch=main", @origin) || raise("git init --bare failed")
-    system("git", "init", "--quiet", "--initial-branch=main", @repo) || raise("git init failed")
-    configure_repo(origin_url)
-    commit_file("README.md", "readme\n", "initial")
-    git("push", "--quiet", "origin", "main")
-    git("checkout", "--quiet", "-b", branch)
-  end
-
-  def configure_repo(origin_url)
-    git("config", "user.email", "test@example.com")
-    git("config", "user.name", "Test")
-    git("config", "commit.gpgsign", "false")
-    git("config", "core.hooksPath", "/dev/null")
-    git("remote", "add", "origin", origin_url)
-    git("remote", "set-url", "--push", "origin", @origin)
+    @fixture_copy = FIXTURES[[ branch, origin_url ]].copy
+    @origin = File.join(@fixture_copy, "origin")
+    @repo = File.join(@fixture_copy, "repo")
   end
 
   def commit_file(path, content, message)
