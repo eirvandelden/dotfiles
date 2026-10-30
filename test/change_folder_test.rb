@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # Every change gets a folder named after its branch: docs/changes/<slug>/. This
@@ -11,10 +12,14 @@ require_relative "isolated_git"
 class ChangeFolderTest < Minitest::Test
   SCRIPT = File.expand_path("../agents/.agents/skills/plan/scripts/change-folder", __dir__)
 
+  REPOSITORY = GitFixture.new do |repo|
+    system("git", "-C", repo, "init", "--quiet", "--initial-branch=main", exception: true)
+    system("git", "-C", repo, "-c", "commit.gpgsign=false", "-c", "user.email=test@example.com", "-c", "user.name=Test",
+           "commit", "--quiet", "--allow-empty", "-m", "initial", exception: true)
+  end
+
   def setup
-    @repo = Dir.mktmpdir
-    git("init", "--quiet", "--initial-branch=main")
-    git("commit", "--quiet", "--allow-empty", "-m", "initial")
+    @repo = REPOSITORY.copy
   end
 
   def teardown
