@@ -4,6 +4,7 @@ require "open3"
 require "tmpdir"
 require "fileutils"
 require "yaml"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 # Guards the global ignore of generated RBS folders and the skill wording that relies on it.
@@ -14,6 +15,15 @@ class GlobalSigIgnoreTest < Minitest::Test
   NEW_REPO_SETUP = "agents/.agents/skills/new-repo-setup/SKILL.md".freeze
   RUBY_STYLE = "agents/.agents/skills/ruby-style/SKILL.md".freeze
   GENERATED = [ "sig/foo.rbs", ".gem_rbs_collection/x" ].freeze
+
+  # A home with the global excludes at <root>/home and an empty repository at <root>/repo.
+  REPOSITORY = GitFixture.new do |root|
+    FileUtils.mkdir_p(File.join(root, "home/.config/git"))
+    FileUtils.cp(IGNORE_GLOBAL, File.join(root, "home/.config/git/ignore.global"))
+    FileUtils.mkdir_p(File.join(root, "repo"))
+    environment = { "HOME" => File.join(root, "home"), "GIT_CONFIG_GLOBAL" => GIT_CONFIG }
+    system(environment, "git", "init", "-q", chdir: File.join(root, "repo"), exception: true)
+  end
 
   def test_global_excludes_hide_sig_and_rbs_collection
     with_repo do
@@ -122,20 +132,13 @@ class GlobalSigIgnoreTest < Minitest::Test
   end
 
   def with_repo
-    Dir.mktmpdir do |tmp|
-      Dir.chdir(tmp) do
-        install_global_excludes(File.join(tmp, "home"))
-        FileUtils.mkdir_p("repo")
-        @home = File.join(tmp, "home")
-        git("init", "-q")
-        yield
-      end
+    copy = REPOSITORY.copy
+    Dir.chdir(copy) do
+      @home = File.join(copy, "home")
+      yield
     end
-  end
-
-  def install_global_excludes(home)
-    FileUtils.mkdir_p(File.join(home, ".config/git"))
-    FileUtils.cp(IGNORE_GLOBAL, File.join(home, ".config/git/ignore.global"))
+  ensure
+    FileUtils.rm_rf(copy) if copy
   end
 
   def write(path)
