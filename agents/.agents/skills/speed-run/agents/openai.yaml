@@ -1,0 +1,7 @@
+---
+interface:
+  display_name: "Speed Run"
+  short_description: "Run a rolling stream of fixes through parallel worktree implementers, review and delivery"
+
+policy:
+  allow_implicit_invocation: false
