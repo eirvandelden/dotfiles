@@ -22,7 +22,7 @@ Establish the **delivery target** at startup from the user's choice or clearly e
 
 If a material target choice is unclear, ask only for that choice and continue independent intake, implementation, and review. Record the target and how delivery will be verified, keep using it across landings, and update it when the user changes targets. Do not silently substitute a destination. A local or preview delivery is the default for web apps; production deployment, public publishing, purchases, and communications still require their applicable authorization. A project without an interactive UI does not need a device or browser.
 
-Create a persistent session directory outside tracked project files, under `${CODEX_HOME:-$HOME/.codex}/speed-run/<project>/<unique-session>/` (or the harness's persistent session storage). Keep a coordinator-owned `ledger.md` and per-report folders there. Do not commit private reports or attachments to a public repository. Preserve the session path in conversation summaries so the session survives compaction or a handoff.
+Create a persistent session directory outside tracked project files, under `$HOME/.agents/speed-run/<project>/<unique-session>/` (or the harness's persistent session storage). Keep a coordinator-owned `ledger.md` and per-report folders there. Do not commit private reports or attachments to a public repository. Preserve the session path in conversation summaries so the session survives compaction or a handoff.
 
 The ledger records:
 
