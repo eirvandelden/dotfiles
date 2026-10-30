@@ -9,7 +9,7 @@ require_relative "isolated_git"
 class JournalMcpTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   CODEX_CONFIG = File.join(REPO_ROOT, "codex/.codex/config.toml")
-  MCP_DOC = File.join(REPO_ROOT, "claude/.claude/MCP.md")
+  MCP_DOC = File.join(REPO_ROOT, "agents/.agents/MCP.md")
   URL = "http://finances.home.arpa/mcp".freeze
 
   def test_codex_declares_journal_with_its_url_and_token_variable

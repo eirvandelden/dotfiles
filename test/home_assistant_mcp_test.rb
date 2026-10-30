@@ -9,7 +9,7 @@ require_relative "isolated_git"
 class HomeAssistantMcpTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   CODEX_CONFIG = File.join(REPO_ROOT, "codex/.codex/config.toml")
-  MCP_DOC = File.join(REPO_ROOT, "claude/.claude/MCP.md")
+  MCP_DOC = File.join(REPO_ROOT, "agents/.agents/MCP.md")
   URL = "http://ha-mcp.home.arpa/mcp".freeze
 
   def test_codex_reaches_home_assistant_through_the_gate_with_the_unlocked_token
