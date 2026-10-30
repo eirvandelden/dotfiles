@@ -5,6 +5,7 @@ require "open3"
 require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "hook_scripts"
+require_relative "git_fixture"
 require_relative "isolated_git"
 
 class LefthookPullHooksTest < Minitest::Test
@@ -13,6 +14,25 @@ class LefthookPullHooksTest < Minitest::Test
   MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
   PACKAGE_LOCK = "{\"name\":\"app\",\"version\":\"1\"}".freeze
 
+  # <root>/origin.git on trunk, <root>/pusher with one commit pushed, <root>/puller cloned from it.
+  REPOSITORY = GitFixture.new do |root|
+    origin = File.join(root, "origin.git")
+    pusher = File.join(root, "pusher")
+    puller = File.join(root, "puller")
+    identity = { "LEFTHOOK" => "0", "GIT_AUTHOR_NAME" => "Test", "GIT_AUTHOR_EMAIL" => "test@example.com",
+                 "GIT_COMMITTER_NAME" => "Test", "GIT_COMMITTER_EMAIL" => "test@example.com" }
+    git = ->(*arguments) { system(identity, "git", *arguments, exception: true) }
+    git.call("init", "--bare", origin, "--quiet")
+    git.call("-C", origin, "symbolic-ref", "HEAD", "refs/heads/#{TRUNK}")
+    git.call("clone", origin, pusher, "--quiet")
+    File.write(File.join(pusher, ".gitkeep"), "")
+    git.call("-C", pusher, "add", ".")
+    git.call("-C", pusher, "commit", "-m", "init", "--quiet")
+    git.call("-C", pusher, "push", "origin", TRUNK, "--quiet")
+    git.call("clone", origin, puller, "--quiet")
+    { "pull.rebase" => "true", "rebase.autoStash" => "true" }.each { |key, value| git.call("-C", puller, "config", key, value) }
+  end
+
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
 
@@ -20,9 +40,6 @@ class LefthookPullHooksTest < Minitest::Test
     @tmpdir = Dir.mktmpdir
     @bin_dir = File.join(@tmpdir, "bin")
     @log_file = File.join(@tmpdir, "commands.log")
-    @origin_dir = File.join(@tmpdir, "origin.git")
-    @pusher_dir = File.join(@tmpdir, "pusher")
-    @puller_dir = File.join(@tmpdir, "puller")
     @hooks_dir = HookScripts.directory
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
@@ -31,7 +48,7 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   def teardown
-    FileUtils.rm_rf(@tmpdir)
+    FileUtils.rm_rf([ @tmpdir, @repository_copy ].compact)
   end
 
   # Each test below runs the steps of several former single-behaviour tests in one pair of repositories. The log is
@@ -160,26 +177,13 @@ class LefthookPullHooksTest < Minitest::Test
     path
   end
 
+  # A copy of the fixture: a bare origin, a pusher that holds the first commit and a puller cloned from it.
   def setup_git_repos
     write_global_gitconfig
-
-    run_git("init", "--bare", @origin_dir, "--quiet")
-    run_git("-C", @origin_dir, "symbolic-ref", "HEAD", "refs/heads/#{TRUNK}")
-
-    run_git("clone", @origin_dir, @pusher_dir, "--quiet")
-    run_git("-C", @pusher_dir, "config", "user.name", "Test")
-    run_git("-C", @pusher_dir, "config", "user.email", "test@example.com")
-
-    File.write(File.join(@pusher_dir, ".gitkeep"), "")
-    run_git("-C", @pusher_dir, "add", ".")
-    run_git("-C", @pusher_dir, "commit", "-m", "init")
-    run_git("-C", @pusher_dir, "push", "origin", TRUNK)
-
-    run_git("clone", @origin_dir, @puller_dir, "--quiet", env: { "GIT_CONFIG_GLOBAL" => global_gitconfig })
-    run_git("-C", @puller_dir, "config", "user.name", "Test")
-    run_git("-C", @puller_dir, "config", "user.email", "test@example.com")
-    run_git("-C", @puller_dir, "config", "pull.rebase", "true")
-    run_git("-C", @puller_dir, "config", "rebase.autoStash", "true")
+    @repository_copy = REPOSITORY.copy
+    @origin_dir = File.join(@repository_copy, "origin.git")
+    @pusher_dir = File.join(@repository_copy, "pusher")
+    @puller_dir = File.join(@repository_copy, "puller")
   end
 
   def global_gitconfig
