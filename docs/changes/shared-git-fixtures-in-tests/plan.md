@@ -8,7 +8,7 @@ From `intent.md` (2026-10-29). Status: accepted.
 
 Existing terms from `GLOSSARY.md`, with the same meaning: **Runner** (`bin/test`), **Test file**, **Hooks copy**, **PATH stub**.
 
-New terms. They are not in `GLOSSARY.md` yet, because Etienne has not agreed them (see the report's `Decision needed:` lines):
+New terms. Etienne agreed them on 2026-10-30, and they are in `GLOSSARY.md`:
 
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Original** — the directory that the build block of a git fixture fills, once per process. No test gets its path or writes into it. Avoid: template (it already means `GIT_TEMPLATE_DIR` in `IsolatedGit.template` and the PR template in `DeliveryHarness#commit_change_work`), seed (the tests already use it for the clone that pushes the first commit).
@@ -86,6 +86,19 @@ end
 ```
 
 Private, not interface: `original` (memoized build; it sets the memo only after the block returns, and on a raise it removes the partial directory), `repoint(copy)` (the textual rewrite), `remove` (`chmod_R u+w`, then `rm_rf`, the same as `HookScripts.remove`). The file starts with `require_relative "isolated_git"`, so every build runs isolated.
+
+`test/herdr_worker_scripts_test.rb`. Two class methods, public only so the fixture block can call them; they are test helpers, not interface.
+
+```ruby
+class HerdrWorkerScriptsTest
+  # Git runs with no hooks, a fixed identity and no signing, in any directory.
+  #: (String directory, *String arguments) -> bool
+  def self.run_git(directory, *arguments)
+
+  #: (String directory, String branch) -> void
+  def self.init_repository(directory, branch)
+end
+```
 
 `test/delivery_harness.rb`. Public signatures stay. `build_repo` copies instead of building.
 
@@ -178,7 +191,7 @@ Git process starts dominate the cost, because Defender scans each exec. The copy
 - **No `core.checkStat` override.** A copy keeps mtimes (`preserve: true`) but gets new inodes and ctimes, so git re-hashes the index entries on the first porcelain command and finds them clean. No script outside `test/` uses `diff-index`, `diff-files` or `update-index` (checked with `git grep`), so the override would only change config that scripts under test read.
 - **The run root lives in `TestRun`, not in the top-level script.** `TestRun#call` already owns the `ensure` that runs `stop_all`; removing the run root in the same `ensure` keeps the order (stop every file, then remove) in one place.
 - **Real paths.** The original's directory is `File.realpath`, so git records one path form and the rewrite needs only that form. Copies are made inside it, so they are real paths too.
-- **New glossary terms wait.** The glossary skill adds a term only after Etienne agrees it. Auto mode does not ask, so the four terms above go to the report as decisions.
+- **New glossary terms.** Etienne agreed the four terms above on 2026-10-30, and the glossary skill added them to `GLOSSARY.md`.
 
 ### File classification
 
