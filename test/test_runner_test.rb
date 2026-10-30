@@ -217,7 +217,56 @@ class TestRunnerTest < Minitest::Test
     assert_equal([ file, File.join(ROOT, "test"), ROOT ], [ script, load_path, directory ])
   end
 
+  def test_a_run_puts_each_file_under_one_run_root_and_removes_it
+    first = write_test("first_test.rb", tmpdir_script("first"))
+    second = write_test("second_test.rb", tmpdir_script("second"))
+
+    output, status = run_runner(first, second, env: { "TMPDIR" => @dir })
+
+    assert(status.success?, output)
+    roots = %w[first second].map { |name| File.read(File.join(@dir, "#{name}.tmpdir")) }
+    assert_equal(1, roots.uniq.size)
+    assert_equal(@dir, File.dirname(roots.first))
+    assert_match(/\Adotfiles-test/, File.basename(roots.first))
+    assert_empty(run_roots)
+  end
+
+  def test_an_interrupt_removes_the_run_root
+    started = File.join(@dir, "started")
+    file = write_test("slow_test.rb", "def test_slow\n    File.write(#{started.inspect}, 'x')\n    sleep 30\n  end")
+
+    interrupt_runner_once(started, file, env: { "TMPDIR" => @dir })
+
+    assert_empty(run_roots)
+  end
+
+  def test_a_runner_killed_after_an_interrupt_leaves_one_run_root
+    started = File.join(@dir, "started")
+    file = write_test("stubborn_test.rb", "def test_stubborn\n    trap('INT') {}\n    " \
+                                          "File.write(#{started.inspect}, Process.pid.to_s)\n    sleep 60\n  end")
+    runner = Process.spawn({ "TMPDIR" => @dir }, RbConfig.ruby, RUNNER, file, chdir: ROOT, out: File::NULL,
+                                                                              err: File::NULL)
+    Timeout.timeout(HANG_GUARD) { sleep 0.05 until File.size?(started) }
+    Process.kill("INT", runner)
+    sleep 0.3
+    Process.kill("KILL", runner)
+    Process.wait(runner)
+
+    assert_equal(1, run_roots.size)
+  ensure
+    left = File.size?(started.to_s) && Integer(File.read(started))
+    Process.kill("KILL", left) if left && !gone?(left)
+  end
+
   private
+
+  def run_roots
+    Dir.glob(File.join(@dir, "dotfiles-test*"))
+  end
+
+  def tmpdir_script(name)
+    "def test_record = File.write(#{File.join(@dir, "#{name}.tmpdir").inspect}, ENV.fetch('TMPDIR'))"
+  end
 
   def write_test(name, body)
     relative = File.join(File.basename(@dir), name)
@@ -291,7 +340,7 @@ class TestRunnerTest < Minitest::Test
     nil
   end
 
-  def run_runner(*arguments, chdir: ROOT)
-    Open3.capture2e(RbConfig.ruby, RUNNER, *arguments, chdir: chdir)
+  def run_runner(*arguments, chdir: ROOT, env: {})
+    Open3.capture2e(env, RbConfig.ruby, RUNNER, *arguments, chdir: chdir)
   end
 end

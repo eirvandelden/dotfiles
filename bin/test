@@ -3,13 +3,16 @@
 # repository root. Without file arguments it runs every test/*_test.rb. `-j N` sets how many run at once.
 # A file's output is printed as one block when it ends. The exit status is 1 when any file fails, 130
 # on INT or TERM, 141 when its output is closed. Any early stop gives each running file INT, and KILL
-# when it still runs 5 seconds later.
+# when it still runs 5 seconds later. Every file gets the same TMPDIR, a run root named dotfiles-test*
+# under the caller's TMPDIR, which the run removes at its end. A run killed by KILL leaves that one directory.
 # test/test_runner_test.rb covers this script.
 require "English"
 require "etc"
+require "fileutils"
 require "optparse"
 require "rbconfig"
 require "tempfile"
+require "tmpdir"
 
 class TestRun
   Job = Struct.new(
@@ -35,6 +38,7 @@ class TestRun
   #: -> Integer
   def call
     %w[INT TERM].each { |signal| trap(signal) { @stopping = true } }
+    @run_root = Dir.mktmpdir("dotfiles-test")
     run_all
     return 130 if @stopping
 
@@ -44,9 +48,18 @@ class TestRun
     141
   ensure
     stop_all
+    remove_run_root
   end
 
   private
+
+  # After stop_all, so no file still writes into it. A killed file can leave a read-only Hooks copy.
+  def remove_run_root
+    return unless @run_root
+
+    FileUtils.chmod_R("u+w", @run_root)
+    FileUtils.rm_rf(@run_root)
+  end
 
   # Each file has its own process group, so a Ctrl-C reaches only this runner, and a runner that
   # stops early for any reason would leave the files running. Every way out passes INT on, so each
@@ -96,8 +109,8 @@ class TestRun
   def start_next
     file = @files.shift
     output = Tempfile.new("test-run")
-    pid = Process.spawn(RbConfig.ruby, "-Itest", file, chdir: @root, pgroup: true, in: File::NULL,
-                        out: output.fileno, err: output.fileno)
+    pid = Process.spawn({ "TMPDIR" => @run_root }, RbConfig.ruby, "-Itest", file, chdir: @root, pgroup: true,
+                        in: File::NULL, out: output.fileno, err: output.fileno)
     @running << Job.new(file, pid, output, monotonic_now)
   end
 
