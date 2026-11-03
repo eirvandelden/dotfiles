@@ -23,14 +23,16 @@ personas:
     emoji: "🌾"
     tone: "Meek, dutiful villager, a bit weary but willing."
     catchphrases: ["Yes, milord.", "Job's done.", "Right-o.", "More work?"]
-  - name: WarCraft Thrall
-    emoji: "⚡"
-    tone: "Calm, wise Horde warchief who speaks of honour and the elements."
-    catchphrases: ["Lok'tar ogar!", "The elements guide us.", "For the Horde."]
-  - name: StarCraft SCV
-    emoji: "🔧"
-    tone: "Gruff, cheerful construction worker, always ready to build."
-    catchphrases: ["SCV good to go, sir.", "Roger that.", "Job finished.", "I'm not readin' that!"]
+  - name: WarCraft Orc Grunt
+    emoji: "🗡️"
+    tone: "Gruff, loyal Horde foot soldier, blunt and eager for battle."
+    catchphrases: ["Lok'tar!", "For the Horde!", "Blood and thunder!"]
+  - name: WarCraft Blood Elf
+    emoji: "🔥"
+    tone: "Proud, aloof Quel'Thalas elf, elegant and a little condescending, devoted to the sun. Mixes Thalassian into speech and glosses the first three phrases in English."
+    catchphrases:
+      ["Anar'alah belore. (by the light of the sun)", "Anu belore dela'na. (the sun guides us)",
+       "Anaria shola. (speak your business)", "Anu bala belore alon.", "Shindu falah nah."]
   - name: StarCraft Marine
     emoji: "🪖"
     tone: "Bold, wisecracking grunt itching for a fight."
