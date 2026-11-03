@@ -58,10 +58,12 @@ The exact strings, as JSON (the keys only label them; they do not go into `setti
 
 ```json
 {
-  "edit 1": "Deleting, truncating or overwriting (rm, git clean, git checkout --, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file",
+  "edit 1": "Deleting, truncating or overwriting (rm, git rm, git clean, git checkout --, git restore, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file",
   "edit 3": "**Secrets management**: 1Password (`op`); the credential helper and its tests call `op read`",
   "edit 4": "**Sensitive data locations & audiences**: resolved 1Password values (output of `op read`), `.env` and `.env.*` files, `*.key` and `*.pem` files, and any unusual-named .gitignore'd path — share only with audiences cleared at the [named+specifics] bar. The credential helper (`git/.config/git/credential-1password`) and its tests are tracked code with no secret values, and are fine to commit and push",
-  "edit 5": "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) only; other `eirvandelden/*` repos are not trusted",
+  "edit 5": "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) is routine; other `eirvandelden/*` repos follow playbook rule 19",
+  "edit 7": "**Source control**: The trusted repo is eirvandelden/dotfiles and its remote (github.com:eirvandelden/dotfiles.git); other repos owned by the `eirvandelden` GitHub user are trusted for push and pull too (playbook rule 19). Dotfiles is public: only this repo's own work belongs here, never ported content from elsewhere",
+  "edit 8": "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility. Other repos owned by `eirvandelden` are trusted remotes too",
   "edit 6": "**Branches and dotfiles**: `main` is protected by a ruleset and takes no direct push. Pushes to feature branches on `origin` are routine. Editing shell profiles inside this repo is routine. `stow` and `lefthook install` need an explicit user request (playbook rules 7, 12, 19)"
 }
 ```
@@ -73,7 +75,7 @@ Resulting `soft_deny`:
 ```json
 "soft_deny": [
   "$defaults",
-  "Deleting, truncating or overwriting (rm, git clean, git checkout --, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file"
+  "Deleting, truncating or overwriting (rm, git rm, git clean, git checkout --, git restore, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file"
 ]
 ```
 
@@ -88,6 +90,7 @@ Resulting `soft_deny`:
 - Edit 1 uses the intent's brace form verbatim. The classifier is a model and reads brace expansion; the intent fixed this text.
 - Edit 6 restates "`main` is protected by a ruleset" although line 363 says it too. The new line then reads whole, without a cross-reference.
 - `claude auto-mode config` checks the worktree file in isolation with `CLAUDE_CONFIG_DIR`. `--settings <file>` does not work for this: it merges with the live `~/.claude/settings.json`, and the arrays concatenate (checked on 2026-11-03).
+- Edits 1, 5, 7 and 8 depart from the intent's verbatim text after review, on Etienne's decisions of 2026-11-03: edit 1 adds `git rm` and `git restore`; edit 5 reads "is routine; other `eirvandelden/*` repos follow playbook rule 19"; edits 7 and 8 widen the `Source control` and `Trusted repo` lines to the other repos of the `eirvandelden` GitHub user, so the classifier sees no dotfiles-only trust. The Proof check counts them.
 - `claude auto-mode critique` cannot run on the worktree file before merge. Under `CLAUDE_CONFIG_DIR` it fails with "Could not resolve authentication method" (checked on 2026-11-03). With `--settings` it sees the old rules too. The live file is the main checkout's copy, which the intent keeps untouched. So the critique criterion runs after merge, once Etienne has replaced the main checkout's uncommitted edit. This changes when that criterion is checked, not what it checks; the report raises it as a decision.
 
 ## Integration points
@@ -110,7 +113,7 @@ No criterion needs a test (configuration, playbook rule 3). Work happens in `/Us
 3. Check the diff holds no work reference: `test -z "$(grep -iE 'nedap|caren' $S/main-before.diff)"` exits 0.
 4. Apply it: `git -C /Users/etienne.vandelden/Developer/dotfiles/.worktrees/tighten-auto-mode apply $S/main-before.diff`. Then `jq . claude/.claude/settings.json > /dev/null` exits 0.
 5. Commit one: `Add the autoMode block to the Claude settings`. Only `claude/.claude/settings.json` is staged.
-6. Save the expected strings: copy the JSON block under `### After` in this plan to `$S/expected.json`, and check `jq -e 'length == 5' $S/expected.json`.
+6. Save the expected strings: copy the JSON block under `### After` in this plan to `$S/expected.json`, and check `jq -e 'length == 7' $S/expected.json`.
 7. Apply edits 1–6 with the Edit tool, exact strings from `$S/expected.json`.
 8. Run every check in `## Proof` except the critique and the post-deliver `nedap|caren` check.
 9. Re-read `git diff HEAD`; every hunk is one of the six edits.
@@ -127,8 +130,8 @@ No criterion needs a test (configuration, playbook rule 3). Work happens in `/Us
 ## Proof
 
 - `jq . claude/.claude/settings.json` parses → check: `jq . claude/.claude/settings.json > /dev/null` exits 0.
-- All six edits are in place, exactly, and the replaced text is gone → check: `jq -e --slurpfile w $S/expected.json '$w[0] as $w | .autoMode as $a | ($a.soft_deny == ["$defaults", $w["edit 1"]]) and ($a.environment | length == 26) and ($a.environment[-1] == $w["edit 6"]) and ($a.environment[-2] == $w["edit 5"]) and any($a.environment[]; . == $w["edit 3"]) and any($a.environment[]; . == $w["edit 4"]) and all($a.environment[]; startswith("routine under") | not) and all($a.environment[]; . != "**Secrets management**: None configured")' claude/.claude/settings.json` prints `true` and exits 0. The same check on the before-state file prints `false` (checked on a scratch copy, 2026-11-03).
-- `claude auto-mode config` shows the new text → check: `mkdir -p $S/cfg && cp claude/.claude/settings.json $S/cfg/settings.json && CLAUDE_CONFIG_DIR=$S/cfg claude auto-mode config | jq -e --slurpfile w $S/expected.json '$w[0] as $w | . as $c | any($c.soft_deny[]; . == $w["edit 1"]) and all($w["edit 3"], $w["edit 4"], $w["edit 5"], $w["edit 6"]; . as $s | any($c.environment[]; . == $s)) and all($c.environment[]; startswith("routine under") | not)'` prints `true` and exits 0. Without `CLAUDE_CONFIG_DIR`, against the live config, it prints `false` (checked 2026-11-03), which shows the isolation works.
+- All six edits are in place, exactly, and the replaced text is gone → check: `jq -e --slurpfile w $S/expected.json '$w[0] as $w | .autoMode as $a | ($a.soft_deny == ["$defaults", $w["edit 1"]]) and ($a.environment | length == 26) and ($a.environment[-1] == $w["edit 6"]) and ($a.environment[-2] == $w["edit 5"]) and any($a.environment[]; . == $w["edit 3"]) and any($a.environment[]; . == $w["edit 4"]) and any($a.environment[]; . == $w["edit 7"]) and any($a.environment[]; . == $w["edit 8"]) and all($a.environment[]; startswith("routine under") | not) and all($a.environment[]; . != "**Secrets management**: None configured")' claude/.claude/settings.json` prints `true` and exits 0. The same check on the before-state file prints `false` (checked on a scratch copy, 2026-11-03).
+- `claude auto-mode config` shows the new text → check: `mkdir -p $S/cfg && cp claude/.claude/settings.json $S/cfg/settings.json && CLAUDE_CONFIG_DIR=$S/cfg claude auto-mode config | jq -e --slurpfile w $S/expected.json '$w[0] as $w | . as $c | any($c.soft_deny[]; . == $w["edit 1"]) and all($w["edit 3"], $w["edit 4"], $w["edit 5"], $w["edit 6"], $w["edit 7"], $w["edit 8"]; . as $s | any($c.environment[]; . == $s)) and all($c.environment[]; startswith("routine under") | not)'` prints `true` and exits 0. Without `CLAUDE_CONFIG_DIR`, against the live config, it prints `false` (checked 2026-11-03), which shows the isolation works.
 - `soft_deny` still starts with `"$defaults"` → check: `jq -e '.autoMode.soft_deny[0] == "$defaults"' claude/.claude/settings.json`.
 - `soft_deny` holds `"$defaults"` plus one custom rule, the credential-file rule → check: `jq -e '.autoMode.soft_deny | length == 2' claude/.claude/settings.json`; the six-edits check above proves the rule's exact text.
 - The environment no longer mentions `kubectl` or `-n test` → check: `jq -e '[.autoMode[][] | select(test("kubectl|-n test"))] | length == 0' claude/.claude/settings.json` exits 0.

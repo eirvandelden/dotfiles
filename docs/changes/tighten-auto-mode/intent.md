@@ -30,11 +30,11 @@ The block exists only as an uncommitted edit in the main checkout, so the change
 
 1. Commit one adds the `autoMode` block as it stands, copied from the main checkout with `git diff | git apply`. The main checkout keeps its uncommitted edit untouched.
 2. Commit two applies six edits:
-   1. `soft_deny`: replace the `Bash(rm -rf:*) in test/ fixtures ...` rule with: "Deleting, truncating or overwriting (rm, git clean, git checkout --, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file."
+   1. `soft_deny`: replace the `Bash(rm -rf:*) in test/ fixtures ...` rule with: "Deleting, truncating or overwriting (rm, git rm, git clean, git checkout --, git restore, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file."
    2. `soft_deny`: delete the `kubectl ... -n test` rule. The repository has no cluster.
    3. Environment, Secrets management: change "None configured" to "1Password (`op`); the credential helper and its tests call `op read`".
    4. Environment, Sensitive data locations: list the real secrets (resolved 1Password values, `.env*`, `*.key`, `*.pem`, gitignored paths). Add that the helper and test files are tracked code and fine to push.
-   5. Environment, routine bullet: replace the "routine under eirvandelden/ prefix" line with "push/pull to `origin` of this repo only; other `eirvandelden/*` repos are not trusted".
+   5. Environment, routine bullet: replace the "routine under eirvandelden/ prefix" line with "push/pull to `origin` of this repo is routine; other `eirvandelden/*` repos follow playbook rule 19".
    6. Environment, branches and dotfiles: `main` is protected by a ruleset. Pushes to feature branches on `origin` are routine. Editing shell profiles inside the repository is routine. `stow` and `lefthook install` need an explicit user request (playbook rules 7, 12, 19).
 
 ## Out of scope
@@ -58,6 +58,8 @@ The block exists only as an uncommitted edit in the main checkout, so the change
 - Carry the block over as its own commit, then tighten it in a second commit — keeps the six edits reviewable as a clean diff.
 - Autonomous delivery — chosen at the delivery-mode question.
 - Only non-work edits go into the carried block — the repository is public.
+- Edit 5 scopes the distrust to repos outside `eirvandelden/*`, and edit 1 adds `git rm` and `git restore` — review round 1 found the verbatim text clashes with playbook rule 19 (2026-11-03).
+- The `Source control` and `Trusted repo` lines name the other repos of the `eirvandelden` GitHub user as trusted — review round 2 found they contradicted edit 5 (2026-11-03).
 
 ## Open questions
 
