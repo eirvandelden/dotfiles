@@ -378,12 +378,12 @@
       "**Primary use of Claude Code**: software development (dotfiles bootstrap/config tooling)",
       "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility",
       "**Org-specific CLIs**: None configured — herdr, rv, lefthook, stow, synvert-ruby, rcn appear to be personal/dotfiles tooling, not org-specific",
-      "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) only; other `eirvandelden/*` repos are not trusted",
+      "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) is routine; other `eirvandelden/*` repos follow playbook rule 19",
       "**Branches and dotfiles**: `main` is protected by a ruleset and takes no direct push. Pushes to feature branches on `origin` are routine. Editing shell profiles inside this repo is routine. `stow` and `lefthook install` need an explicit user request (playbook rules 7, 12, 19)"
     ],
     "soft_deny": [
       "$defaults",
-      "Deleting, truncating or overwriting (rm, git clean, git checkout --, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file"
+      "Deleting, truncating or overwriting (rm, git rm, git clean, git checkout --, git restore, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file"
     ]
   }
 }
