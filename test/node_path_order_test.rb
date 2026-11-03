@@ -279,7 +279,7 @@ class NodePathOrderTest < Minitest::Test
     path = shell_path(env: { "PATH" => "/bin" })
 
     assert_includes(path, "/usr/sbin")
-    assert_operator(path.index("/usr/bin"), :>, path.index(File.join(@brew, "bin")))
+    %w[/usr/bin /bin].each { |dir| assert_operator(path.index(dir), :>, path.index(File.join(@brew, "bin"))) }
   end
 
   def test_an_inherited_homebrew_prefix_puts_homebrew_bin_and_sbin_before_usr_bin
@@ -330,7 +330,7 @@ class NodePathOrderTest < Minitest::Test
     result = run_zsh("command -v git python3 openssl curl", **options)
 
     assert_equal("", result[:stderr])
-    result[:stdout].lines.map(&:strip).sort_by { |line| homebrew_tools.index { |tool| File.basename(tool) == File.basename(line) } }
+    result[:stdout].lines.map(&:strip)
   end
 
   def shell_path(**options)
