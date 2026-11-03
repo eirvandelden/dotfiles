@@ -137,7 +137,7 @@ class AgentVoiceTest < Minitest::Test
 
     assert_includes(peon["catchphrases"], "Dabu?")
     assert_operator(peon["catchphrases"].size, :>, 4)
-    refute_includes(grunt["catchphrases"], "What is thy bidding?")
+    refute_includes(grunt["catchphrases"], "Work, work.")
   end
 
   def test_the_blood_elf_speaks_thalassian
