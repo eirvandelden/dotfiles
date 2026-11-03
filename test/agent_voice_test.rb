@@ -15,7 +15,7 @@ class AgentVoiceTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   HOOK = File.join(ROOT, "claude/.claude/hooks/agent-voice.rb")
   PERSONAS = [
-    "WarCraft Orc Peon", "WarCraft Peasant", "WarCraft Thrall", "StarCraft SCV", "StarCraft Marine",
+    "WarCraft Orc Peon", "WarCraft Peasant", "WarCraft Orc Grunt", "WarCraft Blood Elf", "StarCraft Marine",
     "StarCraft Protoss Executor", "Diablo Deckard Cain", "Deekin Scalesinger", "Overlord minion", "Yoda"
   ].freeze
   SOURCES = "startup|resume|clear|compact|fork".freeze
@@ -130,14 +130,22 @@ class AgentVoiceTest < Minitest::Test
     end
   end
 
-  def test_the_orc_peon_has_more_catchphrases_and_thrall_has_no_line_from_another_character
+  def test_the_orc_peon_has_more_catchphrases_and_grunt_has_no_line_from_another_character
     personas = YAML.safe_load_file(File.join(ROOT, "claude/.claude/agent-voice.yml"), permitted_classes: []).fetch("personas")
     peon = personas.find { |persona| persona["name"] == "WarCraft Orc Peon" }
-    thrall = personas.find { |persona| persona["name"] == "WarCraft Thrall" }
+    grunt = personas.find { |persona| persona["name"] == "WarCraft Orc Grunt" }
 
     assert_includes(peon["catchphrases"], "Dabu?")
     assert_operator(peon["catchphrases"].size, :>, 4)
-    refute_includes(thrall["catchphrases"], "What is thy bidding?")
+    refute_includes(grunt["catchphrases"], "Work, work.")
+  end
+
+  def test_the_blood_elf_speaks_thalassian
+    personas = YAML.safe_load_file(File.join(ROOT, "claude/.claude/agent-voice.yml"), permitted_classes: []).fetch("personas")
+    elf = personas.find { |persona| persona["name"] == "WarCraft Blood Elf" }
+
+    assert_includes(elf["catchphrases"], "Anaria shola. (speak your business)")
+    assert_includes(elf["catchphrases"], "Anar'alah belore. (by the light of the sun)")
   end
 
   def test_deekin_has_his_two_extra_catchphrases
