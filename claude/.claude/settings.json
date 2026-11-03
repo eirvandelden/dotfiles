@@ -359,7 +359,7 @@
       "**Cloud provider(s)**: None configured",
       "**Repository visibility**: Public — eirvandelden/dotfiles (github.com:eirvandelden/dotfiles.git)",
       "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
-      "**Secrets management**: None configured",
+      "**Secrets management**: 1Password (`op`); the credential helper and its tests call `op read`",
       "**Default / protected branches**: main (default); Rulesets: `protect main` - active; Protected branches: `main`",
       "**CI/CD deploy targets**: None configured",
       "**Network posture**: None configured",
@@ -369,7 +369,7 @@
       "**Trusted cloud buckets**: None configured",
       "**Key internal services**: None configured",
       "**Internal package registry**: None configured",
-      "**Sensitive data locations & audiences**: git/.config/git/credential-1password, test/git_credential_helper_test.rb, test/secrets_loader_test.rb, test/secrets_scope_menu_test.rb, and any unusual-named .gitignore'd path or `*.key` file — share only with audiences cleared at the [named+specifics] bar",
+      "**Sensitive data locations & audiences**: resolved 1Password values (output of `op read`), `.env` and `.env.*` files, `*.key` and `*.pem` files, and any unusual-named .gitignore'd path — share only with audiences cleared at the [named+specifics] bar. The credential helper (`git/.config/git/credential-1password`) and its tests are tracked code with no secret values, and are fine to commit and push",
       "**Data retention / declassification**: None configured",
       "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment",
       "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
@@ -378,12 +378,12 @@
       "**Primary use of Claude Code**: software development (dotfiles bootstrap/config tooling)",
       "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility",
       "**Org-specific CLIs**: None configured — herdr, rv, lefthook, stow, synvert-ruby, rcn appear to be personal/dotfiles tooling, not org-specific",
-      "routine under eirvandelden/ prefix: git push/pull to this repo's own remote is routine"
+      "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) only; other `eirvandelden/*` repos are not trusted",
+      "**Branches and dotfiles**: `main` is protected by a ruleset and takes no direct push. Pushes to feature branches on `origin` are routine. Editing shell profiles inside this repo is routine. `stow` and `lefthook install` need an explicit user request (playbook rules 7, 12, 19)"
     ],
     "soft_deny": [
       "$defaults",
-      "Bash(rm -rf:*) in test/ fixtures touching credential-1password or secrets_loader paths",
-      "kubectl destructive writes to the `test` namespace (-n test) beyond routine test runs"
+      "Deleting, truncating or overwriting (rm, git clean, git checkout --, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file"
     ]
   }
 }
