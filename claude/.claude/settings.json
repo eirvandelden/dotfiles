@@ -353,5 +353,37 @@
   "theme": "auto",
   "showMessageTimestamps": true,
   "autoMode": {
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured",
+      "**Cloud provider(s)**: None configured",
+      "**Repository visibility**: Public — eirvandelden/dotfiles (github.com:eirvandelden/dotfiles.git)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: None configured",
+      "**Default / protected branches**: main (default); Rulesets: `protect main` - active; Protected branches: `main`",
+      "**CI/CD deploy targets**: None configured",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine or CI runner with open internet",
+      "**Source control**: The trusted repo (eirvandelden/dotfiles) and its remote (github.com:eirvandelden/dotfiles.git) only — public visibility: only this repo's own work belongs here, never ported content from elsewhere",
+      "**Trusted internal domains**: None configured",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: None configured",
+      "**Internal package registry**: None configured",
+      "**Sensitive data locations & audiences**: git/.config/git/credential-1password, test/git_credential_helper_test.rb, test/secrets_loader_test.rb, test/secrets_scope_menu_test.rb, and any unusual-named .gitignore'd path or `*.key` file — share only with audiences cleared at the [named+specifics] bar",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: any namespace, host, or container whose name carries `prod` or `production` as a whole word or name segment",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (dotfiles bootstrap/config tooling)",
+      "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility",
+      "**Org-specific CLIs**: None configured — herdr, rv, lefthook, stow, synvert-ruby, rcn appear to be personal/dotfiles tooling, not org-specific",
+      "routine under eirvandelden/ prefix: git push/pull to this repo's own remote is routine"
+    ],
+    "soft_deny": [
+      "$defaults",
+      "Bash(rm -rf:*) in test/ fixtures touching credential-1password or secrets_loader paths",
+      "kubectl destructive writes to the `test` namespace (-n test) beyond routine test runs"
+    ]
   }
 }
