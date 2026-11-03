@@ -5,21 +5,38 @@
 # Sourced from .zshenv so it runs for every shell type, including
 # non-interactive shells used by editors, IDEs, and AI coding agents.
 
-# 0. Ensure standard system paths are always present.
+# 0. Ensure standard system paths are always present, behind everything else.
 # Non-login shells (Conductor, editors, CI) may start with a stripped PATH.
-path=(/usr/local/bin /usr/bin /bin /usr/sbin /sbin "${path[@]}")
+# A directory that is already on PATH keeps its place.
+for system_dir in /usr/local/bin /usr/bin /bin /usr/sbin /sbin; do
+  [[ ":$PATH:" == *":$system_dir:"* ]] || path+=("$system_dir")
+done
+unset system_dir
 
 # 1. Homebrew — must come first so later tools can rely on HOMEBREW_PREFIX.
+# brew shellenv prints nothing when PATH already starts with its bin and sbin,
+# so give the brew command a PATH without them. The printed PATH line expands
+# this shell's own PATH.
 if [[ -z "${HOMEBREW_PREFIX:-}" ]]; then
   if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+    eval "$(PATH=/usr/bin:/bin /opt/homebrew/bin/brew shellenv)"
   elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
+    eval "$(PATH=/usr/bin:/bin /usr/local/bin/brew shellenv)"
   fi
 fi
 
+# Puts brew's keg-only curl, then Homebrew's bin and sbin, ahead of the
+# system directories. Also runs when a parent shell set HOMEBREW_PREFIX, and
+# again from .zprofile after macOS path_helper. rv, chnode and the unlocked
+# codex shim come after it, so they stay ahead of Homebrew.
+function prepend_homebrew_path() {
+  [[ -n "${HOMEBREW_PREFIX:-}" ]] || return 0
+  path=("$HOMEBREW_PREFIX/opt/curl/bin" "$HOMEBREW_PREFIX/bin" "$HOMEBREW_PREFIX/sbin" "${path[@]}") # .zshenv sets typeset -U path
+}
+
+prepend_homebrew_path
+
 # 2. Extra PATH entries
-export PATH="/opt/homebrew/opt/curl/bin:$PATH"
 export PATH="$PATH:$HOME/.rd/bin:$HOME/.local/bin" # .rd = Rancher Desktop
 
 # 3. SSL certificate configuration (depends on HOMEBREW_PREFIX from step 1)

@@ -261,7 +261,88 @@ class NodePathOrderTest < Minitest::Test
     assert_first_node(node_bin("22.17.0"), "command -v node", login: true, env: inherited_root("22.17.0"))
   end
 
+  def test_a_non_login_shell_with_an_inherited_homebrew_prefix_resolves_homebrews_git_first
+    assert_first_node(File.join(@brew, "bin", "git"), "command -v git", env: { "PATH" => "/usr/bin:/bin:#{@brew}/bin" })
+  end
+
+  def test_a_login_shell_resolves_homebrews_tools_after_path_helper
+    assert_equal(homebrew_tools, resolved_tools(login: true))
+  end
+
+  def test_interactive_login_and_non_login_shells_resolve_homebrews_tools
+    [ true, false ].each do |login|
+      assert_equal(homebrew_tools, resolved_tools(login:, interactive: true))
+    end
+  end
+
+  def test_a_stripped_path_gets_the_system_directories_after_homebrew
+    path = shell_path(env: { "PATH" => "/bin" })
+
+    assert_includes(path, "/usr/sbin")
+    %w[/usr/bin /bin].each { |dir| assert_operator(path.index(dir), :>, path.index(File.join(@brew, "bin"))) }
+  end
+
+  def test_an_inherited_homebrew_prefix_puts_homebrew_bin_and_sbin_before_usr_bin
+    path = shell_path(env: { "PATH" => "/usr/bin:/bin" })
+
+    [ "bin", "sbin" ].each { |dir| assert_operator(path.index(File.join(@brew, dir)), :<, path.index("/usr/bin")) }
+  end
+
+  def test_the_curl_keg_comes_before_homebrew_bin_and_usr_bin
+    path = shell_path(login: true)
+    keg = path.index(File.join(@brew, "opt", "curl", "bin"))
+
+    assert_operator(keg, :<, path.index(File.join(@brew, "bin")))
+    assert_operator(keg, :<, path.index("/usr/bin"))
+  end
+
+  def test_a_system_directory_already_on_path_keeps_its_place
+    # Set path in the script: zsh on Debian starts with its own PATH, whatever the environment says.
+    script = "path=(/bin /usr/bin); source #{File.join(@repo_root, 'zsh/.config/zsh/paths.zsh')}; print -rl -- $path"
+    result = run_zsh(script)
+
+    assert_equal("", result[:stderr])
+    assert_equal(%w[/bin /usr/bin /usr/local/bin /usr/sbin /sbin],
+                 result[:stdout].lines.map(&:strip) & %w[/usr/local/bin /usr/bin /bin /usr/sbin /sbin])
+  end
+
+  def test_rv_chnode_and_the_codex_shim_stay_ahead_of_homebrew_in_a_login_shell
+    shim_dir = File.join(@tmpdir, "unlocked-bin")
+    write_exe(File.join(shim_dir, "codex"), "#!/bin/sh\nexit 0\n")
+    path = shell_path(login: true, env: { "UNLOCKED_BIN" => shim_dir })
+    order = [ shim_dir, File.dirname(node_bin("24.14.0")), @rubies, File.join(@brew, "opt", "curl", "bin") ]
+
+    assert_equal(order, order.sort_by { |dir| path.index(dir) })
+  end
+
+  def test_without_a_homebrew_prefix_no_homebrew_directory_is_added
+    script = "HOMEBREW_PREFIX=; path=(/usr/bin); prepend_homebrew_path; print -rl -- $path"
+
+    result = run_zsh(script)
+
+    assert_equal("", result[:stderr])
+    assert_equal([ "/usr/bin" ], result[:stdout].lines.map(&:strip))
+  end
+
   private
+
+  def homebrew_tools
+    %w[git python3 openssl].map { |tool| File.join(@brew, "bin", tool) } + [ File.join(@brew, "opt", "curl", "bin", "curl") ]
+  end
+
+  def resolved_tools(**options)
+    result = run_zsh("command -v git python3 openssl curl", **options)
+
+    assert_equal("", result[:stderr])
+    result[:stdout].lines.map(&:strip)
+  end
+
+  def shell_path(**options)
+    result = run_zsh("print -rl -- $path", **options)
+
+    assert_equal("", result[:stderr])
+    result[:stdout].lines.map(&:strip)
+  end
 
   def assert_first_node(expected, script, **options)
     result = run_zsh(script, **options)
@@ -285,7 +366,9 @@ class NodePathOrderTest < Minitest::Test
   end
 
   def write_homebrew
-    %w[node npm npx ruby].each { |name| write_exe(File.join(@brew, "bin", name), "#!/bin/sh\nexit 0\n") }
+    %w[node npm npx ruby git python3 openssl].each { |name| write_exe(File.join(@brew, "bin", name), "#!/bin/sh\nexit 0\n") }
+    write_exe(File.join(@brew, "opt", "curl", "bin", "curl"), "#!/bin/sh\nexit 0\n")
+    mkdir(File.join(@brew, "sbin"))
     write_exe(File.join(@rubies, "ruby"), "#!/bin/sh\nexit 0\n")
     write_exe(File.join(@brew, "bin", "rv"), rv_stub)
     chnode_dir = mkdir(File.join(@brew, "opt", "chnode", "share", "chnode"))
@@ -323,7 +406,7 @@ class NodePathOrderTest < Minitest::Test
   end
 
   # Runs `script` in a clean zsh. A login shell sources .zprofile after a
-  # stand-in for macOS path_helper, which moves Homebrew's bin to the front.
+  # stand-in for macOS path_helper, which moves the system directories to the front.
   def run_zsh(script, login: false, interactive: false, chdir: File.join(@home, "plain"), env: {})
     zsh = [ "zsh", "-f", *("-i" if interactive), "-c", shell_script(script, login:) ]
     stdout, stderr, status = Open3.capture3(shell_env.merge(env), *zsh, chdir:, unsetenv_others: true)
@@ -341,7 +424,7 @@ class NodePathOrderTest < Minitest::Test
 
   def path_helper_and_zprofile
     <<~SH
-      path=("$HOMEBREW_PREFIX/bin" "${path[@]}")
+      path=(/usr/local/bin /usr/bin /bin /usr/sbin /sbin "$HOMEBREW_PREFIX/bin" "${path[@]}")
       source "#{File.join(@repo_root, "zsh/.config/zsh/.zprofile")}"
     SH
   end

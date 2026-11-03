@@ -1,3 +1,11 @@
+# macOS path_helper moved the system directories ahead of Homebrew. Put
+# Homebrew back first; rv, the chnode node and the codex shim below then go
+# ahead of it. paths.zsh defines the function, so a .zprofile sourced on its
+# own leaves PATH alone.
+if (( $+functions[prepend_homebrew_path] )); then
+  prepend_homebrew_path
+fi
+
 # Re-establish rv's Ruby paths after macOS path_helper has reordered PATH.
 # macOS's /etc/zprofile runs path_helper which moves system paths to the front.
 # Using `rv shell env` restores Ruby paths without adding a duplicate preexec hook.
