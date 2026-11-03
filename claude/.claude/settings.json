@@ -22,7 +22,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {
@@ -157,7 +157,8 @@
     "agile@agile": false,
     "superpowers-ruby@superpowers-ruby": false,
     "ruby-lsp@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true
+    "lua-lsp@claude-plugins-official": true,
+    "aikido@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "caveman": {
