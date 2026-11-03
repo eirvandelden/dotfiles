@@ -297,9 +297,13 @@ class NodePathOrderTest < Minitest::Test
   end
 
   def test_a_system_directory_already_on_path_keeps_its_place
-    path = shell_path(env: { "PATH" => "/bin:/usr/bin" })
+    # Set path in the script: zsh on Debian starts with its own PATH, whatever the environment says.
+    script = "path=(/bin /usr/bin); source #{File.join(@repo_root, 'zsh/.config/zsh/paths.zsh')}; print -rl -- $path"
+    result = run_zsh(script)
 
-    assert_equal(%w[/bin /usr/bin /usr/local/bin /usr/sbin /sbin], path & %w[/usr/local/bin /usr/bin /bin /usr/sbin /sbin])
+    assert_equal("", result[:stderr])
+    assert_equal(%w[/bin /usr/bin /usr/local/bin /usr/sbin /sbin],
+                 result[:stdout].lines.map(&:strip) & %w[/usr/local/bin /usr/bin /bin /usr/sbin /sbin])
   end
 
   def test_rv_chnode_and_the_codex_shim_stay_ahead_of_homebrew_in_a_login_shell
