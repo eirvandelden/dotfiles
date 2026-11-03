@@ -43,7 +43,7 @@ Line numbers in the main checkout's uncommitted copy of `claude/.claude/settings
 - 381 `"routine under eirvandelden/ prefix: git push/pull to this repo's own remote is routine"` (last `environment` entry).
 - 383 `"soft_deny": [`, 384 `"$defaults"`, 385 the `Bash(rm -rf:*) in test/ fixtures ...` rule, 386 the `kubectl ... (-n test)` rule.
 
-### After (the six edits of commit two)
+### After (the six edits of commit two, plus edits 7 and 8 from review)
 
 All line numbers below are before-state lines. After the edits, the new `edit 6` line is 382, and the credential-file rule moves to line 386.
 

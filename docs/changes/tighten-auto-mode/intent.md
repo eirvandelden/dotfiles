@@ -8,7 +8,7 @@ Author: Etienne van Delden de la Haije. Status: accepted (2026-11-03). Type: cho
 
 ## Proposed outcome
 
-The `autoMode` block matches the playbook and the repository. The auto-mode classifier blocks the destruction of the credential helper and its tests unless Etienne names the file. It treats `origin` of this repository as the only trusted remote.
+The `autoMode` block matches the playbook and the repository. The auto-mode classifier blocks the destruction of the credential helper and its tests unless Etienne names the file. It treats `origin` of this repository and the other repositories of the `eirvandelden` GitHub user as trusted remotes.
 
 ## Affected users and systems
 
@@ -26,10 +26,10 @@ Etienne's Claude Code sessions in every repository, since the file is the global
 
 ## In scope
 
-The block exists only as an uncommitted edit in the main checkout, so the change makes two commits:
+The block exists only as an uncommitted edit in the main checkout, so the change starts with two commits:
 
 1. Commit one adds the `autoMode` block as it stands, copied from the main checkout with `git diff | git apply`. The main checkout keeps its uncommitted edit untouched.
-2. Commit two applies six edits:
+2. Commit two applies six edits. Review rounds 1 and 2 then added fix commits for edits 1, 5, 7 and 8 (see Decisions):
    1. `soft_deny`: replace the `Bash(rm -rf:*) in test/ fixtures ...` rule with: "Deleting, truncating or overwriting (rm, git rm, git clean, git checkout --, git restore, mv, `>`) `git/.config/git/credential-1password` or `test/{git_credential_helper,secrets_loader,secrets_scope_menu}_test.rb` requires the user to name the exact file."
    2. `soft_deny`: delete the `kubectl ... -n test` rule. The repository has no cluster.
    3. Environment, Secrets management: change "None configured" to "1Password (`op`); the credential helper and its tests call `op read`".
