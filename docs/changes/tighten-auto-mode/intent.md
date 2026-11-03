@@ -4,7 +4,7 @@ Author: Etienne van Delden de la Haije. Status: accepted (2026-11-03). Type: cho
 
 ## Problem
 
-`claude auto-mode critique` flags six issues in the `autoMode` block of `claude/.claude/settings.json`. Two soft_deny rules guard the wrong things or an absent cluster. The environment text says no secrets manager exists, lists the helper and test files as sensitive, trusts every `eirvandelden/*` repository, and misses the branch and dotfile rules of the playbook.
+`claude auto-mode critique` flags six issues in the `autoMode` block of `claude/.claude/settings.json`. Two soft_deny rules guard the wrong things or an absent cluster. The environment text says no secrets manager exists, lists the helper and test files as sensitive, trusts only a prefix rule that the playbook does not state, and misses the branch and dotfile rules of the playbook.
 
 ## Proposed outcome
 
@@ -48,7 +48,7 @@ The block exists only as an uncommitted edit in the main checkout, so the change
 
 - `jq . claude/.claude/settings.json` parses.
 - `claude auto-mode config` shows the new text, and `soft_deny` still starts with `"$defaults"`.
-- `claude auto-mode critique` no longer reports items 1 to 5.
+- `claude auto-mode critique` no longer reports items 1 to 4. Item 5, the trust of other `eirvandelden/*` repositories, is decided in Decisions, so the critique may still mention it.
 - `soft_deny` holds `"$defaults"` plus one custom rule, the credential-file rule.
 - The environment no longer mentions `kubectl` or `-n test`.
 - `git diff origin/main...HEAD | grep -iE 'nedap|caren'` prints nothing.
@@ -58,7 +58,7 @@ The block exists only as an uncommitted edit in the main checkout, so the change
 - Carry the block over as its own commit, then tighten it in a second commit — keeps the six edits reviewable as a clean diff.
 - Autonomous delivery — chosen at the delivery-mode question.
 - Only non-work edits go into the carried block — the repository is public.
-- Edit 5 scopes the distrust to repos outside `eirvandelden/*`, and edit 1 adds `git rm` and `git restore` — review round 1 found the verbatim text clashes with playbook rule 19 (2026-11-03).
+- Edit 5 states that `origin` of this repo is routine and that other `eirvandelden/*` repos follow playbook rule 19, and edit 1 adds `git rm` and `git restore` — review round 1 found the verbatim text clashes with playbook rule 19 (2026-11-03).
 - The `Source control` and `Trusted repo` lines name the other repos of the `eirvandelden` GitHub user as trusted — review round 2 found they contradicted edit 5 (2026-11-03).
 
 ## Open questions

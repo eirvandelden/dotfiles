@@ -124,7 +124,7 @@ No criterion needs a test (configuration, playbook rule 3). Work happens in `/Us
 
 - A trailing comma left on the old line 385 breaks the JSON and with it every Claude Code session after merge. `jq .` catches it before commit two.
 - A mismatch between the main checkout and `origin/main` makes `git apply` fail. Step 1 checks the base; on a failure, stop and report, never hand-merge.
-- The critique may raise new items for the new wording. Items 1–5 are the criterion; a new item goes to a later change.
+- The critique may raise new items for the new wording. Items 1–4 are the criterion; item 5 is decided in `intent.md` Decisions and may stay; a new item goes to a later change.
 - Rejected: temporarily copying the worktree file over the main checkout to run the critique. It edits the live config of every session and breaks the intent's rule that the main checkout stays untouched.
 
 ## Proof
@@ -136,7 +136,7 @@ No criterion needs a test (configuration, playbook rule 3). Work happens in `/Us
 - `soft_deny` holds `"$defaults"` plus one custom rule, the credential-file rule → check: `jq -e '.autoMode.soft_deny | length == 2' claude/.claude/settings.json`; the six-edits check above proves the rule's exact text.
 - The environment no longer mentions `kubectl` or `-n test` → check: `jq -e '[.autoMode[][] | select(test("kubectl|-n test"))] | length == 0' claude/.claude/settings.json` exits 0.
 - `git diff origin/main...HEAD | grep -iE 'nedap|caren'` prints nothing → check: before `deliver`, `test -z "$(git -C /Users/etienne.vandelden/Developer/dotfiles/.worktrees/tighten-auto-mode diff origin/main...HEAD -- claude/.claude/settings.json | grep -iE 'nedap|caren')"` exits 0. `intent.md` and `plan.md` name those words, so the unscoped command matches them until `deliver` removes `docs/changes/tighten-auto-mode/`. After `deliver`, run the intent's exact command; it prints nothing.
-- `claude auto-mode critique` no longer reports items 1 to 5 → check, after merge and after Etienne discards the main checkout's uncommitted edit: `claude auto-mode critique` from any directory; read the output against the six issues in `intent.md`'s Problem. Before merge it cannot run on the worktree file (see `## Design decisions`).
+- `claude auto-mode critique` no longer reports items 1 to 4 (item 5 may stay, by decision) → check, after merge and after Etienne discards the main checkout's uncommitted edit: `claude auto-mode critique` from any directory; read the output against the six issues in `intent.md`'s Problem. Before merge it cannot run on the worktree file (see `## Design decisions`).
 - Invariant: no key outside `autoMode` changes, enforced by the edit scope → check: `git diff origin/main...HEAD` touches only lines inside the `autoMode` object.
 
 Per changed file, the unit tests expected:
