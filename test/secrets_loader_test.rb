@@ -151,7 +151,7 @@ class SecretsLoaderTest < Minitest::Test
     assert_equal File.join(@tmpdir, "homebrew-bin", "codex"), stdout.chomp
   end
 
-  # paths.zsh runs in every shell and puts /usr/local/bin and /usr/bin first,
+  # paths.zsh runs in every shell and puts Homebrew first, ahead of /usr/local/bin and /usr/bin,
   # where an Intel Mac or Linux keeps codex.
   def test_paths_zsh_keeps_the_shim_first_after_unlock
     script = "source #{File.join(ZSH_DIR, 'paths.zsh')}\nprint -r -- \"first=$path[1]\""

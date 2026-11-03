@@ -276,9 +276,9 @@ class NodePathOrderTest < Minitest::Test
   end
 
   def test_a_stripped_path_gets_the_system_directories_after_homebrew
-    path = shell_path(env: { "PATH" => "/nonexistent" })
+    path = shell_path(env: { "PATH" => "/bin" })
 
-    assert_includes(path, "/bin")
+    assert_includes(path, "/usr/sbin")
     assert_operator(path.index("/usr/bin"), :>, path.index(File.join(@brew, "bin")))
   end
 
@@ -299,8 +299,7 @@ class NodePathOrderTest < Minitest::Test
   def test_a_system_directory_already_on_path_keeps_its_place
     path = shell_path(env: { "PATH" => "/bin:/usr/bin" })
 
-    assert_operator(path.index("/bin"), :<, path.index("/usr/bin"))
-    assert_equal(%w[/usr/local/bin /usr/sbin /sbin].sort, path.last(3).sort)
+    assert_equal(%w[/bin /usr/bin /usr/local/bin /usr/sbin /sbin], path & %w[/usr/local/bin /usr/bin /bin /usr/sbin /sbin])
   end
 
   def test_rv_chnode_and_the_codex_shim_stay_ahead_of_homebrew_in_a_login_shell
