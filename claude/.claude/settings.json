@@ -364,7 +364,7 @@
       "**CI/CD deploy targets**: None configured",
       "**Network posture**: None configured",
       "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine or CI runner with open internet",
-      "**Source control**: The trusted repo (eirvandelden/dotfiles) and its remote (github.com:eirvandelden/dotfiles.git) only — public visibility: only this repo's own work belongs here, never ported content from elsewhere",
+      "**Source control**: The trusted repo is eirvandelden/dotfiles and its remote (github.com:eirvandelden/dotfiles.git); other repos owned by the `eirvandelden` GitHub user are trusted for push and pull too (playbook rule 19). Dotfiles is public: only this repo's own work belongs here, never ported content from elsewhere",
       "**Trusted internal domains**: None configured",
       "**Trusted cloud buckets**: None configured",
       "**Key internal services**: None configured",
@@ -376,7 +376,7 @@
       "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources; anything whose name or tag carries `prod` or `production` as a whole word or name segment",
       "### User-specific",
       "**Primary use of Claude Code**: software development (dotfiles bootstrap/config tooling)",
-      "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility",
+      "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility. Other repos owned by `eirvandelden` are trusted remotes too",
       "**Org-specific CLIs**: None configured — herdr, rv, lefthook, stow, synvert-ruby, rcn appear to be personal/dotfiles tooling, not org-specific",
       "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) is routine; other `eirvandelden/*` repos follow playbook rule 19",
       "**Branches and dotfiles**: `main` is protected by a ruleset and takes no direct push. Pushes to feature branches on `origin` are routine. Editing shell profiles inside this repo is routine. `stow` and `lefthook install` need an explicit user request (playbook rules 7, 12, 19)"
