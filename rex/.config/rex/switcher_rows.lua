@@ -42,6 +42,9 @@ end
 
 -- A file:// URL as a plain path, percent escapes decoded. Any other text is returned as it is.
 function SwitcherRows.path(url)
+	if url:sub(1, 7) ~= "file://" then
+		return url
+	end
 	local path = url:gsub("^file://[^/]*", "")
 	return (path:gsub("%%(%x%x)", function(hex)
 		return string.char(tonumber(hex, 16))

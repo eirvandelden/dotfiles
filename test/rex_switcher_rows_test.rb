@@ -86,6 +86,10 @@ class RexSwitcherRowsTest < Minitest::Test
     assert_equal("/plain/path", path_of("/plain/path"))
   end
 
+  def test_a_plain_path_with_a_percent_escape_is_left_alone
+    assert_equal("/tmp/50%41", path_of("/tmp/50%41"))
+  end
+
   private
 
   def path_of(url)

@@ -203,7 +203,7 @@ Run on 2026-11-04 with `rex do <file> --action`, before any production file.
 - Invariant: the panel closes only after `focus` succeeds, enforced by `jump.sh` → `test/rex_switcher_scripts_test.rb` `test_jump_aborts_only_after_focus_succeeds`, `test_jump_when_focus_fails_stays_open`
 
 Per changed file, the unit tests expected, named as behaviour:
-- `rex/.config/rex/switcher_rows.lua`: `lines sorts blocked, error, done, working, idle, shell`, `lines turns tabs and newlines into spaces`, `lines marks a pane without a record as shell`, `lines takes the most urgent record and its message`
+- `rex/.config/rex/switcher_rows.lua`: `lines sorts blocked, error, done, working, idle, shell`, `lines turns tabs and newlines into spaces`, `lines marks a pane without a record as shell`, `lines takes the most urgent record and its message`, `lines takes the program from the winning record`, `path decodes a file:// URL`, `path leaves a plain path with a percent escape alone`
 - `rex/.config/rex/switcher/rows.sh`: `keeps one state per filter`, `keeps every row for a`, `prints the sentinel when nothing matches`, `refuses an unknown filter`
 - `rex/.config/rex/switcher/jump.sh`: `selects then focuses`, `refuses a gone pane`, `refuses when select fails`, `refuses when focus fails`, `ignores the sentinel row`
 - `rex/.config/rex/switcher/pick.sh`: `passes the binds for w, b, d, a, slash, esc and enter to fzf`, `esc reloads the filter's rows for a search prompt and aborts for a list prompt`, `slash keeps the filter letter in the search prompt`, `removes the snapshot on exit`
