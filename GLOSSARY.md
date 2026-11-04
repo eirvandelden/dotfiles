@@ -9,12 +9,17 @@
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hook scripts** — the tracked scripts in `git/.config/git/hooks/`.
 - **Hooks copy** — the one read-only copy of the hook scripts per test process, at which test repositories point `core.hooksPath`.
+- **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
+- **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
+- **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
+- **Switcher** — the floating Rex panel, opened by `ctrl+s space`, that lists every pane and jumps to the one picked. Avoid: palette, picker.
+- **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
 - **Test file** — one `test/*_test.rb`, run as its own process.
