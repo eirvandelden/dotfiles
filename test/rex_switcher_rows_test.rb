@@ -67,7 +67,37 @@ class RexSwitcherRowsTest < Minitest::Test
     assert_equal(%w[s1 w1 b1], row[5..7])
   end
 
+  def test_the_program_comes_from_the_most_urgent_record
+    records = [ { state: "working", effective_app: "claude-code" }, { state: "blocked", effective_app: "terraform" } ]
+
+    row = fields(lines([ pane(program: "zsh", records: records) ]).first)
+
+    assert_equal("terraform", row[2])
+  end
+
+  def test_a_record_without_an_app_keeps_the_panes_program
+    row = fields(lines([ pane(program: "zsh", records: [ { state: "done", msg: "ok" } ]) ]).first)
+
+    assert_equal("zsh", row[2])
+  end
+
+  def test_a_file_url_becomes_a_decoded_path
+    assert_equal("/Users/etienne/Library/Application Support", path_of("file://host/Users/etienne/Library/Application%20Support"))
+    assert_equal("/plain/path", path_of("/plain/path"))
+  end
+
   private
+
+  def path_of(url)
+    skip("luajit is not on PATH") unless system("command -v luajit >/dev/null 2>&1")
+    script = <<~LUA
+      package.path = "#{LUA_DIR}/?.lua;" .. package.path
+      print(require("switcher_rows").path(#{url.dump}))
+    LUA
+    stdout, stderr, status = Open3.capture3("luajit", "-", stdin_data: script)
+    assert(status.success?, "luajit failed: #{stderr}")
+    stdout.chomp
+  end
 
   def pane(overrides = {})
     { session_id: "s1", session: "Work", window_id: "w1", tab: "Tab 1", block_id: "b1",
