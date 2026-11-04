@@ -87,7 +87,8 @@ rex.action({ name = "agent_switcher", title = "Agent switcher", keywords = "agen
 - Each filter key also runs `change-header(<filter name>, snapshot taken at open)`. The header, not the prompt, carries the filter name, so leaving search mode needs no stored state.
 - `/`: `enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/ )`.
 - `esc`: `transform(pick.sh esc)`. `pick.sh esc` reads `$FZF_PROMPT`. A prompt that starts with `/ ` prints `disable-search+clear-query+rebind(w,b,d,a,j,k,/)+change-prompt(> )`. Any other prompt prints `abort`.
-- `enter`: `transform(jump.sh <client_id> {6} {7} {8})`.
+- `enter`: `transform("$SWITCHER_DIR"/jump.sh "$SWITCHER_CLIENT" {6} {7} {8})`.
+- No bind holds a path or the client id. `pick.sh` exports `SWITCHER_DIR`, `SWITCHER_SNAPSHOT` and `SWITCHER_CLIENT`, and the binds read them in quotes. fzf runs binds through a shell that inherits them.
 
 `rex/.config/rex/init.lua` keeps every current binding. `ctrl+s>space` now runs `agent_switcher`, and `require("switcher")` loads the action. `shift+cmd+k` stays on `session.switch`.
 
@@ -122,6 +123,7 @@ Not checked: this dotfiles repository declined Steep and `rbs_rails`, and the ch
 - `enter` uses `transform`, and `jump.sh` prints the fzf action. The panel stays open on a refusal and the failure message shows in the header. This needs fzf 0.45 or newer. The installed fzf is 0.74.5.
 - `jump.sh` always exits 0, so a failure never breaks fzf. The failure is the printed action.
 - Pane labels come from Rex tab and session labels, which this migration set to the Herdr names.
+- Review round 1 changed the first bind design: `pick.sh` passes paths and the client id through exported `SWITCHER_*` variables, not through the bind text. A path with a space or a bracket, and an empty client id, no longer break a bind.
 - No conflict with `intent.md`'s `## Decisions`.
 
 ## Integration points
@@ -191,6 +193,7 @@ Run on 2026-11-04 with `rex do <file> --action`, before any production file.
 - The pane closed after the list was built → `test/rex_switcher_scripts_test.rb` `test_jump_to_a_gone_pane_says_so_and_stays_open`
 - `ctrl+s space` opens the panel, `shift+cmd+k` keeps `session.switch` → `test/rex_config_test.rb` `test_ctrl_s_space_opens_the_switcher`, `test_shift_cmd_k_keeps_session_switch`
 - The new `init.lua` keeps every other current binding → `test/rex_config_test.rb` `test_every_other_current_binding_is_kept`
+- A path with spaces or brackets, and an empty client id, do not break the binds → `test/rex_switcher_scripts_test.rb` `test_the_binds_survive_a_script_and_snapshot_path_with_spaces`, `test_the_enter_bind_keeps_an_empty_client_as_an_empty_first_argument`
 - Invariant: a pane with no record has state `shell`, every row has 8 fields, and the most urgent record wins, enforced by `SwitcherRows.lines` → `test/rex_switcher_rows_test.rb` `test_a_pane_without_a_record_is_a_shell`, `test_every_row_has_eight_fields`, `test_a_blocked_child_record_beats_a_working_root`
 - Invariant: a filter matches the state field, not the message, enforced by `rows.sh` → `test/rex_switcher_scripts_test.rb` `test_a_message_that_says_blocked_does_not_match_b`
 - Invariant: filter keys never call `rex`, enforced by `rows.sh` → `test/rex_switcher_scripts_test.rb` `test_rows_never_call_rex`
