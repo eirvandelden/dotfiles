@@ -7,8 +7,8 @@ class HerdrConfigTest < Minitest::Test
   CONFIG_PATH = File.expand_path("../herdr/.config/herdr/config.toml", __dir__)
   QUIETER_COPIES = "/Users/etienne.vandelden/Documents/Tones/herdr".freeze
 
-  def test_notifications_go_through_the_terminal_so_no_notifier_program_can_block_the_client
-    assert_equal("terminal", toast_delivery)
+  def test_notifications_go_through_the_system
+    assert_equal("system", toast_delivery)
   end
 
   def test_herdr_accepts_the_config
