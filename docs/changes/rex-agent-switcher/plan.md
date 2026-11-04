@@ -145,7 +145,7 @@ Not checked: this dotfiles repository declined Steep and `rbs_rails`, and the ch
 
 ## Order of work
 
-1. Spike in Rex, before any file: write a throwaway Lua file in the scratchpad that defines an action. Run it with `rex do <file> --action <name>`. The action calls `session.attach_all`, walks all sessions, and opens a disposable floating layer that runs a command and exits. Record: whether `attach_all` works inside an action; which fields `session.list_blocks`, `session.view`, `pwd` and `program_status` return, with a record list longer than one; whether the layer closes when its command exits. If `attach_all` fails inside an action, switch the collector to the CLI fallback. If the layer stays open, `pick.sh` closes it with `rex block close`, and the plan notes it in `## Risks`.
+1. Spike in Rex, before any file: write a throwaway Lua file in the scratchpad that defines an action. Run it with `rex do <file> --action <name>`. The action calls `session.attach_all`, walks all sessions, and opens a disposable floating layer that runs a command and exits. Record: whether `attach_all` works inside an action; which fields `session.list_blocks`, `session.view`, `pwd` and `program_status` return, with a record list longer than one; whether the layer closes when its command exits. If `attach_all` fails inside an action, switch the collector to the CLI fallback. If the layer stays open, `pick.sh` closes it with `rex block close`, and the plan notes it in `## Risks`. The spike showed the layer closes by itself.
 2. Write the acceptance test for criterion 1 (`b` lists only blocked agents) in `test/rex_switcher_scripts_test.rb`. Run it. Watch it fail.
 3. Write `rows.sh` until the filter tests pass: `w`, `b`, `d`, `a`, the sentinel, the unknown filter.
 4. Write the `jump.sh` tests, then `jump.sh`: live pane, gone pane, select refused, sentinel.
@@ -154,6 +154,17 @@ Not checked: this dotfiles repository declined Steep and `rbs_rails`, and the ch
 7. Write `switcher.lua` from the spike's facts, and `init.lua` with the config test first.
 8. Add `rex` to `packages.conf`. Run `stylua --check`, `shellcheck -x -S warning`, rubocop and the full suite through `bin/test`.
 9. Check in Rex (rule 22). The running Rex server reads its config file at start, so the agent cannot load the worktree config by setting `REX_CONFIG`. Run `rex config check` against the worktree file, and run the action with `rex do <worktree>/rex/.config/rex/init.lua --action agent_switcher`. Record the output. The key presses (`ctrl+s space`, `b`, `/`, `esc`, Enter) are checked by Etienne after `stow rex` and a config reload; the final account says so.
+
+## Spike results
+
+Run on 2026-11-04 with `rex do <file> --action`, before any production file.
+
+- `session.attach_all` with `event_scope = "session"` works inside an action. A walk over 23 sessions and 90 panes took 71 ms.
+- `session.list` returns `{ sessions = [ { session_id, label } ] }`. `session.list_blocks` returns `{ blocks = [ { block_id, window_id, label, flavor, ... } ] }`. `session.view` returns `windows[ { window_id, label, ... } ]`.
+- `program_status` returns `records[ { state, app, effective_app, msg?, kind? } ]`. No pane had two records at spike time, so the mixed-record rule is covered by the Lua test only.
+- The `pwd` block method returns `{}` for a pane whose shell has not reported a directory. The collector falls back to `process.foreground.cwd`.
+- `ctx.client_id` is absent when the action runs with origin `api` (`rex do --action`). A key press sets it. The collector falls back to the first client with `info.kind == "app"` from `session.list_clients`.
+- A floating layer whose command exits closes by itself: after the command ended, only the tiled layer remained. `pick.sh` needs no `rex block close` fallback.
 
 ## Risks
 
