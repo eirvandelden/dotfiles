@@ -82,11 +82,12 @@ rex.action({ name = "agent_switcher", title = "Agent switcher", keywords = "agen
 - otherwise prints `abort`.
 
 `rex/.config/rex/switcher/pick.sh <snapshot> <client_id>` is only wiring: it runs fzf with the binds below and removes the snapshot on exit. `pick.sh esc` is the one other entry point: it prints the `esc` action described below and nothing else.
-- `--disabled --delimiter '\t' --with-nth 1..5 --prompt '> '` and a `start` bind that loads the `a` rows and sets the header.
+- `--disabled --delimiter '\t' --with-nth 1..5 --prompt 'a> '` and a `start` bind that loads the `a` rows and sets the header.
 - `w`, `b`, `d`, `a`: `reload(rows.sh <f> <snapshot>)+change-prompt(...)`. `j` and `k`: `down` and `up`.
-- Each filter key also runs `change-header(<filter name>, snapshot taken at open)`. The header, not the prompt, carries the filter name, so leaving search mode needs no stored state.
-- `/`: `enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/ )`.
-- `esc`: `transform(pick.sh esc)`. `pick.sh esc` reads `$FZF_PROMPT`. A prompt that starts with `/ ` prints `disable-search+clear-query+rebind(w,b,d,a,j,k,/)+change-prompt(> )`. Any other prompt prints `abort`.
+- Each filter key also runs `change-header(<filter name>, snapshot taken at open)` and `change-prompt(<key>> )`. The prompt carries the filter letter, so leaving search mode needs no stored state.
+- `/`: `transform(pick.sh slash)`. `pick.sh slash` reads `$FZF_PROMPT` (`w> `) and prints `enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/w )`.
+- `esc`: `transform(pick.sh esc)`. `pick.sh esc` reads `$FZF_PROMPT`. A search prompt (`/w `) prints `disable-search+clear-query+rebind(w,b,d,a,j,k,/)`, then a `reload` of the rows of that filter, then `change-prompt(w> )`. Any other prompt prints `abort`.
+- `--layout=reverse`, so the most urgent row is at the top.
 - `enter`: `transform("$SWITCHER_DIR"/jump.sh "$SWITCHER_CLIENT" {6} {7} {8})`.
 - No bind holds a path or the client id. `pick.sh` exports `SWITCHER_DIR`, `SWITCHER_SNAPSHOT` and `SWITCHER_CLIENT`, and the binds read them in quotes. fzf runs binds through a shell that inherits them.
 
@@ -108,7 +109,7 @@ Not checked: this dotfiles repository declined Steep and `rbs_rails`, and the ch
 - A filter keeps rows by the state field, never by the display text. A message that says "blocked" does not match `b`. Enforced in `rows.sh`.
 - Filter keys never call `rex`. Enforced by `rows.sh`, which only reads the snapshot.
 - Enter on the sentinel row, on a gone pane, when `session.select` fails or when `focus` fails never closes the panel. Enforced in `jump.sh`: it prints `abort` only after `focus` succeeds.
-- `esc` in search mode keeps the list and the filter. Enforced in `pick.sh`: leaving search mode never reloads.
+- `esc` in search mode returns to the same state filter with all its rows. Enforced in `pick.sh`: the prompt carries the filter letter and `esc` reloads that filter.
 - `init.lua` keeps every current binding except `ctrl+s>space`. Enforced by the config test.
 
 ### Alternatives
@@ -123,6 +124,7 @@ Not checked: this dotfiles repository declined Steep and `rbs_rails`, and the ch
 - `enter` uses `transform`, and `jump.sh` prints the fzf action. The panel stays open on a refusal and the failure message shows in the header. This needs fzf 0.45 or newer. The installed fzf is 0.74.5.
 - `jump.sh` always exits 0, so a failure never breaks fzf. The failure is the printed action.
 - Pane labels come from Rex tab and session labels, which this migration set to the Herdr names.
+- A live run in Rex showed that `esc` after a search left the narrowed list (even empty) and that fzf lists the first row at the bottom. The prompt now carries the filter letter, `esc` reloads that filter's rows, and the layout is `reverse`.
 - Review round 1 changed the first bind design: `pick.sh` passes paths and the client id through exported `SWITCHER_*` variables, not through the bind text. A path with a space or a bracket, and an empty client id, no longer break a bind.
 - No conflict with `intent.md`'s `## Decisions`.
 
@@ -186,7 +188,8 @@ Run on 2026-11-04 with `rex do <file> --action`, before any production file.
 - `w` lists only working agents, `d` only done agents → `test/rex_switcher_scripts_test.rb` `test_rows_for_w_keep_only_working_panes`, `test_rows_for_d_keep_only_done_panes`
 - `a` lists every pane, shells and idle agents included → `test/rex_switcher_scripts_test.rb` `test_rows_for_a_keep_every_pane`
 - `/` then `caren` lists only rows that mention Caren → `test/rex_switcher_scripts_test.rb` `test_search_matches_any_visible_column` (real `fzf --filter caren` over the rows)
-- `esc` returns to list mode with the same filter → `test/rex_switcher_scripts_test.rb` `test_esc_in_search_mode_leaves_search_without_reloading`, `test_esc_in_list_mode_aborts`
+- `esc` returns to list mode with the same filter → `test/rex_switcher_scripts_test.rb` `test_esc_in_search_mode_leaves_search_and_reloads_the_rows_of_the_same_filter`, `test_slash_enters_search_mode_and_remembers_the_filter_in_the_prompt`, `test_esc_in_list_mode_aborts`
+- The most urgent row is at the top → `test/rex_switcher_scripts_test.rb` `test_the_list_puts_the_most_urgent_row_at_the_top`
 - Enter on a pane in another session shows that pane, focused → `test/rex_switcher_scripts_test.rb` `test_jump_selects_the_session_and_window_then_focuses_the_pane`, and check: the by-hand run in Rex (step 9)
 - No matching pane shows "No panes match" and Enter does nothing → `test/rex_switcher_scripts_test.rb` `test_no_match_prints_the_sentinel_row`, `test_jump_on_the_sentinel_row_makes_no_rex_call`
 - Remote Control off prints a hint and the panel stays open → `test/rex_switcher_scripts_test.rb` `test_jump_refused_by_session_select_keeps_the_panel_open`
@@ -203,7 +206,7 @@ Per changed file, the unit tests expected, named as behaviour:
 - `rex/.config/rex/switcher_rows.lua`: `lines sorts blocked, error, done, working, idle, shell`, `lines turns tabs and newlines into spaces`, `lines marks a pane without a record as shell`, `lines takes the most urgent record and its message`
 - `rex/.config/rex/switcher/rows.sh`: `keeps one state per filter`, `keeps every row for a`, `prints the sentinel when nothing matches`, `refuses an unknown filter`
 - `rex/.config/rex/switcher/jump.sh`: `selects then focuses`, `refuses a gone pane`, `refuses when select fails`, `refuses when focus fails`, `ignores the sentinel row`
-- `rex/.config/rex/switcher/pick.sh`: `passes the binds for w, b, d, a, slash, esc and enter to fzf`, `esc prints the search-exit actions for a search prompt and abort for the list prompt`, `removes the snapshot on exit`
+- `rex/.config/rex/switcher/pick.sh`: `passes the binds for w, b, d, a, slash, esc and enter to fzf`, `esc reloads the filter's rows for a search prompt and aborts for a list prompt`, `slash keeps the filter letter in the search prompt`, `removes the snapshot on exit`
 - `rex/.config/rex/init.lua`: `keeps the current bindings`, `binds ctrl+s space to the switcher`
 - `rex/.config/rex/switcher.lua`: no unit test. It is glue over the Rex runtime. The spike and the by-hand check cover it.
 
