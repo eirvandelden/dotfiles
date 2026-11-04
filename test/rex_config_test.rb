@@ -34,6 +34,12 @@ class RexConfigTest < Minitest::Test
     assert_match(/require\("project"\)/, init_text)
   end
 
+  def test_ctrl_s_f_binds_the_file_viewer_and_requires_it
+    assert_equal("file_viewer", bindings.fetch("ctrl+s>f").first)
+    assert_match(/require\("viewer"\)/, init_text)
+    assert_equal("agent_switcher", bindings.fetch("ctrl+s>space").first)
+  end
+
   def test_shift_cmd_k_keeps_session_switch
     assert_equal("session.switch", bindings.fetch("shift+cmd+k").first)
   end
