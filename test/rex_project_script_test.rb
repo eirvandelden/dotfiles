@@ -83,6 +83,42 @@ class RexProjectScriptTest < Minitest::Test
     refute(fzf_rows.any? { |row| row.start_with?("conductor", "archive") }, fzf_rows.inspect)
   end
 
+  def test_a_failing_rex_ls_prints_a_hint_and_exits_cleanly
+    answer_rex(sessions: [], select_exit: 0, ls_exit: 1)
+
+    stdout, _, status = pick("dotfiles\t#{@root_a}/dotfiles", client: "client-42")
+
+    assert_equal(0, status.exitstatus)
+    assert_includes(stdout, "Rex")
+    refute(rex_calls.any? { |call| call.start_with?("-C") }, "no session may be selected")
+  end
+
+  def test_a_new_session_without_an_id_is_never_selected
+    answer_rex(sessions: [], select_exit: 0, new_json: "{}")
+
+    stdout, _, status = pick("dotfiles\t#{@root_a}/dotfiles", client: "client-42")
+
+    assert_equal(0, status.exitstatus)
+    assert_includes(stdout, "dotfiles")
+    refute(rex_calls.any? { |call| call.start_with?("-C") }, "no session may be selected")
+  end
+
+  def test_a_folder_name_with_spaces_keeps_its_name_and_path
+    FileUtils.mkdir_p("#{@root_b}/my project/.git")
+
+    pick("my project\t#{@root_b}/my project")
+
+    assert_includes(rex_calls, "new my project -c #{@root_b}/my project --json")
+  end
+
+  def test_roots_without_projects_list_nothing_and_make_no_rex_call
+    _, _, status = pick("", roots: File.join(@dir, "missing"))
+
+    assert_equal(0, status.exitstatus)
+    assert_empty(fzf_rows)
+    assert_empty(rex_calls)
+  end
+
   def test_a_pick_makes_at_most_three_rex_calls
     pick("dotfiles\t#{@root_a}/dotfiles")
 
@@ -98,8 +134,7 @@ class RexProjectScriptTest < Minitest::Test
     File.write("#{@root_a}/webapp/.git", "gitdir: ../elsewhere\n")
   end
 
-  def pick(selection, client: "c1")
-    roots = [ @root_a, File.join(@dir, "missing"), @root_b ].join(":")
+  def pick(selection, client: "c1", roots: [ @root_a, File.join(@dir, "missing"), @root_b ].join(":"))
     Open3.capture3({ "PATH" => "#{@bin}:#{ENV.fetch('PATH')}", "STUB_DIR" => @dir,
                      "REX_PROJECT_ROOTS" => roots, "FZF_SELECTION" => selection },
                    "bash", PICK, client, stdin_data: "\n")
@@ -122,7 +157,9 @@ class RexProjectScriptTest < Minitest::Test
     File.exist?(path) ? File.readlines(path, chomp: true) : []
   end
 
-  def answer_rex(sessions:, select_exit:)
+  def answer_rex(sessions:, select_exit:, ls_exit: 0, new_json: '{"session_id":"new-id","label":"x"}')
+    File.write(File.join(@dir, "ls_exit"), ls_exit.to_s)
+    File.write(File.join(@dir, "new.json"), "#{new_json}\n")
     File.write(File.join(@dir, "ls.json"), "#{JSON.generate({ 'sessions' => sessions })}\n")
     File.write(File.join(@dir, "select_exit"), select_exit.to_s)
   end
@@ -131,8 +168,8 @@ class RexProjectScriptTest < Minitest::Test
     install_stub("rex", <<~'BASH')
       echo "$*" >> "$STUB_DIR/rex.log"
       case "$1" in
-        ls) cat "$STUB_DIR/ls.json" ;;
-        new) echo '{"session_id":"new-id","label":"x"}' ;;
+        ls) cat "$STUB_DIR/ls.json"; exit "$(cat "$STUB_DIR/ls_exit")" ;;
+        new) cat "$STUB_DIR/new.json" ;;
         -C) exit "$(cat "$STUB_DIR/select_exit")" ;;
       esac
     BASH
