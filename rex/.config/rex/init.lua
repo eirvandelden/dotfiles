@@ -1,4 +1,5 @@
 require("switcher")
+require("project")
 
 rex.bind("cmd+k", "com.superlogical.terminal.clear")
 rex.bind("shift+cmd+k", "session.switch")
@@ -9,6 +10,7 @@ rex.bind("ctrl+s>left", "pane.focus", { direction = "left" })
 rex.bind("ctrl+s>down", "pane.focus", { direction = "down" })
 rex.bind("ctrl+s>up", "pane.focus", { direction = "up" })
 rex.bind("ctrl+s>right", "pane.focus", { direction = "right" })
+rex.bind("ctrl+s>o", "open_project")
 
 rex.bind("ctrl+3", "pane.send_key", { key = "esc" })
 rex.bind("ctrl+4", "pane.send_key", { key = "ctrl+\\" })
