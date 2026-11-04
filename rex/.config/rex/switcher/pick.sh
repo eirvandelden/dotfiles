@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Runs fzf over a snapshot of panes. Usage: pick.sh <snapshot> <client_id>
 # `pick.sh esc` prints the fzf action for the esc key and nothing else.
+# The binds hold no paths and no client id. fzf runs them through a shell that inherits the
+# SWITCHER_* variables below, so a space or a bracket in a path cannot split a bind, and an empty
+# client id stays an empty argument.
 set -euo pipefail
-
-here="$(cd "$(dirname "$0")" && pwd)"
 
 if [ "${1:-}" = "esc" ]; then
   case "${FZF_PROMPT:-}" in
@@ -13,20 +14,22 @@ if [ "${1:-}" = "esc" ]; then
   exit 0
 fi
 
-snapshot="$1"
-client="${2:-}"
-trap 'rm -f "$snapshot"' EXIT
+SWITCHER_DIR="$(cd "$(dirname "$0")" && pwd)"
+SWITCHER_SNAPSHOT="$1"
+SWITCHER_CLIENT="${2:-}"
+export SWITCHER_DIR SWITCHER_SNAPSHOT SWITCHER_CLIENT
+trap 'rm -f "$SWITCHER_SNAPSHOT"' EXIT
 
 note="snapshot taken at open"
 filter_bind() {
   local key="$1" name="$2"
-  printf '%s:reload(%s/rows.sh %s %s)+change-header(%s, %s)' \
-    "$key" "$here" "$key" "$snapshot" "$name" "$note"
+  printf '%s:reload("$SWITCHER_DIR"/rows.sh %s "$SWITCHER_SNAPSHOT")+change-header(%s, %s)' \
+    "$key" "$key" "$name" "$note"
 }
 
 fzf --disabled --delimiter '\t' --with-nth 1..5 --prompt '> ' \
   --header "all, $note" \
-  --bind "start:reload($here/rows.sh a $snapshot)" \
+  --bind 'start:reload("$SWITCHER_DIR"/rows.sh a "$SWITCHER_SNAPSHOT")' \
   --bind "$(filter_bind w working)" \
   --bind "$(filter_bind b blocked)" \
   --bind "$(filter_bind d "done")" \
@@ -34,5 +37,5 @@ fzf --disabled --delimiter '\t' --with-nth 1..5 --prompt '> ' \
   --bind "j:down" \
   --bind "k:up" \
   --bind "/:enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/ )" \
-  --bind "esc:transform($here/pick.sh esc)" \
-  --bind "enter:transform($here/jump.sh $client {6} {7} {8})" <"$snapshot" || true
+  --bind 'esc:transform("$SWITCHER_DIR"/pick.sh esc)' \
+  --bind 'enter:transform("$SWITCHER_DIR"/jump.sh "$SWITCHER_CLIENT" {6} {7} {8})' <"$SWITCHER_SNAPSHOT" || true

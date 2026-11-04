@@ -163,8 +163,36 @@ class RexSwitcherScriptsTest < Minitest::Test
       assert(binds.any? { |bind| bind.start_with?(prefix) }, "no bind starts with #{prefix}: #{binds.inspect}")
     end
     enter = binds.find { |bind| bind.start_with?("enter:transform(") }
-    assert_includes(enter, "client-42")
+    assert_equal("client-42", fzf_env["SWITCHER_CLIENT"])
     assert_includes(enter, "{6} {7} {8}")
+  end
+
+  def test_the_enter_bind_keeps_an_empty_client_as_an_empty_first_argument
+    answer_rex(block_ls: %w[b9])
+    _, stderr, status = run_script(PICK, @snapshot, "")
+    assert(status.success?, stderr)
+
+    run_bind("enter:transform(", { "{6}" => "s9", "{7}" => "w9", "{8}" => "b9" })
+
+    assert_equal([ "block ls -s s9 --json", "-C  do session.select session_id=s9 window_id=w9",
+                   "focus -s s9 b9" ], rex_calls)
+  end
+
+  def test_the_binds_survive_a_script_and_snapshot_path_with_spaces
+    spaced = File.join(@dir, "with space", "(odd, path)")
+    FileUtils.mkdir_p(spaced)
+    FileUtils.cp_r(SWITCHER, spaced)
+    snapshot = File.join(spaced, "snap shot.tsv")
+    FileUtils.cp(@snapshot, snapshot)
+    _, stderr, status = run_script(File.join(spaced, "switcher", "pick.sh"), snapshot, "client-42")
+    assert(status.success?, stderr)
+    FileUtils.cp(@snapshot, snapshot) # pick.sh removed it on exit; fzf would run the binds while it ran
+
+    start_rows = run_bind("start:reload(")
+    filter_rows = run_bind("b:reload(")
+
+    assert_equal(SNAPSHOT_ROWS, start_rows.lines(chomp: true).map { |line| line.split("\t", -1) })
+    assert_equal([ "blocked" ], states(filter_rows.lines(chomp: true)))
   end
 
   def test_pick_removes_the_snapshot_on_exit
@@ -221,6 +249,26 @@ class RexSwitcherScriptsTest < Minitest::Test
     read_log("fzf.argv")
   end
 
+  def fzf_env
+    read_log("fzf.env").to_h { |line| line.split("=", 2) }
+  end
+
+  # Runs the shell command inside one of the binds that pick.sh gave fzf, as fzf would: through a shell,
+  # with pick.sh's environment, after fzf has put its placeholders' values in. Returns its stdout.
+  def run_bind(prefix, placeholders = {})
+    argv = fzf_argv
+    bind = argv.each_cons(2).filter_map { |flag, value| value if flag == "--bind" }.find { |value| value.start_with?(prefix) }
+    command = bind.delete_prefix(prefix).sub(/\)(\+change-header\(.*\))?\z/, "")
+    placeholders.each { |placeholder, value| command = command.gsub(placeholder, "'#{value}'") }
+    stdout, stderr, status = Open3.capture3(bind_environment, "bash", "-c", command)
+    assert(status.success?, "bind #{prefix} failed: #{stderr}")
+    stdout
+  end
+
+  def bind_environment
+    { "PATH" => "#{@bin}:#{ENV.fetch('PATH')}", "STUB_DIR" => @dir }.merge(fzf_env)
+  end
+
   def read_log(name)
     path = File.join(@dir, name)
     File.exist?(path) ? File.readlines(path, chomp: true) : []
@@ -247,6 +295,7 @@ class RexSwitcherScriptsTest < Minitest::Test
   def install_fzf_stub
     install_stub("fzf", <<~'BASH')
       printf '%s\n' "$@" >> "$STUB_DIR/fzf.argv"
+      env | grep '^SWITCHER_' >> "$STUB_DIR/fzf.env"
       cat > "$STUB_DIR/fzf.stdin"
     BASH
   end
