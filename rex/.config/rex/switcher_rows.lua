@@ -19,13 +19,18 @@ local function most_urgent(records)
 	return best
 end
 
+-- The program of the winning record, else the program the pane reported.
+local function program_of(record, pane)
+	return record and (record.effective_app or record.app) or pane.program
+end
+
 local function row_for(pane)
 	local record = most_urgent(pane.records)
 	local state = record and record.state or "shell"
 	local fields = {
 		state,
 		clean(pane.session) .. " / " .. clean(pane.tab),
-		clean(pane.program),
+		clean(program_of(record, pane)),
 		clean(pane.cwd),
 		clean(record and record.msg),
 		clean(pane.session_id),
@@ -33,6 +38,14 @@ local function row_for(pane)
 		clean(pane.block_id),
 	}
 	return { rank = RANK[state] or 5, text = table.concat(fields, "\t") }
+end
+
+-- A file:// URL as a plain path, percent escapes decoded. Any other text is returned as it is.
+function SwitcherRows.path(url)
+	local path = url:gsub("^file://[^/]*", "")
+	return (path:gsub("%%(%x%x)", function(hex)
+		return string.char(tonumber(hex, 16))
+	end))
 end
 
 -- Turns collected panes into one snapshot line (8 tab-separated fields) per pane.

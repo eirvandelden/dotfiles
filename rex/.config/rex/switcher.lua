@@ -1,4 +1,4 @@
--- Agent switcher glue: collects every pane, writes the snapshot, opens the picker.
+-- Agent switcher glue: collects every pane, writes the snapshot, opens the switcher.
 -- This is the only file that uses the `rex` global.
 local rows = require("switcher_rows")
 
@@ -20,24 +20,20 @@ local function block_call(method, ids)
 	return result or {}
 end
 
-local function strip_host(pwd)
-	local path = pwd:gsub("^file://[^/]*", "")
-	return path
-end
-
 local function cwd_of(ids)
 	local pwd = block_call("pwd", ids).pwd
 	if pwd and pwd ~= "" then
-		return strip_host(pwd)
+		return rows.path(pwd)
 	end
 	local process = block_call("process", ids)
 	return process.foreground and process.foreground.cwd or ""
 end
 
+-- Only a pane without records needs its process name. A pane with records gets its program from
+-- the winning record, which switcher_rows picks.
 local function program_of(records, ids)
-	local winner = records[1]
-	if winner then
-		return winner.effective_app or winner.app or ""
+	if #records > 0 then
+		return ""
 	end
 	local process = block_call("process", ids)
 	return process.foreground and process.foreground.name or ""
@@ -108,7 +104,7 @@ local function client_id_of(ctx)
 	return ""
 end
 
-local function open_picker(snapshot, client_id)
+local function open_switcher(snapshot, client_id)
 	rex.session.new_layer({
 		bounds = { 0.15, 0.15, 0.7, 0.7 },
 		layout = rex.layout.block({
@@ -125,6 +121,6 @@ rex.action({
 	keywords = "agents panes switch jump",
 	run = function(ctx)
 		local snapshot = write_snapshot(rows.lines(collect()))
-		open_picker(snapshot, client_id_of(ctx))
+		open_switcher(snapshot, client_id_of(ctx))
 	end,
 })
