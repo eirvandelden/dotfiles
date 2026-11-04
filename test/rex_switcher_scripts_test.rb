@@ -167,6 +167,17 @@ class RexSwitcherScriptsTest < Minitest::Test
     assert_includes(enter, "{6} {7} {8}")
   end
 
+  def test_no_bind_claims_j_k_or_the_arrow_keys
+    _, stderr, status = run_script(PICK, @snapshot, "client-42")
+
+    assert(status.success?, stderr)
+    argv = fzf_argv
+    binds = argv.each_cons(2).filter_map { |flag, value| value if flag == "--bind" }
+    binds += argv.filter_map { |value| value.delete_prefix("--bind=") if value.start_with?("--bind=") }
+    claimed = binds.select { |bind| bind.start_with?("j:", "k:", "up:", "down:", "left:", "right:") }
+    assert_empty(claimed, "binds that claim j, k or an arrow key: #{claimed.inspect}")
+  end
+
   def test_the_enter_bind_keeps_an_empty_client_as_an_empty_first_argument
     answer_rex(block_ls: %w[b9])
     _, stderr, status = run_script(PICK, @snapshot, "")
@@ -205,7 +216,7 @@ class RexSwitcherScriptsTest < Minitest::Test
     stdout, _, status = run_script(PICK, "esc", env: { "FZF_PROMPT" => "/b " })
 
     assert(status.success?)
-    assert_equal("disable-search+clear-query+rebind(w,b,d,a,j,k,/)" \
+    assert_equal("disable-search+clear-query+rebind(w,b,d,a,/)" \
                  '+reload("$SWITCHER_DIR"/rows.sh b "$SWITCHER_SNAPSHOT")+change-prompt(b> )', stdout.chomp)
   end
 
@@ -220,7 +231,7 @@ class RexSwitcherScriptsTest < Minitest::Test
     stdout, _, status = run_script(PICK, "slash", env: { "FZF_PROMPT" => "w> " })
 
     assert(status.success?)
-    assert_equal("enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/w )", stdout.chomp)
+    assert_equal("enable-search+unbind(w,b,d,a,/)+change-prompt(/w )", stdout.chomp)
   end
 
   def test_the_list_puts_the_most_urgent_row_at_the_top
