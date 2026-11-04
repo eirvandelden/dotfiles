@@ -1,0 +1,9 @@
+# Settings for the golden-ratio plugin (id `vv.golden-ratio`), at the path `herdr plugin config-dir
+# vv.golden-ratio` prints. The plugin reads it on every invocation, so a change applies at once.
+
+# Re-balance on every focus change, with no keypress. Off by default. Needs herdr 0.9.1 or newer;
+# on 0.9.0 it silently does nothing.
+auto = true
+
+# Deliberately unset, so the plugin's own defaults hold: `ratio` (0.618), `debounce_ms` (120) and
+# `min_delta` (0.02).
