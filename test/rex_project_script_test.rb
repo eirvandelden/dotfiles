@@ -35,7 +35,8 @@ class RexProjectScriptTest < Minitest::Test
       [ "dotfiles\t#{@root_a}/dotfiles", "webapp\t#{@root_a}/webapp", "eirvandelden.github.io\t#{@root_b}/eirvandelden.github.io" ],
       fzf_rows.sort_by { |row| [ row.include?(@root_a) ? 0 : 1, row ] }
     )
-    assert_equal(%w[--delimiter --with-nth], fzf_argv.select { |arg| arg.start_with?("--d", "--w") }.map { |arg| arg.sub(/=.*/, "") })
+    assert_includes(fzf_argv, "--delimiter")
+    assert_includes(fzf_argv, "--with-nth")
   end
 
   def test_picking_a_new_project_creates_its_session_and_selects_it
@@ -112,9 +113,10 @@ class RexProjectScriptTest < Minitest::Test
   end
 
   def test_roots_without_projects_list_nothing_and_make_no_rex_call
-    _, _, status = pick("", roots: File.join(@dir, "missing"))
+    stdout, _, status = pick("", roots: File.join(@dir, "missing"))
 
     assert_equal(0, status.exitstatus)
+    assert_includes(stdout, "No git projects")
     assert_empty(fzf_rows)
     assert_empty(rex_calls)
   end
