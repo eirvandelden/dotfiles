@@ -38,6 +38,7 @@ Not affected: Rex reads the file once at start and on `rex config reload`. Each 
 
 ## Design decisions
 
+- Added after acceptance, on Etienne's word that the package is on `rex-agent-switcher`: this branch is rebased onto it and its PR targets it. `init.lua` keeps the switcher's `ctrl+s>space`. The switcher's `test/rex_config_test.rb` already proves the old bindings stay.
 - The package holds `rex/.config/rex/init.lua` and a `README.md` beside it, as the `herdr` package does. Stow links both; the README is inert in `~/.config/rex`.
 - `|` cannot be written in a key sequence: `rex config check` reports `unknown key "|"`. The binding uses `ctrl+s>shift+\`, which is the same physical key chord and loads without error.
 - `ctrl+s>1..9` go to tabs through `client.tab.goto` with `index = n`, written as a loop over 1..9 to avoid nine copies.
@@ -45,7 +46,7 @@ Not affected: Rex reads the file once at start and on `rex config reload`. Each 
 - The new bindings, all after `ctrl+s>`:
 
   | Key | Action | Argument |
-  |---|---|---|
+  | --- | --- | --- |
   | `shift+\` | `pane.split.right` | — |
   | `v` | `pane.split.down` | — |
   | `w` | `pane.close` | — |
@@ -69,9 +70,10 @@ Not affected: Rex reads the file once at start and on `rex config reload`. Each 
 
 ## Files that change
 
-- `rex/.config/rex/init.lua` — new: today's bindings plus the new prefix bindings.
+- `rex/.config/rex/init.lua` — from `rex-agent-switcher`; adds the new prefix bindings and keeps `require("switcher")` and `ctrl+s>space` as `agent_switcher`.
 - `rex/.config/rex/README.md` — new: the keys, and the switch-over steps for Etienne.
-- `packages.conf` — add `rex` to `STOW`.
+
+`packages.conf` is not changed: `rex-agent-switcher` already lists `rex`.
 
 ## Order of work
 
@@ -79,7 +81,7 @@ Not affected: Rex reads the file once at start and on `rex config reload`. Each 
 2. Run `REX_CONFIG=<package file> rex config check`. It must report no error.
 3. Check every action name in the file against the Rex app's action list, as the first Proof check says.
 4. Write the README, with the switch-over steps: move the loose file away with `trash`, `stow -t "$HOME" rex`, `rex config reload`.
-5. Add `rex` to `STOW` in `packages.conf`.
+5. `packages.conf` already lists `rex` from the switcher branch: no change.
 6. Run `test/stow_package_roots_test.rb`, then `bin/test`.
 7. Lint: `markdownlint` on the README.
 

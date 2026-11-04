@@ -8,24 +8,23 @@ Etienne is moving from herdr to Rex and relies on herdr's `ctrl+s` prefix keys. 
 
 ## Proposed outcome
 
-The Rex config lives in a new `rex` stow package. After Etienne stows it, the herdr prefix muscle memory works in Rex.
+The herdr prefix muscle memory works in Rex. The keys go into the `rex` stow package that branch `rex-agent-switcher` already creates, and this change stacks on that branch.
 
 ## Affected users and systems
 
-Etienne's Rex app on macOS. The dotfiles repository: a new `rex` package and its registration in `packages.conf`.
+Etienne's Rex app on macOS. The dotfiles repository: the `rex` package from `rex-agent-switcher`.
 
 ## Constraints
 
-- Approved now (playbook rule 12): a new top-level stow package `rex`. No other permission is needed.
+- No new stow package: `rex` comes from `rex-agent-switcher`, which this branch is rebased on. The pull request targets that branch (playbook rule 20).
 - Agents never run `stow`. Etienne moves the loose `~/.config/rex/init.lua` away and stows the package himself.
-- The existing bindings stay: `cmd+k`, `shift+cmd+k`, the `ctrl+3..8` and `ctrl+-` key remaps, `ctrl+s ctrl+s`, `ctrl+s space` and the arrow-key pane focus.
+- The existing bindings stay: `cmd+k`, `shift+cmd+k`, the `ctrl+3..8` and `ctrl+-` key remaps, `ctrl+s ctrl+s`, the arrow-key pane focus, and the switcher's `ctrl+s space` (`agent_switcher`).
 - Prefix is `ctrl+s`, the same as in herdr.
 
 ## In scope
 
-- `rex/.config/rex/init.lua`, holding the current bindings plus the new ones.
+- `rex/.config/rex/init.lua`, the switcher branch's file plus the new bindings.
 - New prefix bindings: `|` split right, `v` split down, `w` close pane, `z` zoom, `=` balance, `t` new tab, `shift+t` close tab, `n` next tab, `p` previous tab, `1..9` go to tab, `shift+n` new session, `r` rename tab.
-- Registering the package where `packages.conf` lists stow packages.
 - A short note on how to switch from the loose file to the package.
 
 ## Out of scope
@@ -41,11 +40,12 @@ Etienne's Rex app on macOS. The dotfiles repository: a new `rex` package and its
 - Pressing `ctrl+s z` zooms the focused pane. Pressing it again restores the layout.
 - Pressing `ctrl+s 3` goes to the third tab.
 - Pressing `ctrl+s ctrl+s` still sends a literal `ctrl+s` to the shell.
-- After Etienne stows the package, `~/.config/rex/init.lua` links into the dotfiles repository.
+- After Etienne stows the package, `~/.config/rex/init.lua` links into the dotfiles repository, and `ctrl+s space` still opens the agent switcher.
 
 ## Decisions
 
 - `|` splits right and `v` splits down — Etienne took the recommended option, which matches the glyph shapes.
+- Stack on `rex-agent-switcher` and target the PR at it — Etienne said the stow package is on that branch and took the recommended option; two branches creating `rex/.config/rex/init.lua` would conflict.
 - Autonomous delivery without a Codex review — Etienne took the recommended delivery mode, and the Codex question was not asked, so no is the default.
 
 ## Open questions
