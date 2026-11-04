@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # rex/.config/rex/init.lua binds keys. The switcher replaces only ctrl+s>space; every other
 # binding stays. The file is read as text: Rex is not available to run it.
@@ -37,7 +38,11 @@ class RexConfigTest < Minitest::Test
       found_action, found_options = bindings.fetch(key) { flunk("binding #{key} is missing") }
 
       assert_equal(action, found_action, key)
-      assert_equal(options, found_options&.strip, key)
+      if options.nil?
+        assert_nil(found_options&.strip, key)
+      else
+        assert_equal(options, found_options&.strip, key)
+      end
     end
   end
 
