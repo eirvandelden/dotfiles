@@ -79,6 +79,16 @@ Two different reload paths, and forgetting either makes a correct change look br
 
 Either way, the files only exist at these paths once the `herdr` package is stowed.
 
+## Resizing the focused pane
+
+The `vv.golden-ratio` plugin resizes the focused pane to the golden ratio (61.8% of the tab on each axis) on every focus change. `plugins/config/vv.golden-ratio/config.toml` sets `auto = true`, so no key is needed. Auto mode needs herdr 0.9.1 or newer. The plugin reads its config on every invocation, so a change applies at once.
+
+The plugin is not installed by this repository. It builds with Go 1.24+, so install Go first, then run:
+
+```bash
+herdr plugin install vigneshwerv/herdr-golden-ratio
+```
+
 ## Worker scripts
 
 `scripts/hand-off-plan.sh <stage> <change-slug>` starts a named stage (`intent`, `plan`, or `implement`) of a change in a fresh Claude worker rooted in the change's worktree. `intent` opens in a pane below the caller, a new row. `plan` and `implement` open as the next column of the change's row, right of its last pane. `scripts/open-column.sh` places each column and appends it to the row record, `<git-common-dir>/herdr/stage-panes-<slug>`, which `deliver` reads. Every stage but `implement` starts the next one itself once its artifact is accepted. `scripts/start-review.sh` asks a reviewer to look at the current branch as the next column of the change's row, right of its last pane (right of the caller on a branch with no change folder). `open-pr-dash.sh` opens gh-dash the same way, unlisted, so `deliver` never closes it. `hand-off-plan.sh` and `start-review.sh` refuse to run outside a herdr pane and are covered by `test/herdr_worker_scripts_test.rb`. `open-pr-dash.sh` prints the pull request URL there instead and is covered by `test/open_pr_dash_test.rb`. `open-column.sh` is covered by `test/herdr_open_column_test.rb`.
