@@ -158,7 +158,7 @@ class RexSwitcherScriptsTest < Minitest::Test
     assert_includes(argv, "--disabled")
     binds = argv.each_cons(2).filter_map { |flag, value| value if flag == "--bind" }
     binds += argv.filter_map { |value| value.delete_prefix("--bind=") if value.start_with?("--bind=") }
-    [ "w:reload(", "b:reload(", "d:reload(", "a:reload(", "/:enable-search",
+    [ "w:reload(", "b:reload(", "d:reload(", "a:reload(", "/:transform(",
       "esc:transform(", "enter:transform(" ].each do |prefix|
       assert(binds.any? { |bind| bind.start_with?(prefix) }, "no bind starts with #{prefix}: #{binds.inspect}")
     end
@@ -201,19 +201,33 @@ class RexSwitcherScriptsTest < Minitest::Test
     refute_path_exists(@snapshot)
   end
 
-  def test_esc_in_search_mode_leaves_search_without_reloading
-    stdout, _, status = run_script(PICK, "esc", env: { "FZF_PROMPT" => "/ " })
+  def test_esc_in_search_mode_leaves_search_and_reloads_the_rows_of_the_same_filter
+    stdout, _, status = run_script(PICK, "esc", env: { "FZF_PROMPT" => "/b " })
 
     assert(status.success?)
-    assert_equal("disable-search+clear-query+rebind(w,b,d,a,j,k,/)+change-prompt(> )", stdout.chomp)
-    refute_includes(stdout, "reload")
+    assert_equal("disable-search+clear-query+rebind(w,b,d,a,j,k,/)" \
+                 '+reload("$SWITCHER_DIR"/rows.sh b "$SWITCHER_SNAPSHOT")+change-prompt(b> )', stdout.chomp)
   end
 
   def test_esc_in_list_mode_aborts
-    stdout, _, status = run_script(PICK, "esc", env: { "FZF_PROMPT" => "> " })
+    stdout, _, status = run_script(PICK, "esc", env: { "FZF_PROMPT" => "b> " })
 
     assert(status.success?)
     assert_equal("abort", stdout.chomp)
+  end
+
+  def test_slash_enters_search_mode_and_remembers_the_filter_in_the_prompt
+    stdout, _, status = run_script(PICK, "slash", env: { "FZF_PROMPT" => "w> " })
+
+    assert(status.success?)
+    assert_equal("enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/w )", stdout.chomp)
+  end
+
+  def test_the_list_puts_the_most_urgent_row_at_the_top
+    _, stderr, status = run_script(PICK, @snapshot, "client-42")
+
+    assert(status.success?, stderr)
+    assert_includes(fzf_argv, "--layout=reverse")
   end
 
   private
