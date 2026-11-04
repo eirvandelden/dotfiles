@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # SwitcherRows.lines (rex/.config/rex/switcher_rows.lua) turns collected panes into snapshot rows.
 # It is pure Lua, so luajit runs it here; the tests skip when luajit is missing.

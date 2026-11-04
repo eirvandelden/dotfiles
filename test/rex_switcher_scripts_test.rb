@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The switcher scripts (rex/.config/rex/switcher/{rows,jump,pick}.sh) read a snapshot of tab-separated rows:
 # state, "session / tab", program, cwd, message, session_id, window_id, block_id. `rex` and `fzf` are
