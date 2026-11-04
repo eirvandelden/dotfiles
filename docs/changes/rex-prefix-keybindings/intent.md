@@ -35,7 +35,7 @@ Etienne's Rex app on macOS. The dotfiles repository: the `rex` package from `rex
 
 ## Acceptance criteria
 
-- `rex keymap` lists `ctrl+s |` as a right split and `ctrl+s v` as a down split.
+- `rex keymap` lists `ctrl+s shift+\` (the `|` key, which Rex cannot name) as a right split and `ctrl+s v` as a down split.
 - Pressing `ctrl+s w` closes the focused pane.
 - Pressing `ctrl+s z` zooms the focused pane. Pressing it again restores the layout.
 - Pressing `ctrl+s 3` goes to the third tab.
