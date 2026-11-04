@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require "fileutils"
 require "json"
 require "open3"
