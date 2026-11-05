@@ -43,7 +43,7 @@ Not affected: herdr resolves the palette once per config load and once per appea
 - **Light values** (from `dist/herdr/solunized-light.toml` of the solunized change, with `overlay0` unchanged): `accent` `#a44910`, `active_row_bg` `#fffbf1`, `panel_bg`, `sidebar_bg` and `surface_dim` `#eeeae0`, `overlay0` `#d5d2c8`.
 - **Dark values** (from `dist/herdr/solunized-dark.toml`): `accent` `#fa9253`, `active_row_bg` `#012b38`, `panel_bg`, `sidebar_bg` and `surface_dim` `#0d3b4a`, `overlay0` `#2a5d6e`.
 - **`[ui]`**: `pane_gaps = true` is set explicitly. `pane_borders` stays unset, which means `auto`.
-- **Agent rows.** `rows` becomes `["state_icon", "terminal_title_stripped"]` then `["workspace"]`, with no `fg` on either. Etienne decided that the title follows the theme, because a fixed `fg` cannot follow the light and dark switch. The old blue `#0068c9` overrides go.
+- **Agent rows.** `rows` becomes `["state_icon", "terminal_title_stripped"]` then `["workspace"]`, with the title `fg = "#6a8990"` (`dim_0`) and `dim = false`. herdr draws the title with `overlay0`, nearly invisible on the frame (contrast 1.3 light, 1.7 dark), and a fixed `fg` cannot follow the light and dark switch, so Etienne chose one value readable in both (3.1). The old blue `#0068c9` overrides go.
 - **Failing toast test.** `test/herdr_config_test.rb` already fails on `main` (`terminal` against `system`). This plan does not touch it, as Etienne decided.
 - **Comment block.** The two comments above `[theme.custom]` and `[ui.sidebar.agents]` are rewritten to say what each token paints and what herdr 0.9.5 cannot do: rounded corners, pane padding, gap size, a paintable gap and the divider source.
 
@@ -69,7 +69,7 @@ Not affected: herdr resolves the palette once per config load and once per appea
 ## Risks
 
 - `light_name = "terminal"` and `dark_name = "terminal"` may not switch the mode tables if herdr reads only the theme name. The test session in step 5 shows it. Etienne checks dark mode by switching the system appearance, which this plan cannot do.
-- With the title `fg` gone, the title takes herdr's default colour, which may be dim in light mode. Etienne decided to accept this.
+- The title is a fixed `dim_0` `#6a8990`, greyer than the `#243f47` Etienne first picked. Etienne chose it for readability in both modes.
 - Dark mode flips the contrast: the frame is lighter than the panes. Etienne decided this.
 - One dark seam line stayed in a herdr test with outer borders off. The settled look keeps outer borders on, and no test showed a dark line there.
 
@@ -79,7 +79,7 @@ Not affected: herdr resolves the palette once per config load and once per appea
 - Panes read as cards against the frame, and in dark mode the frame is the lighter `bg_1` → check: the test session for light; pending Etienne for dark, by switching the system appearance.
 - The focused pane border is `#a44910` and an inactive border is `#d5d2c8` → check: `grep -nE '^(accent|overlay0)' herdr/.config/herdr/config.toml` shows both values in `[theme.custom.light]`.
 - Selected sidebar rows use `#fffbf1` → check: `grep -n 'active_row_bg' herdr/.config/herdr/config.toml` shows `#fffbf1` in light and `#012b38` in dark.
-- Each agent row shows two lines and the title has no `fg` → check: `sed -n '/^rows = \[/,/^\]/p' herdr/.config/herdr/config.toml` prints the two rows, with no `fg`.
+- Each agent row shows two lines and the title is `#6a8990` → check: `sed -n '/^rows = \[/,/^\]/p' herdr/.config/herdr/config.toml` prints the two rows, with `fg = "#6a8990"` on the title only.
 - Every hex value is a Solunized palette value → check: `ruby -ryaml -e 'pal=YAML.load_file(File.expand_path("~/Developer/solunized/themes.yml"))["themes"].values.flat_map { |t| t["colors"].values }.map(&:downcase); cfg=File.read("herdr/.config/herdr/config.toml").scan(/#\h{6}\b/).map(&:downcase).uniq; abort("not in palette: #{cfg - pal}") unless (cfg - pal).empty?; puts "ok"'` prints `ok`.
 - `herdr config check` reports no diagnostics → check: `HERDR_CONFIG_PATH="$PWD/herdr/.config/herdr/config.toml" herdr config check` prints `config: ok`.
 - Invariant: the light and dark tables hold the same keys, enforced by the edit → check: `diff <(sed -n '/^\[theme.custom.light\]/,/^$/p' herdr/.config/herdr/config.toml | grep -oE '^[a-z_0-9]+') <(sed -n '/^\[theme.custom.dark\]/,/^$/p' herdr/.config/herdr/config.toml | grep -oE '^[a-z_0-9]+')` prints nothing.

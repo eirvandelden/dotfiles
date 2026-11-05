@@ -8,7 +8,7 @@ herdr separates panes, tabs and the sidebar with dark lines. Etienne wants the c
 
 ## Proposed outcome
 
-The tab bar and the sidebar share one slightly darker colour, the frame. Panes stay on the lighter terminal background and read as cards on that frame. The dark seam lines are gone. Selected sidebar rows use the pane colour, so they join the panes. The focus colour is orange. Each agent row takes two lines: the state icon with the title, then the workspace. The title colour follows the theme.
+The tab bar and the sidebar share one slightly darker colour, the frame. Panes stay on the lighter terminal background and read as cards on that frame. The dark seam lines are gone. Selected sidebar rows use the pane colour, so they join the panes. The focus colour is orange. Each agent row takes two lines: the state icon with the title, then the workspace. The title is a fixed `dim_0`, readable in both modes.
 
 ## Affected users and systems
 
@@ -33,7 +33,7 @@ Settled light values, from a tested session:
 - `panel_bg`, `sidebar_bg` and `surface_dim` `#eeeae0` (`bg_1`): the frame, and the seams blending into it.
 - `overlay0` stays `#d5d2c8` (`bg_2`).
 - `[ui]` gets `pane_gaps = true`. `pane_borders` stays `auto`.
-- Agent rows, two lines: the state icon and `terminal_title_stripped` in herdr's default colour, then `workspace` in the default colour.
+- Agent rows, two lines: the state icon and `terminal_title_stripped` in `dim_0` `#6a8990`, then `workspace` in the default colour.
 - Matching dark-mode values, taken from the regenerated `dist/herdr/solunized-dark.toml` of the solunized change, not copied by hand.
 - A rewritten config comment that says what each token paints and what herdr cannot do.
 
@@ -51,7 +51,7 @@ Settled light values, from a tested session:
 - Panes show the lighter terminal background and read as cards against the frame. In dark mode the frame is the lighter `bg_1`.
 - The focused pane border is orange `#a44910`, and an inactive pane border is `#d5d2c8`.
 - Selected sidebar rows use `#fffbf1`, the pane colour.
-- Each agent row shows two lines: the state icon with the title, then the workspace. No state text line. The title has no `fg` override, so it follows the active theme in light and dark.
+- Each agent row shows two lines: the state icon with the title, then the workspace. No state text line. The title is `dim_0` `#6a8990` in both modes, about 3.1 contrast.
 - Every hex value in the new theme settings is a Solunized palette value.
 - `herdr config check` reports no diagnostics.
 
@@ -70,7 +70,7 @@ Settled light values, from a tested session:
 - The focus colour is Solunized `br_orange` `#a44910` — Etienne asked for bright orange.
 - Selected sidebar rows use the pane colour — Etienne found it better.
 - Agent rows use two lines, no state text — the icon already shows the state, and the one-line layout was judged too crowded.
-- The title has no `fg` override, so it follows the active theme in both modes — a fixed `#243f47` would be unreadable in dark mode; Etienne chose this over keeping it (replaces the earlier `fg_0` choice).
+- The title is the fixed `dim_0` `#6a8990` in both modes — herdr's default `overlay0` is nearly invisible (1.3 light, 1.7 dark) and `#243f47` is unreadable in dark mode (1.08); Etienne took the recommended option (replaces the earlier `fg_0` and "follow the theme" choices).
 - Dark mode gets values from Solunized Dark — Etienne chose this over keeping light values.
 - Dark mode frame is the lighter `bg_1` `#0d3b4a`, which flips the contrast against light mode — no colour in Solunized Dark is darker than the pane colour; Etienne took the recommended option.
 - Change solunized too, so the herdr template is the single source of the dark values — Etienne's choice over copying them by hand.
