@@ -4,23 +4,16 @@ require "minitest/autorun"
 require "open3"
 require_relative "isolated_git"
 
-# rex/.config/rex/init.lua binds ctrl+s>shift+f to the golden_ratio action, and the LaunchAgent
-# plist keeps the watcher running. Both are read as files: Rex and launchd are not available here.
+# rex/.config/rex/init.lua binds no golden-ratio chord, and the LaunchAgent plist keeps the
+# watcher running. Both are read as files: Rex and launchd are not available here.
 class RexGoldenRatioConfigTest < Minitest::Test
   REX_DIR = File.expand_path("../rex", __dir__)
   INIT = File.join(REX_DIR, ".config/rex/init.lua")
   PLIST = File.join(REX_DIR, "Library/LaunchAgents/com.eirvandelden.rex-golden-ratio.plist")
   LABEL = "com.eirvandelden.rex-golden-ratio".freeze
 
-  def test_ctrl_s_shift_f_runs_golden_ratio
-    assert_match(/^\s*rex\.bind\("ctrl\+s>shift\+f",\s*"golden_ratio"\)/, File.read(INIT))
-  end
-
-  def test_init_defines_the_golden_ratio_action
-    text = File.read(INIT)
-
-    assert_match(/rex\.action\(\{\s*name = "golden_ratio"/, text)
-    assert_match(/require\("golden_ratio_apply"\)/, text)
+  def test_init_leaves_golden_ratio_to_the_watcher
+    refute_match(/golden_ratio/, File.read(INIT))
   end
 
   def test_the_plist_passes_plutil_lint
