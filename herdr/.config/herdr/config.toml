@@ -59,37 +59,54 @@ done_path    = "/Users/etienne.vandelden/Documents/Tones/herdr/jobs-done.mp3"
 # done_path    = "/Users/etienne.vandelden/Documents/Tones/herdr/ForTheMaster02.mp3"
 
 [theme]
-# Take every color from the terminal's own palette. Ghostty already swaps solunized dark and
-# light with the system appearance, so herdr follows along without a hand-copied palette, apart
-# from the few tokens overridden below.
-# auto_switch stays off because it swaps between two named themes, which this no longer needs.
+# Take the base palette from the terminal. Ghostty already swaps solunized dark and light with the
+# system appearance, and herdr follows its light/dark report. auto_switch is on only so the two
+# mode tables below apply: both names stay "terminal", and each table overrides six tokens.
 name = "terminal"
-auto_switch = false
+auto_switch = true
+light_name = "terminal"
+dark_name = "terminal"
 
-# herdr has no border-width setting, so contrast is the only way to tell the focused pane apart:
-# accent draws the focused border, overlay0 the inactive ones. active_row_bg is overridden because
-# Palette::terminal hardcodes it to a fixed ANSI DarkGray that ignores the light palette entirely.
-# Values are solunized light blue and bg_2. A [theme.custom] block does not follow the system
-# light/dark switch, so dark mode gets these light-palette values too.
-[theme.custom]
-accent        = "#0068c9"
-active_row_bg = "#d5d2c8"
+# The tab bar and sidebar share one frame colour, bg_1, and the panes keep the terminal background
+# (bg_0), so the panes read as cards on the frame. panel_bg paints the tab bar, popups and the mode
+# bar, sidebar_bg the sidebar, and surface_dim the seams, so all three take the frame colour.
+# active_row_bg is the pane colour, so a selected sidebar row joins the panes. accent draws the
+# focused pane border and overlay0 the inactive ones.
+# In dark mode no colour is darker than the panes, so the frame is the lighter bg_1.
+# herdr 0.9.5 has no setting for rounded corners, pane padding, gap size, a paintable gap between
+# split panes, or the colour of a split divider. Values come from the solunized herdr template
+# (~/Developer/solunized/applications/herdr), run through generate_themes.rb.
+[theme.custom.light]
+accent        = "#a44910"
+active_row_bg = "#fffbf1"
 overlay0      = "#d5d2c8"
+panel_bg      = "#eeeae0"
+sidebar_bg    = "#eeeae0"
+surface_dim   = "#eeeae0"
+
+[theme.custom.dark]
+accent        = "#fa9253"
+active_row_bg = "#012b38"
+overlay0      = "#2a5d6e"
+panel_bg      = "#0d3b4a"
+sidebar_bg    = "#0d3b4a"
+surface_dim   = "#0d3b4a"
 
 [ui.toast]
 delivery = "system"
 
 [ui.sidebar.agents]
-# The tab and agent tokens are drawn with overlay0, which the pane borders use too — so overlay0
-# cannot be darkened for readability without making the inactive borders loud. Colouring these two
-# tokens directly sidesteps that shared token. herdr styles them the same whether the row is
-# active or not, so this applies to every agent row.
+# Two lines per agent: the state icon with the terminal title, then the workspace. The icon already
+# shows the state, so there is no state text line. herdr draws the title with overlay0, which is
+# nearly invisible on the frame (contrast 1.3 light, 1.7 dark), and a fixed fg cannot follow the
+# light/dark switch. dim_0 #6a8990 reads at about 3.1 in both modes, so the title takes it.
 rows = [
-  ["state_icon", "workspace", { token = "tab", fg = "#0068c9", dim = false }],
-  [{ token = "agent", fg = "#0068c9", dim = false }], ["state_text"],
+  ["state_icon", { token = "terminal_title_stripped", fg = "#6a8990", dim = false }],
+  ["workspace"],
 ]
 
 [ui]
+pane_gaps = true
 show_agent_labels_on_pane_borders = true
 agent_panel_sort = "priority"
 status_indicators = "symbols"
