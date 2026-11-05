@@ -152,7 +152,7 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 - `rex/.config/rex/init.lua`: unchanged. Change request after delivery: the `golden_ratio` action and the `ctrl+s>shift+f` binding were removed. The watcher is the only entry point.
 - `rex/Library/LaunchAgents/com.eirvandelden.rex-golden-ratio.plist`: new, starts the watcher at login.
 - `test/rex_golden_ratio_test.rb`: new, luajit unit tests of `plan`.
-- `test/rex_golden_ratio_config_test.rb`: new, `init.lua` binding and plist contents.
+- `test/rex_golden_ratio_config_test.rb`: new, the `init.lua` check and plist contents.
 - `test/rex_golden_ratio_live_test.rb`: new, integration test in a throwaway Rex session.
 
 ## Order of work
