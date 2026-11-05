@@ -6,7 +6,7 @@ require "open3"
 require "tmpdir"
 require_relative "isolated_git"
 
-# Integration tests: the golden-ratio action and watcher against real Rex sessions. Each test makes
+# Integration tests: golden-ratio `apply` and the watcher against real Rex sessions. Each test makes
 # throwaway sessions and kills them in teardown. They skip when no Rex server answers.
 class RexGoldenRatioLiveTest < Minitest::Test
   LUA_DIR = File.expand_path("../rex/.config/rex", __dir__)
