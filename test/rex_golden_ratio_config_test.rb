@@ -2,6 +2,7 @@
 require "json"
 require "minitest/autorun"
 require "open3"
+require_relative "isolated_git"
 
 # rex/.config/rex/init.lua binds ctrl+s>shift+f to the golden_ratio action, and the LaunchAgent
 # plist keeps the watcher running. Both are read as files: Rex and launchd are not available here.
