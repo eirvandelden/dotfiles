@@ -51,6 +51,11 @@ local function resize(session_id, step)
 	end
 end
 
+--- Resizes the focused pane of the focused window's tiled layer in one session. Returns the number of resize calls.
+--- Does nothing for a zoomed window or a window with no tiled layer.
+--- Every Rex call inside carries session_id, because a timer's calls do not default to the event's session.
+---@param session_id string|nil  the session to act on; nil means the script's own session
+---@return integer
 function GoldenRatioApply.apply(session_id)
 	local window = window_of(view_of(session_id))
 	if not window or window.zoomed_block_id then
