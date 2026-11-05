@@ -125,7 +125,7 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 
 ## Design decisions
 
-- The config table lives in its own file, `golden_ratio_config.lua`, not inside `init.lua`. The watcher is a separate `rex do` process and cannot see values set in `init.lua`. `init.lua` and the watcher both require the file, so one edit reaches both. This satisfies the "config table" decision in `intent.md`.
+- The config table lives in its own file, `golden_ratio_config.lua`, not inside `init.lua`. The watcher is a separate `rex do` process and cannot see values set in `init.lua`. The watcher reaches it through `golden_ratio_apply.lua`, so one edit changes it. This satisfies the "config table" decision in `intent.md`.
 - `plan` takes the config table, not a bare ratio, so the `min_delta` skip lives in the pure module and is testable.
 - Change request after delivery: no key chord. The first design bound `ctrl+s>shift+f` to a `golden_ratio` action. It was removed, and the watcher is the only entry point.
 - The watcher debounces with `rex.after`: a newer focus change cancels the pending timer, one timer per session. The handler passes `ctx.session_id` into `apply` and `apply` into every call, because a timer's API calls default to the script's session, not the event's.

@@ -30,7 +30,7 @@ The focused pane takes the golden-ratio share (about 61.8%) of the tab width and
 ## In scope
 
 - A watcher script run by `rex do --all` that applies the same resize when focus changes.
-- A config table with `ratio` (default 0.618), `min_delta` and `debounce`, read from `init.lua`.
+- A config table with `ratio` (default 0.618), `min_delta` and `debounce`, read by the watcher.
 - A LaunchAgent plist that starts the watcher at login, plus `launchctl bootstrap` for it.
 - Tests for the pure ratio computation, as the repository tests Lua and scripts.
 
