@@ -63,6 +63,14 @@ local function step_for(hop, focused_block_id, share)
 	}
 end
 
+---@alias ResizeStep { direction: "horizontal"|"vertical", before_block_id: string, after_block_id: string, ratio: number }
+
+--- Plans the resizes that give the focused block the golden share of the layout, outermost split first.
+--- Returns {} when the block is absent, the layout is one leaf, or every split is within config.min_delta.
+---@param layout table  a tiled layer layout: { rect, block_id } or { rect, split = { direction, ratio, before, after } }
+---@param focused_block_id string
+---@param config { ratio: number, min_delta: number }
+---@return ResizeStep[]
 function GoldenRatio.plan(layout, focused_block_id, config)
 	check_ratio(config.ratio)
 	local path = path_to(layout, focused_block_id)
