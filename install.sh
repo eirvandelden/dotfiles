@@ -118,6 +118,7 @@ main() {
   run_task "42_install_uv_tools.sh" "$root"
   run_task "50_stow_all.sh" "$root"
   run_task "51_configure_glow_style.sh" "$root"
+  run_task "52_install_herdr_plugins.sh" "$root"
 
   log "Setup complete! You may want to restart your shell (or reboot)."
 }
