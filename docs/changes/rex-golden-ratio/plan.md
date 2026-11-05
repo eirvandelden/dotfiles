@@ -152,7 +152,7 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 - `rex/.config/rex/golden_ratio_config.lua`: new, the config table.
 - `rex/.config/rex/golden_ratio_apply.lua`: new, the `apply` glue.
 - `rex/.config/rex/golden_ratio_watch.lua`: new, the watcher script.
-- `rex/.config/rex/init.lua`: require `golden_ratio_apply`, define the `golden_ratio` action, bind `ctrl+s>shift+f`.
+- `rex/.config/rex/init.lua`: unchanged. Change request after delivery: the `golden_ratio` action and the `ctrl+s>shift+f` binding were removed. The watcher is the only entry point.
 - `rex/Library/LaunchAgents/com.eirvandelden.rex-golden-ratio.plist`: new, starts the watcher at login.
 - `test/rex_golden_ratio_test.rb`: new, luajit unit tests of `plan`.
 - `test/rex_golden_ratio_config_test.rb`: new, `init.lua` binding and plist contents.
@@ -198,7 +198,7 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 Per changed file, the unit tests expected, named as behaviour:
 
 - `golden_ratio.lua`: `plan` gives three flat panes the golden width, handles nested layouts, flips the share when the focused block is on the `after` side, returns no steps for one pane, a missing block or a settled layout, and refuses a ratio outside 0.05 to 0.95.
-- `init.lua`: the action exists and the key binds it, with every earlier binding kept.
+- `init.lua`: it names no golden-ratio code, so the watcher is the only entry point.
 - The plist: it names the label, runs the watcher with `--all --autostart=false`, sets `RunAtLoad` and `KeepAlive`, and passes `plutil -lint`.
 
 Test setup: `plan` tests use Ruby hashes serialised to JSON and run through `luajit`, as `rex_switcher_rows_test.rb` does, and skip when `luajit` is missing. The live tests create a throwaway Rex session with `rex new`, split panes, call the action or run the watcher with `rex do ... --for`, read `rex session inspect`, and kill the session. They skip when no `rex` server answers.

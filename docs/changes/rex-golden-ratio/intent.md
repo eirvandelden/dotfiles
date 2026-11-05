@@ -29,7 +29,6 @@ The focused pane takes the golden-ratio share (about 61.8%) of the tab width and
 
 ## In scope
 
-- A custom action that resizes the focused pane to the golden ratio, bound to `ctrl+s` then capital `F`.
 - A watcher script run by `rex do --all` that applies the same resize when focus changes.
 - A config table with `ratio` (default 0.618), `min_delta` and `debounce`, read from `init.lua`.
 - A LaunchAgent plist that starts the watcher at login, plus `launchctl bootstrap` for it.
@@ -55,8 +54,7 @@ The focused pane takes the golden-ratio share (about 61.8%) of the tab width and
 
 ## Decisions
 
-- Cover manual and automatic mode — Etienne chose both.
-- Bind the manual action to `ctrl+s` then capital `F` — Etienne's choice; the plan confirms Rex's key syntax for it.
+- Cover automatic mode only — change request after delivery: Etienne no longer wants a keyboard chord, and Rex must not clash with herdr's `ctrl+s` prefix.
 - Read the ratio from a config table — Etienne chose it over a constant.
 - Skip resizing while a window is zoomed — Etienne chose it over resizing under zoom.
 - Start the automatic watcher by default through a LaunchAgent — Etienne wants it on without a toggle; Rex has no autostart for scripts.
