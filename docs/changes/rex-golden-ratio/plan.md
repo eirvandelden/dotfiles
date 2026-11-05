@@ -196,6 +196,7 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 - The key binds `golden_ratio` → `test/rex_golden_ratio_config_test.rb` `test_ctrl_s_shift_f_runs_golden_ratio`
 
 Per changed file, the unit tests expected, named as behaviour:
+
 - `golden_ratio.lua`: `plan` gives three flat panes the golden width, handles nested layouts, flips the share when the focused block is on the `after` side, returns no steps for one pane, a missing block or a settled layout, and refuses a ratio outside 0.05 to 0.95.
 - `init.lua`: the action exists and the key binds it, with every earlier binding kept.
 - The plist: it names the label, runs the watcher with `--all --autostart=false`, sets `RunAtLoad` and `KeepAlive`, and passes `plutil -lint`.

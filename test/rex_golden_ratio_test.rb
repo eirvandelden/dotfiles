@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require "open3"
+require_relative "isolated_git"
 
 # GoldenRatio.plan (rex/.config/rex/golden_ratio.lua) turns a tiled layout and a focused block
 # into the resize steps that give that block the golden share. It is pure Lua, so luajit runs it
