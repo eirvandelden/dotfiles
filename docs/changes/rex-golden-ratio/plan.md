@@ -39,15 +39,13 @@ classDiagram
     }
     class InitLua {
         <<glue>>
-        rex.action golden_ratio
-        rex.bind ctrl+s>shift+f
+        no golden-ratio code
     }
     class LaunchAgent {
         <<plist>>
     }
     GoldenRatioApply --> GoldenRatio : asks for steps
     GoldenRatioApply --> GoldenRatioConfig : reads
-    InitLua --> GoldenRatioApply : action calls apply
     GoldenRatioWatch --> GoldenRatioApply : calls apply
     LaunchAgent --> GoldenRatioWatch : starts, restarts on exit
 ```
@@ -129,12 +127,11 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 
 - The config table lives in its own file, `golden_ratio_config.lua`, not inside `init.lua`. The watcher is a separate `rex do` process and cannot see values set in `init.lua`. `init.lua` and the watcher both require the file, so one edit reaches both. This satisfies the "config table" decision in `intent.md`.
 - `plan` takes the config table, not a bare ratio, so the `min_delta` skip lives in the pure module and is testable.
-- The key is `ctrl+s>shift+f`. Rex matches keys unshifted, so "capital F" is `shift+f`.
+- Change request after delivery: no key chord. The first design bound `ctrl+s>shift+f` to a `golden_ratio` action. It was removed, and the watcher is the only entry point.
 - The watcher debounces with `rex.after`: a newer focus change cancels the pending timer, one timer per session. The handler passes `ctx.session_id` into `apply` and `apply` into every call, because a timer's API calls default to the script's session, not the event's.
-- Focusing another block ends a zoom (checked in a throwaway session). A watcher resize after a focus move therefore sees an unzoomed window and runs. The zoom guard protects the key action and any resize while a block stays zoomed, which is what the intent decision asks.
+- Focusing another block ends a zoom (checked in a throwaway session). A watcher resize after a focus move therefore sees an unzoomed window and runs. The zoom guard protects `apply` and any resize while a block stays zoomed, which is what the intent decision asks.
 - The LaunchAgent runs `/bin/sh -c 'exec "$HOME/.../rex" do "$HOME/.config/rex/golden_ratio_watch.lua" --all --autostart=false'`. A plist cannot expand `$HOME`, and the shell keeps the username out of the repository. `--autostart=false` stops it from starting a second Rex server. `KeepAlive` with a `ThrottleInterval` retries until the Rex server runs.
 - The plist is `rex/Library/LaunchAgents/com.eirvandelden.rex-golden-ratio.plist`, so Etienne's stow links the file into the existing `~/Library/LaunchAgents`.
-- `rex.action` takes a table (`rex.action({ name = ... })`), as the Rex docs and `switcher.lua` show. The config test matches that form.
 - The session view has no top-level focused block. `apply` and the watcher read the window named by `active_window_id`, falling back to the first window, and use that window's `focused_block_id`. `golden_ratio_apply.lua` also exports `focused_block_id(session_id)` for the watcher.
 - A step resizes the split by choosing the focused block and the first leaf of the sibling subtree. Their lowest common ancestor is exactly the split on the path, so `resize_pane` moves that split only.
 
@@ -163,8 +160,8 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 1. Rebase the branch onto `origin/rex-agent-switcher`, so the `rex` package and `init.lua` exist.
 2. Write the live integration test for three side-by-side panes. Run it. Watch it fail.
 3. Write the `plan` unit tests, then `golden_ratio.lua` until they pass.
-4. Add `golden_ratio_config.lua` and `golden_ratio_apply.lua`. The live test for the action passes.
-5. Add the `init.lua` action and binding, with its config test.
+4. Add `golden_ratio_config.lua` and `golden_ratio_apply.lua`. The live test for `apply` passes.
+5. Removed after delivery: the `init.lua` action and binding.
 6. Add `golden_ratio_watch.lua`. The live watcher test passes: a focus move resizes, and the watcher makes one resize round per focus change.
 7. Add the plist, with its test. Lint it with `plutil -lint`.
 8. Run `stylua --check`, luajit tests, the full suite and the linters.
@@ -180,12 +177,12 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 
 ## Proof
 
-- With three side-by-side panes, `ctrl+s F` gives the focused pane about 61.8% of the width → `test/rex_golden_ratio_live_test.rb` `test_apply_gives_the_focused_pane_the_golden_width`
+- With three side-by-side panes, the watcher gives the focused pane about 61.8% of the width → `test/rex_golden_ratio_live_test.rb` `test_apply_gives_the_focused_pane_the_golden_width`
 - A nested pane ends at about 61.8% of both axes → `test/rex_golden_ratio_test.rb` `test_nested_focus_gets_the_golden_share_on_both_axes`, and `test/rex_golden_ratio_live_test.rb` `test_apply_gives_a_nested_pane_the_golden_share_after_real_resizes`, which reads the final pane rectangles from `rex session inspect`
 - The watcher resizes the session that changed → `test/rex_golden_ratio_live_test.rb` `test_the_watcher_resizes_the_session_that_changed`, with two throwaway sessions under one `--all` script
 - A focus move enlarges the new pane without a keypress → `test/rex_golden_ratio_live_test.rb` `test_the_watcher_resizes_after_a_focus_move`
 - A one-pane tab stays unchanged → `test/rex_golden_ratio_test.rb` `test_a_single_pane_needs_no_steps`
-- A zoomed window stays unchanged when the key action runs → `test/rex_golden_ratio_live_test.rb` `test_apply_skips_a_zoomed_window`
+- A zoomed window stays unchanged when `apply` runs → `test/rex_golden_ratio_live_test.rb` `test_apply_skips_a_zoomed_window`
 - A focus move out of a zoomed pane unzooms the window, and the watcher then resizes → `test/rex_golden_ratio_live_test.rb` `test_the_watcher_resizes_after_a_focus_move_ends_a_zoom`
 - A split within `min_delta` is not resized again → `test/rex_golden_ratio_test.rb` `test_a_settled_layout_needs_no_steps`
 - The watcher does not resize in a loop → `test/rex_golden_ratio_live_test.rb` `test_the_watcher_makes_one_resize_round_per_focus_move`
@@ -193,7 +190,7 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 - Invariant: `config.ratio` outside 0.05 to 0.95 is refused, enforced by `GoldenRatio.plan` → `test/rex_golden_ratio_test.rb` `test_a_ratio_outside_the_allowed_range_is_refused`
 - Invariant: the product of shares per axis equals the target at any depth, enforced by `GoldenRatio.plan` → `test/rex_golden_ratio_test.rb` `test_the_shares_on_each_axis_multiply_to_the_target` and `test_a_twenty_deep_path_still_multiplies_to_the_target`
 - Invariant: `plan` needs no `rex` global, enforced by the luajit run → `test/rex_golden_ratio_test.rb` `test_plan_runs_without_a_rex_global`
-- The key binds `golden_ratio` → `test/rex_golden_ratio_config_test.rb` `test_ctrl_s_shift_f_runs_golden_ratio`
+- `init.lua` binds no chord → `test/rex_golden_ratio_config_test.rb` `test_init_leaves_golden_ratio_to_the_watcher`
 
 Per changed file, the unit tests expected, named as behaviour:
 
@@ -201,7 +198,7 @@ Per changed file, the unit tests expected, named as behaviour:
 - `init.lua`: it names no golden-ratio code, so the watcher is the only entry point.
 - The plist: it names the label, runs the watcher with `--all --autostart=false`, sets `RunAtLoad` and `KeepAlive`, and passes `plutil -lint`.
 
-Test setup: `plan` tests use Ruby hashes serialised to JSON and run through `luajit`, as `rex_switcher_rows_test.rb` does, and skip when `luajit` is missing. The live tests create a throwaway Rex session with `rex new`, split panes, call the action or run the watcher with `rex do ... --for`, read `rex session inspect`, and kill the session. They skip when no `rex` server answers.
+Test setup: `plan` tests use Ruby hashes serialised to JSON and run through `luajit`, as `rex_switcher_rows_test.rb` does, and skip when `luajit` is missing. The live tests create a throwaway Rex session with `rex new`, split panes, call `apply` or run the watcher with `rex do ... --for`, read `rex session inspect`, and kill the session. They skip when no `rex` server answers.
 
 ---
 Domain skills applied: software-design, diagrams, sandi-metz-rules (small modules), glossary.
@@ -212,5 +209,5 @@ Domain skills applied: software-design, diagrams, sandi-metz-rules (small module
 
 - The watcher's timer passes no session id, so in `--all` mode `apply` can query or resize the wrong session → fixed (`apply` takes `session_id`; the handler passes `ctx.session_id`; a two-session live test is added)
 - The 0.05 to 0.95 step clamp contradicts the "however deep" acceptance criterion; at depth 20 it gives 35.8% → fixed (the per-step clamp is removed, `config.ratio` is validated instead, and a twenty-deep test is added)
-- The zoom guard cannot hold for the watcher focus test, because `session.focus_block` ends the zoom → fixed (checked live: focus ends a zoom; the plan records that the watcher then resizes an unzoomed window, the zoom test targets the key action, and a test covers the unzoom-then-resize path)
+- The zoom guard cannot hold for the watcher focus test, because `session.focus_block` ends the zoom → fixed (checked live: focus ends a zoom; the plan records that the watcher then resizes an unzoomed window, the zoom test targets `apply`, and a test covers the unzoom-then-resize path)
 - The nested-layout proof tests only the pure planner, not the border Rex picks → fixed (a live nested same-axis test reads the final pane rectangles after real `resize_pane` calls)

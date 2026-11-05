@@ -8,7 +8,7 @@ In Rex, the focused pane keeps whatever size the layout gave it. The herdr `gold
 
 ## Proposed outcome
 
-The focused pane takes the golden-ratio share (about 61.8%) of the tab width and height, on demand with one key and automatically on every focus change.
+The focused pane takes the golden-ratio share (about 61.8%) of the tab width and height, automatically on every focus change.
 
 ## Affected users and systems
 
@@ -20,7 +20,7 @@ The focused pane takes the golden-ratio share (about 61.8%) of the tab width and
 
 - Rex runs `rex.on` only in `rex do` scripts. `init.lua` never receives events, and Rex has no focus-changed event. The watcher is a separate Lua script run by `rex do ... --all`.
 - Rex has no way to start a script by itself. A LaunchAgent starts the watcher at login and restarts it if it exits.
-- The resize uses `rex.session.resize_pane`. It takes two block ids and a direction, and picks the innermost split between them. The action walks every ancestor split of the focused block.
+- The resize uses `rex.session.resize_pane`. It takes two block ids and a direction, and picks the innermost split between them. The watcher walks every ancestor split of the focused block.
 - Each split on an axis crossed k times gives the focused side `ratio^(1/k)`, so the product over the path equals the target ratio. This is the herdr plugin's rule.
 - The watcher's own resizes raise `session_view_changed`. It must not re-trigger itself: it acts only when `focused_block_id` differs from the last one it handled, and skips a resize when the split is already within `min_delta` of the target.
 - The plan verifies whether a focus change alone raises `session_view_changed`. If it does not, the watcher falls back to `rex.every` polling.
@@ -43,11 +43,11 @@ The focused pane takes the golden-ratio share (about 61.8%) of the tab width and
 
 ## Acceptance criteria
 
-- With three side-by-side panes, pressing `ctrl+s` then `F` gives the focused pane about 61.8% of the window width.
+- With three side-by-side panes, moving focus to the middle pane with the watcher running gives it about 61.8% of the window width.
 - In a nested layout, the focused pane ends at about 61.8% of the width and about 61.8% of the height of the window, however deep it sits.
 - Moving focus to another pane with the watcher running enlarges that pane without a keypress.
-- A tab with one pane stays unchanged when the action runs.
-- A zoomed window stays unchanged when the action or the watcher runs.
+- A tab with one pane stays unchanged when the watcher runs.
+- A zoomed window stays unchanged when the watcher runs.
 - A split already within `min_delta` of its target is not resized again.
 - Resizing does not make the watcher resize again in a loop.
 - After login, the watcher runs without Etienne starting it, and restarts if it exits.
