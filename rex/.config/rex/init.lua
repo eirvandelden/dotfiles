@@ -1,5 +1,15 @@
 require("switcher")
 require("project")
+local golden_ratio = require("golden_ratio_apply")
+
+rex.action({
+	name = "golden_ratio",
+	title = "Golden ratio",
+	keywords = "pane resize focus",
+	run = function(ctx)
+		return golden_ratio.apply(ctx.session_id)
+	end,
+})
 
 rex.bind("cmd+k", "com.superlogical.terminal.clear")
 rex.bind("shift+cmd+k", "session.switch")
@@ -11,6 +21,7 @@ rex.bind("ctrl+s>down", "pane.focus", { direction = "down" })
 rex.bind("ctrl+s>up", "pane.focus", { direction = "up" })
 rex.bind("ctrl+s>right", "pane.focus", { direction = "right" })
 rex.bind("ctrl+s>o", "open_project")
+rex.bind("ctrl+s>shift+f", "golden_ratio")
 
 rex.bind("ctrl+3", "pane.send_key", { key = "esc" })
 rex.bind("ctrl+4", "pane.send_key", { key = "ctrl+\\" })
