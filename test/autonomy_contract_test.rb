@@ -70,9 +70,41 @@ class AutonomyContractTest < Minitest::Test
   def test_intent_coordinator_writes_the_account_and_never_merges
     section = section_of(skill("intent"), "## Autonomous delivery")
 
-    assert_includes(section, "deliver-<slug>.md")
+    assert_includes(section, "docs/changes/<slug>/deliver.md")
     assert_includes(section, "Never merge")
     assert_includes(section, "Decision needed:")
+  end
+
+  def test_the_account_is_committed_before_deliver_runs
+    section = section_of(skill("intent"), "## Autonomous delivery")
+    account = section.index("docs/changes/<slug>/deliver.md")
+
+    assert_includes(section, "docs: delivery account for <slug>")
+    assert_operator(account, :<, section.index("~/.claude/skills/deliver/SKILL.md"))
+  end
+
+  def test_the_delivery_done_line_names_the_in_repo_account_path
+    section = section_of(skill("intent"), "## Autonomous delivery")
+    paragraph = section[/^A stage pane started by.*$/]
+
+    assert_includes(paragraph, "Delivery done: docs/changes/<slug>/deliver.md")
+  end
+
+  def test_the_final_message_carries_the_pull_request_url_and_the_ci_result
+    section = section_of(skill("intent"), "## Autonomous delivery")
+    final = section[/^\d+\. Tell Etienne.*$/]
+
+    assert_includes(final, "PR URL")
+    assert_includes(final, "CI result")
+  end
+
+  def test_nothing_names_the_old_account_path
+    old_path = "herdr/deliver-" + "<slug>"
+    files = Dir.glob(File.join(SKILLS, "**/*")) + Dir.glob(File.join(REPO_ROOT, "herdr/**/scripts/*")) +
+            Dir.glob(File.join(REPO_ROOT, "test/*.rb"))
+    offenders = files.select { |file| File.file?(file) && File.read(file).include?(old_path) }
+
+    assert_empty(offenders)
   end
 
   def test_an_intent_session_started_by_a_pane_coordinates_and_sends_only_the_account
