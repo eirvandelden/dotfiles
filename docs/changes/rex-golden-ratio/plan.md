@@ -134,6 +134,8 @@ Checked by: Not checked: Lua code. Steep and RBS do not apply; LuaLS annotations
 - Focusing another block ends a zoom (checked in a throwaway session). A watcher resize after a focus move therefore sees an unzoomed window and runs. The zoom guard protects the key action and any resize while a block stays zoomed, which is what the intent decision asks.
 - The LaunchAgent runs `/bin/sh -c 'exec "$HOME/.../rex" do "$HOME/.config/rex/golden_ratio_watch.lua" --all --autostart=false'`. A plist cannot expand `$HOME`, and the shell keeps the username out of the repository. `--autostart=false` stops it from starting a second Rex server. `KeepAlive` with a `ThrottleInterval` retries until the Rex server runs.
 - The plist is `rex/Library/LaunchAgents/com.eirvandelden.rex-golden-ratio.plist`, so Etienne's stow links the file into the existing `~/Library/LaunchAgents`.
+- `rex.action` takes a table (`rex.action({ name = ... })`), as the Rex docs and `switcher.lua` show. The config test matches that form.
+- The session view has no top-level focused block. `apply` and the watcher read the window named by `active_window_id`, falling back to the first window, and use that window's `focused_block_id`. `golden_ratio_apply.lua` also exports `focused_block_id(session_id)` for the watcher.
 - A step resizes the split by choosing the focused block and the first leaf of the sibling subtree. Their lowest common ancestor is exactly the split on the path, so `resize_pane` moves that split only.
 
 ## Integration points

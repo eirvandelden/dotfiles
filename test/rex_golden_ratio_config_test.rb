@@ -18,7 +18,7 @@ class RexGoldenRatioConfigTest < Minitest::Test
   def test_init_defines_the_golden_ratio_action
     text = File.read(INIT)
 
-    assert_match(/rex\.action\("golden_ratio"/, text)
+    assert_match(/rex\.action\(\{\s*name = "golden_ratio"/, text)
     assert_match(/require\("golden_ratio_apply"\)/, text)
   end
 
