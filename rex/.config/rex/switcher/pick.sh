@@ -16,7 +16,7 @@ if [ "${1:-}" = "esc" ]; then
   case "${FZF_PROMPT:-}" in
     "/"?" ")
       filter="${FZF_PROMPT:1:1}"
-      printf 'disable-search+clear-query+rebind(w,b,d,a,j,k,/)+%s+change-prompt(%s> )\n' \
+      printf 'disable-search+clear-query+rebind(w,b,d,a,/)+%s+change-prompt(%s> )\n' \
         "$(reload_action "$filter")" "$filter"
       ;;
     *) echo "abort" ;;
@@ -25,7 +25,7 @@ if [ "${1:-}" = "esc" ]; then
 fi
 
 if [ "${1:-}" = "slash" ]; then
-  echo "enable-search+unbind(w,b,d,a,j,k,/)+change-prompt(/${FZF_PROMPT:0:1} )"
+  echo "enable-search+unbind(w,b,d,a,/)+change-prompt(/${FZF_PROMPT:0:1} )"
   exit 0
 fi
 
@@ -49,8 +49,6 @@ fzf --disabled --layout=reverse --delimiter '\t' --with-nth 1..5 --prompt 'a> ' 
   --bind "$(filter_bind b blocked)" \
   --bind "$(filter_bind d "done")" \
   --bind "$(filter_bind a all)" \
-  --bind "j:down" \
-  --bind "k:up" \
   --bind '/:transform("$SWITCHER_DIR"/pick.sh slash)' \
   --bind 'esc:transform("$SWITCHER_DIR"/pick.sh esc)' \
   --bind 'enter:transform("$SWITCHER_DIR"/jump.sh "$SWITCHER_CLIENT" {6} {7} {8})' <"$SWITCHER_SNAPSHOT" || true
