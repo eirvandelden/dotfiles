@@ -20,3 +20,10 @@ rex.bind("ctrl+6", "pane.send_key", { key = "ctrl+shift+6" })
 rex.bind("ctrl+7", "pane.send_key", { key = "ctrl+shift+-" })
 rex.bind("ctrl+8", "pane.send_key", { key = "backspace" })
 rex.bind("ctrl+-", "pane.send_key", { key = "ctrl+shift+-" })
+
+require("launchers")
+
+rex.bind("ctrl+s>f", "file_viewer_split")
+rex.bind("ctrl+s>shift+f", "file_viewer_tab")
+rex.bind("ctrl+s>g", "lazygit_split")
+rex.bind("ctrl+s>shift+g", "lazygit_tab")
