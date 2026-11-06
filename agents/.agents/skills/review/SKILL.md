@@ -3,7 +3,7 @@ name: review
 description: Reviews this branch — a fresh reviewer in a herdr pane by default, or the reviewer agent forked in-session with "here". The reviewer stays report-only; a clean review the user started hands over to the deliver skill, which opens the draft PR.
 arguments:
   - name: backend
-    description: "(default) a fresh reviewer in a herdr pane via start-review.sh; \"here\": the reviewer agent forked in-session instead."
+    description: "(default) a fresh reviewer in a herdr pane via start-review; \"here\": the reviewer agent forked in-session instead."
 ---
 
 # Review
@@ -12,13 +12,13 @@ Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or 
 
 ## Choosing a backend
 
-- No argument, `HERDR_ENV` set: pane backend. A fresh agent with an empty context is the reason to review in a pane rather than this session, which has been steering the implementation and cannot see it fresh.
-- `here`, or `HERDR_ENV` unset: fork the `reviewer` agent in this session (Agent tool, `subagent_type: reviewer`). Outside herdr this is the only option — say so in one line before running it, so the pane behaviour isn't silently missed.
+- No argument, `HERDR_ENV` or `REX_SESSION` set: pane backend. A fresh agent with an empty context is the reason to review in a pane rather than this session, which has been steering the implementation and cannot see it fresh.
+- `here`, or `HERDR_ENV` and `REX_SESSION` unset: fork the `reviewer` agent in this session (Agent tool, `subagent_type: reviewer`). Outside herdr and Rex this is the only option — say so in one line before running it, so the pane behaviour isn't silently missed.
 
 ## Pane backend
 
 ```bash
-~/.config/herdr/scripts/start-review.sh
+~/.agents/bin/start-review
 ```
 
 Run it from the repository being reviewed: the reviewer inherits that directory. The script opens the next column of the change's row, right of its last pane (right of the current pane on a branch with no change folder), starts Claude on opus there, and points it at the `reviewer` agent's instructions — the single source both backends read, so a pane review and an in-session review ask the same questions. Tell the user which reviewer is looking at what, and where its report will land, then carry on with work outside this branch's files: the reviewer reads the uncommitted changes as they are now, so anything edited meanwhile makes its findings describe a state that no longer exists.
@@ -27,7 +27,7 @@ The reviewer writes its round to `docs/changes/<slug>/review.md` and leaves it u
 
 ## `here` backend
 
-Dispatch the `reviewer` agent as a fork of this session. Give it the branch's base (same resolution `start-review.sh` uses: `origin/HEAD`, else local `main`, else `master`) so it knows what to diff against. Read its round back directly; there is no pane message to wait for.
+Dispatch the `reviewer` agent as a fork of this session. Give it the branch's base (same resolution `start-review` uses: `origin/HEAD`, else local `main`, else `master`) so it knows what to diff against. Read its round back directly; there is no pane message to wait for.
 
 ## After either backend
 
@@ -45,7 +45,7 @@ A round left with an open finding and no newer round means the review is not clo
 Only valid when `intent.md` has `Delivery: autonomous`; the coordinator runs this, and "stop, do not start fixing" under "After either backend" does not apply, and this skill does not run `deliver`: the coordinator does, once a round of each enabled reviewer is clean (intent skill, Autonomous delivery). The Claude reviewer always looks at the diff. Run the Codex round only when `intent.md` records `Codex review: yes`; a missing field means `no`, and then never run `codex review`. With the Codex round enabled, run it before the Claude round: the `reviewer` agent's own `commit-review` then sees both rounds, so a Codex finding never forces a second `review.md` commit.
 
 1. Claude: a Claude coordinator uses the `reviewer` agent through either backend above. A Codex coordinator uses the read-only Claude CLI backend below. A native Codex reviewer cannot replace this Claude round.
-2. The Codex CLI, only on `Codex review: yes`: `codex review --base <base>`, with `<base>` resolved as in `start-review.sh`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as ``- [ ] Important: <finding> — `<file>:<line>` →`` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Leave it uncommitted. Run `commit-review`; push the branch (`git push -u origin HEAD`) only when it exits 0. A Codex coordinator transcribes the rounds itself, so it runs `commit-review` once after the last.
+2. The Codex CLI, only on `Codex review: yes`: `codex review --base <base>`, with `<base>` resolved as in `start-review`. The coordinator transcribes its output as its own round in `review.md`, in the reviewer's round format: the heading `## Round <n> — <UTC timestamp> — <short SHA reviewed>`, then one finding per line as ``- [ ] Important: <finding> — `<file>:<line>` →`` (or `Nit:`), with the `→` slot left empty to close. Add `(codex)` after the heading so the source is clear. Leave it uncommitted. Run `commit-review`; push the branch (`git push -u origin HEAD`) only when it exits 0. A Codex coordinator transcribes the rounds itself, so it runs `commit-review` once after the last.
 
 Fix every finding through `code-review`, then run each enabled reviewer again. Repeat until a round of each enabled reviewer leaves no open finding. A finding disputed for two rounds goes to Etienne (see `code-review`).
 
