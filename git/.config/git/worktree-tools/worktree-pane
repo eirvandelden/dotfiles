@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 require "common"
 require "json"
 require "open3"
+require "rbconfig"
 
 module WorktreeTools
   class Pane
@@ -21,6 +22,8 @@ module WorktreeTools
 
     #: (Array[String] argv) -> void
     def run!(argv)
+      exec(RbConfig.ruby, File.join(__dir__, "worktree-pane-rex"), *argv) if rex_only_env?
+
       command, path, pane_id = argv
       return unless herdr_env?
       die(USAGE) if !COMMANDS.include?(command) || path.to_s.empty? ||

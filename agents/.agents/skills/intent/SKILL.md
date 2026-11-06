@@ -31,7 +31,7 @@ Every change that touches code starts here — a bug, a feature, a refactor, a c
 Resolve `<slug-or-issue>` into the final branch/folder slug the same way step 1 below does (an issue number or URL: `gh issue view <number> --json title,body,labels` for `<issue-number>-<issue-title-in-kebab-case>`; anything else: the kebab-case slug as-is). Then, from anywhere inside the repository:
 
 ```bash
-~/.config/herdr/scripts/hand-off-plan.sh intent <slug>
+~/.agents/bin/hand-off-plan intent <slug>
 ```
 
 The script creates `.worktrees/<slug>`, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill for `docs/changes/<slug>` — there is no upstream artifact yet, so its interview is what creates `intent.md`. Tell the user which worker took it and where its report will land, then carry on: the interview that follows is that pane's own.
@@ -176,16 +176,18 @@ Refuse to flip `Status:` to `accepted` while any of these holds, and name what i
 
 Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted` and leave `intent.md` uncommitted. Do not commit it and do not push: the plan stage commits `intent.md` and `plan.md` together, in the same worktree. Write the agreed terms into the glossary as the `glossary` skill says; a personal repository gets its own commit (`docs: glossary terms for <slug>`).
 
+Inside Rex (`REX_SESSION` set, `HERDR_ENV` unset), record this block for the delivery step: write `$REX_BLOCK` to `<git-common-dir>/rex/intent-pane-<slug>` (create the directory); block ids never repeat, so it needs no terminal id.
+
 Inside herdr (`HERDR_ENV` set), record this pane for the delivery step. Run `herdr pane current` and write the `pane_id` field, then the `terminal_id` field, one per line, to `<git-common-dir>/herdr/intent-pane-<slug>` (create the directory). The delivery step reads it to keep this pane open when it closes the idle stage panes, and the terminal id tells this pane from a later pane that reuses its id.
 
 - `intent.md` has `Delivery: autonomous`: do not chain to the plan stage by hand. Follow "Autonomous delivery" below.
-- Otherwise, inside herdr (`HERDR_ENV` set), start the plan stage: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the acceptance.
+- Otherwise, inside herdr or Rex (`HERDR_ENV` or `REX_SESSION` set), start the plan stage: `COORDINATOR=<coordinator> ~/.agents/bin/hand-off-plan plan '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID` (`$REX_BLOCK` in Rex; herdr wins when both are set). If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside both tools, stop after the acceptance.
 
 ## Autonomous delivery
 
 Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes only on a `personal` origin. This session is the coordinator. Etienne's "accepted" on the intent was the last approval before the PR, except the escalations below.
 
-1. For each stage in order — `plan`, then `implement` — run `HERDR_PANE_ID=<own pane id> ~/.config/herdr/scripts/hand-off-plan.sh <stage> <slug> --auto`. Wait for that stage's `Plan ready:` or `Handoff done:` line, then read its report before starting the next stage.
+1. For each stage in order — `plan`, then `implement` — run `COORDINATOR=<own pane id> ~/.agents/bin/hand-off-plan <stage> <slug> --auto`. Wait for that stage's `Plan ready:` or `Handoff done:` line, then read its report before starting the next stage.
 2. A `Decision needed:` line in a report is an escalation (below). Settle it before the next stage.
 3. Run the tests, the linters, Brakeman and Bundler Audit where the repository has them.
 4. Exercise the behaviour as a human would, and record the evidence.
@@ -193,11 +195,11 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 6. Once a round of each enabled reviewer leaves no open finding, confirm that `intent.md` is accepted and records `Delivery: autonomous`, because `deliver` removes it. Write the account — behaviour delivered, evidence, check results, review outcome — to `docs/changes/<slug>/deliver.md` and commit that file alone: `git add docs/changes/<slug>/deliver.md`, then commit with the subject `docs: delivery account for <slug>`. `deliver` removes the folder in its own commit, so the account stays in git history. The PR URL and the CI result exist only after `deliver`: they do not go in the account. Then follow `~/.claude/skills/deliver/SKILL.md`. It opens the draft PR. After `deliver`, follow `~/.claude/skills/finish/SKILL.md` in its auto mode, which runs `ship --no-merge`: it marks the PR ready and waits for green CI. Red CI stops the delivery: report the failed checks and their links.
 7. Tell Etienne the behaviour delivered, the PR URL, the CI result and the account path. Never merge: Etienne's `/finish` is the merge approval.
 
-A stage pane started by `hand-off-plan.sh intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the final message, as the single line `Delivery done: docs/changes/<slug>/deliver.md`, sent once the delivery ends; the account path also goes into the report file the starting prompt names, with the PR URL and the CI result.
+A stage pane started by `hand-off-plan intent` is still the coordinator: its starting prompt names another pane, but every stage gets this session's own pane id. That other pane receives only the final message, as the single line `Delivery done: docs/changes/<slug>/deliver.md`, sent once the delivery ends; the account path also goes into the report file the starting prompt names, with the PR URL and the CI result.
 
 Escalation: stop and ask Etienne one concrete question when a choice changes the agreed behaviour, a step needs a permission he has not approved, one problem fails three times, or a finding is still disputed after two rounds. A `Decision needed:` line in a stage report is how a pane raises one of these.
 
-Outside herdr, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
+Outside herdr and Rex, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
 
 ## Codex
 

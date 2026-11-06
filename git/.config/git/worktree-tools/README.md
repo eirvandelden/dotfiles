@@ -139,7 +139,7 @@ stow:
    - `worktree-remove` - Cleanup (remove puma-dev, unstow packages)
    - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>` off `origin`'s default branch; prints its path
    - `worktree-sweep [--detach]` - Sweep merged worktrees of the current repository; the lefthook pull hooks run it with `--detach`
-   - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or rename the herdr pane rooted in a worktree
+   - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or rename the herdr pane (or, in Rex, the block) rooted in a worktree; `worktree-pane` hands over to `worktree-pane-rex` when only `REX_SESSION` is set
 
 3. **Explicit Git Command**
    - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path

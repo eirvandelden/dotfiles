@@ -42,6 +42,11 @@ keybindings:
     - key: C
       name: deep review (octo.nvim)
       command: >
+        n={{.PrNumber}}; r={{.RepoName}};
+        if [ "${HERDR_ENV:-}" = 1 ]; then
         pane=$(herdr pane split --current --direction down --focus | jq -r
         '.result.pane.pane_id') && [ -n "$pane" ] && herdr pane run "$pane"
-        "nvim -c 'silent Octo pr edit {{.PrNumber}} {{.RepoName}}'"
+        "nvim -c 'silent Octo pr edit $n $r'";
+        elif [ -n "${REX_SESSION:-}" ]; then
+        rex split --split=below -- nvim -c "silent Octo pr edit $n $r";
+        fi

@@ -103,6 +103,27 @@ class AgentWorktreeTest < Minitest::Test
     assert_equal([ "w1_p2" ], Dir.children(File.join(@state_home, "worktree-tools", "agent-worktrees")))
   end
 
+  def test_a_rex_record_does_not_serve_a_herdr_lookup
+    @records.record("rex:blkA", "", @worktree)
+
+    assert_nil(@records.usable_for("rex_blkA", "term_A", beside: @main))
+    assert_nil(@records.usable_for("w1:pA", "term_A", beside: @main))
+  end
+
+  def test_a_herdr_record_does_not_serve_a_rex_lookup
+    @records.record("w1:pA", "term_A", @worktree)
+
+    assert_nil(@records.usable_for("rex:w1:pA", "", beside: @main))
+    assert_nil(@records.usable_for("rex:blkA", "", beside: @main))
+  end
+
+  def test_a_rex_record_serves_the_rex_lookup_with_an_empty_terminal_id
+    @records.record("rex:blkA", "", @worktree)
+
+    assert_equal(@worktree, @records.usable_for("rex:blkA", "", beside: @main))
+    assert_equal([ "rex_blkA" ], Dir.children(File.join(@state_home, "worktree-tools", "agent-worktrees")))
+  end
+
   private
 
   def record_file(name)

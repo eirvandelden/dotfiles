@@ -46,6 +46,26 @@
         ]
       },
       {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh -c '[ \"${HERDR_ENV:-}\" = 1 ] || rex __internal session-start --agent claude 2>/dev/null || true'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/rex/scripts/play-tone.sh ready",
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
@@ -141,6 +161,26 @@
           {
             "type": "command",
             "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/rex/scripts/play-tone.sh done",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/rex/scripts/play-tone.sh request",
             "timeout": 10
           }
         ]
