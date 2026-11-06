@@ -30,6 +30,7 @@
 [core]
 	excludesfile = ~/.config/git/ignore.global
   editor = ~/.local/bin/editor-wait
+  hooksPath = ~/.config/git/hooks
   pager = less -+X
 [difftool "default-difftool"]
   # Set OS X Filemerge as mergetool
