@@ -1,0 +1,12 @@
+#!/bin/sh
+# Runs the herdr or the Rex start-review script, chosen from the environment.
+# HERDR_ENV=1 wins over REX_SESSION. COORDINATOR=<id> becomes HERDR_PANE_ID or REX_BLOCK.
+if [ "${HERDR_ENV:-}" = 1 ]; then
+  [ -z "${COORDINATOR:-}" ] || export HERDR_PANE_ID="$COORDINATOR"
+  exec "${HERDR_SCRIPTS_DIR:-$HOME/.config/herdr/scripts}/start-review.sh" "$@"
+elif [ -n "${REX_SESSION:-}" ]; then
+  [ -z "${COORDINATOR:-}" ] || export REX_BLOCK="$COORDINATOR"
+  exec "${REX_SCRIPTS_DIR:-$HOME/.config/rex/scripts}/start-review.sh" "$@"
+fi
+echo "start-review: run it inside a herdr pane (HERDR_ENV=1) or a Rex block (REX_SESSION)." >&2
+exit 1
