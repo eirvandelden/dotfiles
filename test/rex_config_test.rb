@@ -34,6 +34,11 @@ class RexConfigTest < Minitest::Test
     assert_match(/require\("project"\)/, init_text)
   end
 
+  def test_the_file_viewer_is_required_and_has_no_key_bind
+    assert_match(/require\("viewer"\)/, init_text)
+    refute_includes(bindings.values.map(&:first), "file_viewer")
+  end
+
   def test_shift_cmd_k_keeps_session_switch
     assert_equal("session.switch", bindings.fetch("shift+cmd+k").first)
   end
