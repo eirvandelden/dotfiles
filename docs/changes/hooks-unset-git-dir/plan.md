@@ -30,6 +30,7 @@ Every repository and worktree on the global hooks path (`~/.config/git/hooks`, s
 ## Risks
 
 - A lefthook command that relies on `GIT_DIR`. None of the dotfiles or cityofbrass commands do; they already unset it or never read it.
+- A repository used through `--git-dir`/`--work-tree` has no `.git` in its work tree, so lefthook cannot find it without `GIT_DIR`. The shims keep `GIT_DIR` there (review round 1).
 
 ## Proof
 
@@ -37,6 +38,15 @@ Every repository and worktree on the global hooks path (`~/.config/git/hooks`, s
 - In a linked worktree, a lefthook command run by `pre-push` sees no `GIT_DIR` → `test/lefthook_local_hooks_test.rb` `test_pre_push_runs_lefthook_without_git_dir_in_a_linked_worktree`
 - The existing hook tests stay green → check: `ruby test/lefthook_local_hooks_test.rb`
 - A commit in the cityofbrass phase C worktree passes the rubocop hook → manual: `git commit` in `cityofbrass/.worktrees/56-monster-powers`
+
+Departures recorded during implementation:
+
+- The shims unset `GIT_DIR` only when the work tree root holds a `.git` entry. Extra test: `test_pre_commit_keeps_git_dir_for_a_work_tree_without_a_git_entry`.
+
+Manual evidence (2026-11-06):
+
+- Commits `83c7324`..`110cb14` in `cityofbrass/.worktrees/56-monster-powers` ran with `git -c core.hooksPath=<this worktree>/git/.config/git/hooks commit`; the rubocop hook passed. The push of `56-monster-powers` through the same hooks path passed `pre_push_checks` (144 runs, 0 failures).
+- After the review fix: `GIT_DIR=<worktree git dir> sh <this worktree>/git/.config/git/hooks/pre-push` in that worktree gets past Bundler and runs the suite. The same call with `main`'s shim stops with "Your bundle is locked to exception_notification-campfire-once".
 
 ---
 Domain skills applied: None.
