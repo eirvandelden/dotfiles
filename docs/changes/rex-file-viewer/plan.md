@@ -6,7 +6,7 @@ From `intent.md` (2026-11-04). Status: accepted.
 
 ### Domain terms
 
-- **Viewer** — the floating Rex layer, opened by `ctrl+s f`, that lists the files an agent changed and previews the one picked. Avoid: file browser.
+- **Viewer** — the floating Rex layer, opened by the `file_viewer` action, that lists the files an agent changed and previews the one picked. Avoid: file browser.
 - **Changed file** — a path that differs from the base, in the working tree, or is untracked. Status letters: `M`, `A`, `D`, `?`.
 - **Base** — the merge-base of `HEAD` and the base branch, as a commit. With no base branch it is `HEAD`.
 - **Root** — the git toplevel of the focused pane's directory.
@@ -17,7 +17,7 @@ From `intent.md` (2026-11-04). Status: accepted.
 
 ```mermaid
 flowchart LR
-  K["ctrl+s f"] --> A["file_viewer action (viewer.lua)"]
+  K["rex do file_viewer or the command palette"] --> A["file_viewer action (viewer.lua)"]
   A -->|"new_layer: pick.sh cwd"| P["pick.sh"]
   P -->|"dir"| B["base.sh"]
   P -->|"root, base"| F["list.sh"]
@@ -64,7 +64,7 @@ rex.action({ name = "file_viewer", title = "Changed files", keywords = "files di
 --      decoded by switcher_rows.path; any failure, or a missing ctx.block_id, gives "" and so the notice
 ```
 
-`init.lua` gains `require("viewer")` and `rex.bind("ctrl+s>f", "file_viewer")`.
+`init.lua` gains `require("viewer")` and no key bind: Etienne asked for none for now, and herdr owns the `ctrl+s` prefix.
 
 Fzf binds: `j`/`k` move, `ctrl+d` is `preview-half-page-down`, `ctrl+u` is `preview-half-page-up`, `v` toggles the view, `q` and `esc` abort. The list runs with `--disabled`, so letters are binds, as in the switcher.
 
@@ -95,7 +95,7 @@ Not checked: this repository has no Steepfile.
 
 ## Design decisions
 
-- The key is `ctrl+s f`: `ctrl+s` is Rex's prefix here and `f` is free in `init.lua`.
+- No key bind (Etienne, 2026-11-06). The action runs from the command palette or `rex do file_viewer`.
 - The toggle key is `v`, as in the herdr viewer.
 - Markdown renders with `glow -s auto`, so it follows the terminal's light or dark scheme, like the herdr style note.
 - Layer bounds are 5 percent from each edge, a larger area than the switcher, for reading prose.
@@ -114,9 +114,9 @@ Not checked: this repository has no Steepfile.
 
 - `rex/.config/rex/viewer.lua` — new: the `file_viewer` action.
 - `rex/.config/rex/viewer/base.sh`, `list.sh`, `preview.sh`, `pick.sh` — new scripts.
-- `rex/.config/rex/init.lua` — require `viewer` and bind `ctrl+s>f`.
+- `rex/.config/rex/init.lua` — require `viewer`; no bind.
 - `test/rex_viewer_scripts_test.rb` — new.
-- `test/rex_config_test.rb` — one test for the bind and the require.
+- `test/rex_config_test.rb` — one test that `viewer` is required and `file_viewer` has no bind.
 - `GLOSSARY.md` — the new terms.
 
 ## Order of work
@@ -139,7 +139,7 @@ Not checked: this repository has no Steepfile.
 
 ## Proof
 
-- Pressing the key in an agent pane opens a layer that lists the files the agent changed, committed or not → `test/rex_viewer_scripts_test.rb` `test_list_has_committed_uncommitted_and_untracked_files`, and `test/rex_config_test.rb` `test_ctrl_s_f_binds_the_file_viewer_and_requires_it` (a text check of the bind and the require; the action itself is checked by hand)
+- Running the file_viewer action in an agent pane opens a layer that lists the files the agent changed, committed or not → `test/rex_viewer_scripts_test.rb` `test_list_has_committed_uncommitted_and_untracked_files`, and `test/rex_config_test.rb` `test_the_file_viewer_is_required_and_has_no_key_bind` (a text check of the require; the action itself is checked by hand)
 - Selecting `docs/changes/x/plan.md` shows it rendered as markdown → `test/rex_viewer_scripts_test.rb` `test_default_view_renders_markdown_with_glow`; styling by eye in step 7
 - A changed Ruby file shows its diff first, the toggle shows the highlighted file → `test/rex_viewer_scripts_test.rb` `test_default_view_shows_code_as_a_diff`, `test_alternate_view_shows_code_with_bat`, `test_toggle_flips_the_view_both_ways`
 - A created, uncommitted file appears in the list and opens as content → `test/rex_viewer_scripts_test.rb` `test_list_has_committed_uncommitted_and_untracked_files`, `test_default_view_shows_an_untracked_file_with_bat`
@@ -156,7 +156,7 @@ Per changed file, the unit tests expected:
 - `list.sh`: lists changed files sorted by path, prints nothing for a clean repository.
 - `preview.sh`: picks the tool by view, status and extension, falls back when a tool is missing.
 - `pick.sh`: `toggle` flips the prompt, `notice` waits for one key, the binds hold no path.
-- `test/rex_config_test.rb`: `ctrl+s>f` binds `file_viewer`; every other binding stays.
+- `test/rex_config_test.rb`: `viewer` is required, no key binds `file_viewer`, every other binding stays.
 
 Test setup: real temporary git repositories through `isolated_git`; `fzf`, `glow`, `delta` and `bat` are PATH stubs that log their arguments, as in `test/rex_switcher_scripts_test.rb`.
 

@@ -8,7 +8,7 @@ An agent in a Rex pane says it finished writing something. In Rex there is no wa
 
 ## Proposed outcome
 
-One key opens a viewer over the screen. It lists every file the agent changed in its worktree. Selecting a file shows it. Markdown is rendered. Other files show their diff. A key closes the viewer and returns to the agent.
+The `file_viewer` action opens a viewer over the screen. It lists every file the agent changed in its worktree. Selecting a file shows it. Markdown is rendered. Other files show their diff. A key closes the viewer and returns to the agent.
 
 ## Affected users and systems
 
@@ -24,7 +24,7 @@ Etienne, in Rex on macOS. The `rex` stow package: `init.lua`, a new Lua action a
 
 ## In scope
 
-- A Rex action `file_viewer` and a key bind to open it as a floating layer.
+- A Rex action `file_viewer` that opens the viewer as a floating layer. It has no key bind for now; Etienne runs it from the command palette or `rex do file_viewer`.
 - The root is the git toplevel of the focused pane's working directory.
 - The list holds files changed against the merge-base with the base branch, plus uncommitted and untracked files.
 - Preview of the selected file: markdown through `glow`; other text files as a `delta` diff; deleted files as a diff; untracked files as highlighted content through `bat`.
@@ -37,12 +37,13 @@ Etienne, in Rex on macOS. The `rex` stow package: `init.lua`, a new Lua action a
 - Editing files, staging, committing, or posting review comments.
 - A directory tree of unchanged files; the herdr viewer's worktree picker, pinned previews and note-sending.
 - Opening as a tab or split.
+- A keyboard shortcut for the action: herdr owns the `ctrl+s` prefix, so a chord waits for a later change.
 - Any change to the herdr setup or `worktree-viewer`.
 - Live refresh while the viewer is open.
 
 ## Acceptance criteria
 
-- Pressing the key in an agent pane opens a layer that lists the files the agent changed, committed or not.
+- Running the `file_viewer` action in an agent pane opens a layer that lists the files the agent changed, committed or not.
 - Selecting `docs/changes/x/plan.md` shows it rendered as markdown, with headings and lists styled.
 - Selecting a changed Ruby file shows its diff first; the toggle key shows the highlighted file.
 - A file the agent created and did not commit appears in the list and opens as content.
@@ -57,6 +58,7 @@ Etienne, in Rex on macOS. The `rex` stow package: `init.lua`, a new Lua action a
 - Open as a floating layer — it matches the agent switcher.
 - Show the diff first for non-markdown files — answering "what did it change" is the goal.
 - Standalone fzf script, not the herdr binary — chosen over reusing the herdr plugin; no herdr dependency.
+- No keyboard shortcut for now — Etienne's instruction (2026-11-06); herdr owns the `ctrl+s` prefix.
 
 ## Open questions
 
