@@ -22,6 +22,11 @@ class RepoAgentsFileTest < Minitest::Test
     assert_empty missing, "agents.md does not name these stow packages"
   end
 
+  def test_names_no_package_that_packages_conf_dropped
+    stale = named_packages - stow_packages
+    assert_empty stale, "agents.md names packages that packages.conf no longer stows"
+  end
+
   def test_names_the_skill_source_the_work_overlay_and_the_no_stow_rule
     assert_includes text, "agents/.agents/skills/"
     assert_includes text, "claude/.claude/skills/"
@@ -58,6 +63,10 @@ class RepoAgentsFileTest < Minitest::Test
 
   def text
     @text ||= File.read(AGENTS_FILE)
+  end
+
+  def named_packages
+    text[/^- Packages in `packages\.conf`: (.*)$/, 1].scan(/`([^`]+)`/).flatten
   end
 
   def stow_packages
