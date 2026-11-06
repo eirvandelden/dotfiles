@@ -153,7 +153,8 @@ class PullRequestFlowTest < Minitest::Test
     skills = Dir.glob(File.join(SKILLS, "**/*")).select { |path| File.file?(path) }
     agents = Dir.glob(File.join(REPO_ROOT, "claude/.claude/agents/*"))
     scripts = Dir.glob(File.join(REPO_ROOT, "herdr/.config/herdr/scripts/*")).select { |path| File.file?(path) }
-    skills + agents + scripts + [ File.join(REPO_ROOT, "lefthook.yml"), File.join(REPO_ROOT, Playbook::PATH) ]
+    live = [ "lefthook.yml", Playbook::PATH, "agents.md" ].map { |path| File.join(REPO_ROOT, path) }
+    skills + agents + scripts + live
   end
 
   def rule(playbook, number)
