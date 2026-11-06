@@ -7,6 +7,7 @@ require "tmpdir"
 require "yaml"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # The agent voice hook gives a personal session one playful persona on SessionStart. Work
 # repositories and repositories without origin get nothing: fail closed. A directory outside git
@@ -270,7 +271,7 @@ class AgentVoiceTest < Minitest::Test
   end
 
   def test_the_playbook_exempts_flavour_lines_only_when_a_persona_was_given
-    playbook = File.read(File.join(ROOT, "agents.md"))
+    playbook = Playbook.text
 
     assert_match(/flavour lines.*exempt.*only when the `agent-voice` hook gave the session a persona/i, playbook)
   end

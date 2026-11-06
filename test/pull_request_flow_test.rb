@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # Only deliver opens a pull request, and it removes docs/changes/<slug>/ first. The consent guard
 # enforces that mechanically (test/consent_guard_test.rb); these tests pin the skill, playbook and
@@ -22,7 +23,7 @@ class PullRequestFlowTest < Minitest::Test
   end
 
   def test_the_playbook_lets_only_deliver_open_a_pull_request
-    playbook = File.read(File.join(REPO_ROOT, "agents.md"))
+    playbook = Playbook.text
 
     assert_match(/only `?deliver`? opens/i, rule(playbook, 5))
     assert_includes(rule(playbook, 25), "deliver")
@@ -30,7 +31,7 @@ class PullRequestFlowTest < Minitest::Test
   end
 
   def test_deliver_is_named_as_the_freshness_check_before_the_pull_request
-    playbook = File.read(File.join(REPO_ROOT, "agents.md"))
+    playbook = Playbook.text
     header = File.read(File.join(REPO_ROOT, "git/.config/git/worktree-tools/review-report-fresh"))[/\A(?:#.*\n)+/]
 
     assert_match(/`deliver` checks it before it opens one/, rule(playbook, 16))
@@ -143,7 +144,7 @@ class PullRequestFlowTest < Minitest::Test
   end
 
   def test_the_playbook_names_restore_in_rule_5
-    assert_match(/`restore`/, rule(File.read(File.join(REPO_ROOT, "agents.md")), 5))
+    assert_match(/`restore`/, rule(Playbook.text, 5))
   end
 
   private
@@ -152,7 +153,7 @@ class PullRequestFlowTest < Minitest::Test
     skills = Dir.glob(File.join(SKILLS, "**/*")).select { |path| File.file?(path) }
     agents = Dir.glob(File.join(REPO_ROOT, "claude/.claude/agents/*"))
     scripts = Dir.glob(File.join(REPO_ROOT, "herdr/.config/herdr/scripts/*")).select { |path| File.file?(path) }
-    skills + agents + scripts + [ File.join(REPO_ROOT, "lefthook.yml"), File.join(REPO_ROOT, "agents.md") ]
+    skills + agents + scripts + [ File.join(REPO_ROOT, "lefthook.yml"), File.join(REPO_ROOT, Playbook::PATH) ]
   end
 
   def rule(playbook, number)

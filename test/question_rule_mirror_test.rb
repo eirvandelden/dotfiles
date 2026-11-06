@@ -6,11 +6,11 @@ require "open3"
 require "tmpdir"
 require "yaml"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # Playbook rule 27 (agent questions) is mirrored in core-values.yml, which the SessionStart hook injects.
 class QuestionRuleMirrorTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  PLAYBOOK = File.join(ROOT, "agents.md")
   CORE_VALUES = File.join(ROOT, "claude/.claude/core-values.yml")
   SETTINGS = File.join(ROOT, "claude/.claude/settings.json")
   HOOK = File.join(ROOT, "claude/.claude/hooks/core-values.rb")
@@ -37,7 +37,7 @@ class QuestionRuleMirrorTest < Minitest::Test
 
   # The bullets under rule 27, as the YAML mirror writes them: markdown backticks stay, the dash goes.
   def rule_27_bullets
-    lines = File.readlines(PLAYBOOK, chomp: true)
+    lines = Playbook.text.lines(chomp: true)
     start = lines.index { |line| line.start_with?("27. Agent questions") }
     return [] unless start
 

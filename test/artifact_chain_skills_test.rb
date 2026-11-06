@@ -8,7 +8,7 @@ class ArtifactChainSkillsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(ROOT, "agents/.agents/skills")
 
-  LIVE_PATHS = %w[claude agents codex herdr git bin agents.md SKILLS-INDEX.md].freeze
+  LIVE_PATHS = %w[claude agents codex herdr git bin agents.md agents/.agents/PLAYBOOK.md SKILLS-INDEX.md].freeze
   STAGE_SHAPED_SPEC = [
     /`spec`/,
     /(?<!ai-native-workflow\/)\bspec\.md/,

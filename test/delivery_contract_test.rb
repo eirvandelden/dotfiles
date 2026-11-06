@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "yaml"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # Delivery is mostly script behaviour (deliver_test, ship_test, open_pr_dash_test), but who runs
 # which script, and when, is skill and playbook text. These contract tests pin the text that carries
@@ -10,7 +11,7 @@ require_relative "isolated_git"
 class DeliveryContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
-  PLAYBOOK = File.read(File.join(REPO_ROOT, "agents.md"))
+  PLAYBOOK = Playbook.text
   CORE_VALUES = File.read(File.join(REPO_ROOT, "claude/.claude/core-values.yml"))
 
   def test_review_runs_delivery_when_no_finding_is_open
