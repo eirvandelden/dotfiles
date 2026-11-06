@@ -3,6 +3,8 @@
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
 - **Chained test** — one test that runs the steps of several former tests in one repository and keeps every former assertion.
 - **Covering test** — the test that still proves the behaviour of a deleted test.
+- **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
+- **Drift** — the Solunized block is not byte-equal to the light dist table, one empty line, then the dark dist table.
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hook scripts** — the tracked scripts in `git/.config/git/hooks/`.
@@ -14,4 +16,5 @@
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
+- **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Test file** — one `test/*_test.rb`, run as its own process.
