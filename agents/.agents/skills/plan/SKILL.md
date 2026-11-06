@@ -3,7 +3,7 @@ name: plan
 description: Use once intent.md is accepted, before any code — writes docs/changes/<slug>/plan.md in plan mode, critically reviews an existing plan, or absorbs a plan another agent should execute.
 arguments:
   - name: backend
-    description: "(default) a fresh Opus pane as the next column of the change's row via hand-off-plan.sh; \"here\": write in this session instead; \"here auto\": write, critique and accept without Etienne on a personal autonomous change."
+    description: "(default) a fresh Opus pane as the next column of the change's row via hand-off-plan; \"here\": write in this session instead; \"here auto\": write, critique and accept without Etienne on a personal autonomous change."
 ---
 
 # Plan
@@ -14,13 +14,13 @@ Three roles. Do only the one asked for.
 
 ### Choosing a backend
 
-- No argument, `HERDR_ENV` set: pane backend. A fresh agent with an empty context reads only the committed `intent.md` — no chat history from the coordinator crosses into the interrogation.
-- `here`, or `HERDR_ENV` unset: run in this session instead. Outside herdr this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
+- No argument, `HERDR_ENV` or `REX_SESSION` set: pane backend. A fresh agent with an empty context reads only the committed `intent.md` — no chat history from the coordinator crosses into the interrogation.
+- `here`, or `HERDR_ENV` and `REX_SESSION` unset: run in this session instead. Outside herdr and Rex this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
 
 ### Pane backend
 
 ```bash
-~/.config/herdr/scripts/hand-off-plan.sh plan <slug>
+~/.agents/bin/hand-off-plan plan <slug>
 ```
 
 Run it from anywhere inside the repository. The script creates `.worktrees/<slug>` if it does not exist yet, opens a pane as the next column of the change's row, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill's Write role, `here` backend, for `docs/changes/<slug>` — and, in the same prompt, to write `plan.md` and touch nothing else in that worktree until Etienne says the literal word "accepted" or "agreed." Tell the user which worker took the plan stage and where its report will land, then carry on: the interrogation that follows is that pane's own.
@@ -125,13 +125,13 @@ Must run in plan mode — this is where the codebase gets read and the approach 
 5. Self-contained, no chat references: a plan is the only context its executor gets, whether that is this same session later, a fresh worker pane, or another agent entirely. State context, concrete steps, files, verification, and an explicit out-of-scope list — nothing assumes the reader was in this conversation. Phased plans: one file per phase, each stating which decisions need a conversation with the user before that phase starts.
 6. Before offering acceptance, ask the user at least one interrogation question — "what could break", "what did you reject", "what's riskiest" — so the plan gets challenged before it is frozen.
 7. For anything non-trivial, offer a second-model critique (below) before acceptance.
-8. `Status: accepted` only on the user's literal word "accepted" or "agreed" — never on "looks fine" or "ok". On either word, run `~/.claude/skills/plan/scripts/commit-plan`: it commits `intent.md` and `plan.md` together (`docs: intent and plan for <slug>`; `docs: plan for <slug>` when `intent.md` is already committed) and nothing else. Then write the agreed terms into the glossary as the `glossary` skill says; a personal repository gets its own commit (`docs: glossary terms for <slug>`). Then push (`git push -u origin HEAD`). Inside herdr (`HERDR_ENV` set), start the implement stage, in its own fresh pane: `HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh implement '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID`. If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside herdr, stop after the push. Either way, writing a plan is not permission for *this session* to implement it — deliver the plan and stop; the implementing, if it happens, happens in that other pane.
+8. `Status: accepted` only on the user's literal word "accepted" or "agreed" — never on "looks fine" or "ok". On either word, run `~/.claude/skills/plan/scripts/commit-plan`: it commits `intent.md` and `plan.md` together (`docs: intent and plan for <slug>`; `docs: plan for <slug>` when `intent.md` is already committed) and nothing else. Then write the agreed terms into the glossary as the `glossary` skill says; a personal repository gets its own commit (`docs: glossary terms for <slug>`). Then push (`git push -u origin HEAD`). Inside herdr or Rex (`HERDR_ENV` or `REX_SESSION` set), start the implement stage, in its own fresh pane: `COORDINATOR=<coordinator> ~/.agents/bin/hand-off-plan implement '<slug>'`, where `<coordinator>` is the pane id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID` (`$REX_BLOCK` in Rex; herdr wins when both are set). If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside both tools, stop after the push. Either way, writing a plan is not permission for *this session* to implement it — deliver the plan and stop; the implementing, if it happens, happens in that other pane.
 
 ## Auto mode
 
 Plan mode does not apply: never call `EnterPlanMode` (Codex: never ask for `/plan`), because nobody is there to approve `ExitPlanMode`. This overrides the `here` backend's plan-mode step.
 
-Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh plan <slug> --auto`. It never asks Etienne anything and never starts the next stage; the coordinator does. A choice that would change the behaviour agreed in `intent.md`, or a step that contradicts one of its `## Decisions`, becomes a `Decision needed:` line in the report, not a guess.
+Only valid when `intent.md` has `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan plan <slug> --auto`. It never asks Etienne anything and never starts the next stage; the coordinator does. A choice that would change the behaviour agreed in `intent.md`, or a step that contradicts one of its `## Decisions`, becomes a `Decision needed:` line in the report, not a guess.
 
 1. Write `plan.md` as usual, with `Status: draft`. The architects still run, but nobody waits at the design gate.
 2. Run the critique with the other model family's local CLI. A Claude author uses Codex: `codex exec -p terra -s read-only -o <findings-file> "<prompt>"`. A Codex author uses Claude: `claude -p --model opus --permission-mode plan "<prompt>"`. The prompt asks it to read `plan.md`, `## Design` included, and the code it names, and to list disagreements with reasons. The critique covers the design section, and it stands in for Etienne's agreement of the design.

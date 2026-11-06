@@ -242,7 +242,7 @@ Available commands:
 
 ## 📖 Reading files in herdr
 
-herdr runs a read-only, git-aware file viewer in a pane: `prefix+f` for a split beside the work, `prefix+shift+f` for its own tab. Markdown arrives rendered, code highlighted.
+herdr runs a read-only, git-aware file viewer in a pane: `prefix+f` for a split beside the work, `prefix+shift+f` for its own tab. Markdown arrives rendered, code highlighted. Rex opens the same viewer through `worktree-viewer` (the Rex twin, `worktree-viewer-rex`, takes over when only `REX_SESSION` is set).
 
 It opens wherever the focused pane is, which is usually the main checkout — press `W` to re-root it at a worktree, including the one an agent is working in.
 
