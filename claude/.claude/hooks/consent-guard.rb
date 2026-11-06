@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # Claude Code PreToolUse hook: asks for the user's consent before a handful of
-# commands that cannot be undone from the outside (playbook agents.md section 7).
+# commands that cannot be undone from the outside (playbook `PLAYBOOK.md` section 7).
 # Exit 2 blocks the call and feeds stderr back to the agent; exit 0 lets it run.
 #
 # Deliberately small. It used to work out which branch a write would land on, in

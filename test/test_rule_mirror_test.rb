@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "isolated_git"
+require_relative "playbook"
 
-# Playbook rule 3 (agents.md) is the source of the lean test rule. Every instruction that repeats it
+# Playbook rule 3 (PLAYBOOK.md) is the source of the lean test rule. Every instruction that repeats it
 # carries each of its lines verbatim (docs/changes/lean-test-rule/plan.md, canonical wording).
 class TestRuleMirror
   RULE_HEADING = /^3\. Tests:\n/
@@ -26,7 +27,7 @@ end
 
 class TestRuleMirrorTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
-  PLAYBOOK = "agents.md"
+  PLAYBOOK = Playbook::PATH
   MIRRORS = %w[
     agents/.agents/skills/rails-testing/SKILL.md
     agents/.agents/skills/code-review/SKILL.md

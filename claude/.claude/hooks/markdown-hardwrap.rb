@@ -2,7 +2,7 @@
 # Claude Code PostToolUse hook: after an Edit/Write/MultiEdit touches a Markdown file, runs the
 # no-hardwrap markdownlint rule and, on findings, tells Claude the file, the wrapped lines, and
 # how to fix them - so a wrapped paragraph gets caught right after it's written, the same habit
-# `agents.md` rule 26 asks agents to avoid. Always exits 0: this hook only ever informs.
+# `PLAYBOOK.md` rule 26 asks agents to avoid. Always exits 0: this hook only ever informs.
 require "json"
 require "open3"
 require "shellwords"

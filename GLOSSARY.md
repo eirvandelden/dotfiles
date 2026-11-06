@@ -11,12 +11,15 @@
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hook scripts** — the tracked scripts in `git/.config/git/hooks/`.
 - **Hooks copy** — the one read-only copy of the hook scripts per test process, at which test repositories point `core.hooksPath`.
+- **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
+- **Playbook** — `agents/.agents/PLAYBOOK.md`, the one rules file that all agents read in every repository.
+- **Repo agents file** — the root `agents.md`, which describes only this repository; `CLAUDE.md` is a symlink to it.
 - **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.

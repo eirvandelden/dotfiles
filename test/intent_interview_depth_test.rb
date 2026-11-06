@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # The deeper intent interview is skill text: an agent does what the skill says. These tests read it.
 class IntentInterviewDepthTest < Minitest::Test
@@ -115,7 +116,7 @@ class IntentInterviewDepthTest < Minitest::Test
 
   def test_core_values_and_rule_17_name_the_deeper_interview
     values = File.read(File.join(ROOT, "claude/.claude/core-values.yml"))
-    rule = File.read(File.join(ROOT, "agents.md"))[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
+    rule = Playbook.text[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
 
     MIRROR_SENTENCES.each do |sentence|
       assert_includes(values, sentence)

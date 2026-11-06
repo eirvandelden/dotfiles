@@ -1,0 +1,234 @@
+# Etienne van Delden – Personal and Work Rails Playbook
+
+Core rules only. Topic-specific guidance lives in skills — see §5.
+
+## 0. How to Read This Playbook
+
+Single source of truth for the rules that constrain almost every coding session, for humans and agents alike. Read and apply every section before producing output.
+
+This file arrives from the user config — `~/.claude/PLAYBOOK.md` for Claude, `~/.codex/PLAYBOOK.md` for Codex — so it applies in every repository with no per-repo setup. A repository's own `AGENTS.md` covers the other half: what that application does, its domain, its commands, its gotchas. Read both.
+
+Scope labels: **Personal** for personal projects, **Work** for professional projects, **Both** for all of them. Where an item differs per scope, both are listed.
+
+Influences: 37signals (Rails conventions, "everything is CRUD", Hotwire/Kamal/Solid stack), thoughtbot (testing discipline, clean Ruby — [thoughtbot/guides](https://github.com/thoughtbot/guides)), Sandi Metz (small classes, short methods, Tell Don't Ask, Dependency Injection, Law of Demeter).
+
+## 1. Core Principles
+
+Any language, not just Ruby/Rails — full principles and examples in the `object-oriented-design` skill:
+
+- Tell, Don't Ask; Dependency Injection; Composition over Inheritance; Law of Demeter.
+- Business logic lives on the object that owns the data, never in a separate service/manager layer. **Never use service objects.**
+- Model actions as resources ("everything is CRUD"), not bespoke procedures.
+
+Rails/ActiveRecord — full detail in the `rails-architecture` skill:
+
+- Rails convention/CRUD modeling. State transitions are nested resources, not custom controller actions.
+- Orchestration goes, in order of preference: model method, concern, state record, inline ActiveJob, PORO for view-only presentation.
+- Personal: prefer the Solid trifecta (Queue/Cache/Cable) over Redis/Sidekiq.
+
+Refactor incrementally rather than rewriting — small steps, tests green, feature flags for risky changes. Prefer intention-revealing names; short names are fine in hot paths.
+
+## 2. Method Style and Formatting
+
+Full rules — method shape, naming, guard clauses, visibility, doc comments — in the `ruby-style` skill. Enforced mechanically by the `rubocop-eirvandelden` gem.
+
+- Each method does exactly one thing; extract helper methods when it grows.
+- `rescue => error`, never `rescue => e`. Never mutate a method's parameters.
+- No `send`/metaprogramming to shortcut a proper interface.
+- Target methods at 5 lines (under 10), classes under ~100 lines, at most 4 parameters, lines under ~120 characters.
+
+## 3. Error Handling
+
+- Raise errors freely when something goes wrong.
+- Rescue at higher layers so users do not see raw exceptions.
+- Return user friendly error pages.
+
+## 4. Security Tooling
+
+- Run Bundler Audit regularly and before pushes.
+- Run Brakeman regularly and before pushes.
+- Always use strong parameters in controllers.
+
+## 4a. Dependencies and Versioning
+
+Full policy — sources, constraint style, personal gems, Dependabot, upgrade steps — in the `dependencies` skill.
+
+- Ask before adding or removing any dependency (rule 11 in §7).
+- Never skip major versions when upgrading (Rails 6 → 7 → 8, step by step).
+
+## 5. Detailed Guidance
+
+Topic-specific guidance — object-oriented design, Rails architecture, Ruby style, testing, UI, API design, dependencies, ops, git workflow, code review, dotfiles — is not repeated here. Neither is the guidance vendored from superpowers-ruby: Rails guides, Rails and Ruby upgrades, the Hotwire set, 37signals style, Sandi Metz rules, Ruby idioms, Brakeman, systematic debugging, compound, and SQLite worktrees.
+
+Claude Code loads those skills automatically by relevance. Any other agent has no loader and should read the index, then the matching skill file: `SKILLS-INDEX.md`.
+
+Every change moves through the `intent`, `plan` and `implement` skills, in that order — see rule 17 below.
+
+## 6. Open Questions
+
+Undecided areas, to be settled per project: `docs/open-questions.md`.
+
+## 7. AI Agent Workflow
+
+The rules in sections 0–6 (plus the skills in §5) are the full ruleset. This section covers only behaviors specific to how an AI agent should operate.
+
+Claude Code: a subset of the workflow, verification, and consent rules below is also mirrored in `claude/.claude/core-values.yml`, which a hook reinjects every session and prompt so it survives context compaction. Editing a mirrored rule here means editing it there too — see the `dotfiles-maintenance` skill.
+
+1. Keep output concise:
+   - Be terse: no filler, hedging, pleasantries, or unsolicited caveats; plans scannable but complete. Code, commands, error text, and commit messages stay exact.
+   - Write Simplified Technical English (ASD-STE100 principles): sentences of at most 20 words, active voice, present tense, one instruction per sentence, one meaning per word, simple words over jargon. Keep the articles.
+   - Before: "It might be worth considering that the migration could possibly have been skipped." After: "The migration did not run."
+   - Before: "The config file should be checked and the server should then be restarted." After: "Check the config file. Then restart the server."
+   - No plugin enforces this; the rule is the rule.
+   - Flavour lines are exempt from the two rules above, only when the `agent-voice` hook gave the session a persona. Cap: 2 per reply, never in every reply. Code, commands, error text, commit messages, PR text, security warnings and destructive confirmations stay plain.
+2. Lint all generated code before finishing:
+   - Run linters on every file touched.
+   - Fix all issues before considering the task done.
+   - NEVER add linter disable comments.
+3. Tests:
+   - Every code change has tests. Configuration has no tests.
+   - A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
+   - Test public methods and classes only. Private methods never get tests of their own.
+   - Tests may follow the code. A bug fix is the exception: its regression test comes first and fails before the fix.
+   - Run tests after every change and fix failures before finishing.
+   - A task is only done when all tests are green, all linters are green, and you have re-read your own diff and adjusted.
+4. Ask for clarification when the playbook does not cover something.
+5. Pull request workflow:
+   - Always target `origin` (personal fork or own work repo) over upstream.
+   - Agents may push branches to `origin` without asking first, while implementing. Rule 6 still applies: never post/comment as Etienne on a PR without explicit instruction for that exact message.
+   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/`; `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
+   - If the target repository is ambiguous, ask before proceeding.
+   - Never push branches or create PRs against an upstream project without explicit instruction.
+   - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
+   - `docs/changes/<slug>/` artifacts are removed by the delivery step (the `deliver` skill) once review is closed; never delete them by hand. A change request after delivery restores the folder with `deliver`'s `restore` script; never recreate the documents by hand.
+6. GitHub identity and consent:
+   - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit instruction for that exact message.
+   - This includes issue comments, pull request comments, review comments, and replies.
+   - Do not infer permission from approval to open a PR, push code, request review, or perform any other GitHub action.
+   - If GitHub communication is needed, draft the proposed text in chat first and wait for explicit approval before posting it.
+   - Draft in Etienne's voice with the `writing-as-etienne` skill.
+7. Branch protection:
+   - NEVER commit directly to `main` or `master`.
+   - Always create a feature branch; merge via pull request.
+   - New code goes in its own git worktree under `.worktrees/`, never the main checkout and never a feature branch checked out in it — `worktree-first` skill, `WORKTREES.md`.
+   - Never type `git worktree add` yourself; use `worktree-create`.
+8. Hands off system tooling:
+   - NEVER install, uninstall, upgrade, or switch Ruby versions, version managers, or other system-level tools without explicit instruction.
+   - The Ruby version manager is `rv`. Do not assume or use any other version manager (mise, asdf, rbenv, rvm, chruby, etc.).
+   - Do not run commands that modify the system environment (e.g. `brew uninstall`, `rm` on toolchain paths, `mise use`, `asdf install`, etc.) unless the user explicitly asks for it.
+   - If a Ruby version or tool appears to be missing or broken, report the problem and ask for instructions. Do not attempt to fix it autonomously.
+   - This rule extends to all language runtimes, package managers, and system dependencies — not just Ruby.
+9. Database safety:
+   - NEVER run destructive database commands (`db:drop`, `db:reset`, `db:schema:load`, `db:migrate:down` on unknown migrations) without explicit instruction.
+   - NEVER write migrations that drop tables or remove columns without explicit instruction.
+   - NEVER run `db:migrate` against a production database.
+   - Prefer `db:migrate:status` to check migration state before running migrations.
+10. Secrets and credentials:
+    - NEVER read, print, log, or output the contents of `.env`, `.env.*`, `credentials.yml.enc`, `master.key`, or any file likely containing secrets.
+    - NEVER commit files containing secrets. If creating `.env` files, use placeholder values.
+    - NEVER hardcode secrets, API keys, tokens, or passwords in source code. Use `Rails.application.credentials` or environment variables.
+    - If a secret is accidentally printed in output, warn immediately to rotate it.
+11. Dependency management:
+    - NEVER add or remove gems, npm packages, or other dependencies without asking for approval first. The request must explain why the dependency is needed and what it does.
+    - NEVER run `bundle update` (all gems) without explicit instruction. Prefer `bundle update <specific-gem>`.
+    - Install gems with `bi`, never `bundle install`, `bundle`, `bundle i` or `bin/bundle install`. A guard refuses them.
+12. Symlinks and dotfiles:
+    - NEVER overwrite, delete, or modify symlinks directly. When editing dotfiles, always edit the source file in `~/Developer/dotfiles/<package>/`, never the symlinked target in `~/` or `~/.config/`.
+    - NEVER run `stow` or `stow -R` without explicit instruction.
+    - NEVER create new stow packages (top-level directories in the dotfiles repo) without explicit instruction.
+    - Full dotfiles environment/bootstrap detail: `dotfiles-maintenance` skill.
+13. Deployment and infrastructure:
+    - NEVER run deploy commands (`kamal deploy`, `kamal app exec`, `cap deploy`, etc.) without explicit approval.
+    - NEVER modify deployment configuration (`deploy.yml`, `deploy.rb`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/`, `.gitlab-ci.yml`) without explicit approval.
+    - Treat `config/environments/production.rb` as a high-risk file. Always ask before modifying it.
+14. Error recovery:
+    - If a change breaks tests, fix what you introduced rather than modifying the test to pass.
+    - NEVER delete or skip failing tests to make a suite pass.
+    - If stuck after 3 failed attempts at the same problem, stop and explain the situation rather than continuing to make speculative changes.
+15. Project scope awareness:
+    - Before starting work, identify whether this is a personal or work project. The rules differ (Minitest vs. RSpec, fixtures vs. FactoryBot, i18n vs. gettext, etc.).
+    - NEVER copy code, configuration, or credentials between personal and work projects.
+16. Code review workflow:
+    - When asked to review work: read the project's `AGENTS.md` for what the application does and what its domain requires. This playbook already applies from the user config, so there is no fallback to look up.
+    - Combine both with any existing review criteria rather than replacing them.
+    - Full apply-fixes / re-review workflow: `code-review` skill.
+    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `deliver` checks it before it opens one.
+17. Plan before implementing:
+    - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
+    - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
+    - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them.
+    - Intent interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions. Bug fixes and chores stay at 1–3 questions; features and refactors probe fully.
+    - Personal repositories only: in autonomous delivery a recorded cross-model critique replaces the word "accepted" on `plan.md`. See §7a. Every other repository keeps this rule unchanged.
+18. Commits:
+    - Agents may create commits without asking first.
+    - Each commit must be small and contain exactly one logical change. Split unrelated concerns into separate commits.
+    - Still governed by rule 7 (never commit to `main`/`master`) and rule 21 (commit scope hygiene).
+19. Pushes:
+    - Agents may push without asking to repos owned by the `eirvandelden` GitHub user, and to any remote listed in `~/.claude/consent-guard-allowed-remotes.txt` (supplied by `dotfiles-work`; the same file the consent guard reads).
+    - Pushing to any other remote or repository requires explicit permission first.
+    - Force-push rules (rule 20: `--force-with-lease` only, never plain `--force`) still apply regardless of target repo.
+    - The consent guard enforces this rule in both tools. Claude runs it from `settings.json`, Codex from the inline `[hooks]` table in `config.toml`.
+20. Branch sync (rebase workflow):
+    - When starting work on an existing branch and before any approved push or PR update, fetch the latest main and rebase the feature branch on top of it. Rebase, never merge main into the branch.
+    - Stacked branches: rebase onto the explicitly named base branch and target the PR at it.
+    - Resolve each conflicted file on its own merits; never blindly discard one side.
+    - After a rebase, push with `--force-with-lease` only. NEVER use plain `--force`.
+    - The consent guard refuses plain `--force` in both Claude and Codex. Codex's `rules/default.rules` also forbids it when the flag follows `push` directly; the hook catches every other position.
+    - Full workflow: `sync` skill (`agents/.agents/skills/sync/SKILL.md`).
+21. Commit scope hygiene:
+    - Before committing, re-read the full diff. Every hunk must be required by the task. Revert unrelated changes: whitespace, quote style, comments, renamed test strings, lint configs, `.github/` files.
+    - NEVER commit personal or machine-local setup files (`.pumadev`, local `database.yml`, local `.rubocop.yml` tweaks, editor configs). If such a file is already tracked and shows up as modified, leave it out of the commit and mention it.
+    - Orthogonal improvements discovered while working: propose them for a separate branch/PR. Never bundle them into the current one.
+22. Verify, don't assume:
+    - Verify claims by exercising the change (run the command, hit the endpoint, load the page) before reporting done — "should work" is not verified.
+    - Never invent data, names, or content. When real data is needed, ask for it or read it from the source.
+    - Don't assume CLI flags or API behaviour from memory — check the documentation.
+    - Conductor: before editing, verify the working directory is the assigned workspace (`pwd`), not another checkout of the same repository.
+    - When re-checking an earlier fix, confirm it holds in the originally failing scenario before closing the loop.
+23. Test runs and output:
+    - Run the narrowest thing first — one file or example — then the full suite once that is green.
+    - Stop at the first failure instead of dumping output: `-f`/`--fail-fast` (Minitest, RSpec), `--bail` (Jest), `-x --tb=short` (pytest). `tail -20` is a fallback and needs `set -o pipefail`, or it reports `tail`'s exit status instead of the runner's.
+    - NEVER re-run an identical failing command more than twice; change it — narrower scope, more diagnostics, a different flag. (Rule 14 caps the whole stuck problem at 3 attempts.)
+24. Model selection:
+    - Claude Code: `claude/.claude/settings.json` sets `"model": "opus"`, so a session you start runs on Opus. The herdr stage panes and the Rex stage blocks set their own model in `hand-off-plan.sh`: Opus for `intent` and `plan`, Sonnet for `implement`. Start a `sonnet` session by hand only for a task that is entirely mechanical.
+    - Codex: Terra for planning and research, Luna for implementing. Luna is the base default in `codex/.codex/config.toml`; start a planning session with `codex -p terra`, which layers `~/.codex/terra.config.toml` over that base.
+    - Haiku belongs in subagents, never in the main session. Delegate to it for direct commands that need no interpretation — running a known command, listing files, a mechanical rename, a fixed-format lookup. Pass `model: "haiku"` on the individual Agent call rather than setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
+    - Anything requiring judgement — reading a diff for correctness, choosing between designs, writing tests — stays on Opus or Sonnet.
+25. Pre-existing CI failures:
+    - CI red on a branch or repo for reasons unrelated to the current task never gets ignored. Fix it.
+    - Workflow: new worktree → fix the CI failure there → push → review → `deliver` opens the PR (rules 5/6/19 consent still apply) → rebase the original in-progress work on top of that fix.
+    - Applies to personal and work projects both.
+26. Markdown prose:
+    - One line per paragraph, list item, and block quote in markdown prose — the renderer wraps it. Applies even in a file whose existing content is hardwrapped.
+27. Agent questions, in `AskUserQuestion` and in Codex's numbered plain-text options:
+    - Name the actor, Claude or Etienne. Never write "I" or "you" in a question or an option label.
+    - Write each option label as an order to Claude.
+    - Give each option description three lines: "Claude does:", "You do:" and "Result:".
+    - Put the recommended option first, with one reason.
+    - Give a single-select question with side effects (push, delete, install, config, deploy) a preview with `[Claude]` and `[You]` tagged lines. Codex puts that preview in a fenced block under the option.
+    - In Claude Code, the `question-wording-guard.rb` hook denies a question or an option label that holds I, I'll, I'm, I've, I'd, me, my, you, you'll, you're, you'd, you've, your or yours outside backticks.
+
+## 7a. Autonomous delivery (Personal)
+
+Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
+
+- Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
+- One coordinator drives plan, implement, review, fixes and `deliver`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
+- A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -p terra`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
+- Independent review: the Claude `reviewer` agent always reviews the diff; the Codex CLI reviews it too only when `intent.md` records `Codex review: yes`. No open finding may remain before the pull request.
+- Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
+- Verify behaviour as a human would (rule 22) and record the evidence.
+- Stop and ask Etienne one concrete question when: a choice changes the agreed behaviour; a step needs permission under rules 8, 9, 11, 12 or 13; the coordinator makes three failed attempts at one problem; a review finding stays disputed after two rounds.
+- Delivery is a draft pull request: the coordinator runs `deliver`, marks the PR ready and waits for green CI, and never merges. Etienne's `/finish` is the merge approval.
+- Rules 6, 8, 9, 11, 12 and 13 stay in force. Opening the pull request is allowed; replying on it as Etienne is not.
+- The coordinator ends with a short account: behaviour delivered, evidence, check results, review outcome, pull request URL.
+
+## 8. Things agents get wrong here
+
+Same mistake twice → one line here. Ten lines at most. Remove a line when its mistake has not come back in three months.
+
+No entries yet.
+
+## 9. Keyboard
+
+Etienne types Dvorak and navigates with the arrow keys on a separate layer. Name the arrow keys in instructions, never `hjkl`.

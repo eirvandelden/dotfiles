@@ -3,7 +3,7 @@
 #
 # Shared utilities for ./install.sh
 #
-# Strategy (see agents.md):
+# Strategy (see the dotfiles-maintenance skill, agents/.agents/skills/dotfiles-maintenance/SKILL.md):
 # - Idempotent: safe to run repeatedly.
 # - Support: macOS, SteamOS (Arch), Debian-based.
 # - Prefer Homebrew everywhere; use native managers only for packages explicitly listed in

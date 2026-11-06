@@ -1,1 +1,1 @@
-../../agents.md
+../../agents/.agents/PLAYBOOK.md

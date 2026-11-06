@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # Autonomous delivery is skill and playbook text, not code. These contract tests pin the text that
 # carries each boundary, so a later edit cannot drop one silently. They prove the words exist, not
@@ -8,7 +9,7 @@ require_relative "isolated_git"
 class AutonomyContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
-  PLAYBOOK = File.read(File.join(REPO_ROOT, "agents.md"))
+  PLAYBOOK = Playbook.text
   CORE_VALUES = File.read(File.join(REPO_ROOT, "claude/.claude/core-values.yml"))
 
   def test_playbook_carves_rule_17_out_for_personal_autonomy

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # Etienne approves a stage with "accepted" or "agreed". The Status: line stays "accepted" either way.
 class ApprovalWordTest < Minitest::Test
@@ -46,7 +47,7 @@ class ApprovalWordTest < Minitest::Test
   private
 
   def rule_17
-    File.read(File.join(REPO_ROOT, "agents.md"))[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
+    Playbook.text[/^17\. .*?(?=^18\. )/m] || flunk("no rule 17")
   end
 
   def skill_text(name)

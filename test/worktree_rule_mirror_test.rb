@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "isolated_git"
+require_relative "playbook"
 
 # "Never type `git worktree add` yourself; use `worktree-create`" must be written in every place an
 # agent reads its rules, because the worktree guard hook is a no-op where it cannot run or is not
@@ -18,7 +19,7 @@ class WorktreeRuleMirrorTest < Minitest::Test
   end
 
   def test_the_playbook_says_never_type_git_worktree_add
-    assert_match(RULE, File.read(File.join(REPO_ROOT, "agents.md")))
+    assert_match(RULE, Playbook.text)
   end
 
   def test_the_core_values_say_never_type_git_worktree_add
