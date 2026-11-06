@@ -286,6 +286,21 @@ class RexViewerScriptsTest < Minitest::Test
     refute_path_exists(File.join(@dir, "fzf.argv"))
   end
 
+  def test_a_failing_list_shows_a_notice_and_never_starts_fzf
+    broken = new_repository("broken-repo", branch: "main")
+    real_git = Open3.capture2("sh", "-c", "command -v git").first.strip
+    install_stub("git", <<~BASH)
+      case " $* " in *" diff "*) exit 128 ;; esac
+      exec "#{real_git}" "$@"
+    BASH
+
+    stdout, stderr, status = run_script(PICK, broken, stdin: "x")
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, "Could not list the changed files")
+    refute_path_exists(File.join(@dir, "fzf.argv"))
+  end
+
   def test_outside_a_repository_shows_a_notice_and_never_starts_fzf
     outside = File.join(@dir, "outside")
     FileUtils.mkdir_p(outside)

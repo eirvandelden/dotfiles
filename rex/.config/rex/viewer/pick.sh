@@ -44,7 +44,10 @@ VIEWER_ROOT="${located%%$'\t'*}"
 VIEWER_BASE="${located#*$'\t'}"
 export VIEWER_DIR VIEWER_ROOT VIEWER_BASE
 
-rows="$("$VIEWER_DIR"/list.sh "$VIEWER_ROOT" "$VIEWER_BASE")"
+if ! rows="$("$VIEWER_DIR"/list.sh "$VIEWER_ROOT" "$VIEWER_BASE" 2>/dev/null)"; then
+  notice "Could not list the changed files"
+  exit 0
+fi
 if [ -z "$rows" ]; then
   notice "No changed files"
   exit 0
