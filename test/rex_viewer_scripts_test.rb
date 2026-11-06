@@ -384,7 +384,7 @@ class RexViewerScriptsTest < Minitest::Test
     lean = File.join(@dir, "lean")
     FileUtils.mkdir_p(lean)
     LEAN_COMMANDS.each do |name|
-      found = `command -v #{name}`.strip
+      found = Open3.capture2("sh", "-c", "command -v #{name}").first.strip
       FileUtils.ln_sf(found, File.join(lean, name)) unless found.empty? || found.start_with?("alias")
     end
     lean
