@@ -104,10 +104,14 @@ class HerdrPluginsInstallTest < Minitest::Test
   def run_task(plugin:, install_status: 0, reload_status: 0, go: true)
     write_stub("herdr", herdr_stub(plugin))
     write_stub("go", "#!/bin/sh\necho go version go1.25.0\n") if go
-    FileUtils.ln_sf(`command -v jq`.strip, File.join(bin_dir, "jq"))
+    FileUtils.ln_sf(jq_path, File.join(bin_dir, "jq"))
     env = { "PATH" => "#{bin_dir}:/usr/bin:/bin", "HOME" => @tmp, "STUB_LOG" => log_path,
             "STUB_INSTALL_STATUS" => install_status.to_s, "STUB_RELOAD_STATUS" => reload_status.to_s }
     Open3.capture3(env, "bash", SCRIPT)
+  end
+
+  def jq_path
+    ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, "jq") }.find { |path| File.executable?(path) }
   end
 
   def herdr_stub(plugin)
