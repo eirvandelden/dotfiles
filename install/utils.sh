@@ -617,7 +617,7 @@ herdr_plugin_state() {
   # Prints enabled, disabled or missing. `herdr plugin list` reads from disk, so
   # it works while no herdr server runs.
   local enabled
-  enabled="$(herdr plugin list --plugin "$1" --json 2>/dev/null | jq -r '.result.plugins[0] | if . == null then "missing" else .enabled end')"
+  enabled="$(herdr plugin list --plugin "$1" --json | jq -r '.result.plugins[0] | if . == null then "missing" else .enabled end')"
   case "$enabled" in
     true) echo enabled ;;
     false) echo disabled ;;
