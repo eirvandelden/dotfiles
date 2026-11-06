@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Task 52 installs and enables the herdr plugins that packages.conf lists. These tests run the real
 # script with stub `herdr` and `go` commands first on PATH, so no test reaches the real herdr.
