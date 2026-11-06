@@ -102,3 +102,15 @@ herdr/.config/herdr/scripts/quieter-tones.sh ~/Documents/Tones/Warcraft/Humans/j
 ```
 
 herdr plays only mp3, so the script refuses anything else. It also refuses a file that already sits in the copies folder. It needs `ffmpeg`. After changing the `[ui.sound]` paths, run `herdr server reload-config`. The script is covered by `test/herdr_quieter_tones_test.rb`.
+
+## Solunized theme tables
+
+herdr 0.9.5 has no include and `theme.name` takes built-in names only, so the generated `solunized/dist/herdr/` files cannot load. `config.toml` therefore carries a copy of the light and dark tables between `# BEGIN solunized` and `# END solunized`.
+
+`scripts/sync-solunized-theme.sh` rewrites that block from `$SOLUNIZED_DIR/dist/herdr/` (default `~/Developer/solunized`). It skips black and white, leaves every other line alone, and writes nothing when the block already matches. Run it after Solunized changes, then `herdr server reload-config`:
+
+```bash
+herdr/.config/herdr/scripts/sync-solunized-theme.sh
+```
+
+The script refuses a config without exactly one BEGIN before one END, and a dist table without its mode header. It becomes obsolete if herdr adds `include` or theme files. `test/herdr_config_test.rb` fails when the block drifts from `dist/herdr` and skips when there is no Solunized checkout. The script is covered by `test/herdr_sync_solunized_theme_test.rb`.
