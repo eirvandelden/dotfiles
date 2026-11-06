@@ -176,6 +176,18 @@ module WorktreeTools
       ENV["HERDR_BIN_PATH"].to_s.empty? ? "herdr" : ENV["HERDR_BIN_PATH"]
     end
 
+    # REX_BIN_PATH names the rex binary, so a test can stub it; else rex comes from PATH.
+    #: -> String
+    def rex_bin
+      ENV["REX_BIN_PATH"].to_s.empty? ? "rex" : ENV["REX_BIN_PATH"]
+    end
+
+    # True in a Rex block that is not inside a herdr pane. Herdr wins when both are set.
+    #: -> bool
+    def rex_only_env?
+      ENV["HERDR_ENV"] != "1" && !ENV["REX_SESSION"].to_s.empty?
+    end
+
     #: (String command, ?String? error_message) -> true
     def require_command(command, error_message = nil)
       return true if command_exists?(command)
