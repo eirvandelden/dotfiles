@@ -15,7 +15,7 @@ class RexViewerScriptsTest < Minitest::Test
   LIST = File.join(VIEWER, "list.sh")
   PREVIEW = File.join(VIEWER, "preview.sh")
   PICK = File.join(VIEWER, "pick.sh")
-  BASH = `command -v bash`.strip
+  BASH = Open3.capture2("sh", "-c", "command -v bash").first.strip
   LEAN_COMMANDS = %w[git cat env dirname basename sort sed awk grep tr cut head tail mkdir rm uname readlink pwd].freeze
   CHANGED_ROWS = [
     "A\tdocs/changes/x/plan.md",
