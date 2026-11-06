@@ -26,11 +26,28 @@ class WorktreePaneTest < Minitest::Test
     @stub_bin = Dir.mktmpdir
     @extra_dirs = [ @stub_bin ]
     install_herdr_stub
+    install_rex_stub
     @worktree = repo_worktree
   end
 
   def teardown
     FileUtils.rm_rf(@extra_dirs)
+  end
+
+  def test_a_rex_only_environment_hands_over_to_the_rex_tool
+    _stdout, stderr, status = run_script("open", @worktree, herdr_env: nil, env: rex_environment)
+
+    assert(status.success?, stderr)
+    assert(rex_calls.any? { |call| call.start_with?("split") }, rex_calls.inspect)
+    assert_empty(herdr_calls)
+  end
+
+  def test_herdr_wins_over_rex_in_the_pane_tool
+    _stdout, stderr, status = run_script("open", @worktree, env: rex_environment)
+
+    assert(status.success?, stderr)
+    assert(herdr_calls.any? { |call| call.start_with?("pane split") }, herdr_calls.inspect)
+    assert_empty(rex_calls)
   end
 
   def test_open_splits_a_pane_below_rooted_in_the_worktree_without_focus
@@ -234,6 +251,35 @@ class WorktreePaneTest < Minitest::Test
         puts JSON.generate({ result: { pane: { pane_id: "w1:pV" } } })
       else
         puts JSON.generate({ result: {} })
+      end
+    RUBY
+    FileUtils.chmod(0o755, stub)
+  end
+
+  def rex_environment
+    { "REX_SESSION" => "S1", "REX_BLOCK" => "blkCaller", "REX_CALL_LOG" => rex_call_log }
+  end
+
+  def rex_call_log
+    File.join(@stub_bin, "rex-calls.log")
+  end
+
+  def rex_calls
+    File.exist?(rex_call_log) ? File.readlines(rex_call_log, chomp: true) : []
+  end
+
+  # A `rex` that logs its calls, lists no blocks and answers `split` with a new block.
+  def install_rex_stub
+    stub = File.join(@stub_bin, "rex")
+    File.write(stub, <<~'RUBY')
+      #!/usr/bin/env ruby
+      require "json"
+
+      File.open(ENV.fetch("REX_CALL_LOG"), "a") { |file| file.puts(ARGV.join(" ")) }
+      if ARGV.first(2) == %w[block ls]
+        puts JSON.generate(blocks: [])
+      elsif ARGV.first == "split"
+        puts JSON.generate(anchor_id: "blkCaller", block_ids: [ "blkNew" ], split_ids: [ "s1" ], revision: 1)
       end
     RUBY
     FileUtils.chmod(0o755, stub)

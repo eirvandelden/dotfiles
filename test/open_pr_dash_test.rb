@@ -17,6 +17,7 @@ class OpenPrDashTest < Minitest::Test
   BRANCH = "feature/my-change".freeze
   SLUG = "my-change".freeze
   NEW_PANE = "w1:pN".freeze
+  DISPATCHER = File.join(REPO_ROOT, "agents/.agents/bin/open-pr-dash")
 
   def setup
     setup_harness
@@ -87,6 +88,13 @@ class OpenPrDashTest < Minitest::Test
     assert_includes(stdout, PR_URL)
     assert_match(/no pane/i, stdout)
     assert_empty(herdr_calls)
+  end
+
+  def test_the_dispatcher_opens_the_herdr_pane_in_a_herdr_pane
+    _, stderr, status = run_script(DISPATCHER, SLUG, PR_URL, herdr: true, env: { "HERDR_SCRIPTS_DIR" => HERDR_SCRIPTS })
+
+    assert(status.success?, stderr)
+    assert_includes(herdr_calls, "pane run #{NEW_PANE} gh dash --config #{config_path}")
   end
 
   private

@@ -547,10 +547,11 @@ end
   def test_each_accepting_skill_chains_once_to_its_next_stage_with_the_coordinator_id
     { "intent" => "plan", "plan" => "implement" }.each do |stage, next_stage|
       skill = File.read(File.join(SKILLS_DIR, stage, "SKILL.md"))
-      chain = "HERDR_PANE_ID=<coordinator> ~/.config/herdr/scripts/hand-off-plan.sh #{next_stage} '<slug>'"
+      chain = "COORDINATOR=<coordinator> ~/.agents/bin/hand-off-plan #{next_stage} '<slug>'"
 
       assert_equal(1, skill.scan(chain).size, "#{stage}/SKILL.md must chain to #{next_stage} with the coordinator id")
-      assert_equal(1, skill.scan("hand-off-plan.sh #{next_stage}").size, "#{stage}/SKILL.md must chain to #{next_stage} exactly once")
+      assert_equal(1, skill.scan("bin/hand-off-plan #{next_stage}").size, "#{stage}/SKILL.md must chain to #{next_stage} exactly once")
+      assert_includes(skill, "`REX_SESSION`", "#{stage}/SKILL.md must start the next stage inside Rex too")
     end
   end
 
