@@ -4,7 +4,6 @@ require_relative "playbook"
 
 class PlaybookTest < Minitest::Test
   REPO_ROOT = File.realpath(File.expand_path("..", __dir__))
-  IMPORT_LINKS = %w[claude/.claude/PLAYBOOK.md codex/.codex/PLAYBOOK.md].freeze
 
   def test_claude_import_link_resolves_to_the_playbook
     assert_link_resolves_to_the_playbook("claude/.claude/PLAYBOOK.md")
