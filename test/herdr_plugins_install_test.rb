@@ -55,7 +55,7 @@ class HerdrPluginsInstallTest < Minitest::Test
     _stdout, stderr, status = run_task(plugin: :missing, go: false)
 
     refute_predicate(status, :success?)
-    assert_match(/go/, stderr)
+    assert_match(/Missing required command\(s\): go/, stderr)
     assert_empty(herdr_calls)
   end
 
