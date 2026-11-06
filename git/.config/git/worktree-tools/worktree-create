@@ -46,7 +46,7 @@ module WorktreeTools
       repository.fetch_default_branch(default_branch)
       Sweep.new("worktree-create").run(default_branch: default_branch, keep: kept_paths(name))
       path = create_worktree(name, default_branch)
-      record_for_herdr_pane(path)
+      rex_only_env? ? record_for_rex_block(path) : record_for_herdr_pane(path)
       run_worktree_init(path)
       path
     end
@@ -92,6 +92,17 @@ module WorktreeTools
       AgentWorktree.new.record(pane_id, terminal_id, path) if terminal_id
     rescue SystemCallError => error
       warn("worktree-create: could not record the worktree for pane #{pane_id} (#{error.message})")
+    end
+
+    # Rex block ids never repeat, so the record carries an empty terminal id.
+    #: (String path) -> void
+    def record_for_rex_block(path)
+      block_id = ENV["REX_BLOCK"].to_s
+      return if block_id.empty?
+
+      AgentWorktree.new.record("rex:#{block_id}", "", path)
+    rescue SystemCallError => error
+      warn("worktree-create: could not record the worktree for block #{block_id} (#{error.message})")
     end
 
     def terminal_id_of(pane_id)
