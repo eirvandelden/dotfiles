@@ -76,6 +76,7 @@ dark_name = "terminal"
 # herdr 0.9.5 has no setting for rounded corners, pane padding, gap size, a paintable gap between
 # split panes, or the colour of a split divider. Values come from the solunized herdr template
 # (~/Developer/solunized/applications/herdr), run through generate_themes.rb.
+# BEGIN solunized
 [theme.custom.light]
 accent        = "#a44910"
 active_row_bg = "#fffbf1"
@@ -91,6 +92,7 @@ overlay0      = "#2a5d6e"
 panel_bg      = "#0d3b4a"
 sidebar_bg    = "#0d3b4a"
 surface_dim   = "#0d3b4a"
+# END solunized
 
 [ui.toast]
 delivery = "system"

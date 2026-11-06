@@ -6,6 +6,7 @@ require_relative "isolated_git"
 class HerdrConfigTest < Minitest::Test
   CONFIG_PATH = File.expand_path("../herdr/.config/herdr/config.toml", __dir__)
   QUIETER_COPIES = "/Users/etienne.vandelden/Documents/Tones/herdr".freeze
+  SOLUNIZED_DIR = ENV.fetch("SOLUNIZED_DIR", File.expand_path("~/Developer/solunized"))
 
   def test_notifications_go_through_the_system
     assert_equal("system", toast_delivery)
@@ -45,7 +46,36 @@ class HerdrConfigTest < Minitest::Test
     assert_empty(tracked.select { |file| tones.any? { |tone| File.basename(file, ".*") == tone } })
   end
 
+  def test_the_solunized_block_matches_dist_herdr
+    skip_without_dist
+
+    assert_block_matches_dist(File.read(CONFIG_PATH))
+  end
+
+  def test_the_drift_check_catches_an_edited_colour
+    skip_without_dist
+    text = File.read(CONFIG_PATH)
+    edited = text.sub(/(# BEGIN solunized\n.*?)#[0-9a-fA-F]{6}/m, '\\1#000000')
+
+    refute_equal(text, edited)
+    assert_raises(Minitest::Assertion) { assert_block_matches_dist(edited) }
+  end
+
   private
+
+  def skip_without_dist
+    dist = File.join(SOLUNIZED_DIR, "dist", "herdr")
+    skip("no Solunized checkout at #{dist}") unless File.directory?(dist)
+  end
+
+  #: (String) -> void
+  def assert_block_matches_dist(text)
+    block = text[/^# BEGIN solunized\n(.*?)^# END solunized$/m, 1]
+    flunk("config.toml has no solunized markers") unless block
+    light, dark = %w[light dark].map { |mode| File.read(File.join(SOLUNIZED_DIR, "dist", "herdr", "solunized-#{mode}.toml")) }
+
+    assert_equal("#{light}\n#{dark}", block, "Solunized block drifted from dist/herdr: run scripts/sync-solunized-theme.sh")
+  end
 
   def sound_setting(key)
     sound_section = File.read(CONFIG_PATH)[/^\[ui\.sound\][^\n]*\n(.*?)(?=^\[|\z)/m, 1]
