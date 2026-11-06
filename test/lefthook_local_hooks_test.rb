@@ -115,6 +115,25 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/--no-auto-install/, hook_invocation("pre-commit"))
   end
 
+  #: () -> void
+  def test_pre_commit_runs_lefthook_without_git_dir_in_a_linked_worktree
+    setup_repo("trunk")
+    stub_git_dir_logging_lefthook
+    add_linked_worktree
+    stage_file("clean.txt", "hello\n")
+    git("commit", "-m", "clean")
+    assert_match(/GIT_DIR=unset$/, hook_invocation("pre-commit"))
+  end
+
+  #: () -> void
+  def test_pre_push_runs_lefthook_without_git_dir_in_a_linked_worktree
+    setup_repo("trunk")
+    stub_git_dir_logging_lefthook
+    add_linked_worktree
+    push
+    assert_match(/GIT_DIR=unset$/, hook_invocation("pre-push"))
+  end
+
   def test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set
     setup_repo("trunk")
     stub_logging_lefthook
@@ -276,6 +295,20 @@ class LefthookLocalHooksTest < Minitest::Test
 
   def stub_logging_lefthook
     write_executable("lefthook", "#!/bin/sh\necho \"$*\" >> \"#{@log_file}\"\n")
+  end
+
+  # Records the GIT_DIR each lefthook run sees, or "unset".
+  #: () -> void
+  def stub_git_dir_logging_lefthook
+    write_executable("lefthook", "#!/bin/sh\necho \"$* GIT_DIR=${GIT_DIR-unset}\" >> \"#{@log_file}\"\n")
+  end
+
+  # Git exports an absolute GIT_DIR to hooks run from a linked worktree; later steps run there.
+  #: () -> void
+  def add_linked_worktree
+    worktree = File.join(@repository_copy, "linked")
+    run_git("-C", @repo_dir, "worktree", "add", "--quiet", "-b", "linked", worktree, env: { "LEFTHOOK" => "0" })
+    @repo_dir = worktree
   end
 
   # A developer's shell may export LEFTHOOK_BIN; the global hook shim prefers it over lefthook on PATH.

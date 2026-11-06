@@ -80,4 +80,8 @@ call_lefthook()
 }
 
 set_global_config
+# Git exports GIT_DIR to hooks. Commands that run git elsewhere, such as Bundler checking a gem
+# from a git source, would read this repository instead of their own. Lefthook finds the
+# repository from the working directory.
+unset GIT_DIR
 call_lefthook run "pre-commit" --no-auto-install "$@"
