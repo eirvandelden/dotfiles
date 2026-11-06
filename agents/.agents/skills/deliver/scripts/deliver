@@ -199,6 +199,8 @@ class Panes
   end
 end
 
+require_relative "rex_panes"
+
 class Delivery
   include Shell
 
@@ -269,12 +271,17 @@ class Delivery
 
   def finish(url)
     open_dash(url)
-    Panes.new(@slug, @common).close_stale
+    panes_class.new(@slug, @common).close_stale
+  end
+
+  # Herdr wins when both tools set their variables, as in every dispatcher.
+  def panes_class
+    ENV["HERDR_ENV"] != "1" && !ENV.fetch("REX_SESSION", "").empty? ? RexPanes : Panes
   end
 
   def open_dash(url)
-    scripts = ENV.fetch("HERDR_SCRIPTS_DIR", File.join(Dir.home, ".config/herdr/scripts"))
-    system(File.join(scripts, "open-pr-dash.sh"), @slug, url) || warn("The gh-dash pane did not open; the PR is at #{url}.")
+    dispatcher = File.join(Dir.home, ".agents/bin/open-pr-dash")
+    system(dispatcher, @slug, url) || warn("The gh-dash pane did not open; the PR is at #{url}.")
   end
 end
 
