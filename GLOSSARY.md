@@ -10,6 +10,7 @@
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hook scripts** — the tracked scripts in `git/.config/git/hooks/`.
+- **Hook wrapper** — `git/.config/git/hooks/lefthook-wrapper`, the one script every hook script hands its hook name and arguments to. Avoid: shim, runner.
 - **Hooks copy** — the one read-only copy of the hook scripts per test process, at which test repositories point `core.hooksPath`.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
@@ -18,13 +19,17 @@
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
+- **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:eirvandelden/` or `github.com/eirvandelden/`; the same rule as `RemoteMatcher.personal?`.
 - **Playbook** — `agents/.agents/PLAYBOOK.md`, the one rules file that all agents read in every repository.
 - **Repo agents file** — the root `agents.md`, which describes only this repository; `CLAUDE.md` is a symlink to it.
+- **Repo config** — the first of `lefthook.yml`, `.lefthook.yml` or `.config/lefthook.yml` at the git toplevel.
 - **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
+- **Runtime config** — the temporary `lefthook.yml` the hook wrapper writes for one hook run, with only `extends:` naming the shared config and then the repo config.
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
+- **Shared config** — `$HOME/Developer/dotfiles/lefthook.yml`, the lefthook config every personal repository gets.
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
 - **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.
