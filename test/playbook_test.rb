@@ -18,7 +18,37 @@ class PlaybookTest < Minitest::Test
     assert_equal File.read(File.join(REPO_ROOT, Playbook::PATH)), Playbook.text
   end
 
+  def test_no_tracked_file_cites_root_agents_md_as_the_playbook
+    citations = tracked_text_files.flat_map { |file| citations_in(file) }
+    assert_empty citations, "these lines cite root agents.md as the playbook"
+  end
+
   private
+
+  CITATION = /(?<![\/.\w])agents\.md\b/
+  PLAYBOOK_CITATION = Regexp.union(
+    /playbook(?!\.md|::|\w)/i,
+    /see agents\.md/i,
+    /agents\.md (rule|section) \d/i,
+    /File\.read\(File\.join\(\w+, "agents\.md"\)\)/
+  )
+
+  def tracked_text_files
+    files = IO.popen([ "git", "ls-files", "-z" ], chdir: REPO_ROOT, &:read).split("\0")
+    files.reject { |file| file.start_with?("docs/changes/") || file == "test/playbook_test.rb" }
+  end
+
+  def citations_in(file)
+    path = File.join(REPO_ROOT, file)
+    return [] unless File.file?(path) && !File.symlink?(path)
+
+    lines = File.binread(path).force_encoding("UTF-8")
+    return [] unless lines.valid_encoding?
+
+    lines.lines.each_with_index.filter_map do |line, index|
+      "#{file}:#{index + 1}: #{line.strip}" if line.match?(CITATION) && line.match?(PLAYBOOK_CITATION)
+    end
+  end
 
   def assert_link_resolves_to_the_playbook(link)
     path = File.join(REPO_ROOT, link)

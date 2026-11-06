@@ -8,7 +8,7 @@
 # - SteamOS (Arch)
 # - Debian-based Linux
 #
-# Strategy (see agents.md):
+# Strategy (see the dotfiles-maintenance skill, agents/.agents/skills/dotfiles-maintenance/SKILL.md):
 # - Prefer Homebrew on all platforms.
 # - Use native managers only for explicitly configured lists:
 #   - SteamOS/Arch: yay (AUR)

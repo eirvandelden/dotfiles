@@ -4,7 +4,7 @@ require_relative "isolated_git"
 require_relative "playbook"
 
 # Agents install gems with bi, never bundle install. A guard refuses the direct commands, and the
-# words that steer agents to bi live in the playbook (agents.md), in core-values.yml (re-injected
+# words that steer agents to bi live in the playbook (PLAYBOOK.md), in core-values.yml (re-injected
 # so the rule survives context compaction) and in the owned worktree-first skill.
 class GemInstallRuleMirrorTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)

@@ -1,6 +1,6 @@
 # Skills Index
 
-Topic-specific guidance that the core playbook (`agents.md`) deliberately does not repeat.
+Topic-specific guidance that the core playbook (`agents/.agents/PLAYBOOK.md`) deliberately does not repeat.
 
 Sixteen skills are vendored from `lucianghinda/superpowers-ruby` 7.5.0 under its MIT licence; the licence text, and the CC BY-SA 4.0 notice for the Rails Guides inside `rails-guides/references/`, are in `VENDORED-LICENSES.md`. Each `SKILL.md` names its upstream path and the re-sync steps.
 
