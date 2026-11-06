@@ -1,7 +1,9 @@
 # Glossary
 
+- **Base** — the merge-base of `HEAD` and the base branch, as a commit; `HEAD` when no base branch exists. The viewer diffs against it.
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
 - **Chained test** — one test that runs the steps of several former tests in one repository and keeps every former assertion.
+- **Changed file** — a path that differs from the base, in the working tree, or is untracked, with status `M`, `A`, `D` or `?`.
 - **Covering test** — the test that still proves the behaviour of a deleted test.
 - **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
 - **Drift** — the Solunized block is not byte-equal to the light dist table, one empty line, then the dark dist table.
@@ -11,9 +13,11 @@
 - **Hooks copy** — the one read-only copy of the hook scripts per test process, at which test repositories point `core.hooksPath`.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
+- **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
+- **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
@@ -23,3 +27,5 @@
 - **Switcher** — the floating Rex panel, opened by `ctrl+s space`, that lists every pane and jumps to the one picked. Avoid: palette, picker.
 - **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
 - **Test file** — one `test/*_test.rb`, run as its own process.
+- **View** — how the viewer previews a file, `default` or `alternate`. Default: markdown rendered, an untracked file as content, anything else as a diff.
+- **Viewer** — the floating Rex layer, opened by the `file_viewer` action, that lists changed files and previews the one picked. Avoid: file browser.
