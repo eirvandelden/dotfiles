@@ -83,11 +83,9 @@ Either way, the files only exist at these paths once the `herdr` package is stow
 
 The `vv.golden-ratio` plugin resizes the focused pane to the golden ratio (61.8% of the tab on each axis) on every focus change. `plugins/config/vv.golden-ratio/config.toml` sets `auto = true`, so no key is needed. Auto mode needs herdr 0.9.1 or newer. The plugin reads its config on every invocation, so a change applies at once.
 
-The plugin is not installed by this repository. It builds with Go 1.24+, so install Go first, then run:
+The dotfiles setup installs and enables the plugin from `HERDR_PLUGINS` in `packages.conf`, through `install/tasks/52_install_herdr_plugins.sh`. It builds with Go 1.24+, which `packages.conf` also installs.
 
-```bash
-herdr plugin install vigneshwerv/herdr-golden-ratio
-```
+To install it by hand, run `herdr plugin install vigneshwerv/herdr-golden-ratio`, then `herdr server reload-config`. `herdr plugin update` updates it.
 
 ## Worker scripts
 

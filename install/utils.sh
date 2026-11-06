@@ -609,6 +609,57 @@ install_gh_extensions() {
 }
 
 ###############################################################################
+# herdr plugins
+###############################################################################
+
+herdr_plugin_state() {
+  # Usage: herdr_plugin_state <plugin id>
+  # Prints enabled, disabled or missing. `herdr plugin list` reads from disk, so
+  # it works while no herdr server runs.
+  local enabled
+  enabled="$(herdr plugin list --plugin "$1" --json | jq -r '.result.plugins[0] | if . == null then "missing" else .enabled end')"
+  case "$enabled" in
+    true) echo enabled ;;
+    false) echo disabled ;;
+    *) echo missing ;;
+  esac
+}
+
+install_herdr_plugins() {
+  # Usage: install_herdr_plugins "${HERDR_PLUGINS[@]}"   (items are <id>=<owner/repo>)
+  require_cmd herdr go jq
+
+  local entries=("$@")
+  local entry id repo changed=0
+  for entry in "${entries[@]}"; do
+    [[ -z "$entry" ]] && continue
+    [[ "$entry" == *=* ]] || die "herdr plugin: expected <id>=<owner/repo>, got: $entry"
+    id="${entry%%=*}"
+    repo="${entry#*=}"
+
+    case "$(herdr_plugin_state "$id")" in
+      missing)
+        log "herdr plugin: installing $id from $repo"
+        herdr plugin install -y "$repo"
+        changed=1
+        ;;
+      disabled)
+        log "herdr plugin: enabling $id"
+        herdr plugin enable "$id"
+        changed=1
+        ;;
+      enabled)
+        log "herdr plugin: already enabled: $id"
+        ;;
+    esac
+  done
+
+  if (( changed )) && ! herdr server reload-config >/dev/null 2>&1; then
+    warn "herdr: reload-config failed; the plugins load at the next server start."
+  fi
+}
+
+###############################################################################
 # Stow configuration
 ###############################################################################
 
