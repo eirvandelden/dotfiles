@@ -99,9 +99,9 @@ hooks = true
 js_repl = false
 memories = true
 
-# The same guard scripts Claude runs (claude/.claude/hooks/). herdr owns ~/.codex/hooks.json;
-# Codex merges that file with this table. Shell commands arrive as tool_name "Bash", file
-# edits as "apply_patch".
+# The same guard scripts Claude runs (claude/.claude/hooks/). herdr owns ~/.codex/hooks.json when it
+# is installed; Codex merges that file with this table, and Rex writes none. Shell commands arrive as
+# tool_name "Bash", file edits as "apply_patch".
 [[hooks.PreToolUse]]
 matcher = "^Bash$"
 

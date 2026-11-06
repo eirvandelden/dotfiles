@@ -40,6 +40,7 @@ class WorktreeCreateTest < Minitest::Test
     @gh_stub_bin = Dir.mktmpdir
     install_gh_stub
     install_herdr_stub
+    install_rex_stub
     install_git_recorder
     @origin, @repo = origin_and_clone
   end
@@ -87,6 +88,21 @@ class WorktreeCreateTest < Minitest::Test
 
     assert(status.success?, stderr)
     assert_equal({ "terminal_id" => "term_elsewhere", "path" => stdout.strip }, recorded("w1_pA"))
+  end
+
+  def test_records_the_worktree_for_a_rex_block
+    stdout, stderr, status = run_rex_script("feature")
+
+    assert(status.success?, stderr)
+    assert_equal({ "terminal_id" => "", "path" => stdout.strip }, recorded("rex_blkA"))
+  end
+
+  def test_herdr_wins_over_rex_when_recording_the_worktree
+    stdout, stderr, status = run_rex_script("feature", herdr: true)
+
+    assert(status.success?, stderr)
+    assert_equal({ "terminal_id" => "term_stub", "path" => stdout.strip }, recorded("w1_pA"))
+    refute(File.exist?(File.join(@state_home, "worktree-tools", "agent-worktrees", "rex_blkA")))
   end
 
   def test_a_record_that_cannot_be_written_still_prints_the_worktree_path_with_a_warning
@@ -594,6 +610,36 @@ class WorktreeCreateTest < Minitest::Test
     environment["HERDR_STUB_PANE_AGENT"] = pane_agent if pane_agent
     arguments = name_after_flag ? [ *extra_args, name ] : [ name, *extra_args ]
     Open3.capture3(environment, "ruby", SCRIPT, *arguments, chdir: chdir)
+  end
+
+  # A `rex` that logs its calls and answers `block ls` with no blocks and `split` with a new block.
+  def install_rex_stub
+    stub = File.join(@stub_bin, "rex")
+    File.write(stub, <<~'RUBY')
+      #!/usr/bin/env ruby
+      require "json"
+
+      File.open(ENV.fetch("REX_CALL_LOG"), "a") { |file| file.puts(ARGV.join(" ")) }
+      if ARGV.first(2) == %w[block ls]
+        puts JSON.generate(blocks: [])
+      elsif ARGV.first == "split"
+        puts JSON.generate(anchor_id: "blkA", block_ids: [ "blkV" ], split_ids: [ "s1" ], revision: 1)
+      end
+    RUBY
+    FileUtils.chmod(0o755, stub)
+  end
+
+  # Runs worktree-create in a Rex block (REX_SESSION, REX_BLOCK). With herdr: true the block also
+  # sits inside a herdr pane, so both environments are set.
+  def run_rex_script(name, herdr: false)
+    environment = create_environment.merge(
+      "HERDR_ENV" => (herdr ? "1" : nil),
+      "HERDR_PANE_ID" => (herdr ? "w1:pA" : nil),
+      "REX_SESSION" => "S1",
+      "REX_BLOCK" => "blkA",
+      "REX_CALL_LOG" => File.join(@stub_bin, "rex-calls.log")
+    )
+    Open3.capture3(environment, "ruby", SCRIPT, name, chdir: @repo)
   end
 
   def create_environment(without_gh: false)

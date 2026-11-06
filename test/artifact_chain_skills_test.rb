@@ -12,7 +12,7 @@ class ArtifactChainSkillsTest < Minitest::Test
   STAGE_SHAPED_SPEC = [
     /`spec`/,
     /(?<!ai-native-workflow\/)\bspec\.md/,
-    /hand-off-plan\.sh spec/,
+    /hand-off-plan(\.sh)? spec/,
     /\$spec\b/,
     /\bspec skill/i,
     /intent\/spec/,
@@ -62,8 +62,8 @@ class ArtifactChainSkillsTest < Minitest::Test
   def test_accepting_chains_to_plan
     accept = section(skill("intent"), "## 4. Accept", "## Codex")
 
-    assert_includes(accept, "hand-off-plan.sh plan '<slug>'")
-    refute_includes(accept, "hand-off-plan.sh spec")
+    assert_includes(accept, "~/.agents/bin/hand-off-plan plan '<slug>'")
+    refute_match(/hand-off-plan(\.sh)? spec/, accept)
   end
 
   def test_there_is_no_spec_skill_for_claude_or_codex
@@ -84,6 +84,7 @@ class ArtifactChainSkillsTest < Minitest::Test
 
   def test_a_plain_worktree_first_invocation_still_opens_a_pane
     assert_match(/Inside herdr, a pane rooted in the new worktree opens below/, skill("worktree-first"))
+    assert_match(/\bRex\b/, skill("worktree-first"))
     assert_match(/plain invocation[^.]*pane/i, skill("worktree-first"))
   end
 

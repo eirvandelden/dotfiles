@@ -3,7 +3,7 @@ name: implement
 description: Use once plan.md is accepted — builds it through the acceptance test then red/green/refactor per its Proof list, by default in a fresh Sonnet worker pane, or here in single/split mode.
 arguments:
   - name: backend
-    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan.sh; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override); \"here auto\": build without asking Etienne anything on a personal autonomous change."
+    description: "(default) hand off to a fresh Sonnet worker pane via hand-off-plan; \"here\": build in this session instead, picking single or split by the existing three-criteria rule (say \"here single\" to override); \"here auto\": build without asking Etienne anything on a personal autonomous change."
 ---
 
 # Implement
@@ -12,8 +12,8 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
 
 ## Choosing a backend
 
-- No argument, `HERDR_ENV` set: pane backend — hands the plan to a fresh Sonnet worker pane, the same as today's `handoff` mode did.
-- `here`, or `HERDR_ENV` unset: build in this session instead — see the `here` backend below for `single`/`split`. Outside herdr this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
+- No argument, `HERDR_ENV` or `REX_SESSION` set: pane backend — hands the plan to a fresh Sonnet worker pane, the same as today's `handoff` mode did.
+- `here`, or `HERDR_ENV` and `REX_SESSION` unset: build in this session instead — see the `here` backend below for `single`/`split`. Outside herdr and Rex this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
 
 ## Pane backend
 
@@ -21,7 +21,7 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
 2. Run it from anywhere inside the repository:
 
    ```bash
-   ~/.config/herdr/scripts/hand-off-plan.sh implement <slug>
+   ~/.agents/bin/hand-off-plan implement <slug>
    ```
 
    The script creates `.worktrees/<slug>` if it does not exist yet — the `intent` skill usually already has — opens a pane as the next column of the change's row, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
@@ -80,7 +80,7 @@ Not per-unit alternation — each hand-off is a fresh context; the inner loop st
 
 ## Auto mode
 
-Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan.sh implement <slug> --auto`. Ask Etienne nothing.
+Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan implement <slug> --auto`. Ask Etienne nothing.
 
 - Three failed attempts at one problem: stop and report a `Decision needed:` line that states the problem, what was tried and the choice to make.
 - A new dependency (gem, package, system tool) is never added. Report a `Decision needed:` line that names it and why it is needed.

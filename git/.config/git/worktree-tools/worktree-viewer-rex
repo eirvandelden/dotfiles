@@ -1,0 +1,117 @@
+#!/usr/bin/env ruby
+# Open the file viewer program at the worktree the calling Rex block's agent works in.
+# Plain ruby, not rv: Rex runs it from a key binding, where rv may not be set up.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "agent_worktree"
+require "common"
+require "json"
+require "open3"
+require "uri"
+
+module WorktreeTools
+  class Viewer
+    include Helpers
+
+    USAGE = "Usage: worktree-viewer split|tab".freeze
+    PROGRAM_NAME = "herdr-file-viewer".freeze
+    LABEL = "Files".freeze
+    # Where the installed file viewer lives, under the home folder.
+    PLUGINS = ".config/herdr/plugins".freeze
+    DRAW_DELAY = 0.5
+
+    #: (Array[String] argv) -> void
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    #: (Array[String] argv) -> void
+    def run!(argv)
+      @mode = argv.first
+      die(USAGE) unless %w[split tab].include?(@mode)
+
+      @caller_block = ENV["REX_BLOCK"].to_s
+      @session = ENV["REX_SESSION"].to_s
+      abandon("not inside a Rex block") if @caller_block.empty? || @session.empty?
+      abandon("the #{PROGRAM_NAME} viewer program is not installed") unless program
+      open_viewer
+    end
+
+    private
+
+    def open_viewer
+      cwd = caller_cwd || abandon("cannot tell the folder of block #{@caller_block}")
+      root = AgentWorktree.new.usable_for("rex:#{@caller_block}", "", beside: cwd)
+      block_id = create_block(root || cwd)
+      send_picker_key(block_id) if root.nil? && main_worktree?(cwd)
+    end
+
+    def create_block(root)
+      output, error, status = rex(*creation_arguments(root))
+      abandon("rex could not open the viewer #{@mode} (#{error.strip})") unless status.success?
+
+      block_id_from(output) || abandon("rex returned no block id for the viewer")
+    end
+
+    def creation_arguments(root)
+      command = [ "--", "env", "HERDR_PLUGIN_CONFIG_DIR=#{config_dir}", program ]
+      return [ "split", "-s", @session, "-b", @caller_block, "--split=right", "-c", root, "--label", LABEL, "--json", *command ] if @mode == "split"
+
+      [ "window", "new", "-s", @session, LABEL, "-c", root, "--json", *command ]
+    end
+
+    def block_id_from(output)
+      answer = JSON.parse(output)
+      answer.dig("block_ids", 0)
+    rescue JSON::ParserError
+      nil
+    end
+
+    # The viewer needs a moment to draw before the W key opens its worktree picker.
+    def send_picker_key(block_id)
+      sleep(DRAW_DELAY)
+      rex("send-key", "-s", @session, "-b", block_id, "W")
+    end
+
+    # The pwd method first, then the foreground process, as the Rex switcher does.
+    def caller_cwd
+      pwd = block_answer("pwd")["pwd"]
+      return URI(pwd).path if pwd.is_a?(String) && !pwd.empty?
+
+      cwd = block_answer("process").dig("foreground", "cwd")
+      cwd if cwd.is_a?(String) && !cwd.empty?
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    def block_answer(method)
+      request = JSON.generate("block_id" => @caller_block, "method" => method)
+      output, _error, status = rex("api", "call", "-s", @session, "block.method", request)
+      answer = status.success? ? JSON.parse(output) : {}
+      answer.is_a?(Hash) ? answer : {}
+    rescue JSON::ParserError
+      {}
+    end
+
+    def program
+      @program ||= Dir.glob(File.join(Dir.home, PLUGINS, "github", "#{PROGRAM_NAME}-*", "target", "release", PROGRAM_NAME)).find { |path| File.executable?(path) }
+    end
+
+    def config_dir
+      File.join(Dir.home, PLUGINS, "config", PROGRAM_NAME)
+    end
+
+    def abandon(reason)
+      warn("worktree-viewer: #{reason}")
+      exit(EXIT_ERROR)
+    end
+
+    def rex(*arguments)
+      Open3.capture3(rex_bin, *arguments)
+    rescue SystemCallError => error
+      abandon("cannot run rex (#{error.message})")
+    end
+  end
+end
+
+WorktreeTools::Viewer.run!(ARGV) if $PROGRAM_NAME == __FILE__

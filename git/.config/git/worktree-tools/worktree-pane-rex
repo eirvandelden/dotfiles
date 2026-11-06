@@ -1,0 +1,147 @@
+#!/usr/bin/env ruby
+# open/close/label the Rex block rooted in a worktree's directory.
+# Plain ruby, not rv: CI has no rv, and the stage scripts invoke this script directly.
+$LOAD_PATH.unshift(File.expand_path("lib", __dir__))
+
+require "common"
+require "json"
+require "open3"
+require "uri"
+
+module WorktreeTools
+  class Pane
+    include Helpers
+
+    #: (Array[String] argv) -> void
+    def self.run!(argv)
+      new.run!(argv)
+    end
+
+    USAGE = "Usage: worktree-pane open|close <path> | label <path> <block-id>"
+    COMMANDS = %w[open close label].freeze
+
+    #: (Array[String] argv) -> void
+    def run!(argv)
+      command, path, block_id = argv
+      return unless rex_env?
+      die(USAGE) if !COMMANDS.include?(command) || path.to_s.empty? ||
+                    (command == "label" && block_id.to_s.empty?)
+
+      target = realpath!(path)
+      die("worktree-pane: not inside a git repository: #{target}") unless git_common_dir(target)
+
+      case command
+      when "open" then open(target)
+      when "close" then close(target)
+      when "label" then label(target, block_id)
+      end
+    end
+
+    private
+
+    def realpath!(path)
+      File.realpath(path)
+    rescue Errno::ENOENT
+      die("worktree-pane: no such path: #{path}")
+    end
+
+    def rex_env?
+      !ENV["REX_SESSION"].to_s.empty? && command_exists?(rex_bin)
+    end
+
+    def open(target)
+      return if blocks_at(target).any?
+
+      block_id = split(target)
+      rename(block_id, target) if block_id
+    end
+
+    def close(target)
+      blocks_at(target).each { |block_id| close_block(block_id) }
+    end
+
+    def label(target, block_id)
+      rename(block_id, target)
+    end
+
+    def close_block(block_id)
+      return warn("worktree-pane: leaving block #{block_id} open (agent running)") if agent_running?(block_id)
+
+      rex("block", "close", "-s", session, block_id)
+    end
+
+    # program_status lists a record for a block that runs an agent, and none for a plain shell.
+    # An unknown state (the call failed or answered unparsable text) counts as a running agent.
+    def agent_running?(block_id)
+      answer = method_answer(block_id, "program_status")
+      answer.nil? || answer.fetch("records", []).any?
+    end
+
+    # Rex's block list carries no cwd, so each block of the session answers for itself.
+    def blocks_at(target)
+      output, _error, status = rex("block", "ls", "-s", session, "--json")
+      return [] unless status.success?
+
+      ids = JSON.parse(output).fetch("blocks", []).map { |block| block["block_id"] }
+      ids.select { |block_id| cwd_of(block_id) == target }
+    rescue JSON::ParserError
+      []
+    end
+
+    # The pwd method first, then the foreground process; nil when neither knows.
+    def cwd_of(block_id)
+      pwd = method_answer(block_id, "pwd")&.fetch("pwd", nil)
+      return File.realpath(URI(pwd).path) if pwd.is_a?(String) && !pwd.empty?
+
+      cwd = method_answer(block_id, "process")&.dig("foreground", "cwd")
+      File.realpath(cwd) if cwd.is_a?(String) && !cwd.empty?
+    rescue SystemCallError, URI::InvalidURIError
+      nil
+    end
+
+    # The answer Hash, or nil when the call failed or answered unparsable text.
+    def method_answer(block_id, method)
+      request = JSON.generate("block_id" => block_id, "method" => method)
+      output, _error, status = rex("api", "call", "-s", session, "block.method", request)
+      answer = JSON.parse(output) if status.success?
+      answer if answer.is_a?(Hash)
+    rescue JSON::ParserError
+      nil
+    end
+
+    def split(target)
+      output, error, status = rex("split", "-s", session, "-b", ENV.fetch("REX_BLOCK", ""), "--split=below",
+                                  "-c", target, "--focus=false", "--json")
+      return warn_refused(error) unless status.success?
+
+      JSON.parse(output).dig("block_ids", 0)
+    rescue JSON::ParserError
+      warn_refused("rex returned unparsable output")
+    end
+
+    def warn_refused(error)
+      warn("worktree-pane: rex refused to split a block for this worktree (#{error.to_s.strip})")
+      nil
+    end
+
+    def rename(block_id, target)
+      rex("block", "rename", "-s", session, block_id, label_for(target))
+    end
+
+    def label_for(target)
+      repo = git_common_dir(target).dirname.basename.to_s
+      branch, = Open3.capture2("git", "-C", target, "rev-parse", "--abbrev-ref", "HEAD")
+      "#{repo}/#{branch.strip}"
+    end
+
+    def session
+      ENV.fetch("REX_SESSION")
+    end
+
+    def rex(*arguments)
+      Open3.capture3(rex_bin, *arguments)
+    end
+  end
+end
+
+WorktreeTools::Pane.run!(ARGV) if $PROGRAM_NAME == __FILE__

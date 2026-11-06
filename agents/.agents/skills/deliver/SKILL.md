@@ -29,7 +29,7 @@ The script asks no questions. It does these steps, in order:
 4. Remove `docs/changes/<slug>/` in a commit of its own: `Remove change artifacts for <slug>`.
 5. Push the branch.
 6. Create a draft PR, or edit the body of the PR that exists. Delete the saved body and title.
-7. Inside herdr: open a gh-dash pane for the PR with `~/.config/herdr/scripts/open-pr-dash.sh`, then close this change's idle or done stage panes. A stage pane is one that `hand-off-plan.sh` or `start-review.sh` listed in `<git-common-dir>/herdr/stage-panes-<slug>`, and it closes only while its terminal id still matches. Never the delivering agent's own pane, never the intent pane, never another agent's pane. Then delete that list. Outside herdr it prints the PR URL and opens no pane.
+7. Inside herdr or Rex: open a gh-dash pane for the PR with `~/.agents/bin/open-pr-dash`, then close this change's idle or done stage panes. A stage pane is one that `hand-off-plan` or `start-review` listed in `<git-common-dir>/herdr/stage-panes-<slug>` (`<git-common-dir>/rex/stage-panes-<slug>` in Rex), and it closes only while its terminal id still matches (a Rex block closes only while it is idle or done). Never the delivering agent's own pane, never the intent pane, never another agent's pane. Then delete that list. Outside both tools it prints the PR URL and opens no pane.
 
 A push that fails leaves the folder removed and the saved files in place. Run `deliver` again: it resumes at the push.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "delivery_harness"
+require_relative "rex_harness_compat"
 require_relative "isolated_git"
 
 # `deliver` ends a change: once a review round leaves no open finding it removes the change folder
@@ -22,6 +23,7 @@ class DeliverTest < Minitest::Test
     setup_harness
     @dash_scripts = Dir.mktmpdir
     install_dash_stub
+    install_dispatchers
     build_repo
   end
 
@@ -299,6 +301,96 @@ class DeliverTest < Minitest::Test
     assert_equal(%w[w1:pIdle], closed_panes)
   end
 
+  def test_deliver_closes_idle_rex_stage_blocks
+    commit_change_work
+    record_rex_row(%w[blkIdle blkDone blkWorking blkShell])
+    answer_rex_blocks(blkIdle: "idle", blkDone: "done", blkWorking: "working", blkShell: nil, OWN_BLOCK.to_sym => "idle")
+
+    deliver(rex: true)
+
+    assert_equal(%w[blkIdle blkDone], closed_blocks)
+    refute(File.exist?(File.join(common_dir, "rex", "stage-panes-#{SLUG}")))
+    assert_empty(herdr_calls)
+  end
+
+  def test_deliver_keeps_the_calling_and_intent_rex_blocks
+    commit_change_work
+    record_rex_row([ "blkIntent", "blkIdle", OWN_BLOCK ])
+    File.write(File.join(common_dir, "rex", "intent-pane-#{SLUG}"), "blkIntent\n")
+    answer_rex_blocks(blkIntent: "idle", blkIdle: "idle", OWN_BLOCK.to_sym => "idle")
+
+    deliver(rex: true)
+
+    assert_equal(%w[blkIdle], closed_blocks)
+  end
+
+  def test_deliver_closes_a_rex_block_only_when_every_record_is_idle_or_done
+    commit_change_work
+    record_rex_row(%w[blkMixed blkIdle])
+    answer_rex_blocks(blkMixed: [ { state: "idle", app: "zsh" }, { state: "working", app: "claude-code" } ],
+                      blkIdle: "idle")
+
+    deliver(rex: true)
+
+    assert_equal(%w[blkIdle], closed_blocks)
+  end
+
+  def test_deliver_leaves_a_recorded_block_that_rex_no_longer_lists
+    commit_change_work
+    record_rex_row(%w[blkGone blkIdle])
+    answer_rex_blocks(blkIdle: "idle", listed: %w[blkIdle])
+
+    deliver(rex: true)
+
+    assert_equal(%w[blkIdle], closed_blocks)
+  end
+
+  def test_a_failed_rex_block_list_after_the_pr_exists_only_warns
+    commit_change_work
+    record_rex_row(%w[blkIdle])
+    stub_response("rex block ls", { "exit" => 1, "stderr" => "rex: server not responding\n" })
+
+    stdout, stderr, status = deliver(rex: true)
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, PR_URL)
+    assert_match(/server not responding/, stderr)
+    assert_empty(closed_blocks)
+  end
+
+  def test_a_rex_block_with_a_malformed_program_record_stays_open
+    commit_change_work
+    record_rex_row(%w[blkOdd])
+    answer_rex_blocks(blkOdd: [ "idle" ])
+
+    stdout, stderr, status = deliver(rex: true)
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, PR_URL)
+    assert_empty(closed_blocks)
+  end
+
+  def test_deliver_uses_the_herdr_panes_when_both_are_set
+    commit_change_work
+    record_stage_panes(panes_in_play)
+    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: panes_in_play }) })
+    record_rex_row(%w[blkIdle])
+    answer_rex_blocks(blkIdle: "idle")
+
+    deliver(herdr: true, rex: true)
+
+    assert_equal(%w[w1:pIdle w1:pDone], closed_panes)
+    assert_empty(closed_blocks)
+  end
+
+  def test_deliver_opens_the_dash_through_the_dispatcher_in_a_rex_block
+    commit_change_work
+
+    deliver(rex: true, env: { "REX_SCRIPTS_DIR" => @dash_scripts })
+
+    assert_equal([ "#{SLUG} #{PR_URL}" ], dash_calls)
+  end
+
   def test_resumes_after_a_failed_push_without_the_folder
     commit_change_work
     git("remote", "set-url", "--push", "origin", File.join(@origin, "does-not-exist"))
@@ -340,8 +432,37 @@ class DeliverTest < Minitest::Test
 
   private
 
-  def deliver(*arguments, herdr: false, scripts: @dash_scripts, env: {})
-    run_script(DELIVER, *arguments, herdr: herdr, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
+  def deliver(*arguments, herdr: false, rex: false, scripts: @dash_scripts, env: {})
+    run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
+  end
+
+  # deliver finds the dispatchers under the home folder, where the agents package links them.
+  def install_dispatchers
+    FileUtils.mkdir_p(File.join(@home, ".agents"))
+    File.symlink(File.join(REPO_ROOT, "agents/.agents/bin"), File.join(@home, ".agents", "bin"))
+  end
+
+  # What hand-off-plan.sh and start-review.sh record in Rex: one block id per line.
+  def record_rex_row(ids)
+    FileUtils.mkdir_p(File.join(common_dir, "rex"))
+    File.write(File.join(common_dir, "rex", "stage-panes-#{SLUG}"), ids.map { |id| "#{id}\n" }.join)
+  end
+
+  # states: block id => program_status state, an array of records, or nil for a block with no records. `listed`
+  # names the blocks `rex block ls` lists; by default every block of states.
+  def answer_rex_blocks(listed: nil, **states)
+    ids = listed || states.keys.map(&:to_s)
+    stub_response("rex block ls", { "stdout" => JSON.generate(blocks: ids.map { |id| { block_id: id, label: "shell", flavor: "shell" } }) })
+    states.each do |id, state|
+      records = state.is_a?(Array) ? state : (state ? [ { state: state, app: "claude-code" } ] : [])
+      stub_response("rex program_status #{id}", { "stdout" => JSON.generate(records: records) })
+    end
+  end
+
+  def closed_blocks
+    rex_calls.grep(/\Ablock close\b/).flat_map do |call|
+      call.split.drop(2).reject { |word| word.start_with?("-") || word == SESSION }
+    end
   end
 
   def assert_refused_and_untouched(reason)

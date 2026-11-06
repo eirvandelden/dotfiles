@@ -61,7 +61,7 @@ class AutonomyContractTest < Minitest::Test
   def test_intent_accept_starts_the_coordinator_loop
     section = section_of(skill("intent"), "## Autonomous delivery")
 
-    assert_includes(section, "hand-off-plan.sh <stage> <slug> --auto")
+    assert_includes(section, "~/.agents/bin/hand-off-plan <stage> <slug> --auto")
     assert_match(/`plan`, then `implement`/, section)
     refute_match(/`spec`/, section)
     assert_match(/not .*chain/i, skill("intent")[/^## 4\. Accept.*?(?=^## )/m])
@@ -164,7 +164,7 @@ class AutonomyContractTest < Minitest::Test
   def test_review_auto_mode_skips_codex_unless_the_intent_opts_in
     section = section_of(skill("review"), "## Auto mode")
 
-    assert_includes(section, "start-review.sh")
+    assert_includes(section, "start-review")
     assert_includes(section, "code-review")
     assert_match(/transcribe/i, section)
     assert_match(/Codex round only when .*`Codex review: yes`/i, section)
