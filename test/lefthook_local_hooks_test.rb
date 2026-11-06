@@ -134,6 +134,20 @@ class LefthookLocalHooksTest < Minitest::Test
     assert_match(/GIT_DIR=unset$/, hook_invocation("pre-push"))
   end
 
+  #: () -> void
+  def test_pre_commit_keeps_git_dir_for_a_work_tree_without_a_git_entry
+    setup_repo("trunk")
+    stub_real_lefthook
+    work_tree = File.join(@repository_copy, "work-tree")
+    FileUtils.mkdir_p(work_tree)
+    git_dir = File.join(@repo_dir, ".git")
+    File.write(File.join(work_tree, "clean.txt"), "hello\n")
+    separate = [ "--git-dir=#{git_dir}", "--work-tree=#{work_tree}" ]
+    run_git(*separate, "add", "clean.txt")
+    _out, err, status = Open3.capture3(repo_env, "git", *separate, "commit", "-m", "clean", chdir: work_tree)
+    assert(status.success?, "Expected a commit through --git-dir and --work-tree to pass the hook:\n#{err}")
+  end
+
   def test_pre_push_reaches_the_logging_stub_when_lefthook_bin_is_set
     setup_repo("trunk")
     stub_logging_lefthook
