@@ -1,15 +1,13 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require "fileutils"
+require "open3"
+require "tmpdir"
 require "yaml"
 require_relative "isolated_git"
 
 class GhDashConfigTest < Minitest::Test
   CONFIG_PATH = File.expand_path("../github/.config/gh-dash/config.yml", __dir__)
-
-  DEEP_REVIEW_COMMAND =
-    "pane=$(herdr pane split --current --direction down --focus | jq -r '.result.pane.pane_id') " \
-    "&& [ -n \"$pane\" ] && herdr pane run \"$pane\" " \
-    "\"nvim -c 'silent Octo pr edit {{.PrNumber}} {{.RepoName}}'\""
 
   def test_config_is_valid_yaml_inside_the_github_stow_package
     assert_kind_of(Hash, config)
@@ -71,11 +69,22 @@ class GhDashConfigTest < Minitest::Test
     filters.each { |filter| refute_includes(filter.split, "OR", filter) }
   end
 
-  def test_deep_review_keybinding_opens_octo_in_a_herdr_pane
-    keybinding = config.fetch("keybindings").fetch("prs").find { |binding| binding["key"] == "C" }
+  def test_the_deep_review_key_dispatches_between_herdr_and_rex
+    herdr_only = run_deep_review("HERDR_ENV" => "1")
+    assert_equal([ "pane split --current --direction down --focus",
+                   "pane run w1:pNew nvim -c 'silent Octo pr edit 7 o/r'" ], herdr_only.fetch(:herdr))
+    assert_empty(herdr_only.fetch(:rex))
 
-    refute_nil(keybinding, "no C keybinding in keybindings.prs")
-    assert_equal(DEEP_REVIEW_COMMAND, keybinding["command"].strip)
+    rex_only = run_deep_review("REX_SESSION" => "S1")
+    assert_empty(rex_only.fetch(:herdr))
+    assert_match(/\Asplit\b.*--split[= ]below\b.* -- nvim -c silent Octo pr edit 7 o\/r\z/, rex_only.fetch(:rex).first)
+  end
+
+  def test_herdr_wins_over_rex_for_the_deep_review_key
+    calls = run_deep_review("HERDR_ENV" => "1", "REX_SESSION" => "S1")
+
+    refute_empty(calls.fetch(:herdr))
+    assert_empty(calls.fetch(:rex))
   end
 
   def test_diff_pager_is_delta_side_by_side
@@ -83,6 +92,39 @@ class GhDashConfigTest < Minitest::Test
   end
 
   private
+
+  # Runs the C key's command under sh with stub herdr and rex binaries on PATH and the template
+  # variables filled in. Answers what each stub logged, as { herdr: [calls], rex: [calls] }.
+  def run_deep_review(environment)
+    Dir.mktmpdir do |dir|
+      %w[herdr rex].each { |name| install_stub(dir, name) }
+      command = keybinding_command.sub("{{.PrNumber}}", "7").sub("{{.RepoName}}", "o/r")
+      env = { "PATH" => "#{dir}:#{ENV.fetch('PATH')}", "STUB_DIR" => dir, "HERDR_ENV" => nil, "REX_SESSION" => nil }
+      Open3.capture3(env.merge(environment), "sh", "-c", command)
+      %w[herdr rex].to_h { |name| [ name.to_sym, logged_calls(dir, name) ] }
+    end
+  end
+
+  def keybinding_command
+    keybinding = config.fetch("keybindings").fetch("prs").find { |binding| binding["key"] == "C" }
+    refute_nil(keybinding, "no C keybinding in keybindings.prs")
+    keybinding["command"].strip
+  end
+
+  def install_stub(dir, name)
+    path = File.join(dir, name)
+    File.write(path, <<~SH)
+      #!/bin/sh
+      printf '%s\\n' "$*" >> "$STUB_DIR/#{name}.log"
+      echo '{"result":{"pane":{"pane_id":"w1:pNew"}},"block_ids":["blkNew"]}'
+    SH
+    FileUtils.chmod(0o755, path)
+  end
+
+  def logged_calls(dir, name)
+    log = File.join(dir, "#{name}.log")
+    File.exist?(log) ? File.readlines(log, chomp: true) : []
+  end
 
   def config
     @config ||= YAML.safe_load_file(CONFIG_PATH)

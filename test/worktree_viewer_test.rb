@@ -36,6 +36,7 @@ class WorktreeViewerTest < Minitest::Test
     [ @stub_bin, @config_dir, @state_home, File.join(@plugin_root, "scripts"),
       File.join(@plugin_root, "target", "release") ].each { |dir| FileUtils.mkdir_p(dir) }
     install_herdr_stub
+    install_rex_stub
     install_plugin_program
     install_plugin_scripts
     @copy = REPOSITORY.copy
@@ -46,6 +47,22 @@ class WorktreeViewerTest < Minitest::Test
 
   def teardown
     FileUtils.rm_rf([ @root, @copy ].compact)
+  end
+
+  def test_a_rex_only_environment_hands_over_to_the_rex_viewer
+    _stdout, stderr, status = run_launcher("split", env: rex_environment.merge("HERDR_ENV" => nil))
+
+    assert(status.success?, stderr)
+    assert_includes(rex_calls.map(&:first), "split")
+    assert_empty(herdr_calls)
+  end
+
+  def test_herdr_wins_over_rex_in_the_viewer
+    _stdout, stderr, status = run_launcher("split", env: rex_environment.merge("HERDR_ENV" => "1"))
+
+    assert(status.success?, stderr)
+    assert_equal("right", option(first_call("pane", "split"), "--direction"))
+    assert_empty(rex_calls)
   end
 
   def test_a_pane_without_an_agent_hands_over_to_the_plugins_own_launchers
@@ -309,7 +326,7 @@ class WorktreeViewerTest < Minitest::Test
   end
 
   def run_launcher(argument, decision: "OPEN", wait_status: "0", direction_fails: false,
-                   plugin_installed: true, direction: nil, herdr_bin_path: nil, path: nil, failing: nil)
+                   plugin_installed: true, direction: nil, herdr_bin_path: nil, path: nil, failing: nil, env: {})
     environment = {
       "PATH" => path || "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_BIN_PATH" => herdr_bin_path,
@@ -326,8 +343,49 @@ class WorktreeViewerTest < Minitest::Test
       "PLUGIN_STUB_DECISION" => decision,
       "PLUGIN_STUB_DIRECTION_FAILS" => (direction_fails ? "1" : nil),
       "PLUGIN_STUB_SCRIPT_LOG" => script_log
-    }
+    }.merge(env)
     Open3.capture3(environment, "ruby", SCRIPT, argument)
+  end
+
+  def rex_environment
+    { "REX_SESSION" => "S1", "REX_BLOCK" => "blkA", "REX_STUB_CALLS" => rex_calls_file,
+      "REX_STUB_CALLER_CWD" => @repo }
+  end
+
+  def rex_calls_file
+    File.join(@root, "rex-calls.jsonl")
+  end
+
+  def rex_calls
+    return [] unless File.exist?(rex_calls_file)
+
+    File.readlines(rex_calls_file, chomp: true).map { |line| JSON.parse(line) }.map do |call|
+      call.reject { |word| word == "-s" || word == "S1" }
+    end
+  end
+
+  # A `rex` that logs its calls, answers the caller block's folder and a new block id for split.
+  def install_rex_stub
+    install_executable(File.join(@stub_bin, "rex"), <<~'RUBY')
+      #!/usr/bin/env ruby
+      require "json"
+
+      File.open(ENV.fetch("REX_STUB_CALLS"), "a") { |file| file.puts(JSON.generate(ARGV)) }
+      if ARGV.include?("block.method")
+        cwd = ENV.fetch("REX_STUB_CALLER_CWD")
+        request = JSON.parse(ARGV[ARGV.index("block.method") + 1])
+        case request["method"]
+        when "pwd" then puts JSON.generate({ pwd: "file://host#{cwd}" })
+        when "process" then puts JSON.generate({ foreground: { name: "claude", cwd: cwd } })
+        else puts "{}"
+        end
+      elsif ARGV.first == "split"
+        puts JSON.generate(anchor_id: "blkA", block_ids: [ "blkV" ], split_ids: [ "s1" ], revision: 1)
+      end
+    RUBY
+    rex_viewer_program = File.join(@root, ".config/herdr/plugins/github/herdr-file-viewer-abc123/target/release")
+    FileUtils.mkdir_p(rex_viewer_program)
+    install_executable(File.join(rex_viewer_program, "herdr-file-viewer"), "#!/bin/sh\nexit 0\n")
   end
 
   def focus_pane(cwd:, agent: "claude")
