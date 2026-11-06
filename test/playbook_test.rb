@@ -23,6 +23,14 @@ class PlaybookTest < Minitest::Test
     assert_empty citations, "these lines cite root agents.md as the playbook"
   end
 
+  def test_the_playbook_keyboard_section_names_dvorak_and_the_arrow_keys
+    section = Playbook.text[/^## \d+\. Keyboard\n(.*?)(?=^## |\z)/m, 1] || flunk("no Keyboard section")
+    assert_match(/Dvorak/, section)
+    assert_match(/arrow keys/, section)
+    assert_match(/separate layer/, section)
+    assert_match(/never `hjkl`/, section)
+  end
+
   private
 
   CITATION = /(?<![\/.\w])agents\.md\b/

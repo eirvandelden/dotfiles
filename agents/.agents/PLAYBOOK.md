@@ -228,3 +228,7 @@ Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`R
 Same mistake twice → one line here. Ten lines at most. Remove a line when its mistake has not come back in three months.
 
 No entries yet.
+
+## 9. Keyboard
+
+Etienne types Dvorak and navigates with the arrow keys on a separate layer. Name the arrow keys in instructions, never `hjkl`.
