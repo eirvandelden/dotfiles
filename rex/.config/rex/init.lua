@@ -7,7 +7,6 @@ rex.bind("shift+cmd+k", "session.switch")
 
 rex.bind("ctrl+s>ctrl+s", "pane.send_key", { key = "ctrl+s" })
 rex.bind("ctrl+s>space", "agent_switcher")
-rex.bind("ctrl+s>f", "file_viewer")
 rex.bind("ctrl+s>left", "pane.focus", { direction = "left" })
 rex.bind("ctrl+s>down", "pane.focus", { direction = "down" })
 rex.bind("ctrl+s>up", "pane.focus", { direction = "up" })
