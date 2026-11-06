@@ -24,7 +24,7 @@
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
-- **Switcher** — the floating Rex panel, opened by `ctrl+s space`, that lists every pane and jumps to the one picked. Avoid: palette, picker.
+- **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.
 - **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
 - **Test file** — one `test/*_test.rb`, run as its own process.
 - **View** — how the viewer previews a file, `default` or `alternate`. Default: markdown rendered, an untracked file as content, anything else as a diff.

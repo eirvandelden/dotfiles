@@ -5,47 +5,56 @@ require "open3"
 require "tmpdir"
 require_relative "isolated_git"
 
-# rex/.config/rex/init.lua binds keys. The switcher replaces only ctrl+s>space; every other
-# binding stays. The file is read as text: Rex is not available to run it. launchers.lua is the exception:
-# luajit loads it with a stub `rex` that records actions and binds, and the test skips without luajit.
+# rex/.config/rex/init.lua binds keys. herdr owns ctrl+s, so no Rex Lua file binds a ctrl+s key;
+# every other binding stays. The files are read as text: Rex is not available to run them. One test is
+# the exception: luajit loads init.lua with a stub `rex` that records actions and binds, and it skips without luajit.
 # The settings.json hooks are read as text too.
 class RexConfigTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   LUA_DIR = File.join(ROOT, "rex/.config/rex")
   INIT = File.join(LUA_DIR, "init.lua")
   SETTINGS = File.join(ROOT, "claude/.claude/settings.json")
-  LAUNCHERS = %w[file_viewer_split file_viewer_tab lazygit_split lazygit_tab].freeze
-  LAUNCHER_KEYS = {
-    "ctrl+s>f" => "file_viewer_split", "ctrl+s>shift+f" => "file_viewer_tab",
-    "ctrl+s>g" => "lazygit_split", "ctrl+s>shift+g" => "lazygit_tab"
-  }.freeze
+  UNBOUND_ACTIONS = %w[
+    agent_switcher open_project file_viewer file_viewer_split file_viewer_tab lazygit_split lazygit_tab
+  ].freeze
+  CTRL_S_KEY = /\Actrl\+s(>|\z)/
   TONE_HOOKS = { "SessionStart" => "ready", "Notification" => "request", "Stop" => "done" }.freeze
   BIND = /^\s*rex\.bind\("(?<key>[^"]+)",\s*"(?<action>[^"]+)"(?:,\s*\{(?<options>.*)\})?\)/
 
   KEPT = {
     "cmd+k" => [ "com.superlogical.terminal.clear", nil ],
-    "ctrl+s>ctrl+s" => [ "pane.send_key", 'key = "ctrl+s"' ],
-    "ctrl+s>left" => [ "pane.focus", 'direction = "left"' ],
-    "ctrl+s>down" => [ "pane.focus", 'direction = "down"' ],
-    "ctrl+s>up" => [ "pane.focus", 'direction = "up"' ],
-    "ctrl+s>right" => [ "pane.focus", 'direction = "right"' ],
     "ctrl+3" => [ "pane.send_key", 'key = "esc"' ],
     "ctrl+4" => [ "pane.send_key", 'key = "ctrl+\\\\"' ],
     "ctrl+5" => [ "pane.send_key", 'key = "ctrl+]"' ],
     "ctrl+6" => [ "pane.send_key", 'key = "ctrl+shift+6"' ],
     "ctrl+7" => [ "pane.send_key", 'key = "ctrl+shift+-"' ],
     "ctrl+8" => [ "pane.send_key", 'key = "backspace"' ],
-    "ctrl+-" => [ "pane.send_key", 'key = "ctrl+shift+-"' ]
+    "ctrl+-" => [ "pane.send_key", 'key = "ctrl+shift+-"' ],
+    "ctrl+up" => [ "client.prompt.previous", nil ],
+    "ctrl+down" => [ "client.prompt.next", nil ]
   }.freeze
 
-  def test_ctrl_s_space_opens_the_switcher
-    assert_equal("agent_switcher", bindings.fetch("ctrl+s>space").first)
-    assert_match(/require\("switcher"\)/, init_text)
+  def test_no_lua_file_binds_ctrl_s
+    Dir.glob(File.join(LUA_DIR, "*.lua")).each do |file|
+      File.readlines(file).filter_map { |line| BIND.match(line) }.each do |match|
+        refute_match(CTRL_S_KEY, match[:key], "#{File.basename(file)} binds #{match[:key]}, but herdr owns ctrl+s")
+      end
+    end
   end
 
-  def test_ctrl_s_o_opens_the_project_picker
-    assert_equal("open_project", bindings.fetch("ctrl+s>o").first)
+  def test_ctrl_up_and_ctrl_down_move_between_prompts
+    assert_equal("client.prompt.previous", bindings.fetch("ctrl+up").first)
+    assert_equal("client.prompt.next", bindings.fetch("ctrl+down").first)
+  end
+
+  def test_the_switcher_is_required_and_has_no_key_bind
+    assert_match(/require\("switcher"\)/, init_text)
+    refute_includes(bindings.values.map(&:first), "agent_switcher")
+  end
+
+  def test_the_project_action_is_required_and_has_no_key_bind
     assert_match(/require\("project"\)/, init_text)
+    refute_includes(bindings.values.map(&:first), "open_project")
   end
 
   def test_the_file_viewer_is_required_and_has_no_key_bind
@@ -70,22 +79,21 @@ class RexConfigTest < Minitest::Test
     end
   end
 
-  def test_viewer_keys_run_worktree_viewer
-    assert_equal("file_viewer_split", bindings.fetch("ctrl+s>f").first)
-    assert_equal("file_viewer_tab", bindings.fetch("ctrl+s>shift+f").first)
+  def test_the_viewer_launchers_run_worktree_viewer
     launchers = File.read(File.join(LUA_DIR, "launchers.lua"))
 
     assert_match(/worktree-viewer.{0,40}split/m, launchers)
     assert_match(/worktree-viewer.{0,40}tab/m, launchers)
   end
 
-  def test_launcher_actions_are_registered_and_bound
+  def test_the_loaded_config_registers_every_action_and_binds_no_ctrl_s_key
     skip("luajit is not installed") unless system("which luajit > /dev/null 2>&1")
 
-    actions, binds = load_launchers
+    actions, binds = load_config
 
-    assert_equal(LAUNCHERS.sort, actions & LAUNCHERS)
-    LAUNCHER_KEYS.each { |key, action| assert_equal(action, binds[key], key) }
+    assert_equal(UNBOUND_ACTIONS.sort, (actions & UNBOUND_ACTIONS).sort)
+    assert_empty(binds.values & UNBOUND_ACTIONS)
+    assert_empty(binds.keys.grep(CTRL_S_KEY))
   end
 
   def test_settings_json_has_the_rex_session_start_hook
@@ -117,9 +125,9 @@ class RexConfigTest < Minitest::Test
     end
   end
 
-  # Loads init.lua under luajit with a `rex` stub that accepts every call and records
-  # `rex.action{name=...}` and `rex.bind(key, action)`. Returns the action names and the binds.
-  def load_launchers
+  # Loads init.lua and every module it requires under luajit with a `rex` stub that accepts every call
+  # and records `rex.action{name=...}` and `rex.bind(key, action)`. Returns the action names and the binds.
+  def load_config
     Dir.mktmpdir do |dir|
       script = File.join(dir, "load.lua")
       File.write(script, lua_loader)
@@ -135,7 +143,6 @@ class RexConfigTest < Minitest::Test
     <<~LUA
       local dir = arg[1]
       package.path = dir .. "/?.lua;" .. package.path
-      package.loaded["switcher"] = {}
       local function permissive()
         return setmetatable({}, { __index = function() return permissive() end, __call = function() return permissive() end })
       end
