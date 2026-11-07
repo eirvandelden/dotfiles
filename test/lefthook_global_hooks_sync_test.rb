@@ -7,17 +7,21 @@ require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 class LefthookGlobalHooksSyncTest < Minitest::Test
   TRUNK = "trunk"
   NATIVE_LEFTHOOK = LefthookBinary.locate
   MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
 
-  # One fixture per own_config: <root>/origin.git on trunk, <root>/pusher with the first commit pushed
-  # (lefthook.yml in it when own_config) and <root>/puller cloned from it.
+  MINIMAL_CONFIG = "post-checkout:\n  commands:\n    noop:\n      run: \"true\"\n".freeze
+
+  # One fixture per own_config: <root>/github.com/eirvandelden/origin.git on trunk, <root>/pusher with the first commit
+  # pushed (lefthook.yml in it when own_config: a copy of the shared config, or MINIMAL_CONFIG for :minimal) and
+  # <root>/puller cloned from it.
   REPOSITORIES = Hash.new do |fixtures, own_config|
     fixtures[own_config] = GitFixture.new do |root|
-      origin = File.join(root, "origin.git")
+      origin = File.join(root, PersonalOrigin::PATH)
       pusher = File.join(root, "pusher")
       puller = File.join(root, "puller")
       identity = { "LEFTHOOK" => "0", "GIT_AUTHOR_NAME" => "Test", "GIT_AUTHOR_EMAIL" => "test@example.com",
@@ -27,7 +31,7 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
       git.call("-C", origin, "symbolic-ref", "HEAD", "refs/heads/#{TRUNK}")
       git.call("clone", origin, pusher, "--quiet")
       File.write(File.join(pusher, "README.md"), "initial")
-      FileUtils.cp(File.expand_path("../lefthook.yml", __dir__), pusher) if own_config
+      write_own_config(pusher, own_config)
       git.call("-C", pusher, "add", ".")
       git.call("-C", pusher, "commit", "-m", "init", "--quiet")
       git.call("-C", pusher, "push", "origin", TRUNK, "--quiet")
@@ -36,6 +40,14 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
     end
   end
   private_constant :REPOSITORIES
+
+  def self.write_own_config(directory, own_config)
+    case own_config
+    when :minimal then File.write(File.join(directory, "lefthook.yml"), MINIMAL_CONFIG)
+    when true then FileUtils.cp(File.expand_path("../lefthook.yml", __dir__), directory)
+    end
+  end
+  private_class_method :write_own_config
 
   def setup
     skip(MISSING_LEFTHOOK_MESSAGE) unless NATIVE_LEFTHOOK
@@ -73,6 +85,14 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
 
   def test_pull_in_repo_without_own_config_keeps_global_hooks_linked
     setup_git_repos(own_config: false)
+    push_file("yarn.lock", "# yarn lockfile v1\n")
+    pull_in_puller
+    assert_after_pull_hook_ran
+    assert_global_hooks_linked
+  end
+
+  def test_pull_in_a_personal_repo_whose_config_lacks_no_auto_install_keeps_global_hooks_linked
+    setup_git_repos(own_config: :minimal)
     push_file("yarn.lock", "# yarn lockfile v1\n")
     pull_in_puller
     assert_after_pull_hook_ran
@@ -118,7 +138,7 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
 
   def setup_git_repos(own_config:)
     @repository_copy = REPOSITORIES[own_config].copy
-    @origin_dir = File.join(@repository_copy, "origin.git")
+    @origin_dir = File.join(@repository_copy, PersonalOrigin::PATH)
     @pusher_dir = File.join(@repository_copy, "pusher")
     @puller_dir = File.join(@repository_copy, "puller")
   end
