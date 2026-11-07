@@ -193,11 +193,11 @@ class LefthookGlobalHooksSyncTest < Minitest::Test
   end
 
   def assert_global_hooks_linked
-    broken = Dir.children(@global_hooks_dir).sort.reject { |name| linked_to_tracked_shim?(name) }
-    assert_empty(broken, "Global hooks no longer linked to their unchanged tracked shim: #{broken.join(", ")}")
+    broken = Dir.children(@global_hooks_dir).sort.reject { |name| linked_to_tracked_hook?(name) }
+    assert_empty(broken, "Global hooks no longer linked to their unchanged tracked hook: #{broken.join(", ")}")
   end
 
-  def linked_to_tracked_shim?(name)
+  def linked_to_tracked_hook?(name)
     hook = File.join(@global_hooks_dir, name)
     tracked = File.join(tracked_hooks_dir, name)
     File.symlink?(hook) && File.exist?(tracked) && sha256(hook) == sha256(tracked)

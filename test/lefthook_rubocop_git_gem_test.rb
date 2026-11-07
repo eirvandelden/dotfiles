@@ -12,7 +12,7 @@ require_relative "personal_origin"
 # git while Bundler loads its gemspec (mvpa-css does, for its version). With GIT_DIR set that call
 # reads the project's repository, the version no longer matches Gemfile.lock, and RuboCop reports
 # `Unable to find gem`. The fixture gem `house-style` does the same. Everything is real: git, the
-# global hook shims, lefthook, Bundler and RuboCop. Nothing touches the network.
+# global hooks, lefthook, Bundler and RuboCop. Nothing touches the network.
 class LefthookRubocopGitGemTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   NATIVE_LEFTHOOK = LefthookBinary.locate

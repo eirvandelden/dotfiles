@@ -279,7 +279,7 @@ class LefthookLocalHooksTest < Minitest::Test
     write_executable("lefthook", "#!/bin/sh\necho \"$*\" >> \"#{@log_file}\"\n")
   end
 
-  # A developer's shell may export LEFTHOOK_BIN; the global hook shim prefers it over lefthook on PATH.
+  # A developer's shell may export LEFTHOOK_BIN; the hook wrapper prefers it over lefthook on PATH.
   def with_lefthook_bin_set
     previous = ENV.fetch("LEFTHOOK_BIN", nil)
     ENV["LEFTHOOK_BIN"] = NATIVE_LEFTHOOK

@@ -11,7 +11,7 @@ require_relative "git_fixture"
 require_relative "isolated_git"
 require_relative "personal_origin"
 
-# A real `git pull` runs the global hook shims, the real lefthook binary and the repository's
+# A real `git pull` runs the global hooks, the real lefthook binary and the repository's
 # lefthook.yml; the detached sweep it starts removes merged worktrees. gh and herdr are stubbed.
 class WorktreeSweepOnPullTest < Minitest::Test
   DEADLINE = 20
