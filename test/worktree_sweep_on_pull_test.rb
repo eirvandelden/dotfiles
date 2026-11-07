@@ -9,6 +9,7 @@ require_relative "lefthook_binary"
 require_relative "hook_scripts"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 # A real `git pull` runs the global hook shims, the real lefthook binary and the repository's
 # lefthook.yml; the detached sweep it starts removes merged worktrees. gh and herdr are stubbed.
@@ -16,10 +17,10 @@ class WorktreeSweepOnPullTest < Minitest::Test
   DEADLINE = 20
   NATIVE_LEFTHOOK = LefthookBinary.locate
 
-  # <root>/origin.git (bare, main), <root>/seed (clone that pushed the first commit) and <root>/repo (clone
+  # <root>/github.com/eirvandelden/origin.git (bare, main), <root>/seed (clone that pushed the first commit) and <root>/repo (clone
   # of the origin with .worktrees excluded).
   ORIGIN_AND_CLONE = GitFixture.new do |root|
-    origin = File.join(root, "origin.git")
+    origin = File.join(root, PersonalOrigin::PATH)
     seed = File.join(root, "seed")
     git = lambda do |directory, *arguments|
       system({ "GIT_CONFIG_GLOBAL" => "/dev/null", "LEFTHOOK" => "0" }, "git", "-C", directory,
@@ -138,6 +139,7 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
   def test_a_repository_with_its_own_config_and_no_reference_starts_no_sweep
     foo = merged_worktree("foo")
+    make_origin_not_personal
     File.write(File.join(@repo, "lefthook.yml"), "post-merge:\n  commands:\n    own:\n      run: echo own\n")
 
     pull(@repo)
@@ -294,11 +296,19 @@ class WorktreeSweepOnPullTest < Minitest::Test
 
   # --- repositories ------------------------------------------------------------------------
 
+  # The wrapper gives the shared config only to a personal origin: the repository reaches the same
+  # origin through a path that is not personal.
+  def make_origin_not_personal
+    plain = File.join(@tmp, "plain.git")
+    File.symlink(@origin, plain)
+    run_git(@repo, "config", "url.#{plain}.insteadOf", @origin)
+  end
+
   # A copy of the fixture, so a second call gives a second, separate origin and clone.
   def origin_and_clone
     copy = ORIGIN_AND_CLONE.copy
     @copies << copy
-    [ File.join(copy, "origin.git"), File.join(copy, "repo") ]
+    [ File.join(copy, PersonalOrigin::PATH), File.join(copy, "repo") ]
   end
 
   # A worktree whose branch was pushed with -u, has a MERGED PR, and whose commit origin/main

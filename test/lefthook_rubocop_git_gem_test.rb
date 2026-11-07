@@ -6,6 +6,7 @@ require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "hook_scripts"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 # Git exports GIT_DIR to hooks and lefthook passes it to every job. A gem installed from git can run
 # git while Bundler loads its gemspec (mvpa-css does, for its version). With GIT_DIR set that call
@@ -223,7 +224,7 @@ class LefthookRubocopGitGemTest < Minitest::Test
   end
 
   def publish_feature_branch
-    origin_dir = File.join(@tmpdir, "origin.git")
+    origin_dir = File.join(@tmpdir, PersonalOrigin::PATH)
     run!("git", "init", "--quiet", "--bare", origin_dir)
     run!("git", "remote", "add", "origin", origin_dir, chdir: @project_dir)
     run!("git", "worktree", "add", "--quiet", "-b", "feature", @worktree_dir, chdir: @project_dir)

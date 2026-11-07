@@ -7,6 +7,7 @@ require_relative "lefthook_binary"
 require_relative "hook_scripts"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 class LefthookLocalHooksTest < Minitest::Test
   NATIVE_LEFTHOOK = LefthookBinary.locate
@@ -24,7 +25,7 @@ class LefthookLocalHooksTest < Minitest::Test
   REPOSITORIES = Hash.new do |fixtures, branch|
     fixtures[branch] = GitFixture.new do |root|
       repo = File.join(root, "repo")
-      origin = File.join(root, "origin.git")
+      origin = File.join(root, PersonalOrigin::PATH)
       git = [ "git", "-C", repo ]
       system("git", "init", "--bare", "--quiet", origin, exception: true)
       system("git", "init", "--quiet", "--initial-branch=#{branch}", repo, exception: true)
@@ -47,7 +48,7 @@ class LefthookLocalHooksTest < Minitest::Test
     @log_file = File.join(@tmpdir, "commands.log")
     @repo_dir = File.join(@tmpdir, "repo")
     @hooks_dir = HookScripts.directory
-    @origin_dir = File.join(@tmpdir, "origin.git")
+    @origin_dir = File.join(@tmpdir, PersonalOrigin::PATH)
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
     setup_lint_bin_dirs
@@ -244,11 +245,11 @@ class LefthookLocalHooksTest < Minitest::Test
   end
 
   # A copy of the fixture for the branch, which holds the repository at <copy>/repo and a bare origin
-  # at <copy>/origin.git; this test's @repo_dir and @origin_dir point into it.
+  # at <copy>/github.com/eirvandelden/origin.git; this test's @repo_dir and @origin_dir point into it.
   def setup_repo(branch)
     @repository_copy = REPOSITORIES[branch].copy
     @repo_dir = File.join(@repository_copy, "repo")
-    @origin_dir = File.join(@repository_copy, "origin.git")
+    @origin_dir = File.join(@repository_copy, PersonalOrigin::PATH)
   end
 
   def conflict_markers

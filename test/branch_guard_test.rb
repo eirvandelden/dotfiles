@@ -6,6 +6,7 @@ require "yaml"
 require "tmpdir"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "personal_origin"
 require_relative "hook_scripts"
 require_relative "lefthook_binary"
 
@@ -204,6 +205,16 @@ class BranchGuardTest < Minitest::Test
     File.write(stub, "#!/bin/sh\nexit 0\n")
     FileUtils.chmod("+x", stub)
     setup_repo(branch)
+    move_origin_to_a_personal_path
+  end
+
+  # The wrapper gives the shared config only to a repository whose origin is personal.
+  def move_origin_to_a_personal_path
+    personal = File.join(@repository_copy, PersonalOrigin::PATH)
+    FileUtils.mkdir_p(File.dirname(personal))
+    FileUtils.mv(@origin_dir, personal)
+    run_git(@repo_dir, "remote", "set-url", "origin", personal)
+    @origin_dir = personal
   end
 
   def assert_push_refused(*args)

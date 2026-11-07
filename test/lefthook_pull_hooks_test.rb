@@ -7,6 +7,7 @@ require_relative "lefthook_binary"
 require_relative "hook_scripts"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 class LefthookPullHooksTest < Minitest::Test
   TRUNK = "trunk"
@@ -14,9 +15,9 @@ class LefthookPullHooksTest < Minitest::Test
   MISSING_LEFTHOOK_MESSAGE = LefthookBinary::MISSING_MESSAGE
   PACKAGE_LOCK = "{\"name\":\"app\",\"version\":\"1\"}".freeze
 
-  # <root>/origin.git on trunk, <root>/pusher with one commit pushed, <root>/puller cloned from it.
+  # <root>/github.com/eirvandelden/origin.git on trunk, <root>/pusher with one commit pushed, <root>/puller cloned from it.
   REPOSITORY = GitFixture.new do |root|
-    origin = File.join(root, "origin.git")
+    origin = File.join(root, PersonalOrigin::PATH)
     pusher = File.join(root, "pusher")
     puller = File.join(root, "puller")
     identity = { "LEFTHOOK" => "0", "GIT_AUTHOR_NAME" => "Test", "GIT_AUTHOR_EMAIL" => "test@example.com",
@@ -144,6 +145,7 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   def test_repo_with_own_lefthook_config_ignores_global_defaults
+    make_origin_not_personal
     File.write(
       File.join(@puller_dir, "lefthook.yml"),
       "post-merge:\n  commands:\n    own:\n      run: echo own\n"
@@ -154,6 +156,14 @@ class LefthookPullHooksTest < Minitest::Test
   end
 
   private
+
+  # The wrapper gives the shared config only to a personal origin: the puller reaches the same
+  # repository through a path that is not personal.
+  def make_origin_not_personal
+    plain = File.join(@repository_copy, "plain.git")
+    File.symlink(@origin_dir, plain)
+    run_git("-C", @puller_dir, "config", "url.#{plain}.insteadOf", @origin_dir)
+  end
 
   def setup_dotfiles_home
     dotfiles_dir = File.join(@tmpdir, "Developer", "dotfiles")
@@ -181,7 +191,7 @@ class LefthookPullHooksTest < Minitest::Test
   def setup_git_repos
     write_global_gitconfig
     @repository_copy = REPOSITORY.copy
-    @origin_dir = File.join(@repository_copy, "origin.git")
+    @origin_dir = File.join(@repository_copy, PersonalOrigin::PATH)
     @pusher_dir = File.join(@repository_copy, "pusher")
     @puller_dir = File.join(@repository_copy, "puller")
   end
