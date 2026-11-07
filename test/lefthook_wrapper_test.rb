@@ -125,7 +125,10 @@ class LefthookWrapperTest < Minitest::Test
       File.write(@log, "")
       run_wrapper("pre-commit", repo: make_repo(origin: url))
 
-      assert_equal(RemoteMatcher.personal?(url), logged("config").none?("unset"), "the rule differs for #{url}")
+      configs = logged("config")
+
+      assert_equal(1, configs.size, "lefthook did not run exactly once for #{url}")
+      assert_equal(RemoteMatcher.personal?(url), configs.none?("unset"), "the rule differs for #{url}")
     end
   end
 
@@ -243,6 +246,35 @@ class LefthookWrapperTest < Minitest::Test
     run_wrapper("pre-commit", repo: repo)
 
     assert_equal([ File.join(repo, "lefthook.yml") ], runtime_extends)
+  end
+
+  def test_the_runtime_config_keeps_the_shared_config_when_the_repo_config_names_it_only_in_a_comment
+    write_logging_lefthook
+    shared = File.join(@home, "Developer", "dotfiles", "lefthook.yml")
+    repo = make_repo(origin: PERSONAL_URL, config: "# extends: #{shared}\n#{OWN_JOB}")
+
+    run_wrapper("pre-commit", repo: repo)
+
+    assert_equal([ shared, File.join(repo, "lefthook.yml") ], runtime_extends)
+  end
+
+  def test_the_runtime_config_keeps_the_shared_config_when_the_repo_config_extends_a_longer_path
+    write_logging_lefthook
+    shared = File.join(@home, "Developer", "dotfiles", "lefthook.yml")
+    repo = make_repo(origin: PERSONAL_URL, config: "extends:\n  - #{shared}.local\n")
+
+    run_wrapper("pre-commit", repo: repo)
+
+    assert_equal([ shared, File.join(repo, "lefthook.yml") ], runtime_extends)
+  end
+
+  def test_the_runtime_config_writes_a_path_holding_a_backslash_unchanged
+    write_logging_lefthook
+    repo = make_repo(origin: PERSONAL_URL, path: File.join(@home, "back\\nslash"), config: OWN_JOB)
+
+    run_wrapper("pre-commit", repo: repo)
+
+    assert_equal(File.join(repo, "lefthook.yml"), runtime_extends.last)
   end
 
   def test_the_runtime_config_quotes_a_path_holding_a_space_and_a_single_quote

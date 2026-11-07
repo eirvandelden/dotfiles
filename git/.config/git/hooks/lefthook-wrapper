@@ -104,7 +104,7 @@ repo_config()
   do
     if test -f "$_root/$_name"
     then
-      echo "$_root/$_name"
+      printf '%s\n' "$_root/$_name"
       return 0
     fi
   done
@@ -117,6 +117,12 @@ yaml_quote()
   printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"
 }
 
+# True when a file lists the shared config as an `extends:` entry, quoted or not.
+extends_shared()
+{
+  sed -n "s/^[[:space:]]*-[[:space:]]*//p" "$1" | sed "s/^['\"]//; s/['\"][[:space:]]*\$//" | grep -qxF "$shared_config"
+}
+
 use_runtime_config()
 {
   runtime_dir="$(mktemp -d "${TMPDIR:-/tmp}/lefthook.XXXXXX")" || return 1
@@ -126,13 +132,13 @@ use_runtime_config()
   trap 'exit 143' TERM
   _repo_config="$(repo_config)"
   {
-    echo "extends:"
+    printf '%s\n' "extends:"
     # lefthook refuses a path listed twice, so a repo config that extends the shared config goes alone.
-    if test -z "$_repo_config" || ! grep -qF "$shared_config" "$_repo_config"
+    if test -z "$_repo_config" || ! extends_shared "$_repo_config"
     then
-      echo "  - $(yaml_quote "$shared_config")"
+      printf '%s\n' "  - $(yaml_quote "$shared_config")"
     fi
-    test -z "$_repo_config" || echo "  - $(yaml_quote "$_repo_config")"
+    test -z "$_repo_config" || printf '%s\n' "  - $(yaml_quote "$_repo_config")"
   } > "$runtime_dir/lefthook.yml"
   export LEFTHOOK_CONFIG="$runtime_dir/lefthook.yml"
 }
