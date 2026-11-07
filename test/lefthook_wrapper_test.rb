@@ -235,6 +235,16 @@ class LefthookWrapperTest < Minitest::Test
     assert_equal([ shared ], runtime_extends)
   end
 
+  def test_the_runtime_config_leaves_out_the_shared_config_when_the_repo_config_already_extends_it
+    write_logging_lefthook
+    shared = File.join(@home, "Developer", "dotfiles", "lefthook.yml")
+    repo = make_repo(origin: PERSONAL_URL, config: "extends:\n  - #{shared}\n")
+
+    run_wrapper("pre-commit", repo: repo)
+
+    assert_equal([ File.join(repo, "lefthook.yml") ], runtime_extends)
+  end
+
   def test_the_runtime_config_quotes_a_path_holding_a_space_and_a_single_quote
     write_logging_lefthook
     repo = make_repo(origin: PERSONAL_URL, path: File.join(@home, "it's a repo"), config: OWN_JOB)

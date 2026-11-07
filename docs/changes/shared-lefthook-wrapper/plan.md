@@ -104,6 +104,7 @@ exec "$wrapper" "${0##*/}" "$@"
   - Runtime config writer: `mktemp -d "${TMPDIR:-/tmp}/lefthook.XXXXXX"`; each path a single-quoted YAML scalar with `'` doubled; the repo config entry left out when there is none.
   - Cleanup: `trap 'rm -rf "$runtime_dir"' EXIT` and `trap 'exit 129' HUP`, `'exit 130' INT`, `'exit 143' TERM`, so dash also runs the EXIT trap on a signal.
   - `call_lefthook`: the existing lookup chain, moved unchanged from the hook scripts into this one file.
+- When the repo config already names the shared config (a literal path match), the runtime config lists only the repo config: lefthook refuses a path listed twice in `extends:` ("possible recursion in extends").
 - Runtime config content:
 
 ```yaml
@@ -229,7 +230,7 @@ Per hook run, independent of repo size and number of files or jobs:
 
 Per changed file, the unit tests expected (the hook wrapper is the public unit; it is driven through the hook scripts or called directly):
 
-- `git/.config/git/hooks/lefthook-wrapper`: `exits 0 without running lefthook when LEFTHOOK=0`, `passes stdin through to lefthook`, `returns lefthook's exit status`, `writes the repo config entry only when a repo config exists`, `quotes a path holding a space and a single quote`.
+- `git/.config/git/hooks/lefthook-wrapper`: `exits 0 without running lefthook when LEFTHOOK=0`, `passes stdin through to lefthook`, `returns lefthook's exit status`, `writes the repo config entry only when a repo config exists`, `leaves out the shared config when the repo config already extends it`, `quotes a path holding a space and a single quote`.
 - `git/.config/git/hooks/*`: covered by `test_every_hook_script_passes_its_own_name_and_no_auto_install` and `test_a_hook_without_its_wrapper_warns_to_restow_and_continues`.
 - `test/personal_origin.rb`: constant only, no test of its own.
 

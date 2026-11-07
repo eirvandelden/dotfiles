@@ -124,10 +124,15 @@ use_runtime_config()
   trap 'exit 129' HUP
   trap 'exit 130' INT
   trap 'exit 143' TERM
+  _repo_config="$(repo_config)"
   {
     echo "extends:"
-    echo "  - $(yaml_quote "$shared_config")"
-    _repo_config="$(repo_config)" && echo "  - $(yaml_quote "$_repo_config")"
+    # lefthook refuses a path listed twice, so a repo config that extends the shared config goes alone.
+    if test -z "$_repo_config" || ! grep -qF "$shared_config" "$_repo_config"
+    then
+      echo "  - $(yaml_quote "$shared_config")"
+    fi
+    test -z "$_repo_config" || echo "  - $(yaml_quote "$_repo_config")"
   } > "$runtime_dir/lefthook.yml"
   export LEFTHOOK_CONFIG="$runtime_dir/lefthook.yml"
 }
