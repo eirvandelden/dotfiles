@@ -6,6 +6,7 @@ require "rbconfig"
 require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 # A real `git push` through the global pre-push hook, lefthook and the stowed
 # review-report-fresh script. A branch with a change folder but no open pull request
@@ -55,7 +56,9 @@ class ReviewPushHookTest < Minitest::Test
     FileUtils.mkdir_p(hooks)
     File.write(File.join(@home, ".gitconfig"), "[user]\n  name = Test\n  email = test@example.com\n")
     File.write(File.join(@home, ".config", "git", "config"), "[core]\n  hooksPath = ~/.config/git/hooks\n")
-    File.symlink(File.join(@repo_root, "git/.config/git/hooks/pre-push"), File.join(hooks, "pre-push"))
+    %w[pre-push lefthook-wrapper].each do |name|
+      File.symlink(File.join(@repo_root, "git/.config/git/hooks", name), File.join(hooks, name))
+    end
     File.symlink(File.join(@repo_root, "git/.config/git/worktree-tools"), File.join(@home, ".config", "git", "worktree-tools"))
     dotfiles = File.join(@home, "Developer", "dotfiles")
     FileUtils.mkdir_p(dotfiles)
@@ -75,7 +78,7 @@ class ReviewPushHookTest < Minitest::Test
   end
 
   def create_repositories
-    origin = File.join(@home, "origin.git")
+    origin = File.join(@home, PersonalOrigin::PATH)
     git(@home, "init", "--bare", "--quiet", origin)
     git(@home, "-C", origin, "symbolic-ref", "HEAD", "refs/heads/#{TRUNK}")
     git(@home, "clone", "--quiet", origin, @work)

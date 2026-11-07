@@ -6,12 +6,13 @@ require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "hook_scripts"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 # Git exports GIT_DIR to hooks and lefthook passes it to every job. A gem installed from git can run
 # git while Bundler loads its gemspec (mvpa-css does, for its version). With GIT_DIR set that call
 # reads the project's repository, the version no longer matches Gemfile.lock, and RuboCop reports
 # `Unable to find gem`. The fixture gem `house-style` does the same. Everything is real: git, the
-# global hook shims, lefthook, Bundler and RuboCop. Nothing touches the network.
+# global hooks, lefthook, Bundler and RuboCop. Nothing touches the network.
 class LefthookRubocopGitGemTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   NATIVE_LEFTHOOK = LefthookBinary.locate
@@ -223,7 +224,7 @@ class LefthookRubocopGitGemTest < Minitest::Test
   end
 
   def publish_feature_branch
-    origin_dir = File.join(@tmpdir, "origin.git")
+    origin_dir = File.join(@tmpdir, PersonalOrigin::PATH)
     run!("git", "init", "--quiet", "--bare", origin_dir)
     run!("git", "remote", "add", "origin", origin_dir, chdir: @project_dir)
     run!("git", "worktree", "add", "--quiet", "-b", "feature", @worktree_dir, chdir: @project_dir)

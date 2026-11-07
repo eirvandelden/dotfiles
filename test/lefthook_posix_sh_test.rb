@@ -6,6 +6,7 @@ require "tmpdir"
 require_relative "lefthook_binary"
 require_relative "hook_scripts"
 require_relative "isolated_git"
+require_relative "personal_origin"
 
 class LefthookPosixShTest < Minitest::Test
   def self.locate_dash
@@ -26,7 +27,7 @@ class LefthookPosixShTest < Minitest::Test
     @bin_dir = File.join(@tmpdir, "bin")
     @repo_dir = File.join(@tmpdir, "repo")
     @hooks_dir = HookScripts.directory
-    @origin_dir = File.join(@tmpdir, "origin.git")
+    @origin_dir = File.join(@tmpdir, PersonalOrigin::PATH)
     FileUtils.mkdir_p(@bin_dir)
     setup_dotfiles_home
   end
