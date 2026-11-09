@@ -24,6 +24,9 @@ class RvCiFallbackTest < Minitest::Test
                "lefthook run migrations --files-from-stdin\n"
     assert_equal(expected, migration_hook_command("post-merge"))
     assert_equal(expected, migration_hook_command("post-rewrite"))
+  end
+
+  def test_post_checkout_runs_only_the_worktree_init_job
     assert_equal([ "worktree-init-on-create" ], lefthook_config["post-checkout"]["commands"].keys)
   end
 

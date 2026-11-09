@@ -53,7 +53,7 @@ class TestRun
 
   private
 
-  # After stop_all, so no file still writes into it. A killed file can leave a read-only Hooks copy.
+  # After stop_all, so no file still writes into it. A killed file can leave a read-only directory behind.
   def remove_run_root
     return unless @run_root
 

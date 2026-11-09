@@ -18,7 +18,7 @@
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:eirvandelden/` or `github.com/eirvandelden/`; the same rule as `RemoteMatcher.personal?`.
 - **Playbook** — `agents/.agents/PLAYBOOK.md`, the one rules file that all agents read in every repository.
-- **Remote clone** — lefthook's copy of the shared config in `.git/info/lefthook-remotes/<name>`.
+- **Remote clone** — lefthook's copy of the shared config in `.git/info/lefthook-remotes/<name>-<ref>`.
 - **Repo agents file** — the root `agents.md`, which describes only this repository; `CLAUDE.md` is a symlink to it.
 - **Repo config** — the first of `lefthook.yml`, `.lefthook.yml` or `.config/lefthook.yml` at the git toplevel.
 - **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
