@@ -9,7 +9,18 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
 
 1. Agent instructions: `AGENTS.md` is a real committed file describing this application — see "The repo context file" below. `CLAUDE.md` is a symlink to `AGENTS.md`, also committed. Never symlink either one to the shared playbook: that arrives from the user config (`~/.claude/PLAYBOOK.md`, `~/.codex/PLAYBOOK.md`) in every repository already, and a repo that symlinks it too just loads it twice. `docs/changes/` is reserved for the `intent` → `plan` → `implement` chain's change folders; it must not appear in `.gitignore`.
 2. Ruby: `.ruby-version` present; `rv` is the version manager — never mise/asdf/rbenv/rvm.
-3. Git hooks: no lefthook files needed in a new repo. Global `core.hooksPath` scripts automatically set `LEFTHOOK_CONFIG` to `~/Developer/dotfiles/lefthook.yml` when the repo has no own config — pre-commit, pre-push, and pull hooks fire everywhere with zero setup. Add a `lefthook-local.yml` only for repo-specific tasks on top of the defaults. A repo with its own `lefthook.yml` opts back into defaults with: `extends: ["${HOME}/Developer/dotfiles/lefthook.yml"]`. Never run `lefthook install` (restow `git` package to repair hook scripts if needed). Never disable hooks to get a commit through.
+3. Git hooks: the repo has its own `lefthook.yml` that names the dotfiles config as a remote. Start from this Starter config, add the repo's own jobs below it, then run `lefthook install` once:
+
+   ```yaml
+   remotes:
+     - git_url: https://github.com/eirvandelden/dotfiles.git
+       ref: main
+       refetch_frequency: 24h
+       configs:
+         - lefthook.yml
+   ```
+
+   `lefthook install` clones the shared config and writes every hook. Lefthook refetches it on the first hook run after 24 hours, and an unreachable remote never fails a commit. A job in the untracked `lefthook-local.yml` overrides a shared job of the same name. A repo with no `lefthook.yml` runs no hooks. Never disable hooks to get a commit through.
 4. Linters: RuboCop rules come from the `rubocop-eirvandelden` gem — never copy the rules into the repo. Add to the `:development` group: `gem "rubocop-eirvandelden", github: "eirvandelden/rubocop-eirvandelden", require: false` Then name the layers the project needs in `.rubocop.yml`:
 
    ```yaml
