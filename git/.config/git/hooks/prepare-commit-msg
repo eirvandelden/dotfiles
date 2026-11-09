@@ -1,4 +1,0 @@
-#!/bin/sh
-wrapper="${0%/*}/lefthook-wrapper"
-[ -x "$wrapper" ] || { echo "${0##*/}: $wrapper is missing; hooks skipped, restow the git package" >&2; exit 0; }
-exec "$wrapper" "${0##*/}" "$@"
