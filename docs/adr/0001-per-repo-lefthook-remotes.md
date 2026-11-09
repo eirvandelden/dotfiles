@@ -15,6 +15,6 @@ Each personal repository has its own `lefthook.yml` that names the dotfiles `lef
 - A repository with no `lefthook.yml`, or one that never ran `lefthook install`, runs no hooks.
 - A change to the shared config reaches every repository on its first hook run after 24 hours.
 - An unreachable remote never fails a hook run.
-- Every installed repository starts lefthook on `reference-transaction` and `post-index-change`, which adds a little time to ref updates and index writes.
+- The shared config lists no `reference-transaction` or `post-index-change` section: those hooks fire on every ref update and index write, so an empty section prints a banner each time and a broken shared config would block every ref update.
 - Work repositories lose the global hooks too and need their own `lefthook install`.
 - The old hook-run tests are gone: configuration has no tests.

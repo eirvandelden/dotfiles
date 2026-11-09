@@ -417,7 +417,6 @@ update: {}
 proc-receive: {}
 post-receive: {}
 post-update: {}
-reference-transaction: {}
 push-to-checkout: {}
 pre-auto-gc: {}
 sendemail-validate: {}
@@ -426,4 +425,3 @@ p4-changelist: {}
 p4-prepare-changelist: {}
 p4-post-changelist: {}
 p4-pre-submit: {}
-post-index-change: {}
