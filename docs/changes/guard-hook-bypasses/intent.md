@@ -1,6 +1,6 @@
 # Intent: Consent guard asks before any way of skipping the git hooks
 
-Author: Etienne van Delden de la Haije. Status: draft. Type: bugfix. Delivery: autonomous.
+Author: Etienne van Delden de la Haije. Status: accepted. Type: bugfix. Delivery: autonomous.
 
 ## Problem
 
