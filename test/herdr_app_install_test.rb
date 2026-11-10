@@ -82,7 +82,7 @@ class HerdrAppInstallTest < Minitest::Test
     assert_equal(File.join(app_home, "herdr-app"), File.readlink(launcher))
     assert_path_exists(File.join(app_home, "LICENSE"))
     assert_path_exists(File.join(@data, "icons/hicolor/scalable/apps/herdr-app.svg"))
-    assert_match(/^Exec=#{Regexp.escape(File.join(app_home, 'herdr-app'))}$/, File.read(desktop_entry))
+    assert_match(/^Exec="#{Regexp.escape(File.join(app_home, 'herdr-app'))}"$/, File.read(desktop_entry))
   end
 
   def test_a_fresh_install_writes_only_the_app_files
@@ -101,6 +101,14 @@ class HerdrAppInstallTest < Minitest::Test
 
     assert_path_exists(File.join(@directory, "elsewhere/herdr-app/herdr-app"))
     refute_path_exists(File.join(@home, ".local/share/herdr-app"))
+  end
+
+  def test_the_desktop_entry_quotes_an_exec_path_with_reserved_characters
+    data = File.join(@directory, "my data $HOME")
+    run_task(xdg: data)
+
+    exec_line = File.read(File.join(data, "applications/herdr-app.desktop"))[/^Exec=.*$/]
+    assert_equal("Exec=\"#{File.join(@directory, 'my data \\\\$HOME/herdr-app/herdr-app')}\"", exec_line)
   end
 
   def test_a_second_run_downloads_nothing

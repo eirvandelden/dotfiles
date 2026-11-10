@@ -94,13 +94,25 @@ herdr_app_unpack() {
     || die "herdr-app: the tarball holds no regular executable at herdr-app/herdr-app"
 }
 
+# Prints <path> as one quoted Exec argument, escaped as the Desktop Entry spec asks: \ " ` $ take
+# a backslash inside the quotes, that backslash is doubled for the string value, and % becomes %%.
+herdr_app_exec_argument() {
+  local path="$1"
+  path="${path//\\/\\\\\\\\}"
+  path="${path//\"/\\\\\"}"
+  path="${path//\`/\\\\\`}"
+  path="${path//\$/\\\\\$}"
+  path="${path//%/%%}"
+  printf '"%s"\n' "$path"
+}
+
 herdr_app_desktop_entry() {
   local app_home="$1"
   printf '%s\n' \
     "[Desktop Entry]" \
     "Type=Application" \
     "Name=Herdr" \
-    "Exec=${app_home}/herdr-app" \
+    "Exec=$(herdr_app_exec_argument "${app_home}/herdr-app")" \
     "Icon=herdr-app" \
     "Categories=Development;"
 }
