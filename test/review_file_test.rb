@@ -22,6 +22,12 @@ class ReviewFileTest < Minitest::Test
     assert_nil(Review.new("# Review\n\nNothing yet.\n").reviewed_commit)
   end
 
+  def test_a_fixed_slot_with_a_scoped_commit_subject_closes_the_finding
+    review = Review.new(text(round(1, "abc1234", "- [ ] Nit: Naming — `lib/widget.rb:1` → fixed (fix(widget): rename it)")))
+
+    assert_empty(review.open_findings)
+  end
+
   def test_commit_subject_names_the_first_finding
     review = Review.new(text(round(1, "abc1234", "- [ ] Important: Widget leaks memory — `lib/widget.rb:1` → fixed (Plug)")))
 

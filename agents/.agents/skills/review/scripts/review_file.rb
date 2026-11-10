@@ -7,7 +7,7 @@ class Review
   ROUND_COMMIT = /^## Round .* — ([0-9a-f]+)(?: \([a-z]+\))?\s*$/
   FIRST_FINDING = /^\s*- \[ \] (?:Important|Nit): (.+?) — `/
   SUBJECT_LIMIT = 72
-  CLOSED_SLOT = /\A\s*(fixed \(\s*[^)\s][^)]*\)|dismissed:\s*\S.*)\s*\z/
+  CLOSED_SLOT = /\A\s*(fixed \(\s*[^()\s](?:[^()]|\([^()]*\))*\)|dismissed:\s*\S.*)\s*\z/
 
   #: (String text) -> void
   def initialize(text)
