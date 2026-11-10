@@ -402,15 +402,17 @@ post-checkout:
         test -x "$script" || exit 0
         "$script" {1}
 
-# Every other git hook type, empty on purpose. `lefthook install` writes a .git/hooks file only for
-# a type the merged config names, so listing them all lets a job added here later run in every repo
-# after its next refetch, with no new `lefthook install`.
+# Almost every other git hook type, empty on purpose. `lefthook install` writes a .git/hooks file only
+# for a type the merged config names, so listing them lets a job added here later run in every repo
+# after its next refetch, with no new `lefthook install`. Four types are left out on purpose:
+# reference-transaction, post-index-change, prepare-commit-msg and post-commit. They fire on every ref
+# update, index write or commit, so an empty section prints a lefthook banner each time, and a broken
+# shared config would block every ref update. Add a section only for a job that needs one, then run
+# `lefthook install` again in each repo.
 applypatch-msg: {}
 pre-applypatch: {}
 post-applypatch: {}
 pre-merge-commit: {}
-prepare-commit-msg: {}
-post-commit: {}
 pre-rebase: {}
 pre-receive: {}
 update: {}
