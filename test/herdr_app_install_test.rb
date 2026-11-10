@@ -299,8 +299,8 @@ class HerdrAppInstallTest < Minitest::Test
 
   def link_real_tools
     REAL_TOOLS.each do |tool|
-      path = `command -v #{tool}`.strip
-      FileUtils.ln_s(path, File.join(@bin, tool)) unless path.empty?
+      path = executable_on_path(tool)
+      FileUtils.ln_s(path, File.join(@bin, tool)) if path
     end
   end
 
@@ -323,8 +323,15 @@ class HerdrAppInstallTest < Minitest::Test
   end
 
   def sha256sum_stub
-    host = `command -v sha256sum shasum`.lines.first.to_s.strip
+    host = executable_on_path("sha256sum") || executable_on_path("shasum")
     host.end_with?("shasum") ? "#!/bin/sh\nexec #{host} -a 256 \"$@\"\n" : "#!/bin/sh\nexec #{host} \"$@\"\n"
+  end
+
+  # `command -v` is a shell builtin; Ruby's backticks run it without a shell on Linux, so look the
+  # tool up on PATH here instead.
+  def executable_on_path(tool)
+    ENV.fetch("PATH").split(File::PATH_SEPARATOR).map { |dir| File.join(dir, tool) }
+       .find { |path| File.file?(path) && File.executable?(path) }
   end
 
   # Serves a fixture for the URL asked for and logs every call. The last two arguments are `-o <out>
