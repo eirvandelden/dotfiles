@@ -4,12 +4,9 @@ if [ "$LEFTHOOK_VERBOSE" = "1" ] || [ "$LEFTHOOK_VERBOSE" = "true" ]; then
   set -x
 fi
 
-if [ "$LEFTHOOK" = "0" ]; then
-  exit 0
-fi
-
+# Called by the shared lefthook config's post-checkout job: `worktree-init-on-create OLD_HEAD`.
 # A repository opts in with `git config worktree-tools.initOnCreate true`, so a new linked worktree
-# gets its stow package (and its lefthook-local.yml) before lefthook loads. Everywhere else
+# gets its stow package (and its lefthook-local.yml) on its first post-checkout. Everywhere else
 # a new worktree is set up explicitly with `git worktree-init`.
 init_new_worktree()
 {
@@ -25,7 +22,4 @@ init_new_worktree()
 }
 
 init_new_worktree "$1"
-
-wrapper="${0%/*}/lefthook-wrapper"
-[ -x "$wrapper" ] || { echo "${0##*/}: $wrapper is missing; hooks skipped, restow the git package" >&2; exit 0; }
-exec "$wrapper" "${0##*/}" "$@"
+exit 0

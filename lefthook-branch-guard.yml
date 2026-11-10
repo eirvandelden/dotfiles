@@ -1,9 +1,8 @@
 ---
-# The main/master guard, for repositories that load it from their own untracked `lefthook-local.yml`
+# The main/master guard, for a repository whose repo config or untracked `lefthook-local.yml` loads it
 # with `extends: [/Users/etienne.vandelden/Developer/dotfiles/lefthook-branch-guard.yml]`.
-# lefthook.yml holds the same three commands for dotfiles itself and for every repository that falls back
-# to its config. A relative `extends:` there would resolve against each fallback repository's root, and
-# silently drop the guard. test/branch_guard_test.rb keeps the two copies equal.
+# lefthook.yml holds the same three commands for every repository that names it under `remotes:`;
+# keep the two copies equal by hand.
 pre-commit:
   commands:
     no-push-to-main:

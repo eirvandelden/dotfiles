@@ -24,7 +24,7 @@ All configuration is managed through a dotfiles repository at `~/Developer/dotfi
 - Primary package manager Homebrew (`brew`); all packages declared in `packages.conf`. Linux fallbacks: `yay` (Arch/AUR), `apt` (Debian), `flatpak` (GUI apps).
 - Ruby built with YJIT and jemalloc; default version in `ruby/.ruby-version`. Global gems (bundler, rubocop, kamal, solargraph, etc.) installed by `40_install_default_ruby_gems.sh`.
 - Node version manager `chnode` (tkareine/chnode tap); default version in `node/.node-version`.
-- SSH signing via 1Password (ed25519 key, `gpg.format = ssh`). Git hooks via global `core.hooksPath = ~/.config/git/hooks` (stow `git` package). Hook scripts call `lefthook run <hook> --no-auto-install`; they export `LEFTHOOK_CONFIG` pointing to `~/Developer/dotfiles/lefthook.yml` for repos that have no own lefthook config — so pull hooks (post-merge, post-rewrite) and other defaults fire everywhere without per-repo files. Never run `lefthook install`; restow the `git` package to repair scripts. Trusted binstubs via the `.git/safe` convention.
+- SSH signing via 1Password (ed25519 key, `gpg.format = ssh`). Git hooks come from lefthook: each repo runs it from its own repo config, with the shared config as a remote; see `new-repo-setup`. Trusted binstubs via the `.git/safe` convention.
 
 ## Stow packages, bootstrap, cross-platform
 

@@ -146,16 +146,26 @@ stow:
 
 ### Sweep on pull
 
-A pull that moves the checked-out branch fires `post-merge` (fast-forward) or `post-rewrite` (rebase). The global `lefthook.yml` runs `worktree-sweep --detach` from both hooks. The pull returns at once; the sweep finishes in the background.
+A pull that moves the checked-out branch fires `post-merge` (fast-forward) or `post-rewrite` (rebase). The shared `lefthook.yml` runs `worktree-sweep --detach` from both hooks. The pull returns at once; the sweep finishes in the background.
 
 The sweep fetches `origin`'s default branch, then removes each clean worktree under `.worktrees/` whose PR is `MERGED`, or whose branch was pushed under its own name and is now in `origin/<default>`. A branch that was never pushed stays. The worktree that ran the pull stays too. `worktree-create` takes the same lock, so a sweep and a create never overlap in one repository. When a sweep holds it, `worktree-create` says so and waits. The sweep's fetch and each of its `gh` calls give up after `WORKTREE_TOOLS_TIME_LIMIT` seconds (default 30), so a sweep cannot keep the lock forever. `worktree-create`'s own calls have no limit, so Ctrl-C and terminal prompts still reach them.
 
 A pull whose new commits change no files does not sweep. The hooks list the changed files for `migrations`; when that list is empty, lefthook skips every command of the hook, `sweep-worktrees` included. Only empty commits cause this, so the next pull or `worktree-create` sweeps instead.
 
-Rollout, after the merge, on each machine:
+### Rollout after the merge
 
-- Restow: `cd ~/Developer/dotfiles && stow -t "$HOME" --ignore='hooks/(post-merge|pre-commit|pre-push)' git`. Until then the hook command does nothing and prints nothing.
-- In each repository that references the global config through `remotes`, refresh the clone by hand: `git -C <repo>/.git/info/lefthook-remotes/dotfiles pull`. The hook shims never refresh it.
+The `git` package no longer ships global hooks. Run these on each machine, by hand:
+
+- Restow the `git` package: `cd ~/Developer/dotfiles && stow -t "$HOME" -R git`.
+- Check `ls -l ~/.config/git/hooks`. Trash the dangling links, `lefthook-wrapper` and the six hook scripts, with `trash`.
+- Run `lefthook install` in `~/Developer/dotfiles`. It clones nothing there, since dotfiles holds the shared config itself, and writes the hooks it lists.
+
+Follow-ups, one per repository, outside this repository:
+
+- Each personal repository gets a `lefthook.yml` with the Starter config from the `new-repo-setup` skill, then `lefthook install`.
+- Each work repository runs `lefthook install` for its own lefthook config.
+
+Until a repository runs `lefthook install`, it runs no hooks: no branch guard, no linters.
 
 ### How It Works
 
@@ -181,13 +191,13 @@ Rollout, after the merge, on each machine:
 
 ### Setting up new worktrees automatically
 
-The global `post-checkout` hook runs `worktree-init` for a new linked worktree when the repository opts in:
+The shared `post-checkout` job runs `worktree-init-on-create` for a new linked worktree when the repository opts in:
 
 ```bash
 git config worktree-tools.initOnCreate true
 ```
 
-It runs before the hook's own lefthook run, so the stowed `lefthook-local.yml` is in place for that run. Lefthook reloads its config on every run, so later commits see the guard either way. A failing `worktree-init` prints a warning and the checkout goes on. Without the opt-in, nothing runs and you set the worktree up with `git worktree-init`. The hook skips a branch switch and a fresh clone.
+The job runs `worktree-init` during the new worktree's first `post-checkout`. Lefthook has already loaded its config by then, so the stowed `lefthook-local.yml` counts from the next hook run, not the first one. A failing `worktree-init` prints a warning and the checkout goes on. Without the opt-in, nothing runs and you set the worktree up with `git worktree-init`. The script skips a branch switch and a fresh clone.
 
 ## Conductor Integration
 

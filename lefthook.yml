@@ -1,7 +1,4 @@
 ---
-# Without this, `lefthook run` re-syncs hooks into the global core.hooksPath directory and replaces the stowed links.
-no_auto_install: true
-
 pre-commit:
   parallel: true
   commands:
@@ -16,7 +13,10 @@ pre-commit:
     erb_lint:
       tags: erb style
       glob: "*.{erb}"
-      run: erb_lint {staged_files}
+      # GIT_DIR is unset for the reason given on the rubocop job below.
+      run: |
+        unset GIT_DIR
+        erb_lint {staged_files}
     eslint:
       tags: javascript linter
       glob: "*.{js,ts,jsx,tsx}"
@@ -66,7 +66,7 @@ pre-commit:
         fi
         markdownlint --config "$config/no-hardwrap.json" --rules "$config/no-hardwrap.cjs" {staged_files}
         exit 0
-    # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
+    # Same command as lefthook-branch-guard.yml; keep the two equal by hand.
     no-push-to-main:
       tags: branch-protection
       run: |
@@ -138,7 +138,7 @@ pre-commit:
 # lefthook skips every pre-commit command on an empty index, so an empty commit needs this check.
 commit-msg:
   commands:
-    # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
+    # Same command as lefthook-branch-guard.yml; keep the two equal by hand.
     no-push-to-main:
       tags: branch-protection
       run: |
@@ -211,7 +211,10 @@ pre-push:
     erb_lint:
       tags: linter
       glob: "*.erb"
-      run: erb_lint {push_files}
+      # GIT_DIR is unset for the reason given on the pre-commit rubocop job.
+      run: |
+        unset GIT_DIR
+        erb_lint {push_files}
     eslint:
       tags: linter
       glob: "*.{js,ts,jsx,tsx}"
@@ -228,8 +231,10 @@ pre-push:
         - ruby
         - tests
         - minitest
+      # GIT_DIR is unset for the reason given on the pre-commit rubocop job.
       glob: "app/**/*.rb"
       run: |
+        unset GIT_DIR
         for file in {push_files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
@@ -248,8 +253,10 @@ pre-push:
         - ruby
         - tests
         - rspec
+      # GIT_DIR is unset for the reason given on the pre-commit rubocop job.
       glob: "app/**/*.rb"
       run: |
+        unset GIT_DIR
         for file in {push_files}; do
           rel_path="${file#app/}"
           base_name="${rel_path%.rb}"
@@ -275,7 +282,7 @@ pre-push:
       tags: yaml linter
       glob: "*.{yml,yaml}"
       run: yamllint {push_files}
-    # Same command as lefthook-branch-guard.yml; test/branch_guard_test.rb keeps the two equal.
+    # Same command as lefthook-branch-guard.yml; keep the two equal by hand.
     no-push-to-main:
       tags: branch-protection
       use_stdin: true
@@ -334,7 +341,10 @@ post-merge:
     - rebase
   commands:
     migrations:
-      run: git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
+      # GIT_DIR is unset for the reason given on the pre-commit rubocop job; the nested bi, rails and npm need it.
+      run: |
+        unset GIT_DIR
+        git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
     sweep-worktrees:
@@ -347,7 +357,10 @@ post-rewrite:
   files: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD"
   commands:
     migrations:
-      run: git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
+      # GIT_DIR is unset for the reason given on the pre-commit rubocop job; the nested bi, rails and npm need it.
+      run: |
+        unset GIT_DIR
+        git diff-tree -z -r --name-only --no-commit-id ORIG_HEAD HEAD | lefthook run migrations --files-from-stdin
       env:
         LEFTHOOK_QUIET: execution_info,meta,skips,summary
     sweep-worktrees:
@@ -379,3 +392,38 @@ migrations:
       priority: 3
       glob: "{yarn.lock,package-lock.json,package.json}"
       run: ": {files}; if [ -f package-lock.json ]; then npm install; elif [ -f yarn.lock ]; then yarn install; fi"
+
+post-checkout:
+  commands:
+    worktree-init-on-create:
+      # Silent when worktree-init-on-create is not stowed yet. It always exits 0.
+      run: |
+        script=~/.config/git/worktree-tools/worktree-init-on-create
+        test -x "$script" || exit 0
+        "$script" {1}
+
+# Almost every other git hook type, empty on purpose. `lefthook install` writes a .git/hooks file only
+# for a type the merged config names, so listing them lets a job added here later run in every repo
+# after its next refetch, with no new `lefthook install`. Four types are left out on purpose:
+# reference-transaction, post-index-change, prepare-commit-msg and post-commit. They fire on every ref
+# update, index write or commit, so an empty section prints a lefthook banner each time, and a broken
+# shared config would block every ref update. Add a section only for a job that needs one, then run
+# `lefthook install` again in each repo.
+applypatch-msg: {}
+pre-applypatch: {}
+post-applypatch: {}
+pre-merge-commit: {}
+pre-rebase: {}
+pre-receive: {}
+update: {}
+proc-receive: {}
+post-receive: {}
+post-update: {}
+push-to-checkout: {}
+pre-auto-gc: {}
+sendemail-validate: {}
+fsmonitor-watchman: {}
+p4-changelist: {}
+p4-prepare-changelist: {}
+p4-post-changelist: {}
+p4-pre-submit: {}
