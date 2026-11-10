@@ -79,6 +79,7 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - `;` as a leader in both the `global` and `terminal` sections of `keys.json`, and `; ;` types a `;`.
 - First, verify in the running app that sequences work in a terminal and that an unbound `;` still reaches the program.
 - The proposed key map below, as Etienne corrects it. herdr-app's own `cmd-…` defaults stay.
+- `keys.json` also works on Linux: the Steam Deck gets bindings that do not depend on the macOS `cmd` key.
 
 | Keys | herdr-app action | herdr TUI today |
 | --- | --- | --- |
@@ -143,7 +144,7 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 ### Phase 1
 
 - After delivery on this Mac, `~/.config/herdr-app/keys.json` and `~/.config/herdr-app/settings.json` resolve into the dotfiles repository, and herdr-app still uses MonoLisa and plays the herdr tones.
-- Changing the font in the repository's `settings.json` changes the running window's font within a few seconds.
+- Changing the font in the repository's `settings.json` changes the running window's font within 10 seconds.
 - Changing a setting in herdr-app's settings dialog shows up as a diff in the dotfiles repository.
 - With herdr-app running for a while, `git status` in the dotfiles repository shows no file Herdr wrote.
 - On a fresh Mac, the installer installs Herdr and links both files.
@@ -166,6 +167,7 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - With two done agents and one blocked agent, `; d` lists only the two done agents and `; b` only the blocked one; Enter on a row shows that agent.
 - In a shell, `; ;` types one `;`, and `echo a; echo b` runs unchanged.
 - Every row of the key map does what it says.
+- On the Steam Deck, the `;` leader keys work, and no herdr-app action needs the Super key.
 
 ### Phase 4
 
@@ -204,6 +206,9 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - `; d` and `; b` open lists of done and blocked agents, from a cloned picker — Etienne uses `ctrl+s space d` and `ctrl+s space b` a lot; the clone gets no Herdr updates.
 - Look: solunized theme, a fixed color for work spaces, TUI pane frames, blue accent for personal and orange for work; fallback work dark always and personal following the system — Etienne's words.
 - Add the agent pipeline as a third backend; keep the herdr TUI installed as a fallback — herdr-app is at 0.1.x.
+- Accept up to 10 seconds for a repository edit of `settings.json` to reach the running window — herdr-app's watcher misses edits through a link and polls every 10 seconds; settings edits are rare.
+- Until phase 3, the Steam Deck uses the macOS `keys.json`; phase 3 adds Linux bindings — phase 3 rewrites `keys.json` anyway.
+- No Codex critique: the plans of phases 2–5 get a Claude critique instead — Codex refuses the `terra` profile's model. That needs a playbook change (§7a) on its own branch before the phase 2 plan.
 
 ## Open questions
 
