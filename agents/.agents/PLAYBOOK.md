@@ -214,7 +214,7 @@ Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`R
 
 - Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
 - One coordinator drives plan, implement, review, fixes and `deliver`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
-- A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -p terra`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
+- A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -m gpt-6.1-sol -c model_reasoning_effort=medium`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
 - Independent review: the Claude `reviewer` agent always reviews the diff; the Codex CLI reviews it too only when `intent.md` records `Codex review: yes`. No open finding may remain before the pull request.
 - Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
 - Verify behaviour as a human would (rule 22) and record the evidence.
