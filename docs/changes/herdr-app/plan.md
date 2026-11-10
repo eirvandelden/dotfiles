@@ -176,6 +176,7 @@ The intent's folder-link fallback is not needed: herdr-app's source shows that a
    - Herdr's files: `git status --porcelain` listed nothing under `herdr-app/` after the session.
    - Sound paths: `$SANDBOX/../../Documents/Tones/herdr/jobs-done.mp3` resolves; `herdr-app status` reported no errors. Playback stays the delivery check.
    - MonoLisa: not confirmed. The sandbox window drew no frame after the space opened, so `shot` showed the empty start screen. The font key is unchanged from the current file; the delivery check in step 9 confirms it.
+   - Fresh clone, after the rebase onto `main` with PR #273 (bundler removed from `STOW`): `git clone --branch herdr-app` into a scratch folder, then `50_stow_all.sh` with a scratch `HOME` and the real `stow`: exit 0, "stow: all configured packages applied"; `keys.json` and `settings.json` link into the clone; `~/.config/herdr-app` is a real folder.
    - Caution for step 9 and later phases: `herdr-app do app.quit` against the sandbox also closed Etienne's own window. Stop a sandbox window by its own process.
 8. Run `bin/test`, then the linters (`rubocop`, `shellcheck`, `yamllint`, markdownlint through lefthook). Re-read the diff.
 9. Delivery, after the merge, from the main checkout `~/Developer/dotfiles`: `trash ~/.config/herdr-app/keys.json ~/.config/herdr-app/settings.json`, then `stow -d ~/Developer/dotfiles -t "$HOME" --no-folding --restow herdr-app`. Then repeat the live checks against the real config folder.
