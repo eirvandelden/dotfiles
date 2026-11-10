@@ -2,9 +2,12 @@
 # Commits docs/changes/<slug>/review.md once the review has converged: it has a round and no open
 # finding. An open round stays in the working tree, so one review leaves one commit however many
 # rounds it takes. Exits 0 after committing or when there is nothing to commit, 1 otherwise. It
-# never pushes; the caller pushes on exit 0.
+# never pushes; the caller pushes on exit 0. On a work repository it commits nothing: review.md
+# stays local, and it warns when git does not ignore the change folder. The commit subject names
+# the first finding, not the slug.
 require "open3"
 require_relative "review_file"
+require_relative "../../finish/scripts/change_scope"
 
 SKILLS_DIR = File.expand_path("../..", __dir__)
 
@@ -32,10 +35,13 @@ refuse("#{path} has no round: run /review first.") unless review.rounds?
 open_findings = review.open_findings
 refuse(open_findings.map { |line| "Open finding, close or dismiss it: #{line}" }) unless open_findings.empty?
 
-if run("git", "status", "--porcelain", "--", path).empty?
+if ChangeScope.work?
+  warn("#{folder}/ is not ignored: add docs/changes to .git/info/exclude, or a git add . will stage it.") if ChangeScope.folder_visible?(folder)
+  puts("Nothing committed: #{path} stays local on a work repository.")
+elsif run("git", "status", "--porcelain", "--", path).empty?
   puts("Nothing to commit: #{path} is already committed.")
 else
   run("git", "add", "--", path)
-  run("git", "commit", "--quiet", "-m", "Review for #{File.basename(folder)}", "--", path)
+  run("git", "commit", "--quiet", "-m", review.commit_subject(File.basename(folder)), "--", path)
   puts("Committed #{path}.")
 end
