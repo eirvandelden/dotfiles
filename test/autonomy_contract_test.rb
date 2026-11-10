@@ -10,6 +10,7 @@ class AutonomyContractTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(REPO_ROOT, "agents/.agents/skills")
   PLAYBOOK = Playbook.text
+  CODEX_CRITIQUE = "codex exec -m gpt-6.1-sol -c model_reasoning_effort=medium"
   CORE_VALUES = File.read(File.join(REPO_ROOT, "claude/.claude/core-values.yml"))
 
   def test_playbook_carves_rule_17_out_for_personal_autonomy
@@ -162,6 +163,10 @@ class AutonomyContractTest < Minitest::Test
     assert_critique_contract(section_of(skill("plan"), "## Auto mode"))
   end
 
+  def test_playbook_autonomy_names_the_codex_critique
+    assert_includes(autonomy_section, CODEX_CRITIQUE)
+  end
+
   def test_review_auto_mode_skips_codex_unless_the_intent_opts_in
     section = section_of(skill("review"), "## Auto mode")
 
@@ -293,7 +298,7 @@ class AutonomyContractTest < Minitest::Test
   private
 
   def assert_critique_contract(section)
-    assert_includes(section, "codex exec -p terra")
+    assert_includes(section, CODEX_CRITIQUE)
     assert_includes(section, "claude -p")
     assert_includes(section, "## Critique")
     assert_includes(section, "### Round")
