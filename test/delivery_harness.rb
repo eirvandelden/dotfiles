@@ -30,6 +30,7 @@ module DeliveryHarness
   WORKTREE_TOOLS_DIR = File.join(REPO_ROOT, "git/.config/git/worktree-tools")
 
   PERSONAL_URL = "git@github.com:eirvandelden/dots.git".freeze
+  WORK_URL = "git@github.com:employer/their-app.git".freeze
   PR_URL = "https://github.com/eirvandelden/dots/pull/7".freeze
   OWN_PANE = "w1:pOwn".freeze
 
@@ -122,6 +123,21 @@ module DeliveryHarness
     @fixture_copy = FIXTURES[[ branch, origin_url ]].copy
     @origin = File.join(@fixture_copy, "origin")
     @repo = File.join(@fixture_copy, "repo")
+  end
+
+  # Teaches the HOME of this test that "employer/their-app" is a work repository.
+  #: -> void
+  def allow_work_remote
+    FileUtils.mkdir_p(File.join(@home, ".claude"))
+    File.write(File.join(@home, ".claude", "consent-guard-allowed-remotes.txt"), "employer/their-app\n")
+  end
+
+  # The one-time setup Etienne does on a work repository: change folders stay out of git.
+  #: -> void
+  def exclude_change_folders
+    exclude = File.join(common_dir, "info", "exclude")
+    FileUtils.mkdir_p(File.dirname(exclude))
+    File.open(exclude, "a") { |file| file.puts("docs/changes") }
   end
 
   def commit_file(path, content, message)

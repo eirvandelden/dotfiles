@@ -92,7 +92,47 @@ class CommitPlanTest < Minitest::Test
     refute_includes(origin_branches, SLUG)
   end
 
+  def test_on_a_work_repository_intent_and_plan_stay_uncommitted
+    work_repository
+    before = commit_count
+    write_intent(intent_text)
+    write_plan("Status: accepted.")
+
+    stdout, stderr, status = commit_plan
+
+    assert(status.success?, stderr)
+    assert_match(/Nothing committed.*stay local on a work repository/, stdout)
+    assert_equal(before, commit_count)
+    assert_empty(git("log", "--format=%H", "--", "docs/changes").strip)
+    assert_empty(git("status", "--porcelain", "--untracked-files=all", "--", "docs/changes"))
+  end
+
+  def test_on_a_work_repository_warns_when_the_change_folder_is_not_ignored
+    work_repository(exclude: false)
+    write_intent(intent_text)
+    write_plan("Status: accepted.")
+
+    _, stderr, status = commit_plan
+
+    assert(status.success?, stderr)
+    assert_includes(stderr, "docs/changes/#{SLUG}/ is not ignored")
+  end
+
+  def test_on_a_work_repository_refuses_a_draft_plan
+    work_repository
+    write_intent(intent_text)
+    write_plan("Status: draft.")
+
+    assert_refused_without_commit(/plan\.md.*accepted/)
+  end
+
   private
+
+  def work_repository(exclude: true)
+    build_repo(origin_url: DeliveryHarness::WORK_URL)
+    allow_work_remote
+    exclude_change_folders if exclude
+  end
 
   def assert_refused_without_commit(message)
     before = commit_count

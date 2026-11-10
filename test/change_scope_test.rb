@@ -5,6 +5,7 @@ require "open3"
 require "tmpdir"
 require_relative "git_fixture"
 require_relative "isolated_git"
+require_relative "../agents/.agents/skills/finish/scripts/change_scope"
 
 # finish needs to know which of its two behaviours applies before doing
 # anything else. change-scope answers that from the "origin" remote alone,
@@ -65,7 +66,42 @@ class ChangeScopeTest < Minitest::Test
     assert_match(/unknown remote/i, stderr)
   end
 
+  def test_current_answers_personal_for_the_own_account
+    assert_equal("personal", ChangeScope.current("git@github.com:eirvandelden/dotfiles.git"))
+  end
+
+  def test_current_answers_work_for_an_allowlisted_origin
+    allow_remotes("employer/their-app")
+
+    assert_equal("work", with_home { ChangeScope.current("git@github.com:employer/their-app.git") })
+  end
+
+  def test_current_answers_nil_for_an_unknown_origin
+    assert_nil(with_home { ChangeScope.current("git@github.com:someone-else/dotfiles.git") })
+  end
+
+  def test_work_is_false_for_an_unknown_origin
+    add_remote("git@github.com:someone-else/dotfiles.git")
+
+    refute(Dir.chdir(@repo) { with_home { ChangeScope.work? } })
+  end
+
+  def test_work_is_true_for_an_allowlisted_origin
+    allow_remotes("employer/their-app")
+    add_remote("git@github.com:employer/their-app.git")
+
+    assert(Dir.chdir(@repo) { with_home { ChangeScope.work? } })
+  end
+
   private
+
+  def with_home
+    previous = ENV["HOME"]
+    ENV["HOME"] = @home
+    yield
+  ensure
+    ENV["HOME"] = previous
+  end
 
   def allow_remotes(*entries)
     File.write(File.join(@home, ".claude", "consent-guard-allowed-remotes.txt"), entries.join("\n"))

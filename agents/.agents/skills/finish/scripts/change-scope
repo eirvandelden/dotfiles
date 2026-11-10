@@ -3,28 +3,12 @@
 # own GitHub account, "work" when it matches an entry in RemoteMatcher's
 # allowlist file, exits 1 otherwise. The finish skill uses this instead of
 # guessing scope from the branch name or asking every time.
-require "open3"
-require_relative "../../../../../claude/.claude/hooks/remote_matcher"
+require_relative "change_scope"
 
-#: -> String?
-def origin_url
-  stdout, status = Open3.capture2("git", "remote", "get-url", "origin")
-  status.success? ? stdout.strip : nil
-end
-
-#: -> bot
-def refuse
+scope = ChangeScope.current
+if scope.nil?
   warn("unknown remote; finish refuses to guess.")
   exit(1)
 end
 
-url = origin_url
-refuse if url.nil? || url.empty?
-
-if RemoteMatcher.personal?(url)
-  puts("personal")
-elsif RemoteMatcher.allowlisted?(url)
-  puts("work")
-else
-  refuse
-end
+puts(scope)
