@@ -96,7 +96,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 5. Pull request workflow:
    - Always target `origin` (personal fork or own work repo) over upstream.
    - Agents may push branches to `origin` without asking first, while implementing. Rule 6 still applies: never post/comment as Etienne on a PR without explicit instruction for that exact message.
-   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/` (on a work repository the folder is a local file no commit holds, so there is nothing to remove); `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
+   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/` (on a work repository the folder is a local file no commit holds, so there is nothing to remove); `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists. On a work repository the guard passes, because it reads only the index and HEAD.
    - If the target repository is ambiguous, ask before proceeding.
    - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
