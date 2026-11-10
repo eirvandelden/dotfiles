@@ -96,6 +96,14 @@ class HookBypassTest < Minitest::Test
       .each { |command| refute_nil(reason(command), command) }
   end
 
+  def test_a_quoted_switch_value_inside_backticks_has_a_reason
+    refute_nil(reason('echo `LEFTHOOK_CONFIG="/a b" git commit -m x`'))
+  end
+
+  def test_adding_a_lefthook_hook_has_a_reason
+    refute_nil(reason("lefthook add pre-commit"))
+  end
+
   def test_a_quoted_switch_assignment_inside_a_quoted_sentence_has_no_reason
     [ %q(git commit -m 'LEFTHOOK_CONFIG="/tmp/hook dir/x.yml" is refused'),
       %q(git commit -m "see LEFTHOOK_CONFIG='/a b' here") ].each { |command| assert_nil(reason(command), command) }

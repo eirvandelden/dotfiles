@@ -1170,6 +1170,10 @@ end
     [ "lefthook install", "lefthook uninstall" ].each { |command| assert_waits(command) }
   end
 
+  def test_adding_a_lefthook_hook_waits_for_consent
+    assert_waits("lefthook add pre-commit")
+  end
+
   def test_lefthook_dump_runs_without_a_question
     assert_runs("lefthook dump")
   end
