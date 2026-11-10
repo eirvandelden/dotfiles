@@ -38,3 +38,6 @@ codex/.codex/skills/.system
 
 # Session handoff notes written by the superpowers-ruby skill
 docs/handoffs/
+
+# herdr-app writes settings.json.tmp.<pid>.<n> beside the link target, inside this repository
+herdr-app/.config/herdr-app/*.tmp.*

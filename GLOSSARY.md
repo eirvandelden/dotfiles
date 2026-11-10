@@ -7,11 +7,14 @@
 - **Change folder** — `docs/changes/<slug>/`, as `plan/scripts/change-folder` prints it.
 - **Change scope** — `personal` or `work`, as `agents/.agents/skills/finish/scripts/change-scope` prints it from the origin URL. It is not the glossary's **Scope**, which names the secrets `unlock` loads. Never write bare "scope" for this concept. Avoid: work scope, repo scope.
 - **Changed file** — a path that differs from the base, in the working tree, or is untracked, with status `M`, `A`, `D` or `?`.
+- **Core** — one herdr-core session, such as `default` (personal) or `work`, with its own terminals and spaces. Avoid: server.
 - **Covering test** — the test that still proves the behaviour of a deleted test.
 - **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
 - **Drift** — the Solunized block is not byte-equal to the light dist table, one empty line, then the dark dist table.
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
+- **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
+- **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Local artefact** — a change artefact that no commit holds. On a work repository `.git/info/exclude` hides it.

@@ -1,0 +1,15 @@
+{
+  "zoom": 1.0,
+  "sounds": {
+    "enabled": true,
+    "done": "../../Documents/Tones/herdr/jobs-done.mp3",
+    "blocked": "../../Documents/Tones/herdr/milord.mp3"
+  },
+  "font": "MonoLisa",
+  "font_ligatures": false,
+  "telemetry": false,
+  "minimum_contrast": 1.0,
+  "colors": {
+    "accent": "#0068c9"
+  }
+}
