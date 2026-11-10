@@ -60,6 +60,61 @@ class WorktreeSweepTest < Minitest::Test
     refute(branch?("merged-branch"))
   end
 
+  def test_removes_a_merged_worktree_holding_only_untracked_change_artefacts
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_artefacts(merged)
+    write_gh_states("merged-branch" => "MERGED")
+
+    _, stderr, status = run_script
+
+    assert(status.success?, stderr)
+    refute(File.directory?(merged))
+    refute(branch?("merged-branch"))
+  end
+
+  def test_removes_a_merged_worktree_with_artefacts_and_a_globally_ignored_file
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_artefacts(merged)
+    File.write(File.join(merged, ".DS_Store"), "junk")
+    config_home = File.join(@enclosing, "xdg")
+    FileUtils.mkdir_p(File.join(config_home, "git"))
+    File.write(File.join(config_home, "git", "ignore"), ".DS_Store\n")
+    write_gh_states("merged-branch" => "MERGED")
+
+    _, stderr, status = run_script(extra_env: { "XDG_CONFIG_HOME" => config_home })
+
+    assert(status.success?, stderr)
+    refute(File.directory?(merged))
+  end
+
+  def test_keeps_a_merged_worktree_with_a_modified_tracked_file
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_artefacts(merged)
+    File.write(File.join(merged, "file-initial.txt"), "edited")
+    write_gh_states("merged-branch" => "MERGED")
+
+    run_script
+
+    assert(File.directory?(merged))
+    assert(branch?("merged-branch"))
+  end
+
+  def test_keeps_a_merged_worktree_with_an_untracked_file_outside_docs_changes
+    merged = add_worktree("merged-branch")
+    commit(merged, "more work")
+    write_artefacts(merged)
+    File.write(File.join(merged, "notes.txt"), "keep me")
+    write_gh_states("merged-branch" => "MERGED")
+
+    run_script
+
+    assert(File.directory?(merged))
+    assert_equal("keep me", File.read(File.join(merged, "notes.txt")))
+  end
+
   def test_removes_a_branch_pushed_under_its_own_name_once_origin_main_contains_it
     pushed = add_worktree("pushed")
     commit(pushed, "pushed work")
@@ -387,6 +442,12 @@ class WorktreeSweepTest < Minitest::Test
     File.write(File.join(dir, "file-#{message.tr(' ', '-')}.txt"), message)
     git(dir, "add", "-A")
     git(dir, "commit", "--quiet", "-m", message)
+  end
+
+  def write_artefacts(worktree)
+    folder = File.join(worktree, "docs", "changes", "my-change")
+    FileUtils.mkdir_p(folder)
+    %w[intent.md plan.md review.md].each { |name| File.write(File.join(folder, name), "# #{name}\n") }
   end
 
   def add_worktree(name)
