@@ -1,6 +1,6 @@
 # Intent: Consent guard asks before any way of skipping the git hooks
 
-Author: Etienne van Delden de la Haije. Status: accepted. Type: bugfix. Delivery: autonomous.
+Author: Etienne van Delden de la Haije. Status: draft. Type: bugfix. Delivery: autonomous.
 
 ## Problem
 
@@ -17,7 +17,7 @@ Three more routes skip or disarm the hooks without running them at all:
 
 - `git config core.hooksPath …` or `--unset core.hooksPath`, which change the hooks path for every later command.
 - `git commit-tree` with `git update-ref`, which build a commit and move a branch with no hook involved.
-- `lefthook install` and `lefthook uninstall`, which replace or remove the global shims. On 2026-10-06 lefthook wrote its stock shims over four global hooks, and the main guard silently disappeared for repositories without their own lefthook config.
+- `lefthook uninstall`, which removes a repository's hooks. Since ADR 0001 (2026-11-09) there are no global hooks: each repository arms its own with `lefthook install`, so `install` and `add` turn hooks on and stay free.
 
 The guard's existing checks share a second weakness: they see `--force;` as one word, so `git push --force; echo done` passes the never-allowed `--force` check (found during planning).
 
@@ -46,7 +46,7 @@ An agent that takes any of these routes is stopped until Etienne agrees, the sam
 - The lefthook switches `LEFTHOOK` (any value that turns lefthook off), `LEFTHOOK_EXCLUDE`, `LEFTHOOK_BIN` and `LEFTHOOK_CONFIG`, inline or exported.
 - Every way to set or unset `core.hooksPath`: `git -c`, `GIT_CONFIG_PARAMETERS`, `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_<n>`, and `git config` in any scope.
 - The plumbing commands `git commit-tree` and `git update-ref`.
-- `lefthook install` and `lefthook uninstall`.
+- `lefthook uninstall`.
 - Codex `default.rules` entries for each route a prefix rule can express.
 - Every check, old and new, sees commands chained with `;`, `&` or `|` as separate words.
 
@@ -70,7 +70,7 @@ An agent that takes any of these routes is stopped until Etienne agrees, the sam
 - `git config core.hooksPath /dev/null` and `git config --global --unset core.hooksPath` wait for consent.
 - `git config --get core.hooksPath` goes through without a question.
 - `git commit-tree HEAD^{tree} -p HEAD -m "x"` and `git update-ref refs/heads/main <sha>` each wait for consent.
-- `lefthook install` and `lefthook uninstall` wait for consent; `lefthook dump` goes through.
+- `lefthook uninstall` waits for consent; `lefthook install`, `lefthook add pre-commit` and `lefthook dump` go through.
 - After consent, `I_HAVE_USER_CONSENT=1 git commit -n -m "x"` goes through.
 - `git commit --no-veri -m "x"` waits for consent.
 - `LEFTHOOK_BIN=true git commit -m "x"` and `LEFTHOOK_CONFIG=/tmp/empty.yml git commit -m "x"` each wait for consent.
