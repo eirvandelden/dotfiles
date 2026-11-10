@@ -143,7 +143,7 @@ A critique CLI that fails or is missing is a blocker: put it in the report as a 
 
 ## Critique
 
-Read the plan, then read the actual code it touches. Be critical: does the approach hold? Can it be done better? Verify the plan's claims against the code — a file it says exists, a pattern it says is already used, a test level it assumes. Check the plan against `intent.md`'s `## Decisions` too, and report any step that contradicts one. Report disagreements with reasons and propose the better alternative. Meant for a second model: `codex -p terra` reviewing a Claude-written plan, or an Opus session reviewing one Sonnet wrote.
+Read the plan, then read the actual code it touches. Be critical: does the approach hold? Can it be done better? Verify the plan's claims against the code — a file it says exists, a pattern it says is already used, a test level it assumes. Check the plan against `intent.md`'s `## Decisions` too, and report any step that contradicts one. Report disagreements with reasons and propose the better alternative. Meant for a second model: `codex exec -m gpt-6.1-sol -c model_reasoning_effort=medium` reviewing a Claude-written plan, or an Opus session reviewing one Sonnet wrote.
 
 ## Execute a handed-over plan
 
@@ -157,4 +157,4 @@ This role exists for a plan handed over outside the artifact chain (a plan paste
 
 ## Codex
 
-Same three roles, same plan template and design gate. `plan` role needs Codex's own plan mode (`/plan`); `here` is the only backend, since Codex has no herdr pane of its own. `critique` role is what `codex -p terra` is for. In auto mode a Codex author runs the critique with Claude: `claude -p --model opus --permission-mode plan "<prompt>"`.
+Same three roles, same plan template and design gate. `plan` role needs Codex's own plan mode (`/plan`); `here` is the only backend, since Codex has no herdr pane of its own. `critique` role is what `codex -m gpt-6.1-sol -c model_reasoning_effort=medium` is for. In auto mode a Codex author runs the critique with Claude: `claude -p --model opus --permission-mode plan "<prompt>"`.
