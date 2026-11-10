@@ -30,6 +30,10 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/00_common.sh"
 readonly HERDR_APP_MANIFEST_URL="https://releases.herdr.dev/app/latest.json"
 readonly HERDR_APP_URL_PREFIX="https://releases.herdr.dev/"
 
+HERDR_APP_STAGING=""
+
+herdr_app_cleanup() { [[ -z "$HERDR_APP_STAGING" ]] || rm -rf "$HERDR_APP_STAGING"; }
+
 herdr_app_home()     { printf '%s\n' "${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app"; }
 herdr_app_launcher() { printf '%s\n' "$HOME/.local/bin/herdr-app"; }
 
@@ -137,11 +141,11 @@ main() {
 
   require_cmd curl jq tar sha256sum
 
-  local target release url sha256 staging
+  local target release url sha256
   target="$(herdr_app_target)"
-  staging="$(mktemp -d)"
-  # shellcheck disable=SC2064
-  trap "rm -rf '${staging}'" EXIT
+  HERDR_APP_STAGING="$(mktemp -d)"
+  trap herdr_app_cleanup EXIT
+  local staging="$HERDR_APP_STAGING"
 
   herdr_app_fetch "$HERDR_APP_MANIFEST_URL" "$staging/latest.json"
   release="$(herdr_app_release "$staging/latest.json" "$target")"
