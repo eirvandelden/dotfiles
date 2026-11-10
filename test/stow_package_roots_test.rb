@@ -11,7 +11,8 @@ require_relative "isolated_git"
 # `~/README.md`. Nothing complains: stow succeeds, and the stray file is found months later.
 #
 # Every package root in this repository holds only dot-prefixed entries. This is the guard for
-# that, over exactly the packages packages.conf declares.
+# that, over exactly the packages packages.conf declares. It also guards that every declared
+# package has a tracked folder, because `stow_configure` dies on a missing one.
 class StowPackageRootsTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
 
@@ -140,7 +141,7 @@ class StowPackageRootsTest < Minitest::Test
     stow_packages(root).flat_map { |package|
       directory = File.join(root, package)
       # A declared package with no directory is packages.conf's bug, not a stray file, and stow
-      # itself fails on it at install time. Nothing for this guard to say about it.
+      # itself fails on it at install time. `untracked_in` reports it.
       next [] unless File.directory?(directory)
 
       Dir.children(directory)
