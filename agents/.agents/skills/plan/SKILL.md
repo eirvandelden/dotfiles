@@ -27,7 +27,7 @@ Run it from anywhere inside the repository. The script creates `.worktrees/<slug
 
 `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 
-The pane writes `plan.md`, and once Etienne says "accepted" or "agreed", commits `intent.md` and `plan.md` together through `commit-plan` (on a work repository nothing is committed and nothing is pushed), pushes the branch, writes a short report to the shared git directory, and sends one line back: `Plan ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
+The pane writes `plan.md`, and once Etienne says "accepted" or "agreed", commits `intent.md` and `plan.md` together through `commit-plan`, pushes the branch (on a work repository `commit-plan` commits nothing and the pane pushes nothing), writes a short report to the shared git directory, and sends one line back: `Plan ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
 
 ### `here` backend
 

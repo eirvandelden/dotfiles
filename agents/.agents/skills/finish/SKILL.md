@@ -9,7 +9,7 @@ arguments:
 
 # Finish
 
-`/finish` ships a change. The `deliver` skill already removed `docs/changes/<slug>/` (on a work repository the folder stays local and no commit held it), pushed the branch and opened a draft PR. This skill takes that PR the rest of the way. It runs on explicit command (`/finish`), or by the autonomous coordinator in auto mode (below). Etienne's `/finish` is the merge approval. The consent guard refuses to create or merge a pull request through `gh` while the branch's own `docs/changes/<slug>/` exists; `deliver` removed it, so the merge passes here.
+`/finish` ships a change. The `deliver` skill already removed `docs/changes/<slug>/` (on a work repository the folder stays local and no commit held it), pushed the branch and opened a draft PR. This skill takes that PR the rest of the way. It runs on explicit command (`/finish`), or by the autonomous coordinator in auto mode (below). Etienne's `/finish` is the merge approval. The consent guard refuses to create or merge a pull request through `gh` while the branch's own `docs/changes/<slug>/` exists; `deliver` removed it, so the merge passes here. On a work repository the folder stays local and untracked, and the guard reads only the index and HEAD, so it passes too.
 
 `--dry-run`: print the steps below for the scope that applies, then stop before doing anything.
 
