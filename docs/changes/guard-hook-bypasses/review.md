@@ -105,3 +105,42 @@ The inline RBS signatures match the guard's `#:` style. `%w[install uninstall ad
 - `test/consent_guard_test.rb` 142 runs, `test/hook_bypass_test.rb` 24 runs, `test/guard_parity_test.rb` 12 runs, `test/isolated_git_test.rb` 16 runs: all green.
 - `rubocop` on the five touched Ruby files: no offenses.
 - `bin/test`: 105 of 106 files green. `test/secrets_loader_test.rb` fails 5 of 28 runs because the real `/opt/homebrew/bin/op` answers instead of the test's stub ("\"token\" isn't an item in the \"Private\" vault"). The branch touches nothing under `secrets/` or `zsh/`, and the last four `Dotfiles tests` runs on `main` passed, so it is environmental, not from this branch.
+
+## Round 4 — 2026-11-10T20:30Z — edfc13bc
+
+No `REVIEW.md` or `REVIEW.local.md` exists at the repository root, so the reviewer's default passes ran: Bugs, Security, Compliance, Design. The branch contains `origin/main` (`760e1da2`).
+
+No new findings.
+
+Round 3's two findings are addressed on the branch but still unchecked above; the coordinator closes them:
+
+- Important (`lefthook install` and `add` ask): Etienne amended and accepted the intent on 2026-11-10, and `Ask only before lefthook uninstall` drops `install` and `add` and rewrites the reason without "global". Holds as fixed.
+- Nit (`add` after any `lefthook` word): moot, `add` is gone. `which lefthook && git add .` now goes through (probed).
+
+### Bugs
+
+Probed the worktree's guard with a Claude and a Codex payload each. Exit 2 with the new reason: `lefthook uninstall`, `lefthook uninstall&&echo done`, `npx lefthook uninstall`, and `lefthook install && brew uninstall foo` (the accepted "any later word" risk). Exit 0: `lefthook install`, `lefthook install -f`, `lefthook add pre-commit`, `lefthook dump`, `which lefthook && git add .`, `brew uninstall lefthook`, `I_HAVE_USER_CONSENT=1 lefthook uninstall` and `git commit -m "lefthook uninstall is guarded"`. `LEFTHOOK=0 lefthook install` still asks through the switch route.
+
+`bin/lefthook uninstall --force` is refused outright by the plain `--force` check, which matches `--force` in any command. `origin/main`'s guard refuses it the same way, so it is not from this branch.
+
+### Security
+
+No secrets, no new network calls, no new dependencies. The revision narrows one route (`install`, `add`) that ADR 0001 made the arming step; every other route is unchanged.
+
+### Compliance
+
+The amended acceptance criterion maps to tests: `lefthook uninstall` waits → `test_uninstalling_lefthook_waits_for_consent`; `lefthook install` and `lefthook add pre-commit` go through → `test_installing_or_adding_lefthook_hooks_runs_without_a_question`; `lefthook dump` goes through → `test_lefthook_dump_runs_without_a_question`. Every test the plan's `## Proof` names exists, including `test_lefthook_uninstall_has_a_reason` and `test_installing_or_adding_lefthook_hooks_has_no_reason`. The round-1 mapping for the other criteria is unchanged. Tests changed only where the amended intent reverses a criterion: no test was weakened, skipped or deleted for any other route.
+
+`codex execpolicy check` with codex-cli 0.167.0 gives the step-7 decisions: `prompt` for `git commit -n -m x`, `git ci -n -m x`, `git commit --no-veri -m x`, `git merge --no-verify x`, `git config --global --unset core.hooksPath`, `git config --global remove-section core`, `git config --rename-section core core2` and `lefthook uninstall`; no rule for `git config --get core.hooksPath`, `lefthook install`, `lefthook add pre-commit` and `lefthook dump`; `allow` for `git push -n origin feature`.
+
+Two notes for the delivery account, not findings. The plan's "State of the branch" names pre-rebase commit ids (`917b7a4a` …) that no branch holds; the folder goes at delivery. `claude/.claude/settings.json:422` still tells the auto-mode classifier that `lefthook install` needs an explicit user request; the plan puts it out of scope and raises it for the coordinator, and no coordinator decision records the outcome. It is a candidate for a separate branch.
+
+### Design
+
+`LEFTHOOK_UNINSTALL` follows `NO_VERIFY` as a single-word constant, as decision 13 says, and closes round 3's design remark. `lefthook_uninstall?` stays one `index` and one `include?`. The Codex rule and `GUARDED_COMMANDS` match the hook.
+
+### Checks run
+
+- `test/consent_guard_test.rb` 143 runs, `test/hook_bypass_test.rb` 25 runs, `test/guard_parity_test.rb` 12 runs, `test/isolated_git_test.rb` 16 runs: all green.
+- `rubocop` on the five touched Ruby files: no offenses.
+- `bin/test`: 106 of 107 files green. `test/secrets_loader_test.rb` fails 5 runs because the real `op` answers instead of the test's stub ("\"token\" isn't an item in the \"Private\" vault"), as in round 3. The branch touches nothing under `secrets/` or `zsh/`, so it is environmental.
