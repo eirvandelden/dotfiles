@@ -135,7 +135,7 @@ The intent's folder-link fallback is not needed: herdr-app's source shows that a
 - `keys.json` is one file for macOS and SteamOS, as tracked today. On Linux, herdr-app reads its `cmd-` bindings as the Super key. Phase 3 rewrites the keys.
 - Ignore `herdr-app/.config/herdr-app/*.tmp.*` in the root `.gitignore`: `write_atomic` writes `settings.json.tmp.<pid>.<n>` next to the link target, inside the repository, and a crash between write and rename would leave it.
 - Stow on this Mac only from the main checkout after the merge, never from this worktree: links into `.worktrees/herdr-app` would dangle once the worktree is removed.
-- No conflict with `intent.md`'s `## Decisions` found. The acceptance criterion "within a few seconds" may not hold: herdr-app's watcher does not see edits through a link, and its fallback poll runs every 10 s. The plan keeps the criterion as written and measures it; if the measured delay is over a few seconds, that is a decision for Etienne, not for the implementer.
+- No conflict with `intent.md`'s `## Decisions` found. herdr-app's watcher does not see edits through a link, and its fallback poll runs every 10 s. Etienne accepted up to 10 seconds, and `intent.md` now says so.
 
 ## Integration points
 
@@ -183,7 +183,7 @@ The intent's folder-link fallback is not needed: herdr-app's source shows that a
 
 ## Risks
 
-- Edits to the repository's `settings.json` reach the running app through the 10 s mtime poll, not the watcher. "Within a few seconds" becomes "within about 10 s". Nothing in the dotfiles can shorten it.
+- Edits to the repository's `settings.json` reach the running app through the 10 s mtime poll, not the watcher. The criterion is "within 10 seconds", as Etienne accepted. Nothing in the dotfiles can shorten it.
 - While the tracked `keys.json` equals a shipped default, a herdr-app update rewrites it through the link. That shows as a diff in the repository. Phase 3 edits the file, after which updates stop touching it.
 - On SteamOS, `keys.json` holds the macOS `cmd-` bindings (Super key) until phase 3.
 - The second sandbox window shares herdr-core with Etienne's window; it must never close spaces or stop a core. It may double sounds and toasts while it runs.
@@ -197,7 +197,7 @@ The intent's folder-link fallback is not needed: herdr-app's source shows that a
 The live checks below run twice: first in the sandbox of step 7, with `CONFIG=$SANDBOX`, `REPO=<this worktree>` and `HERDR_APP_HOME="$SANDBOX"` on every `herdr-app` command; then after delivery, with `CONFIG=~/.config/herdr-app`, `REPO=~/Developer/dotfiles` and no `HERDR_APP_HOME`.
 
 - After delivery on this Mac, both files resolve into the dotfiles repository, herdr-app still uses MonoLisa and plays the herdr tones → check: `readlink "$CONFIG/keys.json" "$CONFIG/settings.json"` prints paths under `$REPO/herdr-app/`; no `$CONFIG/settings.error`; `herdr-app shot` shows MonoLisa; the Play buttons in Settings > Alerts play `jobs-done` and `milord`, not the bundled sounds.
-- Changing the font in the repository's `settings.json` changes the running window's font within a few seconds → check: change `font` in `$REPO/herdr-app/.config/herdr-app/settings.json`, time until `herdr-app shot` shows it, revert. Record the measured time; over a few seconds goes to Etienne as a decision.
+- Changing the font in the repository's `settings.json` changes the running window's font within 10 seconds → check: change `font` in `$REPO/herdr-app/.config/herdr-app/settings.json`, time until `herdr-app shot` shows it, revert; repeat three times and record each time. The sandbox ran a `font_size` change through `herdr-app status` once (9.3 s), because its window drew no frame for `shot`; the delivery check in step 9 times the `font` change itself. Over 10 seconds goes to Etienne as a decision.
 - Changing a setting in herdr-app's settings dialog shows up as a diff in the repository → check: toggle a setting in the dialog; `test -L "$CONFIG/settings.json"`; `git -C "$REPO" diff --stat` lists `herdr-app/.config/herdr-app/settings.json`; revert. If the link became a plain file, stop: the intent's whole-folder fallback applies.
 - With herdr-app running for a while, `git status` shows no file Herdr wrote → check: `git -C "$REPO" status --porcelain` after a session lists nothing under `herdr-app/` beyond the two tracked files.
 - On a fresh Mac, the installer installs Herdr and links both files → `test/herdr_app_package_test.rb` `test_brew_macos_lists_the_herdr_app_cask`, `test_stow_lists_herdr_app`, `test_stow_shared_lists_herdr_app`; `test/herdr_app_package_test.rb` `test_the_stow_task_links_herdr_app_file_by_file`; plus check: the cask install on a fresh Mac stays a manual check for Etienne, since the intent keeps the installer from running on this Mac.
