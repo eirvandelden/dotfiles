@@ -158,7 +158,7 @@ The `git` package no longer ships global hooks. Run these on each machine, by ha
 
 - Restow the `git` package: `cd ~/Developer/dotfiles && stow -t "$HOME" -R git`.
 - Check `ls -l ~/.config/git/hooks`. Trash the dangling links, `lefthook-wrapper` and the six hook scripts, with `trash`.
-- Run `lefthook install` in `~/Developer/dotfiles`. It clones nothing there, since dotfiles holds the shared config itself, and writes every hook.
+- Run `lefthook install` in `~/Developer/dotfiles`. It clones nothing there, since dotfiles holds the shared config itself, and writes the hooks it lists.
 
 Follow-ups, one per repository, outside this repository:
 

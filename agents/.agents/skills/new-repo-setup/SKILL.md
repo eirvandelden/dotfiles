@@ -20,7 +20,7 @@ Checklist, in order. Reference repo for configs: `~/Developer/journal_administra
          - lefthook.yml
    ```
 
-   `lefthook install` clones the shared config and writes every hook. Lefthook refetches it on the first hook run after 24 hours, and an unreachable remote never fails a commit. A job in the untracked `lefthook-local.yml` overrides a shared job of the same name. A repo with no `lefthook.yml` runs no hooks. Never disable hooks to get a commit through.
+   `lefthook install` clones the shared config and writes the hooks it lists. Lefthook refetches it on the first hook run after 24 hours, and an unreachable remote never fails a commit. A job in the untracked `lefthook-local.yml` overrides a shared job of the same name. A repo with no `lefthook.yml` runs no hooks. Never disable hooks to get a commit through.
 4. Linters: RuboCop rules come from the `rubocop-eirvandelden` gem — never copy the rules into the repo. Add to the `:development` group: `gem "rubocop-eirvandelden", github: "eirvandelden/rubocop-eirvandelden", require: false` Then name the layers the project needs in `.rubocop.yml`:
 
    ```yaml
