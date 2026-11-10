@@ -5,6 +5,7 @@
 module HookBypass
   COMMIT_WORDS = %w[commit ci].freeze
   NO_VERIFY = "--no-verify".freeze
+  LEFTHOOK_UNINSTALL = "uninstall".freeze
   SHORT_OPTIONS_WITH_N = /\A-[A-Za-z]*n[A-Za-z]*\z/
   LEFTHOOK_SWITCH = /\ALEFTHOOK(?:_EXCLUDE|_BIN|_CONFIG)?=/
   # Swallows escapes and whole quoted strings, so only an unquoted assignment with a quoted value matches.
@@ -29,7 +30,7 @@ module HookBypass
       [ lefthook_switch?(words, command), "a LEFTHOOK switch turns off, replaces or narrows the git hooks (playbook rule 19)." ],
       [ hooks_path?(words), "changing core.hooksPath moves the git hooks out of the way (playbook rule 19)." ],
       [ plumbing?(words), "git commit-tree and update-ref write history without running any git hook (playbook rule 19)." ],
-      [ lefthook_install?(words), "lefthook install, uninstall and add replace or remove the global git hooks (playbook rule 19)." ]
+      [ lefthook_uninstall?(words), "lefthook uninstall removes a repository's git hooks, which are what keep commits off main (playbook rule 19)." ]
     ]
   end
 
@@ -106,9 +107,9 @@ module HookBypass
   end
 
   #: (Array[String] words) -> bool
-  def lefthook_install?(words)
+  def lefthook_uninstall?(words)
     start = words.index { |word| File.basename(word) == "lefthook" }
-    !start.nil? && words.drop(start + 1).any? { |word| %w[install uninstall add].include?(word) }
+    !start.nil? && words.drop(start + 1).include?(LEFTHOOK_UNINSTALL)
   end
 
   #: (Array[String] words) -> bool

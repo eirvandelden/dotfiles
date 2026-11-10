@@ -1166,8 +1166,8 @@ end
       .each { |command| assert_waits(command) }
   end
 
-  def test_installing_or_uninstalling_lefthook_waits_for_consent
-    [ "lefthook install", "lefthook uninstall" ].each { |command| assert_waits(command) }
+  def test_uninstalling_lefthook_waits_for_consent
+    assert_waits("lefthook uninstall")
   end
 
   def test_installing_or_adding_lefthook_hooks_runs_without_a_question
@@ -1209,7 +1209,7 @@ end
   end
 
   def test_a_hook_skip_chained_or_substituted_still_waits_for_consent
-    [ "git commit -n; echo done", "lefthook install&&echo done", "echo $(git commit -n -m x)",
+    [ "git commit -n; echo done", "lefthook uninstall&&echo done", "echo $(git commit -n -m x)",
       "echo `git commit -n -m x`", "(git commit -n -m x)" ].each { |command| assert_waits(command) }
   end
 

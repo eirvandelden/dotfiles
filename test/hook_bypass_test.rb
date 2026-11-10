@@ -49,7 +49,7 @@ class HookBypassTest < Minitest::Test
   end
 
   def test_git_and_lefthook_match_by_basename
-    [ "/usr/bin/git commit -n", "bin/lefthook install" ].each { |command| refute_nil(reason(command), command) }
+    [ "/usr/bin/git commit -n", "bin/lefthook uninstall" ].each { |command| refute_nil(reason(command), command) }
   end
 
   def test_core_hooks_path_matches_in_any_case
@@ -98,6 +98,10 @@ class HookBypassTest < Minitest::Test
 
   def test_a_quoted_switch_value_inside_backticks_has_a_reason
     refute_nil(reason('echo `LEFTHOOK_CONFIG="/a b" git commit -m x`'))
+  end
+
+  def test_lefthook_uninstall_has_a_reason
+    [ "lefthook uninstall", "lefthook --verbose uninstall" ].each { |command| refute_nil(reason(command), command) }
   end
 
   def test_installing_or_adding_lefthook_hooks_has_no_reason
