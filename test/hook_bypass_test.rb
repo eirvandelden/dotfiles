@@ -100,8 +100,8 @@ class HookBypassTest < Minitest::Test
     refute_nil(reason('echo `LEFTHOOK_CONFIG="/a b" git commit -m x`'))
   end
 
-  def test_adding_a_lefthook_hook_has_a_reason
-    refute_nil(reason("lefthook add pre-commit"))
+  def test_installing_or_adding_lefthook_hooks_has_no_reason
+    [ "lefthook install", "lefthook add pre-commit", "lefthook dump" ].each { |command| assert_nil(reason(command), command) }
   end
 
   def test_a_quoted_switch_assignment_inside_a_quoted_sentence_has_no_reason
