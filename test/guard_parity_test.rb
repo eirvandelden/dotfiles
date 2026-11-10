@@ -25,7 +25,7 @@ class GuardParityTest < Minitest::Test
     %w[git config core.hooksPath], %w[git config --global --unset core.hooksPath],
     %w[git config --remove-section core], %w[git config --rename-section core],
     %w[git commit-tree], %w[git update-ref],
-    %w[lefthook install], %w[lefthook uninstall]
+    %w[lefthook install], %w[lefthook uninstall], %w[lefthook add]
   ].freeze
   GEM_INSTALL_FORMS = [ %w[bundle install], %w[bundle i], %w[bin/bundle install], %w[bin/bundle i] ].freeze
   MACHINE_PATHS = %w[/Users/ /private/ /opt/ /Applications/].freeze
