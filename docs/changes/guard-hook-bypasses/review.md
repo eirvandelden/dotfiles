@@ -72,3 +72,36 @@ Round 1's Important finding holds as fixed: `GUARDED_COMMANDS` holds `%w[git con
 - `test/consent_guard_test.rb` 141 runs, `test/hook_bypass_test.rb` 22 runs, `test/guard_parity_test.rb` 12 runs: all green.
 - `rubocop` on the five touched Ruby files: no offenses.
 - Every other `test/*_test.rb`: green, except `test/isolated_git_test.rb` (the first finding).
+
+## Round 3 — 2026-11-10T13:50Z — d076ff7e
+
+No `REVIEW.md` or `REVIEW.local.md` exists at the repository root, so the reviewer's default passes ran: Bugs, Security, Compliance, Design. The branch contains `origin/main`.
+
+- [ ] Important: Main removed the global git hooks on 2026-11-09 (`daff85ef`, ADR `docs/adr/0001-per-repo-lefthook-remotes.md`), and `lefthook install` is now the prescribed setup step. `new-repo-setup` step 3 says "then run `lefthook install` once", and `git/.config/git/worktree-tools/README.md:161-168` tells every repository to run it. The branch still asks before every `lefthook install` and `lefthook add`, and the reason says they "replace or remove the global git hooks", which no longer exist. The premise in `intent.md:20` (the 2026-10-06 overwrite of the global shims) and the plan's note that the skills say "never run `lefthook install`" are stale. Every new or re-armed repository now costs a question for the step that turns its hooks on. `lefthook uninstall` still disarms a repository and keeps its reason. Changing the agreed acceptance criterion (`lefthook install` waits) is Etienne's decision under §7a: ask whether `install` and `add` stay guarded, and fix the reason text either way. — `claude/.claude/hooks/hook_bypass.rb:32`
+- [ ] Nit: Since round 2 added `add`, `lefthook_install?` asks whenever `add` follows any `lefthook` word, across chain operators. `which lefthook && git add .`, `brew install lefthook && git add Brewfile`, `git rm -r lefthook && git add .` and `git -C lefthook add x` all ask (probed against the worktree's guard). `git add` is the most common follow-on, so this widens the false questions the plan's "somewhere after" rule accepted for `install`. Moot if the Important finding drops `add`; otherwise stop the search at the next `;`, `&&`, `|` or `&` word, or record it under Risks. — `claude/.claude/hooks/hook_bypass.rb:111`
+
+### Bugs
+
+Round 2's fixes hold. `lefthook add pre-commit`, `lefthook add -d pre-commit`, `bin/lefthook add pre-push` and `npx lefthook add pre-commit` ask. ``echo `LEFTHOOK_CONFIG="/a b" git commit -m x` `` and the single-quoted form ask. `git commit -m "lefthook add pre-commit is refused"`, `git commit -m "lefthook: add pre-commit"`, `git add lefthook.yml` and `lefthook run pre-commit` go through. `LEFTHOOK_BIN` stays a live route after main's change: lefthook's own stock `pre-commit` (this repository's `.git/hooks/pre-commit:13`) runs `$LEFTHOOK_BIN` when it is set.
+
+Also probed: `git -c alias.c='commit -n' c -m x` goes through. That is an inline alias, the class the plan's Risks already accepts ("Only the `ci` alias is known"), so it is no finding here; a follow-up candidate beside `git fast-import`.
+
+### Security
+
+No secrets, no new network calls, no new dependencies. The round-2 changes only widen what the guard asks about.
+
+### Compliance
+
+The round-2 fixes have tests: `test_adding_a_lefthook_hook_waits_for_consent`, `test_adding_a_lefthook_hook_has_a_reason` and `test_a_quoted_switch_value_inside_backticks_has_a_reason`. `%w[lefthook add]` is in `GUARDED_COMMANDS`. The round-1 acceptance mapping is unchanged and each test it names passes. `plan.md` decisions 5 and 9 still name only `install` and `uninstall`; the code and the Codex rule also cover `add`. No existing test was weakened, skipped or deleted.
+
+`codex execpolicy check` with codex-cli 0.167.0 gives the step-8 decisions: `prompt` for `git commit -n -m x`, `git ci -n -m x`, `git commit --no-veri -m x`, `git merge --no-verify x`, `git config --global --unset core.hooksPath`, `git config --global remove-section core`, `git config --rename-section core core2`, `lefthook install`, `lefthook uninstall`, `lefthook add pre-commit` and `lefthook add -d pre-push`; no rule for `git config --get core.hooksPath` and `lefthook dump`; `allow` for `git push -n origin feature`.
+
+### Design
+
+The inline RBS signatures match the guard's `#:` style. `%w[install uninstall add]` sits inline in `lefthook_install?` while the other word sets are constants (`READS`, `SECTION_OPERATIONS`); worth a constant if the Important finding changes the list.
+
+### Checks run
+
+- `test/consent_guard_test.rb` 142 runs, `test/hook_bypass_test.rb` 24 runs, `test/guard_parity_test.rb` 12 runs, `test/isolated_git_test.rb` 16 runs: all green.
+- `rubocop` on the five touched Ruby files: no offenses.
+- `bin/test`: 105 of 106 files green. `test/secrets_loader_test.rb` fails 5 of 28 runs because the real `/opt/homebrew/bin/op` answers instead of the test's stub ("\"token\" isn't an item in the \"Private\" vault"). The branch touches nothing under `secrets/` or `zsh/`, and the last four `Dotfiles tests` runs on `main` passed, so it is environmental, not from this branch.
