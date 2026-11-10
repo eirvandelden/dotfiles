@@ -580,6 +580,19 @@ end
     assert_equal(0, status.exitstatus, stderr)
   end
 
+  def test_creating_a_pull_request_on_a_work_repository_with_an_excluded_change_folder_is_allowed
+    allow_remotes("employer/their-app")
+    system("git", "-C", @repo, "remote", "set-url", "origin", "git@github.com:employer/their-app.git")
+    start_change("work-change", stage: false)
+    File.write(File.join(@repo, ".git", "info", "exclude"), "docs/changes\n", mode: "a")
+
+    _, stderr, status = run_guard("gh pr create --fill")
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert(File.exist?(File.join(@repo, "docs", "changes", "work-change", "intent.md")))
+    assert_empty(`git -C #{@repo} diff --cached --name-only`.strip)
+  end
+
   def test_creating_a_pull_request_on_main_is_allowed
     _, stderr, status = run_guard("gh pr create --fill")
 
@@ -1117,14 +1130,14 @@ end
   end
 
   # A repository on <branch> whose working tree holds docs/changes/<branch>/.
-  def start_change(branch, repo: @repo)
+  def start_change(branch, repo: @repo, stage: true)
     system("git", "-C", repo, "config", "commit.gpgsign", "false")
     system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet",
            "--allow-empty", "-m", "init")
     system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "-b", branch)
     FileUtils.mkdir_p(File.join(repo, "docs", "changes", branch))
     File.write(File.join(repo, "docs", "changes", branch, "intent.md"), "intent")
-    system("git", "-C", repo, "add", "docs")
+    system("git", "-C", repo, "add", "docs") if stage
   end
 
   # A second repository with a change folder, and a directory to run the command from.

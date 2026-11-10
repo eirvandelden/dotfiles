@@ -3,7 +3,8 @@
 # in commits, as the last change to anything outside the folder. Freshness is defined in git
 # terms, not mtime — see docs/changes/ai-native-workflow/spec.md §4. Exits 0 when there is nothing to enforce yet (no change
 # folder in HEAD, or the branch has no code commits of its own) or when the review is fresh;
-# exits 1 with a message otherwise.
+# exits 1 with a message otherwise. On a work repository the change folder is never committed, so
+# it is never in HEAD and this check passes; `deliver` checks freshness there from review.md.
 #
 # With --skip-without-pr (the pre-push hook passes it) a change folder in HEAD also passes while
 # the branch has no open pull request, so a work-in-progress push needs no review yet. Once a PR
