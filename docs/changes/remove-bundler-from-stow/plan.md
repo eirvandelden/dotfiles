@@ -14,7 +14,7 @@ From `intent.md` (2026-11-10). Status: accepted.
 
 ### Diagrams
 
-Before: `packages.conf` `STOW` names `bundler` → the stow step calls `stow_configure(root, STOW...)` → `stow_configure` dies with "Stow package not found: <root>/bundler" on a fresh clone → no later package gets linked.
+Before: `packages.conf` `STOW` names `bundler` → the stow step calls `stow_configure(root, STOW...)` → `stow_configure` dies with `Stow package not found: <root>/bundler` on a fresh clone → no later package gets linked.
 
 ```mermaid
 classDiagram
@@ -178,6 +178,7 @@ Not checked: the repository runs no `steep check`; `test/ruby_signatures_test.rb
 - `agents.md` matches `STOW` after the edit → `test/repo_agents_file_test.rb` (existing, unchanged)
 
 Per changed file, the unit tests expected:
+
 - `test/stow_package_roots_test.rb`: `a declared package with a tracked file is accepted`, `a declared package without a folder is rejected`, `a declared package with only untracked files is rejected`, `a declared package that is a tracked file is rejected`, `every stowed package has a tracked folder`. The seven existing tests stay green.
 - `packages.conf`, `agents.md`, `repository-layout.md`: configuration and docs; no tests of their own beyond the lines above.
 
