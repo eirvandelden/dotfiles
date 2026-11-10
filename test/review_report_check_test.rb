@@ -192,6 +192,16 @@ class ReviewReportCheckTest < Minitest::Test
     assert_match(%r{run: ~/\.config/git/worktree-tools/review-report-fresh --skip-without-pr$}, lefthook)
   end
 
+  def test_a_work_branch_with_untracked_artefacts_passes
+    write_and_commit("app/claims.rb", "class Claims; end\n", "add claims")
+    write("docs/changes/claims-status/plan.md", "# Plan\n")
+    write("docs/changes/claims-status/review.md", "# Round 1\n")
+
+    _, stderr, status = run_script
+
+    assert(status.success?, stderr)
+  end
+
   private
 
   def stale_change_folder

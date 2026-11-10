@@ -2,8 +2,10 @@
 # Commits docs/changes/<slug>/intent.md and plan.md together, once both say "Status: accepted".
 # It stages those two paths and commits only them, so work staged elsewhere stays out. The subject
 # is "docs: intent and plan for <slug>" while intent.md has uncommitted changes, else
-# "docs: plan for <slug>". It never pushes; the caller pushes after it.
+# "docs: plan for <slug>". It never pushes; the caller pushes after it. On a work repository it
+# commits nothing: both files stay local, and it warns when git does not ignore the change folder.
 require "open3"
+require_relative "../../finish/scripts/change_scope"
 
 CHANGE_FOLDER = File.expand_path("change-folder", __dir__)
 
@@ -34,6 +36,12 @@ refuse("#{intent} is not accepted: accept the intent first.") unless accepted?(i
 refuse("#{plan} is not accepted: accept the plan first.") unless accepted?(plan)
 
 slug = File.basename(folder)
+if ChangeScope.work?
+  warn("#{folder}/ is not ignored: add docs/changes to .git/info/exclude, or a git add . will stage it.") if ChangeScope.folder_visible?(folder)
+  puts("Nothing committed: #{intent} and #{plan} stay local on a work repository.")
+  exit(0)
+end
+
 fresh_intent = !run("git", "status", "--porcelain", "--", intent).empty?
 subject = fresh_intent ? "docs: intent and plan for #{slug}" : "docs: plan for #{slug}"
 run("git", "add", "--", intent, plan)

@@ -72,6 +72,62 @@ class DeliverTest < Minitest::Test
     markers.each { |marker| assert_includes(stderr, "Case #{marker.inspect}") }
   end
 
+  def test_on_a_work_repository_a_closed_review_ends_in_a_draft_pr_without_artefact_commits
+    work_change
+
+    stdout, stderr, status = deliver
+
+    assert(status.success?, stderr)
+    assert_empty(git("log", "--format=%H", "--", "docs/changes").strip)
+    assert(File.exist?(File.join(@repo, "docs/changes", SLUG, "review.md")))
+    assert_equal("Add widget", git("log", "-1", "--format=%s").strip)
+    assert_includes(origin_branches, SLUG)
+    assert_includes(gh_calls.grep(/\Apr create /).first, "--draft")
+    assert_includes(captured("gh-pr-create.body"), "Widgets cannot ship today.")
+    assert_includes(stdout, PR_URL)
+  end
+
+  def test_on_a_work_repository_refuses_a_change_folder_that_is_not_excluded
+    work_change(exclude: false)
+
+    _, stderr, status = deliver
+
+    assert_equal(1, status.exitstatus)
+    assert_match(%r{docs/changes is not in \.git/info/exclude}, stderr)
+    assert_empty(gh_calls.grep(/\Apr (create|edit)/))
+  end
+
+  def test_on_a_work_repository_an_unexcluded_folder_is_not_called_an_uncommitted_change
+    work_change(exclude: false)
+
+    _, stderr, = deliver
+
+    refute_match(/uncommitted changes; commit/, stderr)
+  end
+
+  def test_on_a_work_repository_refuses_a_review_older_than_head
+    work_change
+    commit_file("lib/widget.rb", "class Widget; def late; end; end\n", "Change widget after review")
+
+    _, stderr, status = deliver
+    _, check_stderr, check_status = deliver("--check")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/The review is not fresh/, stderr)
+    assert_equal(1, check_status.exitstatus)
+    assert_match(/The review is not fresh/, check_stderr)
+    assert_empty(gh_calls.grep(/\Apr (create|edit)/))
+  end
+
+  def test_on_a_work_repository_refuses_an_open_finding
+    work_change(findings: [ OPEN_FINDING ])
+
+    _, stderr, status = deliver
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/Open finding/, stderr)
+  end
+
   def test_refuses_a_stale_review
     commit_change_work
     commit_file("lib/widget.rb", "class Widget; def late; end; end\n", "Change widget after review")
@@ -431,6 +487,20 @@ class DeliverTest < Minitest::Test
   end
 
   private
+
+  # A work repository: the artefacts are untracked files and docs/changes is excluded.
+  def work_change(exclude: true, findings: [ "- [ ] Nit: Naming — `lib/widget.rb:1` → fixed (Rename widget)" ])
+    build_repo(origin_url: WORK_URL)
+    allow_work_remote
+    exclude_change_folders if exclude
+    folder = File.join(@repo, "docs/changes", SLUG)
+    FileUtils.mkdir_p(folder)
+    File.write(File.join(folder, "intent.md"), intent_text)
+    File.write(File.join(folder, "plan.md"), plan_text)
+    commit_file("lib/widget.rb", "class Widget; end\n", "Add widget")
+    round = "## Round 1 — 2026-10-13T10:00:00Z — #{git('rev-parse', '--short', 'HEAD').strip}\n\n#{findings.join("\n")}\n"
+    File.write(File.join(folder, "review.md"), "# Review\n\n#{round}")
+  end
 
   def deliver(*arguments, herdr: false, rex: false, scripts: @dash_scripts, env: {})
     run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))

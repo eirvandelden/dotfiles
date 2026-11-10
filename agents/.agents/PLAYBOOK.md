@@ -96,11 +96,11 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 5. Pull request workflow:
    - Always target `origin` (personal fork or own work repo) over upstream.
    - Agents may push branches to `origin` without asking first, while implementing. Rule 6 still applies: never post/comment as Etienne on a PR without explicit instruction for that exact message.
-   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/`; `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists.
+   - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/` (on a work repository the folder is a local file no commit holds, so there is nothing to remove); `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists. On a work repository the guard passes, because it reads only the index and HEAD.
    - If the target repository is ambiguous, ask before proceeding.
    - Never push branches or create PRs against an upstream project without explicit instruction.
    - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
-   - `docs/changes/<slug>/` artifacts are removed by the delivery step (the `deliver` skill) once review is closed; never delete them by hand. A change request after delivery restores the folder with `deliver`'s `restore` script; never recreate the documents by hand.
+   - `docs/changes/<slug>/` artifacts are removed by the delivery step (the `deliver` skill) once review is closed; never delete them by hand. On a work repository they stay local, `commit-plan` and `commit-review` commit nothing, and `docs/changes` goes into `.git/info/exclude` once. A change request after delivery restores the folder with `deliver`'s `restore` script; never recreate the documents by hand.
 6. GitHub identity and consent:
    - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit instruction for that exact message.
    - This includes issue comments, pull request comments, review comments, and replies.
@@ -152,11 +152,11 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - When asked to review work: read the project's `AGENTS.md` for what the application does and what its domain requires. This playbook already applies from the user config, so there is no fallback to look up.
     - Combine both with any existing review criteria rather than replacing them.
     - Full apply-fixes / re-review workflow: `code-review` skill.
-    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `deliver` checks it before it opens one.
+    - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `deliver` checks it before it opens one. On a work repository `review.md` stays local and `deliver` checks it against HEAD.
 17. Plan before implementing:
     - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
     - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
-    - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them.
+    - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them. On a work repository both stay local files: no commit holds them.
     - Intent interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions. Bug fixes and chores stay at 1–3 questions; features and refactors probe fully.
     - Personal repositories only: in autonomous delivery a recorded cross-model critique replaces the word "accepted" on `plan.md`. See §7a. Every other repository keeps this rule unchanged.
 18. Commits:

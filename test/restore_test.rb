@@ -37,6 +37,21 @@ class RestoreTest < Minitest::Test
     refute_includes(git("log", "--format=%s").lines.map(&:strip), REMOVAL_SUBJECT)
   end
 
+  def test_on_a_work_repository_there_is_nothing_to_restore
+    build_repo(origin_url: WORK_URL)
+    allow_work_remote
+    exclude_change_folders
+    head = git("rev-parse", "HEAD")
+    FileUtils.mkdir_p(File.join(@repo, FOLDER))
+
+    stdout, stderr, status = run_script(RESTORE)
+
+    assert(status.success?, stderr)
+    assert_match(%r{Nothing to restore: #{FOLDER}/ stays local on a work repository}, stdout)
+    assert_equal(head, git("rev-parse", "HEAD"))
+    assert_empty(gh_calls)
+  end
+
   def test_restore_prints_a_force_with_lease_push
     deliver_by_hand
 

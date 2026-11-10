@@ -341,6 +341,8 @@ def command_directories(words, working_directory)
   end
 end
 
+# Reads only the index and HEAD, so an untracked or excluded folder passes: on a work repository
+# the change folder is never tracked, which is what lets `gh pr create` through there.
 #: (String directory) -> bool
 def change_folder?(directory)
   folder, _, status = Open3.capture3(CHANGE_FOLDER_SCRIPT, chdir: directory)

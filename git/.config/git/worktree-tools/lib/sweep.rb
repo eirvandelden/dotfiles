@@ -1,9 +1,12 @@
 require "common"
 require "open3"
 require "rbconfig"
+require "tempfile"
 
 module WorktreeTools
   # Removes the worktrees under .worktrees/ whose work has merged. Run it from the repository root.
+  # Untracked files under docs/changes/ count as clean: they are local change artefacts. Git keeps
+  # the final say, since the status and the removal both run with that exclusion and no --force.
   class Sweep
     include Helpers
 
@@ -53,7 +56,7 @@ module WorktreeTools
     end
 
     def clean?(dir)
-      output, = git("-C", dir, "status", "--porcelain")
+      output, = git(*artefact_exclusion, "-C", dir, "status", "--porcelain")
       output.strip.empty?
     end
 
@@ -89,8 +92,37 @@ module WorktreeTools
     def remove_worktree(dir, branch, state)
       close_pane(dir)
       run_worktree_remove(dir)
-      git_showing_errors("worktree", "remove", dir)
+      git_showing_errors(*artefact_exclusion, "worktree", "remove", dir)
       git_showing_errors("branch", state == "MERGED" ? "-D" : "-d", branch)
+    end
+
+    # ["-c", "core.excludesFile=<excludes_file>"], put before every status and worktree remove call.
+    def artefact_exclusion
+      [ "-c", "core.excludesFile=#{excludes_file}" ]
+    end
+
+    # A temporary excludes file: the current global excludes (core.excludesFile, else
+    # $XDG_CONFIG_HOME/git/ignore or ~/.config/git/ignore), then "docs/changes/". Written once per run.
+    def excludes_file
+      @excludes_file ||= Tempfile.new("sweep-excludes").tap do |file|
+        file.puts(global_excludes)
+        file.puts("docs/changes/")
+        file.flush
+      end
+      @excludes_file.path
+    end
+
+    def global_excludes
+      path = global_excludes_path
+      File.exist?(path) ? File.read(path) : ""
+    end
+
+    def global_excludes_path
+      configured, = git("config", "--get", "core.excludesFile")
+      return File.expand_path(configured.strip) unless configured.strip.empty?
+
+      config_home = ENV["XDG_CONFIG_HOME"].to_s.empty? ? File.join(Dir.home, ".config") : ENV["XDG_CONFIG_HOME"]
+      File.join(config_home, "git", "ignore")
     end
 
     def git_showing_errors(*arguments)

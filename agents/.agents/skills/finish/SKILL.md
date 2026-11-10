@@ -9,7 +9,7 @@ arguments:
 
 # Finish
 
-`/finish` ships a change. The `deliver` skill already removed `docs/changes/<slug>/`, pushed the branch and opened a draft PR. This skill takes that PR the rest of the way. It runs on explicit command (`/finish`), or by the autonomous coordinator in auto mode (below). Etienne's `/finish` is the merge approval. The consent guard refuses to create or merge a pull request through `gh` while the branch's own `docs/changes/<slug>/` exists; `deliver` removed it, so the merge passes here.
+`/finish` ships a change. The `deliver` skill already removed `docs/changes/<slug>/` (on a work repository the folder stays local and no commit held it), pushed the branch and opened a draft PR. This skill takes that PR the rest of the way. It runs on explicit command (`/finish`), or by the autonomous coordinator in auto mode (below). Etienne's `/finish` is the merge approval. The consent guard refuses to create or merge a pull request through `gh` while the branch's own `docs/changes/<slug>/` exists; `deliver` removed it, so the merge passes here. On a work repository the folder stays local and untracked, and the guard reads only the index and HEAD, so it passes too.
 
 `--dry-run`: print the steps below for the scope that applies, then stop before doing anything.
 
@@ -33,7 +33,7 @@ The script marks a draft PR ready and waits for CI. It merges with a merge commi
 ## 3. Work: ADR, after-push, reviewers
 
 1. Ask: "Does this change affect another application: API contract, published event, shared schema, anything another team consumes?"
-   - Yes: distil the PR title and body (`gh pr view --json title,body`) into an ADR with the sections Context, Decision and Consequences. The change folder is gone, so the PR body is the source. Write it at the path pattern `~/.claude/finish/adr-location` names (one line, repo-relative), numbered one past the highest existing ADR. Commit it alone: `Add ADR NNNN: <title>`. Push it. When the file is absent, ask where the ADR belongs. Never guess a path.
+   - Yes: distil the PR title and body (`gh pr view --json title,body`) into an ADR with the sections Context, Decision and Consequences. The change folder is gone or stays local, so the PR body is the source. Write it at the path pattern `~/.claude/finish/adr-location` names (one line, repo-relative), numbered one past the highest existing ADR. Commit it alone: `Add ADR NNNN: <title>`. Push it. When the file is absent, ask where the ADR belongs. Never guess a path.
    - No: continue.
 2. Run `~/.claude/finish/after-push <pr-number> <pr-url>` when it exists and is executable (contract in section 5). Non-zero exit: print its stderr and stop. Do not request reviewers. When it is absent, run `gh pr view --web` and print "no after-push script; mark the PR ready and set the review status by hand."
 3. Confirm the reviewer list before requesting anyone, each time. Offer the list in `~/.claude/finish/reviewers` when that file exists. Offer `~/.claude/finish/last-reviewers` instead when `reviewers` is absent, or when the user picks "last used".

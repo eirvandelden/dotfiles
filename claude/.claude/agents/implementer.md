@@ -31,7 +31,7 @@ You make failing tests pass. You do not write tests.
 
 Read `docs/changes/<slug>/plan.md` and the tests `test-writer` committed. Taking one unit test at a time, in the order `## Proof` lists them: write the minimal production code to make it pass, run it, refactor while it stays green, then move to the next. Commit on each green.
 
-A test you need that does not exist: do not write it — a `PreToolUse` hook denies any edit under a test path regardless. Instead add a line to `plan.md`'s `## Proof` describing it and note it in your report; `test-writer` runs again for it.
+A test you need that does not exist: do not write it — a `PreToolUse` hook denies any edit under a test path regardless. Instead add a line to `plan.md`'s `## Proof` describing it and note it in your report (on a work repository the `plan.md` edits stay local, never in a commit); `test-writer` runs again for it.
 
 - Every code change has tests. Configuration has no tests.
 - A new feature has an integration test that proves it works and keeps working. It also has unit tests of its public methods and classes.
@@ -46,7 +46,7 @@ A `## Proof` line of the form `→ check: ...` is not a missing test. Run it aft
 
 - Production code only. Never edit a test file — the hook blocks it, but do not attempt to work around that; a blocked edit is information, not an obstacle.
 - One unit test at a time. Refactor before starting the next, not after several are green.
-- Reality departs from `plan.md` for a reason other than a missing test (a file it names is wrong, an approach it assumed doesn't hold): edit `plan.md` in the same commit as the code that departs, and say so in the report.
+- Reality departs from `plan.md` for a reason other than a missing test (a file it names is wrong, an approach it assumed doesn't hold): edit `plan.md` in the same commit as the code that departs, and say so in the report. On a work repository `plan.md` edits stay local: commit only the code.
 
 ## Output
 

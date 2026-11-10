@@ -81,12 +81,45 @@ class CommitReviewTest < Minitest::Test
     assert_equal(before, commit_count)
   end
 
-  def test_the_commit_subject_names_the_slug
-    write_review(round(1, "No findings."))
+  def test_the_commit_subject_names_the_first_finding
+    write_review(round(1, CLOSED))
 
     commit_review
 
-    assert_equal("Review for #{SLUG}", git("log", "-1", "--format=%s").strip)
+    assert_equal("docs: review findings for Widget leaks memory", git("log", "-1", "--format=%s").strip)
+  end
+
+  def test_on_a_work_repository_a_converged_review_stays_uncommitted
+    work_repository
+    before = commit_count
+    write_review(round(1, CLOSED))
+
+    stdout, stderr, status = commit_review
+
+    assert(status.success?, stderr)
+    assert_match(/Nothing committed.*stays local on a work repository/, stdout)
+    assert_equal(before, commit_count)
+    assert_empty(git("status", "--porcelain", "--untracked-files=all", "--", "docs/changes"))
+  end
+
+  def test_on_a_work_repository_an_open_finding_still_refuses
+    work_repository
+    write_review(round(1, OPEN))
+
+    _, stderr, status = commit_review
+
+    assert_equal(1, status.exitstatus)
+    assert_includes(stderr, "Widget leaks memory")
+  end
+
+  def test_on_a_work_repository_warns_when_the_change_folder_is_not_ignored
+    work_repository(exclude: false)
+    write_review(round(1, CLOSED))
+
+    _, stderr, status = commit_review
+
+    assert(status.success?, stderr)
+    assert_includes(stderr, "docs/changes/#{SLUG}/ is not ignored")
   end
 
   def test_it_never_pushes
@@ -98,6 +131,14 @@ class CommitReviewTest < Minitest::Test
   end
 
   private
+
+  def work_repository(exclude: true)
+    build_repo(origin_url: DeliveryHarness::WORK_URL)
+    allow_work_remote
+    exclude_change_folders if exclude
+    FileUtils.mkdir_p(File.join(@repo, "docs/changes/#{SLUG}"))
+    File.write(File.join(@repo, "docs/changes/#{SLUG}/intent.md"), intent_text)
+  end
 
   def round(number, *findings)
     "## Round #{number} — 2026-10-15T10:00:00Z — abc1234\n\n#{findings.join("\n")}\n"
