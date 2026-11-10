@@ -54,9 +54,11 @@ determine_os() {
   if [[ "$OS_KERNEL" == "Darwin" ]]; then
     OS="macOS"
   elif [[ "$OS_KERNEL" == "Linux" ]]; then
-    if [[ -r /etc/os-release ]]; then
-      # shellcheck disable=SC1091
-      . /etc/os-release
+    # OS_RELEASE_FILE lets a test reach the SteamOS branch on any Linux host.
+    local os_release="${OS_RELEASE_FILE:-/etc/os-release}"
+    if [[ -r "$os_release" ]]; then
+      # shellcheck disable=SC1090
+      . "$os_release"
       OS_DISTRO_ID="${ID:-}"
       OS_PRETTY="${PRETTY_NAME:-}"
     fi
