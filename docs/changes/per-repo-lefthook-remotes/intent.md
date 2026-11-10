@@ -36,7 +36,7 @@ Etienne's personal repositories under `~/Developer`. The `git` stow package: `co
 - Remove the hook wrapper and the seven hook scripts from `git/.config/git/hooks/`, with the tests that exist only for them.
 - Shared jobs that load Ruby or run git in another repository clear `GIT_DIR` themselves.
 - Remove `no_auto_install: true` from the shared `lefthook.yml`; it only guarded the global hooks.
-- An empty section in the shared `lefthook.yml` for each git hook type it does not use yet, so the first `lefthook install` writes every hook.
+- An empty section in the shared `lefthook.yml` for each git hook type it does not use yet, except `reference-transaction`, `post-index-change`, `prepare-commit-msg` and `post-commit`, so the first `lefthook install` writes those hooks.
 - Rewrite the tests that relied on the global hooks, so that test repos use `remotes:` and `lefthook install`.
 - A documented `lefthook.yml` template with the `remotes:` block, for repos and for `new-repo-setup`.
 - Rollout steps in the worktree-tools README, run by Etienne after the merge: restow `git`, trash the dangling `~/.config/git/hooks` links, then run `lefthook install` in the dotfiles checkout.
@@ -58,7 +58,7 @@ Etienne's personal repositories under `~/Developer`. The `git` stow package: `co
 - A hook run without network access still commits.
 - A `bundle exec` job in a linked worktree on `pre-push` does not see `GIT_DIR`.
 - A repo with no `lefthook.yml` and no `lefthook install` runs no hooks at all.
-- When the shared config gives jobs to a hook type that had none, a repo runs them after its next refetch, with no new `lefthook install`.
+- When the shared config gives jobs to a listed hook type that had none, a repo runs them after its next refetch, with no new `lefthook install`. The four unlisted types (`reference-transaction`, `post-index-change`, `prepare-commit-msg`, `post-commit`) need a new install.
 
 ## Flagged concerns
 
@@ -73,7 +73,7 @@ A repo with no `lefthook.yml` gets no shared jobs after this change. Chosen side
 - Each repo declares the dotfiles config as a `remotes:` entry — Etienne wants a lefthook config per repo that sets his default as a remote.
 - Remove `core.hooksPath` for every repo, work repos included — one plain lefthook setup everywhere, matching "no extra hooks".
 - Document `lefthook install` in the dotfiles repo as a rollout step after the merge — `lefthook install` needs `--force` while `core.hooksPath` is still set (its `--help`), and no machine change happens before the merge.
-- List every git hook type in the shared `lefthook.yml`, as empty sections where unused — never rerun `lefthook install` per repo when the shared config starts using a new hook type.
+- List the git hook types in the shared `lefthook.yml`, as empty sections where unused, except `reference-transaction`, `post-index-change`, `prepare-commit-msg` and `post-commit` — Etienne does not use them, and they fire on every ref update, index write or commit (decided 2026-11-10). A job for one of them needs a new `lefthook install`.
 
 ## Open questions
 
