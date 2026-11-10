@@ -49,6 +49,16 @@ class AutoAcceptTest < Minitest::Test
     assert_match(/Status: accepted$/, File.read(@artifact))
   end
 
+  def test_accepts_an_artifact_in_the_personal_org
+    add_remote("git@github.com:eirvandelden-dev/dotfiles.git")
+    write_artifact(critique: CLOSED_CRITIQUE)
+
+    _stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+    assert_match(/Status: accepted$/, File.read(@artifact))
+  end
+
   def test_changes_only_the_status_line
     add_remote("git@github.com:eirvandelden/dotfiles.git")
     write_artifact(critique: CLOSED_CRITIQUE)
