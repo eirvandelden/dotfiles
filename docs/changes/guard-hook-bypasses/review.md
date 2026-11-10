@@ -45,3 +45,30 @@ Every test the plan's `## Proof` names exists, including all 22 unit tests in `t
 - `test/consent_guard_test.rb` 130 runs, `test/hook_bypass_test.rb` 22 runs, `test/guard_parity_test.rb` 9 runs: all green.
 - `rubocop` on the five touched Ruby files: no offenses.
 - Other test files: green except `test/review_report_check_test.rb` (known red on main, plan step 10) and `test/worktree_create_test.rb`, `test/worktree_pane_test.rb`, `test/worktree_viewer_test.rb`. Those three fail in setup on `git commit` because 1Password commit signing returns "agent returned an error" on this machine. A plain commit in a fresh scratch repository fails the same way, so it is environmental and not from this branch.
+
+## Round 2 — 2026-10-20T14:18Z — 3d95e377
+
+No `REVIEW.md` or `REVIEW.local.md` exists at the repository root, so the reviewer's default passes ran: Bugs, Security, Compliance. The branch contains `origin/main`.
+
+- [ ] Important: `test/hook_bypass_test.rb` does not `require_relative "isolated_git"`, so `test/isolated_git_test.rb` `test_every_test_file_requires_the_helper` fails ("Expected [\"hook_bypass_test.rb\"] to be empty"). CI runs every `test/*_test.rb`, so the branch turns it red. — `test/hook_bypass_test.rb:4` →
+- [ ] Important: `lefthook add pre-commit` goes through without a question, and it does the same harm as `lefthook install`. Probed in a sandbox (`GIT_CONFIG_GLOBAL` with `core.hooksPath` set to a scratch directory, lefthook 2.2.2): it renamed the global `pre-commit` shim to `pre-commit.old` and wrote lefthook's stock hook in its place, the 2026-10-06 incident the intent cites. `lefthook_install?` and the Codex rule `["lefthook", ["install", "uninstall"]]` know only `install` and `uninstall`. — `claude/.claude/hooks/hook_bypass.rb:95` →
+- [ ] Nit: The quote-aware scan's lookbehind `(?<![^\s;&|(])` does not accept a backtick, while decision 4 treats a backtick as substitution punctuation. ``echo `LEFTHOOK_CONFIG="/a b" git commit -m x` `` goes through; the same command inside `$( … )` or `{ …; }` asks. — `claude/.claude/hooks/hook_bypass.rb:11` →
+- [ ] Nit: `git fast-import` writes commits and moves branches without any git hook, the same class as `commit-tree` and `update-ref`, and goes through. The intent lists only those two; consider a follow-up. — `claude/.claude/hooks/hook_bypass.rb:90` →
+
+### Bugs
+
+Beyond the above, probed the worktree's guard with a Claude payload: `$(LEFTHOOK_CONFIG="/a b" git commit …)`, `{ LEFTHOOK_CONFIG="/a b" git commit …; }`, `git -C . config core.hooksPath …`, `git config --global core.hooksPath ''`, `git --config-env core.hooksPath=NOPE commit`, `GIT_CONFIG_KEY_0="core.hooksPath" … git commit`, `git -c 'core.hooksPath=/tmp/a b' commit` and the bare read `git config core.hooksPath` ask. `git config --get core.hooksPath`, `git log -n 5` and `git commit -m 'it is git commit -n'` go through. `git commit --no-verify=1` goes through, but git refuses a value on a boolean option, so it skips nothing.
+
+### Security
+
+No secrets, no new network calls, no new dependencies. The change only widens what the guard asks about. The `lefthook add` gap above is the only new route found that defeats the main guard.
+
+### Compliance
+
+Round 1's Important finding holds as fixed: `GUARDED_COMMANDS` holds `%w[git config --rename-section core]`, and the parity test passes. The acceptance-criteria mapping from round 1 is unchanged: no test changed since, and each test it names still passes. Every test `plan.md`'s `## Proof` names exists. No existing test was weakened, skipped or deleted. The plan's Risks gained the heredoc line from round 1.
+
+### Checks run
+
+- `test/consent_guard_test.rb` 141 runs, `test/hook_bypass_test.rb` 22 runs, `test/guard_parity_test.rb` 12 runs: all green.
+- `rubocop` on the five touched Ruby files: no offenses.
+- Every other `test/*_test.rb`: green, except `test/isolated_git_test.rb` (the first finding).
