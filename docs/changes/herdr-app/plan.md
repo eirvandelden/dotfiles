@@ -56,6 +56,10 @@ Shell, so each entry has a one-line contract instead of an RBS signature.
 **`install/tasks/26_install_herdr_app.sh`** (new, mode 755): installs herdr-app on SteamOS from the verified Linux tarball, writing only under `$HOME` and `$XDG_DATA_HOME`. "SteamOS" is `determine_os`'s existing group (`ID` `steamos`, `holo` or `arch`, or a `pacman` system), the same group the AUR task serves. Entry point: the script, no arguments. Exit 0 means skipped, already installed or installed. Any other exit leaves no launcher link. It sources `00_common.sh` like `53_configure_rex_defaults.sh`, and keeps its helpers local to the script:
 
 ```bash
+# herdr_app_cleanup   :: () -> status          rm -rf the staging folder named in the global HERDR_APP_STAGING
+#                        (the EXIT trap names this function, so no quoted trap string needs a shellcheck disable)
+# herdr_app_home      :: () -> stdout          "${XDG_DATA_HOME:-$HOME/.local/share}/herdr-app"
+# herdr_app_launcher  :: () -> stdout          "$HOME/.local/bin/herdr-app"
 # herdr_app_installed :: () -> status          true when the launcher link resolves to an executable
 # herdr_app_target    :: () -> stdout          "linux-x86_64" | "linux-aarch64" from uname -m; die on anything else
 # herdr_app_fetch     :: (url, out) -> status  curl --proto =https --proto-redir =https -fsSL -o out url
@@ -64,12 +68,15 @@ Shell, so each entry has a one-line contract instead of an RBS signature.
 # herdr_app_verify    :: (tarball, sha256) -> status   die unless sha256sum's first field equals sha256
 # herdr_app_unpack    :: (tarball, staging) -> status  tar -xzf into staging; die unless staging/herdr-app/herdr-app
 #                        is a regular, executable file and not a symlink
+# herdr_app_exec_argument :: (path) -> stdout  path as one quoted Desktop Entry Exec argument: \ " ` $ escaped
+#                        inside the quotes, that backslash doubled for the string value, % as %%
+# herdr_app_desktop_entry :: (app_home) -> stdout  the herdr-app.desktop text; Exec through herdr_app_exec_argument
 # herdr_app_place     :: (staging) -> status   rm -rf "<app home>.new"; mv staging/herdr-app "<app home>.new";
 #                        rm -rf "<app home>"; mv "<app home>.new" "<app home>" (never into an existing folder);
 #                        cp -f herdr-app.svg to the hicolor icon folder; write herdr-app.desktop (overwrite);
 #                        ln -sfn the launcher link last. Every step overwrites, so a rerun after any failure starts clean.
 # main                :: () -> status          task_bootstrap; determine_os; skip unless SteamOS; skip when installed;
-#                        require_cmd curl jq tar sha256sum; trap EXIT removes staging; fetch, verify, unpack, place
+#                        require_cmd curl jq tar sha256sum; trap herdr_app_cleanup EXIT; fetch, verify, unpack, place
 ```
 
 **`install/utils.sh` `determine_os`**: one change, a test seam. It reads `${OS_RELEASE_FILE:-/etc/os-release}` instead of the fixed path. The default behaviour is unchanged.
@@ -102,7 +109,7 @@ Not checked: this change has no Ruby production code; Steep does not apply to sh
 - The launcher link exists only after a complete install, and its presence means no request. Enforced by `herdr_app_place` linking last and the guard in `main`. Proved by `test_a_second_run_downloads_nothing` and `test_a_missing_launcher_link_reinstalls`.
 - The task never installs herdr-core, never uses `sudo`, and writes only under `$HOME` and `$XDG_DATA_HOME`. Enforced by the script's paths. Proved by `test_a_fresh_install_writes_only_the_app_files` and `test_xdg_data_home_moves_the_app_home`.
 - A rerun after a failed or partial install ends in one clean app home, never a nested folder. Enforced by `herdr_app_place`'s remove-then-move. Proved by `test_a_rerun_after_a_partial_install_replaces_it` and `test_a_failed_desktop_entry_leaves_no_launcher_link`.
-- The staging folder is gone after every exit. Enforced by `trap … EXIT`. Proved by `test_staging_is_removed_after_success_and_failure`.
+- The staging folder is gone after every exit. Enforced by `trap herdr_app_cleanup EXIT`. Proved by `test_staging_is_removed_after_success_and_failure`.
 - The config folder is a real folder, never a link into the repository. Enforced by `herdr-app` in `STOW_SHARED` (`stow --no-folding`). Proved by `test_stow_shared_lists_herdr_app` and `test_the_stow_task_links_herdr_app_file_by_file`, which runs `50_stow_all.sh` with a `stow` PATH stub. This also makes `../../Documents` resolve to `$HOME/Documents`.
 - `settings.json` holds no absolute path, and every sound path resolves under the home folder. Proved by `test_sound_paths_resolve_under_home`.
 - A save from herdr-app keeps a link a link. Enforced by herdr-app: `persist::write_atomic` resolves the link and renames its temp file next to the target; `keys.rs` writes with `fs::write`, which follows the link. Proved by the manual check in `## Proof`.
@@ -161,6 +168,15 @@ The intent's folder-link fallback is not needed: herdr-app's source shows that a
 5. Write `test/herdr_app_install_test.rb`. Run it, watch it fail (task missing).
 6. Write `install/tasks/26_install_herdr_app.sh` and the `install.sh` line. Run the install test green.
 7. Live check on this Mac, before the pull request, in a sandbox that mirrors the deployed depth: `SANDBOX=~/.config/herdr-app-plan-check`, holding links to the worktree's `keys.json` and `settings.json`, so `../../Documents/Tones/herdr` still resolves to `~/Documents/Tones/herdr`. Start a second window with `HERDR_APP_HOME="$SANDBOX" /Applications/Herdr.app/Contents/MacOS/Herdr`. Pass `HERDR_APP_HOME="$SANDBOX"` to every `herdr-app` client command (`shot`, `status`), or it addresses Etienne's window. Run the sandbox checks in `## Proof` with `$SANDBOX` and the worktree path. Never quit or restart Etienne's own herdr-app window or any core. Quit the sandbox window afterwards and `trash "$SANDBOX"`. If a second window cannot start, record that and leave the live checks for the delivery step.
+
+   Results, 2026-11-10, run by the coordinator with `HC_SESSION=test-hac` (a longer session name overflowed the 103-byte socket path limit):
+
+   - Repository edit reaches the window: `font_size` 14 → 16 in the worktree's `settings.json` showed in `herdr-app status` after 9.3 s, inside the intent's 10 s. Reverted.
+   - Save from the app keeps the link: `herdr-app do app.zoom_in` wrote `"zoom": 1.1` through the link; `settings.json` stayed a link, and `git diff` listed `herdr-app/.config/herdr-app/settings.json`. `app.zoom_reset` left the tree clean. The whole-folder fallback is not needed.
+   - Herdr's files: `git status --porcelain` listed nothing under `herdr-app/` after the session.
+   - Sound paths: `$SANDBOX/../../Documents/Tones/herdr/jobs-done.mp3` resolves; `herdr-app status` reported no errors. Playback stays the delivery check.
+   - MonoLisa: not confirmed. The sandbox window drew no frame after the space opened, so `shot` showed the empty start screen. The font key is unchanged from the current file; the delivery check in step 9 confirms it.
+   - Caution for step 9 and later phases: `herdr-app do app.quit` against the sandbox also closed Etienne's own window. Stop a sandbox window by its own process.
 8. Run `bin/test`, then the linters (`rubocop`, `shellcheck`, `yamllint`, markdownlint through lefthook). Re-read the diff.
 9. Delivery, after the merge, from the main checkout `~/Developer/dotfiles`: `trash ~/.config/herdr-app/keys.json ~/.config/herdr-app/settings.json`, then `stow -d ~/Developer/dotfiles -t "$HOME" --no-folding --restow herdr-app`. Then repeat the live checks against the real config folder.
 
@@ -190,10 +206,11 @@ The live checks below run twice: first in the sandbox of step 7, with `CONFIG=$S
 - Invariant: HTTPS only, enforced by `herdr_app_fetch` → `test/herdr_app_install_test.rb` `test_every_request_is_https_only`.
 - Invariant: only `releases.herdr.dev` tarballs, enforced by `herdr_app_release` → `test/herdr_app_install_test.rb` `test_a_foreign_tarball_url_fails_before_download`.
 - Invariant: nothing lands before the digest matches, enforced by `main`'s order → `test/herdr_app_install_test.rb` `test_a_wrong_sha256_installs_nothing`.
-- Invariant: the launcher link is written last, enforced by `herdr_app_place` → `test/herdr_app_install_test.rb` `test_a_missing_launcher_link_reinstalls`, `test_a_tarball_without_the_executable_installs_nothing`.
+- Invariant: the launcher link is written last, enforced by `herdr_app_place` → `test/herdr_app_install_test.rb` `test_a_missing_launcher_link_reinstalls`, `test_a_tarball_without_the_executable_installs_nothing`, `test_a_tarball_with_a_symlinked_executable_installs_nothing`.
 - Invariant: no herdr-core, no `sudo`, writes only under `$HOME` and `$XDG_DATA_HOME`, enforced by the task's paths → `test/herdr_app_install_test.rb` `test_a_fresh_install_writes_only_the_app_files`, `test_xdg_data_home_moves_the_app_home`.
 - Invariant: a rerun after a partial install ends in one clean app home, enforced by `herdr_app_place` → `test/herdr_app_install_test.rb` `test_a_rerun_after_a_partial_install_replaces_it`, `test_a_failed_desktop_entry_leaves_no_launcher_link`.
-- Invariant: staging removed on every exit, enforced by `trap` → `test/herdr_app_install_test.rb` `test_staging_is_removed_after_success_and_failure`.
+- Invariant: staging removed on every exit, enforced by `trap herdr_app_cleanup EXIT` → `test/herdr_app_install_test.rb` `test_staging_is_removed_after_success_and_failure`.
+- Invariant: the desktop entry's Exec path stays one argument with any reserved character, enforced by `herdr_app_exec_argument` → `test/herdr_app_install_test.rb` `test_the_desktop_entry_quotes_an_exec_path_with_reserved_characters`, `test_a_fresh_install_places_the_app_and_the_launcher_link`.
 - Invariant: the config folder is a real folder, enforced by `STOW_SHARED` → `test/herdr_app_package_test.rb` `test_stow_shared_lists_herdr_app`, `test_the_stow_task_links_herdr_app_file_by_file`.
 
 Per changed file, the unit tests expected, named as behaviour:
