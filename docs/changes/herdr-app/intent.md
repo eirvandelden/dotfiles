@@ -43,7 +43,8 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - `keys.json`: herdr-app treats an edited file as Etienne's and stops adding new default shortcuts to it. Phase 3 edits it, so new herdr-app defaults are added by hand after that.
 - The Linux release is a tarball per architecture, listed with its sha256 in `https://releases.herdr.dev/app/latest.json`. The cask requires macOS on arm64.
 - `;` leader: herdr-app loads bindings through GPUI's `KeyBinding::load`, which accepts sequences such as `"; t"`, and its terminal receives replayed prefixes (`src/terminal.rs` in herdrdev/herdr-app). Typing `;` and then a bound key quickly fires the binding. A `;` followed by a space or Enter is never bound.
-- Running programs cannot move from the herdr TUI to herdr-core. Migration recreates names and folders only.
+- Running programs cannot move from the herdr TUI to herdr-core. Migration recreates names and folders, and resumes each agent's own session by its id; one session never runs in two places at once.
+- A herdr-core restart (an update, a reboot) gives every kept terminal a fresh shell and ends its agent. The 2026-10-30 import into herdr-core `default` lost its agents that way on 2026-11-05.
 - Closing a space ends its programs and cannot be undone.
 - The dotfiles repository is public: no work names in tracked files (the work TUI session name and work folders are arguments or live in `dotfiles-work`), and no MonoLisa font files (a paid font).
 - Etienne types Dvorak; key instructions name the arrow keys, never `hjkl`.
@@ -71,8 +72,10 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - herdr-core `default` holds personal; herdr-core `work` holds work.
 - One herdr-app window shows both, as two foldable sidebar groups.
 - An installer task that starts the work core and registers it with herdr-app, idempotent, on macOS and SteamOS.
-- A migration script that reads the herdr TUI workspaces of a given session and makes one space per workspace in a given herdr-core session, with the same name and folder. It skips a workspace whose name already exists as a space. Etienne runs it once per side; the session names are arguments.
-- After Etienne has checked the migrated spaces and approved, close the 20 old spaces in herdr-core `default` that the migration did not create. Claude lists them and asks before closing.
+- Before the migration: Claude lists the stale herdr-app spaces from the 2026-10-30 import and closes them all after Etienne approves the list.
+- A migration script that reads the herdr TUI workspaces, tabs and panes of a given session and builds them fresh in a given herdr-core session, with the same names and folders. It skips a workspace whose name already exists as a space. Etienne runs it once per side; the session names are arguments.
+- Agent sessions: the script reads each TUI pane's `agent_session` (`herdr agent list`). For each pane whose agent Etienne already quit, it resumes exactly that session in the matching new pane: `claude --resume <id>` or `codex resume <id>`. It lists the panes whose agent still runs, and never ends a program itself.
+- Documented recovery: how agents come back after a herdr-core restart.
 
 ### Phase 3: keys
 
@@ -156,7 +159,9 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - herdr-app shows two sidebar groups, personal and work, and each one folds away.
 - A new space made while a work space has focus lands in the work core, and `hc ls` in a personal shell does not list it.
 - After the migration, every herdr TUI workspace has a space with the same name and folder, on the right side. A second run makes no new spaces.
-- The old herdr-core spaces close only after Etienne approves the list.
+- The stale herdr-core spaces close only after Etienne approves the list.
+- After the migration, every former herdr TUI Claude or Codex pane runs the same conversation in herdr-app, and no session runs in both places.
+- A TUI pane whose agent still runs is listed, and its session is not resumed.
 - On a fresh machine, the installer leaves the work core registered, and a second run changes nothing.
 
 ### Phase 3
@@ -199,7 +204,9 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - herdr-core `default` is personal, `work` is work — the work session already exists.
 - The only work environment is a fixed sidebar color for work spaces — Etienne's choice; git identity already follows the remote.
 - Migrate TUI workspaces by script, names and folders only — running programs cannot move.
-- Close the old herdr-core spaces only after Etienne has migrated and approved — "close them after I migrated and approved".
+- Close the stale herdr-core spaces from the 2026-10-30 import, after Etienne approves, then migrate fresh — Etienne's choice; the import's agents were already lost.
+- Restore each agent's own Claude or Codex session in its matching pane, by session id — "restore the correct claude and codex sessions in each matching panel".
+- The script resumes only sessions whose TUI agent Etienne already quit — it never ends a program.
 - `;` is the leader everywhere, and `; ;` types a semicolon — Etienne's choice; sequence support checked in the herdr-app source.
 - `; w` closes the pane, or the tab when it is the last pane — Etienne's choice.
 - `; space` opens the picker, outside terminals only — `; ` is common in shells and code, so typing stays unchanged.
@@ -208,7 +215,7 @@ Five phases, in this order. Each phase ships as its own pull request, and the ne
 - Add the agent pipeline as a third backend; keep the herdr TUI installed as a fallback — herdr-app is at 0.1.x.
 - Accept up to 10 seconds for a repository edit of `settings.json` to reach the running window — herdr-app's watcher misses edits through a link and polls every 10 seconds; settings edits are rare.
 - Until phase 3, the Steam Deck uses the macOS `keys.json`; phase 3 adds Linux bindings — phase 3 rewrites `keys.json` anyway.
-- No Codex critique: the plans of phases 2–5 get a Claude critique instead — Codex refuses the `terra` profile's model. That needs a playbook change (§7a) on its own branch before the phase 2 plan.
+- The plans of phases 2–5 get a Codex critique with `gpt-6.1-sol` at medium effort — the playbook's §7a now names that model, so no playbook change is needed.
 
 ## Open questions
 
