@@ -15,11 +15,13 @@ module HookBypass
 
   module_function
 
+  #: (Array[String] words, String command) -> String?
   def reason(words, command)
     words = words.map { |word| bare(word) }
     routes(words, command).find { |skips, _| skips }&.last
   end
 
+  #: (Array[String] words, String command) -> Array[[bool, String]]
   def routes(words, command)
     [
       [ no_verify?(words), "#{NO_VERIFY} skips the git hooks, which are what keep commits off main (playbook rule 19)." ],
@@ -32,35 +34,43 @@ module HookBypass
   end
 
   # Substitution and subshell punctuation stays glued to a word. A word with whitespace came from quotes: prose.
+  #: (String word) -> String
   def bare(word)
     word.match?(/\s/) ? word : word.gsub(/\A[$({`]+|[)}`]+\z/, "")
   end
 
+  #: (Array[String] words) -> bool
   def no_verify?(words)
     words.any? { |word| word.length >= 6 && NO_VERIFY.start_with?(word) }
   end
 
+  #: (Array[String] words) -> bool
   def commit_n?(words)
     git?(words) && commit?(words) && words.any? { |word| word.match?(SHORT_OPTIONS_WITH_N) }
   end
 
+  #: (Array[String] words) -> bool
   def commit?(words)
     words.any? { |word| COMMIT_WORDS.include?(word) }
   end
 
+  #: (Array[String] words, String command) -> bool
   def lefthook_switch?(words, command)
     words.any? { |word| word.match?(LEFTHOOK_SWITCH) && !word.match?(/\s/) } || quoted_switch?(command)
   end
 
+  #: (String command) -> bool
   def quoted_switch?(command)
     command.scan(QUOTED_SWITCH).any? { |(switch)| switch }
   end
 
+  #: (Array[String] words) -> bool
   def hooks_path?(words)
     environment_hooks_path?(words) ||
       (git?(words) && (git_option_hooks_path?(words) || config_hooks_path?(words)))
   end
 
+  #: (Array[String] words) -> bool
   def environment_hooks_path?(words)
     words.any? do |word|
       word.match?(/\AGIT_CONFIG_KEY_\d+=core\.hookspath\z/i) ||
@@ -68,33 +78,40 @@ module HookBypass
     end
   end
 
+  #: (Array[String] words) -> bool
   def git_option_hooks_path?(words)
     words.any? { |word| word.downcase.start_with?("#{HOOKS_PATH}=", "--config-env=#{HOOKS_PATH}=") }
   end
 
+  #: (Array[String] words) -> bool
   def config_hooks_path?(words)
     words.include?("config") && (hooks_path_written?(words) || core_section_changed?(words))
   end
 
+  #: (Array[String] words) -> bool
   def hooks_path_written?(words)
     words.each_with_index.any? do |word, index|
       word.casecmp?(HOOKS_PATH) && !(index.positive? && READS.include?(words[index - 1]))
     end
   end
 
+  #: (Array[String] words) -> bool
   def core_section_changed?(words)
     words.any? { |word| word.casecmp?("core") } && words.any? { |word| SECTION_OPERATIONS.include?(word) }
   end
 
+  #: (Array[String] words) -> bool
   def plumbing?(words)
     git?(words) && (words.include?("commit-tree") || words.include?("update-ref"))
   end
 
+  #: (Array[String] words) -> bool
   def lefthook_install?(words)
     start = words.index { |word| File.basename(word) == "lefthook" }
     !start.nil? && words.drop(start + 1).any? { |word| %w[install uninstall].include?(word) }
   end
 
+  #: (Array[String] words) -> bool
   def git?(words)
     words.any? { |word| File.basename(word) == "git" }
   end
