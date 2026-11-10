@@ -97,6 +97,14 @@ class DeliverTest < Minitest::Test
     assert_empty(gh_calls.grep(/\Apr (create|edit)/))
   end
 
+  def test_on_a_work_repository_an_unexcluded_folder_is_not_called_an_uncommitted_change
+    work_change(exclude: false)
+
+    _, stderr, = deliver
+
+    refute_match(/uncommitted changes; commit/, stderr)
+  end
+
   def test_on_a_work_repository_refuses_a_review_older_than_head
     work_change
     commit_file("lib/widget.rb", "class Widget; def late; end; end\n", "Change widget after review")

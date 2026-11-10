@@ -57,7 +57,13 @@ class Preconditions
   private
 
   def tree_reason
-    "The working tree has uncommitted changes; commit or remove them." unless capture("git", "status", "--porcelain").empty?
+    "The working tree has uncommitted changes; commit or remove them." unless capture(*status_command).empty?
+  end
+
+  # On a work repository the change folder stays local, so it never counts as an uncommitted change.
+  def status_command
+    command = [ "git", "status", "--porcelain" ]
+    @work ? command + [ "--", ".", ":(exclude)#{@folder}" ] : command
   end
 
   # On a work repository the change folder must be ignored, or a git add . would stage it.
