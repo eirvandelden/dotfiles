@@ -1,6 +1,6 @@
 # Plan: Consent guard asks before any way of skipping the git hooks
 
-From `intent.md` (2026-10-07, amended 2026-10-12). Status: accepted.
+From `intent.md` (2026-10-07, amended 2026-10-12 and 2026-11-10). Status: draft.
 
 ## Context
 
@@ -153,6 +153,16 @@ Domain skills applied: dotfiles-maintenance (stow layout, rule 12), object-orien
 - Reuse what still fits from `guard-hook-bypasses-impl1`: `HookBypass`, the Codex rules, the parity test extension, the tests.
 - Scope, out of scope and acceptance criteria in `intent.md` are unchanged. Sequencer commits (`cherry-pick`, `am`) stay out of scope (Etienne: known gap). The mixed `--force-with-lease a; --force b` case stays an accepted risk.
 - `test/review_report_check_test.rb` is red on main for an unrelated reason; it is not this change's concern.
+
+## Coordinator decisions (2026-11-10)
+
+ADR 0001 (`docs/adr/0001-per-repo-lefthook-remotes.md`, 2026-11-09) removed the global git hooks: each repository arms its own hooks with `lefthook install`. Etienne amended and accepted `intent.md` on 2026-11-10: only `lefthook uninstall` stays guarded. Revise the plan against `origin/main`, then run a new critique round.
+
+- `HookBypass`: drop `install` and `add`; keep `uninstall`. Name the word set as a constant, like `READS` and `SECTION_OPERATIONS`. Rewrite the reason: there are no global hooks to replace.
+- Codex rule: `["lefthook", "uninstall"]` only. Parity test: `GUARDED_COMMANDS` keeps `lefthook uninstall` and drops `lefthook install` and `lefthook add`.
+- Tests: `lefthook uninstall` waits; `lefthook install`, `lefthook add pre-commit` and `lefthook dump` go through. Replace the round-2 tests that make `lefthook add` ask. `lefthook install&&echo done` in the chained test becomes `lefthook uninstall&&echo done`.
+- Update the stale lines: decision 5 (lefthook route), decision 9 (Codex rule), decision 10 (parity list), Integration points (the skills now prescribe `lefthook install`), step 8, Risks, Proof.
+- Review round 3's Nit (`add` after any `lefthook` word, across chain operators) is moot once `add` is gone.
 
 ## Critique
 
