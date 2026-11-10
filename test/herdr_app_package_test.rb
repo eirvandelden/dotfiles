@@ -94,16 +94,17 @@ class HerdrAppPackageTest < Minitest::Test
     stdout.split("\n")
   end
 
-  # Runs the real stow task from a scratch copy of the installer, with an empty folder per STOW
-  # package, a stub `stow` that logs its arguments, and a HOME that has no dotfiles-work. Returns one
-  # logged line per call.
+  # Runs the real stow task from a scratch copy of the installer, with a folder for each package that
+  # git tracks here, a stub `stow` that logs its arguments, and a HOME that has no dotfiles-work. A STOW
+  # entry without a tracked folder makes the task fail, as it would on a fresh clone. Returns one logged
+  # line per call.
   def stow_calls(directory)
     root = File.join(directory, "repo")
     bin = File.join(directory, "bin")
     log = File.join(directory, "stow.log")
     FileUtils.mkdir_p([ root, bin, File.join(directory, "home") ])
     FileUtils.cp_r([ "install", "packages.conf" ].map { |name| File.join(REPO_ROOT, name) }, root)
-    bash_array("STOW").each { |package| FileUtils.mkdir_p(File.join(root, package)) }
+    tracked_package_folders.each { |package| FileUtils.mkdir_p(File.join(root, package)) }
     stub = File.join(bin, "stow")
     File.write(stub, %(#!/bin/sh\necho "$@" >> "#{log}"\n))
     FileUtils.chmod(0o755, stub)
@@ -113,5 +114,12 @@ class HerdrAppPackageTest < Minitest::Test
     raise stderr unless status.success?
 
     File.readlines(log, chomp: true)
+  end
+
+  def tracked_package_folders
+    stdout, stderr, status = Open3.capture3("git", "-C", REPO_ROOT, "ls-files", "-z")
+    raise stderr unless status.success?
+
+    stdout.split("\0").filter_map { |path| path.split("/", 2).first if path.include?("/") }.uniq
   end
 end
