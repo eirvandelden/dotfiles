@@ -72,7 +72,7 @@ Phase status: phase 1 shipped in PR #275 (merged 2026-11-10), after PR #273 remo
 ### Phase 2: cores
 
 - herdr-core `default` holds personal; herdr-core `work` holds work.
-- One herdr-app window shows both, as two foldable sidebar groups.
+- One herdr-app window shows both, as two foldable sidebar groups, named "personal" and "work". The personal name comes from a cloned `spaces` mod, shown by a cloned `main` layout; phase 4 builds on both clones.
 - An installer task that starts the work core and registers it with herdr-app, idempotent, on macOS and SteamOS.
 - Before the migration: Claude lists the stale herdr-app spaces from the 2026-10-30 import and closes them all after Etienne approves the list.
 - A migration script that reads the herdr TUI workspaces, tabs and panes of a given session and builds them fresh in a given herdr-core session, with the same names and folders. It skips a workspace whose name already exists as a space. Etienne runs it once per side; the session names are arguments.
@@ -158,7 +158,7 @@ Phase status: phase 1 shipped in PR #275 (merged 2026-11-10), after PR #273 remo
 
 ### Phase 2
 
-- herdr-app shows two sidebar groups, personal and work, and each one folds away.
+- herdr-app shows two sidebar groups, "personal" and "work", and each one folds away.
 - A new space made while a work space has focus lands in the work core, and `hc ls` in a personal shell does not list it.
 - After the migration, every herdr TUI workspace has a space with the same name and folder, on the right side. A second run makes no new spaces.
 - The stale herdr-core spaces close only after Etienne approves the list.
@@ -208,6 +208,9 @@ Phase status: phase 1 shipped in PR #275 (merged 2026-11-10), after PR #273 remo
 - Migrate TUI workspaces by script, names and folders only — running programs cannot move.
 - Close the stale herdr-core spaces from the 2026-10-30 import, after Etienne approves, then migrate fresh — Etienne's choice; the import's agents were already lost.
 - Restore each agent's own Claude or Codex session in its matching pane, by session id — "restore the correct claude and codex sessions in each matching panel".
+- herdr-core stays herdr-app's to install and update; the installer only warns when `hc` is missing — herdr-app manages core versions itself.
+- Name the personal sidebar group "personal" in phase 2, through a cloned `spaces` mod — Etienne's choice; the clone gets no Herdr updates.
+- Claude may update the work core with `hc machine update` only while it holds 0 terminals; otherwise stop and ask — no running program can end.
 - Resume each session in herdr-app while its TUI agent still runs; Etienne quits the TUI agent after checking the resumed one — "so I can manually check it went ok". Same session id, not a fork — Etienne's choice, with two writers until the TUI agent quits.
 - `;` is the leader everywhere, and `; ;` types a semicolon — Etienne's choice; sequence support checked in the herdr-app source.
 - `; w` closes the pane, or the tab when it is the last pane — Etienne's choice.

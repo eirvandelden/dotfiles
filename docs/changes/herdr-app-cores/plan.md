@@ -164,6 +164,10 @@ Ruby 4, inline RBS comments as `ruby-style` says, in `module HerdrAppMigration`.
 ```bash
 # work_core_running    :: () -> status   HC_SESSION=work hc server status --json succeeds
 # work_core_start      :: () -> status   HC_SESSION=work hc server start; never stop or restart
+# work_core_update     :: () -> status   only when machine ls/add reports the work core too old: count live
+#                                        terminals with HC_SESSION=work hc ls --json; 0 → hc machine update work
+#                                        (restarts that empty core, Etienne approved); any → die naming the count,
+#                                        nothing changed
 # work_core_registered :: () -> status   HC_SESSION=default hc machine ls --json | jq: a machine named "work";
 #                                        die without changing it when its session is not "work" or it is not
 #                                        reached --via 'sh -c' (a mismatch is Etienne's call, never replaced)
@@ -211,8 +215,11 @@ W workspaces, T tabs, P panes in one TUI session (about 20, 45 and 70 on the per
 
 - Phase 2 only, per the coordinator.
 - herdr-app shows another core as a machine: `hc machine add --via 'sh -c' --name work --session work`, registered with the `default` core. The `spaces` mod groups spaces by machine once more than one is known, and each group folds (`machines.folded`).
-- Acceptance reading for "two sidebar groups, personal and work": the personal group is herdr-app's own "This computer" group (the `default` core), and the work group is the `work` machine. herdr-app 0.1.15's `spaces` mod hard-codes the "This computer" label; a "personal" label needs a cloned `spaces` mod, which this phase does not make. Whether that label must change, and in which phase, is a decision for Etienne.
-- Install task number 27, right after `26_install_herdr_app.sh`. When `hc` is missing (a fresh machine before herdr-app's first open installs herdr-core), it warns and returns 0; installing herdr-core from the installer is not in the approved permissions. So on a fresh machine the work core is registered by the installer run after herdr-app's first open, not by the very first run. Installing herdr-core from the installer would close that gap; it needs Etienne's approval (playbook rule 11).
+- Acceptance reading for "two sidebar groups, personal and work": the personal group is the `default` core's group and the work group is the `work` machine. herdr-app's `spaces` mod hard-codes "This computer" for the local group, so this phase clones it as `spaces-cores` and changes only its three local-machine string literals (`"This computer"` at shipped lines 321 and 331, `"this computer"` at line 347) to `"personal"`; the comment at line 297 stays. A cloned layout `cores` (from `main`) points its `spaces` block's `content.mod` at `spaces-cores`, nothing else. Phase 4 builds on both clones.
+- The package tracks only the clone files Etienne owns: `mods/spaces-cores/main.js`, `mods/spaces-cores/mod.json` and `layouts/cores.json`. Herdr rewrites `jsconfig.json` and the `.d.ts` files in a mod folder on every start (AGENTS.md), so `.gitignore` ignores `herdr-app/.config/herdr-app/mods/*/jsconfig.json` and `herdr-app/.config/herdr-app/mods/*/*.d.ts`, and the package never holds them. With `STOW_SHARED`, stow links the three tracked files one by one; Herdr writes the rest into the real `mods/spaces-cores/` folder.
+- The window shows the clone only after `herdr-app do layout.switch cores`, which `shared.json` (untracked) keeps per machine. Task 27 never switches layouts; the runbook and the delivery step do, once per machine.
+- Install task number 27, right after `26_install_herdr_app.sh`. When `hc` is missing (a fresh machine before herdr-app's first open installs herdr-core), it warns and returns 0; installing herdr-core from the installer is not in the approved permissions. So on a fresh machine the work core is registered by the installer run after herdr-app's first open, not by the very first run. Etienne chose this: herdr-app installs and updates its own core.
+- Task 27 never stops a core and restarts one only through `hc machine update work` while the work core holds 0 live terminals (Etienne's approval, 2026-11-10). With any live terminal it dies, naming the count, and changes nothing.
 - The stale-space listing reads live spaces only. On 2026-11-10 at 22:00, `herdr-app ls` held one live space on this computer ("Developer") and 20 entries under `recent`: the imported spaces had already been closed. The cleanup step still runs, and an empty or one-line listing is a valid result.
 - `build` reads everything and computes every layout before its first create command. A failure after a space exists names that space and its id and exits 1; the runbook has Etienne approve closing it, then rerun. No progress file.
 - The migration lives in the `herdr-app` package as `.local/bin/herdr-app-migrate` plus `.local/share/herdr-app-migrate/*.rb`. `STOW_SHARED` links them file by file, and `test_the_package_holds_only_keys_and_settings` (which reads only `.config/herdr-app`) stays true.
@@ -244,21 +251,26 @@ W workspaces, T tabs, P panes in one TUI session (about 20, 45 and 70 on the per
 - `test/herdr_app_migration_test.rb` — new; unit tests with a fake command line.
 - `test/herdr_app_migrate_cli_test.rb` — new; the executable with `herdr` and `herdr-app` PATH stubs.
 - `test/herdr_app_work_core_test.rb` — new; the task with an `hc` PATH stub.
+- `herdr-app/.config/herdr-app/mods/spaces-cores/main.js` and `mod.json` — new; the cloned `spaces` mod with the three labels changed.
+- `herdr-app/.config/herdr-app/layouts/cores.json` — new; the cloned `main` layout with the `spaces` block on `spaces-cores`.
+- `.gitignore` — ignore `herdr-app/.config/herdr-app/mods/*/jsconfig.json` and `herdr-app/.config/herdr-app/mods/*/*.d.ts`.
+- `test/herdr_app_package_test.rb` — `test_the_package_holds_only_keys_and_settings` becomes `test_the_package_holds_only_etiennes_files`; new clone tests (see Proof).
 
 ## Order of work
 
 1. Confirm the CLI shapes before any fixture, read-only or in scratch, and record the results under this step: the reply keys of `herdr-app do space.new`, `tab.new` and `pane.split`, and the `--argv` form, in a sandbox window as in phase 1 (`HERDR_APP_HOME` under `~/.config/herdr-app-c2`, short `HC_SESSION=hac2`, stopped by its own pid, never `app.quit`); the fields of `hc machine ls --json` for a machine (session, via, state); the exit status of `hc server status` for a core that is not running, with scratch `XDG_STATE_HOME` and `HC_SESSION`.
-2. Write `test/herdr_app_migrate_cli_test.rb` `test_build_builds_every_workspace_on_the_machine`. Run it, watch it fail (no executable).
-3. Write `test/herdr_app_migration_test.rb` for `AgentSession`, `Pane`, `Layout`; make them green with `agent_session.rb`, `workspace.rb` (`Pane`, `Pairing`) and `layout.rb`.
-4. Unit tests for `Machine`, `Workspace`, `Tab`, `TuiSession`, `CommandLine`; make them green.
-5. Unit tests for `StaleSpaces`; make them green.
-6. Write `herdr-app-migrate`; run the CLI test green, then the rest of the CLI tests.
-7. Write `test/herdr_app_work_core_test.rb`; watch it fail; write `install/tasks/27_register_work_core.sh` and the `install.sh` line; run it green.
-8. Write the runbook and the `SKILL.md` link.
-9. Sandbox migration: start a scratch herdr TUI session (`herdr --session hac2`) with two workspaces, a two-column tab and a 2×2 tab, plain shells only; run `herdr-app-migrate build --tui hac2 --machine '' --dry-run`, then without it, against the sandbox window (`HERDR_APP_HOME` set); compare names, folders and split shapes with `herdr-app ls`; run it again and see only skip lines. Stop only that TUI session and that sandbox window, by pid.
-10. Run `bin/test`, then the linters (`rubocop`, `shellcheck`, `yamllint`, markdownlint through lefthook). Re-read the diff.
-11. Delivery on this Mac, after the merge, from the main checkout `~/Developer/dotfiles`. Each stop waits for Etienne:
-    1. `stow -d ~/Developer/dotfiles -t "$HOME" --no-folding --restow herdr-app`.
+2. Clones, in the step 1 sandbox window: with `HERDR_APP_HOME=~/.config/herdr-app-c2` on every command, `herdr-app do mod.clone '{"name":"spaces","as":"spaces-cores"}'` and `herdr-app do layout.clone '{"name":"main","as":"cores"}'` (it switches only that sandbox window). Write the package tests first and watch them fail. Copy `mods/spaces-cores/main.js`, `mods/spaces-cores/mod.json` and `layouts/cores.json` from the sandbox home into `herdr-app/.config/herdr-app/`; change the three labels and the one `content.mod`; add the `.gitignore` lines. Run the package tests green; `herdr-app check` the mod folder in the sandbox.
+3. Write `test/herdr_app_migrate_cli_test.rb` `test_build_builds_every_workspace_on_the_machine`. Run it, watch it fail (no executable).
+4. Write `test/herdr_app_migration_test.rb` for `AgentSession`, `Pane`, `Layout`; make them green with `agent_session.rb`, `workspace.rb` (`Pane`, `Pairing`) and `layout.rb`.
+5. Unit tests for `Machine`, `Workspace`, `Tab`, `TuiSession`, `CommandLine`; make them green.
+6. Unit tests for `StaleSpaces`; make them green.
+7. Write `herdr-app-migrate`; run the CLI test green, then the rest of the CLI tests.
+8. Write `test/herdr_app_work_core_test.rb`; watch it fail; write `install/tasks/27_register_work_core.sh` and the `install.sh` line; run it green.
+9. Write the runbook and the `SKILL.md` link.
+10. Sandbox migration: start a scratch herdr TUI session (`herdr --session hac2`) with two workspaces, a two-column tab and a 2×2 tab, plain shells only; run `herdr-app-migrate build --tui hac2 --machine '' --dry-run`, then without it, against the sandbox window (`HERDR_APP_HOME` set); compare names, folders and split shapes with `herdr-app ls`; run it again and see only skip lines. Stop only that TUI session and that sandbox window, by pid.
+11. Run `bin/test`, then the linters (`rubocop`, `shellcheck`, `yamllint`, markdownlint through lefthook). Re-read the diff.
+12. Delivery on this Mac, after the merge, from the main checkout `~/Developer/dotfiles`. Each stop waits for Etienne:
+    1. `stow -d ~/Developer/dotfiles -t "$HOME" --no-folding --restow herdr-app`, then `herdr-app do layout.switch cores` in Etienne's window.
     2. `install/tasks/27_register_work_core.sh`; check the work group in the window; run it again and see "already registered".
     3. `herdr-app-migrate stale --machine ''`. **Stop: Etienne approves the list** (it may be empty, or only "Developer"). Then `herdr-app-migrate close --machine '' <approved ids>`, or nothing.
     4. `herdr-app-migrate build --tui default --machine '' --dry-run`, then without `--dry-run`. Then the work side with the work TUI session's name as argument and `--machine work`.
@@ -278,9 +290,9 @@ W workspaces, T tabs, P panes in one TUI session (about 20, 45 and 70 on the per
 
 ## Proof
 
-- herdr-app shows two sidebar groups, personal and work, and each one folds away → `test/herdr_app_work_core_test.rb` `test_registers_the_work_core_with_the_default_core`; plus check: after step 11.2, `herdr-app shot` shows a "This computer" group and a `work` group; Etienne folds and unfolds each header.
+- herdr-app shows two sidebar groups, personal and work, and each one folds away → `test/herdr_app_work_core_test.rb` `test_registers_the_work_core_with_the_default_core`; `test/herdr_app_package_test.rb` `test_the_cores_layout_shows_the_cloned_spaces_mod`, `test_the_cloned_spaces_mod_names_the_local_group_personal`; plus check: after step 12.2, `herdr-app shot` shows a "personal" group and a `work` group; Etienne folds and unfolds each header.
 - A new space made while a work space has focus lands in the work core, and `hc ls` in a personal shell does not list it → check: Etienne focuses a work space and makes a new space with the new-space key; `HC_SESSION=work hc ls` lists its terminal and `hc ls` in a personal shell does not.
-- After the migration, every herdr TUI workspace has a space with the same name and folder, in its machine's group; a second run makes no new spaces → `test/herdr_app_migrate_cli_test.rb` `test_build_builds_every_workspace_on_the_machine`, `test_a_second_build_creates_nothing`; `test/herdr_app_migration_test.rb` `test_a_workspace_becomes_a_space_with_its_name_and_folder`, `test_the_space_lands_on_the_named_machine`; plus check: after step 11.4, every `herdr --session <S> workspace list` label is a space name under its group in `herdr-app ls`, and a second `build` prints only skipped lines.
+- After the migration, every herdr TUI workspace has a space with the same name and folder, in its machine's group; a second run makes no new spaces → `test/herdr_app_migrate_cli_test.rb` `test_build_builds_every_workspace_on_the_machine`, `test_a_second_build_creates_nothing`; `test/herdr_app_migration_test.rb` `test_a_workspace_becomes_a_space_with_its_name_and_folder`, `test_the_space_lands_on_the_named_machine`; plus check: after step 12.4, every `herdr --session <S> workspace list` label is a space name under its group in `herdr-app ls`, and a second `build` prints only skipped lines.
 - The stale herdr-core spaces close only after Etienne approves the list → `test/herdr_app_migration_test.rb` `test_close_refuses_an_unlisted_id_before_closing_any`; plus check: the delivery account quotes Etienne's approval before the `close` call.
 - After the migration, every former herdr TUI Claude or Codex pane runs the same conversation, with the same session id, in herdr-app → `test/herdr_app_migration_test.rb` `test_a_claude_pane_resumes_its_session_in_its_folder`, `test_a_codex_pane_resumes_its_session_in_its_folder`; `test/herdr_app_migrate_cli_test.rb` `test_build_resumes_every_running_agent_once`; plus check: Etienne reads each resumed pane against its TUI pane.
 - The script prints each TUI pane next to its herdr-app pane, and ends no TUI agent → `test/herdr_app_migrate_cli_test.rb` `test_build_prints_one_line_per_tui_pane`; `test/herdr_app_migration_test.rb` `test_build_sends_no_closing_or_tui_changing_command`.
@@ -309,7 +321,9 @@ Per changed file, the unit tests expected, named as behaviour:
 
 Test setup: the unit tests inject a `FakeCommandLine` that answers canned JSON keyed by the command's words and logs every call; fixtures use invented session, workspace and folder names. The CLI test runs the real executable with a PATH of its own bin folder: one Ruby stub installed as `herdr` and `herdr-app` that drops a leading `--session <S>`, logs its arguments, answers from a JSON fixture, and keeps the spaces that `space.new` makes so a second `build` sees them. The task test follows `test/herdr_app_install_test.rb`: scratch `HOME`, an os-release file through `OS_RELEASE_FILE`, a `uname` stub, and an `hc` stub that logs calls and keeps `machine ls` and `server status` answers in a state file. No test reaches a real herdr, herdr-app or core.
 
-Out of scope for this phase: keys, look, the pipeline backend; installing herdr-core; renaming the "This computer" group; split ratios; moving running programs or scrollback; removing the herdr TUI.
+Clone tests: `test_the_cores_layout_shows_the_cloned_spaces_mod` (the `spaces` block of `cores.json` names `spaces-cores`, and `cores.json` equals the shipped `main.json` apart from that one value); `test_the_cloned_spaces_mod_names_the_local_group_personal` (the string literals `"This computer"` and `"this computer"` are gone, `"personal"` takes their three places, and the line-297 comment is unchanged); `test_the_package_holds_only_etiennes_files` (exactly `keys.json`, `settings.json`, `layouts/cores.json`, `mods/spaces-cores/main.js`, `mods/spaces-cores/mod.json`). Work core update tests in `test/herdr_app_work_core_test.rb`: `test_updates_an_empty_work_core_that_is_too_old`, `test_refuses_to_update_a_work_core_with_live_terminals` (no `machine update` call, exit non-zero, message names the count).
+
+Out of scope for this phase: keys, look, the pipeline backend; installing herdr-core; split ratios; moving running programs or scrollback; removing the herdr TUI.
 
 ---
 Domain skills applied: dotfiles-maintenance (stow, installer tasks), object-oriented-design, ruby-style, software-design, glossary, diagrams.
@@ -328,3 +342,14 @@ Domain skills applied: dotfiles-maintenance (stow, installer tasks), object-orie
 - `--dry-run` cannot print later commands that need earlier ids → fixed (dry run prints a declarative preview per workspace, with no ids; new tests)
 - The layout fallback hides bad input, and TUI order need not give the top-left pane → fixed (anchors come from geometry; overlapping, missing or uncuttable layouts raise `Refusal` before any create; new tests)
 - The personal-group label stays unresolved while the plan claims no conflict → fixed (Design decisions records the acceptance reading, "This computer" is the personal group, and leaves the label change to Etienne as a decision)
+
+### Round 2 (Claude Opus, same-model, at Etienne's request after the Codex round took over 10 minutes)
+
+Scope: Etienne's three answers on 2026-11-10 (herdr-core left to herdr-app, the "personal" group in this phase, the work core update while empty), folded into the plan body above. Findings, all fixed:
+
+- Tracking every clone file would put Herdr's rewritten `.d.ts` and `jsconfig.json` in the repo → fixed (track `main.js`, `mod.json` and `cores.json` only; `.gitignore` the rest)
+- `test_the_package_holds_only_keys_and_settings` would break → fixed (becomes `test_the_package_holds_only_etiennes_files`)
+- The amendment contradicted the design, Files, Order of work, Proof and Out of scope → fixed (folded into each section; the amendment section is gone)
+- `hc machine update` restarts the core, against "never stop or restart", with no proof → fixed (the exception is in the signature and the design, with two tests)
+- "In a scratch home first" had no runnable steps, and `layout.clone` switches the window it runs in → fixed (Order of work step 2 in the sandbox window, `HERDR_APP_HOME` on every command, copy into the package)
+- The label test was case-sensitive and partial → fixed (covers all three literals and the comment)
