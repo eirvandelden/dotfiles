@@ -159,7 +159,7 @@ class WorktreeCreateTest < Minitest::Test
     assert_includes(herdr_calls, "pane close w1:pQ")
 
     close_index = order_calls.index("herdr: pane close w1:pQ")
-    remove_index = order_calls.index { |call| call.start_with?("git: worktree remove") }
+    remove_index = order_calls.index { |call| call.match?(/\Agit: (-c \S+ )?worktree remove/) }
     assert(close_index, order_calls.join("\n"))
     assert(remove_index, order_calls.join("\n"))
     assert_operator(close_index, :<, remove_index)
@@ -359,7 +359,7 @@ class WorktreeCreateTest < Minitest::Test
     assert_match(/reusing existing worktree/, stderr)
     assert_equal(File.realpath(foo), stdout.strip)
     assert_equal(original_head, git(foo, "rev-parse", "HEAD").strip)
-    assert_empty(git_calls.grep(/\Aworktree remove /))
+    assert_empty(git_calls.grep(/\A(-c \S+ )?worktree remove /))
     assert_empty(herdr_calls.grep(/\Apane close /))
   end
 

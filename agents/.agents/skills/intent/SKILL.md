@@ -36,7 +36,7 @@ Resolve `<slug-or-issue>` into the final branch/folder slug the same way step 1 
 
 The script creates `.worktrees/<slug>`, splits a pane below the caller, and starts a fresh Opus agent there, rooted in that worktree, told to invoke this skill for `docs/changes/<slug>` — there is no upstream artifact yet, so its interview is what creates `intent.md`. Tell the user which worker took it and where its report will land, then carry on: the interview that follows is that pane's own.
 
-The pane writes `intent.md`, and once Etienne says "accepted" or "agreed", leaves it uncommitted for the plan stage to commit, writes a short report to the shared git directory, and sends one line back: `Intent ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
+The pane writes `intent.md`, and once Etienne says "accepted" or "agreed", leaves it uncommitted for the plan stage to commit (on a work repository it stays a local file for good), writes a short report to the shared git directory, and sends one line back: `Intent ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the pane started. Read the file and tell the user what came back.
 
 ## Anti-pattern: "this one is too simple to need an intent"
 

@@ -294,6 +294,16 @@ end
     assert_includes(worker_prompt("plan"), "touch nothing else")
   end
 
+  def test_the_plan_prompt_says_commit_plan_commits_nothing_on_a_work_repository
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    prompt = worker_prompt("plan")
+
+    assert_includes(prompt, "On a work repository commit-plan commits nothing")
+    assert_includes(prompt, "skip the push")
+  end
+
 def test_the_plan_worker_commits_intent_and_plan_then_pushes
   worktree_creatable!
 

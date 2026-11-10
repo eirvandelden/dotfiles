@@ -72,7 +72,7 @@ Run the Bugs, Security, Compliance and Design passes REVIEW.md describes, worst 
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \
 first round) and leave review.md uncommitted — change no code, stage nothing else. Then run \
 ~/.claude/skills/review/scripts/commit-review, which commits that file alone only when no finding \
-is open. Push the branch (git push -u origin HEAD) only when commit-review exits 0; if the push is \
+is open (on a work repository it commits nothing and exits 0: review.md stays local). Push the branch (git push -u origin HEAD) only when commit-review exits 0; if the push is \
 refused, say so in your report and never use --no-verify. Then run ~/.claude/skills/deliver/scripts/deliver --check, which changes nothing. \
 Then report back to the block that asked: run rex send -b $REX_BLOCK with a single line: \
 Review clean: when the check exits 0, else Review ready: when it exits non-zero, \

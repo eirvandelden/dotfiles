@@ -31,7 +31,8 @@ case "${3:-}" in
 esac
 
 accepted_then_push="Once Etienne says the literal word \"accepted\" or \"agreed\" and the skill has committed \
-intent.md and plan.md, push the branch (git push -u origin HEAD)."
+intent.md and plan.md, push the branch (git push -u origin HEAD). On a work repository commit-plan commits \
+nothing and both files stay local: skip the push."
 intent_accepted="Once Etienne says the literal word \"accepted\" or \"agreed\", the skill flips the status and \
 you leave intent.md uncommitted: do not commit it and do not push. The plan stage commits it."
 

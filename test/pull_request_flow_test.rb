@@ -147,6 +147,19 @@ class PullRequestFlowTest < Minitest::Test
     assert_match(/`restore`/, rule(Playbook.text, 5))
   end
 
+  def test_on_a_work_repository_the_workflow_text_keeps_plan_and_review_local
+    {
+      "agents/.agents/skills/implement/SKILL.md" => /work repository.*plan\.md.*stays? local/i,
+      "claude/.claude/agents/implementer.md" => /work repository.*plan\.md.*stays? local/i,
+      "claude/.claude/agents/test-writer.md" => /work repository.*plan\.md.*stays? local/i,
+      "agents/.agents/skills/review/SKILL.md" => /work repository.*review\.md.*stays? local/i,
+      "agents/.agents/skills/deliver/SKILL.md" => /work repository.*nothing to (remove|restore)/i,
+      "claude/.claude/agents/reviewer.md" => /work repository.*commit-review.*(exits 0|commits nothing)/i
+    }.each do |path, pattern|
+      assert_match(pattern, File.read(File.join(REPO_ROOT, path)), path)
+    end
+  end
+
   private
 
   def scanned_files

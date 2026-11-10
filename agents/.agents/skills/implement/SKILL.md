@@ -50,9 +50,9 @@ Outer loop, once per acceptance criterion in `## Proof` that names a test: write
 
 Inner loop, per unit test named under the file being changed: red, green, refactor, commit on green.
 
-A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same commit as the code that needed it. Anywhere else reality departs from the plan: edit `plan.md` in the same commit as the departing code, never after.
+A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same commit as the code that needed it. Anywhere else reality departs from the plan: edit `plan.md` in the same commit as the departing code, never after. On a work repository (`change-scope` prints `work`) every `plan.md` edit stays local: no commit holds it, and a code or test commit holds only code or tests.
 
-**`Type: bugfix`** (from `intent.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit. Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`docs/changes/ai-native-workflow/spec.md §4`); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
+**`Type: bugfix`** (from `intent.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit (on a work repository the line stays local with the rest of `plan.md`: the test commit holds only the test). Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`docs/changes/ai-native-workflow/spec.md §4`); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
 
 New Ruby code follows `ruby-style`'s documentation rule. In a personal repository that means an inline RBS signature (`#:`) above each method, matching `plan.md`'s `### Signatures`. A design Proof line (`Query count:` or `Invariant:`) is built like any other criterion: its test first, then the code that enforces it. Where the plan says `Checked by: steep check`, run it.
 

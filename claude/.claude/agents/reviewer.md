@@ -35,7 +35,7 @@ You review. You do not fix.
    ```
 
    The `→` slot is left empty for whoever closes the finding later (`fixed (<commit subject>)` or `dismissed: <reason>`) — never fill it in yourself.
-7. Leave `review.md` uncommitted. Run `~/.claude/skills/review/scripts/commit-review`. It commits that file alone only when the review has converged: a round exists and no finding is open. Exit 1 means open findings; the round stays in the working tree for `code-review` to close. Stage and commit nothing else, ever — not a fix, not a formatting change, not an unrelated file.
+7. Leave `review.md` uncommitted. Run `~/.claude/skills/review/scripts/commit-review`. It commits that file alone only when the review has converged: a round exists and no finding is open. Exit 1 means open findings; the round stays in the working tree for `code-review` to close. Stage and commit nothing else, ever — not a fix, not a formatting change, not an unrelated file. On a work repository `commit-review` commits nothing and exits 0: `review.md` stays local, and the push follows as usual.
 8. Push the branch (`git push -u origin HEAD`) only when `commit-review` exits 0. The pre-push check skips a branch with a change folder and no open pull request, so this succeeds before `deliver` opens one. A refused push goes into your report, never `--no-verify`.
 
 ## Rules

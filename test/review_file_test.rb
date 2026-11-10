@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "../agents/.agents/skills/review/scripts/review_file"
 
 # Review reads the review.md of a change: its last reviewed commit and the commit subject that

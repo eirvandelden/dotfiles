@@ -33,7 +33,7 @@ Skip every `## Proof` line of the form `→ check: ...`. List each one in your o
 
 ## Rules
 
-- Writes only under test paths (`test/**`, `spec/**`, `*_test.rb`, `*_spec.rb`, `__tests__/**`, `*.test.*`) plus updating `plan.md`'s `## Proof` lines when a test needed a name Proof didn't already have.
+- Writes only under test paths (`test/**`, `spec/**`, `*_test.rb`, `*_spec.rb`, `__tests__/**`, `*.test.*`) plus updating `plan.md`'s `## Proof` lines when a test needed a name Proof didn't already have. On a work repository those `plan.md` edits stay local: commit only the tests.
 - Never edit production code, even to make a test compile — report the gap instead.
 - Never weaken, skip, or delete an existing test to make the new ones sit comfortably.
 

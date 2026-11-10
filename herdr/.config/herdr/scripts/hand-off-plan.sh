@@ -6,7 +6,7 @@
 # open as the next column of the change's row, right of its last pane (open-column.sh).
 # The worktree is created first and the worker starts inside it, already past worktree-first.
 # Every stage but implement, once accepted, starts the next one in the chain itself.
-# The intent stage leaves intent.md uncommitted; the plan stage commits intent.md and plan.md together.
+# The intent stage leaves intent.md uncommitted; the plan stage commits intent.md and plan.md together, except on a work repository, where commit-plan commits nothing.
 # --auto (plan, implement; autonomous delivery on a personal repository): the worker runs the
 # skill in its auto mode, never waits for Etienne's word "accepted", never starts the next stage
 # (the coordinator does), and puts open decisions in its report as "Decision needed:" lines.
@@ -31,7 +31,8 @@ case "${3:-}" in
 esac
 
 accepted_then_push="Once Etienne says the literal word \"accepted\" or \"agreed\" and the skill has committed \
-intent.md and plan.md, push the branch (git push -u origin HEAD)."
+intent.md and plan.md, push the branch (git push -u origin HEAD). On a work repository commit-plan commits \
+nothing and both files stay local: skip the push."
 intent_accepted="Once Etienne says the literal word \"accepted\" or \"agreed\", the skill flips the status and \
 you leave intent.md uncommitted: do not commit it and do not push. The plan stage commits it."
 
