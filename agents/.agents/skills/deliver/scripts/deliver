@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
-# Ends a change once its review is closed: removes docs/changes/<slug>/ in a commit of its own,
+# Ends a change once its review is closed: removes docs/changes/<slug>/ in a commit of its own
+# (on a work repository the folder is a local artefact no commit holds, so nothing is removed),
 # pushes the branch, opens (or updates) a draft PR with the filled body, then opens a gh-dash pane
 # and closes the idle stage panes this change opened. It asks no questions. `deliver --check` runs
 # only the preconditions and exits 0 when delivery may run, 1 with the reasons otherwise.
@@ -10,6 +11,7 @@ require "fileutils"
 require "json"
 require "open3"
 require_relative "../../review/scripts/review_file"
+require_relative "../../finish/scripts/change_scope"
 
 SKILLS_DIR = File.expand_path("../..", __dir__)
 TEMPLATES = %w[
@@ -40,14 +42,16 @@ end
 class Preconditions
   include Shell
 
-  #: (String folder) -> void
-  def initialize(folder)
+  # work: is required, so no caller can fall back to the committed checks by omission.
+  #: (String folder, work: bool) -> void
+  def initialize(folder, work:)
     @folder = folder
+    @work = work
   end
 
   #: -> Array[String]
   def reasons
-    [ tree_reason, review_reasons, freshness_reason, scope_reason ].flatten.compact
+    [ tree_reason, exclusion_reason, review_reasons, freshness_reason, scope_reason ].flatten.compact
   end
 
   private
@@ -56,20 +60,53 @@ class Preconditions
     "The working tree has uncommitted changes; commit or remove them." unless capture("git", "status", "--porcelain").empty?
   end
 
+  # On a work repository the change folder must be ignored, or a git add . would stage it.
+  def exclusion_reason
+    return unless @work
+    return if capture("git", "status", "--porcelain", "--untracked-files=all", "--", @folder).empty?
+
+    "docs/changes is not in .git/info/exclude: add it once for this repository."
+  end
+
   def review_reasons
     path = File.join(@folder, "review.md")
-    return "No #{path}: run /review first." unless File.exist?(path)
-
-    review = Review.new(File.read(path))
+    return "No #{path}: run /review first." unless review
     return "#{path} has no round: run /review first." unless review.rounds?
 
     review.open_findings.map { |line| "Open finding, close or dismiss it: #{line}" }
   end
 
+  def review
+    path = File.join(@folder, "review.md")
+    @review ||= Review.new(File.read(path)) if File.exist?(path)
+  end
+
   def freshness_reason
+    @work ? local_freshness_reason : committed_freshness_reason
+  end
+
+  def committed_freshness_reason
     tool = File.join(ENV.fetch("WORKTREE_TOOLS_DIR", File.join(Dir.home, ".config/git/worktree-tools")), "review-report-fresh")
     _, stderr, status = Open3.capture3(tool)
     "The review is not fresh: run /review again.\n#{stderr.strip}" unless status.success?
+  end
+
+  # The review.md of a work repository is untracked, so freshness is its reviewed commit being HEAD.
+  def local_freshness_reason
+    return unless review&.rounds?
+
+    reviewed = review.reviewed_commit.to_s
+    head = capture("git", "rev-parse", "HEAD").strip
+    return if reviewed_head(reviewed) == head
+
+    "The review is not fresh: run /review again.\nReviewed commit #{reviewed.empty? ? 'unknown' : reviewed}, HEAD #{head[0, 7]}."
+  end
+
+  def reviewed_head(reviewed)
+    return if reviewed.empty?
+
+    stdout, _, status = Open3.capture3("git", "rev-parse", "--verify", "--quiet", "#{reviewed}^{commit}")
+    stdout.strip if status.success?
   end
 
   def scope_reason
@@ -211,11 +248,13 @@ class Delivery
     @branch = capture("git", "rev-parse", "--abbrev-ref", "HEAD").strip
     @common = capture("git", "rev-parse", "--path-format=absolute", "--git-common-dir").strip
     @draft = Draft.new(@slug, @common)
+    @work = ChangeScope.work?
+    @preconditions = Preconditions.new(@folder, work: @work)
   end
 
   #: -> bool
   def check
-    reasons = Preconditions.new(@folder).reasons
+    reasons = @preconditions.reasons
     reasons.each { |reason| warn(reason) }
     reasons.empty?
   end
@@ -234,15 +273,15 @@ class Delivery
   private
 
   def resuming?
-    !succeeds?("git", "cat-file", "-e", "HEAD:#{@folder}") && @draft.saved? && last_subject == removal_subject
+    !@work && !succeeds?("git", "cat-file", "-e", "HEAD:#{@folder}") && @draft.saved? && last_subject == removal_subject
   end
 
   def prepare
-    reasons = Preconditions.new(@folder).reasons
+    reasons = @preconditions.reasons
     raise Refusal, reasons.join("\n") unless reasons.empty?
 
     @draft.capture_from(@folder)
-    remove_folder
+    remove_folder unless @work
   end
 
   def remove_folder

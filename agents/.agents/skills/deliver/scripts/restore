@@ -4,9 +4,11 @@
 # commit named "Remove change artifacts for <slug>" with a rebase. It prints the push command and
 # never pushes: the caller runs `git push --force-with-lease -u origin HEAD` so the consent guard
 # judges it. It refuses, leaving the branch as it was, whenever the removal commit is not exactly a
-# deletion of the whole folder.
+# deletion of the whole folder. On a work repository the folder is a local artefact that `deliver`
+# never removed, so it prints that and exits 0 before it fetches, checks the tree or rebases.
 require "json"
 require "open3"
+require_relative "../../finish/scripts/change_scope"
 
 CHANGE_FOLDER = File.expand_path("../../plan/scripts/change-folder", __dir__)
 DOCUMENTS = %w[intent.md plan.md review.md].freeze
@@ -125,6 +127,11 @@ begin
   raise Refusal, error_text.strip unless folder_status.success?
 
   folder = folder.strip
+  if ChangeScope.work?
+    puts("Nothing to restore: #{folder}/ stays local on a work repository.")
+    exit(0)
+  end
+
   branch = Branch.new
   branch.require_clean_tree
   branch.require_open_pull_request
