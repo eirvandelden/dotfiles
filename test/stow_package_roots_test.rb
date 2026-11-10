@@ -67,6 +67,54 @@ class StowPackageRootsTest < Minitest::Test
     assert_empty(strays, stray_report(strays))
   end
 
+  # A file in git's index under a declared package's folder makes it a tracked package folder.
+  #: () -> void
+  def test_a_declared_package_with_a_tracked_file_is_accepted
+    root = fixture_repository("tidy" => [ ".gitignore" ])
+
+    assert_empty(untracked_in(root))
+  end
+
+  # The fresh-clone failure: packages.conf declares a package that has no folder.
+  #: () -> void
+  def test_a_declared_package_without_a_folder_is_rejected
+    root = fixture_repository("present" => [ ".gitignore" ])
+    File.write(File.join(root, "packages.conf"), "STOW=(\n  present\n  missing\n)\n\nSTOW_SHARED=()\n")
+
+    assert_equal([ "missing" ], untracked_in(root))
+  end
+
+  # The main-checkout case: the folder exists locally, but git tracks nothing in it.
+  # A File.directory? check passes here, where a fresh clone fails.
+  #: () -> void
+  def test_a_declared_package_with_only_untracked_files_is_rejected
+    root = fixture_repository("tracked" => [ ".gitignore" ])
+    FileUtils.mkdir_p(File.join(root, "local"))
+    FileUtils.touch(File.join(root, "local", ".bundle"))
+    File.write(File.join(root, "packages.conf"), "STOW=(\n  tracked\n  local\n)\n\nSTOW_SHARED=()\n")
+
+    assert_equal([ "local" ], untracked_in(root))
+  end
+
+  # A tracked file at the root with the package's name is not a folder; stow_configure refuses it.
+  #: () -> void
+  def test_a_declared_package_that_is_a_tracked_file_is_rejected
+    root = fixture_repository("tracked" => [ ".gitignore" ])
+    FileUtils.touch(File.join(root, "plain"))
+    File.write(File.join(root, "packages.conf"), "STOW=(\n  tracked\n  plain\n)\n\nSTOW_SHARED=()\n")
+    system("git", "-C", root, "add", "--all", exception: true)
+
+    assert_equal([ "plain" ], untracked_in(root))
+  end
+
+  # The regression test: red on main (bundler), green after the fix.
+  #: () -> void
+  def test_every_stowed_package_has_a_tracked_folder
+    missing = untracked_in(REPO_ROOT)
+
+    assert_empty(missing, "packages.conf declares packages with no tracked folder: #{missing.join(", ")}")
+  end
+
   private
 
   # Names each stray and the path in $HOME it would become, so a failure says what goes wrong
@@ -74,6 +122,17 @@ class StowPackageRootsTest < Minitest::Test
   def stray_report(strays)
     "Stow links a package's top-level entries into $HOME. These would land there: " +
       strays.map { |stray| "#{stray} -> ~/#{File.basename(stray)}" }.join(", ")
+  end
+
+  # Every declared package with no path in git's index under its folder. It reads the index only,
+  # never a file's contents, so a local untracked folder counts as missing.
+  #: (String root) -> Array[String]
+  def untracked_in(root)
+    packages = stow_packages(root)
+    stdout, stderr, status = Open3.capture3("git", "-C", root, "ls-files", "-z", "--", *packages)
+    raise stderr unless status.success?
+
+    packages - stdout.split("\0").filter_map { |path| path.split("/", 2).first if path.include?("/") }
   end
 
   # Every entry at a declared package's root that is not dot-prefixed, as "<package>/<entry>".
@@ -108,6 +167,7 @@ class StowPackageRootsTest < Minitest::Test
 
   # A repository root holding a packages.conf that declares the given packages, each created with
   # the entries listed for it.
+  #: (Hash[String, Array[String]] packages) -> String
   def fixture_repository(packages)
     root = Dir.mktmpdir
     @fixtures = (@fixtures || []) << root
@@ -120,6 +180,8 @@ class StowPackageRootsTest < Minitest::Test
     declarations = packages.keys.map { |package| "  #{package}" }.join("\n")
     File.write(File.join(root, "packages.conf"),
                "STOW=(\n#{declarations}\n)\n\nSTOW_SHARED=()\n")
+    system("git", "init", "--quiet", root, exception: true)
+    system("git", "-C", root, "add", "--all", exception: true)
     root
   end
 

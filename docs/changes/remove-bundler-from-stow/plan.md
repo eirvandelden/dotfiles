@@ -193,3 +193,5 @@ Domain skills applied: software-design, glossary, diagrams, dotfiles-maintenance
 
 - The guard counts a tracked root file named like a package as a package folder, but `stow_configure` requires a directory → fixed (`untracked_in` counts only paths with a `/`; new test `test_a_declared_package_that_is_a_tracked_file_is_rejected`; Proof line added)
 - The manual check with `ls -A` does not prove that links resolve, nor covers a shared package → fixed (the check now compares `realpath` of `caddy`'s `Caddyfile`, after the former `bundler` position, and of `claude`'s `settings.json`, a shared package linked file by file, against the clone)
+
+Reproduction: committed
