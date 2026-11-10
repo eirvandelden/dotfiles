@@ -4,7 +4,7 @@ Etienne's dotfiles: GNU Stow packages, each a top-level directory, linked into `
 
 ## Packages and stow
 
-- Packages in `packages.conf`: `1password` `agents` `avante` `editor` `bundler` `caddy` `claude` `codex` `conductor` `ghostty` `git` `github` `glow` `herdr` `lazygit` `markdownlint` `neovim` `node` `pumadev` `rex` `ruby` `rubocop` `rv` `secrets` `solargraph` `ssh` `tones` `vim` `yamllint` `zed` `zsh`.
+- Packages in `packages.conf`: `1password` `agents` `avante` `editor` `caddy` `claude` `codex` `conductor` `ghostty` `git` `github` `glow` `herdr` `lazygit` `markdownlint` `neovim` `node` `pumadev` `rex` `ruby` `rubocop` `rv` `secrets` `solargraph` `ssh` `tones` `vim` `yamllint` `zed` `zsh`.
 - Skill sources live in `agents/.agents/skills/<name>/`. They link into `claude/.claude/skills/`.
 - The private `dotfiles-work` overlay (`~/Developer/dotfiles-work`) installs into the `STOW_SHARED` packages file by file.
 - Edit the source file in its package, never the link under `~/`. Never run `stow` or `stow -R` without an explicit request.
