@@ -4,7 +4,7 @@ Author: Etienne van Delden de la Haije. Status: accepted (2026-11-10). Type: fea
 
 ## Problem
 
-Etienne keeps work and personal apart with two herdr TUI sessions, `default` (19 personal workspaces) and `nedap` (5 work workspaces), each in its own Ghostty or Rex tab. herdr-app, the Herdr desktop app on herdr-core, offers what the TUI lacks: a sidebar on the right and multi-key sequences for a `;` leader. Today it is not usable as his daily tool:
+Etienne keeps work and personal apart with two herdr TUI sessions, `default` (19 personal workspaces) and a work session (5 work workspaces), each in its own Ghostty or Rex tab. herdr-app, the Herdr desktop app on herdr-core, offers what the TUI lacks: a sidebar on the right and multi-key sequences for a `;` leader. Today it is not usable as his daily tool:
 
 - Its config (`keys.json`, `settings.json`) lives only on this Mac, outside the dotfiles repository, and holds macOS-only paths. A fresh Mac or Steam Deck gets neither the app nor the config.
 - It shows one herdr-core session, so work and personal terminals mix in one list.
