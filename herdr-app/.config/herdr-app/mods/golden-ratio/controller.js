@@ -20,6 +20,8 @@ function resolveSettings(settings) {
 
 const keyOf = (focus) => (focus ? `${focus.space}/${focus.tab}/${focus.pane}` : null);
 
+const zoomedIn = (panes, focus) => panes.some((pane) => pane.tab === focus.tab && pane.zoomed);
+
 export class Controller {
   constructor(host, settings) {
     this.host = host;
@@ -29,10 +31,14 @@ export class Controller {
     this.lastApplied = null;
   }
 
+  stateOf(focus) {
+    return focus ? `${keyOf(focus)}/${zoomedIn(this.host.panes(), focus)}` : null;
+  }
+
   onFocus() {
     try {
       const focus = this.host.focused();
-      const key = keyOf(focus);
+      const key = this.stateOf(focus);
       if (key === this.lastSeen) return;
       this.lastSeen = key;
       this.token += 1;
@@ -58,7 +64,7 @@ export class Controller {
         return;
       }
       this.submit(planFor(document, focus, panes, { ratio: this.settings.ratio, minDelta: this.settings.min_delta }));
-      this.lastApplied = keyOf(focus);
+      this.lastApplied = this.stateOf(focus);
     } catch (error) {
       // A failed settle run leaves the layout as it is; the next focus change tries again.
     }

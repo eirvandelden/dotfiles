@@ -10,7 +10,7 @@ From `intent.md` (2026-11-11). Status: accepted.
 - **Focus path**: the containers from the tab root down to the focused pane.
 - **Step**: one `{id, weight}` pair, run as `layout.resize`.
 - **Golden ratio**: 0.618. On each axis, the focused pane gets that share of the tab. When the focus path crosses `n` containers of one axis, each of them gives the focused branch the share `ratio^(1/n)`, so the shares multiply to `ratio`.
-- **Settled**: the focus did not change for `debounce_ms`.
+- **Settled**: the focus did not change for `debounce_ms`. The focus state is the (space, tab, pane) key plus whether the focused tab is zoomed, so unzooming with the same pane focused is a change.
 - **Drift**: the focused tab is missing from the document (a fresh tab not yet persisted), or its leaf ids differ from the pane ids `panes()` reports for that tab. A space with a `machine` is not drift: it stays quiet and is never retried. It is the only staleness the mod can detect.
 - **Settle run**: one pass of the controller after the debounce: read the document, check the focus again, plan, submit the steps.
 - **herdr TUI plugin**: `vv.golden-ratio`, which hooks the TUI server and never fires under herdr-app (`herdr plugin log list --plugin vv.golden-ratio` is empty). The glossary has no term to avoid here.
@@ -104,6 +104,7 @@ Weight math at a container on the focus path, with at least two weighted childre
 
 - `plan` returns only ids that exist in the tree. Enforced in `planner.js`.
 - A zoomed tab, a one-pane tab and a drifted tab produce no step. Enforced in `planFor`.
+- Unzooming the focused tab re-evaluates the pane, even though the pane is the same. A pass within `min_delta` still marks the state applied. Enforced in `controller.js`.
 - Planning the result of a plan gives `[]`. Enforced by the `min_delta` rule.
 - A px child is never in a step. Enforced in `plan`.
 - A superseded settle run submits no `layout.resize`. Enforced by the token and focus check in `controller.js` after the document read. The steps then go out in one loop with no `await`, so nothing cancels a step once the loop starts. The commands are queued by `run()` and cannot be recalled.
@@ -180,6 +181,7 @@ Weight math at a container on the focus path, with at least two weighted childre
 - Invariant: a drifted tab gets no step, enforced by `planFor` → `test/herdr_app_golden_ratio_test.rb` `test_drifted_tab_gets_no_step`
 - Invariant: a tab or space missing from the document is drift, a machine space is not → `test/herdr_app_golden_ratio_test.rb` `test_plan_for_reports_a_tab_missing_from_the_document_as_drift`, `test_document_missing_the_fresh_tab_is_retried_then_applied` and `test_machine_space_is_never_retried`
 - Invariant: a px child is never resized, enforced by `plan` → `test/herdr_app_golden_ratio_test.rb` `test_px_sibling_is_never_in_a_step`
+- Invariant: unzooming with the same pane focused rebalances → `test/herdr_app_golden_ratio_test.rb` `test_unzooming_the_same_pane_rebalances`; a no-op pass still marks the pair applied → `test_a_no_op_pass_still_marks_the_pair_applied`
 - Invariant: a superseded settle run submits nothing → `test/herdr_app_golden_ratio_test.rb` `test_focus_change_during_the_document_read_submits_nothing`
 - Invariant: a failed document read retries once, then does nothing → `test/herdr_app_golden_ratio_test.rb` `test_failed_read_retries_once_then_stays_quiet` and `test_document_that_lags_a_split_is_retried`
 - Document decoding and emitted commands, end to end through the controller → `test/herdr_app_golden_ratio_test.rb` `test_focus_change_emits_layout_resize_commands_from_the_document`
