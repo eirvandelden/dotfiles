@@ -8,7 +8,7 @@ Task `install/tasks/27_register_work_core.sh` starts the `work` core and registe
 
 ## The cores layout
 
-The package holds a clone of the `spaces` mod, `spaces-cores`, which labels the local group "personal", and a clone of the `main` layout, `cores`, which uses it. The window shows it after `herdr-app do layout.switch cores`. Run that once per machine. Herdr rewrites `jsconfig.json` and the `.d.ts` files in a mod folder on every start, so `.gitignore` leaves them out.
+The package holds a clone of the `spaces` mod, `spaces-cores`, which labels the local group "personal", and a clone of the `main` layout, `cores`, which uses it. The window shows it after `herdr-app do layout.switch --name cores`. Run that once per machine. Herdr rewrites `jsconfig.json` and the `.d.ts` files in a mod folder on every start, so `.gitignore` leaves them out.
 
 ## Stale spaces
 
@@ -26,3 +26,13 @@ Ratios of splits are not kept, and running programs and scrollback do not move.
 ## After a core restart
 
 A core restart ends every agent. Every kept terminal gets a shell in its last folder. In each agent pane run `claude --resume` or `codex resume` there and pick the session, or use the id from the pairing list.
+
+## Starting and stopping cores
+
+Start, restart or stop a core only from a plain terminal, never from an agent shell or a `!` command. The core holder copies the environment of the shell that starts it, so its `CLAUDE_*` variables then reach every terminal the core runs.
+
+## The leader and the agent lists
+
+`keys.json` adds a `;` leader sequence for most herdr-app shortcuts, such as `; t` for a new tab and `; space` for the `picker` mod. The `cmd-…` and `ctrl-…` bindings stay. Quit, hide, `layout.switch`, the window zoom (`app.zoom_in`, `app.zoom_out`, `app.zoom_reset`), copy and paste have no leader sequence; pane zoom is `; z`. On Linux, which has no `cmd`, use `ctrl-shift-c` and `ctrl-shift-v` to copy and paste in a terminal, `ctrl-shift-k` for the `picker` mod, `ctrl-shift-l` for `layout.switch`, and `ctrl-=`, `ctrl--` and `ctrl-0` to zoom. These `ctrl-…` keys are global on macOS too, so `ctrl--`, `ctrl-=`, `ctrl-+` and `ctrl-0` no longer reach terminal programs. `ctrl--` sends `^_`, which is undo in zsh and readline. In a terminal, `; ;` types a `;` and `; space` types a semicolon and a space. The leader also fires in a terminal: a `;` followed by a bound key runs that binding, so `ls;pwd` runs `tab.prev` at `; p`. A typed `;;`, as in a shell `case` arm or `for(;;)`, arrives as one `;`. Type `; ; ; ;` to get `;;`. In a herdr-app text input, such as a tab name, a `;` followed by a bound key fires that binding, and `; ;` types nothing. `; d` lists the done agents and `; b` the blocked ones, from the `agents-done` and `agents-blocked` mods. Both load one `main.js`, and each `mod.json` names its status. After a change to `keys.json`, check that `$HERDR_APP_HOME/keys.error` does not exist and that `herdr-app status` names no keys error. One bad binding drops every binding in the window.
+
+Hold `ctrl+alt+cmd` to repeat a move without the leader: an arrow focuses the pane in that direction, `shift` + arrow swaps it, `n` and `p` go to the next and previous tab, `]` and `[` to the next and previous space, and `a` and `shift-a` to the next and previous agent. On Linux these chords need Super, so `; ` + arrow stays the fallback there. Neovim's leader is space, because herdr-app's `;` leader also fires inside terminals. `;` belongs to herdr-app: Neovim maps `;` to `<Nop>` in normal mode, so its repeat of the last `f` or `t` is off. In Neovim, `;x` and `;w` still run herdr-app's `pane.close` and `;p` its `tab.prev`. The floating terminal's `<leader>tt` toggle works in normal mode only.

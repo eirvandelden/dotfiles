@@ -22,6 +22,9 @@ vim.keymap.set("c", "<M-f>", "<C-Right>", { desc = "Move right one word (cmd)" }
 
 vim.keymap.set("n", "<M-f>", "w", { desc = "Move forward one word" })
 vim.keymap.set("n", "<M-b>", "b", { desc = "Move backward one word" })
+
+-- ; belongs to herdr-app: its leader takes ; plus a bound key, even inside Neovim
+vim.keymap.set("n", ";", "<Nop>", { desc = "Reserved for the herdr-app leader" })
 -- exit terminal mode with Escape
 vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { desc = "Terminal: exit to Normal", silent = true })
 

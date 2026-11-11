@@ -1,5 +1,6 @@
 # Glossary
 
+- **Agent list** — a herdr-app popup that lists the running agents of one status and shows the one picked: `; d` opens the done list (`agents-done`), `; b` the blocked list (`agents-blocked`).
 - **Base** — the merge-base of `HEAD` and the base branch, as a commit; `HEAD` when no base branch exists. The viewer diffs against it.
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
 - **Chained test** — one test that runs the steps of several former tests in one repository and keeps every former assertion.
@@ -17,6 +18,7 @@
 - **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
+- **Leader** — the `;` key that starts every herdr-app shortcut sequence, such as `; t`. `; ;` types a `;` in a terminal.
 - **Local artefact** — a change artefact that no commit holds. On a work repository `.git/info/exclude` hides it.
 - **Machine** — one core as herdr-app shows it: this computer (the `default` core, `''` on the command line), or a core that `hc machine add` registered with the default core, such as `work`. herdr-app shows each machine as one sidebar group.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.

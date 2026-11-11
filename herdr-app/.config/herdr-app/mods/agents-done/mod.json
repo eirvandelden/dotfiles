@@ -1,0 +1,13 @@
+{
+  "place": "none",
+  "title": "Done agents",
+  "overlay": {
+    "kind": "popup",
+    "at": "top",
+    "offset": 40,
+    "width": 640,
+    "height": 0.5,
+    "props": { "status": "done", "title": "Done agents" }
+  },
+  "cloned_from": { "name": "picker", "version": "0.1.15" }
+}
