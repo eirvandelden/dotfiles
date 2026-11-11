@@ -51,6 +51,19 @@ class HerdrAppKeysTest < Minitest::Test
     ARROWS.to_h { |direction| [ "; shift-#{direction}", "pane.swap:#{direction}" ] }
   ).freeze
 
+  # Each ctrl-alt-cmd chord with the leader key it repeats in one keypress.
+  CHORD_TWINS = {
+    "ctrl-alt-cmd-n" => "; n",
+    "ctrl-alt-cmd-p" => "; p",
+    "ctrl-alt-cmd-]" => "; ]",
+    "ctrl-alt-cmd-[" => "; [",
+    "ctrl-alt-cmd-a" => "; a",
+    "ctrl-alt-cmd-shift-a" => "; shift-a"
+  }.merge(
+    ARROWS.to_h { |direction| [ "ctrl-alt-cmd-#{direction}", "; #{direction}" ] },
+    ARROWS.to_h { |direction| [ "ctrl-alt-cmd-shift-#{direction}", "; shift-#{direction}" ] }
+  ).freeze
+
   # Each table spelling with the spelling the shifted character produces. macOS matches both to one
   # keypress; Linux needs both.
   SHIFTED_SPELLINGS = {
@@ -222,6 +235,12 @@ class HerdrAppKeysTest < Minitest::Test
 
   def test_the_leader_map_binds_every_row
     assert_equal(LEADER_MAP, section("global").slice(*LEADER_MAP.keys))
+  end
+
+  def test_the_chords_repeat_their_leader_twins
+    twins = CHORD_TWINS.transform_values { |leader_key| LEADER_MAP.fetch(leader_key) }
+
+    assert_equal(twins, section("global").slice(*CHORD_TWINS.keys))
   end
 
   def test_every_action_is_reachable_without_cmd
