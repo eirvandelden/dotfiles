@@ -59,7 +59,7 @@ module NodeRunner
 
   def run_node(body, input = {})
     script = <<~JS
-      import { plan, planFor } from "file://#{MODS}/planner.js";
+      import { drifted, plan, planFor } from "file://#{MODS}/planner.js";
       import { Controller } from "file://#{MODS}/controller.js";
       #{PRELUDE}
       const input = #{JSON.generate(input)};
@@ -74,7 +74,7 @@ module NodeRunner
 
   def run_planner(body, input = {})
     script = <<~JS
-      import { plan, planFor } from "file://#{MODS}/planner.js";
+      import { drifted, plan, planFor } from "file://#{MODS}/planner.js";
       #{PRELUDE.lines.first(6).join}
       const input = #{JSON.generate(input)};
       console.log(JSON.stringify((() => { #{body} })()));
@@ -99,6 +99,10 @@ module NodeRunner
 
   def column(id, *children, size: nil)
     { "type" => "column", "id" => id, "children" => children }.merge(size ? { "size" => size } : {})
+  end
+
+  def stack(id, *children)
+    { "type" => "stack", "id" => id, "children" => children }
   end
 
   def document(root, machine: nil, tab: "t1")
@@ -246,6 +250,24 @@ class HerdrAppGoldenRatioTest < Minitest::Test
 
       assert_steps({ "a" => 0.618, "b" => 0.382 }, run_planner(call, input.merge(document: document(tree))))
       assert_empty(run_planner(call, input.merge(document: document(tree, machine: "laptop"))))
+    end
+
+    def test_plan_ignores_a_stack_container
+      assert_empty(plan_for_tree(stack("s", block("a"), block("b")), "a"))
+      tree = row("r", stack("s", block("a"), block("b")), block("d"))
+
+      assert_steps({ "s" => 0.618, "d" => 0.382 }, plan_for_tree(tree, "a"))
+    end
+
+    def test_plan_for_reports_a_tab_missing_from_the_document_as_drift
+      call = "return drifted(input.document, input.focus, input.panes);"
+      tree = row("r", block("a"), block("b"))
+      input = { focus: focus_on("a", tab: "t2"), panes: pane_infos(%w[a b], tab: "t2") }
+
+      assert(run_planner(call, input.merge(document: document(tree, tab: "t1"))), "missing tab")
+      assert(run_planner(call, input.merge(document: { "spaces" => [] })), "missing space")
+      refute(run_planner(call, input.merge(document: document(tree, tab: "t2"))), "tab present")
+      refute(run_planner(call, input.merge(document: document(tree, tab: "t2", machine: "laptop"))), "machine")
     end
   end
 
@@ -411,6 +433,72 @@ class HerdrAppGoldenRatioTest < Minitest::Test
       assert_equal(%w[a b d r], weights.keys.sort)
       assert_in_delta(0.618, weights.fetch("a"), 0.001)
       assert_in_delta(0.618, weights.fetch("r"), 0.001)
+    end
+
+    def test_document_missing_the_fresh_tab_is_retried_then_applied
+      stale = document(row("r", block("x"), block("y")), tab: "t0")
+      current = document(row("r", block("a"), block("b")))
+      outcome = run_node(<<~JS, pair_input(documents: [ stale, current ]))
+        const h = harness(input);
+        h.controller.onFocus();
+        await h.clock.fire();
+        const afterFirst = { runs: h.state.runs.length, retry: h.state.timers.length };
+        await h.clock.fire();
+        return { afterFirst, runs: h.state.runs.length, pending: h.state.timers.length };
+      JS
+
+      assert_equal({ "runs" => 0, "retry" => 1 }, outcome["afterFirst"])
+      assert_equal(2, outcome["runs"])
+      assert_equal(0, outcome["pending"])
+    end
+
+    def test_machine_space_is_never_retried
+      tree = row("r", block("a"), block("b"))
+      outcome = run_node(<<~JS, pair_input(documents: [ document(tree, machine: "laptop") ]))
+        const h = harness(input);
+        h.controller.onFocus();
+        await h.clock.fire();
+        const retry = h.state.timers.length;
+        await h.clock.fire();
+        return { retry, reads: h.state.reads, runs: h.state.runs.length };
+      JS
+
+      assert_equal({ "retry" => 0, "reads" => 1, "runs" => 0 }, outcome)
+    end
+
+    def test_unzooming_the_same_pane_rebalances
+      outcome = run_node(<<~JS, pair_input(zoomed: pane_infos(%w[a b], zoomed: true)))
+        const h = harness(input);
+        const unzoomed = input.panes;
+        h.host.panes = () => input.zoomed;
+        h.controller.onFocus();
+        await h.clock.fire();
+        const whileZoomed = h.state.runs.length;
+        h.host.panes = () => unzoomed;
+        h.controller.onFocus();
+        await h.clock.fire();
+        return { whileZoomed, runs: h.state.runs.length };
+      JS
+
+      assert_equal(0, outcome["whileZoomed"])
+      assert_equal(2, outcome["runs"])
+    end
+
+    def test_a_no_op_pass_still_marks_the_pair_applied
+      tree = row("r", block("a", { "weight" => 0.618 }), block("b", { "weight" => 0.382 }))
+      outcome = run_node(<<~JS, pair_input(documents: [ document(tree) ], focus_b: focus_on("b")))
+        const h = harness(input);
+        h.controller.onFocus();
+        await h.clock.fire();
+        h.state.focus = input.focus_b;
+        h.controller.onFocus();
+        h.state.timers.length = 0;
+        h.state.focus = input.focus;
+        h.controller.onFocus();
+        return { timers: h.state.timers.length, runs: h.state.runs.length };
+      JS
+
+      assert_equal({ "timers" => 0, "runs" => 0 }, outcome)
     end
   end
 end
