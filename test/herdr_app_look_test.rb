@@ -34,6 +34,13 @@ class HerdrAppLookTest < Minitest::Test
     assert_equal(%w[agents spaces-cores], collect_mods(sidebar).intersection(%w[spaces-cores agents]).sort)
   end
 
+  def test_the_golden_ratio_block_lives_in_the_work_column_not_the_sidebar
+    work = find_node(layout, "work")
+
+    assert_equal("golden-ratio", work.fetch("children").last["id"])
+    assert_nil(find_node(find_node(layout, "sidebar"), "golden-ratio"))
+  end
+
   def test_the_root_theme_is_the_personal_pair
     assert_equal(PERSONAL_PAIR, layout["theme"])
   end
