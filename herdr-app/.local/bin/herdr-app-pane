@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+# Opens and closes the agent pipeline's panes in herdr-app, beside the coordinator (HERDR_APP_COORDINATOR, else
+# this terminal's HC_TERMINAL_ID). Bad arguments exit 1 before any herdr-app or hc call; a refusal exits 1 with
+# its reason on one stderr line. The row record lives under the current git repository's common dir.
+library = File.expand_path("../share/herdr-app-pane", File.dirname(File.realpath(__FILE__)))
+require File.join(library, "panes")
+
+USAGE = "usage: herdr-app-pane open <cwd> [--row <slug>] [--new-row | --unlisted | --worktree] [-- <command>...] " \
+        "| close [<terminal>] | close-idle <slug> | close-at <cwd>".freeze
+PLACEMENT_FLAGS = { "--new-row" => :new_row, "--unlisted" => :unlisted, "--worktree" => :worktree }.freeze
+
+#: -> bot
+def usage!
+  abort("herdr-app-pane: #{USAGE}")
+end
+
+# Answers the cwd and the keywords of Panes#open.
+#: (Array[String] arguments) -> [String, Hash[Symbol, untyped]]
+def open_arguments(arguments)
+  separator = arguments.index("--") || arguments.size
+  cwd, *options = arguments.take(separator)
+  usage! if cwd.nil? || cwd.start_with?("-")
+  [ cwd, open_options(options).merge(command: arguments.drop(separator + 1)) ]
+end
+
+#: (Array[String] options) -> Hash[Symbol, untyped]
+def open_options(options)
+  row = nil
+  placements = []
+  until options.empty?
+    option = options.shift
+    next placements << PLACEMENT_FLAGS.fetch(option) if PLACEMENT_FLAGS.key?(option)
+
+    usage! unless option == "--row" && options.first && !options.first.start_with?("-")
+    row = options.shift
+  end
+  usage! if placements.size > 1
+  { row: row, placement: placements.first || :column }
+end
+
+# Prints the new terminal's address; a worktree pane that already exists prints nothing.
+#: (String cwd, Hash[Symbol, untyped] options) -> ^(HerdrAppPane::Panes) -> void
+def open_call(cwd, options)
+  ->(panes) { panes.open(cwd, **options)&.then { |terminal| puts(terminal) } }
+end
+
+# Checks the arguments, then answers a call that runs the command on a Panes.
+#: (String? command, Array[String] arguments) -> ^(HerdrAppPane::Panes) -> void
+def parse(command, arguments)
+  case [ command, arguments.size ]
+  in [ "open", _ ] then open_call(*open_arguments(arguments))
+  in [ "close", 0 | 1 ] then ->(panes) { panes.close(*arguments) }
+  in [ "close-idle", 1 ] then ->(panes) { panes.close_idle(arguments.first) }
+  in [ "close-at", 1 ] then ->(panes) { panes.close_at(arguments.first) }
+  else usage!
+  end
+end
+
+command, *arguments = ARGV
+run = parse(command, arguments)
+abort("herdr-app-pane: not in a herdr-app terminal: HC_TERMINAL_ID is unset") if ENV.fetch("HC_TERMINAL_ID", "").empty?
+
+begin
+  run.call(HerdrAppPane::Panes.new)
+rescue HerdrAppPane::Refusal => error
+  abort("herdr-app-pane: #{error.message}")
+end
