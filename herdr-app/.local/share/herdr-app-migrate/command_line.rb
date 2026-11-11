@@ -10,7 +10,7 @@ module HerdrAppMigration
     #: (*String command) -> Hash[String, untyped]
     def json(*command)
       stdout, stderr, status = Open3.capture3(*command)
-      raise Refusal, "#{command.join(' ')} failed: #{stderr.strip}" unless status.success?
+      raise Refusal, "#{command.join(' ')} failed: #{stderr.lines.first&.strip}" unless status.success?
 
       parse(command, stdout)
     rescue SystemCallError => error
