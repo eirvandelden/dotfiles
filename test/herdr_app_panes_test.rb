@@ -70,6 +70,16 @@ module PanesTestSupport
     add_terminal(@world, terminal_row(address, pane), terminal(address, cwd: cwd, foreground_cwd: foreground_cwd))
   end
 
+  # Two spaces with the id sp0, one per machine, each with the coordinator's address t10 and an idle agent t20;
+  # the coordinator's hc labels name sp0.
+  def list_space_id_on_two_machines
+    personal = space("sp0", tab("tb0", agent_row("t10", "p10"), agent_row("t20", "p20")), name: "dotfiles")
+    work = space("sp0", tab("tb9", agent_row("t10", "p90"), agent_row("t20", "p92")), name: "api", machine: "work")
+    @world["spaces"] = [ personal, work ]
+    @world[HerdrAppHarness::FOCUS_KEY] = "p20"
+    @world["terminals"]["t10"] = [ terminal("t10", cwd: @main, status: agent, space: "sp0", tab: "tb0") ]
+  end
+
   def record_path(row = ROW)
     File.join(@common_dir, "herdr-app", "stage-panes-#{row}")
   end
@@ -104,6 +114,15 @@ class HerdrAppPanesOpenTest < Minitest::Test
     panes.open(@cwd, command: [ "claude" ], placement: :new_row)
 
     assert_equal(%w[p11 p10], splits.map { |request| request["pane"] })
+  end
+
+  def test_open_refuses_a_space_id_listed_on_two_machines
+    list_space_id_on_two_machines
+
+    error = assert_raises(HerdrAppPane::Refusal) { panes.open(@cwd, command: [ "claude" ]) }
+
+    assert_match(/sp0/, error.message)
+    assert_empty(splits)
   end
 
   def test_open_falls_back_to_the_coordinator_when_the_row_end_is_gone_or_refuses
@@ -291,6 +310,18 @@ class HerdrAppPanesCloseIdleTest < Minitest::Test
 
     assert_equal(0, closed)
     assert_match(/no window is running/, stderr)
+    assert_empty(closed_panes)
+  end
+
+  def test_close_idle_closes_nothing_when_the_space_id_is_ambiguous
+    list_space_id_on_two_machines
+    write_record("t20")
+    closed = nil
+
+    _, stderr = capture_io { closed = panes.close_idle(ROW) }
+
+    assert_equal(0, closed)
+    assert_match(/sp0/, stderr)
     assert_empty(closed_panes)
   end
 
