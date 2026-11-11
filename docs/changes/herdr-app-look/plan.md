@@ -276,7 +276,7 @@ Sandbox check, in a sandbox herdr-app only; never send a command or keystroke to
 - Invariant: blue and orange differ only in the accent → `test_blue_and_orange_differ_only_in_the_accent`.
 - Invariant: work spaces share one mark, and no personal mark is orange → `test_work_spaces_share_one_fixed_mark`, `test_no_personal_mark_is_the_work_orange`; check: sandbox shot.
 - The tabs bar leaves room for the traffic lights with the sidebar on the right → `test_the_tabs_bar_shows_the_cloned_tabs_mod`, `test_the_cloned_tabs_mod_pads_without_the_sidebar_width`, `test_the_cloned_tabs_mod_differs_from_tabs_only_in_the_padding` (skips without the shipped `tabs` mod); check: sandbox shots, sidebar shown and hidden.
-- herdr-app loads both mods → `test_herdr_app_accepts_the_core_look_mod`, `test_herdr_app_accepts_the_cloned_spaces_mod` (skip without `herdr-app`).
+- herdr-app loads the three mods → `test_herdr_app_accepts_the_core_look_mod`, `test_herdr_app_accepts_the_cloned_spaces_mod`, `test_herdr_app_accepts_the_cloned_tabs_mod` (skip without `herdr-app`).
 
 Per changed file, the unit tests expected:
 

@@ -27,9 +27,15 @@ class HerdrAppPackageTest < Minitest::Test
       %w[
         keys.json layouts/cores.json
         mods/agents-blocked/main.js mods/agents-blocked/mod.json mods/agents-done/main.js mods/agents-done/mod.json
+        mods/core-look/main.js mods/core-look/mod.json mods/core-look/pick.js
         mods/golden-ratio/controller.js mods/golden-ratio/main.js mods/golden-ratio/mod.json
         mods/golden-ratio/planner.js
-        mods/spaces-cores/main.js mods/spaces-cores/mod.json settings.json
+        mods/spaces-cores/main.js mods/spaces-cores/mod.json
+        mods/tabs-cores/main.js mods/tabs-cores/mod.json mods/tabs-cores/win-close.svg mods/tabs-cores/win-max.svg
+        mods/tabs-cores/win-min.svg mods/tabs-cores/win-restore.svg
+        settings.json
+        themes/solunized-dark-blue.json themes/solunized-dark-orange.json
+        themes/solunized-light-blue.json themes/solunized-light-orange.json
       ],
       tracked_package_files.sort
     )
@@ -55,9 +61,9 @@ class HerdrAppPackageTest < Minitest::Test
   end
 
   def test_the_generated_mod_files_are_ignored
-    paths = %w[spaces-cores agents-done agents-blocked].product(%w[jsconfig.json herdr.d.ts])
-
-    paths.map { |mod, file| "mods/#{mod}/#{file}" }.each do |path|
+    mods = %w[spaces-cores agents-done agents-blocked core-look tabs-cores]
+    generated = mods.product(%w[jsconfig.json herdr.d.ts gpui-kit.d.ts])
+    generated.map { |mod, name| "mods/#{mod}/#{name}" }.each do |path|
       _stdout, _stderr, status = Open3.capture3(
         IsolatedGit::ENVIRONMENT, "git", "check-ignore", "-q", "herdr-app/.config/herdr-app/#{path}", chdir: REPO_ROOT
       )
