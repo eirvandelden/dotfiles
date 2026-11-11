@@ -61,6 +61,21 @@
           "size": {
             "px": 69
           }
+        },
+        {
+          "id": "golden-ratio",
+          "type": "block",
+          "content": {
+            "mod": "golden-ratio",
+            "props": {
+              "ratio": 0.618,
+              "debounce_ms": 120,
+              "min_delta": 0.02
+            }
+          },
+          "size": {
+            "px": 0
+          }
         }
       ],
       "size": {
