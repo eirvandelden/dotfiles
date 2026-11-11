@@ -36,7 +36,10 @@ const FALLBACK = 60000;
 
 // What a stored color name looks like on an avatar (the same in every mod
 // that draws space avatars): one strong color per hue, light and dark alike.
-const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
+const MARK = { ansi6: "#22a99a", ansi3: "#d9b02a", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
+// Every work space shows this one avatar color, in light and dark. Orange belongs to work only:
+// MARK.ansi3 here is Solunized yellow, not the shipped orange, so no personal avatar looks like it.
+const WORK_MARK = "#ea8347";
 
 // A space speaks up only when something in it needs you.
 export function glyph(status) {
@@ -388,7 +391,7 @@ export default class Spaces extends View {
     const on = w.active;
     const fromIndex = this.pressed === null ? -1 : spaces().findIndex(s => s.id === this.pressed);
     const colors = shared("space.colors") ?? {};
-    const color = colors[w.id] ?? "ansi6";
+    const color = w.machine ? WORK_MARK : (colors[w.id] ?? "ansi6");
     const fill = color.startsWith("#") ? color : (MARK[color] ?? t[color]);
     return v_flex()
       .relative()
