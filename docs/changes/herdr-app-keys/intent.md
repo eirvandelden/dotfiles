@@ -238,6 +238,7 @@ Direct chords repeat the moves Etienne makes many times in a row: hold `ctrl+alt
 - The two runbook fixes ship in phase 3 — Etienne's choice; same runbook, small edit.
 - Never start, restart or stop an hc core from an agent shell: it copies the agent's CLAUDE_* variables into every terminal — learned on 2026-11-11, when resumed agents stopped saving transcripts.
 - The herdr-app leader stays `;`; Neovim's leader moves to space, and `ctrl+alt+cmd` chords repeat pane, tab, space and agent moves — Etienne, 2026-11-11, after the review found Neovim's `;` leader clashed.
+- Neovim's `;` motion is off: `;` maps to `<Nop>` in normal mode, because `;` belongs to herdr-app — Etienne, 2026-11-11, after the review found that `;x` and `;w` in Neovim close its pane.
 
 ## Open questions
 
