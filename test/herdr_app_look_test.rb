@@ -256,13 +256,13 @@ class HerdrAppLookTest < Minitest::Test
   def ghostty_terminal_colors(appearance)
     settings = File.readlines(File.join(GHOSTTY_THEMES, "solunized-#{appearance}"), chomp: true)
                    .filter_map { |line| line.split(/\s*=\s*/, 2) if line.include?("=") }
-    palette = settings.select { |key, _| key == "palette" }.to_h { |_, value| value.split("=", 2) }
+    slots = settings.select { |key, _| key == "palette" }.to_h { |_, value| value.split("=", 2) }
     plain = settings.reject { |key, _| key == "palette" }.to_h
 
     {
       "background" => plain.fetch("background"), "foreground" => plain.fetch("foreground"),
       "selection" => plain.fetch("selection-background"), "cursor" => plain.fetch("cursor-color"),
-      "ansi" => (0..15).map { |index| palette.fetch(index.to_s) }
+      "ansi" => (0..15).map { |index| slots.fetch(index.to_s) }
     }.transform_values { |value| value.is_a?(Array) ? value.map(&:downcase) : value.downcase }
   end
 
@@ -307,7 +307,7 @@ class HerdrAppLookTest < Minitest::Test
 
   def personal_marks
     marks = mod_source("spaces-cores", "main.js")[/^const MARK = \{([^}]*)\};/, 1]
-    flunk("spaces-cores has no MARK palette") unless marks
+    flunk("spaces-cores has no MARK colors") unless marks
 
     marks.scan(/(\w+): "(#\h{6})"/).to_h
   end
