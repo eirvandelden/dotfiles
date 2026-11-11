@@ -6,13 +6,13 @@ module HerdrAppPane
   class Refusal < StandardError; end
 
   # Runs one herdr-app or hc command as an argument list, never a shell string, and answers its JSON.
-  # HERDR_APP_BIN and HC_BIN name the binaries, so a test can stub them; else they come from PATH.
+  # HERDR_APP_BIN and HC_BIN name the executables, so a test can stub them; else they come from PATH.
   class CommandLine
-    BINARIES = { "herdr-app" => "HERDR_APP_BIN", "hc" => "HC_BIN" }.freeze
+    EXECUTABLES = { "herdr-app" => "HERDR_APP_BIN", "hc" => "HC_BIN" }.freeze
 
     #: (*String command) -> untyped
     def json(*command)
-      stdout, stderr, status = Open3.capture3(binary(command.first), *command.drop(1))
+      stdout, stderr, status = Open3.capture3(executable(command.first), *command.drop(1))
       answer = parse(stdout)
       refuse(command, error_of(answer) || stderr.lines.first&.strip) if error_of(answer) || !status.success?
       refuse(command, "answered no JSON") if answer.nil?
@@ -25,8 +25,8 @@ module HerdrAppPane
     private
 
     #: (String tool) -> String
-    def binary(tool)
-      override = ENV.fetch(BINARIES.fetch(tool, ""), "")
+    def executable(tool)
+      override = ENV.fetch(EXECUTABLES.fetch(tool, ""), "")
       override.empty? ? tool : override
     end
 
