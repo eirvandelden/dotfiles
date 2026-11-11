@@ -11,11 +11,13 @@
 - **Core** — one herdr-core session, such as `default` (personal) or `work`, with its own terminals and spaces. Avoid: server.
 - **Covering test** — the test that still proves the behaviour of a deleted test.
 - **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
+- **Dist themes** — `solunized-{light,dark}-{blue,orange}.json` in `<solunized checkout>/dist/herdr-app/`, copied into the herdr-app package.
 - **Drift** — the Solunized block is not byte-equal to the light dist table, one empty line, then the dark dist table.
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
-- **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
+- **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
 - **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
+- **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Leader** — the `;` key that starts every herdr-app shortcut sequence, such as `; t`. `; ;` types a `;` in a terminal.
@@ -24,10 +26,13 @@
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
+- **Owned theme** — one of the four names of the personal pair and the work pair.
 - **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
+- **Personal pair** — the theme pair `solunized-light-blue` and `solunized-dark-blue`.
 - **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:eirvandelden/` or `github.com/eirvandelden/`; the same rule as `RemoteMatcher.personal?`.
+- **Personal space** — a space whose `machine` is null: this computer, the `default` core.
 - **Playbook** — `agents/.agents/PLAYBOOK.md`, the one rules file that all agents read in every repository.
 - **Remote clone** — lefthook's copy of the shared config in `.git/info/lefthook-remotes/<name>-<ref>`.
 - **Repo agents file** — the root `agents.md`, which describes only this repository; `CLAUDE.md` is a symlink to it.
@@ -40,15 +45,20 @@
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Shared config** — the dotfiles `lefthook.yml`, which a repo config names under `remotes:`.
-- **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
+- **Shown halves** — `layout().theme` in a herdr-app mod: the `{light, dark}` theme names the window shows now, a stored pick included.
 - **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
+- **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Space** — a herdr-app space: a named place to work on one machine, with tabs.
 - **Stale space** — a space on this computer left from the 2026-10-30 import, whose agents were lost on 2026-11-05.
 - **Starter config** — the documented `lefthook.yml` with the `remotes:` block that a personal repository copies. Avoid: template.
 - **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.
 - **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
 - **Test file** — one `test/*_test.rb`, run as its own process.
+- **Theme pair** — `{light, dark}`: two herdr-app theme names, one per appearance.
 - **View** — how the viewer previews a file, `default` or `alternate`. Default: markdown rendered, an untracked file as content, anything else as a diff.
 - **Viewer** — the floating Rex layer, opened by the `file_viewer` action, that lists changed files and previews the one picked. Avoid: file browser.
+- **Work mark** — the one fixed avatar color of every work space in the herdr-app spaces list.
+- **Work pair** — the theme pair `solunized-light-orange` and `solunized-dark-orange`.
 - **Work repository** — a repository whose change scope is `work`: its origin matches an entry of `~/.claude/consent-guard-allowed-remotes.txt`. Avoid: employer repo.
+- **Work space** — a space whose `machine` is not null: today only the `work` core.
 - **Workspace** — a herdr TUI workspace, the source of one space.
