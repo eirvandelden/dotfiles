@@ -121,6 +121,16 @@ Phase status: phase 1 shipped in PR #275 (merged 2026-11-10), after PR #273 remo
 | `; ?` | keys help | prefix `?` |
 | `; ,` | settings | prefix `s` |
 
+Direct chords repeat the moves Etienne makes many times in a row: hold `ctrl+alt+cmd` once and press the key again and again. Each chord runs the same action as its leader twin. On Linux `cmd` is Super, so `; ` + arrow stays the Super-free path.
+
+| Keys | herdr-app action | Leader twin |
+| --- | --- | --- |
+| `ctrl-alt-cmd-` + arrow | focus pane in that direction | `; ` + arrow |
+| `ctrl-alt-cmd-shift-` + arrow | swap pane in that direction | `; shift-` + arrow |
+| `ctrl-alt-cmd-n` / `ctrl-alt-cmd-p` | next / previous tab | `; n` / `; p` |
+| `ctrl-alt-cmd-]` / `ctrl-alt-cmd-[` | next / previous space | `; ]` / `; [` |
+| `ctrl-alt-cmd-a` / `ctrl-alt-cmd-shift-a` | next / previous agent | `; a` / `; shift-a` |
+
 ### Phase 4: look
 
 - The whole current sidebar, with its spaces list and agents list, moves from the default left side to the right, in a cloned `main` layout.
@@ -227,6 +237,7 @@ Phase status: phase 1 shipped in PR #275 (merged 2026-11-10), after PR #273 remo
 - The phase 3 plan gets a Claude critique instead of the Codex one — Etienne's choice; the Codex critique took over 10 minutes.
 - The two runbook fixes ship in phase 3 — Etienne's choice; same runbook, small edit.
 - Never start, restart or stop an hc core from an agent shell: it copies the agent's CLAUDE_* variables into every terminal — learned on 2026-11-11, when resumed agents stopped saving transcripts.
+- The herdr-app leader stays `;`; Neovim's leader moves to space, and `ctrl+alt+cmd` chords repeat pane, tab, space and agent moves — Etienne, 2026-11-11, after the review found Neovim's `;` leader clashed.
 
 ## Open questions
 

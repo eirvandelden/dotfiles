@@ -180,6 +180,7 @@ Rejected: porting the TUI plugins beyond the key map; a type-to-filter box in th
 - Invariant: one file holds the agent list code, enforced by the symlink → `test/herdr_app_package_test.rb` `test_the_blocked_list_shares_the_done_list_code`.
 - Invariant: the agent list code imports no relative path and names no `mods/agents-` path → `test/herdr_app_package_test.rb` `test_the_agent_list_imports_only_builtin_modules`.
 - Invariant: herdr-app's `cmd-…` defaults stay → `test/herdr_app_keys_test.rb` `test_the_cmd_defaults_stay`.
+- Each `ctrl-alt-cmd-…` chord runs the same action as its leader twin (pane focus and swap, tab, space and agent moves) → `test/herdr_app_keys_test.rb` `test_the_chords_repeat_their_leader_twins` + check: the sandbox `keys.error` check (step 3) with the chords in `keys.json`. A Steam Deck check for KDE `ctrl+alt+meta` clashes is pending with Etienne.
 - Departures of the test commit `1ea687f1` from this plan:
   - `test_every_action_is_reachable_without_cmd` skips a `send:` of exactly one C0 control byte (cmd-left, cmd-right, cmd-backspace), besides `app.quit`, `app.hide` and `app.hide_others`.
   - `test_object_bindings_name_real_commands_and_arguments` refuses an empty object list.
@@ -192,10 +193,11 @@ Rejected: porting the TUI plugins beyond the key map; a type-to-filter box in th
   - `rows()`, `close()` and `render()` read `props()?.` because `herdr-app check` renders the mod without overlay props.
   - `keys.json` also binds `; shift-/` and the `; !`…`; (` spellings, as `test_shifted_keys_have_both_spellings` demands.
   - `test_the_agent_lists_are_clones_of_the_picker` is renamed `test_the_agent_lists_are_clones_of_a_shipped_mod`, because "picker" is a glossary Avoid word.
+  - After the review found that Neovim's `;` leader clashed with herdr-app's, Etienne kept the `;` leader, moved Neovim's leader to space, and added `ctrl-alt-cmd-…` chords for pane, tab, space and agent moves (intent `## Decisions`, 2026-11-11).
 
 Per changed file, the unit tests expected:
 
-- `test/herdr_app_keys_test.rb`: `test_the_leader_map_binds_every_row`, `test_every_action_is_reachable_without_cmd`, `test_object_bindings_name_real_commands_and_arguments`, `test_semicolon_twice_types_one_semicolon`, `test_space_in_a_terminal_types_semicolon_space`, `test_terminal_copy_and_paste_work_without_super`, `test_shifted_keys_have_both_spellings`, `test_the_cmd_defaults_stay`.
+- `test/herdr_app_keys_test.rb`: `test_the_leader_map_binds_every_row`, `test_every_action_is_reachable_without_cmd`, `test_object_bindings_name_real_commands_and_arguments`, `test_semicolon_twice_types_one_semicolon`, `test_space_in_a_terminal_types_semicolon_space`, `test_terminal_copy_and_paste_work_without_super`, `test_shifted_keys_have_both_spellings`, `test_the_cmd_defaults_stay`, `test_the_chords_repeat_their_leader_twins`.
 - `test/herdr_app_package_test.rb`: `test_the_package_holds_only_etiennes_files` (updated list), `test_the_blocked_list_shares_the_done_list_code`, `test_each_agent_list_names_its_status`, `test_the_agent_list_imports_only_builtin_modules`, `test_the_agent_lists_are_clones_of_a_shipped_mod`, `test_the_generated_mod_files_are_ignored` (extended to the new folders).
 
 Test setup: the tests read the tracked JSON and JS files; no herdr-app process. The key map is a frozen hash in `test/herdr_app_keys_test.rb`, written from the intent's table. Sandbox checks use a scratch `HERDR_APP_HOME` and `HC_SESSION=hac3`, both removed after.
