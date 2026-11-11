@@ -8,7 +8,7 @@ Task `install/tasks/27_register_work_core.sh` starts the `work` core and registe
 
 ## The cores layout
 
-The package holds a clone of the `spaces` mod, `spaces-cores`, which labels the local group "personal", and a clone of the `main` layout, `cores`, which uses it. The window shows it after `herdr-app do layout.switch cores`. Run that once per machine. Herdr rewrites `jsconfig.json` and the `.d.ts` files in a mod folder on every start, so `.gitignore` leaves them out.
+The package holds a clone of the `spaces` mod, `spaces-cores`, which labels the local group "personal", and a clone of the `main` layout, `cores`, which uses it. The window shows it after `herdr-app do layout.switch --name cores`. Run that once per machine. Herdr rewrites `jsconfig.json` and the `.d.ts` files in a mod folder on every start, so `.gitignore` leaves them out.
 
 ## Stale spaces
 
@@ -26,3 +26,11 @@ Ratios of splits are not kept, and running programs and scrollback do not move.
 ## After a core restart
 
 A core restart ends every agent. Every kept terminal gets a shell in its last folder. In each agent pane run `claude --resume` or `codex resume` there and pick the session, or use the id from the pairing list.
+
+## Starting and stopping cores
+
+Start, restart or stop a core only from a plain terminal, never from an agent shell or a `!` command. The core holder copies the environment of the shell that starts it, so its `CLAUDE_*` variables then reach every terminal the core runs.
+
+## The leader and the agent lists
+
+`keys.json` binds every shortcut of herdr-app to the `;` leader, such as `; t` for a new tab and `; space` for the picker. In a terminal, `; ;` types a `;` and `; space` types a semicolon and a space. In a herdr-app text input, such as a tab name, a `;` followed by a bound key fires that binding, and `; ;` types nothing. `; d` lists the done agents and `; b` the blocked ones, from the `agents-done` and `agents-blocked` mods. Both load one `main.js`, and each `mod.json` names its status. After a change to `keys.json`, check that `$HERDR_APP_HOME/keys.error` does not exist and that `herdr-app status` names no keys error. One bad binding drops every binding in the window.
