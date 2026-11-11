@@ -45,13 +45,15 @@ module HerdrAppPane
     end
 
     # The terminals listed in the space of terminal, across its tabs: {"terminal","pane","status","app",...}.
+    # A space id listed on more than one machine names no single space, so it refuses.
     #: (String terminal) -> Array[Hash[String, untyped]]
     def space_of(terminal)
       id = @command_line.json("hc", "get", terminal, "--json").dig("labels", "herdr.space")
-      space = @command_line.json("herdr-app", "ls").fetch("spaces", []).find { |candidate| candidate["id"] == id }
-      raise Refusal, "herdr-app lists no space for #{terminal}" unless space
+      spaces = @command_line.json("herdr-app", "ls").fetch("spaces", []).select { |candidate| candidate["id"] == id }
+      raise Refusal, "herdr-app lists no space for #{terminal}" if spaces.empty?
+      raise Refusal, "herdr-app lists space #{id} on #{spaces.size} machines: no single space" if spaces.size > 1
 
-      space.fetch("tabs", []).flat_map { |tab| tab.fetch("terminals", []) }
+      spaces.first.fetch("tabs", []).flat_map { |tab| tab.fetch("terminals", []) }
     end
 
     #: (String address) -> Terminal
