@@ -372,6 +372,19 @@ class HerdrAppWorkspaceTest < Minitest::Test
     assert_match(/space api \(sp0\) is incomplete/, error.message)
   end
 
+  def test_a_new_space_without_a_listed_pane_names_the_incomplete_space
+    command_line = FakeCommandLine.new do |command|
+      next listing([ "listed-by-the-fake", nil ]) if command[1] == "ls"
+
+      { "space" => "sp0", "tab" => "tab0", "terminal" => "unlisted" }
+    end
+    error = assert_raises(HerdrAppMigration::Refusal) do
+      workspace("api", [ single_tab ]).migrate_to(HerdrAppMigration::Machine.new("", command_line: command_line), {})
+    end
+
+    assert_match(/space api \(sp0\) is incomplete: herdr-app lists no pane for terminal unlisted/, error.message)
+  end
+
   def test_the_preview_lists_tabs_splits_and_start_commands
     tabs = [ tab("main", %w[w1:p1 w1:p2], [ Rect.(0, 0, 50, 40), Rect.(50, 0, 50, 40) ]) ]
     preview = workspace("api", tabs).preview("w1:p2" => agent("codex", "def"))

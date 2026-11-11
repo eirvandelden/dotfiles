@@ -28,7 +28,8 @@ module HerdrAppMigration
     #: (name: String, folder: String, tab: String, argv: Array[String]) -> Created
     def new_space(name:, folder:, tab:, argv:)
       @built << name
-      created(do_command("space.new", name: name, folder: folder, tab: tab, argv: argv, machine: @name))
+      answer = do_command("space.new", name: name, folder: folder, tab: tab, argv: argv, machine: @name)
+      incomplete(name, answer["space"]) { created(answer) }
     end
 
     #: (space: String, name: String, folder: String, argv: Array[String]) -> Created
@@ -56,6 +57,12 @@ module HerdrAppMigration
 
     def do_command(command, **arguments)
       @command_line.json("herdr-app", "do", command, JSON.generate(arguments))
+    end
+
+    def incomplete(name, space)
+      yield
+    rescue Refusal => error
+      raise Refusal, "space #{name} (#{space}) is incomplete: #{error.message}"
     end
 
     def created(answer)
