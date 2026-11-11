@@ -182,6 +182,18 @@ module WorktreeTools
       ENV["REX_BIN_PATH"].to_s.empty? ? "rex" : ENV["REX_BIN_PATH"]
     end
 
+    # True in a herdr-app terminal that is not inside a herdr TUI pane. Herdr wins when both are set.
+    #: -> bool
+    def herdr_app_env?
+      ENV["HERDR_ENV"] != "1" && !ENV["HC_TERMINAL_ID"].to_s.empty?
+    end
+
+    # HERDR_APP_PANE names the herdr-app-pane CLI, so a test can stub it; else herdr-app-pane from PATH.
+    #: -> String
+    def herdr_app_pane_bin
+      ENV["HERDR_APP_PANE"].to_s.empty? ? "herdr-app-pane" : ENV["HERDR_APP_PANE"]
+    end
+
     # True in a Rex block that is not inside a herdr pane. Herdr wins when both are set.
     #: -> bool
     def rex_only_env?
