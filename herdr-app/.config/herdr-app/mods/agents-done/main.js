@@ -15,11 +15,11 @@ export default class AgentList extends View {
   }
 
   close() {
-    closeOverlay(props().overlay);
+    closeOverlay(props()?.overlay);
   }
 
   rows() {
-    const status = props().status;
+    const status = props()?.status;
     if (!status) return [];
     return agents().filter((a) => a.status === status);
   }
@@ -32,7 +32,7 @@ export default class AgentList extends View {
 
   render() {
     const t = theme();
-    const status = props().status;
+    const status = props()?.status;
     const rows = this.rows();
     this.at = rows.length ? Math.min(this.at, rows.length - 1) : 0;
     const empty = status ? `No ${status} agents` : 'Set "overlay.props.status" in mod.json';
@@ -74,7 +74,7 @@ export default class AgentList extends View {
       .child(
         h_flex()
           .items_center()
-          .child(div().flex_1().text_size(15).font_semibold().text_color(t.foreground).child(props().title ?? "Agents"))
+          .child(div().flex_1().text_size(15).font_semibold().text_color(t.foreground).child(props()?.title ?? "Agents"))
           .child(div().id("agent-list-esc").px(6).py(2).rounded(5).text_size(11).text_color(t.dim).cursor_pointer().hover((s) => s.bg(t.hover).text_color(t.foreground)).on_click(() => this.close()).child("Esc")),
       )
       .child(v_flex().id("al-rows").mb(6).children(rows.length ? rows.map(line) : [div().px(10).py(6).text_color(t.dim).child(empty)]));
