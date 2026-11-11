@@ -42,8 +42,12 @@ export function plan(tree, paneId, { ratio, minDelta }) {
   });
 }
 
+function spaceOf(document, focus) {
+  return ((document && document.spaces) || []).find((candidate) => candidate.id === focus.space) || null;
+}
+
 function tabOf(document, focus) {
-  const space = ((document && document.spaces) || []).find((candidate) => candidate.id === focus.space);
+  const space = spaceOf(document, focus);
   if (!space || space.machine) return null;
   return space.tabs.find((tab) => tab.id === focus.tab) || null;
 }
@@ -52,10 +56,12 @@ function tabPanes(panes, focus) {
   return panes.filter((pane) => pane.tab === focus.tab);
 }
 
-/** True when the document's leaf set for the focused tab differs from the live panes of that tab. */
+/** True when the focused tab is missing from the document or its leaf set differs from the live panes. A machine space stays quiet. */
 export function drifted(document, focus, panes) {
+  const space = spaceOf(document, focus);
+  if (space && space.machine) return false;
   const tab = tabOf(document, focus);
-  if (!tab) return false;
+  if (!tab) return true;
   const known = leafIds(tab.root).sort();
   const live = tabPanes(panes, focus).map((pane) => pane.pane).sort();
   return known.length !== live.length || known.some((id, index) => id !== live[index]);

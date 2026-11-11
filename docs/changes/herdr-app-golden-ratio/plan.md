@@ -11,7 +11,7 @@ From `intent.md` (2026-11-11). Status: accepted.
 - **Step**: one `{id, weight}` pair, run as `layout.resize`.
 - **Golden ratio**: 0.618. On each axis, the focused pane gets that share of the tab. When the focus path crosses `n` containers of one axis, each of them gives the focused branch the share `ratio^(1/n)`, so the shares multiply to `ratio`.
 - **Settled**: the focus did not change for `debounce_ms`.
-- **Drift**: the leaf ids of the document's tab differ from the pane ids `panes()` reports for that tab. It is the only staleness the mod can detect.
+- **Drift**: the focused tab is missing from the document (a fresh tab not yet persisted), or its leaf ids differ from the pane ids `panes()` reports for that tab. A space with a `machine` is not drift: it stays quiet and is never retried. It is the only staleness the mod can detect.
 - **Settle run**: one pass of the controller after the debounce: read the document, check the focus again, plan, submit the steps.
 - **herdr TUI plugin**: `vv.golden-ratio`, which hooks the TUI server and never fires under herdr-app (`herdr plugin log list --plugin vv.golden-ratio` is empty). The glossary has no term to avoid here.
 
@@ -63,6 +63,9 @@ sequenceDiagram
 ```js
 /** Steps that give the focused pane's branch `ratio` at every container on its focus path. [] when the pane is absent or alone. */
 export function plan(tree, paneId, { ratio, minDelta })
+
+/** True when the focused tab or space is missing from the document, or the leaf ids differ from the live panes of that tab. A space with a `machine` is not drift. */
+export function drifted(document, focus, panes)
 
 /** `plan` for the focused pane's tab, or [] when the tab is zoomed (live `PaneInfo.zoomed`, since the document carries no zoom), has drifted, or holds one pane. */
 export function planFor(document, focus, panes, { ratio, minDelta })
@@ -175,6 +178,7 @@ Weight math at a container on the focus path, with at least two weighted childre
 - Invariant: only existing ids appear in a plan, enforced by `plan` → `test/herdr_app_golden_ratio_test.rb` `test_plan_returns_only_ids_in_the_tree`
 - Invariant: planning a plan's result gives nothing, enforced by `min_delta` → `test/herdr_app_golden_ratio_test.rb` `test_plan_is_idempotent`
 - Invariant: a drifted tab gets no step, enforced by `planFor` → `test/herdr_app_golden_ratio_test.rb` `test_drifted_tab_gets_no_step`
+- Invariant: a tab or space missing from the document is drift, a machine space is not → `test/herdr_app_golden_ratio_test.rb` `test_plan_for_reports_a_tab_missing_from_the_document_as_drift`, `test_document_missing_the_fresh_tab_is_retried_then_applied` and `test_machine_space_is_never_retried`
 - Invariant: a px child is never resized, enforced by `plan` → `test/herdr_app_golden_ratio_test.rb` `test_px_sibling_is_never_in_a_step`
 - Invariant: a superseded settle run submits nothing → `test/herdr_app_golden_ratio_test.rb` `test_focus_change_during_the_document_read_submits_nothing`
 - Invariant: a failed document read retries once, then does nothing → `test/herdr_app_golden_ratio_test.rb` `test_failed_read_retries_once_then_stays_quiet` and `test_document_that_lags_a_split_is_retried`
