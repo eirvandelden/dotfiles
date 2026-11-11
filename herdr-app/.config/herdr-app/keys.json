@@ -56,7 +56,101 @@
     "ctrl-6": "space.select:6",
     "ctrl-7": "space.select:7",
     "ctrl-8": "space.select:8",
-    "ctrl-9": "space.select:9"
+    "ctrl-9": "space.select:9",
+    "; ;": "send:;",
+    "; t": "tab.new",
+    "; n": "tab.next",
+    "; p": "tab.prev",
+    "; ]": "space.next",
+    "; [": "space.prev",
+    "; a": "agent.next",
+    "; shift-a": "agent.prev",
+    "; d": "mod.open:agents-done",
+    "; b": "mod.open:agents-blocked",
+    "; v": "pane.split:right",
+    "; -": "pane.split:down",
+    "; x": "pane.close",
+    "; w": "pane.close",
+    "; shift-x": "tab.close",
+    "; z": "pane.zoom",
+    "; shift-b": "layout.toggle:sidebar",
+    "; space": "mod.open:picker",
+    "; shift-n": "space.new",
+    "; shift-w": "space.rename",
+    "; shift-t": "tab.rename",
+    "; shift-d": "space.close",
+    "; f": "layout.toggle:panel",
+    "; shift-f": {
+      "command": "tab.new",
+      "args": {
+        "mod": "files",
+        "name": "Files"
+      }
+    },
+    "; g": {
+      "command": "pane.split",
+      "args": {
+        "direction": "right",
+        "argv": [
+          "lazygit"
+        ]
+      }
+    },
+    "; shift-g": {
+      "command": "tab.new",
+      "args": {
+        "name": "lazygit",
+        "argv": [
+          "lazygit"
+        ]
+      }
+    },
+    "; /": "terminal.search",
+    "; shift-p": "app.palette",
+    "; ?": "app.help",
+    "; shift-/": "app.help",
+    "; ,": "app.settings",
+    "; 1": "tab.select:1",
+    "; shift-1": "space.select:1",
+    "; 2": "tab.select:2",
+    "; shift-2": "space.select:2",
+    "; 3": "tab.select:3",
+    "; shift-3": "space.select:3",
+    "; 4": "tab.select:4",
+    "; shift-4": "space.select:4",
+    "; 5": "tab.select:5",
+    "; shift-5": "space.select:5",
+    "; 6": "tab.select:6",
+    "; shift-6": "space.select:6",
+    "; 7": "tab.select:7",
+    "; shift-7": "space.select:7",
+    "; 8": "tab.select:8",
+    "; shift-8": "space.select:8",
+    "; 9": "tab.select:9",
+    "; shift-9": "space.select:9",
+    "; !": "space.select:1",
+    "; @": "space.select:2",
+    "; #": "space.select:3",
+    "; $": "space.select:4",
+    "; %": "space.select:5",
+    "; ^": "space.select:6",
+    "; &": "space.select:7",
+    "; *": "space.select:8",
+    "; (": "space.select:9",
+    "; left": "pane.go:left",
+    "; shift-left": "pane.swap:left",
+    "; right": "pane.go:right",
+    "; shift-right": "pane.swap:right",
+    "; up": "pane.go:up",
+    "; shift-up": "pane.swap:up",
+    "; down": "pane.go:down",
+    "; shift-down": "pane.swap:down",
+    "ctrl-=": "app.zoom_in",
+    "ctrl-+": "app.zoom_in",
+    "ctrl--": "app.zoom_out",
+    "ctrl-0": "app.zoom_reset",
+    "ctrl-shift-l": "layout.switch",
+    "ctrl-shift-k": "mod.open:picker"
   },
   "terminal": {
     "cmd-f": "terminal.search",
@@ -68,6 +162,9 @@
     "alt-backspace": "send:\u0017",
     "cmd-left": "send:\u0001",
     "cmd-right": "send:\u0005",
-    "cmd-backspace": "send:\u0015"
+    "cmd-backspace": "send:\u0015",
+    "; space": "send:; ",
+    "ctrl-shift-c": "terminal.copy",
+    "ctrl-shift-v": "terminal.paste"
   }
 }

@@ -180,6 +180,12 @@ Rejected: porting the TUI plugins beyond the key map; a type-to-filter box in th
 - Invariant: one file holds the agent list code, enforced by the symlink → `test/herdr_app_package_test.rb` `test_the_blocked_list_shares_the_done_list_code`.
 - Invariant: the agent list code imports no relative path and names no `mods/agents-` path → `test/herdr_app_package_test.rb` `test_the_agent_list_imports_only_builtin_modules`.
 - Invariant: herdr-app's `cmd-…` defaults stay → `test/herdr_app_keys_test.rb` `test_the_cmd_defaults_stay`.
+- Departures of the test commit `1ea687f1` from this plan:
+  - `test_every_action_is_reachable_without_cmd` skips a `send:` of exactly one C0 control byte (cmd-left, cmd-right, cmd-backspace), besides `app.quit`, `app.hide` and `app.hide_others`.
+  - `test_object_bindings_name_real_commands_and_arguments` refuses an empty object list.
+  - A `<mod>.<command>` string passes only for a mod that herdr-app 0.1.15 ships or a mod folder in the package.
+  - The Linux global defaults are checked at the top of `test_every_action_is_reachable_without_cmd`.
+  - `test/secrets_loader_test.rb` hangs when the 1Password agent is down. That is a known separate issue, out of scope.
 
 Per changed file, the unit tests expected:
 
