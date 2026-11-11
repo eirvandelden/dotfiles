@@ -12,8 +12,8 @@ Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or 
 
 ## Choosing a backend
 
-- No argument, `HERDR_ENV` or `REX_SESSION` set: pane backend. A fresh agent with an empty context is the reason to review in a pane rather than this session, which has been steering the implementation and cannot see it fresh.
-- `here`, or `HERDR_ENV` and `REX_SESSION` unset: fork the `reviewer` agent in this session (Agent tool, `subagent_type: reviewer`). Outside herdr and Rex this is the only option — say so in one line before running it, so the pane behaviour isn't silently missed.
+- No argument, `HERDR_ENV`, `HC_TERMINAL_ID` or `REX_SESSION` set: pane backend. A fresh agent with an empty context is the reason to review in a pane rather than this session, which has been steering the implementation and cannot see it fresh.
+- `here`, or `HERDR_ENV`, `HC_TERMINAL_ID` and `REX_SESSION` unset: fork the `reviewer` agent in this session (Agent tool, `subagent_type: reviewer`). Outside herdr, herdr-app and Rex this is the only option — say so in one line before running it, so the pane behaviour isn't silently missed.
 
 ## Pane backend
 
@@ -23,7 +23,7 @@ Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or 
 
 Run it from the repository being reviewed: the reviewer inherits that directory. The script opens the next column of the change's row, right of its last pane (right of the current pane on a branch with no change folder), starts Claude on opus there, and points it at the `reviewer` agent's instructions — the single source both backends read, so a pane review and an in-session review ask the same questions. Tell the user which reviewer is looking at what, and where its report will land, then carry on with work outside this branch's files: the reviewer reads the uncommitted changes as they are now, so anything edited meanwhile makes its findings describe a state that no longer exists.
 
-The reviewer writes its round to `docs/changes/<slug>/review.md` and leaves it uncommitted. It runs `~/.claude/skills/review/scripts/commit-review`, which commits that file alone only when no finding is open, and pushes the branch only when `commit-review` exits 0. On a work repository `commit-review` commits nothing: `review.md` stays local, and it exits 0 so the push and `deliver --check` follow. The personal subject is `docs: review findings for <first finding>`. Then it runs `deliver --check`. It sends one line back: `Review clean: <path>` when that exits 0 (no open finding, review fresh), else `Review ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the reviewer started.
+The reviewer writes its round to `docs/changes/<slug>/review.md` and leaves it uncommitted. It runs `~/.claude/skills/review/scripts/commit-review`, which commits that file alone only when no finding is open, and pushes the branch only when `commit-review` exits 0. On a work repository `commit-review` commits nothing: `review.md` stays local, and it exits 0 so the push and `deliver --check` follow. The personal subject is `docs: review findings for <first finding>`. Then it runs `deliver --check`. It sends one line back: `Review clean: <path>` when that exits 0 (no open finding, review fresh), else `Review ready: <path>`. It arrives as an ordinary message, possibly mid other work, and retries while the caller is busy — but the report is never lost, since the path was printed when the reviewer started. In herdr-app it arrives inside an `<hc from=…>` tag, as `<hc from="t61 …">Review ready: <path></hc>`: the line inside the tag is the report line.
 
 ## `here` backend
 
