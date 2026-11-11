@@ -174,7 +174,8 @@ class HerdrAppLookTest < Minitest::Test
     shipped = File.read(shipped_main)
 
     assert_includes(shipped, SHIPPED_PADDING_TERM, "the shipped tabs mod changed its padding: re-clone it")
-    assert_equal(shipped.sub(SHIPPED_PADDING_TERM, ""), mod_source("tabs-cores", "main.js"))
+    assert_equal(cloned_main(shipped), mod_source("tabs-cores", "main.js"))
+    assert_clone_names_tabs_as_its_source
     shipped_assets.each do |path|
       assert_equal(File.binread(path), File.binread(File.join(mod_folder("tabs-cores"), File.basename(path))), path)
     end
@@ -277,6 +278,21 @@ class HerdrAppLookTest < Minitest::Test
     flunk("no #{path}") unless File.file?(path)
 
     File.read(path)
+  end
+
+  # The shipped tabs main.js as `herdr-app do mod.clone` writes it (asset paths under mods/tabs-cores/),
+  # with the one hand edit: the padding drops the sidebar-width term.
+  def cloned_main(shipped)
+    shipped.gsub("mods/tabs/", "mods/tabs-cores/").sub(SHIPPED_PADDING_TERM, "")
+  end
+
+  # mod.clone adds cloned_from to mod.json and changes nothing else in it.
+  def assert_clone_names_tabs_as_its_source
+    shipped = JSON.parse(File.read(File.join(SHIPPED_TABS, "mod.json")))
+    clone = JSON.parse(mod_source("tabs-cores", "mod.json"))
+
+    assert_equal("tabs", clone.dig("cloned_from", "name"))
+    assert_equal(shipped, clone.except("cloned_from"))
   end
 
   # Every file of the shipped tabs mod that the clone keeps unchanged: not main.js, not mod.json (the clone
