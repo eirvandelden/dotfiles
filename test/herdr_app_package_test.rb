@@ -92,7 +92,7 @@ class HerdrAppPackageTest < Minitest::Test
     refute_includes(source, "mods/agents-")
   end
 
-  def test_the_agent_lists_are_clones_of_the_picker
+  def test_the_agent_lists_are_clones_of_a_shipped_mod
     AGENT_LISTS.each_key do |mod|
       assert_equal("picker", mod_json(mod).dig("cloned_from", "name"), mod)
     end
