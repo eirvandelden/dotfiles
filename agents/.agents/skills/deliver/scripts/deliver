@@ -244,6 +244,22 @@ end
 
 require_relative "rex_panes"
 
+# Closes the stage panes this change opened in herdr-app, once they are idle or done. herdr-app-pane knows
+# herdr-app's answers and the row record, <git-common-dir>/herdr-app/stage-panes-<slug>; this only runs it.
+# Best effort, like the gh-dash pane: the PR exists by now, so a failure only warns.
+class HerdrAppPanes
+  #: (String slug, String _common_dir) -> void
+  def initialize(slug, _common_dir)
+    @slug = slug
+  end
+
+  #: -> void
+  def close_stale
+    pane_cli = ENV.fetch("HERDR_APP_PANE", "").empty? ? "herdr-app-pane" : ENV.fetch("HERDR_APP_PANE")
+    system(pane_cli, "close-idle", @slug) || warn("The stage panes stay open: #{pane_cli} close-idle #{@slug} failed.")
+  end
+end
+
 class Delivery
   include Shell
 
@@ -319,9 +335,12 @@ class Delivery
     panes_class.new(@slug, @common).close_stale
   end
 
-  # Herdr wins when both tools set their variables, as in every dispatcher.
+  # Herdr, then herdr-app, then Rex, as in every dispatcher.
   def panes_class
-    ENV["HERDR_ENV"] != "1" && !ENV.fetch("REX_SESSION", "").empty? ? RexPanes : Panes
+    return Panes if ENV["HERDR_ENV"] == "1"
+    return HerdrAppPanes unless ENV.fetch("HC_TERMINAL_ID", "").empty?
+
+    ENV.fetch("REX_SESSION", "").empty? ? Panes : RexPanes
   end
 
   def open_dash(url)
