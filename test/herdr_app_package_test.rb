@@ -22,11 +22,9 @@ class HerdrAppPackageTest < Minitest::Test
   end
 
   def test_the_package_holds_only_etiennes_files
-    files = Dir.glob("**/*", base: PACKAGE).select { |path| File.file?(File.join(PACKAGE, path)) }
-
     assert_equal(
       %w[keys.json layouts/cores.json mods/spaces-cores/main.js mods/spaces-cores/mod.json settings.json],
-      files.sort
+      tracked_package_files.sort
     )
   end
 
@@ -162,6 +160,16 @@ class HerdrAppPackageTest < Minitest::Test
     raise stderr unless status.success?
 
     File.readlines(log, chomp: true)
+  end
+
+  # Herdr writes untracked, ignored files into the package folder, so only tracked files count.
+  def tracked_package_files
+    stdout, stderr, status = Open3.capture3(
+      IsolatedGit::ENVIRONMENT, "git", "-C", REPO_ROOT, "ls-files", "-z", "--", PACKAGE
+    )
+    raise stderr unless status.success?
+
+    stdout.split("\0").map { |path| Pathname.new(File.join(REPO_ROOT, path)).relative_path_from(PACKAGE).to_s }
   end
 
   def tracked_package_folders
