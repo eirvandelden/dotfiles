@@ -46,9 +46,9 @@ opt.guicursor = {
 
 opt.clipboard = "unnamedplus"
 
--- set leader to ;
-vim.g.mapleader = ";"
-vim.g.maplocalleader = ";"
+-- set leader to space: herdr-app uses ; as its leader, also inside terminals
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
 
 -- Ensure visible window separators between splits (including Avante sidebar)
 do
