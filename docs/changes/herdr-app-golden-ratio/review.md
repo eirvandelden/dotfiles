@@ -12,3 +12,9 @@ Checks: 26 tests green (golden-ratio and package), rubocop and markdownlint clea
 Nothing found. Round 1 fixes verified: missing tab is drift and retried once (6888d057), unzoom re-evaluates through the zoom-aware state key (22a8edc2), only row and column count as axes (d9003a0e), README sentence split (106dad86). No regression seen: a machine space stays quiet, a superseded run submits nothing, a drifted tab after one retry stays quiet until the next focus change as planned.
 
 Checks: 32 tests green (golden-ratio and package), rubocop and markdownlint clean. Every Proof test exists; no existing test weakened. The zero-size block mount and resize were proven live in the sandbox.
+
+## Round 3 — 2026-11-11T19:47:31Z — a00095b0
+
+Nothing found. Commit 28b8fe75 adds one `require_relative "isolated_git"` to the golden-ratio test; the helper exists at `test/isolated_git.rb`. a00095b0 only touches the change folder.
+
+Checks: 32 golden-ratio tests green, rubocop clean. Every Proof test exists; no existing test weakened.
