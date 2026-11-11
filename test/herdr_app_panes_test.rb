@@ -204,6 +204,16 @@ class HerdrAppPanesOpenTest < Minitest::Test
     assert_equal(%w[t11], record)
   end
 
+  def test_unlisted_open_does_not_wait_for_an_agent
+    @world["new_terminal"] = [ terminal("new", cwd: @main) ]
+
+    opened = panes.open(@main, command: %w[gh dash], row: ROW, placement: :unlisted)
+
+    assert_equal("t61", opened)
+    assert_empty(closed_panes)
+    assert_empty(calls.select { |call| call.first(3) == %w[hc get t61] })
+  end
+
   def test_open_waits_until_hc_shows_an_agent
     shell = terminal("new", cwd: @cwd)
     @world["new_terminal"] = [ shell, shell, terminal("new", cwd: @cwd, status: agent("working")) ]
