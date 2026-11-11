@@ -32,6 +32,8 @@ Each top-level directory in the dotfiles repo is a Stow package. See `references
 
 See `references/herdr-app-cores.md` for the herdr-app work and personal cores and the TUI migration.
 
+See `references/herdr-app-look.md` for the herdr-app Solunized themes, the right sidebar, the color per core and the sandbox look check.
+
 - `bootstrap.sh` is a curlable POSIX script that clones the repo and runs the installer.
 - `install.sh` orchestrates numbered scripts (`00_common.sh` through `50_stow_all.sh`) covering OS updates, prerequisites, packages, runtimes, gems, npm packages, and stow.
 
