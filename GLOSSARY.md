@@ -16,8 +16,8 @@
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
-- **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
 - **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
+- **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Leader** — the `;` key that starts every herdr-app shortcut sequence, such as `; t`. `; ;` types a `;` in a terminal.
@@ -46,8 +46,8 @@
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Shared config** — the dotfiles `lefthook.yml`, which a repo config names under `remotes:`.
 - **Shown halves** — `layout().theme` in a herdr-app mod: the `{light, dark}` theme names the window shows now, a stored pick included.
-- **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
+- **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
 - **Space** — a herdr-app space: a named place to work on one machine, with tabs.
 - **Stale space** — a space on this computer left from the 2026-10-30 import, whose agents were lost on 2026-11-05.
 - **Starter config** — the documented `lefthook.yml` with the `remotes:` block that a personal repository copies. Avoid: template.
