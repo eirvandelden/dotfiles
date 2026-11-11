@@ -34,6 +34,7 @@ An agent session inside an `hc` terminal (`HC_TERMINAL_ID` set) hands a stage to
 - `deliver` closes the change's idle stage terminals through `hc`.
 - The skills `intent`, `plan`, `implement`, `review`, `deliver` and `finish` name the `hc` terminal address instead of `HERDR_PANE_ID` or `herdr pane current`.
 - Removal of the Rex path (dispatcher branch, Rex scripts, `rex_panes.rb`, Rex recording in `worktree-create`) and then of the herdr-tui path, each in its own commit, after the `hc` path is proven.
+- The same removal in the files outside the agent workflow: `worktree-viewer`, `worktree-viewer-rex`, `lib/common.rb`, `lib/agent_worktree.rb`, `rex/.config/rex/scripts/play-tone.sh`, `rex/.config/rex/launchers.lua` and `github/.config/gh-dash/config.yml`, so no herdr-tui or Rex mention remains anywhere in the repository.
 - Tests for each changed script.
 
 ## Out of scope
@@ -50,7 +51,7 @@ An agent session inside an `hc` terminal (`HC_TERMINAL_ID` set) hands a stage to
 - An intent hand-off records the intent terminal address in `<git-common-dir>/herdr/intent-pane-<slug>`.
 - Delivery closes the idle stage terminals of the change and leaves the intent terminal open.
 - Outside `hc` (no `HC_TERMINAL_ID`) the dispatcher exits 1 with a message that names `HC_TERMINAL_ID`.
-- After the removal commits, no script or skill in the repository mentions `HERDR_PANE_ID`, `herdr pane` or `REX_SESSION`.
+- After the removal commits, no file in the repository mentions `HERDR_PANE_ID`, `herdr pane` or `REX_SESSION`.
 
 ## Flagged concerns
 
@@ -62,6 +63,8 @@ An agent session inside an `hc` terminal (`HC_TERMINAL_ID` set) hands a stage to
 - Reports stay in `<git-common-dir>/herdr/` — no reason given.
 - Drop the Rex path — no reason given.
 - Remove the herdr-tui path in a later commit, after the `hc` path is proven — no reason given.
+- Widen the removal to every file that mentions herdr-tui or Rex, not only the agent workflow — no reason given.
+- Add the six new terms (Terminal, Terminal address, Coordinator, Stage terminal, Worktree terminal, Terminal name) to `GLOSSARY.md` in a separate commit — no reason given.
 - Autonomous delivery, with `.github/workflows/` approved as a touch if a test needs it — no reason given.
 
 ## Open questions

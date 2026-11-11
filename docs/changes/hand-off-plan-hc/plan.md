@@ -8,12 +8,12 @@ From `intent.md` (2026-11-11). Status: accepted.
 
 Glossary terms used: **Core** (never "server"), **herdr-app**, **herdr TUI**, **Change folder**, **PATH stub**, **Personal repository**. No avoided word appears in the intent or this plan.
 
-New terms, proposed here. Etienne has not agreed them, so the glossary does not get them in this change (see the last `Decision needed:` in the report):
+New terms, agreed in `intent.md` `## Decisions`. Step 14 of `## Order of work` writes them to `GLOSSARY.md` in alphabetical order, in its own commit `docs: glossary terms for hand-off-plan-hc`, with these definitions. "Pane" gets no avoid entry, because herdr-app panes show terminals and the word stays valid there:
 
-- **Terminal**: one `hc` terminal in a core, as `hc ls` lists it. Avoid: pane, block.
+- **Terminal**: one `hc` terminal in a core, as `hc ls` lists it.
 - **Terminal address**: the id `hc` gives a terminal, such as `t6h`. Inside the terminal, `$HC_TERMINAL_ID` holds it. Avoid: pane id, block id.
 - **Coordinator**: the terminal that a worker sends its ready line to. The dispatcher sets it from `$COORDINATOR`, else `$HC_TERMINAL_ID`, and passes it on as `HC_COORDINATOR`.
-- **Stage terminal**: a terminal that `hand-off-plan` or `start-review` started for a change. It carries the labels `repo=<git-common-dir>` (absolute, so two repositories that share a slug never mix), `slug=<slug>` and `stage=<intent|plan|implement|review>`. Avoid: stage pane, column.
+- **Stage terminal**: a terminal that `hand-off-plan` or `start-review` started for a change. It carries the labels `repo=<git-common-dir>` (absolute, so two repositories that share a slug never mix), `slug=<slug>` and `stage=<intent|plan|implement|review>`. Avoid: stage pane.
 - **Worktree terminal**: the shell terminal that `worktree-pane open` started for a worktree. It carries the label `worktree=<realpath>` and no `slug` label.
 - **Terminal name**: `<stage>-<slug>`, lower case, every character outside `a-z 0-9 - _` replaced by `-`, cut to 32 characters. `hc` keeps names unique among live terminals.
 
@@ -202,11 +202,18 @@ Not checked: the dotfiles repository declined Steep and rbs_rails; it has no `St
 - The intent record has two writers with the same value: `hand-off-plan.sh intent` writes the new terminal's address, and the intent skill writes `$HC_TERMINAL_ID` for an intent session started by hand.
 - New scripts live in `herdr-app/.config/herdr-app/scripts/`, beside the precedent of `herdr/.config/herdr/scripts/` and `rex/.config/rex/scripts/`. No new stow package. The package links file by file, so Etienne restows `herdr-app` before `~/.agents/bin/hand-off-plan` finds them; the agent never runs `stow`.
 - `worktree-pane` gets its `hc` branch inline (first in `run!`), not a `worktree-pane-hc` twin: fewer files, and the herdr code simply goes in the last commit. The `label` verb stays, as the intent says ("open and label via `hc`"), and becomes `hc label <address> worktree=<realpath> branch=<repo>/<branch>`. `open` and `close` find terminals by the `worktree` label, not by `cwd`, because `hc ls` reports the launch folder.
-- `worktree-create` needs no `hc` code: it opens through `worktree-pane`, and its herdr record returns early without `HERDR_PANE_ID`. The `AgentWorktree` record has no `hc` reader, so `hc` writes none. The Rex and herdr recording go in their removal commits.
+- `worktree-create` needs no `hc` code: it opens through `worktree-pane`, and its herdr record returns early without `HERDR_PANE_ID`. The `AgentWorktree` record has no `hc` reader, so `hc` writes none. The Rex recording goes in commit 2; the herdr recording, `AgentWorktree` itself and its only readers (the viewers) go in their removal commits.
 - The worker ends itself with `hc kill "$HC_TERMINAL_ID"`, the transport twin of `herdr pane close`. The twelve-try reply loop stays: `hc send` refuses a blocked program without `--force`, and the prompt must not answer the coordinator's dialog.
 - Terminal names are mapped and cut, not refused: a branch name such as `Fix_Thing` still works. The report file uses the full slug, so two long slugs collide only on the live name, which `hc` refuses loudly.
-- Acceptance criterion 6 is checked on the agent-workflow files only: `agents/.agents/bin/`, `agents/.agents/skills/`, `herdr-app/.config/herdr-app/scripts/`, `git/.config/git/worktree-tools/{worktree-create,worktree-pane}`. Files outside the hand-off still mention the old calls and stay, because the intent puts them out of scope ("Retiring Rex itself", no viewer, no gh-dash keys): `worktree-viewer`, `worktree-viewer-rex`, `lib/common.rb` (`rex_only_env?` for the viewers), `lib/agent_worktree.rb` (comment), `rex/.config/rex/scripts/play-tone.sh` (Claude's tone hooks), `rex/.config/rex/launchers.lua`, `github/.config/gh-dash/config.yml`. This narrows the literal criterion, so it is a `Decision needed:` line in the report. The coordinator settles it before the implement stage starts (intent skill, Autonomous delivery, step 2). If Etienne picks the literal reading, the removal commits also delete or rewrite those files, and step 13 below grows by that list; the `hc` path commits do not change either way.
-- Conflicts with `intent.md` `## Decisions`: none. Reports stay in `<git-common-dir>/herdr/`; start-review and open-pr-dash are ported; Rex goes; herdr TUI goes later, in its own commit, after the `hc` path is proven; `.github/workflows/` is not touched.
+- Removal set. Acceptance criterion 6 is literal: after commit 3, no tracked file outside `docs/changes/hand-off-plan-hc/` mentions `HERDR_PANE_ID`, `herdr pane` or `REX_SESSION`. The change folder is the one exception while the branch is open, and `deliver` removes it before the pull request, so the criterion holds on `main`. The removal covers three groups:
+  - Every tracked file that `git grep` finds for the three strings today (each one is named under `## Files that change`).
+  - The seven files the intent names outside the agent workflow: `worktree-viewer`, `worktree-viewer-rex`, `lib/common.rb`, `lib/agent_worktree.rb`, `play-tone.sh`, `launchers.lua`, `github/.config/gh-dash/config.yml`.
+  - The agent-facing hooks that drive herdr TUI or Rex, and every binding that would call a deleted script: the Rex `session-start` hook and the three `play-tone.sh` hooks in `claude/.claude/settings.json`; the `herdr …` and `rex …` allow rules in `codex/.codex/rules/default.rules`; the `prefix+f` and `prefix+shift+f` viewer keys in `herdr/.config/herdr/config.toml`; the `file_viewer_split` and `file_viewer_tab` launcher actions and their commented binds in `rex/.config/rex/{launchers.lua,init.lua}`.
+- Kept, because `## Out of scope` still keeps "Rex itself as an application" and herdr-app's own files: the rest of the `herdr` package (herdr TUI's config, plugins, `quieter-tones.sh`, `sync-solunized-theme.sh`), the rest of the `rex` package (its init, switcher, own `viewer.lua`, lazygit launchers, keymaps), `herdr-app/.local/share/herdr-app-migrate/` (it migrates from herdr TUI by design), the glossary terms that describe herdr TUI and Rex, and the comment in `codex/.codex/config.toml`. None of them holds the three strings. Reading the decision "every file that mentions herdr-tui or Rex" as deleting those packages would contradict `## Out of scope`, so the report carries one `Decision needed:` line for it; the plan's work is the same either way up to commit 3.
+- The gh-dash `C` key (deep review in octo.nvim) is ported, not dropped: its herdr and Rex branches become one `hc` branch, `hc run --bg --no-notify --outlive-parent --cwd "$PWD" -- nvim -c "silent Octo pr edit $n $r"`, added in commit group 1 beside the other ports. Dropping it would remove a feature the intent never named.
+- The Codex allow rules for `herdr` and `rex` go; no `hc` allow rules are added. Adding allow rules widens Codex's permissions, which the intent does not ask for.
+- The removal test builds its pattern from fragments (`"HERDR_" + "PANE_ID"` and so on), so the test file does not match itself.
+- Conflicts with `intent.md` `## Decisions`: none, given the reading above. Reports stay in `<git-common-dir>/herdr/`; start-review and open-pr-dash are ported; Rex goes; herdr TUI goes later, in its own commit, after the `hc` path is proven; `.github/workflows/` is not touched.
 
 ## Integration points
 
@@ -230,26 +237,38 @@ Commit group 1 — `hc` path (one logical change per commit):
 - `agents/.agents/skills/deliver/scripts/stage_terminals.rb` — new, `StageTerminals`.
 - `agents/.agents/skills/deliver/scripts/deliver` — requires `stage_terminals`; `panes_class` chooses `StageTerminals` first.
 - `agents/.agents/skills/{intent,plan,implement,review,deliver,finish}/SKILL.md` — `HC_TERMINAL_ID` and the terminal address replace `HERDR_PANE_ID` and `herdr pane current` in the backend choice, the coordinator rule and the intent record. The skills' `description` lines say "terminal" for "pane".
+- `agents/.agents/skills/worktree-first/SKILL.md` — the paragraph on the pane that opens below becomes the `hc` worktree terminal; the viewer sentence goes (the viewer is deleted in commit 3).
+- `agents/.agents/PLAYBOOK.md` rule 24 — "the stage terminals set their own model in `hand-off-plan.sh`" replaces "the herdr stage panes and the Rex stage blocks"; the models stay. Rule 24 is not mirrored in `claude/.claude/core-values.yml`, so that file does not change. `test/playbook_test.rb` follows if it asserts the old wording.
 - `test/hc_worker_scripts_test.rb` — new, from `herdr_worker_scripts_test.rb` with an `hc` PATH stub.
 - `test/hc_open_pr_dash_test.rb` — new, from `open_pr_dash_test.rb`.
 - `test/dispatchers_test.rb`, `test/deliver_test.rb`, `test/delivery_harness.rb`, `test/worktree_pane_test.rb`, `test/delivery_contract_test.rb`, `test/worktree_first_skill_test.rb`, `test/herdr_app_package_test.rb` (four new tracked files) — `hc` cases.
 - `test/design_review_pass_test.rb` — read the review prompt from `herdr-app/.config/herdr-app/scripts/start-review.sh` (it reads the herdr script today, which commit 3 deletes).
 - `test/pull_request_flow_test.rb` — its scan of `herdr/.config/herdr/scripts/*` also covers `herdr-app/.config/herdr-app/scripts/*`, and only that directory after commit 3.
 - `test/fixtures/hc_ls_stage_terminals.json` — real `hc ls --json --all --label …` output captured in step 10, so `deliver_test` parses the true format.
+- `github/.config/gh-dash/config.yml` — the `C` key gets an `hc` branch first; `test/gh_dash_config_test.rb` asserts it.
 - `herdr-app` README or `herdr/.config/herdr/README.md` hand-off section, `git/.config/git/worktree-tools/README.md`, `SKILLS-INDEX.md`, `README.md` — describe the `hc` path.
 
 Commit 2 — Rex path removal:
 
-- Delete `rex/.config/rex/scripts/{hand-off-plan,start-review,open-pr-dash,open-column,worker-ready}.sh`, `agents/.agents/skills/deliver/scripts/rex_panes.rb`, `git/.config/git/worktree-tools/worktree-pane-rex`.
-- Remove the Rex branch from the three dispatchers, `panes_class`, `worktree-pane` (`exec … worktree-pane-rex`), `worktree-create` (`record_for_rex_block`), and the Rex paragraphs of the skills.
-- Delete `test/{rex_worker_scripts,rex_open_column,rex_open_pr_dash,worktree_pane_rex}_test.rb`; remove the Rex cases from `dispatchers_test`, `deliver_test`, `worktree_create_test`, `delivery_harness`. `rex_harness_compat.rb` stays only if a kept Rex test still needs it.
-- Keep `play-tone.sh`, `launchers.lua`, `worktree-viewer-rex`, and `rex_only_env?`/`rex_bin` in `common.rb` while the viewer uses them.
+- Delete `rex/.config/rex/scripts/{hand-off-plan,start-review,open-pr-dash,open-column,worker-ready,play-tone}.sh`, `agents/.agents/skills/deliver/scripts/rex_panes.rb`, `git/.config/git/worktree-tools/{worktree-pane-rex,worktree-viewer-rex}`.
+- Remove the Rex branch from the three dispatchers, `panes_class`, `worktree-pane` (`exec … worktree-pane-rex`), `worktree-viewer` (`exec … worktree-viewer-rex`), `worktree-create` (`record_for_rex_block`), `lib/common.rb` (`rex_bin`, `rex_only_env?`), the gh-dash `C` key, and the Rex paragraphs of the skills.
+- `rex/.config/rex/launchers.lua`: delete the `viewer` function and the `file_viewer_split` and `file_viewer_tab` actions; the lazygit actions stay. `rex/.config/rex/init.lua`: delete the two commented `file_viewer_*` binds.
+- `claude/.claude/settings.json`: delete the Rex `session-start` hook and the three `play-tone.sh` hooks (`ready`, `done`, `request`).
+- `codex/.codex/rules/default.rules`: delete the `rex …` allow rules.
+- Delete `test/{rex_worker_scripts,rex_open_column,rex_open_pr_dash,worktree_pane_rex,worktree_viewer_rex,rex_tone}_test.rb` and `test/rex_harness_compat.rb` once no kept test requires it. Remove the Rex cases from `dispatchers_test`, `deliver_test`, `worktree_create_test`, `worktree_viewer_test`, `delivery_harness`, `gh_dash_config_test`, the tone and session-start assertions from `agent_coexistence_config_test` (`test_settings_add_guarded_rex_hooks` goes, or keeps only what still holds) and `rex_config_test` (`test_settings_json_has_the_rex_session_start_hook`, `test_hooks_play_the_three_tones` and `test_session_start_plays_its_tone_only_on_startup` go), and `file_viewer_split`/`file_viewer_tab` from `rex_config_test`'s action list and its launcher test. Any Codex rules test that lists the `rex` rules follows.
 
 Commit 3 — herdr TUI path removal:
 
-- Delete `herdr/.config/herdr/scripts/{hand-off-plan,start-review,open-pr-dash,open-column}.sh`. `quieter-tones.sh` and `sync-solunized-theme.sh` stay.
-- Remove the herdr branch from the three dispatchers (the refusal names `HC_TERMINAL_ID`), the `Panes` class and `panes_class` from `deliver`, the herdr code from `worktree-pane`, `record_for_herdr_pane` and `terminal_id_of` from `worktree-create`, and the herdr sentences from the skills.
-- Delete `test/{herdr_worker_scripts,herdr_open_column,open_pr_dash}_test.rb`; remove the herdr cases from `dispatchers_test`, `deliver_test`, `delivery_harness`, `worktree_create_test`, `worktree_pane_test`, `pull_request_flow_test`. `herdr_quieter_tones_test` and `herdr_sync_solunized_theme_test` stay with their scripts.
+- Delete `herdr/.config/herdr/scripts/{hand-off-plan,start-review,open-pr-dash,open-column}.sh`, `git/.config/git/worktree-tools/worktree-viewer` and `git/.config/git/worktree-tools/lib/agent_worktree.rb`. `quieter-tones.sh` and `sync-solunized-theme.sh` stay.
+- Remove the herdr branch from the three dispatchers (the refusal names `HC_TERMINAL_ID`), the `Panes` class and `panes_class` from `deliver`, the herdr code from `worktree-pane`, `require "agent_worktree"`, `record_for_herdr_pane` and `terminal_id_of` from `worktree-create`, `herdr_bin` from `lib/common.rb`, the herdr branch of the gh-dash `C` key, and the herdr sentences from the skills.
+- `herdr/.config/herdr/config.toml`: delete the `prefix+f` and `prefix+shift+f` viewer keys. `herdr/.config/herdr/README.md` and `README.md`: delete the viewer sections and the herdr hand-off section. `git/.config/git/worktree-tools/README.md`, `SKILLS-INDEX.md`: drop the herdr and Rex wording.
+- `codex/.codex/rules/default.rules`: delete the `herdr …` allow rules.
+- Delete `test/{herdr_worker_scripts,herdr_open_column,open_pr_dash,worktree_viewer,agent_worktree}_test.rb`; remove the herdr cases from `dispatchers_test`, `deliver_test`, `delivery_harness`, `worktree_create_test`, `worktree_pane_test`, `pull_request_flow_test`, `gh_dash_config_test`, `agent_coexistence_config_test`, `delivery_contract_test`, `worktree_first_skill_test`, and the viewer keys from `herdr_config_test` if it asserts them. `herdr_quieter_tones_test` and `herdr_sync_solunized_theme_test` stay with their scripts.
+- `test/no_herdr_tui_or_rex_mentions_test.rb` — new: `git ls-files` minus `docs/changes/`, no line matches the three strings, built from fragments.
+
+Commit 4 — glossary:
+
+- `GLOSSARY.md` — add **Coordinator**, **Stage terminal**, **Terminal**, **Terminal address**, **Terminal name** and **Worktree terminal** in alphabetical order, with the definitions under `### Domain terms`.
 
 ## Order of work
 
@@ -267,11 +286,12 @@ Commit 3 — herdr TUI path removal:
     - Hand-off: `COORDINATOR=<probe-coordinator address> <worktree>/agents/.agents/bin/hand-off-plan plan probe-slug`. Check: `hc ls --all --label slug=probe-slug` showed `plan-probe-slug` with `cwd` `<scratch>/.worktrees/probe-slug` and the three labels; `<scratch>/received` holds `Plan ready: <report>`; the report path is under `<scratch>/.git/herdr/`; the worktree terminal carries `worktree=` and `branch=` labels after `worktree-pane label`.
     - Intent: the same for `intent`; `<scratch>/.git/herdr/intent-pane-probe-slug` holds the intent terminal's address.
     - Review and dash: `start-review` from the probe worktree delivers `Review … :` to a fresh probe coordinator; `open-pr-dash probe-slug https://example.invalid/pr/1` with a stub `gh` starts `dash-probe-slug` without a `slug` label.
-    - Cleanup: capture `hc ls --json --all --label repo=<scratch common dir> --label slug=probe-slug` into `test/fixtures/hc_ls_stage_terminals.json`, which `deliver_test` parses. Then run `ruby -r<worktree>/agents/.agents/skills/deliver/scripts/stage_terminals.rb -e 'StageTerminals.new("probe-slug", "<scratch>/.git").close_stale'` from the probe coordinator's environment. Check: the idle and finished probe stage terminals are gone; the intent terminal and the dash stay.
+    - Cleanup: the hand-off probes above have killed themselves, so cleanup gets its own probes, started with `hc run --bg --no-notify --outlive-parent` and the three stage labels for `probe-slug` and this scratch repository: a plain `claude` with no prompt labelled `stage=plan` (an idle agent; no prompt means no tokens), a plain `claude` labelled `stage=intent` whose address goes into `<scratch>/.git/herdr/intent-pane-probe-slug`, and `true` labelled `stage=implement` (finished). The dash terminal from the step above stays. Wait until `hc ls --json --all --label slug=probe-slug` shows the plan probe with status `idle` (or `done`) and the implement probe `finished`; if the idle `claude` never reports a status, record that in the account and stop before the removal commits, because the closable rule would then need a change. Capture that output into `test/fixtures/hc_ls_stage_terminals.json`, which `deliver_test` parses. Then run `ruby -r<worktree>/agents/.agents/skills/deliver/scripts/stage_terminals.rb -e 'StageTerminals.new("probe-slug", "<scratch>/.git").close_stale'` from a terminal whose `HC_TERMINAL_ID` is not one of the probes. Check each one: the plan probe is gone, the implement probe is removed, the intent probe and the dash are still live.
     - Tear down every probe terminal with `hc kill` and `hc rm`, and trash the scratch repository. Record every command and its output in the delivery account.
-11. Before commit 2, confirm the coordinator settled the criterion-6 `Decision needed:` line; apply its answer to the removal lists.
-12. Commit 2: the Rex removal. Run `bin/test`. Green.
-13. Commit 3: the herdr TUI removal. Run `bin/test` and the grep check below. Green.
+11. Port the gh-dash `C` key to `hc` with its test (commit group 1).
+12. Commit 2: the Rex removal, as listed. Run `bin/test`, `rubocop`, `shellcheck`, `yamllint` and `jq . claude/.claude/settings.json`. Green. Commit.
+13. Commit 3: first write `test/no_herdr_tui_or_rex_mentions_test.rb`, run it, watch it fail on the herdr files that remain. Then do the herdr TUI removal, as listed. Run the new test, `bin/test` and the linters. Green. Commit test and removal together.
+14. Commit 4: the glossary terms, alone, subject `docs: glossary terms for hand-off-plan-hc`.
 
 ## Risks
 
@@ -280,7 +300,10 @@ Commit 3 — herdr TUI path removal:
 - **Orphans.** `--outlive-parent` leaves a stage terminal behind when no delivery follows. Accepted by the intent.
 - **Name collision.** A worker that failed to kill itself blocks a re-run of the same stage. `hc` refuses loudly; Etienne closes the old one.
 - **Status values.** Only `working` and `done` were seen live. `idle` comes from `hc send --if idle|working`. A status outside the closable list keeps the terminal open, which is the safe side.
-- **Viewer records.** After commit 3 nothing writes `AgentWorktree` records, so `worktree-viewer` falls back to the pane's own folder. The viewer is herdr TUI only and out of scope.
+- **Lost features.** herdr TUI loses its `prefix+f` file viewer keys and Rex loses its `file_viewer_split`/`file_viewer_tab` launchers and the three agent tones. Both apps stay usable otherwise. herdr-app has its own viewer and sounds. Etienne asked for the wider removal.
+- **gh-dash `C` key focus.** `hc run --bg` starts nvim in a new terminal but may not focus it in herdr-app; Etienne switches to it by hand. The key still works.
+- **Codex prompts.** Without `herdr`/`rex` allow rules and with no `hc` rules added, a Codex coordinator gets a permission prompt for each `hc` call. That is the safe default.
+- **Settings JSON.** A bad edit of `claude/.claude/settings.json` breaks every Claude session's hooks. `jq .` and the hook tests run before commit 2.
 - **Rejected:** the `stage-panes-<slug>` record for `hc` (labels hold the same fact without a second source of truth); `HC_TERMINAL_ID=$COORDINATOR` in the dispatcher (it would make `hc` file the worker under the wrong parent); `hc run --rm` for workers (a crashed worker's screen would vanish).
 
 ## Proof
@@ -294,7 +317,9 @@ Commit 3 — herdr TUI path removal:
 - Invariant: a refused duplicate never empties a live worker's report, enforced by the live-name check → `test/hc_worker_scripts_test.rb` `test_a_duplicate_hand_off_is_refused_and_keeps_the_report`.
 - Invariant: `worktree-pane close` kills only identified worktree terminals, enforced in `Pane#close` (private) → `test/worktree_pane_test.rb` `test_close_keeps_terminals_without_the_worktree_label_or_with_a_status`.
 - Outside `hc` the dispatcher exits 1 with a message that names `HC_TERMINAL_ID` → `test/dispatchers_test.rb` `test_each_dispatcher_refuses_outside_hc_and_names_hc_terminal_id`.
-- After the removal commits, no agent-workflow script or skill mentions `HERDR_PANE_ID`, `herdr pane` or `REX_SESSION` → `test/dispatchers_test.rb` `test_no_agent_workflow_file_mentions_herdr_panes_or_rex_sessions`, and check: `grep -rnE 'HERDR_PANE_ID|herdr pane|REX_SESSION' agents/.agents/bin agents/.agents/skills herdr-app/.config/herdr-app/scripts git/.config/git/worktree-tools/worktree-create git/.config/git/worktree-tools/worktree-pane` prints nothing.
+- After the removal commits, no file in the repository mentions `HERDR_PANE_ID`, `herdr pane` or `REX_SESSION` → `test/no_herdr_tui_or_rex_mentions_test.rb` `test_no_tracked_file_mentions_herdr_panes_or_rex_sessions` (every tracked file outside `docs/changes/`), and check: `git grep -nE 'HERDR_PANE_ID|herdr pane|REX_SESSION' -- ':!docs/changes'` prints nothing after commit 3; after `deliver` removes the change folder, `git grep` without the exclusion prints nothing too.
+- Glossary terms in a separate commit → check: `git show --stat HEAD` after step 14 lists `GLOSSARY.md` alone, and `grep -c '^- \*\*\(Coordinator\|Stage terminal\|Terminal\|Terminal address\|Terminal name\|Worktree terminal\)\*\*' GLOSSARY.md` prints 6.
+- The seven named outside files no longer mention herdr TUI or Rex → `test/no_herdr_tui_or_rex_mentions_test.rb` `test_the_named_viewer_and_tone_files_are_gone` (the four deleted files do not exist) and `test/gh_dash_config_test.rb` `test_deep_review_opens_in_an_hc_terminal`, plus `rex_config_test` without the viewer launchers and `agent_coexistence_config_test` without the tone hooks.
 - Invariant: every stage terminal and the dash outlive their parent, enforced by each `hc run` in the three scripts → `test/hc_worker_scripts_test.rb` `test_every_stage_terminal_outlives_its_parent`, `test/hc_open_pr_dash_test.rb` `test_the_dash_terminal_outlives_its_parent_and_has_no_slug_label`.
 - Invariant: a terminal name is 1–32 characters of `a-z 0-9 - _`, enforced by `terminal_name` → `test/hc_worker_scripts_test.rb` `test_a_long_mixed_case_slug_gives_a_valid_terminal_name`.
 - Invariant: the dispatcher never overwrites `HC_TERMINAL_ID`, enforced in the dispatchers → `test/dispatchers_test.rb` `test_coordinator_travels_in_hc_coordinator_and_hc_terminal_id_stays`.
@@ -314,7 +339,7 @@ Per changed file, the unit tests expected, named as behaviour:
 
 Test setup: an `hc` PATH stub per test (`HC_BIN_PATH` for the Ruby tools) that appends its argv as one JSON line to a log, answers `run` with `{"address":"t9a","name":…}`, answers `ls` from a fixture file, and exits 3 for a name in a "taken" file. Git fixtures from `git_fixture.rb` and `isolated_git.rb`, as the herdr tests use. Every test sets `HC_TERMINAL_ID` explicitly (or unsets it), because the suite itself now runs inside `hc` terminals.
 
-Out of scope: moving the report directory; herdr-app itself; models; prompt content beyond transport; `hc` templates; Rex as an application (`play-tone.sh`, `launchers.lua`, `rex` hooks in `claude/.claude/settings.json`); `worktree-viewer` and `worktree-viewer-rex`; the gh-dash `C` key binding; `herdr-app-migrate`; the glossary entries.
+Out of scope: moving the report directory; herdr-app itself; models; prompt content beyond transport; `hc` templates; `hc` allow rules for Codex; Rex and herdr TUI as applications (the rest of the `rex` and `herdr` packages, which hold none of the three strings); `herdr-app-migrate`; glossary terms other than the six new ones.
 
 ---
 Domain skills applied: software-design, glossary, diagrams, ruby-style (signature comments). No Rails skill applies.
@@ -330,4 +355,10 @@ Domain skills applied: software-design, glossary, diagrams, ruby-style (signatur
 - Step 10 killed the worker before its reply, so the `hc` path was not proven before the removal commits → fixed (step 10 is now a full live round trip with the real `hc`, the real scripts and a stub `claude`: plan and intent hand-offs, review, dash and cleanup, all before commit 2)
 - The live check used the installed `worktree-create` and `worktree-pane`, which lack the `hc` code → fixed (step 10 also sets `WORKTREE_TOOLS_DIR` and `CLAUDE_SKILLS_DIR` to this worktree and checks the worktree labels)
 - `test/design_review_pass_test.rb` reads the herdr `start-review.sh`, which commit 3 deletes → fixed (added to the files that change, pointed at the `hc` script; `pull_request_flow_test.rb` added for the same reason)
-- The plan narrows acceptance criterion 6 without Etienne's acceptance → fixed (the narrowing stays a `Decision needed:` line, step 11 makes the removal commits wait until the coordinator has settled it, and the design decision names what the removal lists gain under the literal reading)
+- The plan narrows acceptance criterion 6 without Etienne's acceptance → fixed (Etienne widened the intent to the literal criterion; the plan now removes every mention, see the removal set under `## Design decisions`)
+
+### Round 2 (codex gpt-6.1-sol, medium; widened intent)
+
+- Commit 2 deletes the Rex session-start hook but two kept tests still require it (`RexConfigTest#test_settings_json_has_the_rex_session_start_hook`, `AgentCoexistenceConfigTest#test_settings_add_guarded_rex_hooks`) → fixed (commit 2 names both, plus the two tone tests in `rex_config_test`)
+- The wider removal misses workflow guidance in `worktree-first/SKILL.md` and `PLAYBOOK.md` rule 24 → fixed (both move to `hc` wording in commit group 1, models unchanged; `core-values.yml` does not mirror rule 24, so it stays)
+- Step 10's cleanup check had no live intent terminal and no idle or finished stage terminal, because every hand-off probe kills itself → fixed (cleanup gets its own probes: an idle `claude` as plan, an idle `claude` as the recorded intent, a finished `true` as implement, plus the dash; states are confirmed before cleanup and each survivor and removal is checked after; an idle `claude` without status stops the removal commits)
