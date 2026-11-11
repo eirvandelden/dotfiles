@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require "json"
 require "open3"
+require_relative "isolated_git"
 
 # Tests for the herdr-app golden-ratio mod. The pure logic (planner.js) and the debounce logic
 # (controller.js) run through `node`; main.js is glue and is checked by `herdr-app check`.
