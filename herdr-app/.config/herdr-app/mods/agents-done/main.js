@@ -7,6 +7,11 @@ import { v_flex, h_flex } from "gpui-base";
 import { agents, theme, run, props, closeOverlay } from "herdr";
 
 export default class AgentList extends View {
+  /**
+   * @param {object} _props
+   * @param {Context} cx
+   * @returns {void}
+   */
   init(_props, cx) {
     this.at = 0;
     this.handle = cx.focus_handle();
@@ -14,22 +19,35 @@ export default class AgentList extends View {
     cx.timer.after(600, () => this.handle.focus());
   }
 
+  /**
+   * @returns {void}
+   */
   close() {
     closeOverlay(props()?.overlay);
   }
 
+  /**
+   * @returns {AgentInfo[]}
+   */
   rows() {
     const status = props()?.status;
     if (!status) return [];
     return agents().filter((a) => a.status === status);
   }
 
+  /**
+   * @param {AgentInfo|undefined} row
+   * @returns {void}
+   */
   go(row) {
     if (!row) return;
     this.close();
     run("agent.focus", { terminal: row.address });
   }
 
+  /**
+   * @returns {Element}
+   */
   render() {
     const t = theme();
     const status = props()?.status;
