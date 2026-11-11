@@ -15,6 +15,7 @@ function leafIds(node) {
   return isContainer(node) ? node.children.flatMap(leafIds) : [node.id];
 }
 
+const isAxis = (node) => node.type === "row" || node.type === "column";
 const isPx = (node) => node.size && node.size.px !== undefined;
 const weightOf = (node) => (node.size && typeof node.size.weight === "number" ? node.size.weight : 1);
 
@@ -33,12 +34,12 @@ function stepsAt(container, focused, target, minDelta) {
 export function plan(tree, paneId, { ratio, minDelta }) {
   const path = pathTo(tree, paneId);
   if (!path) return [];
-  const containers = path.slice(0, -1);
+  const containers = path.slice(0, -1).filter(isAxis);
   const perAxis = {};
   for (const container of containers) perAxis[container.type] = (perAxis[container.type] || 0) + 1;
-  return containers.flatMap((container, index) => {
+  return containers.flatMap((container) => {
     const target = Math.pow(ratio, 1 / perAxis[container.type]);
-    return stepsAt(container, path[index + 1], target, minDelta);
+    return stepsAt(container, path[path.indexOf(container) + 1], target, minDelta);
   });
 }
 

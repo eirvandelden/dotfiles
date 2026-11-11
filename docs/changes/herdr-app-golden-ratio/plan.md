@@ -7,7 +7,7 @@ From `intent.md` (2026-11-11). Status: accepted.
 ### Domain terms
 
 - **Tab tree**: the row, column and block nodes of one tab, as herdr-core stores them in the `herdr-app` document. A block is a pane. Every node has an id; `size` is `{weight}` or `{px}`, and a missing size means weight 1.
-- **Focus path**: the containers from the tab root down to the focused pane.
+- **Focus path**: the containers from the tab root down to the focused pane. Only `row` and `column` containers are axes; a `stack` shows one child and has no weights, so it gets no step and its children are not resized. The siblings of a stack in the enclosing row or column follow the weight rule.
 - **Step**: one `{id, weight}` pair, run as `layout.resize`.
 - **Golden ratio**: 0.618. On each axis, the focused pane gets that share of the tab. When the focus path crosses `n` containers of one axis, each of them gives the focused branch the share `ratio^(1/n)`, so the shares multiply to `ratio`.
 - **Settled**: the focus did not change for `debounce_ms`. The focus state is the (space, tab, pane) key plus whether the focused tab is zoomed, so unzooming with the same pane focused is a change.
@@ -107,6 +107,7 @@ Weight math at a container on the focus path, with at least two weighted childre
 - Unzooming the focused tab re-evaluates the pane, even though the pane is the same. A pass within `min_delta` still marks the state applied. Enforced in `controller.js`.
 - Planning the result of a plan gives `[]`. Enforced by the `min_delta` rule.
 - A px child is never in a step. Enforced in `plan`.
+- A `stack` on the focus path produces no step. Enforced in `plan`.
 - A superseded settle run submits no `layout.resize`. Enforced by the token and focus check in `controller.js` after the document read. The steps then go out in one loop with no `await`, so nothing cancels a step once the loop starts. The commands are queued by `run()` and cannot be recalled.
 - A failed `doc.get` leaves the layout unchanged and raises nothing to the UI: `readDocument` returns null and the controller retries once. A failed `layout.resize` shows the app's own toast and can leave a partial layout. Weights are absolute, so the next focus change repairs it.
 - The drift check catches a changed leaf set only. A rearrangement that keeps every leaf id is not detectable from `panes()`. The cost is a mis-sized layout until the next focus change, never a wrong pane resized by id, because every step targets ids from the same document.
@@ -180,6 +181,7 @@ Weight math at a container on the focus path, with at least two weighted childre
 - Invariant: planning a plan's result gives nothing, enforced by `min_delta` → `test/herdr_app_golden_ratio_test.rb` `test_plan_is_idempotent`
 - Invariant: a drifted tab gets no step, enforced by `planFor` → `test/herdr_app_golden_ratio_test.rb` `test_drifted_tab_gets_no_step`
 - Invariant: a tab or space missing from the document is drift, a machine space is not → `test/herdr_app_golden_ratio_test.rb` `test_plan_for_reports_a_tab_missing_from_the_document_as_drift`, `test_document_missing_the_fresh_tab_is_retried_then_applied` and `test_machine_space_is_never_retried`
+- Invariant: a stack container is not an axis → `test/herdr_app_golden_ratio_test.rb` `test_plan_ignores_a_stack_container`
 - Invariant: a px child is never resized, enforced by `plan` → `test/herdr_app_golden_ratio_test.rb` `test_px_sibling_is_never_in_a_step`
 - Invariant: unzooming with the same pane focused rebalances → `test/herdr_app_golden_ratio_test.rb` `test_unzooming_the_same_pane_rebalances`; a no-op pass still marks the pair applied → `test_a_no_op_pass_still_marks_the_pair_applied`
 - Invariant: a superseded settle run submits nothing → `test/herdr_app_golden_ratio_test.rb` `test_focus_change_during_the_document_read_submits_nothing`
