@@ -77,7 +77,7 @@ work_core_reachable() {
   local state why machines
   machines="$(work_core_machines)"
   state="$(jq -r '.machines[] | select(.name == "work") | .state' <<< "$machines")"
-  [[ "$state" == "connected" ]] && return 0
+  [[ "$state" == "unreachable" ]] || return 0
 
   why="$(jq -r '.machines[] | select(.name == "work") | .why // empty' <<< "$machines")"
   warn "work core: the work machine is ${state}${why:+: ${why}}; check that hc is on the default core's PATH."

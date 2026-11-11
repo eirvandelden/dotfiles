@@ -133,6 +133,14 @@ class HerdrAppWorkCoreTest < Minitest::Test
     assert_match(/work machine is unreachable/, stderr)
   end
 
+  def test_a_connecting_work_machine_does_not_warn
+    @state["new_state"] = "connecting"
+    _stdout, stderr, status = run_task
+
+    assert_predicate(status, :success?, stderr)
+    refute_match(/work machine is/, stderr)
+  end
+
   def test_skips_with_a_warning_without_hc
     @with_hc = false
     _stdout, stderr, status = run_task
