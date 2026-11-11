@@ -254,6 +254,7 @@ W workspaces, T tabs, P panes in one TUI session (about 20, 45 and 70 on the per
 - `herdr-app/.config/herdr-app/mods/spaces-cores/main.js` and `mod.json` — new; the cloned `spaces` mod with the three labels changed.
 - `herdr-app/.config/herdr-app/layouts/cores.json` — new; the cloned `main` layout with the `spaces` block on `spaces-cores`.
 - `.gitignore` — ignore `herdr-app/.config/herdr-app/mods/*/jsconfig.json` and `herdr-app/.config/herdr-app/mods/*/*.d.ts`.
+- `eslint.config.mjs` — new (departure, Etienne's choice on 2026-11-11): the repository had no ESLint config, so the shared `eslint` hook refused the first tracked `.js` file. The config only ignores `herdr-app/**/mods/**`, Herdr's cloned code; the shared `lefthook.yml` stays unchanged. `herdr-app check` passes on `mods/spaces-cores`.
 - `test/herdr_app_package_test.rb` — `test_the_package_holds_only_keys_and_settings` becomes `test_the_package_holds_only_etiennes_files`; new clone tests (see Proof).
 
 ## Order of work
