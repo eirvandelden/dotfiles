@@ -18,9 +18,11 @@
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Local artefact** — a change artefact that no commit holds. On a work repository `.git/info/exclude` hides it.
+- **Machine** — one core as herdr-app shows it: this computer (the `default` core, `''` on the command line), or a core that `hc machine add` registered with the default core, such as `work`. herdr-app shows each machine as one sidebar group.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
+- **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:eirvandelden/` or `github.com/eirvandelden/`; the same rule as `RemoteMatcher.personal?`.
@@ -32,11 +34,14 @@
 - **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
+- **Running agent** — a herdr TUI pane that `herdr agent list` lists now, with its kind (`claude` or `codex`), session id and folder.
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Shared config** — the dotfiles `lefthook.yml`, which a repo config names under `remotes:`.
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
+- **Space** — a herdr-app space: a named place to work on one machine, with tabs.
+- **Stale space** — a space on this computer left from the 2026-10-30 import, whose agents were lost on 2026-11-05.
 - **Starter config** — the documented `lefthook.yml` with the `remotes:` block that a personal repository copies. Avoid: template.
 - **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.
 - **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
@@ -44,3 +49,4 @@
 - **View** — how the viewer previews a file, `default` or `alternate`. Default: markdown rendered, an untracked file as content, anything else as a diff.
 - **Viewer** — the floating Rex layer, opened by the `file_viewer` action, that lists changed files and previews the one picked. Avoid: file browser.
 - **Work repository** — a repository whose change scope is `work`: its origin matches an entry of `~/.claude/consent-guard-allowed-remotes.txt`. Avoid: employer repo.
+- **Workspace** — a herdr TUI workspace, the source of one space.

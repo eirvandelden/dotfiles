@@ -30,6 +30,8 @@ All configuration is managed through a dotfiles repository at `~/Developer/dotfi
 
 Each top-level directory in the dotfiles repo is a Stow package. See `references/repository-layout.md` for the current package list and the cross-platform package-manager breakdown.
 
+See `references/herdr-app-cores.md` for the herdr-app work and personal cores and the TUI migration.
+
 - `bootstrap.sh` is a curlable POSIX script that clones the repo and runs the installer.
 - `install.sh` orchestrates numbered scripts (`00_common.sh` through `50_stow_all.sh`) covering OS updates, prerequisites, packages, runtimes, gems, npm packages, and stow.
 

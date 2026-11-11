@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# Moves herdr TUI workspaces into herdr-app spaces. Runbook: dotfiles-maintenance, references/herdr-app-cores.md
+require "optparse"
+library = File.expand_path("../share/herdr-app-migrate", File.dirname(File.realpath(__FILE__)))
+%w[command_line tui_session machine stale_spaces].each { |name| require File.join(library, name) }
+
+USAGE = "usage: herdr-app-migrate build --tui SESSION --machine NAME [--dry-run] | stale|close --machine NAME [id...]".freeze
+
+#: (String tui_name, HerdrAppMigration::Machine machine, bool dry_run) -> void
+def build(tui_name, machine, dry_run)
+  tui = HerdrAppMigration::TuiSession.new(tui_name)
+  agents = tui.running_agents
+  workspaces = tui.workspaces
+  previews = workspaces.to_h { |workspace| [ workspace, workspace.preview(agents) ] }
+  workspaces.each do |workspace|
+    skipped = machine.space?(workspace.name)
+    next puts(skipped ? "skip #{workspace.name}" : previews[workspace]) if dry_run
+
+    pairings = workspace.migrate_to(machine, agents)
+    puts(skipped ? "skipped\t#{workspace.name}" : pairings)
+  end
+end
+
+options = {}
+parser = OptionParser.new
+parser.on("--tui SESSION") { |value| options[:tui] = value }
+parser.on("--machine NAME") { |value| options[:machine] = value }
+parser.on("--dry-run") { options[:dry_run] = true }
+command, *ids = parser.parse(ARGV)
+abort("herdr-app-migrate: #{USAGE}") unless options[:machine] && %w[build stale close].include?(command)
+
+begin
+  case command
+  when "build" then build(options.fetch(:tui) { abort("herdr-app-migrate: --tui is required") }, HerdrAppMigration::Machine.new(options[:machine]), options[:dry_run])
+  when "stale" then puts(HerdrAppMigration::StaleSpaces.new(options[:machine]).listing)
+  else HerdrAppMigration::StaleSpaces.new(options[:machine]).close(ids)
+  end
+rescue HerdrAppMigration::Refusal => error
+  abort("herdr-app-migrate: #{error.message}")
+end

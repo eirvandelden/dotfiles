@@ -7,9 +7,10 @@ require "pathname"
 require "tmpdir"
 require_relative "isolated_git"
 
-# The herdr-app package carries the two files Etienne edits: keys.json and settings.json. herdr-app
-# writes other files into its config folder (view.json, window.json, caches), so the folder must stay
-# a real folder with file links; packages.conf lists the package in STOW_SHARED for that.
+# The herdr-app package carries the files Etienne edits: keys.json, settings.json and the cores clones
+# of the spaces mod and the main layout. herdr-app writes other files into its config folder (view.json,
+# window.json, caches, each mod's .d.ts), so the folder must stay a real folder with file links;
+# packages.conf lists the package in STOW_SHARED for that.
 class HerdrAppPackageTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   PACKAGE = File.join(REPO_ROOT, "herdr-app/.config/herdr-app")
@@ -20,8 +21,40 @@ class HerdrAppPackageTest < Minitest::Test
     end
   end
 
-  def test_the_package_holds_only_keys_and_settings
-    assert_equal(%w[keys.json settings.json], Dir.children(PACKAGE).sort)
+  def test_the_package_holds_only_etiennes_files
+    assert_equal(
+      %w[keys.json layouts/cores.json mods/spaces-cores/main.js mods/spaces-cores/mod.json settings.json],
+      tracked_package_files.sort
+    )
+  end
+
+  def test_the_cores_layout_shows_the_cloned_spaces_mod
+    assert_equal(%w[spaces-cores], layout_mods("cores").grep(/\Aspaces/))
+  end
+
+  def test_the_cloned_spaces_mod_names_the_local_group_personal
+    source = File.read(File.join(PACKAGE, "mods/spaces-cores/main.js"))
+
+    refute_match(/"this computer"/i, source)
+    refute_match(/\?\? "this computer"/i, source)
+    assert_equal(3, source.scan(/\?\? "personal"|: "personal"/).size)
+    assert_includes(source, "once one isn't this computer.")
+  end
+
+  def test_the_cloned_spaces_mod_loads_as_its_own_mod
+    mod = JSON.parse(File.read(File.join(PACKAGE, "mods/spaces-cores/mod.json")))
+
+    assert_equal("spaces", mod.dig("cloned_from", "name"))
+  end
+
+  def test_the_generated_mod_files_are_ignored
+    %w[mods/spaces-cores/jsconfig.json mods/spaces-cores/herdr.d.ts].each do |path|
+      _stdout, _stderr, status = Open3.capture3(
+        IsolatedGit::ENVIRONMENT, "git", "check-ignore", "-q", "herdr-app/.config/herdr-app/#{path}", chdir: REPO_ROOT
+      )
+
+      assert_predicate(status, :success?, path)
+    end
   end
 
   def test_settings_keep_monolisa
@@ -77,6 +110,19 @@ class HerdrAppPackageTest < Minitest::Test
 
   private
 
+  def layout_mods(name)
+    nodes = [ JSON.parse(File.read(File.join(PACKAGE, "layouts/#{name}.json"))) ]
+    nodes.flat_map { |node| collect_mods(node) }
+  end
+
+  def collect_mods(node)
+    case node
+    when Hash then [ node["mod"] ].grep(String) + node.each_value.flat_map { |child| collect_mods(child) }
+    when Array then node.flat_map { |child| collect_mods(child) }
+    else []
+    end
+  end
+
   def settings
     JSON.parse(File.read(File.join(PACKAGE, "settings.json")))
   end
@@ -114,6 +160,16 @@ class HerdrAppPackageTest < Minitest::Test
     raise stderr unless status.success?
 
     File.readlines(log, chomp: true)
+  end
+
+  # Herdr writes untracked, ignored files into the package folder, so only tracked files count.
+  def tracked_package_files
+    stdout, stderr, status = Open3.capture3(
+      IsolatedGit::ENVIRONMENT, "git", "-C", REPO_ROOT, "ls-files", "-z", "--", PACKAGE
+    )
+    raise stderr unless status.success?
+
+    stdout.split("\0").map { |path| Pathname.new(File.join(REPO_ROOT, path)).relative_path_from(PACKAGE).to_s }
   end
 
   def tracked_package_folders

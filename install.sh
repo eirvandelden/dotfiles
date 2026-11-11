@@ -112,6 +112,7 @@ main() {
   run_task "24_configure_launchd_path.sh" "$root"
   run_task "25_install_gh_extensions.sh" "$root"
   run_task "26_install_herdr_app.sh" "$root"
+  run_task "27_register_work_core.sh" "$root"
   run_task "30_install_default_ruby.sh" "$root"
   run_task "31_install_default_node.sh" "$root"
   run_task "40_install_default_ruby_gems.sh" "$root"

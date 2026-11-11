@@ -41,3 +41,7 @@ docs/handoffs/
 
 # herdr-app writes settings.json.tmp.<pid>.<n> beside the link target, inside this repository
 herdr-app/.config/herdr-app/*.tmp.*
+
+# herdr rewrites these in every mod folder on each start
+herdr-app/.config/herdr-app/mods/*/jsconfig.json
+herdr-app/.config/herdr-app/mods/*/*.d.ts
