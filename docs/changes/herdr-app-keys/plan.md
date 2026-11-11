@@ -194,6 +194,7 @@ Rejected: porting the TUI plugins beyond the key map; a type-to-filter box in th
   - `keys.json` also binds `; shift-/` and the `; !`…`; (` spellings, as `test_shifted_keys_have_both_spellings` demands.
   - `test_the_agent_lists_are_clones_of_the_picker` is renamed `test_the_agent_lists_are_clones_of_a_shipped_mod`, because "picker" is a glossary Avoid word.
   - After the review found that Neovim's `;` leader clashed with herdr-app's, Etienne kept the `;` leader, moved Neovim's leader to space, and added `ctrl-alt-cmd-…` chords for pane, tab, space and agent moves (intent `## Decisions`, 2026-11-11).
+  - Later review rounds turned off Neovim's `;` motion (`;` maps to `<Nop>` in normal mode, Etienne's decision, 2026-11-11) and left the floating terminal's `<leader>tt` toggle in normal mode only, because a terminal-mode `<space>tt` held back every typed space.
 
 Per changed file, the unit tests expected:
 
