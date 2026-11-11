@@ -186,11 +186,17 @@ Rejected: porting the TUI plugins beyond the key map; a type-to-filter box in th
   - A `<mod>.<command>` string passes only for a mod that herdr-app 0.1.15 ships or a mod folder in the package.
   - The Linux global defaults are checked at the top of `test_every_action_is_reachable_without_cmd`.
   - `test/secrets_loader_test.rb` hangs when the 1Password agent is down. That is a known separate issue, out of scope.
+- Departures of the implementation from this plan:
+  - `mod.clone` was not used. The `picker` mod's `mod.json` overlay (popup, top, offset 40, width 640) was copied by hand with height 0.5, plus `props` and a hand-written `cloned_from` (`picker` 0.1.15).
+  - Each agent list row shows the tab name, the space name and the agent app.
+  - `rows()`, `close()` and `render()` read `props()?.` because `herdr-app check` renders the mod without overlay props.
+  - `keys.json` also binds `; shift-/` and the `; !`…`; (` spellings, as `test_shifted_keys_have_both_spellings` demands.
+  - `test_the_agent_lists_are_clones_of_the_picker` is renamed `test_the_agent_lists_are_clones_of_a_shipped_mod`, because "picker" is a glossary Avoid word.
 
 Per changed file, the unit tests expected:
 
 - `test/herdr_app_keys_test.rb`: `test_the_leader_map_binds_every_row`, `test_every_action_is_reachable_without_cmd`, `test_object_bindings_name_real_commands_and_arguments`, `test_semicolon_twice_types_one_semicolon`, `test_space_in_a_terminal_types_semicolon_space`, `test_terminal_copy_and_paste_work_without_super`, `test_shifted_keys_have_both_spellings`, `test_the_cmd_defaults_stay`.
-- `test/herdr_app_package_test.rb`: `test_the_package_holds_only_etiennes_files` (updated list), `test_the_blocked_list_shares_the_done_list_code`, `test_each_agent_list_names_its_status`, `test_the_agent_list_imports_only_builtin_modules`, `test_the_agent_lists_are_clones_of_the_picker`, `test_the_generated_mod_files_are_ignored` (extended to the new folders).
+- `test/herdr_app_package_test.rb`: `test_the_package_holds_only_etiennes_files` (updated list), `test_the_blocked_list_shares_the_done_list_code`, `test_each_agent_list_names_its_status`, `test_the_agent_list_imports_only_builtin_modules`, `test_the_agent_lists_are_clones_of_a_shipped_mod`, `test_the_generated_mod_files_are_ignored` (extended to the new folders).
 
 Test setup: the tests read the tracked JSON and JS files; no herdr-app process. The key map is a frozen hash in `test/herdr_app_keys_test.rb`, written from the intent's table. Sandbox checks use a scratch `HERDR_APP_HOME` and `HC_SESSION=hac3`, both removed after.
 
