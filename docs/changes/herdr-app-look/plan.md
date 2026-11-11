@@ -286,6 +286,7 @@ Per changed file, the unit tests expected:
 - `themes/*.json`: `test_each_owned_theme_has_a_theme_file`, the Ghostty, dist and blue-orange tests.
 - `mods/spaces-cores/main.js`: `test_work_spaces_share_one_fixed_mark`; `test_the_cloned_spaces_mod_names_the_local_group_personal` stays green.
 - `test/herdr_app_package_test.rb`: `test_the_package_holds_only_etiennes_files` lists the new files.
+- `test/herdr_app_look_test.rb` itself: it needs `require_relative "isolated_git"`, or `test/isolated_git_test.rb` `test_every_test_file_requires_the_helper` fails the full `bin/test` (for `test-writer`; found during implement).
 
 Test setup: tests read the package files directly; the pick tests run `node` on `pick.js` with inline data; the drift test reads `$SOLUNIZED_DIR/dist/herdr-app` (default `~/Developer/solunized`) and skips when it is missing, as `test/herdr_config_test.rb` does; the `herdr-app check` tests use a scratch `HERDR_APP_HOME` and skip without `herdr-app`.
 
