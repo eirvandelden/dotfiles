@@ -3,6 +3,36 @@ require_relative "command_line"
 require_relative "row_record"
 
 module HerdrAppPane
+  # One `hc get` answer; an unreadable one runs no agent and shows no folder. hc's top-level cwd is the folder the
+  # terminal was spawned in; foreground.cwd is where its program runs.
+  class Terminal
+    AGENTS = %w[claude-code codex].freeze
+
+    #: (String? path) -> String?
+    def self.real(path)
+      path && File.realpath(path)
+    rescue SystemCallError
+      nil
+    end
+
+    #: (untyped answer) -> void
+    def initialize(answer)
+      @answer = answer.is_a?(Hash) ? answer : {}
+    end
+
+    #: -> bool
+    def agent?
+      status = @answer["status"]
+      status.is_a?(Hash) && AGENTS.include?(status["app"])
+    end
+
+    # True when the terminal's real folder is target, a real path.
+    #: (String? target) -> bool
+    def at?(target)
+      !target.nil? && Terminal.real(@answer.dig("foreground", "cwd") || @answer["cwd"]) == target
+    end
+  end
+
   # The herdr-app window and its core, as Panes sees them: the only pipeline code that sends `herdr-app ls` or
   # `herdr-app do`. Addresses repeat across cores, so a space is found by the space id `hc get` labels a
   # terminal with, and `herdr-app ls` is narrowed to that space before any address is matched.
@@ -24,12 +54,23 @@ module HerdrAppPane
       space.fetch("tabs", []).flat_map { |tab| tab.fetch("terminals", []) }
     end
 
-    # The `hc get` answer of terminal, or nil when hc cannot read it.
-    #: (String terminal) -> Hash[String, untyped]?
-    def terminal(terminal)
-      @command_line.json("hc", "get", terminal, "--json")
+    #: (String address) -> Terminal
+    def terminal(address)
+      Terminal.new(@command_line.json("hc", "get", address, "--json"))
     rescue Refusal
-      nil
+      Terminal.new(nil)
+    end
+
+    # Polls hc every HERDR_APP_READY_POLL seconds until the terminal runs an agent; false after seconds.
+    #: (String address, Float seconds) -> bool
+    def await_agent(address, seconds)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+      until terminal(address).agent?
+        return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+
+        sleep(Float(ENV.fetch("HERDR_APP_READY_POLL", "1")))
+      end
+      true
     end
 
     #: -> String?
@@ -65,7 +106,6 @@ module HerdrAppPane
   class Panes
     PLACEMENTS = %i[column new_row unlisted worktree].freeze
     STAGES = %i[column new_row].freeze
-    AGENTS = %w[claude-code codex].freeze
     CLOSABLE = %w[idle done].freeze
     # Starts the command in its folder, or not at all.
     ROOTED = 'cd "$1" || exit 1; shift; exec "$@"'.freeze
@@ -89,7 +129,7 @@ module HerdrAppPane
       raise ArgumentError, "unknown placement #{placement}" unless PLACEMENTS.include?(placement)
 
       panes = @window.space_of(@coordinator)
-      return if placement == :worktree && panes.any? { |entry| shows?(@window.terminal(entry["terminal"]), real(cwd)) }
+      return if placement == :worktree && shown?(panes, cwd)
 
       opened = split(anchors(panes, row, placement), direction(placement), rooted(cwd, command))
       settle(opened, row && record(row)) if STAGES.include?(placement)
@@ -121,7 +161,7 @@ module HerdrAppPane
     # and that runs no agent. Never the own or coordinator terminal. Answers the number closed.
     #: (String cwd) -> Integer
     def close_at(cwd)
-      target = real(cwd)
+      target = Terminal.real(cwd)
       @window.space_of(@coordinator).count { |entry| shell_at?(entry, target) && close_pane(entry["pane"]) }
     end
 
@@ -130,6 +170,12 @@ module HerdrAppPane
     #: (String row) -> RowRecord
     def record(row)
       RowRecord.new(@common_dir ||= RowRecord.common_dir, row)
+    end
+
+    #: (Array[Hash[String, untyped]] panes, String cwd) -> bool
+    def shown?(panes, cwd)
+      target = Terminal.real(cwd)
+      panes.any? { |entry| @window.terminal(entry["terminal"]).at?(target) }
     end
 
     #: (Array[Hash[String, untyped]] panes, String? row, Symbol placement) -> Array[String]
@@ -173,27 +219,16 @@ module HerdrAppPane
     end
 
     # Records a stage pane, then waits for its agent. hc keeps terminals, so a claude that fails to start leaves
-    # a shell: that pane closes again and leaves the record.
+    # a shell: that pane closes again, and its line leaves the record.
     #: (Hash[String, String] opened, RowRecord? row_record) -> void
     def settle(opened, row_record)
       terminal = opened.fetch("terminal")
       row_record&.append(terminal)
-      return if agent_started?(terminal)
+      return if @window.await_agent(terminal, ready_timeout)
 
       close_pane(opened.fetch("pane"))
       row_record&.drop(terminal)
       raise Refusal, "no agent started in #{terminal} within #{ready_timeout} s; closed its pane"
-    end
-
-    #: (String terminal) -> bool
-    def agent_started?(terminal)
-      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + ready_timeout
-      until agent?(@window.terminal(terminal))
-        return false if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
-
-        sleep(Float(ENV.fetch("HERDR_APP_READY_POLL", "1")))
-      end
-      true
     end
 
     #: -> Float
@@ -210,36 +245,15 @@ module HerdrAppPane
 
     #: (Hash[String, untyped] entry) -> bool
     def idle_agent?(entry)
-      AGENTS.include?(entry["app"]) && CLOSABLE.include?(entry["status"])
+      Terminal::AGENTS.include?(entry["app"]) && CLOSABLE.include?(entry["status"])
     end
 
     #: (Hash[String, untyped] entry, String? target) -> bool
     def shell_at?(entry, target)
-      return false if [ @own, @coordinator ].include?(entry["terminal"]) || AGENTS.include?(entry["app"])
+      return false if [ @own, @coordinator ].include?(entry["terminal"]) || Terminal::AGENTS.include?(entry["app"])
 
-      info = @window.terminal(entry["terminal"])
-      !agent?(info) && shows?(info, target)
-    end
-
-    #: (Hash[String, untyped]? info) -> bool
-    def agent?(info)
-      status = info.is_a?(Hash) ? info["status"] : nil
-      status.is_a?(Hash) && AGENTS.include?(status["app"])
-    end
-
-    # hc's top-level cwd is the folder the terminal was spawned in; foreground.cwd is where its program runs.
-    #: (Hash[String, untyped]? info, String? target) -> bool
-    def shows?(info, target)
-      return false if target.nil? || !info.is_a?(Hash)
-
-      real(info.dig("foreground", "cwd") || info["cwd"]) == target
-    end
-
-    #: (String? path) -> String?
-    def real(path)
-      path && File.realpath(path)
-    rescue SystemCallError
-      nil
+      terminal = @window.terminal(entry["terminal"])
+      !terminal.agent? && terminal.at?(target)
     end
 
     #: (Array[Hash[String, untyped]] panes, String terminal) -> String
