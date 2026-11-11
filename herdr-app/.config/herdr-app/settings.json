@@ -1,5 +1,5 @@
 {
-  "zoom": 1.0,
+  "zoom": 1,
   "sounds": {
     "enabled": true,
     "done": "../../Documents/Tones/herdr/jobs-done.mp3",
@@ -8,8 +8,9 @@
   "font": "MonoLisa",
   "font_ligatures": false,
   "telemetry": false,
-  "minimum_contrast": 1.0,
+  "minimum_contrast": 1,
   "colors": {
     "accent": "#0068c9"
-  }
+  },
+  "font_size": 14
 }
