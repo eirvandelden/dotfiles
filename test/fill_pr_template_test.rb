@@ -46,66 +46,6 @@ class FillPrTemplateTest < Minitest::Test
     - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
   MARKDOWN
 
-  PLAN_WITHOUT_PROOF = <<~MARKDOWN
-    # Plan: Claims status export
-
-    Status: accepted.
-
-    ## Files that change
-
-    `app/models/claim.rb`: adds `#export_status`.
-
-    ## Order of work
-
-    1. Write the acceptance test, watch it fail.
-    2. Add `#export_status`.
-  MARKDOWN
-
-  PLAN_WITH_NESTED_PROOF = <<~MARKDOWN
-    # Plan: Claims status export
-
-    Status: accepted.
-
-    ## Files that change
-
-    `app/models/claim.rb`: adds `#export_status`.
-
-    ## Order of work
-
-    1. Write the acceptance test, watch it fail.
-    2. Add `#export_status`.
-
-    ## Proof
-
-    - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
-    - Claims see export progress mid-run → `test/system/claim_export_test.rb` `test_shows_export_progress`
-
-    Per changed file, the unit tests expected, named as behaviour:
-    - `app/models/claim.rb`: `#export_status` returns "running" while the export is in progress, echoing the Proof section's `→`-bearing bullets
-
-    Test setup: no new fixtures beyond the existing claim factory.
-  MARKDOWN
-
-  PLAN_WITH_PROOF_WITHOUT_ARROWS = <<~MARKDOWN
-    # Plan: Claims status export
-
-    Status: accepted.
-
-    ## Files that change
-
-    `app/models/claim.rb`: adds `#export_status`.
-
-    ## Order of work
-
-    1. Write the acceptance test, watch it fail.
-    2. Add `#export_status`.
-
-    ## Proof
-
-    - Claims adjusters see export status
-    - Claims see export progress mid-run
-  MARKDOWN
-
   PLAN_WITH_DESIGN = <<~MARKDOWN
     # Plan: Claims status export
 
@@ -127,6 +67,22 @@ class FillPrTemplateTest < Minitest::Test
     ### Signatures
 
     Not affected: no new public method.
+
+    ### Complexity
+
+    One pass over the claims.
+
+    ### Invariants
+
+    - An export never sends a claim twice.
+
+    ### Alternatives
+
+    - A cron job: rejected, too slow.
+
+    ### Rollout risk
+
+    The queue may back up.
 
     ## Files that change
 
@@ -171,10 +127,10 @@ class FillPrTemplateTest < Minitest::Test
 
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(/export status appears on the claim page/, output)
-    assert_match(%r{app/models/claim\.rb}, output)
-    assert_match(/Write the acceptance test/, output)
-    assert_match(/test_shows_export_status/, output)
     refute_match(/_describe what this changes_/, output)
+    assert_match(/_how did you build it_/, output)
+    assert_match(/_how was this verified_/, output)
+    refute_match(%r{app/models/claim\.rb|Write the acceptance test|test_shows_export_status}, output)
   end
 
   def test_a_checkbox_style_templates_prose_headings_get_filled_but_its_checkboxes_stay
@@ -198,7 +154,6 @@ class FillPrTemplateTest < Minitest::Test
     MARKDOWN
 
     assert_match(/Claims adjusters cannot see export status/, output)
-    assert_match(%r{app/models/claim\.rb}, output)
     assert_match(/- \[ \] Added tests/, output)
     assert_match(/- \[ \] Ran the linter/, output)
   end
@@ -256,7 +211,7 @@ class FillPrTemplateTest < Minitest::Test
 
   def test_a_choice_list_sub_heading_after_a_prose_sub_heading_still_keeps_its_checkboxes
     output = run_fill(<<~MARKDOWN)
-      ## Testing
+      ## Description
 
       TODO
 
@@ -270,14 +225,14 @@ class FillPrTemplateTest < Minitest::Test
       - [ ] Feature
     MARKDOWN
 
-    assert_match(/test_shows_export_status/, output)
+    assert_match(/export status appears on the claim page/, output)
     refute_match(/prose to absorb/, output)
     assert_match(/### Type of change/, output)
     assert_match(/- \[ \] Bug fix/, output)
     assert_match(/- \[ \] Feature/, output)
   end
 
-  def test_a_choice_list_testing_heading_gets_the_plans_proof_appended
+  def test_a_choice_list_testing_heading_keeps_its_checkboxes_and_gets_no_proof
     output = run_fill(<<~MARKDOWN)
       ## Description
 
@@ -290,19 +245,7 @@ class FillPrTemplateTest < Minitest::Test
 
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(/- \[ \] Unit tests added/, output)
-    assert_match(/## Proof\n\n.*test_shows_export_status/m, output)
-  end
-
-  def test_a_matched_testing_heading_still_gets_the_plans_whole_proof_section
-    output = run_fill(<<~MARKDOWN, plan: PLAN_WITH_NESTED_PROOF)
-      ## Testing
-
-      TODO
-    MARKDOWN
-
-    assert_match(/Per changed file, the unit tests expected, named as behaviour:/, output)
-    assert_match(/returns "running" while the export is in progress/, output)
-    assert_match(/Test setup: no new fixtures beyond the existing claim factory\./, output)
+    refute_match(/## Proof|test_shows_export_status/, output)
   end
 
   def test_a_what_does_this_pr_do_heading_is_filled
@@ -325,16 +268,20 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/Pick one: bug fix, feature, chore\./, output)
   end
 
-  def test_a_how_has_this_been_tested_heading_gets_the_plans_proof_not_its_files
+  def test_an_empty_fill_keeps_the_template_heading_text
     output = run_fill(<<~MARKDOWN)
       ## How has this been tested?
+
+      Run the suite and click through the page.
+
+      ## Tests
 
       TODO
     MARKDOWN
 
-    filled_section = output[/## How has this been tested\?\n\n(.*?)\n\n##/m, 1]
-    assert_match(/test_shows_export_status/, filled_section)
-    refute_match(%r{app/models/claim\.rb}, filled_section)
+    assert_match(/## How has this been tested\?\n\nRun the suite and click through the page\./, output)
+    assert_match(/## Tests\n\nTODO/, output)
+    refute_match(/test_shows_export_status/, output)
   end
 
   def test_a_filled_section_ends_with_a_blank_line_before_the_next_heading
@@ -367,7 +314,7 @@ class FillPrTemplateTest < Minitest::Test
     MARKDOWN
 
     assert_match(/Claims adjusters cannot see export status/, output)
-    assert_match(/test_shows_export_status/, output)
+    assert_match(/_how was this verified_/, output)
     assert_match(/flag or migration to coordinate/, output)
   end
 
@@ -403,7 +350,7 @@ class FillPrTemplateTest < Minitest::Test
 
   def test_a_sub_heading_under_a_matched_heading_is_not_filled_a_second_time
     output = run_fill(<<~MARKDOWN)
-      ## Testing
+      ## Description
 
       TODO
 
@@ -412,7 +359,7 @@ class FillPrTemplateTest < Minitest::Test
       TODO
     MARKDOWN
 
-    assert_equal(1, output.scan(/test_shows_export_status/).length)
+    assert_equal(1, output.scan(/export status appears on the claim page/).length)
   end
 
   def test_a_heading_like_line_inside_a_fenced_code_block_is_not_split_on
@@ -433,7 +380,7 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/flag or migration to coordinate/, output)
   end
 
-  def test_a_template_with_no_matching_headings_gets_three_sections_appended
+  def test_a_template_with_no_matching_headings_gets_summary_alone_appended_when_the_plan_has_no_allowed_subsection
     output = run_fill(<<~MARKDOWN)
       ## Screenshots
 
@@ -443,86 +390,30 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/\A## Screenshots\n\n_attach screenshots here_/, output)
     assert_match(/## Summary/, output)
     refute_match(/## Why/, output)
-    assert_match(/## Implementation/, output)
-    assert_match(/## Proof/, output)
+    refute_match(/## Implementation/, output)
+    refute_match(/## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
   end
 
-  def test_no_template_produces_three_sections_from_intent_and_plan_alone
+  def test_no_template_produces_summary_alone_when_the_plan_has_no_allowed_subsection
     output = run_fill(nil)
 
     assert_match(/\A## Summary/, output)
-    refute_match(/## Why/, output)
-    assert_match(/## Implementation/, output)
-    assert_match(/## Proof/, output)
+    refute_match(/## Why|## Implementation|## Proof/, output)
     assert_match(/Claims adjusters cannot see export status/, output)
     assert_match(/export status appears on the claim page/, output)
-    refute_match(/Write the acceptance test/, output)
-    assert_match(%r{app/models/claim\.rb}, output)
-    assert_match(/test_shows_export_status/, output)
+    refute_match(%r{Write the acceptance test|app/models/claim\.rb|test_shows_export_status}, output)
   end
 
-  def test_an_appended_proof_section_keeps_an_asterisk_bullet_with_an_arrow
-    plan = <<~MARKDOWN
-      # Plan: Claims status export
+  def test_no_template_produces_summary_and_implementation_when_an_allowed_subsection_has_content
+    output = run_fill(nil, plan: PLAN_WITH_DESIGN)
 
-      Status: accepted.
-
-      ## Files that change
-
-      `app/models/claim.rb`: adds `#export_status`.
-
-      ## Order of work
-
-      1. Write the acceptance test, watch it fail.
-      2. Add `#export_status`.
-
-      ## Proof
-
-      * Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
-    MARKDOWN
-
-    output = run_fill(nil, plan: plan)
-
-    assert_match(/\* Claims adjusters see export status/, output)
+    assert_match(/\A## Summary/, output)
+    assert_match(/## Implementation\n\n### Domain terms/, output)
+    refute_match(/## Proof/, output)
   end
 
-  def test_an_appended_proof_section_drops_the_per_file_unit_test_list_after_its_lead_in
-    output = run_fill(nil, plan: PLAN_WITH_NESTED_PROOF)
-
-    proof = output[/## Proof\n\n(.*)\z/m, 1]&.strip
-    assert_equal(<<~PROOF.strip, proof)
-      - Claims adjusters see export status → `test/system/claim_export_test.rb` `test_shows_export_status`
-      - Claims see export progress mid-run → `test/system/claim_export_test.rb` `test_shows_export_progress`
-    PROOF
-  end
-
-  def test_an_appended_proof_section_keeps_all_bullets_when_none_carry_an_arrow
-    output = run_fill(nil, plan: PLAN_WITH_PROOF_WITHOUT_ARROWS)
-
-    proof = output[/## Proof\n\n(.*)\z/m, 1]&.strip
-    assert_equal(<<~PROOF.strip, proof)
-      - Claims adjusters see export status
-      - Claims see export progress mid-run
-    PROOF
-  end
-
-  def test_a_how_to_test_sub_heading_that_gets_absorbed_still_gets_the_proof_appended
-    output = run_fill(<<~MARKDOWN)
-      ## Description
-
-      TODO
-
-      ### How to test
-
-      TODO
-    MARKDOWN
-
-    assert_match(/Claims adjusters cannot see export status/, output)
-    assert_match(/## Proof\n\n.*test_shows_export_status/m, output)
-  end
-
-  def test_a_testing_notes_sub_heading_kept_verbatim_by_a_choice_list_sibling_still_gets_the_proof_appended
+  def test_a_sub_heading_kept_verbatim_by_a_choice_list_sibling_stays_and_gets_no_proof
     output = run_fill(<<~MARKDOWN)
       ## Description
 
@@ -543,7 +434,7 @@ class FillPrTemplateTest < Minitest::Test
     MARKDOWN
 
     assert_match(/### Testing notes\n\n_describe how you tested this_/, output)
-    assert_match(/## Proof\n\n.*test_shows_export_status/m, output)
+    refute_match(/## Proof|test_shows_export_status/, output)
   end
 
   def test_a_second_heading_of_an_already_filled_category_keeps_its_template_text
@@ -561,17 +452,6 @@ class FillPrTemplateTest < Minitest::Test
     assert_match(/## Description\n\n_still the template text_/, output)
   end
 
-  def test_a_missing_proof_in_the_plan_is_not_appended_as_an_empty_heading
-    output = run_fill(<<~MARKDOWN, plan: PLAN_WITHOUT_PROOF)
-      ## Screenshots
-
-      _attach screenshots here_
-    MARKDOWN
-
-    assert_match(/## Implementation/, output)
-    refute_match(/## Proof/, output)
-  end
-
   def test_the_plans_design_section_lands_in_the_implementation_part_with_its_mermaid_fence
     output = run_fill(<<~MARKDOWN, plan: PLAN_WITH_DESIGN)
       ## Implementation
@@ -581,27 +461,85 @@ class FillPrTemplateTest < Minitest::Test
 
     implementation = output[/## Implementation\n\n(.*?)(?=\n\n## |\z)/m, 1]
     assert_match(/### Domain terms/, implementation)
-    assert_match(/### Signatures\n\nNot affected: no new public method\./, implementation)
+    assert_match(/### Diagrams/, implementation)
     assert_match(/```mermaid\nclassDiagram\n  Claim --> Export\n```/, implementation)
-    assert_operator(implementation.index("### Domain terms"), :<, implementation.index("app/models/claim.rb"))
+    assert_operator(implementation.index("### Domain terms"), :<, implementation.index("### Diagrams"))
     refute_match(/^## Design$/, output)
   end
 
-  def test_an_appended_implementation_section_starts_with_the_design
-    output = run_fill(nil, plan: PLAN_WITH_DESIGN)
+  def test_the_plans_design_internals_never_reach_the_body
+    output = run_fill(<<~MARKDOWN, plan: PLAN_WITH_DESIGN)
+      ## Implementation
 
-    implementation = output[/## Implementation\n\n(.*?)(?=\n\n## Proof)/m, 1]
-    assert_match(/\A### Domain terms/, implementation)
-    assert_match(/```mermaid\nclassDiagram/, implementation)
-    assert_match(%r{app/models/claim\.rb}, implementation)
+      _how did you build it_
+    MARKDOWN
+
+    refute_match(/Signatures|Complexity|Invariants|Alternatives|Not affected|One pass|never sends a claim twice|cron job/, output)
   end
 
-  def test_a_plan_without_design_fills_as_before
-    output = run_fill(nil)
+  def test_a_design_subsection_off_the_allowlist_stays_out
+    output = run_fill(nil, plan: PLAN_WITH_DESIGN)
 
-    implementation = output[/## Implementation\n\n(.*?)(?=\n\n## Proof)/m, 1]
-    refute_match(/###/, implementation)
-    assert_match(%r{\A`app/models/claim\.rb`}, implementation)
+    refute_match(/Rollout risk|The queue may back up/, output)
+  end
+
+  def test_the_plans_proof_and_file_list_never_reach_the_body
+    output = run_fill(nil, plan: PLAN_WITH_DESIGN)
+
+    refute_match(%r{Proof|test_shows_export_status|Files that change|app/models/claim\.rb|Order of work|Write the acceptance test}, output)
+  end
+
+  def test_an_allowed_title_outside_design_never_reaches_the_body
+    plan = <<~MARKDOWN
+      # Plan: Claims status export
+
+      Status: accepted.
+
+      ## Design
+
+      ### Rollout risk
+
+      The queue may back up.
+
+      ## Notes
+
+      ### Diagrams
+
+      Stray diagram text.
+    MARKDOWN
+
+    output = run_fill(nil, plan: plan)
+
+    refute_match(/Stray diagram text|### Diagrams|## Implementation/, output)
+  end
+
+  def test_an_allowed_subsection_keeps_its_deeper_headings_and_stops_at_the_next_peer_heading
+    plan = <<~MARKDOWN
+      # Plan: Claims status export
+
+      Status: accepted.
+
+      ## Design
+
+      ### Diagrams
+
+      #### Before
+
+      Before text.
+
+      ### Signatures
+
+      Signature text.
+
+      ## Files that change
+
+      `app/models/claim.rb`: adds `#export_status`.
+    MARKDOWN
+
+    output = run_fill(nil, plan: plan)
+
+    assert_match(/### Diagrams\n\n#### Before\n\nBefore text\./, output)
+    refute_match(/Signature text|app\/models\/claim\.rb/, output)
   end
 
   private

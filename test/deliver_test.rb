@@ -223,8 +223,19 @@ class DeliverTest < Minitest::Test
     body = captured("gh-pr-create.body")
 
     assert_includes(body, "## Summary")
-    assert_includes(body, "## Implementation")
-    assert_includes(body, "## Proof")
+    refute_includes(body, "## Proof")
+    refute_includes(body, "test_widgets_ship")
+  end
+
+  def test_keeps_the_designs_diagram_and_drops_its_internals_from_the_body
+    commit_change_work(plan: plan_with_design)
+
+    deliver
+    body = captured("gh-pr-create.body")
+
+    assert_includes(body, "```mermaid")
+    refute_includes(body, "Signatures")
+    refute_includes(body, "## Proof")
   end
 
   def test_titles_the_pr_from_intent_md
@@ -487,6 +498,29 @@ class DeliverTest < Minitest::Test
   end
 
   private
+
+  def plan_with_design
+    <<~MD
+      # Plan: Ship the widget
+
+      ## Design
+
+      ### Diagrams
+
+      ```mermaid
+      classDiagram
+        Widget --> Ship
+      ```
+
+      ### Signatures
+
+      `Widget#ship`
+
+      ## Proof
+
+      - Widgets ship → `test/widget_test.rb` `test_widgets_ship`
+    MD
+  end
 
   # A work repository: the artefacts are untracked files and docs/changes is excluded.
   def work_change(exclude: true, findings: [ "- [ ] Nit: Naming — `lib/widget.rb:1` → fixed (Rename widget)" ])

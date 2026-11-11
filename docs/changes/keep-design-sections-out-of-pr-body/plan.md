@@ -140,3 +140,5 @@ Domain skills applied: software-design, glossary, diagrams, ruby-style.
 - The allowlist needs explicit structural boundaries and tests → fixed (Signatures state the `###` direct-child rule; an invariant and two unit tests cover it)
 - The playbook files are symlinks, so the second edit is conditional → fixed (one source edit, `agents/.agents/PLAYBOOK.md`; the check reads each pointer)
 - The ADR compatibility claim lacks support → fixed (the claim is replaced by a named limitation in Risks and Integration points; reading git history is a follow-up)
+
+Reproduction: committed

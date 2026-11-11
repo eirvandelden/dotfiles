@@ -179,10 +179,10 @@ module DeliveryHarness
   end
 
   # intent.md and plan.md, a code commit, then a review.md round that covers it.
-  def commit_change_work(slug: @branch, template: nil, findings: [ "- [ ] Nit: Naming — `lib/widget.rb:1` → fixed (Rename widget)" ])
+  def commit_change_work(slug: @branch, template: nil, plan: plan_text, findings: [ "- [ ] Nit: Naming — `lib/widget.rb:1` → fixed (Rename widget)" ])
     commit_file(".github/PULL_REQUEST_TEMPLATE.md", template, "Add template") if template
     commit_file("docs/changes/#{slug}/intent.md", intent_text, "Add intent")
-    commit_file("docs/changes/#{slug}/plan.md", plan_text, "Add plan")
+    commit_file("docs/changes/#{slug}/plan.md", plan, "Add plan")
     commit_file("lib/widget.rb", "class Widget; end\n", "Add widget")
     commit_review(slug, findings) if findings
   end
