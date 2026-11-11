@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Phase 4 of herdr-app, the look: the sidebar on the right of the cores layout, the Solunized themes, the
 # herdr TUI's cards on a frame, and a blue accent for personal spaces and an orange one for work spaces.
