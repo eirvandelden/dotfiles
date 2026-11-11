@@ -9,7 +9,7 @@ require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # The herdr-app stage scripts hand-off-plan.sh and start-review.sh open a Claude worker beside the
-# coordinator through the real herdr-app-pane CLI, which talks to stub herdr-app and hc binaries. The
+# coordinator through the real herdr-app-pane CLI, which talks to stub herdr-app and hc executables. The
 # worker starts as `claude --model <model> <prompt>` in a pane.split argv: the prompt is its last word.
 # The coordinator is t10 in pane p10; HC_TERMINAL_ID is set in the child environment only.
 #
@@ -99,13 +99,7 @@ class HerdrAppWorkerScriptsTest < Minitest::Test
     assert_includes(stdout, report)
     assert_match(/hc send t10\b/, prompt_of(split))
     assert_includes(prompt_of(split), "Handoff done:")
-
-    # The stub worker does what the prompt says: write the report, then tell the coordinator.
-    File.write(report, "Handoff done: #{report}\nwhat the implement stage did\n")
-    system(herdr_app_env(own: "t61"), herdr_app_stub("hc"), "send", "t10", "Handoff done: #{report}", exception: true)
-
-    told = herdr_app_calls.select { |call| call.first(2) == %w[hc send] }
-    assert_equal([ [ "hc", "send", "t10", "Handoff done: #{report}" ] ], told)
+    # The real round trip, a worker's hc send reaching the coordinator, rests on the sandbox live check (plan Proof).
   end
 
   def test_intent_splits_down

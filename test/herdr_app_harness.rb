@@ -3,12 +3,12 @@ require "json"
 require "tmpdir"
 
 # Stubs and fixtures for the tests of herdr-app as a pane backend. No test that uses this file reaches
-# the real herdr-app or hc: stub `herdr-app`, `hc` and `herdr-app-pane` binaries come first on PATH, and
+# the real herdr-app or hc: stub `herdr-app`, `hc` and `herdr-app-pane` executables come first on PATH, and
 # HERDR_APP_BIN, HC_BIN and HERDR_APP_PANE name them. HC_TERMINAL_ID is set only in the child
 # environment herdr_app_env builds.
 #
 # One World holds the state of a herdr-app window: its spaces, the focused pane, the `hc get` answer of
-# each terminal. The stub binaries load it from <dir>/world.json, answer, and write it back; an in-process
+# each terminal. The stub executables load it from <dir>/world.json, answer, and write it back; an in-process
 # FakeCommandLine answers from the same World. Every call lands in <dir>/calls.log as a JSON array,
 # the tool first: ["herdr-app", "do", "pane.split", "{...}"], ["hc", "get", "t10", "--json"].
 #
@@ -206,7 +206,7 @@ module HerdrAppHarness
     end
   end
 
-  # The entry point of the stub binaries. `herdr-app` and `hc` answer from the World; `herdr-app-pane` only
+  # The entry point of the stub executables. `herdr-app` and `hc` answer from the World; `herdr-app-pane` only
   # logs and answers world["pane_cli"] ({"stdout","stderr","exit"}), by default the new terminal t61.
   module Stub
     def self.run(tool, arguments, directory)
@@ -305,7 +305,7 @@ module HerdrAppHarness
     herdr_app_world_write(herdr_app_world.tap { |world| yield(world) })
   end
 
-  # The environment of a herdr-app terminal own, with every herdr-app binary a stub. pane_cli: the
+  # The environment of a herdr-app terminal own, with every herdr-app executable a stub. pane_cli: the
   # herdr-app-pane to run, the stub by default; pass PANE_CLI to run the real one against the stubs.
   def herdr_app_env(own: COORDINATOR, pane_cli: herdr_app_stub("herdr-app-pane"))
     CLEARED_ENV.merge(
