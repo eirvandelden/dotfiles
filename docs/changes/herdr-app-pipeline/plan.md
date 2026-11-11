@@ -126,6 +126,8 @@ end
 
 `herdr-app/.local/share/herdr-app-pane/command_line.rb` — `HerdrAppPane::CommandLine#json(*command)`: runs one `herdr-app` or `hc` command as an argument list (binaries from `HERDR_APP_BIN` and `HC_BIN`, else PATH), answers parsed JSON, raises `Refusal` on a failure, an `{"error"}` answer or unparsable output. Same shape as `HerdrAppMigration::CommandLine`.
 
+`herdr-app/.local/share/herdr-app-pane/row_record.rb` — `HerdrAppPane::RowRecord`: reads, appends to, drops a line from and deletes `<git-common-dir>/herdr-app/stage-panes-<row>`, and reads `intent-pane-<row>`; `RowRecord.common_dir` finds the git common dir when `Panes` gets none. Implementation departure (2026-11-11): the record's file handling moved out of `Panes` to keep that class short. `panes.rb` also holds a small `HerdrAppPane::Window` class that wraps the `herdr-app` and `hc` calls (`space_of`, `terminal`, `focused`, `split`, `focus`, `close`), so invariant 8 still holds per file.
+
 `git/.config/git/worktree-tools/lib/common.rb` (`Helpers`):
 
 ```ruby
@@ -204,7 +206,7 @@ Counts are spawned processes; there are no queries.
 
 ## Files that change
 
-- New `herdr-app/.local/share/herdr-app-pane/{panes,command_line}.rb` and `herdr-app/.local/bin/herdr-app-pane`.
+- New `herdr-app/.local/share/herdr-app-pane/{panes,command_line,row_record}.rb` and `herdr-app/.local/bin/herdr-app-pane`.
 - New `herdr-app/.config/herdr-app/scripts/{hand-off-plan,start-review,open-pr-dash}.sh`.
 - `agents/.agents/bin/{hand-off-plan,start-review,open-pr-dash}` — third branch.
 - `agents/.agents/skills/deliver/scripts/deliver` — `HerdrAppPanes` and `panes_class`.
