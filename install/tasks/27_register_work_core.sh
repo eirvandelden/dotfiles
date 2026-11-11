@@ -67,7 +67,7 @@ work_core_register() {
     return 0
   fi
 
-  [[ "$output" =~ [Oo]ld|[Uu]pdate ]] || die "work core: could not register it: ${output}"
+  [[ "$output" == *"too old"* ]] || die "work core: could not register it: ${output}"
   work_core_update
   default_hc machine add --via "$WORK_CORE_VIA" --name work --session work --json >/dev/null
 }

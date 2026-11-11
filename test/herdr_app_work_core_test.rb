@@ -34,6 +34,10 @@ class HerdrAppWorkCoreTest < Minitest::Test
     when %w[ls --json] then puts({ "terminals" => Array.new(state["live"]) { { "state" => "live" } } }.to_json)
     when %w[machine ls] then puts({ "machines" => state["machines"] }.to_json)
     when %w[machine add]
+      if state["add_error"]
+        puts({ "error" => { "message" => state["add_error"] } }.to_json)
+        exit 1
+      end
       if state["too_old"]
         puts({ "error" => { "message" => "the hc on work is too old" } }.to_json)
         exit 1
@@ -152,6 +156,15 @@ class HerdrAppWorkCoreTest < Minitest::Test
     assert_predicate(status, :success?, stderr)
     assert_includes(calls, "default machine update work")
     assert_equal([ "work" ], machines.map { |machine| machine["name"] })
+  end
+
+  def test_an_unrelated_add_error_does_not_update_the_work_core
+    @state["add_error"] = "could not update the folder it holds"
+    _stdout, stderr, status = run_task
+
+    refute_predicate(status, :success?)
+    assert_match(/could not register it/, stderr)
+    assert_empty(calls.grep(/machine update/))
   end
 
   def test_refuses_to_update_a_work_core_with_live_terminals
