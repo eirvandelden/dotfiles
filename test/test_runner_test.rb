@@ -258,6 +258,20 @@ class TestRunnerTest < Minitest::Test
     Process.kill("KILL", left) if left && !gone?(left)
   end
 
+  def test_clears_herdr_app_variables_for_each_test_file
+    record = File.join(@dir, "herdr-app.record")
+    names = %w[HC_TERMINAL_ID HC_TERMINAL_SOCKET HC_SCOPE HERDR_APP_COORDINATOR HERDR_APP_HOME]
+    file = write_test("env_test.rb", "def test_record = File.write(#{record.inspect}, " \
+                                     "#{names.inspect}.select { |name| ENV.key?(name) }.join(' '))")
+    herdr_app_terminal = { "HC_TERMINAL_ID" => "t99", "HC_TERMINAL_SOCKET" => File.join(@dir, "no.sock"),
+                           "HC_SCOPE" => "scope", "HERDR_APP_COORDINATOR" => "t98", "HERDR_APP_HOME" => File.join(@dir, "home") }
+
+    output, status = run_runner(file, env: herdr_app_terminal)
+
+    assert(status.success?, output)
+    assert_equal("", File.read(record))
+  end
+
   private
 
   def run_roots

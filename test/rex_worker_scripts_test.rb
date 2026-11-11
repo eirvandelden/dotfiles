@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # Two scripts spawn a Claude worker inside the running Rex session: hand-off-plan.sh starts a stage
@@ -968,7 +969,7 @@ class RexWorkerScriptsTest < Minitest::Test
   end
 
   def run_script(script, *arguments, rex_env: "S1", caller_block: CALLER, extra_env: {})
-    environment = stub_env.merge(
+    environment = HerdrAppHarness::CLEARED_ENV.merge(stub_env).merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "GIT_CALL_LOG" => git_call_log,
       "REX_SESSION" => rex_env,

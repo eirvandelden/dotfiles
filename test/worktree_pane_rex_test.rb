@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # worktree-pane opens, closes or labels the Rex block rooted in a worktree's directory. It talks to
@@ -271,13 +272,13 @@ class WorktreePaneRexTest < Minitest::Test
   end
 
   def run_script(command, path, *rest, rex_env: "S1", env: {})
-    environment = {
+    environment = HerdrAppHarness::CLEARED_ENV.merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "REX_CALL_LOG" => call_log,
       "REX_STUB_BLOCKS" => stub_blocks_file,
       "REX_SESSION" => rex_env,
       "REX_BLOCK" => "blkCaller"
-    }.merge(env)
+    ).merge(env)
     Open3.capture3(environment, "ruby", SCRIPT, *[ command, path, *rest ].compact)
   end
 

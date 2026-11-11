@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # play-tone.sh <ready|request|done> plays one quiet tone from ~/Documents/Tones/herdr/ with afplay. The
@@ -78,6 +79,16 @@ class RexToneTest < Minitest::Test
     assert_empty(afplay_calls)
   end
 
+  def test_plays_nothing_in_a_herdr_app_terminal_with_a_leaked_rex_session
+    TONES.each_key do |tone|
+      _, stderr, status = run_script(tone, env: { "HC_TERMINAL_ID" => "t10", "REX_SESSION" => "S1" })
+
+      assert_equal(0, status.exitstatus, stderr)
+    end
+
+    assert_empty(afplay_calls)
+  end
+
   private
 
   def assert_plays(tone, file)
@@ -88,8 +99,9 @@ class RexToneTest < Minitest::Test
   end
 
   def run_script(*arguments, env: {})
-    environment = { "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}", "HOME" => @home, "AFPLAY_LOG" => log,
-                    "HERDR_ENV" => nil, "REX_SESSION" => "S1" }.merge(env)
+    environment = HerdrAppHarness::CLEARED_ENV.merge("PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}", "HOME" => @home,
+                                                     "AFPLAY_LOG" => log, "HERDR_ENV" => nil, "REX_SESSION" => "S1")
+                                              .merge(env)
     Open3.capture3(environment, SCRIPT, *arguments)
   end
 
