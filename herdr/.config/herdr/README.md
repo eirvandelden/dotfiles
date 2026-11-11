@@ -87,7 +87,7 @@ The dotfiles setup installs and enables the plugin from `HERDR_PLUGINS` in `pack
 
 To install it by hand, run `herdr plugin install vigneshwerv/herdr-golden-ratio`, then `herdr server reload-config`. `herdr plugin update` updates it.
 
-herdr-app has its own `golden-ratio` mod, because the TUI plugin never fires there. After the focus rests on a pane for `debounce_ms`, the mod reads the tab tree from herdr-core and resizes each container on the focus path so the focused pane gets the ratio on every axis it shares with a sibling. Its props are `ratio` (0.05 to 0.95, default 0.618), `debounce_ms` (0 to 2000, default 120) and `min_delta` (0 to 0.5, default 0.02, the share difference below which a pane is left alone). It skips zoomed tabs, single-pane tabs and spaces on a remote machine. The `cores` layout mounts it as a zero-size block with those props. It works once the `herdr-app` package files are linked, so restow after pulling.
+herdr-app has its own `golden-ratio` mod, because the TUI plugin never fires there. The focus must rest on a pane for `debounce_ms`. Then the mod reads the tab tree from herdr-core. It resizes each row and column on the focus path. The focused pane gets the ratio on every axis it shares with a sibling. Its props are `ratio` (0.05 to 0.95, default 0.618), `debounce_ms` (0 to 2000, default 120) and `min_delta` (0 to 0.5, default 0.02). A pane within `min_delta` of the ratio is left alone. The mod skips zoomed tabs, single-pane tabs and spaces on a remote machine. The `cores` layout mounts it as a zero-size block with those props. It works once the `herdr-app` package files are linked, so restow after pulling.
 
 ## Worker scripts
 
