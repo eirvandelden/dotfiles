@@ -122,6 +122,7 @@ main() {
   run_task "51_configure_glow_style.sh" "$root"
   run_task "52_install_herdr_plugins.sh" "$root"
   run_task "53_configure_rex_defaults.sh" "$root"
+  run_task "54_prepare_state_dirs.sh" "$root"
 
   log "Setup complete! You may want to restart your shell (or reboot)."
 }
