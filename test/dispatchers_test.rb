@@ -3,12 +3,13 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
-# The dispatchers in agents/.agents/bin choose the herdr or the Rex stage script from the environment:
-# HERDR_ENV=1 runs the herdr script, REX_SESSION runs the Rex script, herdr wins when both are set, and
-# neither refuses. Each script is a stub that records its arguments and its coordinator variables.
-# COORDINATOR=<id> becomes HERDR_PANE_ID for herdr and REX_BLOCK for Rex.
+# The dispatchers in agents/.agents/bin choose the herdr, herdr-app or Rex stage script from the environment:
+# HERDR_ENV=1 runs the herdr script, HC_TERMINAL_ID the herdr-app script, REX_SESSION the Rex script, in that
+# order, and none refuses. Each script is a stub that records its arguments and its coordinator variables.
+# COORDINATOR=<id> becomes HERDR_PANE_ID for herdr, HERDR_APP_COORDINATOR for herdr-app and REX_BLOCK for Rex.
 class DispatchersTest < Minitest::Test
   BIN = File.expand_path("../agents/.agents/bin", __dir__)
   DISPATCHERS = {
@@ -21,10 +22,12 @@ class DispatchersTest < Minitest::Test
     @root = Dir.mktmpdir
     @herdr_scripts = File.join(@root, "herdr")
     @rex_scripts = File.join(@root, "rex")
+    @herdr_app_scripts = File.join(@root, "herdr-app")
     @log = File.join(@root, "calls.log")
     DISPATCHERS.each_value do |script|
       install_stub(File.join(@herdr_scripts, script), "herdr")
       install_stub(File.join(@rex_scripts, script), "rex")
+      install_herdr_app_stub(File.join(@herdr_app_scripts, script))
     end
   end
 
@@ -127,16 +130,74 @@ class DispatchersTest < Minitest::Test
                  calls_with_coordinator)
   end
 
+  def test_each_dispatcher_runs_its_herdr_app_script_when_hc_terminal_id_is_set
+    DISPATCHERS.each_key do |name|
+      File.delete(@log) if File.exist?(@log)
+
+      _stdout, stderr, status = dispatch(name, "one", "two words", herdr_app: true)
+
+      assert(status.success?, "#{name}: #{stderr}")
+      assert_equal([ "herdr-app one two words" ], calls, name)
+    end
+  end
+
+  def test_herdr_wins_over_herdr_app
+    DISPATCHERS.each_key do |name|
+      File.delete(@log) if File.exist?(@log)
+
+      dispatch(name, "plan", "some-change", herdr: true, herdr_app: true)
+
+      assert_equal([ "herdr plan some-change" ], calls, name)
+    end
+  end
+
+  def test_herdr_app_wins_over_rex
+    DISPATCHERS.each_key do |name|
+      File.delete(@log) if File.exist?(@log)
+
+      dispatch(name, "plan", "some-change", herdr_app: true, rex: true)
+
+      assert_equal([ "herdr-app plan some-change" ], calls, name)
+    end
+  end
+
+  def test_coordinator_becomes_herdr_app_coordinator
+    dispatch("hand-off-plan", "implement", "some-change", herdr_app: true, env: { "COORDINATOR" => "t30" })
+
+    assert_equal([ "herdr-app implement some-change pane= block= coordinator=t30" ], calls_with_coordinator)
+  end
+
+  def test_each_dispatcher_refuses_outside_all_three_tools_and_names_herdr_app
+    DISPATCHERS.each_key do |name|
+      _stdout, stderr, status = dispatch(name, "plan", "some-change")
+
+      assert_equal(1, status.exitstatus, name)
+      assert_match(/herdr-app/i, stderr, name)
+    end
+  end
+
   private
 
-  def dispatch(name, *arguments, herdr: false, rex: false, env: {})
-    environment = {
+  # herdr_app: true runs inside a herdr-app terminal, HC_TERMINAL_ID set in the child only.
+  def dispatch(name, *arguments, herdr: false, rex: false, herdr_app: false, env: {})
+    environment = HerdrAppHarness::CLEARED_ENV.merge(
       "HERDR_ENV" => (herdr ? "1" : nil), "REX_SESSION" => (rex ? "S1" : nil),
+      "HC_TERMINAL_ID" => (herdr_app ? "t10" : nil),
       "HERDR_PANE_ID" => nil, "REX_BLOCK" => nil, "COORDINATOR" => nil,
       "HERDR_SCRIPTS_DIR" => @herdr_scripts, "REX_SCRIPTS_DIR" => @rex_scripts,
-      "STUB_LOG" => @log, "HOME" => @root
-    }.merge(env)
+      "HERDR_APP_SCRIPTS_DIR" => @herdr_app_scripts, "STUB_LOG" => @log, "HOME" => @root
+    ).merge(env)
     Open3.capture3(environment, File.join(BIN, name), *arguments)
+  end
+
+  def install_herdr_app_stub(path)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, <<~SH)
+      #!/bin/sh
+      printf 'herdr-app %s pane=%s block=%s coordinator=%s\n' "$*" "${HERDR_PANE_ID:-}" "${REX_BLOCK:-}" \
+        "${HERDR_APP_COORDINATOR:-}" >> "$STUB_LOG"
+    SH
+    FileUtils.chmod(0o755, path)
   end
 
   def install_stub(path, label)

@@ -3,6 +3,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 
 # Shared setup for the delivery scripts' tests (deliver, ship, open-pr-dash.sh): a temporary git
 # repository with a bare repository behind "origin", stubbed `gh` and `herdr` on PATH, and a HOME
@@ -254,13 +255,13 @@ module DeliveryHarness
   end
 
   def script_environment(herdr)
-    {
+    HerdrAppHarness::CLEARED_ENV.merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}", "HOME" => @home, "STUB_STATE" => @state,
       "WORKTREE_TOOLS_DIR" => WORKTREE_TOOLS_DIR, "GIT_CONFIG_GLOBAL" => "/dev/null",
       "GIT_DIR" => nil, "GIT_WORK_TREE" => nil, "GIT_INDEX_FILE" => nil, "LEFTHOOK_BIN" => nil,
       "HERDR_ENV" => herdr ? "1" : nil, "HERDR_WORKSPACE_ID" => herdr ? "w1" : nil,
       "HERDR_PANE_ID" => herdr ? OWN_PANE : nil
-    }
+    )
   end
 
   private

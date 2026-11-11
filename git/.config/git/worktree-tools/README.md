@@ -140,6 +140,7 @@ stow:
    - `worktree-create <name>` - Sweep merged/gone worktrees, then create `.worktrees/<name>` off `origin`'s default branch; prints its path
    - `worktree-sweep [--detach]` - Sweep merged worktrees of the current repository; the lefthook pull hooks run it with `--detach`
    - `worktree-pane open|close <path>` / `worktree-pane label <path> <pane-id>` - Open, close, or rename the herdr pane (or, in Rex, the block) rooted in a worktree; `worktree-pane` hands over to `worktree-pane-rex` when only `REX_SESSION` is set
+   - In a herdr-app terminal (`HC_TERMINAL_ID` set, `HERDR_ENV` not `1`), `worktree-pane` runs `herdr-app-pane` from the `herdr-app` package instead: `open` runs `herdr-app-pane open <path> --worktree` (a login shell in a pane below the coordinator, none when a pane of the space already shows the path), `close` runs `herdr-app-pane close-at <path>` (closes the shells at the path, never an agent), and `label` does nothing, since herdr-app has no pane rename. `HERDR_APP_PANE` names another `herdr-app-pane`. The order is herdr, then herdr-app, then Rex.
 
 3. **Explicit Git Command**
    - `git worktree-init` - Runs `worktree-setup` for the current worktree or a provided path

@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # worktree-create sweeps merged/gone worktrees, then creates a fresh one off origin's default
@@ -643,7 +644,7 @@ class WorktreeCreateTest < Minitest::Test
   end
 
   def create_environment(without_gh: false)
-    {
+    HerdrAppHarness::CLEARED_ENV.merge(
       "XDG_STATE_HOME" => @state_home,
       "HERDR_PANE_ID" => nil,
       "HERDR_BIN_PATH" => nil,
@@ -654,7 +655,7 @@ class WorktreeCreateTest < Minitest::Test
       "HERDR_ENV" => "1",
       "GIT_CALL_LOG" => git_call_log,
       "ORDER_LOG" => order_log
-    }
+    )
   end
 
   def recorded(pane_file_name)

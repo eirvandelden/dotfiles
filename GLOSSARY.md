@@ -8,6 +8,7 @@
 - **Change folder** — `docs/changes/<slug>/`, as `plan/scripts/change-folder` prints it.
 - **Change scope** — `personal` or `work`, as `agents/.agents/skills/finish/scripts/change-scope` prints it from the origin URL. It is not the glossary's **Scope**, which names the secrets `unlock` loads. Never write bare "scope" for this concept. Avoid: work scope, repo scope.
 - **Changed file** — a path that differs from the base, in the working tree, or is untracked, with status `M`, `A`, `D` or `?`.
+- **Coordinator** — the terminal a stage worker reports to. In herdr-app it is `HERDR_APP_COORDINATOR`, set by a dispatcher from `COORDINATOR`, else the caller's own `HC_TERMINAL_ID`.
 - **Core** — one herdr-core session, such as `default` (personal) or `work`, with its own terminals and spaces. Avoid: server.
 - **Covering test** — the test that still proves the behaviour of a deleted test.
 - **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
@@ -28,6 +29,7 @@
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
 - **Owned theme** — one of the four names of the personal pair and the work pair.
 - **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
+- **Pane backend** — the tool where the pipeline opens its panes: herdr TUI, herdr-app or Rex, picked from the environment.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Personal pair** — the theme pair `solunized-light-blue` and `solunized-dark-blue`.
@@ -39,6 +41,8 @@
 - **Repo config** — the first of `lefthook.yml`, `.lefthook.yml` or `.config/lefthook.yml` at the git toplevel.
 - **Reviewed commit** — the short SHA in the last `## Round <n> — <time> — <sha>` heading of `review.md`. The heading may end in `(claude)` or `(codex)`.
 - **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
+- **Row** — the stage panes of one change, side by side; the slug names it.
+- **Row record** — `<git-common-dir>/<tool>/stage-panes-<slug>`: the stage panes of one row, one per line, in the order they opened. herdr-app lines are hc terminal addresses.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
 - **Running agent** — a herdr TUI pane that `herdr agent list` lists now, with its kind (`claude` or `codex`), session id and folder.
@@ -49,6 +53,7 @@
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
 - **Space** — a herdr-app space: a named place to work on one machine, with tabs.
+- **Stage pane** — a pane the pipeline opens for one change: a stage worker, a reviewer or gh-dash.
 - **Stale space** — a space on this computer left from the 2026-10-30 import, whose agents were lost on 2026-11-05.
 - **Starter config** — the documented `lefthook.yml` with the `remotes:` block that a personal repository copies. Avoid: template.
 - **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.

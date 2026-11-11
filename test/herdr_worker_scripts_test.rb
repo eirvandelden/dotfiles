@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # Two scripts spawn a Claude worker inside the running Herdr session: one starts a stage
@@ -1098,7 +1099,7 @@ end
   WORKTREE_TOOLS_DIR = File.expand_path("../git/.config/git/worktree-tools", __dir__)
 
   def run_script(script, *arguments, herdr_env: "1", caller_pane: "w1:p1", extra_env: {})
-    environment = {
+    environment = HerdrAppHarness::CLEARED_ENV.merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "GIT_CALL_LOG" => git_call_log,
@@ -1109,7 +1110,7 @@ end
       "HERDR_PANE_ID" => caller_pane,
       "WORKTREE_TOOLS_DIR" => WORKTREE_TOOLS_DIR,
       "CLAUDE_SKILLS_DIR" => SKILLS_DIR
-    }
+    )
     Open3.capture3(environment.merge(extra_env), script, *arguments, chdir: @repo)
   end
 

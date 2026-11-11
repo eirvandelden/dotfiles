@@ -5,6 +5,7 @@ require "open3"
 require "timeout"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # worktree-sweep removes merged worktrees of the repository it runs in. It shells out to git, gh
@@ -554,14 +555,14 @@ class WorktreeSweepTest < Minitest::Test
   end
 
   def script_environment(extra_env = {})
-    {
+    HerdrAppHarness::CLEARED_ENV.merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HOME" => @enclosing,
       "GH_STUB_STATES" => gh_states_file,
       "GH_STUB_HANG" => gh_hang_file,
       "RELEASE_HANGING_STUBS" => release_file,
       "GIT_CALL_LOG" => File.join(@enclosing, "git-calls.log")
-    }.merge(extra_env)
+    ).merge(extra_env)
   end
 
   def run_script(*arguments, chdir: @repo, extra_env: {})

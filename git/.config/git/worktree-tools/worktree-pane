@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # open/close/label the herdr pane rooted in a worktree's directory.
+# In a herdr-app terminal herdr-app-pane does the work: open --worktree, close-at; label does nothing.
 # Plain ruby, not rv: CI has no rv, and hand-off-plan.sh invokes this script directly.
 $LOAD_PATH.unshift(File.expand_path("lib", __dir__))
 
@@ -22,16 +23,12 @@ module WorktreeTools
 
     #: (Array[String] argv) -> void
     def run!(argv)
+      return herdr_app(argv) if herdr_app_env?
+
       exec(RbConfig.ruby, File.join(__dir__, "worktree-pane-rex"), *argv) if rex_only_env?
-
-      command, path, pane_id = argv
       return unless herdr_env?
-      die(USAGE) if !COMMANDS.include?(command) || path.to_s.empty? ||
-                    (command == "label" && pane_id.to_s.empty?)
 
-      target = realpath!(path)
-      die("worktree-pane: not inside a git repository: #{target}") unless git_common_dir(target)
-
+      command, target, pane_id = checked(argv)
       case command
       when "open" then open(target)
       when "close" then close(target)
@@ -40,6 +37,28 @@ module WorktreeTools
     end
 
     private
+
+    # herdr-app has no pane rename, so label does nothing.
+    def herdr_app(argv)
+      command, target, = checked(argv)
+      return if command == "label"
+
+      exec(herdr_app_pane_bin, *(command == "open" ? [ "open", target, "--worktree" ] : [ "close-at", target ]))
+    rescue SystemCallError => error
+      die("worktree-pane: #{herdr_app_pane_bin} could not start (#{error.message})")
+    end
+
+    # Dies on bad arguments; answers the command, the real path of the worktree and the pane id.
+    def checked(argv)
+      command, path, pane_id = argv
+      die(USAGE) if !COMMANDS.include?(command) || path.to_s.empty? ||
+                    (command == "label" && pane_id.to_s.empty?)
+
+      target = realpath!(path)
+      die("worktree-pane: not inside a git repository: #{target}") unless git_common_dir(target)
+
+      [ command, target, pane_id ]
+    end
 
     def realpath!(path)
       File.realpath(path)

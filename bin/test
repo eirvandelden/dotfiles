@@ -5,6 +5,7 @@
 # on INT or TERM, 141 when its output is closed. Any early stop gives each running file INT, and KILL
 # when it still runs 5 seconds later. Every file gets the same TMPDIR, a run root named dotfiles-test*
 # under the caller's TMPDIR, which the run removes at its end. A run killed by KILL leaves that one directory.
+# No file inherits the variables of a herdr-app terminal (HERDR_APP_VARIABLES).
 # test/test_runner_test.rb covers this script.
 require "English"
 require "etc"
@@ -22,6 +23,8 @@ class TestRun
     :started  #: Float
   )
   GRACE_SECONDS = 5
+  # A run inside a herdr-app terminal must drive no pane of the real window, so no test file inherits these.
+  HERDR_APP_VARIABLES = %w[HC_TERMINAL_ID HC_TERMINAL_SOCKET HC_SCOPE HERDR_APP_COORDINATOR HERDR_APP_HOME].freeze
 
   #: (Array[String] files, root: String, jobs: Integer) -> void
   def initialize(files, root:, jobs:)
@@ -109,7 +112,8 @@ class TestRun
   def start_next
     file = @files.shift
     output = Tempfile.new("test-run")
-    pid = Process.spawn({ "TMPDIR" => @run_root }, RbConfig.ruby, "-Itest", file, chdir: @root, pgroup: true,
+    environment = HERDR_APP_VARIABLES.to_h { |name| [ name, nil ] }.merge("TMPDIR" => @run_root)
+    pid = Process.spawn(environment, RbConfig.ruby, "-Itest", file, chdir: @root, pgroup: true,
                         in: File::NULL, out: output.fileno, err: output.fileno)
     @running << Job.new(file, pid, output, monotonic_now)
   end

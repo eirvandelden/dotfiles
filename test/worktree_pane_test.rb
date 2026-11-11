@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "tmpdir"
 require_relative "git_fixture"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # worktree-pane opens or closes the herdr pane rooted in a worktree's directory. It talks to
@@ -286,13 +287,13 @@ class WorktreePaneTest < Minitest::Test
   end
 
   def run_script(command, path, *rest, herdr_env: "1", env: {})
-    environment = {
+    environment = HerdrAppHarness::CLEARED_ENV.merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}",
       "HERDR_CALL_LOG" => call_log,
       "HERDR_STUB_PANES" => stub_panes_file,
       "HERDR_ENV" => herdr_env,
       "HERDR_WORKSPACE_ID" => "w1"
-    }.merge(env)
+    ).merge(env)
     Open3.capture3(environment, "ruby", SCRIPT, *[ command, path, *rest ].compact)
   end
 

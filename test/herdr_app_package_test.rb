@@ -7,10 +7,10 @@ require "pathname"
 require "tmpdir"
 require_relative "isolated_git"
 
-# The herdr-app package carries the files Etienne edits: keys.json, settings.json and the cores clones
-# of the spaces mod and the main layout. herdr-app writes other files into its config folder (view.json,
-# window.json, caches, each mod's .d.ts), so the folder must stay a real folder with file links;
-# packages.conf lists the package in STOW_SHARED for that.
+# The herdr-app package carries the files Etienne edits: keys.json, settings.json, the cores clones
+# of the spaces mod and the main layout, and the pipeline's stage scripts. herdr-app writes other files
+# into its config folder (view.json, window.json, caches, each mod's .d.ts), so the folder must stay a
+# real folder with file links; packages.conf lists the package in STOW_SHARED for that.
 class HerdrAppPackageTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   PACKAGE = File.join(REPO_ROOT, "herdr-app/.config/herdr-app")
@@ -33,6 +33,7 @@ class HerdrAppPackageTest < Minitest::Test
         mods/spaces-cores/main.js mods/spaces-cores/mod.json
         mods/tabs-cores/main.js mods/tabs-cores/mod.json mods/tabs-cores/win-close.svg mods/tabs-cores/win-max.svg
         mods/tabs-cores/win-min.svg mods/tabs-cores/win-restore.svg
+        scripts/hand-off-plan.sh scripts/open-pr-dash.sh scripts/start-review.sh
         settings.json
         themes/solunized-dark-blue.json themes/solunized-dark-orange.json
         themes/solunized-light-blue.json themes/solunized-light-orange.json

@@ -2,6 +2,7 @@
 require "minitest/autorun"
 require_relative "delivery_harness"
 require_relative "rex_harness_compat"
+require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # `deliver` ends a change: once a review round leaves no open finding it removes the change folder
@@ -14,6 +15,7 @@ require_relative "isolated_git"
 # `open-pr-dash.sh <slug> <pr-url>`; refusals go to stderr with exit 1; the PR URL goes to stdout.
 class DeliverTest < Minitest::Test
   include DeliveryHarness
+  include HerdrAppHarness
 
   SLUG = "my-change".freeze
   OPEN_FINDING = "- [ ] Important: Widget leaks memory — `lib/widget.rb:1` →".freeze
@@ -29,6 +31,7 @@ class DeliverTest < Minitest::Test
 
   def teardown
     FileUtils.rm_rf(@dash_scripts)
+    herdr_app_teardown
     teardown_harness
   end
 
@@ -448,6 +451,21 @@ class DeliverTest < Minitest::Test
 
     assert_equal(%w[w1:pIdle w1:pDone], closed_panes)
     assert_empty(closed_blocks)
+  end
+
+  def test_deliver_runs_close_idle_in_herdr_app
+    commit_change_work
+    herdr_app_setup(HerdrAppHarness::Fixtures.default_world(cwd: toplevel))
+    env = herdr_app_env.merge("PATH" => "#{@herdr_app_bin}:#{@stub_bin}:#{ENV.fetch('PATH')}",
+                              "HERDR_APP_SCRIPTS_DIR" => @dash_scripts)
+
+    stdout, stderr, status = deliver(env: env)
+
+    assert(status.success?, stderr)
+    assert_includes(stdout, PR_URL)
+    assert_equal([ [ "close-idle", SLUG ] ], herdr_app_pane_cli_calls)
+    assert_empty(herdr_calls)
+    assert_empty(rex_calls)
   end
 
   def test_deliver_opens_the_dash_through_the_dispatcher_in_a_rex_block
