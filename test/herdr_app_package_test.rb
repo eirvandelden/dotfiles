@@ -14,6 +14,7 @@ require_relative "isolated_git"
 class HerdrAppPackageTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   PACKAGE = File.join(REPO_ROOT, "herdr-app/.config/herdr-app")
+  AGENT_LISTS = { "agents-done" => "done", "agents-blocked" => "blocked" }.freeze
 
   def test_both_files_parse_as_json
     %w[keys.json settings.json].each do |name|
@@ -25,6 +26,7 @@ class HerdrAppPackageTest < Minitest::Test
     assert_equal(
       %w[
         keys.json layouts/cores.json
+        mods/agents-blocked/main.js mods/agents-blocked/mod.json mods/agents-done/main.js mods/agents-done/mod.json
         mods/golden-ratio/controller.js mods/golden-ratio/main.js mods/golden-ratio/mod.json
         mods/golden-ratio/planner.js
         mods/spaces-cores/main.js mods/spaces-cores/mod.json settings.json
@@ -53,12 +55,46 @@ class HerdrAppPackageTest < Minitest::Test
   end
 
   def test_the_generated_mod_files_are_ignored
-    %w[mods/spaces-cores/jsconfig.json mods/spaces-cores/herdr.d.ts].each do |path|
+    paths = %w[spaces-cores agents-done agents-blocked].product(%w[jsconfig.json herdr.d.ts])
+
+    paths.map { |mod, file| "mods/#{mod}/#{file}" }.each do |path|
       _stdout, _stderr, status = Open3.capture3(
         IsolatedGit::ENVIRONMENT, "git", "check-ignore", "-q", "herdr-app/.config/herdr-app/#{path}", chdir: REPO_ROOT
       )
 
       assert_predicate(status, :success?, path)
+    end
+  end
+
+  def test_the_blocked_list_shares_the_done_list_code
+    path = File.join(PACKAGE, "mods/agents-blocked/main.js")
+
+    assert(File.symlink?(path), "#{path} is not a symlink")
+    assert_equal("../agents-done/main.js", File.readlink(path))
+  end
+
+  def test_each_agent_list_names_its_status
+    AGENT_LISTS.each do |mod, status|
+      overlay = mod_json(mod).fetch("overlay", {})
+
+      assert_equal([ "popup", status ], [ overlay["kind"], overlay.dig("props", "status") ], mod)
+    end
+  end
+
+  # herdr-app's loader refuses a relative import that resolves outside the mod folder, and every file in
+  # a stowed mod resolves into this repository.
+  def test_the_agent_list_imports_only_builtin_modules
+    path = File.join(PACKAGE, "mods/agents-done/main.js")
+    assert_path_exists(path)
+    source = File.read(path)
+
+    refute_match(%r{from\s+["']\.\.?/}, source)
+    refute_includes(source, "mods/agents-")
+  end
+
+  def test_the_agent_lists_are_clones_of_the_picker
+    AGENT_LISTS.each_key do |mod|
+      assert_equal("picker", mod_json(mod).dig("cloned_from", "name"), mod)
     end
   end
 
@@ -114,6 +150,14 @@ class HerdrAppPackageTest < Minitest::Test
   end
 
   private
+
+  #: (String) -> Hash[String, untyped]
+  def mod_json(mod)
+    path = File.join(PACKAGE, "mods/#{mod}/mod.json")
+    assert_path_exists(path)
+
+    JSON.parse(File.read(path))
+  end
 
   def layout_mods(name)
     nodes = [ JSON.parse(File.read(File.join(PACKAGE, "layouts/#{name}.json"))) ]
