@@ -409,13 +409,18 @@ class HerdrAppTuiSessionTest < Minitest::Test
 
   def tui_answer(words)
     result = case words
-    in [ "workspace", "list" ] then { "workspaces" => [ { "workspace_id" => "w1", "label" => "api" } ] }
+    in [ "workspace", "list" ] then { "workspaces" => tui_workspaces }
     in [ "tab", "list", "--workspace", "w1" ] then { "tabs" => [ { "tab_id" => "w1:t1", "label" => "main" } ] }
     in [ "pane", "list", "--workspace", "w1" ] then { "panes" => panes }
     in [ "pane", "layout", "--pane", _ ] then { "layout" => { "panes" => rects } }
     in [ "agent", "list" ] then { "agents" => agents }
     end
     { "id" => "x", "result" => result }
+  end
+
+  def tui_workspaces
+    rows = [ { "workspace_id" => "w1", "label" => "api" } ]
+    @duplicates ? rows + [ { "workspace_id" => "w1", "label" => "api" } ] : rows
   end
 
   def panes
@@ -439,6 +444,13 @@ class HerdrAppTuiSessionTest < Minitest::Test
 
     assert_equal(%w[api /work/api main], [ workspace.name, workspace.folder, workspace.tabs.first.name ])
     assert_equal(%w[w1:p1 w1:p2], workspace.tabs.first.panes.map(&:id))
+  end
+
+  def test_two_workspaces_with_one_label_are_refused_by_name
+    @duplicates = true
+    error = assert_raises(HerdrAppMigration::Refusal) { session.workspaces }
+
+    assert_match(/two workspaces are named api/, error.message)
   end
 
   def test_running_agents_hold_only_claude_and_codex_with_a_session

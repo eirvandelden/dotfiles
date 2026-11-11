@@ -15,7 +15,9 @@ module HerdrAppMigration
 
     #: -> Array[Workspace]
     def workspaces
-      read("workspace", "list").fetch("workspaces").map { |workspace| build(workspace) }
+      rows = read("workspace", "list").fetch("workspaces")
+      refuse_duplicates(rows)
+      rows.map { |workspace| build(workspace) }
     end
 
     #: -> Hash[String, AgentSession]
@@ -28,6 +30,11 @@ module HerdrAppMigration
 
     def read(*words)
       @command_line.json("herdr", "--session", @session, *words).fetch("result")
+    end
+
+    def refuse_duplicates(rows)
+      label = rows.map { |workspace| workspace["label"] }.tally.find { |_label, count| count > 1 }&.first
+      raise Refusal, "two workspaces are named #{label}; rename one in the TUI session first" if label
     end
 
     def build(workspace)
