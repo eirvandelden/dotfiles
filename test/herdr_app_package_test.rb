@@ -23,7 +23,12 @@ class HerdrAppPackageTest < Minitest::Test
 
   def test_the_package_holds_only_etiennes_files
     assert_equal(
-      %w[keys.json layouts/cores.json mods/spaces-cores/main.js mods/spaces-cores/mod.json settings.json],
+      %w[
+        keys.json layouts/cores.json
+        mods/golden-ratio/controller.js mods/golden-ratio/main.js mods/golden-ratio/mod.json
+        mods/golden-ratio/planner.js
+        mods/spaces-cores/main.js mods/spaces-cores/mod.json settings.json
+      ],
       tracked_package_files.sort
     )
   end
