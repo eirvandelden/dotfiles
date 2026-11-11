@@ -124,9 +124,68 @@ module HerdrAppPane
 end
 ```
 
-`herdr-app/.local/share/herdr-app-pane/command_line.rb` — `HerdrAppPane::CommandLine#json(*command)`: runs one `herdr-app` or `hc` command as an argument list (binaries from `HERDR_APP_BIN` and `HC_BIN`, else PATH), answers parsed JSON, raises `Refusal` on a failure, an `{"error"}` answer or unparsable output. Same shape as `HerdrAppMigration::CommandLine`.
+`herdr-app/.local/share/herdr-app-pane/command_line.rb` — `HerdrAppPane::CommandLine#json(*command)`: runs one `herdr-app` or `hc` command as an argument list (executables from `HERDR_APP_BIN` and `HC_BIN`, else PATH), answers parsed JSON, raises `Refusal` on a failure, an `{"error"}` answer or unparsable output. Same shape as `HerdrAppMigration::CommandLine`.
 
-`herdr-app/.local/share/herdr-app-pane/row_record.rb` — `HerdrAppPane::RowRecord`: reads, appends to, drops a line from and deletes `<git-common-dir>/herdr-app/stage-panes-<row>`, and reads `intent-pane-<row>`; `RowRecord.common_dir` finds the git common dir when `Panes` gets none. Implementation departure (2026-11-11): the record's file handling moved out of `Panes` to keep that class short. `panes.rb` also holds a small `HerdrAppPane::Window` class that wraps the `herdr-app` and `hc` calls (`space_of`, `terminal`, `await_agent`, `focused`, `split`, `focus`, `close`), so invariant 8 still holds per file, and a `HerdrAppPane::Terminal` value object over one `hc get` answer (`agent?`, `at?`).
+`herdr-app/.local/share/herdr-app-pane/row_record.rb` — `HerdrAppPane::RowRecord`: reads, appends to, drops a line from and deletes `<git-common-dir>/herdr-app/stage-panes-<row>`, and reads `intent-pane-<row>`; `RowRecord.common_dir` finds the git common dir when `Panes` gets none. Implementation departure (2026-11-11): the record's file handling moved out of `Panes` to keep that class short. `panes.rb` also holds `HerdrAppPane::Window`, which wraps every `herdr-app` and `hc` call, so invariant 8 still holds per file, and `HerdrAppPane::Terminal`, a value object over one `hc get` answer. `HerdrAppPane::AGENTS = %w[claude-code codex]`.
+
+```ruby
+module HerdrAppPane
+  # One hc get answer: top-level cwd is where the terminal was spawned; foreground.cwd is where its program runs.
+  class Terminal
+    #: (String? path) -> String?
+    def self.real(path)
+    #: (untyped answer) -> void
+    def initialize(answer)
+    #: -> bool
+    def agent?
+    #: (String? target) -> bool
+    def at?(target)
+  end
+
+  # The window and the cores behind it, as the coordinator's space sees them.
+  class Window
+    #: (CommandLine command_line) -> void
+    def initialize(command_line)
+    # Raises Refusal when no listed space has the terminal's space id, or when more than one machine lists it.
+    #: (String terminal) -> Array[Hash[String, untyped]]
+    def space_of(terminal)
+    #: (String address, String cwd) -> bool
+    def shows?(address, cwd)
+    #: (String address, String cwd) -> bool
+    def shell_at?(address, cwd)
+    #: (String address, Float seconds) -> bool
+    def await_agent(address, seconds)
+    #: -> String?
+    def focused
+    #: (String anchor, String direction, Array[String] argv) -> Hash[String, String]
+    def split(anchor, direction, argv)
+    #: (String pane) -> void
+    def focus(pane)
+    #: (String pane) -> void
+    def close(pane)
+  end
+
+  # <git-common-dir>/herdr-app/stage-panes-<row>, one terminal address per line; intent-pane-<row> beside it.
+  class RowRecord
+    #: -> String
+    def self.common_dir
+    #: (String common_dir, String row) -> void
+    def initialize(common_dir, row)
+    #: -> bool
+    def exist?
+    #: -> Array[String]
+    def terminals
+    #: -> String?
+    def intent
+    #: (String terminal) -> void
+    def append(terminal)
+    #: (String terminal) -> void
+    def drop(terminal)
+    #: -> void
+    def delete
+  end
+end
+```
 
 `git/.config/git/worktree-tools/lib/common.rb` (`Helpers`):
 
@@ -170,7 +229,7 @@ Counts are spawned processes; there are no queries.
 
 ### Invariants
 
-1. Every pane `open` makes is in the coordinator's space, so on the coordinator's core. Enforced: the anchor comes from the space id in `hc get <coordinator>` labels (`herdr.space`), and `herdr-app ls` is narrowed to that space before any terminal address is matched (addresses repeat across cores).
+1. Every pane `open` makes is in the coordinator's space, so on the coordinator's core. Enforced: the anchor comes from the space id in `hc get <coordinator>` labels (`herdr.space`), and `herdr-app ls` is narrowed to that space before any terminal address is matched (addresses repeat across cores). A space id that `herdr-app ls` lists on more than one machine raises `Refusal` before any split or close.
 2. Every pane `open` makes starts in its cwd, or its program never starts. Enforced: the argv `sh -c 'cd "$1" || exit 1; shift; exec "$@"' sh <cwd> <command...>`, with `"${SHELL:-/bin/sh}" -l` as the command when none is given.
 3. The row record lists only column and new_row panes that started. Enforced: the append guard in `open`, and the line drop on a failed start.
 4. `close_idle` never closes the own, coordinator or intent terminal. Enforced: the keep list.
@@ -251,7 +310,7 @@ Counts are spawned processes; there are no queries.
 - Intent behaviour "open-pr-dash" → `test/herdr_app_open_pr_dash_test.rb` `test_opens_gh_dash_unlisted_in_the_row`.
 - Intent behaviour "the tones" → `test/rex_tone_test.rb` `test_plays_nothing_in_a_herdr_app_terminal_with_a_leaked_rex_session`.
 - Intent behaviour "picked from the environment" → `test/dispatchers_test.rb` `test_each_dispatcher_runs_its_herdr_app_script_when_hc_terminal_id_is_set`, `test_herdr_wins_over_herdr_app`, `test_herdr_app_wins_over_rex`, `test_coordinator_becomes_herdr_app_coordinator`, `test_each_dispatcher_refuses_outside_all_three_tools_and_names_herdr_app`.
-- Invariant 1 → `test/herdr_app_panes_test.rb` `test_open_never_anchors_on_a_terminal_of_another_space`.
+- Invariant 1 → `test/herdr_app_panes_test.rb` `test_open_never_anchors_on_a_terminal_of_another_space`, `test_open_refuses_a_space_id_listed_on_two_machines`, `test_close_idle_closes_nothing_when_the_space_id_is_ambiguous`.
 - Invariant 2 → `test/herdr_app_panes_test.rb` `test_open_roots_the_command_in_cwd`, `test_worktree_open_runs_a_login_shell`.
 - Invariant 3 → `test/herdr_app_panes_test.rb` `test_unlisted_and_worktree_opens_leave_the_row_record_unchanged`, `test_failed_start_closes_the_pane_and_drops_its_record_line`.
 - Invariant 4 → `test/herdr_app_panes_test.rb` `test_close_idle_keeps_own_coordinator_and_intent_terminals`.
