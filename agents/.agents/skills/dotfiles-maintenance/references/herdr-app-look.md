@@ -6,7 +6,7 @@ The `cores` layout puts the sidebar on the right. Panes are cards on a frame, as
 
 The package holds four themes in `herdr-app/.config/herdr-app/themes/`: `solunized-light-blue`, `solunized-dark-blue`, `solunized-light-orange` and `solunized-dark-orange`. Each file is a byte-for-byte copy of a Dist theme. The solunized repository generates the Dist themes with `ruby generate_themes.rb`. Blue and orange differ only in `colors.accent`.
 
-Copy the Dist themes after each change in the solunized repository:
+Copy the Dist themes after each change in the solunized repository. Run the loop from the root of the dotfiles repository:
 
 ```sh
 for name in light-blue light-orange dark-blue dark-orange; do
