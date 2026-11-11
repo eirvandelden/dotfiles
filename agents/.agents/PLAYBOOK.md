@@ -99,7 +99,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
    - Only `deliver` opens a pull request, as a draft, after it removes `docs/changes/<slug>/` (on a work repository the folder is a local file no commit holds, so there is nothing to remove); `finish` ships it. The consent guard refuses to create or merge a pull request through `gh` while that folder exists. On a work repository the guard passes, because it reads only the index and HEAD.
    - If the target repository is ambiguous, ask before proceeding.
    - Never push branches or create PRs against an upstream project without explicit instruction.
-   - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists.
+   - Always use the repo's PR template for the PR body (check `.github/PULL_REQUEST_TEMPLATE.md` or similar). Mandatory on work repos; use on personal repos too if one exists. What the body holds and never holds: `deliver` skill, "PR body".
    - `docs/changes/<slug>/` artifacts are removed by the delivery step (the `deliver` skill) once review is closed; never delete them by hand. On a work repository they stay local, `commit-plan` and `commit-review` commit nothing, and `docs/changes` goes into `.git/info/exclude` once. A change request after delivery restores the folder with `deliver`'s `restore` script; never recreate the documents by hand.
 6. GitHub identity and consent:
    - NEVER post, publish, submit, or reply to a GitHub comment as Etienne without explicit instruction for that exact message.

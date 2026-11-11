@@ -12,6 +12,8 @@ Three roles. Do only the one asked for.
 
 ## Write
 
+The plan's signatures, invariants, alternatives, proof and file list stay in `plan.md`; the PR body never holds them. See the `deliver` skill, "PR body".
+
 ### Choosing a backend
 
 - No argument, `HERDR_ENV` or `REX_SESSION` set: pane backend. A fresh agent with an empty context reads only the committed `intent.md` — no chat history from the coordinator crosses into the interrogation.

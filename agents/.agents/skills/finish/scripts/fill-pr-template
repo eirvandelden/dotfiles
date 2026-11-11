@@ -3,13 +3,14 @@
 # either scope. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own template phrasing still gets filled. A
 # heading nothing matches, or whose body is a checkbox list, keeps its own
-# text. Any of the three appended categories (Summary, Implementation, Proof)
-# that ends up with no heading filled — no heading matched it, or the one
-# that did is a checkbox list — is appended at the end under its own
-# heading, with trimmed content; with no template at all, or no matching
-# heading anywhere, that means all three. The plan's `## Design` section, its
-# `###` subsections and Mermaid fences included, opens the Implementation part,
-# so GitHub renders the diagrams after finish removes the change folder.
+# text. A matched heading whose fill is empty keeps its own text too. Summary
+# and Implementation, when no heading took them, are appended at the end under
+# their own heading, with trimmed content. The body holds the intent's Problem
+# and Proposed outcome, plus the plan's `## Design` subsections on
+# DESIGN_SUBSECTIONS_IN_BODY, Mermaid fences included, so GitHub renders the
+# diagrams after finish removes the change folder. Every other plan section
+# (Signatures, Complexity, Invariants, Alternatives, Proof, Files that change)
+# stays in plan.md.
 CATEGORIES = [
   [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /\bwhy|\bmotivation/i ],
@@ -19,9 +20,11 @@ CATEGORIES = [
 
 APPEND_ORDER = [
   [ :summary, "Summary" ],
-  [ :implementation, "Implementation" ],
-  [ :test, "Proof" ]
+  [ :implementation, "Implementation" ]
 ].freeze
+
+# The only Design subsections that reach the PR body.
+DESIGN_SUBSECTIONS_IN_BODY = [ "Domain terms", "Diagrams" ].freeze
 
 TYPE_HEADING = /type/i
 CHOICE_LIST = /^-\s*\[[ xX]\]/.freeze
@@ -59,15 +62,24 @@ def section_body(markdown, title)
   match && match[:body].strip
 end
 
-#: (String markdown, String title) -> String?
-def section_with_subsections(markdown, title)
-  _preamble, sections = parse_sections(markdown)
-  index = sections.index { |section| section[:title].casecmp?(title) }
-  return unless index
+# The allowlisted Design subsections with their deeper headings and fences, or "".
+#: (String plan) -> String
+def design_for_body(plan)
+  _preamble, sections = parse_sections(plan)
+  start = sections.index { |section| section[:title].casecmp?("Design") && heading_level(section[:heading]) == 2 }
+  return "" unless start
 
-  level = heading_level(sections[index][:heading])
-  nested = sections.drop(index + 1).take_while { |section| heading_level(section[:heading]) > level }
-  joined(sections[index][:body].strip, *nested.map { |section| "#{section[:heading]}#{section[:body]}".strip })
+  design = sections.drop(start + 1).take_while { |section| heading_level(section[:heading]) > 2 }
+  joined(*allowed_subsections(design).map { |section| "#{section[:heading]}#{section[:body]}".strip })
+end
+
+#: (Array[Hash[Symbol, String]] design) -> Array[Hash[Symbol, String]]
+def allowed_subsections(design)
+  allowed = false
+  design.select do |section|
+    allowed = DESIGN_SUBSECTIONS_IN_BODY.any? { |title| title.casecmp?(section[:title]) } if heading_level(section[:heading]) == 3
+    allowed
+  end
 end
 
 #: (*String? parts) -> String
@@ -85,29 +97,7 @@ def filler(intent, plan)
   {
     summary: summary_text(intent),
     why: section_body(intent, "Problem") || "",
-    implementation: joined(
-      section_with_subsections(plan, "Design"), section_body(plan, "Files that change"), section_body(plan, "Order of work")
-    ),
-    test: section_body(plan, "Proof") || ""
-  }
-end
-
-#: (String plan) -> String
-def acceptance_criteria(plan)
-  proof_lines = (section_body(plan, "Proof") || "").lines
-  criteria_lines = proof_lines.take_while { |line| !line.match?(/^(?:Per changed file|Test setup)/) }
-  bullets = criteria_lines.grep(/^[-*]\s/)
-  with_arrows = bullets.grep(/→\s*`/)
-
-  (with_arrows.empty? ? bullets : with_arrows).join.strip
-end
-
-#: (String intent, String plan) -> Hash[Symbol, String]
-def appended_filler(intent, plan)
-  {
-    summary: summary_text(intent),
-    implementation: joined(section_with_subsections(plan, "Design"), section_body(plan, "Files that change")),
-    test: acceptance_criteria(plan)
+    implementation: design_for_body(plan)
   }
 end
 
@@ -125,11 +115,11 @@ def choice_list?(body)
   body.match?(CHOICE_LIST)
 end
 
-#: (Hash[Symbol, String] appended_fill, Array[Symbol] filled_categories) -> String
-def appended_sections(appended_fill, filled_categories)
+#: (Hash[Symbol, String] fill, Array[Symbol] filled_categories) -> String
+def appended_sections(fill, filled_categories)
   APPEND_ORDER
-    .reject { |category, _heading| filled_categories.include?(category) || appended_fill[category].to_s.empty? }
-    .map { |category, heading| "## #{heading}\n\n#{appended_fill[category]}" }
+    .reject { |category, _heading| filled_categories.include?(category) || fill[category].to_s.empty? }
+    .map { |category, heading| "## #{heading}\n\n#{fill[category]}" }
     .join("\n\n")
 end
 
@@ -143,8 +133,8 @@ def category_for_section(section)
   choice_list?(section[:body]) ? nil : category_for(section[:title])
 end
 
-#: (String template, Hash[Symbol, String] fill, Hash[Symbol, String] appended_fill) -> String
-def fill_template(template, fill, appended_fill)
+#: (String template, Hash[Symbol, String] fill) -> String
+def fill_template(template, fill)
   preamble, sections = parse_sections(template)
   categories = sections.map { |section| category_for_section(section) }
 
@@ -171,7 +161,7 @@ def fill_template(template, fill, appended_fill)
     end
     absorbed_until_level = nil
 
-    if category && !filled_categories.include?(category)
+    if category && !filled_categories.include?(category) && !fill[category].to_s.empty?
       rebuilt << "#{section[:heading]}\n\n#{fill[category]}\n\n"
       filled_categories << category
       absorbed_until_level = level
@@ -181,7 +171,7 @@ def fill_template(template, fill, appended_fill)
   end
 
   body = (preamble + rebuilt.join).strip
-  joined(body, appended_sections(appended_fill, filled_categories))
+  joined(body, appended_sections(fill, filled_categories))
 end
 
 template_path, intent_path, plan_path = ARGV
@@ -193,8 +183,7 @@ end
 intent = File.read(intent_path)
 plan = File.read(plan_path)
 fill = filler(intent, plan)
-appended_fill = appended_filler(intent, plan)
 
 template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
 
-puts(fill_template(template, fill, appended_fill))
+puts(fill_template(template, fill))
