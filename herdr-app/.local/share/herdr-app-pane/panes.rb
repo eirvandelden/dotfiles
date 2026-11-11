@@ -3,11 +3,12 @@ require_relative "command_line"
 require_relative "row_record"
 
 module HerdrAppPane
+  # The agents hc and herdr-app name; any other program, or none, is a shell.
+  AGENTS = %w[claude-code codex].freeze
+
   # One `hc get` answer; an unreadable one runs no agent and shows no folder. hc's top-level cwd is the folder the
   # terminal was spawned in; foreground.cwd is where its program runs.
   class Terminal
-    AGENTS = %w[claude-code codex].freeze
-
     #: (String? path) -> String?
     def self.real(path)
       path && File.realpath(path)
@@ -56,11 +57,17 @@ module HerdrAppPane
       spaces.first.fetch("tabs", []).flat_map { |tab| tab.fetch("terminals", []) }
     end
 
-    #: (String address) -> Terminal
-    def terminal(address)
-      Terminal.new(@command_line.json("hc", "get", address, "--json"))
-    rescue Refusal
-      Terminal.new(nil)
+    # True when the terminal at address runs in cwd; both sides compare as real paths.
+    #: (String address, String cwd) -> bool
+    def shows?(address, cwd)
+      terminal(address).at?(Terminal.real(cwd))
+    end
+
+    # True when the terminal at address runs no agent and runs in cwd.
+    #: (String address, String cwd) -> bool
+    def shell_at?(address, cwd)
+      terminal = terminal(address)
+      !terminal.agent? && terminal.at?(Terminal.real(cwd))
     end
 
     # Polls hc every HERDR_APP_READY_POLL seconds until the terminal runs an agent; false after seconds.
@@ -97,6 +104,13 @@ module HerdrAppPane
     end
 
     private
+
+    #: (String address) -> Terminal
+    def terminal(address)
+      Terminal.new(@command_line.json("hc", "get", address, "--json"))
+    rescue Refusal
+      Terminal.new(nil)
+    end
 
     #: (String name, Hash[String, untyped] request) -> untyped
     def act(name, request)
@@ -163,8 +177,7 @@ module HerdrAppPane
     # and that runs no agent. Never the own or coordinator terminal. Answers the number closed.
     #: (String cwd) -> Integer
     def close_at(cwd)
-      target = Terminal.real(cwd)
-      @window.space_of(@coordinator).count { |entry| shell_at?(entry, target) && close_pane(entry["pane"]) }
+      @window.space_of(@coordinator).count { |entry| shell_at?(entry, cwd) && close_pane(entry["pane"]) }
     end
 
     private
@@ -176,8 +189,7 @@ module HerdrAppPane
 
     #: (Array[Hash[String, untyped]] panes, String cwd) -> bool
     def shown?(panes, cwd)
-      target = Terminal.real(cwd)
-      panes.any? { |entry| @window.terminal(entry["terminal"]).at?(target) }
+      panes.any? { |entry| @window.shows?(entry["terminal"], cwd) }
     end
 
     #: (Array[Hash[String, untyped]] panes, String? row, Symbol placement) -> Array[String]
@@ -247,15 +259,14 @@ module HerdrAppPane
 
     #: (Hash[String, untyped] entry) -> bool
     def idle_agent?(entry)
-      Terminal::AGENTS.include?(entry["app"]) && CLOSABLE.include?(entry["status"])
+      AGENTS.include?(entry["app"]) && CLOSABLE.include?(entry["status"])
     end
 
-    #: (Hash[String, untyped] entry, String? target) -> bool
-    def shell_at?(entry, target)
-      return false if [ @own, @coordinator ].include?(entry["terminal"]) || Terminal::AGENTS.include?(entry["app"])
+    #: (Hash[String, untyped] entry, String cwd) -> bool
+    def shell_at?(entry, cwd)
+      return false if [ @own, @coordinator ].include?(entry["terminal"]) || AGENTS.include?(entry["app"])
 
-      terminal = @window.terminal(entry["terminal"])
-      !terminal.agent? && terminal.at?(target)
+      @window.shell_at?(entry["terminal"], cwd)
     end
 
     #: (Array[Hash[String, untyped]] panes, String terminal) -> String
