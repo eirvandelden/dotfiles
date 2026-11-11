@@ -31,6 +31,10 @@ The script asks no questions. It does these steps, in order:
 6. Create a draft PR, or edit the body of the PR that exists. Delete the saved body and title.
 7. Inside herdr or Rex: open a gh-dash pane for the PR with `~/.agents/bin/open-pr-dash`, then close this change's idle or done stage panes. A stage pane is one that `hand-off-plan` or `start-review` listed in `<git-common-dir>/herdr/stage-panes-<slug>` (`<git-common-dir>/rex/stage-panes-<slug>` in Rex), and it closes only while its terminal id still matches (a Rex block closes only while it is idle or done). Never the delivering agent's own pane, never the intent pane, never another agent's pane. Then delete that list. Outside both tools it prints the PR URL and opens no pane.
 
+### PR body
+
+The body holds the intent's Problem and Proposed outcome, and the plan's Design diagrams and domain terms. It never holds signatures, complexity, invariants, alternatives, proof lines or the file list. Those stay in `intent.md` and `plan.md`. `fill-pr-template` enforces this with an allowlist of Design subsections, and an agent that writes a body by hand follows the same rule.
+
 A push that fails leaves the folder removed and the saved files in place. Run `deliver` again: it resumes at the push.
 
 `deliver --check` runs step 1 only and changes nothing. It exits 0 when delivery may run, and 1 with the reasons otherwise.
