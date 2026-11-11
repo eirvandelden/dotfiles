@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require_relative "isolated_git"
 
 # Runs the real herdr-app-migrate executable with a PATH that holds one Ruby stub, installed as both
 # `herdr` and `herdr-app`. The stub drops a leading `--session <S>`, logs its arguments, answers from a

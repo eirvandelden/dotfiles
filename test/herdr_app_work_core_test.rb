@@ -5,6 +5,7 @@ require "json"
 require "open3"
 require "rbconfig"
 require "tmpdir"
+require_relative "isolated_git"
 
 # install/tasks/27_register_work_core.sh starts the work core and registers it with the default core.
 # These tests run the real script with a PATH that holds stubs and a few real tools, a scratch HOME and an

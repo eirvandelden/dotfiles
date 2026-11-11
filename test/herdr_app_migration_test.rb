@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 LIBRARY = File.expand_path("../herdr-app/.local/share/herdr-app-migrate", __dir__)
 %w[command_line agent_session layout workspace machine tui_session stale_spaces].each { |name| require File.join(LIBRARY, name) }
