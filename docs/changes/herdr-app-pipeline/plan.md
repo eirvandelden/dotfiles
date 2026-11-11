@@ -100,8 +100,9 @@ module HerdrAppPane
     # Opens a pane rooted in cwd that runs command, or a login shell when command is empty, and answers its terminal address.
     # column: right of the row's last live pane, else right of the coordinator; new_row: below the coordinator;
     # unlisted: placed like column, never recorded; worktree: below the coordinator, nil when a pane of the space already shows cwd.
-    # Gives focus back when the split took it. With a command, waits until hc shows an agent in the new terminal;
-    # a finished terminal or a timeout closes the pane, drops its record line and raises Refusal.
+    # Gives focus back when the split took it. A column or new_row pane (a stage worker or reviewer) waits until hc shows an agent;
+    # an unlisted or worktree pane (gh-dash, a shell) never waits;
+    # no agent by the timeout (terminals are kept, so a failed claude leaves a shell) closes the pane, drops its record line and raises Refusal.
     #: (String cwd, ?command: Array[String], ?row: String?, ?placement: Symbol) -> String?
     def open(cwd, command: [], row: nil, placement: :column)
 
@@ -157,7 +158,8 @@ Not checked: the dotfiles repository declined Steep and rbs_rails; it has no `St
 
 Counts are spawned processes; there are no queries.
 
-- `open` (column, new_row, unlisted): `hc get` + `herdr-app ls` + `pane.split` (+1 split when the row end refuses) + at most 1 `pane.focus` + up to `HERDR_APP_READY_TIMEOUT / HERDR_APP_READY_POLL` `hc get` (30 / 1 by default; a started claude answers within a few). Constant in the row length.
+- `open` (column, new_row): `hc get` + `herdr-app ls` + `pane.split` (+1 split when the row end refuses) + at most 1 `pane.focus` + up to `HERDR_APP_READY_TIMEOUT / HERDR_APP_READY_POLL` `hc get` (30 / 1 by default; a started claude answers within a few). Constant in the row length.
+- `open` (unlisted): the same without the readiness wait: gh-dash is not an agent.
 - `open` (worktree): 2 + T `hc get` + at most 1 split + at most 1 focus, T = terminals in the coordinator's space. No readiness wait: it runs a shell.
 - Worker start: 0 sends (Rex polls, then sends twice).
 - `close`: 2 + 1 `pane.close`.
@@ -185,7 +187,7 @@ Counts are spawned processes; there are no queries.
 ## Design decisions
 
 - All new runtime files live in the `herdr-app` package: the scripts in `herdr-app/.config/herdr-app/scripts/`, the CLI in `herdr-app/.local/bin/`, its library in `herdr-app/.local/share/herdr-app-pane/`. `herdr-app` is in `STOW` and `STOW_SHARED`; the intent approves its restow in every delivery step. The `git` and `agents` packages get edits to existing files only, so they need no restow.
-- The prompt is claude's first argument, not a send after an idle wait. A short readiness wait (`hc get` until an agent shows, 30 s) replaces Rex's `abandon_worker`: a failed start closes its pane and exits 1.
+- The prompt is claude's first argument, not a send after an idle wait. A short readiness wait (`hc get` until an agent shows, 30 s) replaces Rex's `abandon_worker`: no agent by then (a failed claude leaves a kept shell, `probe.md`) closes its pane and exits 1.
 - The coordinator variable is `HERDR_APP_COORDINATOR`. hc owns `HC_TERMINAL_ID` and the `HC_` prefix.
 - Reports arrive wrapped: hc delivers `hc send` text to an agent as `<hc from="t61 …">Plan ready: …</hc>`. The intent, plan, implement and review skills say so where they name the ready lines.
 - Tones: herdr-app plays its own tones (phase 1 `settings.json`); `play-tone.sh` plays nothing in a herdr-app terminal, even with a leaked `REX_SESSION`.
@@ -246,7 +248,7 @@ Counts are spawned processes; there are no queries.
 - Intent behaviour "closing idle stage panes" → `test/deliver_test.rb` `test_deliver_runs_close_idle_in_herdr_app`; `test/herdr_app_panes_test.rb` `test_close_idle_closes_idle_and_done_agents`.
 - Intent behaviour "open-pr-dash" → `test/herdr_app_open_pr_dash_test.rb` `test_opens_gh_dash_unlisted_in_the_row`.
 - Intent behaviour "the tones" → `test/rex_tone_test.rb` `test_plays_nothing_in_a_herdr_app_terminal_with_a_leaked_rex_session`.
-- Intent behaviour "picked from the environment" → `test/dispatchers_test.rb` `test_each_dispatcher_runs_its_herdr_app_script_when_hc_terminal_id_is_set`, `test_herdr_wins_over_herdr_app`, `test_herdr_app_wins_over_rex`, `test_coordinator_becomes_herdr_app_coordinator`.
+- Intent behaviour "picked from the environment" → `test/dispatchers_test.rb` `test_each_dispatcher_runs_its_herdr_app_script_when_hc_terminal_id_is_set`, `test_herdr_wins_over_herdr_app`, `test_herdr_app_wins_over_rex`, `test_coordinator_becomes_herdr_app_coordinator`, `test_each_dispatcher_refuses_outside_all_three_tools_and_names_herdr_app`.
 - Invariant 1 → `test/herdr_app_panes_test.rb` `test_open_never_anchors_on_a_terminal_of_another_space`.
 - Invariant 2 → `test/herdr_app_panes_test.rb` `test_open_roots_the_command_in_cwd`, `test_worktree_open_runs_a_login_shell`.
 - Invariant 3 → `test/herdr_app_panes_test.rb` `test_unlisted_and_worktree_opens_leave_the_row_record_unchanged`, `test_failed_start_closes_the_pane_and_drops_its_record_line`.
@@ -260,7 +262,7 @@ Counts are spawned processes; there are no queries.
 
 Per changed file, the unit tests expected:
 
-- `panes.rb`: `Panes#open places a column right of the row's last live pane`, `falls back to the coordinator when the row end is gone or refuses`, `new_row splits down from the coordinator`, `worktree answers nil when a pane already shows cwd`, `appends started column and new_row panes to the row record`, `raises Refusal with herdr-app's reason`, `uses HERDR_APP_COORDINATOR over the own terminal`, `waits until hc shows an agent`; `#close closes the pane of the own terminal`, `of a given terminal`; `#close_idle deletes the record`, `warns and answers 0 when herdr-app fails`; `#close_at closes shells at cwd only`.
+- `panes.rb`: `Panes#open places a column right of the row's last live pane`, `falls back to the coordinator when the row end is gone or refuses`, `new_row splits down from the coordinator`, `worktree answers nil when a pane already shows cwd`, `appends started column and new_row panes to the row record`, `raises Refusal with herdr-app's reason`, `uses HERDR_APP_COORDINATOR over the own terminal`, `waits until hc shows an agent`, `unlisted open does not wait for an agent`; `#close closes the pane of the own terminal`, `of a given terminal`; `#close_idle deletes the record`, `warns and answers 0 when herdr-app fails`; `#close_at closes shells at cwd only`.
 - `command_line.rb`: `CommandLine#json answers parsed JSON`, `raises Refusal on a failure, an error answer and unparsable output`, `honours HERDR_APP_BIN and HC_BIN`.
 - `herdr-app-pane`: `open prints the terminal address`, `exits 1 with the reason`, `refuses bad arguments before any call`, `close defaults to the own terminal`, `close-idle and close-at reach the class`.
 - `lib/common.rb`: `herdr_app_env? needs HC_TERMINAL_ID and no HERDR_ENV=1`, `herdr_app_pane_bin honours HERDR_APP_PANE`.
