@@ -269,7 +269,7 @@ class HerdrAppKeysTest < Minitest::Test
 
   #: -> void
   def test_space_opens_the_picker_in_a_terminal
-    refute(section("terminal").key?("; space"), "a terminal override hides the picker")
+    refute(section("terminal").key?("; space"), "a terminal override hides the `picker` mod")
     assert_equal("mod.open:picker", terminal_bindings["; space"])
   end
 
