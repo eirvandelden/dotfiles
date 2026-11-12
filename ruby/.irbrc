@@ -2,12 +2,12 @@
 # After a while you can use my gem to analyze a local IRB sessions history:
 # ```
 # gem install lazyme
-# lazyme ~/.irb-history
+# lazyme ~/.local/state/irb/history
 # ```
 # require 'irb/ext/save-history'
 
 IRB.conf[:SAVE_HISTORY]     = 10000
-IRB.conf[:HISTORY_FILE]     = "#{ENV['HOME']}/.irb-history"
+IRB.conf[:HISTORY_FILE]     = "#{ENV['HOME']}/.local/state/irb/history"
 IRB.conf[:RUBY_YJIT_ENABLE] = 1
 
 ## Readable autocomplete

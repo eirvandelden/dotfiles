@@ -84,3 +84,6 @@ fi
 if (( ${+functions[apply_default_node_version]} )) && [[ "${precmd_functions[*]}" != *"apply_default_node_version"* ]]; then
   precmd_functions+=(apply_default_node_version)
 fi
+
+# Databases
+export MYSQL_HISTFILE="$HOME/.local/state/mysql/history"
