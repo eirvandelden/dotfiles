@@ -2,10 +2,12 @@
 require "minitest/autorun"
 require "json"
 require "open3"
+require_relative "herdr_app_mod_copy"
 require_relative "isolated_git"
 
-# Tests for the herdr-app golden-ratio mod. The pure logic (planner.js) and the debounce logic
-# (controller.js) run through `node`; main.js is glue and is checked by `herdr-app check`.
+# Tests for the herdr-app golden-ratio mod. The pure logic (plan, drifted, planFor) and the debounce logic
+# (Controller) are exports of main.js; they run through `node` on a mod copy with module stubs for the
+# host modules. The mod's loading is checked by `herdr-app check`.
 #
 # The contract these tests pin down (plan.md leaves the details open):
 #
@@ -25,7 +27,7 @@ require_relative "isolated_git"
 #   from the last one it saw. The settle run is the timer callback; it may return a promise.
 # - The fake clock fires every pending timer on demand, then lets pending promises settle.
 module NodeRunner
-  MODS = File.expand_path("../herdr-app/.config/herdr-app/mods/golden-ratio", __dir__)
+  include HerdrAppModCopy
 
   PRELUDE = <<~JS.freeze
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -58,29 +60,36 @@ module NodeRunner
     }
   JS
 
+  #: (String, ?Hash[Symbol, untyped]) -> untyped
   def run_node(body, input = {})
-    script = <<~JS
-      import { drifted, plan, planFor } from "file://#{MODS}/planner.js";
-      import { Controller } from "file://#{MODS}/controller.js";
-      #{PRELUDE}
-      const input = #{JSON.generate(input)};
-      const output = await (async () => { #{body} })();
-      console.log(JSON.stringify(output));
-    JS
-    stdout, stderr, status = Open3.capture3("node", "--input-type=module", "-e", script)
-    flunk("node failed: #{stderr.lines.first(6).join}") unless status.success?
-
-    JSON.parse(stdout)
+    run_script do |url|
+      <<~JS
+        import { drifted, plan, planFor, Controller } from "#{url}";
+        #{PRELUDE}
+        const input = #{JSON.generate(input)};
+        const output = await (async () => { #{body} })();
+        console.log(JSON.stringify(output));
+      JS
+    end
   end
 
+  #: (String, ?Hash[Symbol, untyped]) -> untyped
   def run_planner(body, input = {})
-    script = <<~JS
-      import { drifted, plan, planFor } from "file://#{MODS}/planner.js";
-      #{PRELUDE.lines.first(6).join}
-      const input = #{JSON.generate(input)};
-      console.log(JSON.stringify((() => { #{body} })()));
-    JS
-    stdout, stderr, status = Open3.capture3("node", "--input-type=module", "-e", script)
+    run_script do |url|
+      <<~JS
+        import { drifted, plan, planFor } from "#{url}";
+        #{PRELUDE.lines.first(6).join}
+        const input = #{JSON.generate(input)};
+        console.log(JSON.stringify((() => { #{body} })()));
+      JS
+    end
+  end
+
+  # Runs the script the block builds from the golden-ratio mod copy's URL.
+  def run_script
+    stdout, stderr, status = with_mod_copy("golden-ratio") do |url|
+      Open3.capture3("node", "--input-type=module", "-e", yield(url))
+    end
     flunk("node failed: #{stderr.lines.first(6).join}") unless status.success?
 
     JSON.parse(stdout)
