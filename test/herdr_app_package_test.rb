@@ -208,7 +208,7 @@ class HerdrAppPackageTest < Minitest::Test
 
   def mod_path_imports(mods_root, mod)
     folder = File.join(mods_root, mod)
-    Dir.glob("**/*.js", base: folder).sort.flat_map do |file|
+    Dir.glob("**/*.{js,mjs,cjs}", base: folder).sort.flat_map do |file|
       File.read(File.join(folder, file)).scan(PATH_IMPORT).flatten.map { |specifier| "#{file} imports #{specifier}" }
     end
   end
