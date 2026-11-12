@@ -103,7 +103,7 @@ class MarkerCheckTest < Minitest::Test
   end
 
   def test_the_local_config_calls_the_repository_copy_for_all_four_checks
-    config = YAML.load_file(File.join(REPO_ROOT, "lefthook-local.yml"))
+    config = YAML.load_file(File.join(REPO_ROOT, "lefthook-local.yml"), aliases: true)
     expected = { "pre-commit" => "{staged_files}", "pre-push" => "{files}" }
 
     expected.each do |hook, files|
