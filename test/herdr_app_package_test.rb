@@ -14,6 +14,7 @@ require_relative "isolated_git"
 class HerdrAppPackageTest < Minitest::Test
   REPO_ROOT = File.expand_path("..", __dir__)
   PACKAGE = File.join(REPO_ROOT, "herdr-app/.config/herdr-app")
+  PATH_IMPORT = /(?:\bfrom|\bimport)\s*\(?\s*["'](\.{0,2}\/[^"']*)["']/
   AGENT_LISTS = { "agents-done" => "done", "agents-blocked" => "blocked" }.freeze
 
   def test_both_files_parse_as_json
@@ -27,9 +28,8 @@ class HerdrAppPackageTest < Minitest::Test
       %w[
         keys.json layouts/cores.json
         mods/agents-blocked/main.js mods/agents-blocked/mod.json mods/agents-done/main.js mods/agents-done/mod.json
-        mods/core-look/main.js mods/core-look/mod.json mods/core-look/pick.js
-        mods/golden-ratio/controller.js mods/golden-ratio/main.js mods/golden-ratio/mod.json
-        mods/golden-ratio/planner.js
+        mods/core-look/main.js mods/core-look/mod.json
+        mods/golden-ratio/main.js mods/golden-ratio/mod.json
         mods/spaces-cores/main.js mods/spaces-cores/mod.json
         mods/tabs-cores/main.js mods/tabs-cores/mod.json mods/tabs-cores/win-close.svg mods/tabs-cores/win-max.svg
         mods/tabs-cores/win-min.svg mods/tabs-cores/win-restore.svg
@@ -88,15 +88,39 @@ class HerdrAppPackageTest < Minitest::Test
     end
   end
 
-  # herdr-app's loader refuses a relative import that resolves outside the mod folder, and every file in
-  # a stowed mod resolves into this repository.
-  def test_the_agent_list_imports_only_builtin_modules
+  # herdr-app's loader refuses a path import whose real path leaves the mod folder, and every file in a
+  # stowed mod resolves into this repository. The scan runs everywhere, CI included.
+  def test_no_mod_holds_a_path_import
+    found = path_imports(File.join(PACKAGE, "mods"))
+
+    assert_empty(found, found.map { |mod, hits| "mod #{mod}: #{hits.join(', ')}" }.join("\n"))
+  end
+
+  def test_the_import_guard_names_a_mod_with_a_path_import
+    Dir.mktmpdir("herdr-app-mods") do |root|
+      FileUtils.mkdir_p(File.join(root, "helper-user"))
+      File.write(File.join(root, "helper-user/main.js"), %(import { x } from "./helper.js";\n))
+
+      assert_equal({ "helper-user" => [ "main.js imports ./helper.js" ] }, path_imports(root))
+    end
+  end
+
+  def test_the_agent_list_names_no_other_agent_list
     path = File.join(PACKAGE, "mods/agents-done/main.js")
     assert_path_exists(path)
-    source = File.read(path)
 
-    refute_match(%r{from\s+["']\.\.?/}, source)
-    refute_includes(source, "mods/agents-")
+    refute_includes(File.read(path), "mods/agents-")
+  end
+
+  # The real loader, through links as stow makes them. Needs herdr-app, so CI skips it.
+  def test_herdr_app_loads_every_mod_through_links
+    skip("herdr-app is not installed") unless system("command -v herdr-app >/dev/null 2>&1")
+
+    failures = Dir.mktmpdir("hal", "/tmp") do |home|
+      mod_names.filter_map { |mod| linked_mod_failure(home, mod) }
+    end
+
+    assert_empty(failures, failures.join("\n"))
   end
 
   def test_the_agent_lists_are_clones_of_a_shipped_mod
@@ -157,6 +181,37 @@ class HerdrAppPackageTest < Minitest::Test
   end
 
   private
+
+  def mod_names
+    tracked_package_files.filter_map { |path| path[%r{\Amods/([^/]+)/}, 1] }.uniq.sort
+  end
+
+  # Builds a folder of one link per tracked file of the mod, the way stow links it, and checks it.
+  # Returns a line that names the mod and the first line of the output, or nil when herdr-app accepts it.
+  def linked_mod_failure(home, mod)
+    folder = File.join(home, "mods", mod)
+    FileUtils.rm_rf(folder)
+    tracked_package_files.grep(%r{\Amods/#{mod}/}).each do |path|
+      target = File.join(folder, path.delete_prefix("mods/#{mod}/"))
+      FileUtils.mkdir_p(File.dirname(target))
+      File.symlink(File.join(PACKAGE, path), target)
+    end
+    output, status = Open3.capture2e({ "HERDR_APP_HOME" => home }, "herdr-app", "check", folder)
+    "mod #{mod}: #{output.lines.first&.strip}" unless status.success?
+  end
+
+  # { mod => ["<file> imports <specifier>"] } for each mod with a path import.
+  #: (String) -> Hash[String, Array[String]]
+  def path_imports(mods_root)
+    Dir.children(mods_root).sort.to_h { |mod| [ mod, mod_path_imports(mods_root, mod) ] }.reject { |_, hits| hits.empty? }
+  end
+
+  def mod_path_imports(mods_root, mod)
+    folder = File.join(mods_root, mod)
+    Dir.glob("**/*.{js,mjs,cjs}", base: folder).sort.flat_map do |file|
+      File.read(File.join(folder, file)).scan(PATH_IMPORT).flatten.map { |specifier| "#{file} imports #{specifier}" }
+    end
+  end
 
   #: (String) -> Hash[String, untyped]
   def mod_json(mod)

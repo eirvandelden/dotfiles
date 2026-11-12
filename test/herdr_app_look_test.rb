@@ -3,15 +3,17 @@ require "minitest/autorun"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "herdr_app_mod_copy"
 require_relative "isolated_git"
 
 # Phase 4 of herdr-app, the look: the sidebar on the right of the cores layout, the Solunized themes, the
 # herdr TUI's cards on a frame, and a blue accent for personal spaces and an orange one for work spaces.
-# The core-look mod picks the theme pair through pick.js, which imports nothing, so node runs it here.
+# The core-look mod picks the theme pair through themePick in its main.js; node runs it here through a mod copy.
 class HerdrAppLookTest < Minitest::Test
+  include HerdrAppModCopy
+
   REPO_ROOT = File.expand_path("..", __dir__)
   PACKAGE = File.join(REPO_ROOT, "herdr-app/.config/herdr-app")
-  PICK = File.join(PACKAGE, "mods/core-look/pick.js")
   GHOSTTY_THEMES = File.join(REPO_ROOT, "ghostty/.config/ghostty/themes")
   SOLUNIZED_DIR = ENV.fetch("SOLUNIZED_DIR", File.expand_path("~/Developer/solunized"))
   SHIPPED_TABS = File.expand_path("~/.config/herdr-app/mods/tabs")
@@ -146,10 +148,10 @@ class HerdrAppLookTest < Minitest::Test
   end
 
   def test_core_look_never_edits_the_layout
-    sources = %w[main.js pick.js].to_h { |name| [ name, mod_source("core-look", name) ] }
+    source = mod_source("core-look", "main.js")
 
-    assert_includes(sources.fetch("main.js"), "app.theme")
-    sources.each { |name, source| refute_includes(source, "layout.set", name) }
+    assert_includes(source, "app.theme")
+    refute_includes(source, "layout.set")
   end
 
   def test_work_spaces_share_one_fixed_mark
@@ -340,18 +342,19 @@ class HerdrAppLookTest < Minitest::Test
     end
   end
 
-  # Runs pick.js's themePick on the given space and shown halves with the owned pairs. Returns the parsed
+  # Runs themePick from the core-look mod copy on the given space and shown halves with the owned pairs. Returns the parsed
   # result; the string "undefined" when themePick returned undefined instead of null.
   def theme_pick(space:, shown:)
     skip("node is not installed") unless installed?("node")
-    flunk("no #{PICK}") unless File.file?(PICK)
     script = <<~JS
       const { themePick } = await import(process.argv[1]);
       const result = themePick(JSON.parse(process.argv[2]));
       process.stdout.write(JSON.stringify(result === undefined ? "undefined" : result));
     JS
     input = JSON.generate(space: space, shown: shown, pairs: PAIRS)
-    stdout, stderr, status = Open3.capture3("node", "--input-type=module", "-e", script, "--", "file://#{PICK}", input)
+    stdout, stderr, status = with_mod_copy("core-look") do |url|
+      Open3.capture3("node", "--input-type=module", "-e", script, "--", url, input)
+    end
 
     assert(status.success?, stderr)
     JSON.parse(stdout)
