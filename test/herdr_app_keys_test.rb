@@ -4,9 +4,9 @@ require "json"
 require_relative "isolated_git"
 
 # keys.json gives herdr-app a `;` leader: `; t` and its siblings, written once in the `global` section,
-# which GPUI applies inside terminals too. The `terminal` section overrides `; space`, so a shell gets the
-# `; ` it typed. The file must also work on Linux, where `cmd` is the Super key, and keep herdr-app's own
-# defaults. The tests read the tracked file only; CI runs on Linux without herdr-app.
+# which GPUI applies inside terminals too, so `; space` opens the `picker` mod there as well. The file
+# must also work on Linux, where `cmd` is the Super key, and keep herdr-app's own defaults. The tests
+# read the tracked file only; CI runs on Linux without herdr-app.
 class HerdrAppKeysTest < Minitest::Test
   KEYS = File.expand_path("../herdr-app/.config/herdr-app/keys.json", __dir__)
 
@@ -267,9 +267,10 @@ class HerdrAppKeysTest < Minitest::Test
     refute(all_keys.any? { |key| key.match?(/\A; (shift-)?enter\z/) }, "`; enter` must stay unbound")
   end
 
-  def test_space_in_a_terminal_types_semicolon_space
-    assert_equal("send:; ", section("terminal")["; space"])
-    assert_equal("mod.open:picker", section("global")["; space"])
+  #: -> void
+  def test_space_opens_the_picker_in_a_terminal
+    refute(section("terminal").key?("; space"), "a terminal override hides the picker")
+    assert_equal("mod.open:picker", terminal_bindings["; space"])
   end
 
   def test_terminal_copy_and_paste_work_without_super
