@@ -183,7 +183,7 @@ class HerdrAppPackageTest < Minitest::Test
   private
 
   def mod_names
-    Dir.children(File.join(PACKAGE, "mods")).sort
+    tracked_package_files.filter_map { |path| path[%r{\Amods/([^/]+)/}, 1] }.uniq.sort
   end
 
   # Builds a folder of one link per tracked file of the mod, the way stow links it, and checks it.
