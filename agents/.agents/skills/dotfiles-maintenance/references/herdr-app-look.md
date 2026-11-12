@@ -24,7 +24,7 @@ The root of `layouts/cores.json` names the personal pair as its theme. A fresh m
 
 The `core-look` mod sits in a 0 px block at the end of the `work` column. Its props name the personal pair and the work pair. The root theme and the `personal` prop must stay equal; a test checks it. On each render the mod reads the focused space. A space with a `machine` is a work space and gets the work pair. A space without a machine is a personal space and gets the personal pair. The mod runs `app.theme` for each half that differs. `app.theme` writes the untracked `layouts/.state/cores.json`, never the layout file.
 
-The decision lives in `mods/core-look/pick.js`. It imports nothing, so the tests run it with `node`.
+The decision is `themePick` in `mods/core-look/main.js`. The tests run it with `node` through a mod copy, which stubs the host modules `herdr` and `gpui-kit`.
 
 ## The hand-pick rule
 

@@ -19,11 +19,15 @@
 - **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
 - **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
 - **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
+- **Host module** — a module that herdr-app gives a mod at run time (`herdr`, `gpui-kit`); node cannot resolve it.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Leader** — the `;` key that starts every herdr-app shortcut sequence, such as `; t`. `; ;` types a `;` in a terminal.
+- **Linked mod folder** — a scratch folder that holds one link per tracked file of a mod, the way stow links it; the guard runs `herdr-app check` on it.
 - **Local artefact** — a change artefact that no commit holds. On a work repository `.git/info/exclude` hides it.
 - **Machine** — one core as herdr-app shows it: this computer (the `default` core, `''` on the command line), or a core that `hc machine add` registered with the default core, such as `work`. herdr-app shows each machine as one sidebar group.
+- **Mod copy** — a scratch folder that holds one mod's `main.js` as `main.mjs`, plus one module stub per host module, so node can import it.
+- **Module stub** — a package a test writes into a scratch `node_modules` folder in place of a host module; a PATH stub for imports.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
@@ -31,6 +35,7 @@
 - **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
 - **Pane backend** — the tool where the pipeline opens its panes: herdr TUI, herdr-app or Rex, picked from the environment.
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
+- **Path import** — an import whose specifier is a file path (`./`, `../` or `/`), not a module name. herdr-app refuses one from a stowed mod, because its real path leaves the mod folder.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Personal pair** — the theme pair `solunized-light-blue` and `solunized-dark-blue`.
 - **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:eirvandelden/` or `github.com/eirvandelden/`; the same rule as `RemoteMatcher.personal?`.
@@ -56,6 +61,7 @@
 - **Stage pane** — a pane the pipeline opens for one change: a stage worker, a reviewer or gh-dash.
 - **Stale space** — a space on this computer left from the 2026-10-30 import, whose agents were lost on 2026-11-05.
 - **Starter config** — the documented `lefthook.yml` with the `remotes:` block that a personal repository copies. Avoid: template.
+- **Stowed mod** — a mod folder under `~/.config/herdr-app/mods/` whose files are links into the repository, as `stow --no-folding` makes them.
 - **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.
 - **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
 - **Test file** — one `test/*_test.rb`, run as its own process.
