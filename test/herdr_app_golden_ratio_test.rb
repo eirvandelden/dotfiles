@@ -86,6 +86,7 @@ module NodeRunner
   end
 
   # Runs the script the block builds from the golden-ratio mod copy's URL.
+  #: () { (String) -> String } -> untyped
   def run_script
     stdout, stderr, status = with_mod_copy("golden-ratio") do |url|
       Open3.capture3("node", "--input-type=module", "-e", yield(url))
