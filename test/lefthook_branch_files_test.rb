@@ -8,8 +8,8 @@ require "yaml"
 require_relative "lefthook_binary"
 require_relative "isolated_git"
 
-# Real `git commit` and `git push` runs through the global pre-commit and pre-push hooks and the
-# repository's lefthook.yml. The pre-push checks must scan only the files the branch itself changes
+# Real `git commit` and `git push` runs through the hooks that `lefthook install` writes, with the
+# dotfiles lefthook.yml as config. The pre-push checks must scan only the files the branch itself changes
 # against main, also after a rebase over a main that moved on. The marker words are built by
 # concatenation, so this file passes the marker checks it tests.
 class LefthookBranchFilesTest < Minitest::Test
@@ -26,9 +26,10 @@ class LefthookBranchFilesTest < Minitest::Test
     @home = Dir.mktmpdir
     @bin_dir = File.join(@home, "bin")
     @work = File.join(@home, "work")
-    link_global_setup
+    link_home_setup
     stub_commands
     create_repositories
+    install_hooks
   end
 
   def teardown
@@ -241,18 +242,13 @@ class LefthookBranchFilesTest < Minitest::Test
     git(@work, "rebase", "--quiet", "origin/#{TRUNK}")
   end
 
-  def link_global_setup
-    hooks = File.join(@home, ".config", "git", "hooks")
-    FileUtils.mkdir_p(hooks)
+  def link_home_setup
+    FileUtils.mkdir_p(@home)
     File.write(File.join(@home, ".gitconfig"), "[user]\n  name = Test\n  email = test@example.com\n")
-    File.write(File.join(@home, ".config", "git", "config"), "[core]\n  hooksPath = ~/.config/git/hooks\n")
-    %w[pre-commit pre-push].each do |hook|
-      File.symlink(File.join(@repo_root, "git/.config/git/hooks", hook), File.join(hooks, hook))
-    end
     link_worktree_tools
   end
 
-  # The fallback config runs marker-check from the dotfiles checkout beside it, with no stow link;
+  # lefthook.yml runs marker-check from the dotfiles checkout in $HOME, with no stow link;
   # review-report-fresh is the only script still reached through ~/.config.
   def link_worktree_tools
     tools = File.join(@repo_root, "git/.config/git/worktree-tools")
@@ -262,6 +258,12 @@ class LefthookBranchFilesTest < Minitest::Test
     FileUtils.mkdir_p(scripts)
     File.symlink(File.join(tools, "marker-check"), File.join(scripts, "marker-check"))
     FileUtils.cp(File.join(@repo_root, "lefthook.yml"), File.join(@home, "Developer", "dotfiles"))
+  end
+
+  # A plain `lefthook install` writes the hooks; LEFTHOOK_CONFIG keeps the committed files free of lefthook.yml.
+  def install_hooks
+    _, stderr, status = Open3.capture3(environment, NATIVE_LEFTHOOK.to_s, "install", chdir: @work)
+    flunk("lefthook install failed: #{stderr}") unless status.success?
   end
 
   # gh reports no open pull request; shellcheck and yamllint log their arguments to $HOME/<name>.log.
@@ -310,7 +312,8 @@ class LefthookBranchFilesTest < Minitest::Test
   def environment
     ruby_bin = File.dirname(RbConfig.ruby)
     { "HOME" => @home, "PATH" => "#{@bin_dir}:#{ruby_bin}:/usr/bin:/bin", "GIT_CONFIG_GLOBAL" => nil,
-      "GIT_CONFIG_SYSTEM" => "/dev/null", "XDG_CONFIG_HOME" => nil, "LEFTHOOK" => nil, "LEFTHOOK_CONFIG" => nil,
+      "GIT_CONFIG_SYSTEM" => "/dev/null", "XDG_CONFIG_HOME" => nil, "LEFTHOOK" => nil,
+      "LEFTHOOK_CONFIG" => File.join(@home, "Developer", "dotfiles", "lefthook.yml"),
       "LEFTHOOK_VERBOSE" => nil, "LEFTHOOK_BIN" => NATIVE_LEFTHOOK.to_s }
   end
 end
