@@ -1,7 +1,6 @@
 # Intent: Drop conductor from the repo agents file
 
-Author: Etienne van Delden de la Haije. Status: accepted (2026-11-13). Type: chore.
-Delivery: autonomous. Codex review: no.
+Author: Etienne van Delden de la Haije. Status: accepted (2026-11-13). Type: chore. Delivery: autonomous. Codex review: no.
 
 ## Problem
 
