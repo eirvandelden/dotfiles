@@ -190,6 +190,10 @@ module HerdrAppAgents
     #: (String? socket_path) -> Core
     def self.of_socket(socket_path); end
 
+    # XDG_STATE_HOME, else ~/.local/state: the one state-folder rule for the core sockets and the records.
+    #: -> String
+    def self.state_home; end
+
     #: (String name, ?command_line: CommandLine) -> void
     def initialize(name, command_line: CommandLine.new(core: name)); end
 
@@ -210,7 +214,8 @@ module HerdrAppAgents
     def terminal(terminal); end
 
     # Types record's resume line into its terminal when that terminal is a bare shell, then writes resumed_at.
-    # A refused send writes nothing, so a later run may retry. Answers :typed, :closed (hc get refuses),
+    # A refused send writes nothing, so a later run may retry. A failed record write after a send only warns on
+    # stderr: the outcome stays :typed and the bare-shell and running? guards keep the session from a second resume. Answers :typed, :closed (hc get refuses),
     # :not_a_bare_shell or :send_refused; restore prints a stderr line for each reason.
     #: (AgentRecord record, store: RecordStore, now: Time) -> Symbol
     def resume(record, store:, now:); end
@@ -312,7 +317,7 @@ module HerdrAppAgents
 
   # The agent records under <state>/herdr-app/agents/<core>/<terminal>.json.
   class RecordStore
-    # <state>/herdr-app/agents, with state from XDG_STATE_HOME, else ~/.local/state.
+    # <state>/herdr-app/agents, with state from Core.state_home.
     #: -> String
     def self.default_root; end
 
@@ -387,7 +392,7 @@ Not checked: the dotfiles repository has no Steepfile; the inline `#:` comments 
 3. One core and terminal pair holds at most one record, the latest. The store path enforces it.
 4. Restore types only validated, quoted values. `AgentRecord.parse` validates every field at load; `resume_line` joins fixed words, a UUID, whitelisted flags and a `Shellwords`-escaped cwd.
 5. Restore types only into a bare shell. `Core#resume` reads `hc get` directly before `hc send`; `TerminalState#bare_shell?` answers false for any missing field. A gap of milliseconds between the two calls stays open: hc has no atomic predicate for a shell, and `hc send` waits for an unfinished draft.
-6. Each session resumes at most once. `RecordStore#exclusively` lets one restore run at a time; `AgentRecord.distinct` keeps one record per session id across cores; `Shutdown#running` drops records touched since the core start, which covers a session reopened elsewhere through its own new record; the restore drops ids `ProcessTable#running?` sees; `Core#resume` writes `resumed_at` after a successful send, so a re-run never retypes and a refused send may retry.
+6. Each session resumes at most once. `RecordStore#exclusively` lets one restore run at a time; `AgentRecord.distinct` keeps one record per session id across cores; `Shutdown#running` drops records touched since the core start, which covers a session reopened elsewhere through its own new record; the restore drops ids `ProcessTable#running?` sees; `Core#resume` writes `resumed_at` after a successful send, so a re-run never retypes and a refused send may retry. If that write fails, `Core#resume` warns on stderr and keeps restoring; the bare-shell check and `ProcessTable#running?` then stop a second resume.
 7. A record of one core never restores into another. Every hc call of `Core` runs with `HC_SESSION=<core>`; `Shutdown` uses that core's own start.
 8. Only sessions in the restore window resume. `Shutdown#running` enforces it.
 9. Store paths stay inside the state folder. `Core::NAME` and `AgentRecord::TERMINAL` reject `/` and `.` prefixes before a path is built.
