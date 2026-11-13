@@ -417,7 +417,7 @@ Not checked: the dotfiles repository has no Steepfile; the inline `#:` comments 
 - `herdr-app/.local/share/herdr-app-agents/shutdown.rb` — `Shutdown`.
 - `claude/.claude/settings.json` — a `SessionStart` entry, matcher `^(startup|resume|clear|compact|fork)$`, command `"$HOME/.local/bin/herdr-app-agents" record claude || true`, timeout 10. Appended after the existing entries.
 - `codex/.codex/config.toml` — a `[[hooks.SessionStart]]` table after the agent-voice table, same matcher, command `'"$HOME/.local/bin/herdr-app-agents" record codex || true'`. It goes after agent-voice so `agent_voice_test.rb`'s first-table regex keeps matching.
-- `test/herdr_app_harness.rb` — `World#hc` answers `server status` (`uptime_ms` per core), reads `HC_SESSION` (`world["cores"][name]["terminals"]` beside the top-level `terminals`, which stay the default core) and logs `send`. `Fixtures#terminal` gains optional `pid:`, `foreground_pid:` and `foreground_argv:` keywords (verified live: `hc get` answers `pid` and `foreground.{pid,argv,cwd}`). Existing tests do not change.
+- `test/herdr_app_agents_harness.rb` — new (departure from the plan: a separate harness, so `herdr_app_harness.rb` and its tests stay untouched): PATH stubs of `hc` and `ps` answering `server status`, `get` and `send` per core from a `world.json`, plus fixtures for `hc get` answers.
 - `test/herdr_app_agents_test.rb` — new: unit tests.
 - `test/herdr_app_agents_cli_test.rb` — new: the executable against PATH stubs of `hc` and `ps`, `XDG_STATE_HOME` in a tmpdir.
 - `agents/.agents/skills/dotfiles-maintenance/references/herdr-app-cores.md` — "After a core restart" names `herdr-app-agents restore`.
@@ -425,7 +425,7 @@ Not checked: the dotfiles repository has no Steepfile; the inline `#:` comments 
 ## Order of work
 
 1. Write the acceptance test "starting a Claude session in a herdr-app pane writes a record" in `test/herdr_app_agents_cli_test.rb` (stub `hc get` and `ps` chain recorder → `sh` → agent pid), run it, watch it fail.
-2. Extend `test/herdr_app_harness.rb` (cores, `server status`, `send` log) and add a `ps` PATH stub; existing herdr-app tests stay green.
+2. Write `test/herdr_app_agents_harness.rb` (per-core terminals, `server status`, `send` log, a `ps` PATH stub); the existing herdr-app tests stay untouched.
 3. Build `CommandLine`, `TerminalState`, `ProcessTable`, `AgentRecord`, `RecordStore`, `SessionStart` with their unit tests, red/green per method, until step 1 passes.
 4. Add the remaining record criteria: Codex records, `claude -p` writes nothing, a daemon-shaped chain writes nothing and logs a refusal, a malformed payload exits 0 with empty stdout.
 5. Write the restore acceptance tests (Claude, Codex, four sessions in one folder, old transcript, non-bare shell, double resume, `work` core, count line), then build `Shutdown` and `Core` until they pass.
@@ -433,7 +433,7 @@ Not checked: the dotfiles repository has no Steepfile; the inline `#:` comments 
 7. Update `herdr-app-cores.md`.
 8. Run `bin/test`, then `rubocop` on every touched Ruby file and `lefthook run pre-commit`.
 9. Live checks, recorded in the review evidence:
-   - Open a scratch herdr-app pane (`herdr-app-pane open <scratch dir> --unlisted`), export `XDG_STATE_HOME=<scratch>`, and start `claude --settings <scratch settings.json>` whose only hook is `SessionStart` → `<worktree>/herdr-app/.local/bin/herdr-app-agents record claude`. Confirm one record with the right terminal, session id and cwd, then close the pane.
+   - Open a scratch herdr-app pane (`herdr-app-pane open <scratch dir> --unlisted`) and start `claude --settings <scratch settings.json>` whose only hook is `SessionStart` → `<worktree>/herdr-app/.local/bin/herdr-app-agents record claude`. Confirm one record with the right terminal, session id and cwd, then close the pane.
    - In that run, print the real hook lineage (`ps` chain from the hook to claude) into `recorder.log` or the record test notes, and confirm only hook runners stand between.
    - Codex gate: start a plain `codex` (no `--no-daemon`) in a scratch herdr-app pane with the record hook and read `recorder.log`. A record passes. A lineage refusal naming `app-server` means plain Codex sessions cannot be recorded from the pane: stop, keep the Codex code and its stubbed tests, and report `Decision needed: plain Codex hooks run in the app-server daemon` to the coordinator instead of declaring the Codex criteria met.
    - Controlled restart in a sandbox core, never `default` or `work`: from `env -i HOME=$HOME PATH=$PATH`, start a short-named sandbox core (`HC_SESSION=rq1 hc server status`), open two `claude --model haiku` sessions in one folder in two kept terminals of that core with the record hook, send each one prompt, then `hc server restart` that core. Confirm both terminal ids survive, run `herdr-app-agents restore`, and confirm each terminal shows its own session id again and the count line says 2. Repeat with Codex if the Codex gate passed. Stop the sandbox core afterwards. A full reboot stays unverified until Etienne's first real one.
@@ -479,7 +479,7 @@ Per changed file, the unit tests expected, named as behaviour (`test/herdr_app_a
 - `session_start.rb`: `SessionStart#record answers nil outside herdr-app`, `nil for claude print mode`, `refuses another address`, `refuses a conflicting HC_SESSION`, `records the foreground cwd and flags`.
 - `shutdown.rb`: `Shutdown#moment is the newest transcript before the core start`, `Shutdown#running keeps 600 s and drops 601 s`, `drops a missing transcript`, `drops records touched since the start`.
 
-Test setup: PATH stubs for `hc` (the harness `World`, extended with per-core terminals and `server status`) and `ps` (a process table from the world). `XDG_STATE_HOME` in a tmpdir; transcripts are tmp files whose mtime the test sets with `File.utime`. Session ids are invented UUIDs. No test reaches a real core.
+Test setup: PATH stubs for `hc` (`herdr_app_agents_harness.rb`, per-core terminals and `server status`) and `ps` (a process table from the world). `XDG_STATE_HOME` in a tmpdir (stubs only: the real `hc` finds its core socket through it, so live checks use the real state folder and remove their records afterwards); transcripts are tmp files whose mtime the test sets with `File.utime`. Session ids are invented UUIDs. No test reaches a real core.
 
 ---
 Domain skills applied: software-design, object-oriented-design, ruby-style, glossary, diagrams, dotfiles-maintenance.
