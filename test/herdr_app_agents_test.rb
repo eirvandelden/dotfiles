@@ -137,6 +137,19 @@ class HerdrAppAgentsTest < Minitest::Test
     assert_empty(@store.records)
   end
 
+  def test_core_resume_survives_a_failed_record_write_after_a_successful_send
+    line = FakeCommandLine.new([ "hc", "get", "t5", "--json" ] => shell("t5"))
+    store = Object.new
+    store.define_singleton_method(:write) { |_record| raise Errno::ENOSPC }
+
+    outcome = nil
+    _stdout, stderr = capture_io { outcome = Core.new("default", command_line: line).resume(record, store: store, now: NOW) }
+
+    assert_equal(:typed, outcome)
+    assert_includes(stderr, "could not write the record for t5")
+    assert_includes(stderr, "No space left on device")
+  end
+
   def test_terminal_state_bare_shell_refuses_an_agent_a_child_process_and_a_missing_field
     child = shell("t5").merge("foreground" => { "pid" => 9, "argv" => [ "vim" ], "cwd" => "/tmp" })
     agent_running = agent("t5", %w[claude])

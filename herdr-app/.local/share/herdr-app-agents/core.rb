@@ -139,10 +139,18 @@ module HerdrAppAgents
     #: (AgentRecord record, RecordStore store, Time now) -> Symbol
     def type(record, store, now)
       @command_line.text("hc", "send", record.terminal, record.resume_line)
-      store.write(record.resumed(now))
+      remember(record, store, now)
       :typed
     rescue Refusal
       :send_refused
+    end
+
+    # The line is typed already, so a failed write only warns: the other cores still restore.
+    #: (AgentRecord record, RecordStore store, Time now) -> void
+    def remember(record, store, now)
+      store.write(record.resumed(now))
+    rescue SystemCallError => error
+      warn("herdr-app-agents: could not write the record for #{record.terminal}: #{error.message}")
     end
   end
 end
