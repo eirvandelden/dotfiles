@@ -25,7 +25,9 @@ Ratios of splits are not kept, and running programs and scrollback do not move.
 
 ## After a core restart
 
-A core restart ends every agent. Every kept terminal gets a shell in its last folder. In each agent pane run `claude --resume` or `codex resume` there and pick the session, or use the id from the pairing list.
+A core restart ends every agent. Every kept terminal gets a shell in its last folder. After both cores run, run `herdr-app-agents restore` from a plain terminal. It resumes each session that ran at shutdown in its own pane, with the same id, and prints how many it restored.
+
+A `SessionStart` hook in Claude and Codex (`herdr-app-agents record`) writes one record per pane under `~/.local/state/herdr-app/agents/<core>/<terminal>.json`. Restore picks the records whose transcript changed in the 10 minutes before shutdown, and types only into a bare shell. A skipped pane gets one stderr line. For a pane with no record, run `claude --resume` or `codex resume` there and pick the session, or use the id from the pairing list.
 
 ## Starting and stopping cores
 
