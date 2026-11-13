@@ -56,7 +56,8 @@ classDiagram
     +of_socket(path)$ Core
     +started_at(now) Time
     +terminal(id) TerminalState
-    +resume(record, store, now) bool
+    +running() bool
+    +resume(record, store, now) Symbol
   }
   class TerminalState {
     +address?(id) bool
@@ -199,13 +200,19 @@ module HerdrAppAgents
     #: (Time now) -> Time
     def started_at(now); end
 
+    # Whether something listens on <state>/herdr-core/<name>/<name>.sock. Asks the socket, never hc:
+    # hc starts a stopped core, so restore skips a core that is not running.
+    #: -> bool
+    def running?; end
+
     # An unreadable answer gives a TerminalState that is never a bare shell.
     #: (String terminal) -> TerminalState
     def terminal(terminal); end
 
     # Types record's resume line into its terminal when that terminal is a bare shell, then writes resumed_at.
-    # A refused send writes nothing, so a later run may retry. Answers whether it typed.
-    #: (AgentRecord record, store: RecordStore, now: Time) -> bool
+    # A refused send writes nothing, so a later run may retry. Answers :typed, :closed (hc get refuses),
+    # :not_a_bare_shell or :send_refused; restore prints a stderr line for each reason.
+    #: (AgentRecord record, store: RecordStore, now: Time) -> Symbol
     def resume(record, store:, now:); end
   end
 
@@ -233,8 +240,8 @@ module HerdrAppAgents
     #: -> bool
     def bare_shell?; end
 
-    # True when the foreground argv runs kind interactively: argv[0] basename is kind, and for codex the
-    # first non-flag argument is not exec or e.
+    # True when the foreground argv runs kind interactively: a program named kind among the first two words,
+    # and for codex no later word is exec or e (flag values never are).
     #: (String kind) -> bool
     def interactive?(kind); end
   end
@@ -246,8 +253,9 @@ module HerdrAppAgents
     #: (?command_line: CommandLine) -> ProcessTable
     def self.snapshot(command_line: CommandLine.new); end
 
-    #: (Array[[Integer, Integer, Array[String]]] rows) -> void
-    def initialize(rows); end
+    # rows is given directly in tests; otherwise the table runs command_line's `ps` once, on first use.
+    #: (?Array[[Integer, Integer, Array[String]]]? rows, ?command_line: CommandLine?) -> void
+    def initialize(rows = nil, command_line: nil); end
 
     # True when agent_pid is an ancestor of pid and every process between them is a hook runner.
     #: (Integer pid, Integer agent_pid) -> bool
@@ -278,6 +286,10 @@ module HerdrAppAgents
     #: (String json, ?transcript_written_at: Time?) -> AgentRecord
     def self.parse(json, transcript_written_at: nil); end
 
+    # True for a String holding an absolute path with no control character; the field rule behind parse.
+    #: (untyped value) -> bool
+    def self.path?(value); end
+
     # One record per session id: the newest recorded_at; a tie keeps none.
     #: (Array[AgentRecord] records) -> Array[AgentRecord]
     def self.distinct(records); end
@@ -300,8 +312,12 @@ module HerdrAppAgents
 
   # The agent records under <state>/herdr-app/agents/<core>/<terminal>.json.
   class RecordStore
+    # <state>/herdr-app/agents, with state from XDG_STATE_HOME, else ~/.local/state.
+    #: -> String
+    def self.default_root; end
+
     #: (?root: String) -> void
-    def initialize(root: File.join(ENV.fetch("XDG_STATE_HOME", File.expand_path("~/.local/state")), "herdr-app/agents")); end
+    def initialize(root: self.class.default_root); end
 
     # Atomic: a temporary file in the same folder, mode 0600, then rename.
     #: (AgentRecord record) -> void
