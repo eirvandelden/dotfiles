@@ -117,14 +117,14 @@ class HerdrAppAgentsTest < Minitest::Test
   def test_core_resume_types_only_into_a_bare_shell
     line = FakeCommandLine.new([ "hc", "get", "t5", "--json" ] => agent("t5", %w[claude]))
 
-    refute(Core.new("default", command_line: line).resume(record, store: @store, now: NOW))
+    assert_equal(:not_a_bare_shell, Core.new("default", command_line: line).resume(record, store: @store, now: NOW))
     assert_empty(line.calls.select { |call| call[1] == "send" })
   end
 
   def test_core_resume_writes_resumed_at_after_a_successful_send
     line = FakeCommandLine.new([ "hc", "get", "t5", "--json" ] => shell("t5"))
 
-    assert(Core.new("default", command_line: line).resume(record, store: @store, now: NOW))
+    assert_equal(:typed, Core.new("default", command_line: line).resume(record, store: @store, now: NOW))
     assert_includes(line.calls, [ "hc", "send", "t5", record.resume_line ])
     assert_equal(NOW, @store.records.first.resumed_at)
   end
@@ -133,7 +133,7 @@ class HerdrAppAgentsTest < Minitest::Test
     line = FakeCommandLine.new([ "hc", "get", "t5", "--json" ] => shell("t5"),
                                [ "hc", "send", "t5", record.resume_line ] => Refusal.new("busy"))
 
-    refute(Core.new("default", command_line: line).resume(record, store: @store, now: NOW))
+    assert_equal(:send_refused, Core.new("default", command_line: line).resume(record, store: @store, now: NOW))
     assert_empty(@store.records)
   end
 

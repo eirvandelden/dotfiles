@@ -9,6 +9,7 @@ library = File.expand_path("../share/herdr-app-agents", File.dirname(File.realpa
 %w[session_start shutdown].each { |file| require File.join(library, file) }
 
 USAGE = "usage: herdr-app-agents record claude|codex | restore".freeze
+SKIP_REASONS = { closed: "terminal is closed", not_a_bare_shell: "not a bare shell", send_refused: "hc refused the send" }.freeze
 AGENT_ENVIRONMENT = %w[CLAUDECODE CODEX_THREAD_ID].freeze
 
 #: -> bot
@@ -48,9 +49,9 @@ def restore_core(name, records, store, now)
 
   due = HerdrAppAgents::Shutdown.new(records, started_at: core.started_at(now)).running
   due.count do |found|
-    core.resume(found, store: store, now: now).tap do |typed|
-      warn("herdr-app-agents: skipped #{name}/#{found.terminal}: not a bare shell") unless typed
-    end
+    outcome = core.resume(found, store: store, now: now)
+    warn("herdr-app-agents: skipped #{name}/#{found.terminal}: #{SKIP_REASONS.fetch(outcome)}") unless outcome == :typed
+    outcome == :typed
   end
 rescue HerdrAppAgents::Refusal => error
   skip_core(name, error.message)

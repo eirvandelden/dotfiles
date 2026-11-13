@@ -172,8 +172,30 @@ class HerdrAppAgentsCliTest < Minitest::Test
 
     assert_predicate(status, :success?)
     assert_match(/restored 0 agents/, stdout)
-    assert_match(/#{TERMINAL}/, stderr)
+    assert_match(/#{TERMINAL}: not a bare shell/, stderr)
     assert_empty(agents_sends)
+  end
+
+  def test_restore_names_a_closed_terminal
+    world(t6: shell("t6"))
+    agents_write_record(terminal: TERMINAL, session_id: CLAUDE_ID)
+
+    stdout, stderr, = agents_cli("restore")
+
+    assert_match(/restored 0 agents/, stdout)
+    assert_match(/#{TERMINAL}: terminal is closed/, stderr)
+    refute_match(/bare shell/, stderr)
+  end
+
+  def test_restore_names_a_refused_send
+    agents_world_write("cores" => { "default" => core([ shell(TERMINAL) ]).merge("refuse_send" => [ TERMINAL ]) })
+    agents_write_record(terminal: TERMINAL, session_id: CLAUDE_ID)
+
+    stdout, stderr, = agents_cli("restore")
+
+    assert_match(/restored 0 agents/, stdout)
+    assert_match(/#{TERMINAL}: hc refused the send/, stderr)
+    refute_match(/bare shell/, stderr)
   end
 
   def test_restore_skips_a_session_reopened_elsewhere_without_its_id_in_argv

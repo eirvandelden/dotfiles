@@ -122,17 +122,27 @@ module HerdrAppAgents
     end
 
     # Types record's resume line into its terminal when that terminal is a bare shell, then writes resumed_at.
-    # A refused send writes nothing, so a later run may retry. Answers whether it typed.
-    #: (AgentRecord record, store: RecordStore, now: Time) -> bool
+    # A refused send writes nothing, so a later run may retry. Answers :typed, :closed (hc get refuses),
+    # :not_a_bare_shell or :send_refused.
+    #: (AgentRecord record, store: RecordStore, now: Time) -> Symbol
     def resume(record, store:, now:)
-      state = terminal(record.terminal)
-      return false unless state.address?(record.terminal) && state.bare_shell?
+      state = TerminalState.new(@command_line.json("hc", "get", record.terminal, "--json"))
+      return :not_a_bare_shell unless state.address?(record.terminal) && state.bare_shell?
 
+      type(record, store, now)
+    rescue Refusal
+      :closed
+    end
+
+    private
+
+    #: (AgentRecord record, RecordStore store, Time now) -> Symbol
+    def type(record, store, now)
       @command_line.text("hc", "send", record.terminal, record.resume_line)
       store.write(record.resumed(now))
-      true
+      :typed
     rescue Refusal
-      false
+      :send_refused
     end
   end
 end
