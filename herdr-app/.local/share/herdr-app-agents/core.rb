@@ -86,13 +86,19 @@ module HerdrAppAgents
       new(name)
     end
 
+    # XDG_STATE_HOME, else ~/.local/state: the one state-folder rule for the sockets and the records.
+    #: -> String
+    def self.state_home
+      state = ENV.fetch("XDG_STATE_HOME", "")
+      state.empty? ? File.expand_path("~/.local/state") : state
+    end
+
     attr_reader :name #: String
 
     # Whether something listens on <state>/herdr-core/<name>/<name>.sock. Asks the socket, never hc: hc starts a stopped core.
     #: -> bool
     def running?
-      state = ENV.fetch("XDG_STATE_HOME", "")
-      UNIXSocket.open(File.join(state.empty? ? File.expand_path("~/.local/state") : state, "herdr-core", @name, "#{@name}.sock")).close
+      UNIXSocket.open(File.join(self.class.state_home, "herdr-core", @name, "#{@name}.sock")).close
       true
     rescue SystemCallError, ArgumentError
       false

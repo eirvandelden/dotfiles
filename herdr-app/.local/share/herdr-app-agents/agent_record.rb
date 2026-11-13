@@ -131,8 +131,7 @@ module HerdrAppAgents
   class RecordStore
     #: -> String
     def self.default_root
-      state = ENV.fetch("XDG_STATE_HOME", "")
-      File.join(state.empty? ? File.expand_path("~/.local/state") : state, "herdr-app/agents")
+      File.join(Core.state_home, "herdr-app/agents")
     end
 
     #: (?root: String) -> void
