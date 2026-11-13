@@ -23,13 +23,14 @@ module HerdrAppAgents
     KINDS = %w[claude codex].freeze
     SESSION_ID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
     TERMINAL = /\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\z/
-    CLAUDE_MODES = %w[acceptEdits auto bypassPermissions dontAsk plan].freeze
+    CLAUDE_MODES = %w[acceptEdits auto bypassPermissions dontAsk manual plan].freeze
     CODEX_SANDBOXES = %w[read-only workspace-write danger-full-access].freeze
     CODEX_APPROVALS = %w[untrusted on-failure on-request never].freeze
     # Flag name => the values it accepts, or nil for a flag without a value.
     FLAGS = {
-      "claude" => { "--dangerously-skip-permissions" => nil, "--permission-mode" => CLAUDE_MODES },
-      "codex" => { "--dangerously-bypass-approvals-and-sandbox" => nil,
+      "claude" => { "--dangerously-skip-permissions" => nil, "--allow-dangerously-skip-permissions" => nil,
+                   "--permission-mode" => CLAUDE_MODES },
+      "codex" => { "--dangerously-bypass-approvals-and-sandbox" => nil, "--approve-for-me" => nil,
                    "-s" => CODEX_SANDBOXES, "--sandbox" => CODEX_SANDBOXES,
                    "-a" => CODEX_APPROVALS, "--ask-for-approval" => CODEX_APPROVALS }
     }.freeze

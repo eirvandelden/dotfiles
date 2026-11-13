@@ -203,6 +203,12 @@ class HerdrAppAgentsTest < Minitest::Test
     assert_empty(AgentRecord.flags_of("other", %w[--dangerously-skip-permissions]))
   end
 
+  def test_flags_of_keeps_the_manual_mode_and_the_approval_flags
+    assert_equal(%w[--permission-mode manual --allow-dangerously-skip-permissions],
+                 AgentRecord.flags_of("claude", %w[claude --permission-mode manual --allow-dangerously-skip-permissions]))
+    assert_equal(%w[--approve-for-me], AgentRecord.flags_of("codex", %w[codex --approve-for-me --model x]))
+  end
+
   def test_parse_refuses_each_bad_field
     good = record_hash
     { "kind" => "gemini", "session_id" => "x; ls", "core" => "../x", "terminal" => "t/../x", "cwd" => "relative",
