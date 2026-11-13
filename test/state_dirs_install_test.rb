@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "open3"
 require "tmpdir"
+require_relative "isolated_git"
 
 # The state directories step creates the XDG state directories that ssh, irb and mysql write to, and
 # copies the old history files in. These tests run the real script against a scratch $HOME.

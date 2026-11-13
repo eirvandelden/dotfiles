@@ -367,7 +367,7 @@ class SecretsLoaderTest < Minitest::Test
   end
 
   def run_secrets(scope, extra_env = {})
-    Open3.capture3(env.merge(extra_env), "zsh", "-c", "source #{LOADER} && secrets #{scope}")
+    Open3.capture3(env.merge(extra_env), "zsh", "-f", "-c", "source #{LOADER} && secrets #{scope}")
   end
 
   def run_unlock(script, extra_env = {})
