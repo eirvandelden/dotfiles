@@ -259,6 +259,18 @@ class HerdrAppAgentsCliTest < Minitest::Test
     refute_includes(hc_calls, "ls")
   end
 
+  def test_restore_leaves_a_core_that_is_not_running_alone
+    world(TERMINAL => shell(TERMINAL))
+    agents_write_record(terminal: TERMINAL, session_id: CLAUDE_ID, core: "stopped", core_running: false)
+
+    stdout, stderr, status = agents_cli("restore")
+
+    assert_predicate(status, :success?)
+    assert_match(/restored 0 agents/, stdout)
+    assert_match(%r{skipped core stopped: not running}, stderr)
+    assert_empty(agents_calls.select { |call| call[0] == "hc" })
+  end
+
   def test_restore_refuses_inside_an_agent
     world(TERMINAL => shell(TERMINAL))
     agents_write_record(terminal: TERMINAL, session_id: CLAUDE_ID)

@@ -88,6 +88,20 @@ class HerdrAppAgentsTest < Minitest::Test
     end
   end
 
+  def test_core_running_asks_the_socket_not_hc
+    state = Dir.mktmpdir("agents-sock", "/tmp")
+    with_env("XDG_STATE_HOME" => state) do
+      refute(Core.new("work").running?)
+      FileUtils.mkdir_p(File.join(state, "herdr-core/work"))
+      server = UNIXServer.new(File.join(state, "herdr-core/work/work.sock"))
+      assert(Core.new("work").running?)
+      server.close
+      refute(Core.new("work").running?)
+    end
+  ensure
+    FileUtils.rm_rf(state)
+  end
+
   def test_core_started_at_subtracts_uptime_ms
     line = FakeCommandLine.new([ "hc", "server", "status", "--json" ] => { "uptime_ms" => 90_000 })
 

@@ -2,6 +2,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "rbconfig"
+require "socket"
 require "time"
 require "tmpdir"
 
@@ -78,15 +79,26 @@ module HerdrAppAgentsHarness
   RUBY
 
   def agents_setup(world = { "cores" => { "default" => Fixtures.core } })
-    @agents_dir = Dir.mktmpdir("agents-stub")
+    @agents_dir = Dir.mktmpdir("agents-stub", "/tmp") # short: a unix socket path holds about 100 characters
+    @agents_listeners = {}
     @agents_bin = File.join(@agents_dir, "bin")
     @agents_state = File.join(@agents_dir, "state")
     FileUtils.mkdir_p([ @agents_bin, @agents_state ])
     %w[hc ps].each { |name| agents_install(name) }
     agents_world_write(world)
+    agents_core_listen("default")
+  end
+
+  # A running core is a socket something listens on, at <state>/herdr-core/<core>/<core>.sock.
+  def agents_core_listen(core)
+    @agents_listeners[core] ||= begin
+      FileUtils.mkdir_p(File.join(@agents_state, "herdr-core", core))
+      UNIXServer.new(File.join(@agents_state, "herdr-core", core, "#{core}.sock"))
+    end
   end
 
   def agents_teardown
+    @agents_listeners&.each_value(&:close)
     FileUtils.rm_rf(@agents_dir) if @agents_dir
   end
 
@@ -135,7 +147,8 @@ module HerdrAppAgentsHarness
   # Writes a record file as the recorder would, and a transcript whose mtime is transcript_age seconds ago.
   # Pass transcript_age: nil for a record with no transcript on disk.
   def agents_write_record(terminal:, session_id:, core: "default", kind: "claude", cwd: "/tmp/project",
-                          transcript_age: 120, recorded_age: 3600, **overrides)
+                          transcript_age: 120, recorded_age: 3600, core_running: true, **overrides)
+    agents_core_listen(core) if core_running
     transcript = File.join(@agents_dir, "#{session_id}.jsonl")
     agents_touch(transcript, transcript_age) if transcript_age
     record = { "core" => core, "terminal" => terminal, "kind" => kind, "session_id" => session_id, "cwd" => cwd,

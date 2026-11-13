@@ -44,6 +44,8 @@ end
 #: (String name, Array[HerdrAppAgents::AgentRecord] records, HerdrAppAgents::RecordStore store, Time now) -> Integer
 def restore_core(name, records, store, now)
   core = HerdrAppAgents::Core.new(name)
+  return skip_core(name, "not running") unless core.running?
+
   due = HerdrAppAgents::Shutdown.new(records, started_at: core.started_at(now)).running
   due.count do |found|
     core.resume(found, store: store, now: now).tap do |typed|
@@ -51,7 +53,12 @@ def restore_core(name, records, store, now)
     end
   end
 rescue HerdrAppAgents::Refusal => error
-  warn("herdr-app-agents: skipped core #{name}: #{error.message}")
+  skip_core(name, error.message)
+end
+
+#: (String name, String reason) -> Integer
+def skip_core(name, reason)
+  warn("herdr-app-agents: skipped core #{name}: #{reason}")
   0
 end
 

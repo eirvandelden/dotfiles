@@ -1,3 +1,4 @@
+require "socket"
 require_relative "command_line"
 
 module HerdrAppAgents
@@ -86,6 +87,16 @@ module HerdrAppAgents
     end
 
     attr_reader :name #: String
+
+    # Whether something listens on <state>/herdr-core/<name>/<name>.sock. Asks the socket, never hc: hc starts a stopped core.
+    #: -> bool
+    def running?
+      state = ENV.fetch("XDG_STATE_HOME", "")
+      UNIXSocket.open(File.join(state.empty? ? File.expand_path("~/.local/state") : state, "herdr-core", @name, "#{@name}.sock")).close
+      true
+    rescue SystemCallError, ArgumentError
+      false
+    end
 
     #: (String name, ?command_line: CommandLine) -> void
     def initialize(name, command_line: CommandLine.new(core: name))
