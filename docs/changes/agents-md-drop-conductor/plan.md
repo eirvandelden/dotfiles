@@ -1,6 +1,6 @@
 # Plan: Drop conductor from the repo agents file
 
-From `intent.md` (2026-11-13). Status: accepted.
+From `intent.md` (2026-11-13). Status: draft.
 
 ## Design
 
