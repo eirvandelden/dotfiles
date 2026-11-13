@@ -1,6 +1,8 @@
 # Glossary
 
 - **Agent list** — a herdr-app popup that lists the running agents of one status and shows the one picked: `; d` opens the done list (`agents-done`), `; b` the blocked list (`agents-blocked`).
+- **Agent record** — `<state>/herdr-app/agents/<core>/<terminal>.json`: the agent session that last started in one terminal of one core, with its kind, session id, folder, transcript path, permission flags, `recorded_at` and `resumed_at`. Avoid: pane record, session file.
+- **Bare shell** — a live terminal with no agent status, whose foreground process is its own login shell (`foreground.pid == pid`, `argv[0]` a shell). Its folder does not matter: the resume line changes folder.
 - **Base** — the merge-base of `HEAD` and the base branch, as a commit; `HEAD` when no base branch exists. The viewer diffs against it.
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
 - **Chained test** — one test that runs the steps of several former tests in one repository and keeps every former assertion.
@@ -19,6 +21,7 @@
 - **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
 - **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
 - **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
+- **Hook lineage** — the parent chain from the hook process up to the pane's foreground agent. Only hook runners (`sh`, `bash`, `zsh`, `dash`, `env`, `ruby`, `rv`) may stand between them.
 - **Host module** — a module that herdr-app gives a mod at run time (`herdr`, `gpui-kit`); node cannot resolve it.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
 - **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
@@ -44,6 +47,8 @@
 - **Remote clone** — lefthook's copy of the shared config in `.git/info/lefthook-remotes/<name>-<ref>`.
 - **Repo agents file** — the root `agents.md`, which describes only this repository; `CLAUDE.md` is a symlink to it.
 - **Repo config** — the first of `lefthook.yml`, `.lefthook.yml` or `.config/lefthook.yml` at the git toplevel.
+- **Restore window** — the 10 minutes up to and including the shutdown moment.
+- **Resume line** — the shell-quoted command that restore types into a bare shell: `cd <cwd> && claude --resume <id> [flags]` or `cd <cwd> && codex resume <id> [flags]`.
 - **Reviewed commit** — the short SHA in the last `## Round <n> — <time> — <sha>` heading of `review.md`. The heading may end in `(claude)` or `(codex)`.
 - **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
 - **Row** — the stage panes of one change, side by side; the slug names it.
@@ -55,6 +60,7 @@
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Shared config** — the dotfiles `lefthook.yml`, which a repo config names under `remotes:`.
 - **Shown halves** — `layout().theme` in a herdr-app mod: the `{light, dark}` theme names the window shows now, a stored pick included.
+- **Shutdown moment** — the newest transcript write among one core's agent records that comes before that core started.
 - **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
 - **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
 - **Space** — a herdr-app space: a named place to work on one machine, with tabs.
@@ -66,6 +72,7 @@
 - **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
 - **Test file** — one `test/*_test.rb`, run as its own process.
 - **Theme pair** — `{light, dark}`: two herdr-app theme names, one per appearance.
+- **Transcript** — the session log at the hook payload's `transcript_path`. Its mtime is the session's last write.
 - **View** — how the viewer previews a file, `default` or `alternate`. Default: markdown rendered, an untracked file as content, anything else as a diff.
 - **Viewer** — the floating Rex layer, opened by the `file_viewer` action, that lists changed files and previews the one picked. Avoid: file browser.
 - **Work mark** — the one fixed avatar color of every work space in the herdr-app spaces list.
