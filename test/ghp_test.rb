@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require_relative "../claude/.claude/hooks/remote_matcher"
+require_relative "isolated_git"
 
 # ghp opens a personal project on GitHub. It asks gh whether the eirvandelden-dev
 # organisation has the repository and falls back to the eirvandelden user, so a

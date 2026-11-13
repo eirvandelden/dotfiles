@@ -3,6 +3,7 @@ require "minitest/autorun"
 require "fileutils"
 require "tmpdir"
 require_relative "../claude/.claude/hooks/remote_matcher"
+require_relative "isolated_git"
 
 # RemoteMatcher decides which origins are personal. Both personal owners match over
 # ssh and https; an owner that only shares a prefix does not.
