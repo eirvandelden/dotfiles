@@ -4,6 +4,7 @@ require "fileutils"
 require "open3"
 require "tmpdir"
 require "yaml"
+require_relative "../claude/.claude/hooks/remote_matcher"
 require_relative "isolated_git"
 
 class GhDashConfigTest < Minitest::Test
@@ -27,9 +28,15 @@ class GhDashConfigTest < Minitest::Test
   end
 
   def test_personal_section_takes_every_ready_pr_in_my_repositories
-    expected = %w[is:open user:eirvandelden draft:false]
+    expected = %w[is:open user:eirvandelden user:eirvandelden-dev draft:false]
 
     assert_equal(expected.sort, filter_tokens("prSections", "Personal PRs"))
+  end
+
+  def test_personal_section_names_every_personal_owner
+    owners = filter_tokens("prSections", "Personal PRs").grep(/\Auser:/).map { |token| token.delete_prefix("user:") }
+
+    assert_equal(RemoteMatcher::PERSONAL_OWNERS.sort, owners.sort)
   end
 
   def test_drafts_section_takes_my_open_work_drafts

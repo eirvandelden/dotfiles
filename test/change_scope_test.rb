@@ -40,6 +40,15 @@ class ChangeScopeTest < Minitest::Test
     assert_equal("personal", stdout.strip)
   end
 
+  def test_the_personal_org_remote_is_personal
+    add_remote("https://github.com/eirvandelden-dev/appkit.git")
+
+    stdout, stderr, status = run_script
+
+    assert(status.success?, stderr)
+    assert_equal("personal", stdout.strip)
+  end
+
   def test_an_allowlisted_remote_is_work
     allow_remotes("employer/their-app")
     add_remote("git@github.com:employer/their-app.git")
