@@ -132,6 +132,15 @@ type = "command"
 command = '"$HOME/.claude/hooks/agent-voice.rb"'
 timeout = 10
 
+# Records which Codex session runs in which herdr-app terminal, for `herdr-app-agents restore`. Silent outside herdr-app.
+[[hooks.SessionStart]]
+matcher = "^(startup|resume|clear|compact|fork)$"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = '"$HOME/.local/bin/herdr-app-agents" record codex || true'
+timeout = 10
+
 [mcp_servers.MobileBuildMCP]
 command = "npx"
 args = ["-y", "mobilebuildmcp@2.7.1", "mcp"]

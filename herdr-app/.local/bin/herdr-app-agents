@@ -1,0 +1,85 @@
+#!/usr/bin/env ruby
+# Records which agent session runs in which herdr-app terminal, and restores them after a core restart.
+#   record claude|codex  Reads a SessionStart payload on stdin. Prints nothing on stdout, notes each refusal in
+#                        <state>/herdr-app/agents/recorder.log and always exits 0, so it never breaks a session.
+#   restore              Resumes each agent that was running at the last shutdown, in its own bare-shell terminal.
+#                        Prints "herdr-app-agents: restored N agents". Run it from a plain terminal, not an agent.
+# Bad arguments exit 1 with the usage line before any hc call.
+library = File.expand_path("../share/herdr-app-agents", File.dirname(File.realpath(__FILE__)))
+%w[session_start shutdown].each { |file| require File.join(library, file) }
+
+USAGE = "usage: herdr-app-agents record claude|codex | restore".freeze
+SKIP_REASONS = { closed: "terminal is closed", not_a_bare_shell: "not a bare shell", send_refused: "hc refused the send" }.freeze
+AGENT_ENVIRONMENT = %w[CLAUDECODE CODEX_THREAD_ID].freeze
+
+#: -> bot
+def usage!
+  abort("herdr-app-agents: #{USAGE}")
+end
+
+# Never fails: a hook that raised would break or pollute the agent session that started it.
+#: (String kind) -> void
+def record(kind)
+  store = HerdrAppAgents::RecordStore.new
+  session = HerdrAppAgents::SessionStart.new(kind, $stdin.read, ENV.to_h)
+  found = session.record(processes: HerdrAppAgents::ProcessTable.snapshot, now: Time.now)
+  store.write(found) if found
+rescue StandardError => error
+  begin
+    store&.note("#{kind}: #{error.message}")
+  rescue StandardError
+    nil
+  end
+end
+
+#: (HerdrAppAgents::RecordStore store) -> Array[HerdrAppAgents::AgentRecord]
+def candidates(store)
+  processes = HerdrAppAgents::ProcessTable.snapshot
+  HerdrAppAgents::AgentRecord.distinct(store.records).reject do |found|
+    running = processes.running?(found.session_id)
+    warn("herdr-app-agents: skipped #{found.core}/#{found.terminal}: session is open already") if running
+    running
+  end
+end
+
+#: (String name, Array[HerdrAppAgents::AgentRecord] records, HerdrAppAgents::RecordStore store, Time now) -> Integer
+def restore_core(name, records, store, now)
+  core = HerdrAppAgents::Core.new(name)
+  return skip_core(name, "not running") unless core.running?
+
+  due = HerdrAppAgents::Shutdown.new(records, started_at: core.started_at(now)).running
+  due.count do |found|
+    outcome = core.resume(found, store: store, now: now)
+    warn("herdr-app-agents: skipped #{name}/#{found.terminal}: #{SKIP_REASONS.fetch(outcome)}") unless outcome == :typed
+    outcome == :typed
+  end
+rescue HerdrAppAgents::Refusal => error
+  skip_core(name, error.message)
+end
+
+#: (String name, String reason) -> Integer
+def skip_core(name, reason)
+  warn("herdr-app-agents: skipped core #{name}: #{reason}")
+  0
+end
+
+#: -> void
+def restore
+  abort("herdr-app-agents: refusing to restore inside an agent: it would start a core with the agent's environment") if AGENT_ENVIRONMENT.any? { |name| ENV.key?(name) }
+
+  store = HerdrAppAgents::RecordStore.new
+  restored = store.exclusively do
+    now = Time.now
+    candidates(store).group_by(&:core).sum { |name, records| restore_core(name, records, store, now) }
+  end
+  puts("herdr-app-agents: restored #{restored} agents")
+rescue HerdrAppAgents::Refusal => error
+  abort("herdr-app-agents: #{error.message}")
+end
+
+command, *arguments = ARGV
+case [ command, arguments ]
+in [ "record", [ "claude" | "codex" => kind ] ] then record(kind)
+in [ "restore", [] ] then restore
+else usage!
+end
