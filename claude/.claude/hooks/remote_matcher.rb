@@ -1,8 +1,9 @@
 # Shared remote matching for the consent guard (asks before pushing anywhere
-# unlisted) and finish's change-scope (decides which of its two behaviours
-# applies). One source, two callers: PERSONAL_OWNERS names Etienne's own GitHub
-# user and organisation, and BUILTIN_REMOTES derives from it; ALLOWLIST_FILE is
-# supplied by dotfiles-work, so the public repository names no employer.
+# unlisted), finish's change-scope (decides which of its two behaviours
+# applies), plan's auto-accept and the agent-voice hook. One source, four
+# callers: PERSONAL_OWNERS names Etienne's own GitHub user and organisation, and
+# BUILTIN_REMOTES derives from it; ALLOWLIST_FILE is supplied by dotfiles-work,
+# so the public repository names no employer.
 module RemoteMatcher
   PERSONAL_OWNERS = %w[eirvandelden eirvandelden-dev].freeze
 
