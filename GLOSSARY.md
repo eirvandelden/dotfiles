@@ -37,7 +37,7 @@
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **Path import** — an import whose specifier is a file path (`./`, `../` or `/`), not a module name. herdr-app refuses one from a stowed mod, because its real path leaves the mod folder.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
-- **Personal owner** — a GitHub user or organisation whose repositories are personal: `eirvandelden` and `eirvandelden-dev`. `RemoteMatcher::PERSONAL_OWNERS` holds the list.
+- **Personal owner** — a GitHub user or organisation whose repositories are personal: `eirvandelden` and `eirvandelden-dev`. `RemoteMatcher::PERSONAL_OWNERS` holds the list. Avoid: personal account, because `eirvandelden-dev` is an organisation.
 - **Personal pair** — the theme pair `solunized-light-blue` and `solunized-dark-blue`.
 - **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:<owner>/` or `github.com/<owner>/` for a personal owner (`eirvandelden` or `eirvandelden-dev`); the same rule as `RemoteMatcher.personal?`.
 - **Personal space** — a space whose `machine` is null: this computer, the `default` core.
