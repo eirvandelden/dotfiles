@@ -44,6 +44,9 @@ class RemoteMatcherTest < Minitest::Test
     patterns = RemoteMatcher.allowed_remotes
 
     assert_equal(RemoteMatcher::PERSONAL_OWNERS.size + 1, patterns.size)
+    RemoteMatcher::PERSONAL_OWNERS.each do |owner|
+      assert(patterns.any? { |pattern| "github.com/#{owner}/x".match?(pattern) }, owner)
+    end
     assert(patterns.any? { |pattern| "github.com/acme/x".match?(pattern) })
   end
 end
