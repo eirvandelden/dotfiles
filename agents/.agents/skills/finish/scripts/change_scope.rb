@@ -1,8 +1,8 @@
 require "open3"
 require_relative "../../../../../claude/.claude/hooks/remote_matcher"
 
-# The change scope of a repository, from its "origin" remote alone: "personal" for Etienne's own
-# GitHub account, "work" for an entry of RemoteMatcher's allowlist. The one mapping that
+# The change scope of a repository, from its "origin" remote alone: "personal" for a personal
+# owner, "work" for an entry of RemoteMatcher's allowlist. The one mapping that
 # `change-scope` and the scripts that treat work repositories differently share. It is not the
 # glossary's Scope, which names the secrets `unlock` loads.
 module ChangeScope

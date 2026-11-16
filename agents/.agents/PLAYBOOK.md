@@ -164,7 +164,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Each commit must be small and contain exactly one logical change. Split unrelated concerns into separate commits.
     - Still governed by rule 7 (never commit to `main`/`master`) and rule 21 (commit scope hygiene).
 19. Pushes:
-    - Agents may push without asking to repos owned by the `eirvandelden` GitHub user, and to any remote listed in `~/.claude/consent-guard-allowed-remotes.txt` (supplied by `dotfiles-work`; the same file the consent guard reads).
+    - Agents may push without asking to repos owned by the `eirvandelden` GitHub user or the `eirvandelden-dev` organisation, and to any remote listed in `~/.claude/consent-guard-allowed-remotes.txt` (supplied by `dotfiles-work`; the same file the consent guard reads).
     - Pushing to any other remote or repository requires explicit permission first.
     - Force-push rules (rule 20: `--force-with-lease` only, never plain `--force`) still apply regardless of target repo.
     - The consent guard enforces this rule in both tools. Claude runs it from `settings.json`, Codex from the inline `[hooks]` table in `config.toml`.
@@ -210,7 +210,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 
 ## 7a. Autonomous delivery (Personal)
 
-Applies only when `origin` is a repository of the `eirvandelden` GitHub user (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
+Applies only when `origin` is a repository of the `eirvandelden` GitHub user or the `eirvandelden-dev` organisation (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
 
 - Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
 - One coordinator drives plan, implement, review, fixes and `deliver`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.

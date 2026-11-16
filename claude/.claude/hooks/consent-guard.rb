@@ -448,7 +448,12 @@ def consentable_reason(words, working_directory)
   return nil unless unnamed_remote
 
   "pushing to remote '#{unnamed_remote}' isn't on the unattended allowlist — " \
-    "eirvandelden/*, plus whatever #{RemoteMatcher::ALLOWLIST_FILE} lists (playbook rule 19)."
+    "#{personal_owner_globs}, plus whatever #{RemoteMatcher::ALLOWLIST_FILE} lists (playbook rule 19)."
+end
+
+#: -> String
+def personal_owner_globs
+  RemoteMatcher::PERSONAL_OWNERS.map { |owner| "#{owner}/*" }.join(", ")
 end
 
 #: (Array[String] words) -> bool

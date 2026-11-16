@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "tmpdir"
+require_relative "../claude/.claude/hooks/remote_matcher"
 require_relative "git_fixture"
 require_relative "isolated_git"
 
@@ -18,13 +19,15 @@ require_relative "isolated_git"
 class ConsentGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/consent-guard.rb", __dir__)
 
+  OWNER = "eirvandelden".freeze
+
   REPOSITORY = GitFixture.new do |repo|
     system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
-    system("git", "-C", repo, "remote", "add", "origin", "git@github.com:eirvandelden/dotfiles.git", exception: true)
+    system("git", "-C", repo, "remote", "add", "origin", "git@github.com:#{OWNER}/dotfiles.git", exception: true)
   end
 
   def setup
-    @repo = REPOSITORY.copy
+    @repo = self.class::REPOSITORY.copy
     # A home of its own, so the guard reads the allowlist this test wrote and
     # never the one installed on the machine running the suite.
     @home = Dir.mktmpdir
@@ -197,9 +200,29 @@ end
   end
 
   def test_pushing_to_an_allowed_url_is_allowed
-    _, stderr, status = run_guard("git push git@github.com:eirvandelden/dotfiles.git my-branch")
+    _, stderr, status = run_guard("git push #{personal_url("dotfiles")} my-branch")
 
     assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_to_a_personal_org_url_is_allowed
+    _, stderr, status = run_guard("git push git@github.com:eirvandelden-dev/clocky.git my-branch")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_pushing_to_a_near_miss_owner_needs_consent
+    [ "git@github.com:eirvandelden-devtools/x.git", "https://github.com/eirvandeldenx/x.git" ].each do |url|
+      _, _, status = run_guard("git push #{url} my-branch")
+
+      assert_equal(2, status.exitstatus, url)
+    end
+  end
+
+  def test_the_refusal_names_every_personal_owner
+    _, stderr, = run_guard("git push git@github.com:someone-else/x.git my-branch")
+
+    RemoteMatcher::PERSONAL_OWNERS.each { |owner| assert_includes(stderr, "#{owner}/*") }
   end
 
   def test_pushing_with_no_target_is_allowed
@@ -304,7 +327,7 @@ end
   end
 
   def test_a_remote_push_url_outside_the_allowlist_needs_consent
-    add_remote("mirror", "git@github.com:eirvandelden/dotfiles.git")
+    add_remote("mirror", personal_url("dotfiles"))
     system("git", "-C", @repo, "remote", "set-url", "--push", "mirror", "git@github.com:someone-else/dotfiles.git")
 
     _, stderr, status = run_guard("git push mirror b")
@@ -347,7 +370,7 @@ end
   end
 
   def test_a_url_that_only_contains_an_allowed_path_needs_consent
-    _, stderr, status = run_guard("git push https://evil.example/github.com/eirvandelden/x.git my-branch")
+    _, stderr, status = run_guard("git push https://evil.example/github.com/#{self.class::OWNER}/x.git my-branch")
 
     assert_equal(2, status.exitstatus)
     assert_match(/evil\.example/, stderr)
@@ -356,7 +379,7 @@ end
   def test_a_push_with_dash_c_resolves_the_remote_in_that_repository
     other = Dir.mktmpdir
     system("git", "init", "--quiet", other)
-    system("git", "-C", other, "remote", "add", "fork", "git@github.com:eirvandelden/other.git")
+    system("git", "-C", other, "remote", "add", "fork", personal_url("other"))
 
     _, stderr, status = run_guard("git -C #{other} push fork my-branch")
 
@@ -1277,6 +1300,10 @@ end
     File.write(File.join(@home, ".claude", "consent-guard-allowed-remotes.txt"), entries.join("\n"))
   end
 
+  def personal_url(repository)
+    "git@github.com:#{self.class::OWNER}/#{repository}.git"
+  end
+
   def add_remote(name, url)
     system("git", "-C", @repo, "remote", "add", name, url)
   end
@@ -1297,5 +1324,15 @@ end
     environment = { "HOME" => @home }
     environment["PATH"] = "#{@gh_bin}:#{ENV.fetch('PATH')}" if @gh_bin
     environment
+  end
+end
+
+# Every ConsentGuardTest case again, with an origin under the eirvandelden-dev organisation.
+class ConsentGuardPersonalOrgTest < ConsentGuardTest
+  OWNER = "eirvandelden-dev".freeze
+
+  REPOSITORY = GitFixture.new do |repo|
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
+    system("git", "-C", repo, "remote", "add", "origin", "git@github.com:#{OWNER}/dotfiles.git", exception: true)
   end
 end

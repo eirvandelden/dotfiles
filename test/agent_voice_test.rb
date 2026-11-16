@@ -48,6 +48,13 @@ class AgentVoiceTest < Minitest::Test
     assert_equal(1, PERSONAS.count { |name| stdout.include?(name) })
   end
 
+  def test_a_personal_org_repository_session_gets_a_persona
+    stdout, stderr, status = run_hook(cwd: repository("git@github.com:eirvandelden-dev/example.git"))
+
+    assert_equal(0, status.exitstatus, stderr)
+    assert_includes(stdout, "Persona:")
+  end
+
   def test_different_sessions_can_get_different_personas
     cwd = repository("git@github.com:eirvandelden/example.git")
     picks = (1..30).map { |n| persona_in(run_hook(cwd: cwd, session_id: "session-#{n}").first) }
