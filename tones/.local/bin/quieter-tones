@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# quieter-tones.sh <source.mp3>...
+# quieter-tones <source.mp3>...
 #
-# herdr plays each notification tone at full level and has no volume setting. This writes a
+# herdr-app plays each notification tone at full level and has no volume setting. This writes a
 # copy of each source tone at 0.3 of its level (what `afplay -v 0.3` gives) to
-# ~/Documents/Tones/herdr/, under the same file name. config.toml points at those copies.
+# ~/Documents/Tones/herdr/, under the same file name. herdr-app's settings.json points at those copies.
 # Run it again after a tone swap. The source is only ever read.
 
 set -euo pipefail
@@ -13,7 +13,7 @@ out_dir="$HOME/Documents/Tones/herdr"
 tmp=""
 
 fail() {
-  echo "quieter-tones.sh: $1" >&2
+  echo "quieter-tones: $1" >&2
   exit 1
 }
 
@@ -28,7 +28,7 @@ check_source() {
   [ -f "$source" ] || fail "no such file: $source"
   case "$source" in
     *.mp3) ;;
-    *) fail "not an mp3 (herdr plays only mp3): $source" ;;
+    *) fail "not an mp3 (herdr-app plays only mp3): $source" ;;
   esac
   # realpath follows a link, so a link to a copy counts as the copy.
   resolved=$(realpath -- "$source") || fail "cannot resolve: $source"
@@ -55,7 +55,7 @@ quieten() {
   echo "$destination"
 }
 
-[ $# -gt 0 ] || fail "usage: quieter-tones.sh <source.mp3>..."
+[ $# -gt 0 ] || fail "usage: quieter-tones <source.mp3>..."
 command -v ffmpeg >/dev/null 2>&1 || fail "ffmpeg is not on PATH"
 trap cleanup EXIT
 

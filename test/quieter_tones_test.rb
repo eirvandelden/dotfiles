@@ -6,11 +6,11 @@ require "open3"
 require "tmpdir"
 require_relative "isolated_git"
 
-# herdr plays each notification tone at full level and has no volume setting. quieter-tones.sh
+# herdr-app plays each notification tone at full level and has no volume setting. quieter-tones
 # writes a 0.3-level mp3 copy of each source tone into ~/Documents/Tones/herdr. Stub tests put a
 # fake `ffmpeg` first on PATH and run anywhere; real tests need ffmpeg and skip without it.
-class HerdrQuieterTonesTest < Minitest::Test
-  SCRIPT = File.expand_path("../herdr/.config/herdr/scripts/quieter-tones.sh", __dir__)
+class QuieterTonesTest < Minitest::Test
+  SCRIPT = File.expand_path("../tones/.local/bin/quieter-tones", __dir__)
   SYSTEM_PATH = "/usr/bin:/bin".freeze
 
   def setup
