@@ -90,13 +90,6 @@ class RexOpenPrDashTest < Minitest::Test
     refute_includes(File.read(row_record_path), NEW_BLOCK)
   end
 
-  def test_the_dispatcher_opens_the_rex_block_in_a_rex_block
-    _, stderr, status = run_script(DISPATCHER, SLUG, PR_URL, rex: true, env: { "REX_SCRIPTS_DIR" => REX_SCRIPTS })
-
-    assert(status.success?, stderr)
-    assert_match(/ -- gh dash --config #{Regexp.escape(config_path)}\z/, split_calls.first.to_s)
-  end
-
   private
 
   def dash(rex: true)

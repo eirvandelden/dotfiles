@@ -11,13 +11,14 @@ require_relative "isolated_git"
 # script are stubs; see delivery_harness.rb for their formats.
 #
 # Interface these tests pin, beyond the plan: review-report-fresh is found through
-# $WORKTREE_TOOLS_DIR; the pane script is $HERDR_SCRIPTS_DIR/open-pr-dash.sh, called as
+# $WORKTREE_TOOLS_DIR; the pane script is $HERDR_APP_SCRIPTS_DIR/open-pr-dash.sh, called as
 # `open-pr-dash.sh <slug> <pr-url>`; refusals go to stderr with exit 1; the PR URL goes to stdout.
 class DeliverTest < Minitest::Test
   include DeliveryHarness
   include HerdrAppHarness
 
   SLUG = "my-change".freeze
+  HC_ENV = { "HC_TERMINAL_ID" => "t10", "HERDR_APP_COORDINATOR" => nil }.freeze
   OPEN_FINDING = "- [ ] Important: Widget leaks memory — `lib/widget.rb:1` →".freeze
   REMOVAL_SUBJECT = "Remove change artifacts for #{SLUG}".freeze
 
@@ -38,7 +39,7 @@ class DeliverTest < Minitest::Test
   def test_a_closed_review_ends_in_a_draft_pr_without_the_change_folder
     commit_change_work(template: "## Summary\n\nPlaceholder\n")
 
-    stdout, stderr, status = deliver(herdr: true)
+    stdout, stderr, status = deliver(env: HC_ENV)
 
     assert(status.success?, stderr)
     refute(File.exist?(File.join(@repo, "docs/changes", SLUG)))
@@ -468,14 +469,6 @@ class DeliverTest < Minitest::Test
     assert_empty(rex_calls)
   end
 
-  def test_deliver_opens_the_dash_through_the_dispatcher_in_a_rex_block
-    commit_change_work
-
-    deliver(rex: true, env: { "REX_SCRIPTS_DIR" => @dash_scripts })
-
-    assert_equal([ "#{SLUG} #{PR_URL}" ], dash_calls)
-  end
-
   def test_resumes_after_a_failed_push_without_the_folder
     commit_change_work
     git("remote", "set-url", "--push", "origin", File.join(@origin, "does-not-exist"))
@@ -555,7 +548,7 @@ class DeliverTest < Minitest::Test
   end
 
   def deliver(*arguments, herdr: false, rex: false, scripts: @dash_scripts, env: {})
-    run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
+    run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: { "HERDR_APP_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
   end
 
   # deliver finds the dispatchers under the home folder, where the agents package links them.

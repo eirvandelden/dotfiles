@@ -102,6 +102,16 @@ class HerdrAppWorkerScriptsTest < Minitest::Test
     # The real round trip, a worker's hc send reaching the coordinator, rests on the sandbox live check (plan Proof).
   end
 
+  def test_plan_handoff_through_the_dispatcher_launches_a_worker_told_to_report_plan_ready
+    _, stderr, status = dispatch("hand-off-plan", "plan", SLUG)
+
+    assert(status.success?, stderr)
+    split = herdr_app_only_split
+    assert_includes(split["argv"], worktree_path(SLUG))
+    assert_match(/hc send t10\b/, prompt_of(split))
+    assert_includes(prompt_of(split), "Plan ready:")
+  end
+
   def test_intent_splits_down
     _, stderr, status = hand_off("intent", SLUG)
 
@@ -119,7 +129,7 @@ class HerdrAppWorkerScriptsTest < Minitest::Test
     assert_equal(%w[p10 p61], herdr_app_splits.map { |request| request["pane"] })
   end
 
-  def test_auto_changes_the_prompt_as_in_rex
+  def test_auto_changes_the_prompt
     hand_off("plan", SLUG, "--auto")
     hand_off("implement", SLUG, "--auto")
     plan, implement = herdr_app_splits.map { |request| prompt_of(request) }
