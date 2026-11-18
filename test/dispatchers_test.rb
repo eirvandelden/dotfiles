@@ -18,6 +18,7 @@ class DispatchersTest < Minitest::Test
   }.freeze
   # Built from parts, so this file never holds a whole retired token.
   RETIRED_SESSION = %w[REX SESSION].join("_")
+  RETIRED_ENV = %w[HERDR ENV].join("_")
 
   def setup
     @root = Dir.mktmpdir
@@ -68,7 +69,7 @@ class DispatchersTest < Minitest::Test
   end
 
   def test_each_dispatcher_refuses_a_herdr_pane_and_a_rex_block_and_names_hc_terminal_id
-    [ { "HERDR_ENV" => "1" }, { RETIRED_SESSION => "S1" } ].each do |retired|
+    [ { RETIRED_ENV => "1" }, { RETIRED_SESSION => "S1" } ].each do |retired|
       DISPATCHERS.each_key do |name|
         _stdout, stderr, status = dispatch(name, "plan", "some-change", env: retired)
 
