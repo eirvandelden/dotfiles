@@ -13,12 +13,10 @@ class RexConfigTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   LUA_DIR = File.join(ROOT, "rex/.config/rex")
   INIT = File.join(LUA_DIR, "init.lua")
-  SETTINGS = File.join(ROOT, "claude/.claude/settings.json")
   UNBOUND_ACTIONS = %w[
     agent_switcher open_project file_viewer file_viewer_split file_viewer_tab lazygit_split lazygit_tab
   ].freeze
   CTRL_S_KEY = /\Actrl\+s(>|\z)/
-  TONE_HOOKS = { "SessionStart" => "ready", "Notification" => "request", "Stop" => "done" }.freeze
   BIND = /^\s*rex\.bind\("(?<key>[^"]+)",\s*"(?<action>[^"]+)"(?:,\s*\{(?<options>.*)\})?\)/
 
   KEPT = {
@@ -96,34 +94,7 @@ class RexConfigTest < Minitest::Test
     assert_empty(binds.keys.grep(CTRL_S_KEY))
   end
 
-  def test_settings_json_has_the_rex_session_start_hook
-    commands = hook_commands.fetch("SessionStart")
-
-    assert(commands.any? { |command| command.include?("rex __internal session-start --agent claude") }, commands.inspect)
-  end
-
-  def test_hooks_play_the_three_tones
-    TONE_HOOKS.each do |event, tone|
-      commands = hook_commands.fetch(event)
-
-      assert(commands.any? { |command| command.match?(%r{play-tone\.sh #{tone}\b}) }, "#{event}: #{commands.inspect}")
-    end
-  end
-
-  def test_session_start_plays_its_tone_only_on_startup
-    entry = JSON.parse(File.read(SETTINGS)).dig("hooks", "SessionStart")
-                .find { |candidate| candidate["hooks"].any? { |hook| hook["command"].include?("play-tone.sh ready") } }
-
-    assert_equal("startup", entry["matcher"])
-  end
-
   private
-
-  def hook_commands
-    JSON.parse(File.read(SETTINGS)).fetch("hooks").transform_values do |entries|
-      entries.flat_map { |entry| entry["hooks"].map { |hook| hook["command"].to_s } }
-    end
-  end
 
   # Loads init.lua and every module it requires under luajit with a `rex` stub that accepts every call
   # and records `rex.action{name=...}` and `rex.bind(key, action)`. Returns the action names and the binds.

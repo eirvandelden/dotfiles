@@ -26,46 +26,6 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "^(startup|resume|clear|compact|fork)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash '/Users/etienne.vandelden/.claude/hooks/herdr-agent-state.sh' session",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/bin/sh -c '[ \"${HERDR_ENV:-}\" = 1 ] || rex __internal session-start --agent claude 2>/dev/null || true'",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.config/rex/scripts/play-tone.sh ready",
-            "timeout": 10
-          }
-        ]
-      },
-      {
         "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
@@ -150,47 +110,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
             "command": "\"$HOME/.claude/hooks/core-values.rb\" motto",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh '/Users/etienne.vandelden/.claude/hooks/herdr-claude-session-title.sh'",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.config/rex/scripts/play-tone.sh done",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.config/rex/scripts/play-tone.sh request",
             "timeout": 10
           }
         ]
@@ -427,7 +347,7 @@
       "### User-specific",
       "**Primary use of Claude Code**: software development (dotfiles bootstrap/config tooling)",
       "**Trusted repo**: /Users/etienne.vandelden/Developer/dotfiles (github.com:eirvandelden/dotfiles.git), public — only this repo's own work is OK to push here; secrets/sensitive data never cleared by visibility. Other repos owned by `eirvandelden` or `eirvandelden-dev` are trusted remotes too",
-      "**Org-specific CLIs**: None configured — herdr, rv, lefthook, stow, synvert-ruby, rcn appear to be personal/dotfiles tooling, not org-specific",
+      "**Org-specific CLIs**: None configured — rv, lefthook, stow, synvert-ruby, rcn appear to be personal/dotfiles tooling, not org-specific",
       "**Routine pushes**: git push/pull to `origin` of this repo (github.com:eirvandelden/dotfiles.git) is routine; other `eirvandelden/*` and `eirvandelden-dev/*` repos follow playbook rule 19",
       "**Branches and dotfiles**: `main` is protected by a ruleset and takes no direct push. Pushes to feature branches on `origin` are routine. Editing shell profiles inside this repo is routine. `stow` and `lefthook install` need an explicit user request (playbook rules 7, 12, 19)"
     ],
