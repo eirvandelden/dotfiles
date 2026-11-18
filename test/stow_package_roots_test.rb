@@ -18,8 +18,7 @@ class StowPackageRootsTest < Minitest::Test
 
   # Non-dot directories that a named package may hold at its root because they are real $HOME
   # directories. macOS keeps glow's config in ~/Library, so `glow/Library` is intended.
-  # `rex/Library` holds a LaunchAgent plist for ~/Library/LaunchAgents.
-  HOME_DIRECTORIES = { "glow" => [ "Library" ], "rex" => [ "Library" ] }.freeze
+  HOME_DIRECTORIES = { "glow" => [ "Library" ] }.freeze
 
   def test_a_package_of_only_dotfiles_is_accepted
     root = fixture_repository("tidy" => [ ".config", ".gitignore" ])

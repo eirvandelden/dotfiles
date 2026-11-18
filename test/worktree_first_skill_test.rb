@@ -119,7 +119,7 @@ class WorktreeFirstSkillTest < Minitest::Test
 
   def environment
     { "HOME" => @home, "PATH" => [ gh_stub_dir, ENV.fetch("PATH") ].join(File::PATH_SEPARATOR),
-      "HERDR_ENV" => nil, "GIT_CONFIG_GLOBAL" => "/dev/null", "CREATE_CALL_LOG" => create_call_log }
+      "HC_TERMINAL_ID" => nil, "GIT_CONFIG_GLOBAL" => "/dev/null", "CREATE_CALL_LOG" => create_call_log }
   end
 
   # A failing `gh` first on PATH. Dropping every PATH dir that holds `gh` also drops `bash` on CI,

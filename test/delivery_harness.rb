@@ -6,14 +6,14 @@ require_relative "git_fixture"
 require_relative "herdr_app_harness"
 
 # Shared setup for the delivery scripts' tests (deliver, ship, open-pr-dash.sh): a temporary git
-# repository with a bare repository behind "origin", stubbed `gh` and `herdr` on PATH, and a HOME
+# repository with a bare repository behind "origin", a stubbed `gh` on PATH, and a HOME
 # of its own so no real configuration is read.
 #
 # The stubs are one Ruby program installed under both names. Its shebang passes --disable-gems, so a
 # call does not pay the RubyGems start-up (about 33 ms); it needs only fileutils and json. Each call
-# appends its arguments, one line per call, to <state>/gh.log or <state>/herdr.log. Its answer comes
+# appends its arguments, one line per call, to <state>/gh.log. Its answer comes
 # from <state>/scripts.json, written by `stub_response`. The key is "<tool> <subcommand words>", longest match first:
-# "herdr pane get w1:pA", then "herdr pane get"; `gh pr checks` also answers to "gh pr checks watch"
+# "gh pr view 7", then "gh pr view"; `gh pr checks` also answers to "gh pr checks watch"
 # (when --watch is given) and "gh pr checks json" (otherwise). The last key tried is "<tool> *". A
 # key with several responses plays them in order and repeats the last. A response is a hash with
 # "stdout", "stderr", "exit", and "jq_stdout" (printed instead of stdout when -q or --jq is given).
@@ -26,14 +26,11 @@ module DeliveryHarness
   REPO_ROOT = File.expand_path("..", __dir__)
   DELIVER = File.join(REPO_ROOT, "agents/.agents/skills/deliver/scripts/deliver")
   SHIP = File.join(REPO_ROOT, "agents/.agents/skills/finish/scripts/ship")
-  HERDR_SCRIPTS = File.join(REPO_ROOT, "herdr/.config/herdr/scripts")
-  OPEN_PR_DASH = File.join(HERDR_SCRIPTS, "open-pr-dash.sh")
   WORKTREE_TOOLS_DIR = File.join(REPO_ROOT, "git/.config/git/worktree-tools")
 
   PERSONAL_URL = "git@github.com:eirvandelden/dots.git".freeze
   WORK_URL = "git@github.com:employer/their-app.git".freeze
   PR_URL = "https://github.com/eirvandelden/dots/pull/7".freeze
-  OWN_PANE = "w1:pOwn".freeze
 
   STUB_SOURCE = <<~'RUBY'.freeze
     #!/usr/bin/env -S ruby --disable-gems
@@ -201,7 +198,6 @@ module DeliveryHarness
 
   def default_responses
     stub_response("gh *", { "stdout" => "" })
-    stub_response("herdr *", { "stdout" => '{"result":{}}' })
     stub_response("gh pr list", { "stdout" => "[]" })
     stub_response("gh pr create", { "stdout" => "#{PR_URL}\n" })
     stub_response("gh repo view", { "stdout" => '{"nameWithOwner":"eirvandelden/dots"}', "jq_stdout" => "eirvandelden/dots\n" })
@@ -236,10 +232,6 @@ module DeliveryHarness
     log_lines("gh")
   end
 
-  def herdr_calls
-    log_lines("herdr")
-  end
-
   def log_lines(name)
     path = File.join(@state, "#{name}.log")
     File.exist?(path) ? File.readlines(path, chomp: true) : []
@@ -250,27 +242,23 @@ module DeliveryHarness
     File.exist?(path) ? File.read(path) : nil
   end
 
-  def run_script(script, *arguments, herdr: false, env: {})
-    Open3.capture3(script_environment(herdr).merge(env), script, *arguments, chdir: @repo)
+  def run_script(script, *arguments, env: {})
+    Open3.capture3(script_environment.merge(env), script, *arguments, chdir: @repo)
   end
 
-  def script_environment(herdr)
+  def script_environment
     HerdrAppHarness::CLEARED_ENV.merge(
       "PATH" => "#{@stub_bin}:#{ENV.fetch('PATH')}", "HOME" => @home, "STUB_STATE" => @state,
       "WORKTREE_TOOLS_DIR" => WORKTREE_TOOLS_DIR, "GIT_CONFIG_GLOBAL" => "/dev/null",
-      "GIT_DIR" => nil, "GIT_WORK_TREE" => nil, "GIT_INDEX_FILE" => nil, "LEFTHOOK_BIN" => nil,
-      "HERDR_ENV" => herdr ? "1" : nil, "HERDR_WORKSPACE_ID" => herdr ? "w1" : nil,
-      "HERDR_PANE_ID" => herdr ? OWN_PANE : nil
+      "GIT_DIR" => nil, "GIT_WORK_TREE" => nil, "GIT_INDEX_FILE" => nil, "LEFTHOOK_BIN" => nil
     )
   end
 
   private
 
   def install_stubs
-    %w[gh herdr].each do |name|
-      path = File.join(@stub_bin, name)
-      File.write(path, STUB_SOURCE)
-      FileUtils.chmod(0o755, path)
-    end
+    path = File.join(@stub_bin, "gh")
+    File.write(path, STUB_SOURCE)
+    FileUtils.chmod(0o755, path)
   end
 end

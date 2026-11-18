@@ -176,7 +176,7 @@ class DeliverTest < Minitest::Test
     assert(File.exist?(File.join(@repo, "docs/changes", SLUG, "intent.md")))
     assert_empty(origin_branches - [ "main" ])
     assert_empty(gh_calls.grep(/\Apr (create|edit)/))
-    assert_empty(herdr_calls)
+    assert_empty(dash_calls)
   end
 
   def test_check_mode_exits_one_with_the_reasons_when_a_finding_is_open

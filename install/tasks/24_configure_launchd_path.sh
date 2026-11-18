@@ -7,11 +7,10 @@
 # - Give services that launchd starts the same Homebrew PATH an interactive shell has.
 # - launchd hands its services a bare PATH (/usr/bin:/bin:/usr/sbin:/sbin). Everything
 #   started through `brew services` inherits it, and so does anything those services
-#   spawn without going through a login shell. Herdr is the case that surfaced this:
-#   its plugin panes are spawned straight from the server, so the file viewer could not
-#   find glow, delta or bat, and the lazygit plugin could not find lazygit — all four
-#   live in /opt/homebrew/bin. The plugins degrade quietly to plain text rather than
-#   reporting a broken install, which makes this hard to spot.
+#   spawn without going through a login shell. Such a program finds no tool in
+#   /opt/homebrew/bin, such as glow, delta, bat or lazygit, and it often degrades
+#   quietly to plain text rather than reporting a broken install, which makes this
+#   hard to spot.
 #
 # Usage:
 #   ./install/tasks/24_configure_launchd_path.sh

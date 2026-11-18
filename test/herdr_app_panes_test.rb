@@ -486,7 +486,7 @@ class HerdrAppCommandOwnerTest < Minitest::Test
       herdr-app/.config/herdr-app/scripts/*.sh herdr-app/.local/bin/herdr-app-pane herdr-app/.local/share/herdr-app-pane/*.rb
       agents/.agents/bin/hand-off-plan agents/.agents/bin/start-review agents/.agents/bin/open-pr-dash
       agents/.agents/skills/deliver/scripts/deliver git/.config/git/worktree-tools/worktree-pane
-      git/.config/git/worktree-tools/lib/common.rb rex/.config/rex/scripts/play-tone.sh
+      git/.config/git/worktree-tools/lib/common.rb
     ]
     patterns.flat_map { |pattern| Dir.glob(File.join(ROOT, pattern)) }
   end

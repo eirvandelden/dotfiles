@@ -165,7 +165,7 @@ class PullRequestFlowTest < Minitest::Test
   def scanned_files
     skills = Dir.glob(File.join(SKILLS, "**/*")).select { |path| File.file?(path) }
     agents = Dir.glob(File.join(REPO_ROOT, "claude/.claude/agents/*"))
-    scripts = Dir.glob(File.join(REPO_ROOT, "herdr/.config/herdr/scripts/*")).select { |path| File.file?(path) }
+    scripts = Dir.glob(File.join(REPO_ROOT, "herdr-app/.config/herdr-app/scripts/*")).select { |path| File.file?(path) }
     live = [ "lefthook.yml", Playbook::PATH, "agents.md" ].map { |path| File.join(REPO_ROOT, path) }
     skills + agents + scripts + live
   end

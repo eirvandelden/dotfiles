@@ -60,14 +60,14 @@ class StateDirsInstallTest < Minitest::Test
     assert_equal("puts 1\n", File.read(state("irb/history")))
   end
 
-  def test_install_runs_the_task_after_the_rex_step
+  def test_install_runs_the_task_after_the_glow_step
     lines = File.readlines(File.join(REPO_ROOT, "install.sh"))
-    rex = lines.index { |line| line.include?(%(run_task "53_configure_rex_defaults.sh")) }
+    glow = lines.index { |line| line.include?(%(run_task "51_configure_glow_style.sh")) }
     state = lines.index { |line| line.include?(%(run_task "54_prepare_state_dirs.sh")) }
 
-    refute_nil(rex)
+    refute_nil(glow)
     refute_nil(state)
-    assert_operator(state, :>, rex)
+    assert_operator(state, :>, glow)
   end
 
   def test_the_step_is_executable

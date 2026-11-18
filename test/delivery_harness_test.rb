@@ -5,7 +5,7 @@ require "rbconfig"
 require_relative "delivery_harness"
 require_relative "isolated_git"
 
-# The `gh` and `herdr` stubs are called many times per delivery test, so their start-up cost counts.
+# The `gh` stub is called many times per delivery test, so its start-up cost counts.
 class DeliveryHarnessTest < Minitest::Test
   include DeliveryHarness
 
@@ -21,14 +21,10 @@ class DeliveryHarnessTest < Minitest::Test
   end
 
   def test_a_stub_call_starts_without_rubygems
-    %w[gh herdr].each do |name|
-      File.delete(@answer) if File.exist?(@answer)
+    _, error, = call_stub("gh")
 
-      _, error, = call_stub(name)
-
-      assert_path_exists(@answer, error)
-      assert_equal("nil", File.read(@answer), "#{name} stub loaded RubyGems")
-    end
+    assert_path_exists(@answer, error)
+    assert_equal("nil", File.read(@answer), "gh stub loaded RubyGems")
   end
 
   def test_build_repo_gives_each_test_its_own_repository_and_origin

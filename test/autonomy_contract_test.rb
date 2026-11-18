@@ -102,7 +102,7 @@ class AutonomyContractTest < Minitest::Test
 
   def test_nothing_names_the_old_account_path
     old_path = "herdr/deliver-" + "<slug>"
-    files = Dir.glob(File.join(SKILLS, "**/*")) + Dir.glob(File.join(REPO_ROOT, "herdr/**/scripts/*")) +
+    files = Dir.glob(File.join(SKILLS, "**/*")) + Dir.glob(File.join(REPO_ROOT, "herdr-app/**/scripts/*")) +
             Dir.glob(File.join(REPO_ROOT, "test/*.rb"))
     offenders = files.select { |file| File.file?(file) && File.read(file).include?(old_path) }
 

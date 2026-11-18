@@ -30,7 +30,7 @@ class DesignReviewPassTest < Minitest::Test
   end
 
   def test_the_review_pane_prompt_names_the_design_pass
-    script = File.read(File.join(ROOT, "herdr/.config/herdr/scripts/start-review.sh"))
+    script = File.read(File.join(ROOT, "herdr-app/.config/herdr-app/scripts/start-review.sh"))
 
     assert_match(/Bugs, Security, Compliance and Design|Design pass/i, script)
   end
