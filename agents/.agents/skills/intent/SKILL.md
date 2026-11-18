@@ -176,14 +176,10 @@ Refuse to flip `Status:` to `accepted` while any of these holds, and name what i
 
 Otherwise, on the words "accepted", "agreed", "accept the intent" or "agree the intent" (not "looks good", not "ok"): flip the `Status:` line to `accepted` and leave `intent.md` uncommitted. Do not commit it and do not push: the plan stage commits `intent.md` and `plan.md` together, in the same worktree. Write the agreed terms into the glossary as the `glossary` skill says; a personal repository gets its own commit (`docs: glossary terms for <slug>`).
 
-Inside Rex (`REX_SESSION` set, `HERDR_ENV` and `HC_TERMINAL_ID` unset), record this block for the delivery step: write `$REX_BLOCK` to `<git-common-dir>/rex/intent-pane-<slug>` (create the directory); block ids never repeat, so it needs no terminal id.
-
-Inside herdr (`HERDR_ENV` set), record this pane for the delivery step. Run `herdr pane current` and write the `pane_id` field, then the `terminal_id` field, one per line, to `<git-common-dir>/herdr/intent-pane-<slug>` (create the directory). The delivery step reads it to keep this pane open when it closes the idle stage panes, and the terminal id tells this pane from a later pane that reuses its id.
-
-Inside herdr-app (`HC_TERMINAL_ID` set, `HERDR_ENV` unset), record this terminal for the delivery step: write `$HC_TERMINAL_ID` to `<git-common-dir>/herdr-app/intent-pane-<slug>` (create the directory). The delivery step keeps the pane of that terminal open when it closes the idle stage panes.
+Inside herdr-app (`HC_TERMINAL_ID` set), record this terminal for the delivery step: write `$HC_TERMINAL_ID` to `<git-common-dir>/herdr-app/intent-pane-<slug>` (create the directory). The delivery step keeps that terminal open when it closes the idle stage terminals.
 
 - `intent.md` has `Delivery: autonomous`: do not chain to the plan stage by hand. Follow "Autonomous delivery" below.
-- Otherwise, inside herdr, herdr-app or Rex (`HERDR_ENV`, `HC_TERMINAL_ID` or `REX_SESSION` set), start the plan stage: `COORDINATOR=<coordinator> ~/.agents/bin/hand-off-plan plan '<slug>'`, where `<coordinator>` is the pane or terminal id your starting prompt named if a stage pane started you, else your own `$HERDR_PANE_ID` (in herdr-app `$HC_TERMINAL_ID`, so `COORDINATOR=$HC_TERMINAL_ID`; `$REX_BLOCK` in Rex; herdr wins over herdr-app, and herdr-app over Rex). If that command fails, say so and do not retry — in a stage pane, in your report file, as your starting prompt says. Outside the three tools, stop after the acceptance.
+- Otherwise, inside herdr-app (`HC_TERMINAL_ID` set), start the plan stage: `COORDINATOR=<coordinator> ~/.agents/bin/hand-off-plan plan '<slug>'`, where `<coordinator>` is the terminal address your starting prompt named if a stage terminal started you, else your own `$HC_TERMINAL_ID`, so `COORDINATOR=$HC_TERMINAL_ID`. If that command fails, say so and do not retry — in a stage terminal, in your report file, as your starting prompt says. Outside herdr-app, stop after the acceptance.
 
 ## Autonomous delivery
 
@@ -201,8 +197,8 @@ A stage pane started by `hand-off-plan intent` is still the coordinator: its sta
 
 Escalation: stop and ask Etienne one concrete question when a choice changes the agreed behaviour, a step needs a permission he has not approved, one problem fails three times, or a finding is still disputed after two rounds. A `Decision needed:` line in a stage report is how a pane raises one of these.
 
-Outside herdr, herdr-app and Rex, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
+Outside herdr-app, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
 
 ## Codex
 
-Same interview and template. Explore first, the scope check, the probe list and the read-back apply unchanged; read files with Codex's own tools. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr pane of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `plan` and `implement` do today.
+Same interview and template. Explore first, the scope check, the probe list and the read-back apply unchanged; read files with Codex's own tools. Invoked as `$intent`. Use `gh issue view` the same way; there is no `AskUserQuestion` tool, so number multiple-choice options in plain text instead. The default in-session interview is the only backend, since Codex has no herdr-app terminal of its own; a Codex coordinator may still start a Claude intent pane through the same script, as `plan` and `implement` do today.

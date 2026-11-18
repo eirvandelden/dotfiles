@@ -8,7 +8,7 @@ class ArtifactChainSkillsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(ROOT, "agents/.agents/skills")
 
-  LIVE_PATHS = %w[claude agents codex herdr git bin agents.md agents/.agents/PLAYBOOK.md SKILLS-INDEX.md].freeze
+  LIVE_PATHS = %w[claude agents codex herdr-app git bin agents.md agents/.agents/PLAYBOOK.md SKILLS-INDEX.md].freeze
   STAGE_SHAPED_SPEC = [
     /`spec`/,
     /(?<!ai-native-workflow\/)\bspec\.md/,
@@ -82,10 +82,9 @@ class ArtifactChainSkillsTest < Minitest::Test
     assert_includes(skill("worktree-first"), "--no-pane")
   end
 
-  def test_a_plain_worktree_first_invocation_still_opens_a_pane
-    assert_match(/Inside herdr, a pane rooted in the new worktree opens below/, skill("worktree-first"))
-    assert_match(/\bRex\b/, skill("worktree-first"))
-    assert_match(/plain invocation[^.]*pane/i, skill("worktree-first"))
+  def test_a_plain_worktree_first_invocation_still_opens_a_terminal
+    assert_match(/Inside herdr-app, a terminal rooted in the new worktree opens below/, skill("worktree-first"))
+    assert_match(/plain invocation[^.]*terminal/i, skill("worktree-first"))
   end
 
   def test_plan_reads_only_an_accepted_intent

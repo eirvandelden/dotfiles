@@ -65,9 +65,8 @@ class DeliveryContractTest < Minitest::Test
   def test_intent_records_its_pane_on_accept
     section = section_of(skill("intent"), "## 4. Accept")
 
-    assert_includes(section, "herdr pane current")
-    assert_includes(section, "terminal_id")
-    assert_includes(section, "intent-pane-<slug>")
+    assert_includes(section, "HC_TERMINAL_ID")
+    assert_includes(section, "herdr-app/intent-pane-<slug>")
   end
 
   def test_the_coordinator_delivers_then_ships_without_merging

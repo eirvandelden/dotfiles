@@ -1,9 +1,9 @@
 ---
 name: review
-description: Reviews this branch — a fresh reviewer in a herdr pane by default, or the reviewer agent forked in-session with "here". The reviewer stays report-only; a clean review the user started hands over to the deliver skill, which opens the draft PR.
+description: Reviews this branch — a fresh reviewer in a herdr-app terminal by default, or the reviewer agent forked in-session with "here". The reviewer stays report-only; a clean review the user started hands over to the deliver skill, which opens the draft PR.
 arguments:
   - name: backend
-    description: "(default) a fresh reviewer in a herdr pane via start-review; \"here\": the reviewer agent forked in-session instead."
+    description: "(default) a fresh reviewer in a herdr-app terminal via start-review; \"here\": the reviewer agent forked in-session instead."
 ---
 
 # Review
@@ -12,8 +12,8 @@ Get this branch reviewed. The reviewer is report-only: it reads `REVIEW.md` (or 
 
 ## Choosing a backend
 
-- No argument, `HERDR_ENV`, `HC_TERMINAL_ID` or `REX_SESSION` set: pane backend. A fresh agent with an empty context is the reason to review in a pane rather than this session, which has been steering the implementation and cannot see it fresh.
-- `here`, or `HERDR_ENV`, `HC_TERMINAL_ID` and `REX_SESSION` unset: fork the `reviewer` agent in this session (Agent tool, `subagent_type: reviewer`). Outside herdr, herdr-app and Rex this is the only option — say so in one line before running it, so the pane behaviour isn't silently missed.
+- No argument, `HC_TERMINAL_ID` set: pane backend. A fresh agent with an empty context is the reason to review in a pane rather than this session, which has been steering the implementation and cannot see it fresh.
+- `here`, or `HC_TERMINAL_ID` unset: fork the `reviewer` agent in this session (Agent tool, `subagent_type: reviewer`). Outside herdr-app this is the only option — say so in one line before running it, so the terminal behaviour isn't silently missed.
 
 ## Pane backend
 
@@ -59,6 +59,6 @@ The coordinator transcribes the output into `review.md`, using the round format 
 
 ## Codex
 
-Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `intent.md`, `plan.md`, the diff, write the round, run `commit-review` — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr pane of its own.
+Same report-only contract, same file. Spawn the `reviewer` agent (multi-agent tools); if spawning is unavailable in the session, run the same instructions — read `REVIEW.md`/ `REVIEW.local.md`, `intent.md`, `plan.md`, the diff, write the round, run `commit-review` — in a fresh `codex` session instead. `$review` invokes it; `here` is the only backend, since Codex has no herdr-app terminal of its own.
 
 For autonomous delivery, follow Auto mode instead: run the read-only Claude CLI backend, plus the separate Codex review round only on `Codex review: yes`.

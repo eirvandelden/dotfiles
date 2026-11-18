@@ -1,6 +1,6 @@
 # herdr-app look: Solunized themes, the right sidebar, and a color per core
 
-The `cores` layout puts the sidebar on the right. Panes are cards on a frame, as in the herdr TUI. A personal space shows a blue accent. A work space shows an orange accent.
+The `cores` layout puts the sidebar on the right. Panes are cards on a frame. A personal space shows a blue accent. A work space shows an orange accent.
 
 ## The themes
 

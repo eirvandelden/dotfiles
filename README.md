@@ -240,15 +240,6 @@ Available commands:
 - `worktree-setup-all` - Setup all worktrees in current repo
 - `worktree-remove <path>` - Cleanup before removing worktree
 
-## 📖 Reading files in herdr
-
-herdr runs a read-only, git-aware file viewer in a pane: `prefix+f` for a split beside the work, `prefix+shift+f` for its own tab. Markdown arrives rendered, code highlighted. Rex opens the same viewer through `worktree-viewer` (the Rex twin, `worktree-viewer-rex`, takes over when only `REX_SESSION` is set).
-
-It opens wherever the focused pane is, which is usually the main checkout — press `W` to re-root it at a worktree, including the one an agent is working in.
-
-For complete documentation, see:
-- [herdr README](herdr/.config/herdr/README.md)
-
 ## 🐙 gh-dash
 
 Keys for reviewing pull requests in gh-dash:

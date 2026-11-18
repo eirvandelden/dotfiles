@@ -12,8 +12,8 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
 
 ## Choosing a backend
 
-- No argument, `HERDR_ENV`, `HC_TERMINAL_ID` or `REX_SESSION` set: pane backend — hands the plan to a fresh Sonnet worker pane, the same as today's `handoff` mode did.
-- `here`, or `HERDR_ENV`, `HC_TERMINAL_ID` and `REX_SESSION` unset: build in this session instead — see the `here` backend below for `single`/`split`. Outside herdr, herdr-app and Rex this is the only option — say so in one line before starting, so the pane behaviour isn't silently missed.
+- No argument, `HC_TERMINAL_ID` set: pane backend — hands the plan to a fresh Sonnet worker terminal.
+- `here`, or `HC_TERMINAL_ID` unset: build in this session instead — see the `here` backend below for `single`/`split`. Outside herdr-app this is the only option — say so in one line before starting, so the terminal behaviour isn't silently missed.
 
 ## Pane backend
 
@@ -89,4 +89,4 @@ Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` ar
 
 ## Codex
 
-Same backends. Pane backend still spawns a Claude pane, as today — Codex has no herdr worker of its own. `here` backend's `split` mode's `implementer` restriction comes from the generated `codex/.codex/agents/` TOML plus its `developer_instructions` sentence (phase 3), not a per-path hook — Codex agents cannot carry one.
+Same backends. Pane backend still spawns a Claude terminal, as today — Codex has no herdr-app worker of its own. `here` backend's `split` mode's `implementer` restriction comes from the generated `codex/.codex/agents/` TOML plus its `developer_instructions` sentence (phase 3), not a per-path hook — Codex agents cannot carry one.

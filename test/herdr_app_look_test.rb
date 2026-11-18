@@ -7,7 +7,7 @@ require_relative "herdr_app_mod_copy"
 require_relative "isolated_git"
 
 # Phase 4 of herdr-app, the look: the sidebar on the right of the cores layout, the Solunized themes, the
-# herdr TUI's cards on a frame, and a blue accent for personal spaces and an orange one for work spaces.
+# cards on a frame, and a blue accent for personal spaces and an orange one for work spaces.
 # The core-look mod picks the theme pair through themePick in its main.js; node runs it here through a mod copy.
 class HerdrAppLookTest < Minitest::Test
   include HerdrAppModCopy
