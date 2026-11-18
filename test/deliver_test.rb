@@ -1,13 +1,12 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "delivery_harness"
-require_relative "rex_harness_compat"
 require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # `deliver` ends a change: once a review round leaves no open finding it removes the change folder
-# in a commit of its own, pushes the branch and opens (or updates) a draft PR, then asks the herdr
-# script for a gh-dash pane. `deliver --check` runs only the preconditions. gh, herdr and the pane
+# in a commit of its own, pushes the branch and opens (or updates) a draft PR, then asks the herdr-app
+# script for a gh-dash pane. `deliver --check` runs only the preconditions. gh, herdr-app-pane and the pane
 # script are stubs; see delivery_harness.rb for their formats.
 #
 # Interface these tests pin, beyond the plan: review-report-fresh is found through
@@ -170,7 +169,7 @@ class DeliverTest < Minitest::Test
     commit_change_work
     head = git("rev-parse", "HEAD")
 
-    _, stderr, status = deliver("--check", herdr: true)
+    _, stderr, status = deliver("--check")
 
     assert(status.success?, stderr)
     assert_equal(head, git("rev-parse", "HEAD"))
@@ -178,7 +177,6 @@ class DeliverTest < Minitest::Test
     assert_empty(origin_branches - [ "main" ])
     assert_empty(gh_calls.grep(/\Apr (create|edit)/))
     assert_empty(herdr_calls)
-    assert_empty(dash_calls)
   end
 
   def test_check_mode_exits_one_with_the_reasons_when_a_finding_is_open
@@ -291,167 +289,25 @@ class DeliverTest < Minitest::Test
     assert_includes(stdout, PR_URL)
   end
 
-  def test_closes_the_idle_and_done_stage_panes_this_change_opened
+  def test_deliver_closes_idle_stage_terminals_and_keeps_the_intent_terminal
     commit_change_work
-    record_stage_panes(panes_in_play)
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: panes_in_play }) })
+    world = HerdrAppHarness::Fixtures.default_world(cwd: toplevel)
+    herdr_app_setup(world)
+    herdr_app_world_change do |changed|
+      [ %w[t20 p20], %w[t21 p21] ].each do |address, pane|
+        HerdrAppHarness::Fixtures.add_terminal(changed, HerdrAppHarness::Fixtures.agent_row(address, pane, "idle"),
+                                               HerdrAppHarness::Fixtures.terminal(address, cwd: toplevel, status: HerdrAppHarness::Fixtures.agent("idle")))
+      end
+    end
+    record_row_and_intent_terminals
+    env = herdr_app_env(pane_cli: HerdrAppHarness::PANE_CLI).merge("HERDR_APP_SCRIPTS_DIR" => @dash_scripts,
+                                                                      "PATH" => "#{@herdr_app_bin}:#{@stub_bin}:#{ENV.fetch('PATH')}")
 
-    deliver(herdr: true)
-
-    assert_includes(herdr_calls, "pane list --workspace w1")
-    assert_equal(%w[w1:pIdle w1:pDone], closed_panes)
-    refute(File.exist?(stage_panes_file))
-  end
-
-  def test_never_closes_its_own_pane_or_a_working_or_agentless_pane
-    commit_change_work
-    record_stage_panes(panes_in_play)
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: panes_in_play }) })
-
-    deliver(herdr: true)
-
-    %W[#{OWN_PANE} w1:pWorking w1:pShell].each { |pane| refute_includes(closed_panes, pane) }
-  end
-
-  def test_leaves_an_unrelated_idle_agent_in_the_worktree_open
-    commit_change_work
-    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
-    unrelated = pane("w1:pOther", "codex", "idle")
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ pane("w1:pIdle", "claude", "idle"), unrelated ] }) })
-
-    deliver(herdr: true)
-
-    assert_equal(%w[w1:pIdle], closed_panes)
-  end
-
-  def test_never_closes_the_intent_pane
-    commit_change_work
-    intent = pane("w1:pIntent", "claude", "idle")
-    record_stage_panes([ intent, pane("w1:pIdle", "claude", "idle") ])
-    record_intent_pane(intent)
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ intent, pane("w1:pIdle", "claude", "idle") ] }) })
-
-    deliver(herdr: true)
-
-    assert_equal(%w[w1:pIdle], closed_panes)
-  end
-
-  def test_leaves_a_recorded_pane_id_that_another_terminal_reuses
-    commit_change_work
-    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
-    reused = pane("w1:pIdle", "claude", "idle").merge(terminal_id: "term_later")
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ reused ] }) })
-
-    deliver(herdr: true)
-
-    assert_empty(closed_panes)
-  end
-
-  def test_a_failed_pane_list_after_the_pr_exists_only_warns
-    commit_change_work
-    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
-    stub_response("herdr pane list", { "exit" => 1, "stderr" => "herdr: server not responding\n" })
-
-    stdout, stderr, status = deliver(herdr: true)
+    _, stderr, status = deliver(env: env)
 
     assert(status.success?, stderr)
-    assert_includes(stdout, PR_URL)
-    assert_match(/server not responding/, stderr)
-    assert_empty(closed_panes)
-  end
-
-  def test_lists_panes_without_a_workspace_when_herdr_names_none
-    commit_change_work
-    record_stage_panes([ pane("w1:pIdle", "claude", "idle") ])
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ pane("w1:pIdle", "claude", "idle") ] }) })
-
-    _, stderr, status = deliver(herdr: true, env: { "HERDR_WORKSPACE_ID" => nil })
-
-    assert(status.success?, stderr)
-    assert_includes(herdr_calls, "pane list")
-    assert_equal(%w[w1:pIdle], closed_panes)
-  end
-
-  def test_deliver_closes_idle_rex_stage_blocks
-    commit_change_work
-    record_rex_row(%w[blkIdle blkDone blkWorking blkShell])
-    answer_rex_blocks(blkIdle: "idle", blkDone: "done", blkWorking: "working", blkShell: nil, OWN_BLOCK.to_sym => "idle")
-
-    deliver(rex: true)
-
-    assert_equal(%w[blkIdle blkDone], closed_blocks)
-    refute(File.exist?(File.join(common_dir, "rex", "stage-panes-#{SLUG}")))
-    assert_empty(herdr_calls)
-  end
-
-  def test_deliver_keeps_the_calling_and_intent_rex_blocks
-    commit_change_work
-    record_rex_row([ "blkIntent", "blkIdle", OWN_BLOCK ])
-    File.write(File.join(common_dir, "rex", "intent-pane-#{SLUG}"), "blkIntent\n")
-    answer_rex_blocks(blkIntent: "idle", blkIdle: "idle", OWN_BLOCK.to_sym => "idle")
-
-    deliver(rex: true)
-
-    assert_equal(%w[blkIdle], closed_blocks)
-  end
-
-  def test_deliver_closes_a_rex_block_only_when_every_record_is_idle_or_done
-    commit_change_work
-    record_rex_row(%w[blkMixed blkIdle])
-    answer_rex_blocks(blkMixed: [ { state: "idle", app: "zsh" }, { state: "working", app: "claude-code" } ],
-                      blkIdle: "idle")
-
-    deliver(rex: true)
-
-    assert_equal(%w[blkIdle], closed_blocks)
-  end
-
-  def test_deliver_leaves_a_recorded_block_that_rex_no_longer_lists
-    commit_change_work
-    record_rex_row(%w[blkGone blkIdle])
-    answer_rex_blocks(blkIdle: "idle", listed: %w[blkIdle])
-
-    deliver(rex: true)
-
-    assert_equal(%w[blkIdle], closed_blocks)
-  end
-
-  def test_a_failed_rex_block_list_after_the_pr_exists_only_warns
-    commit_change_work
-    record_rex_row(%w[blkIdle])
-    stub_response("rex block ls", { "exit" => 1, "stderr" => "rex: server not responding\n" })
-
-    stdout, stderr, status = deliver(rex: true)
-
-    assert(status.success?, stderr)
-    assert_includes(stdout, PR_URL)
-    assert_match(/server not responding/, stderr)
-    assert_empty(closed_blocks)
-  end
-
-  def test_a_rex_block_with_a_malformed_program_record_stays_open
-    commit_change_work
-    record_rex_row(%w[blkOdd])
-    answer_rex_blocks(blkOdd: [ "idle" ])
-
-    stdout, stderr, status = deliver(rex: true)
-
-    assert(status.success?, stderr)
-    assert_includes(stdout, PR_URL)
-    assert_empty(closed_blocks)
-  end
-
-  def test_deliver_uses_the_herdr_panes_when_both_are_set
-    commit_change_work
-    record_stage_panes(panes_in_play)
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: panes_in_play }) })
-    record_rex_row(%w[blkIdle])
-    answer_rex_blocks(blkIdle: "idle")
-
-    deliver(herdr: true, rex: true)
-
-    assert_equal(%w[w1:pIdle w1:pDone], closed_panes)
-    assert_empty(closed_blocks)
+    assert_equal(%w[p20], herdr_app_actions("pane.close").map { |request| request["pane"] })
+    assert_includes(herdr_app_listed_panes, "p21")
   end
 
   def test_deliver_runs_close_idle_in_herdr_app
@@ -465,8 +321,6 @@ class DeliverTest < Minitest::Test
     assert(status.success?, stderr)
     assert_includes(stdout, PR_URL)
     assert_equal([ [ "close-idle", SLUG ] ], herdr_app_pane_cli_calls)
-    assert_empty(herdr_calls)
-    assert_empty(rex_calls)
   end
 
   def test_resumes_after_a_failed_push_without_the_folder
@@ -497,15 +351,19 @@ class DeliverTest < Minitest::Test
     assert_empty(Dir.glob(File.join(common_dir, "deliver", "#{SLUG}.{body.md,title}")))
   end
 
-  def test_outside_herdr_prints_the_pr_url_and_opens_no_pane
+  def test_outside_a_herdr_app_terminal_prints_the_pr_url_and_opens_no_pane
     commit_change_work
+    herdr_app_setup(HerdrAppHarness::Fixtures.default_world(cwd: toplevel))
+    env = herdr_app_env.merge("HC_TERMINAL_ID" => nil, "PATH" => "#{@herdr_app_bin}:#{@stub_bin}:#{ENV.fetch('PATH')}")
 
-    stdout, stderr, status = deliver(scripts: HERDR_SCRIPTS)
+    stdout, stderr, status = deliver(env: env)
 
     assert(status.success?, stderr)
+    refute_match(/stage panes stay open/, stderr)
     assert_includes(stdout, PR_URL)
     assert_equal(1, gh_calls.count { |call| call.start_with?("pr create ") })
-    assert_empty(herdr_calls)
+    assert_empty(herdr_app_calls)
+    assert_empty(dash_calls)
   end
 
   private
@@ -547,37 +405,14 @@ class DeliverTest < Minitest::Test
     File.write(File.join(folder, "review.md"), "# Review\n\n#{round}")
   end
 
-  def deliver(*arguments, herdr: false, rex: false, scripts: @dash_scripts, env: {})
-    run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: { "HERDR_APP_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
+  def deliver(*arguments, scripts: @dash_scripts, env: {})
+    run_script(DELIVER, *arguments, env: { "HERDR_APP_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
   end
 
   # deliver finds the dispatchers under the home folder, where the agents package links them.
   def install_dispatchers
     FileUtils.mkdir_p(File.join(@home, ".agents"))
     File.symlink(File.join(REPO_ROOT, "agents/.agents/bin"), File.join(@home, ".agents", "bin"))
-  end
-
-  # What hand-off-plan.sh and start-review.sh record in Rex: one block id per line.
-  def record_rex_row(ids)
-    FileUtils.mkdir_p(File.join(common_dir, "rex"))
-    File.write(File.join(common_dir, "rex", "stage-panes-#{SLUG}"), ids.map { |id| "#{id}\n" }.join)
-  end
-
-  # states: block id => program_status state, an array of records, or nil for a block with no records. `listed`
-  # names the blocks `rex block ls` lists; by default every block of states.
-  def answer_rex_blocks(listed: nil, **states)
-    ids = listed || states.keys.map(&:to_s)
-    stub_response("rex block ls", { "stdout" => JSON.generate(blocks: ids.map { |id| { block_id: id, label: "shell", flavor: "shell" } }) })
-    states.each do |id, state|
-      records = state.is_a?(Array) ? state : (state ? [ { state: state, app: "claude-code" } ] : [])
-      stub_response("rex program_status #{id}", { "stdout" => JSON.generate(records: records) })
-    end
-  end
-
-  def closed_blocks
-    rex_calls.grep(/\Ablock close\b/).flat_map do |call|
-      call.split.drop(2).reject { |word| word.start_with?("-") || word == SESSION }
-    end
   end
 
   def assert_refused_and_untouched(reason)
@@ -593,35 +428,12 @@ class DeliverTest < Minitest::Test
     assert_empty(gh_calls.grep(/\Apr (create|edit)/))
   end
 
-  def panes_in_play
-    [
-      pane("w1:pIdle", "claude", "idle"), pane("w1:pDone", "claude", "done"),
-      pane(OWN_PANE, "claude", "idle"), pane("w1:pWorking", "claude", "working"),
-      pane("w1:pShell", nil, "unknown")
-    ]
-  end
-
-  def pane(id, agent, status)
-    { pane_id: id, terminal_id: "term_#{id}", workspace_id: "w1", cwd: toplevel, agent: agent, agent_status: status }
-  end
-
-  # What hand-off-plan.sh and start-review.sh record: one "<pane_id> <terminal_id>" line per pane.
-  def record_stage_panes(panes)
-    FileUtils.mkdir_p(File.dirname(stage_panes_file))
-    File.write(stage_panes_file, panes.map { |entry| "#{entry[:pane_id]} #{entry[:terminal_id]}\n" }.join)
-  end
-
-  # What the intent skill records: the pane id, then the terminal id, one per line.
-  def record_intent_pane(entry)
-    File.write(File.join(common_dir, "herdr", "intent-pane-#{SLUG}"), "#{entry[:pane_id]}\n#{entry[:terminal_id]}\n")
-  end
-
-  def stage_panes_file
-    File.join(common_dir, "herdr", "stage-panes-#{SLUG}")
-  end
-
-  def closed_panes
-    herdr_calls.grep(/\Apane close/).map { |call| call.split.last }
+  # What hand-off-plan.sh records in the row, and what the intent skill records: terminal addresses, one per line.
+  def record_row_and_intent_terminals
+    directory = File.join(common_dir, "herdr-app")
+    FileUtils.mkdir_p(directory)
+    File.write(File.join(directory, "stage-panes-#{SLUG}"), "t20\nt21\n")
+    File.write(File.join(directory, "intent-pane-#{SLUG}"), "t21\n")
   end
 
   def dash_log

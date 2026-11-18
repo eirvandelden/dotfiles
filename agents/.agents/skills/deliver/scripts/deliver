@@ -2,7 +2,7 @@
 # Ends a change once its review is closed: removes docs/changes/<slug>/ in a commit of its own
 # (on a work repository the folder is a local artefact no commit holds, so nothing is removed),
 # pushes the branch, opens (or updates) a draft PR with the filled body, then opens a gh-dash pane
-# and closes the idle stage panes this change opened. It asks no questions. `deliver --check` runs
+# and closes the idle stage terminals this change opened. It asks no questions. `deliver --check` runs
 # only the preconditions and exits 0 when delivery may run, 1 with the reasons otherwise.
 #
 # The body and title are saved under <git-common-dir>/deliver/ so a delivery that fails after the
@@ -187,74 +187,19 @@ class Draft
   end
 end
 
-# Closes the stage panes this change opened, once they are idle or done. hand-off-plan.sh and
-# start-review.sh list each one as "<pane_id> <terminal_id>" in <git-common-dir>/herdr/
-# stage-panes-<slug>. A pane closes only while its terminal id still matches (pane ids are reused),
-# and never when it is this pane or the intent pane the intent skill recorded. Best effort, like
-# the gh-dash pane: the PR exists by now, so a herdr failure only warns.
-class Panes
-  include Shell
-
-  CLOSABLE = %w[idle done].freeze
-
-  #: (String slug, String common_dir) -> void
-  def initialize(slug, common_dir)
-    @record = File.join(common_dir, "herdr", "stage-panes-#{slug}")
-    @intent_record = File.join(common_dir, "herdr", "intent-pane-#{slug}")
-  end
-
-  #: -> void
-  def close_stale
-    return unless ENV["HERDR_ENV"] == "1" && File.exist?(@record)
-
-    stale.each { |pane| system("herdr", "pane", "close", pane.fetch("pane_id")) }
-    File.delete(@record)
-  rescue Refusal, JSON::ParserError => error
-    warn("The stage panes stay open: #{error.message}")
-  end
-
-  private
-
-  def stale
-    listed.select { |pane| recorded.include?([ pane["pane_id"], pane["terminal_id"] ]) && closable?(pane) }
-  end
-
-  def closable?(pane)
-    CLOSABLE.include?(pane["agent_status"]) && !kept.include?(pane["pane_id"])
-  end
-
-  def recorded
-    @recorded ||= File.readlines(@record).map(&:split).select { |fields| fields.size == 2 }
-  end
-
-  def kept
-    intent = File.exist?(@intent_record) ? File.readlines(@intent_record, chomp: true).first : nil
-    [ ENV["HERDR_PANE_ID"], intent ].compact
-  end
-
-  def listed
-    JSON.parse(capture("herdr", "pane", "list", *workspace)).dig("result", "panes").to_a
-  end
-
-  def workspace
-    id = ENV.fetch("HERDR_WORKSPACE_ID", "")
-    id.empty? ? [] : [ "--workspace", id ]
-  end
-end
-
-require_relative "rex_panes"
-
-# Closes the stage panes this change opened in herdr-app, once they are idle or done. herdr-app-pane knows
-# herdr-app's answers and the row record, <git-common-dir>/herdr-app/stage-panes-<slug>; this only runs it.
+# Closes the idle stage terminals this change opened through herdr-app-pane, which knows herdr-app's answers
+# and the row record, <git-common-dir>/herdr-app/stage-panes-<slug>. Outside an hc terminal it does nothing.
 # Best effort, like the gh-dash pane: the PR exists by now, so a failure only warns.
 class HerdrAppPanes
-  #: (String slug, String _common_dir) -> void
-  def initialize(slug, _common_dir)
+  #: (String slug) -> void
+  def initialize(slug)
     @slug = slug
   end
 
   #: -> void
   def close_stale
+    return if ENV.fetch("HC_TERMINAL_ID", "").empty?
+
     pane_cli = ENV.fetch("HERDR_APP_PANE", "").empty? ? "herdr-app-pane" : ENV.fetch("HERDR_APP_PANE")
     system(pane_cli, "close-idle", @slug) || warn("The stage panes stay open: #{pane_cli} close-idle #{@slug} failed.")
   end
@@ -332,15 +277,7 @@ class Delivery
 
   def finish(url)
     open_dash(url)
-    panes_class.new(@slug, @common).close_stale
-  end
-
-  # Herdr, then herdr-app, then Rex, as in every dispatcher.
-  def panes_class
-    return Panes if ENV["HERDR_ENV"] == "1"
-    return HerdrAppPanes unless ENV.fetch("HC_TERMINAL_ID", "").empty?
-
-    ENV.fetch("REX_SESSION", "").empty? ? Panes : RexPanes
+    HerdrAppPanes.new(@slug).close_stale
   end
 
   def open_dash(url)
