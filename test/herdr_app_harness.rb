@@ -311,8 +311,7 @@ module HerdrAppHarness
     CLEARED_ENV.merge(
       "PATH" => "#{@herdr_app_bin}:#{ENV.fetch('PATH')}", "HERDR_APP_STUB_DIR" => @herdr_app_dir,
       "HERDR_APP_BIN" => herdr_app_stub("herdr-app"), "HC_BIN" => herdr_app_stub("hc"), "HERDR_APP_PANE" => pane_cli,
-      "HERDR_APP_READY_POLL" => "0", "HERDR_APP_READY_TIMEOUT" => "2", "HC_TERMINAL_ID" => own,
-      "HERDR_ENV" => nil, "HERDR_PANE_ID" => nil, "HERDR_WORKSPACE_ID" => nil, "REX_SESSION" => nil, "REX_BLOCK" => nil
+      "HERDR_APP_READY_POLL" => "0", "HERDR_APP_READY_TIMEOUT" => "2", "HC_TERMINAL_ID" => own
     )
   end
 
