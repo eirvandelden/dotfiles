@@ -30,7 +30,7 @@ All configuration is managed through a dotfiles repository at `~/Developer/dotfi
 
 Each top-level directory in the dotfiles repo is a Stow package. See `references/repository-layout.md` for the current package list and the cross-platform package-manager breakdown.
 
-See `references/herdr-app-cores.md` for the herdr-app work and personal cores and the TUI migration.
+See `references/herdr-app-cores.md` for the herdr-app work and personal cores.
 
 See `references/herdr-app-look.md` for the herdr-app Solunized themes, the right sidebar, the color per core and the sandbox look check.
 

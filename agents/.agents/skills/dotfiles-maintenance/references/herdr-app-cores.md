@@ -1,4 +1,4 @@
-# herdr-app cores: work and personal, and the migration from the herdr TUI
+# herdr-app cores: work and personal
 
 herdr-app shows one herdr-core session per window. Personal is the `default` core. Work is the `work` core, which the `default` core knows as the machine `work`. herdr-app groups spaces by machine, and each group folds.
 
@@ -10,24 +10,11 @@ Task `install/tasks/27_register_work_core.sh` starts the `work` core and registe
 
 The package holds a clone of the `spaces` mod, `spaces-cores`, which labels the local group "personal", and a clone of the `main` layout, `cores`, which uses it. The window shows it after `herdr-app do layout.switch --name cores`. Run that once per machine. Herdr rewrites `jsconfig.json` and the `.d.ts` files in a mod folder on every start, so `.gitignore` leaves them out.
 
-## Stale spaces
-
-`herdr-app-migrate stale --machine ''` lists the live spaces of this computer. `recent` entries are not listed. Etienne approves the list. Then `herdr-app-migrate close --machine '' <id>…` closes only those ids, or nothing. Close them before the first `build`, or `build` skips their names.
-
-## Migration, per side
-
-1. `herdr-app-migrate build --tui <session> --machine '' --dry-run` previews every space, tab, split and start command, and sends nothing. Use `--machine work` and the work TUI session for the work side.
-2. Run it again without `--dry-run`. It reads the whole TUI session and checks every layout first, so a refused layout creates nothing. It skips a workspace whose name is already a space on that machine, so a second run creates nothing. It prints one line per TUI pane: space, tab, TUI pane, herdr-app pane, and `claude <id> started`, `codex <id> started` or `shell`.
-3. A failure after a space exists names that space and its id. Approve closing it, close it, and run again.
-4. Etienne checks each resumed agent against its TUI pane, then quits each TUI agent himself. Until then one session runs in two processes. Type in neither copy.
-
-Ratios of splits are not kept, and running programs and scrollback do not move.
-
 ## After a core restart
 
 A core restart ends every agent. Every kept terminal gets a shell in its last folder. After both cores run, run `herdr-app-agents restore` from a plain terminal. It resumes each session that ran at shutdown in its own pane, with the same id, and prints how many it restored.
 
-A `SessionStart` hook in Claude and Codex (`herdr-app-agents record`) writes one record per pane under `~/.local/state/herdr-app/agents/<core>/<terminal>.json`. Restore picks the records whose transcript changed in the 10 minutes before shutdown, and types only into a bare shell. A skipped pane gets one stderr line. For a pane with no record, run `claude --resume` or `codex resume` there and pick the session, or use the id from the pairing list.
+A `SessionStart` hook in Claude and Codex (`herdr-app-agents record`) writes one record per pane under `~/.local/state/herdr-app/agents/<core>/<terminal>.json`. Restore picks the records whose transcript changed in the 10 minutes before shutdown, and types only into a bare shell. A skipped pane gets one stderr line. For a pane with no record, run `claude --resume` or `codex resume` there and pick the session.
 
 ## Starting and stopping cores
 
