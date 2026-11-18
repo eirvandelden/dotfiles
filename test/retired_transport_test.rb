@@ -7,7 +7,7 @@ require_relative "isolated_git"
 class RetiredTransportTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   # Built from parts, so this file never holds a whole token.
-  RETIRED = [ %w[HERDR PANE ID].join("_"), %w[herdr pane].join(" "), %w[REX SESSION].join("_") ].freeze
+  RETIRED = [ %w[HERDR PANE ID].join("_"), [ "herdr", "pane" ].join(" "), %w[REX SESSION].join("_") ].freeze
   RETIRED_PACKAGES = %w[herdr rex].freeze
   CLEARED_GIT_ENV = { "GIT_DIR" => nil, "GIT_WORK_TREE" => nil, "GIT_INDEX_FILE" => nil }.freeze
 
