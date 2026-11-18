@@ -3,28 +3,22 @@
 - **Agent list** — a herdr-app popup that lists the running agents of one status and shows the one picked: `; d` opens the done list (`agents-done`), `; b` the blocked list (`agents-blocked`).
 - **Agent record** — `<state>/herdr-app/agents/<core>/<terminal>.json`: the agent session that last started in one terminal of one core, with its kind, session id, folder, transcript path, permission flags, `recorded_at` and `resumed_at`. Avoid: pane record, session file.
 - **Bare shell** — a live terminal with no agent status, whose foreground process is its own login shell (`foreground.pid == pid`, `argv[0]` a shell). Its folder does not matter: the resume line changes folder.
-- **Base** — the merge-base of `HEAD` and the base branch, as a commit; `HEAD` when no base branch exists. The viewer diffs against it.
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
 - **Chained test** — one test that runs the steps of several former tests in one repository and keeps every former assertion.
 - **Change artefact** — `intent.md`, `plan.md` or `review.md` in a change folder. Avoid: change document. The old spelling "artifacts" stays only inside the existing removal subject `Remove change artifacts for <slug>`, which `restore` matches.
 - **Change folder** — `docs/changes/<slug>/`, as `plan/scripts/change-folder` prints it.
 - **Change scope** — `personal` or `work`, as `agents/.agents/skills/finish/scripts/change-scope` prints it from the origin URL. It is not the glossary's **Scope**, which names the secrets `unlock` loads. Never write bare "scope" for this concept. Avoid: work scope, repo scope.
-- **Changed file** — a path that differs from the base, in the working tree, or is untracked, with status `M`, `A`, `D` or `?`.
-- **Coordinator** — the terminal a stage worker reports to. In herdr-app it is `HERDR_APP_COORDINATOR`, set by a dispatcher from `COORDINATOR`, else the caller's own `HC_TERMINAL_ID`.
+- **Coordinator** — the terminal a stage worker reports to. A dispatcher passes `COORDINATOR` on as `HERDR_APP_COORDINATOR`; without it, the caller's own `HC_TERMINAL_ID`.
 - **Core** — one herdr-core session, such as `default` (personal) or `work`, with its own terminals and spaces. Avoid: server.
 - **Covering test** — the test that still proves the behaviour of a deleted test.
-- **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
 - **Dist themes** — `solunized-{light,dark}-{blue,orange}.json` in `<solunized checkout>/dist/herdr-app/`, copied into the herdr-app package.
-- **Drift** — the Solunized block is not byte-equal to the light dist table, one empty line, then the dark dist table.
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
 - **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
-- **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
 - **Hook lineage** — the parent chain from the hook process up to the pane's foreground agent. Only hook runners (`sh`, `bash`, `zsh`, `dash`, `env`, `ruby`, `rv`) may stand between them.
 - **Host module** — a module that herdr-app gives a mod at run time (`herdr`, `gpui-kit`); node cannot resolve it.
 - **Import link** — `claude/.claude/PLAYBOOK.md` or `codex/.codex/PLAYBOOK.md`: the tracked symlink to the playbook that a tool imports from its home directory.
-- **Jump** — select a pane's session and tab in the Rex app, then focus the pane, from the switcher.
 - **Leader** — the `;` key that starts every herdr-app shortcut sequence, such as `; t`. `; ;` types a `;` in a terminal.
 - **Linked mod folder** — a scratch folder that holds one link per tracked file of a mod, the way stow links it; the guard runs `herdr-app check` on it.
 - **Local artefact** — a change artefact that no commit holds. On a work repository `.git/info/exclude` hides it.
@@ -32,12 +26,9 @@
 - **Mod copy** — a scratch folder that holds one mod's `main.js` as `main.mjs`, plus one module stub per host module, so node can import it.
 - **Module stub** — a package a test writes into a scratch `node_modules` folder in place of a host module; a PATH stub for imports.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
-- **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
 - **Owned theme** — one of the four names of the personal pair and the work pair.
-- **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
-- **Pane backend** — the tool where the pipeline opens its panes: herdr TUI, herdr-app or Rex, picked from the environment.
-- **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
+- **Pane backend** — the backend that hands a stage to a fresh stage terminal, picked when `HC_TERMINAL_ID` is set.
 - **Path import** — an import whose specifier is a file path (`./`, `../` or `/`), not a module name. herdr-app refuses one from a stowed mod, because its real path leaves the mod folder.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
 - **Personal owner** — a GitHub user or organisation whose repositories are personal: `eirvandelden` and `eirvandelden-dev`. `RemoteMatcher::PERSONAL_OWNERS` holds the list. Avoid: personal account, because `eirvandelden-dev` is an organisation.
@@ -51,33 +42,27 @@
 - **Restore window** — the 10 minutes up to and including the shutdown moment.
 - **Resume line** — the shell-quoted command that restore types into a bare shell: `cd <cwd> && claude --resume <id> [flags]` or `cd <cwd> && codex resume <id> [flags]`.
 - **Reviewed commit** — the short SHA in the last `## Round <n> — <time> — <sha>` heading of `review.md`. The heading may end in `(claude)` or `(codex)`.
-- **Root** — the git toplevel of the focused pane's directory, where the viewer looks for changed files.
-- **Row** — the stage panes of one change, side by side; the slug names it.
-- **Row record** — `<git-common-dir>/<tool>/stage-panes-<slug>`: the stage panes of one row, one per line, in the order they opened. herdr-app lines are hc terminal addresses.
+- **Row** — the stage terminals of one change, side by side; the slug names it.
+- **Row record** — `<git-common-dir>/herdr-app/stage-panes-<slug>`: the stage terminals of one row, one terminal address per line, in the order they opened.
 - **Run root** — the one `dotfiles-test*` directory the Runner makes per run, the `TMPDIR` of every test file, removed at the end of the run.
 - **Runner** — `bin/test`, from PR #229, which runs test files in parallel and fails when one fails.
-- **Running agent** — a herdr TUI pane that `herdr agent list` lists now, with its kind (`claude` or `codex`), session id and folder.
 - **Scope** — which secrets `unlock` and `secrets` load: `personal`, `work` or `both`.
 - **Scope menu** — the numbered list "cancel, personal, work, both" that a bare `unlock` or `secrets` shows on a terminal.
 - **Shared config** — the dotfiles `lefthook.yml`, which a repo config names under `remotes:`.
 - **Shown halves** — `layout().theme` in a herdr-app mod: the `{light, dark}` theme names the window shows now, a stored pick included.
 - **Shutdown moment** — the newest transcript write among one core's agent records that comes before that core started.
-- **Solunized block** — the lines of `herdr/.config/herdr/config.toml` between `# BEGIN solunized` and `# END solunized`, markers excluded.
-- **Snapshot** — the file of switcher rows that Lua writes when the switcher opens. Filters and search read it and never ask Rex again.
 - **Space** — a herdr-app space: a named place to work on one machine, with tabs.
-- **Stage pane** — a pane the pipeline opens for one change: a stage worker, a reviewer or gh-dash.
-- **Stale space** — a space on this computer left from the 2026-10-30 import, whose agents were lost on 2026-11-05.
+- **Stage terminal** — a terminal that `hand-off-plan` or `start-review` opened for one change and listed in its row record. Avoid: stage block. The `herdr-app-pane` code still says "stage pane".
 - **Starter config** — the documented `lefthook.yml` with the `remotes:` block that a personal repository copies. Avoid: template.
 - **Stowed mod** — a mod folder under `~/.config/herdr-app/mods/` whose files are links into the repository, as `stow --no-folding` makes them.
-- **Switcher** — the floating Rex panel, run as the `agent_switcher` action, that lists every pane and jumps to the one picked. Avoid: palette, picker.
-- **Switcher row** — one tab-separated line of a snapshot: pane state, session and tab, program, cwd and message, then the hidden session, window and pane ids.
+- **Terminal** — one `hc` terminal in a core, as `hc ls` lists it.
+- **Terminal address** — the id `hc` gives a terminal, such as `t6g`. Inside the terminal, `$HC_TERMINAL_ID` holds it. A row record holds terminal addresses. Avoid: pane id, block id.
+- **Terminal name** — the name `hc ls` shows for a terminal: 1 to 32 characters of `a-z 0-9 - _`, unique among live terminals.
 - **Test file** — one `test/*_test.rb`, run as its own process.
 - **Theme pair** — `{light, dark}`: two herdr-app theme names, one per appearance.
 - **Transcript** — the session log at the hook payload's `transcript_path`. Its mtime is the session's last write.
-- **View** — how the viewer previews a file, `default` or `alternate`. Default: markdown rendered, an untracked file as content, anything else as a diff.
-- **Viewer** — the floating Rex layer, opened by the `file_viewer` action, that lists changed files and previews the one picked. Avoid: file browser.
 - **Work mark** — the one fixed avatar color of every work space in the herdr-app spaces list.
 - **Work pair** — the theme pair `solunized-light-orange` and `solunized-dark-orange`.
 - **Work repository** — a repository whose change scope is `work`: its origin matches an entry of `~/.claude/consent-guard-allowed-remotes.txt`. Avoid: employer repo.
 - **Work space** — a space whose `machine` is not null: today only the `work` core.
-- **Workspace** — a herdr TUI workspace, the source of one space.
+- **Worktree terminal** — the shell terminal that `worktree-pane open` opens for a worktree, through `herdr-app-pane open <path> --worktree`. No row record lists it.
