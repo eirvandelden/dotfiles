@@ -170,34 +170,16 @@ module WorktreeTools
       status.success?
     end
 
-    # The herdr plugin scripts prefer HERDR_BIN_PATH over PATH; worktree-create and worktree-viewer match them.
-    #: -> String
-    def herdr_bin
-      ENV["HERDR_BIN_PATH"].to_s.empty? ? "herdr" : ENV["HERDR_BIN_PATH"]
-    end
-
-    # REX_BIN_PATH names the rex binary, so a test can stub it; else rex comes from PATH.
-    #: -> String
-    def rex_bin
-      ENV["REX_BIN_PATH"].to_s.empty? ? "rex" : ENV["REX_BIN_PATH"]
-    end
-
-    # True in a herdr-app terminal that is not inside a herdr TUI pane. Herdr wins when both are set.
+    # True inside an hc terminal.
     #: -> bool
     def herdr_app_env?
-      ENV["HERDR_ENV"] != "1" && !ENV["HC_TERMINAL_ID"].to_s.empty?
+      !ENV["HC_TERMINAL_ID"].to_s.empty?
     end
 
     # HERDR_APP_PANE names the herdr-app-pane CLI, so a test can stub it; else herdr-app-pane from PATH.
     #: -> String
     def herdr_app_pane_bin
       ENV["HERDR_APP_PANE"].to_s.empty? ? "herdr-app-pane" : ENV["HERDR_APP_PANE"]
-    end
-
-    # True in a Rex block that is not inside a herdr pane. Herdr wins when both are set.
-    #: -> bool
-    def rex_only_env?
-      ENV["HERDR_ENV"] != "1" && !ENV["REX_SESSION"].to_s.empty?
     end
 
     #: (String command, ?String? error_message) -> true

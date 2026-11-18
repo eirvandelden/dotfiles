@@ -9,9 +9,8 @@ require_relative "git_fixture"
 require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
-# In a herdr-app terminal (HC_TERMINAL_ID set, HERDR_ENV not 1) worktree-pane hands its work to
-# herdr-app-pane: open runs `herdr-app-pane open <path> --worktree`, close runs `herdr-app-pane close-at <path>`,
-# and label does nothing. Most tests use the logging herdr-app-pane stub; the worktree-create test runs the real
+# In a herdr-app terminal (HC_TERMINAL_ID set) worktree-pane hands its work to herdr-app-pane: open runs
+# `herdr-app-pane open <path> --worktree`, close runs `herdr-app-pane close-at <path>`, and label is refused. Most tests use the logging herdr-app-pane stub; the worktree-create test runs the real
 # CLI against stub herdr-app and hc. HC_TERMINAL_ID is set in the child environment only.
 class WorktreePaneHerdrAppTest < Minitest::Test
   include HerdrAppHarness
@@ -65,26 +64,6 @@ class WorktreePaneHerdrAppTest < Minitest::Test
     assert_equal([ "-l", worktree ], File.readlines(shell_log, chomp: true))
   end
 
-  def test_herdr_env_keeps_the_herdr_path
-    herdr_log = File.join(@root, "herdr.log")
-    herdr_app_install("herdr", <<~SH)
-      #!/bin/sh
-      printf '%s\\n' "$*" >> #{herdr_log.inspect}
-      case "$1 $2" in
-        "pane list") echo '{"result":{"panes":[]}}' ;;
-        "pane split") echo '{"result":{"pane":{"pane_id":"w1:pV"}}}' ;;
-        *) echo '{"result":{}}' ;;
-      esac
-    SH
-
-    _, stderr, status = worktree_pane("open", @worktree, env: { "HERDR_ENV" => "1", "HERDR_WORKSPACE_ID" => "w1" })
-
-    assert(status.success?, stderr)
-    assert_includes(File.readlines(herdr_log, chomp: true),
-                    "pane split --current --direction down --cwd #{@worktree} --no-focus")
-    assert_empty(herdr_app_pane_cli_calls)
-  end
-
   def test_open_runs_herdr_app_pane_open_worktree
     _, stderr, status = worktree_pane("open", @worktree)
 
@@ -99,8 +78,16 @@ class WorktreePaneHerdrAppTest < Minitest::Test
     assert_equal([ [ "close-at", @worktree ] ], herdr_app_pane_cli_calls)
   end
 
-  def test_label_does_nothing
+  def test_label_is_refused_with_the_usage_line
     _, stderr, status = worktree_pane("label", @worktree, "t61")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/Usage: worktree-pane open\|close <path>/, stderr)
+    assert_empty(herdr_app_calls)
+  end
+
+  def test_outside_a_herdr_app_terminal_worktree_pane_calls_nothing
+    _, stderr, status = worktree_pane("open", @worktree, env: { "HC_TERMINAL_ID" => nil })
 
     assert(status.success?, stderr)
     assert_empty(herdr_app_calls)
@@ -126,13 +113,11 @@ end
 class WorktreeToolsHerdrAppHelpersTest < Minitest::Test
   LIBRARY = File.join(HerdrAppHarness::REPO_ROOT, "git/.config/git/worktree-tools/lib")
 
-  def test_herdr_app_env_needs_hc_terminal_id_and_no_herdr_env_1
+  def test_herdr_app_env_is_true_exactly_when_hc_terminal_id_is_set
     {
       { "HC_TERMINAL_ID" => "t10" } => "true",
-      { "HC_TERMINAL_ID" => "t10", "HERDR_ENV" => "0", "REX_SESSION" => "S1" } => "true",
       { "HC_TERMINAL_ID" => nil } => "false",
-      { "HC_TERMINAL_ID" => "" } => "false",
-      { "HC_TERMINAL_ID" => "t10", "HERDR_ENV" => "1" } => "false"
+      { "HC_TERMINAL_ID" => "" } => "false"
     }.each do |env, answer|
       assert_equal(answer, helper("herdr_app_env?", env), env.inspect)
     end
@@ -147,7 +132,7 @@ class WorktreeToolsHerdrAppHelpersTest < Minitest::Test
   private
 
   def helper(name, env)
-    environment = HerdrAppHarness::CLEARED_ENV.merge("HERDR_ENV" => nil, "REX_SESSION" => nil).merge(env)
+    environment = HerdrAppHarness::CLEARED_ENV.merge(env)
     script = "require 'common'; include WorktreeTools::Helpers; print #{name}"
     stdout, stderr, status = Open3.capture3(environment, RbConfig.ruby, "-I", LIBRARY, "-e", script)
     assert(status.success?, stderr)

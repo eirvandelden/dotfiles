@@ -9,7 +9,7 @@ require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # worktree-sweep removes merged worktrees of the repository it runs in. It shells out to git, gh
-# (PR state) and, inside herdr, worktree-pane; gh and herdr are stubbed.
+# (PR state) and, inside a herdr-app terminal, worktree-pane; gh is stubbed.
 class WorktreeSweepTest < Minitest::Test
   SCRIPT = File.expand_path("../git/.config/git/worktree-tools/worktree-sweep", __dir__)
   # Guards against a hang, not a slow machine: a hanging stub waits ten minutes, and a full
