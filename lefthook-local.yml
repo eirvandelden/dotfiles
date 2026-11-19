@@ -1,7 +1,20 @@
 ---
+# This repository tests its own marker-check, so it calls the copy in the checkout instead of the global
+# fallback's path. A worktree of a branch that changes the script then needs no stow link.
+# Lefthook runs commands from the repository root. Only `run` is overridden; tags and fail_text stay.
+pre-commit:
+  commands:
+    no-fixme:
+      run: git/.config/git/worktree-tools/marker-check FIXME {staged_files}
+    no-nocommit:
+      run: git/.config/git/worktree-tools/marker-check NOCOMMIT {staged_files}
 pre-push:
   parallel: true
   commands:
+    no-fixme:
+      run: git/.config/git/worktree-tools/marker-check FIXME {files}
+    no-nocommit:
+      run: git/.config/git/worktree-tools/marker-check NOCOMMIT {files}
     verify-ruby-version:
       tags: shell-defaults
       run: |
