@@ -106,6 +106,7 @@ class HerdrAppPaneCliTest < Minitest::Test
     assert_equal(1, status.exitstatus)
     assert_empty(stdout)
     assert_equal(1, stderr.lines.count, stderr)
+    assert_match(/opened a tab but named no terminal/, stderr)
   end
 
   def test_tab_expands_a_relative_folder
