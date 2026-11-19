@@ -98,6 +98,13 @@ class HerdrAppPaneCliTest < Minitest::Test
                     "space" => "sp1" } ], herdr_app_actions("tab.new"))
   end
 
+  def test_tab_expands_a_relative_folder
+    _, stderr, status = pane_cli("tab", ".", "--name", "docs")
+
+    assert(status.success?, stderr)
+    assert_equal([ @repo ], herdr_app_actions("tab.new").map { |request| request["folder"] })
+  end
+
   def test_tab_runs_outside_a_git_repository
     outside = Dir.mktmpdir("outside")
 

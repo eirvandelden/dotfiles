@@ -52,7 +52,7 @@ def tab_arguments(arguments)
     usage! unless options.size == 2 && options.first == "--name" && !options.last.start_with?("-")
     name = options.last
   end
-  [ cwd, { name: name, command: arguments.drop(separator + 1) } ]
+  [ File.expand_path(cwd), { name: name, command: arguments.drop(separator + 1) } ]
 end
 
 # Prints the new tab's terminal address, when herdr-app names one.
