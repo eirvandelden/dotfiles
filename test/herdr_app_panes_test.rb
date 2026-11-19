@@ -500,8 +500,6 @@ class HerdrAppPanesWorkCoreTest < Minitest::Test
   def add_work_agent(address, status)
     add_terminal(@world, agent_row("work/#{address}", "work/p#{address[1..]}", status),
                  terminal(address, cwd: @cwd, status: agent(status), space: "sp3", tab: "tb3"), space: "work/sp3")
-    @world["terminals"]["work/#{address}"] = @world["terminals"].delete("work/#{address}") ||
-                                              @world["terminals"].delete(address)
   end
 
   def assert_hc_addresses
