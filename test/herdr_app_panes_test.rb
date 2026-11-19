@@ -418,8 +418,6 @@ class HerdrAppPanesCloseAtTest < Minitest::Test
   end
 end
 
-# CommandLine runs stub executables; HERDR_APP_BIN and HC_BIN name them, and the stub folder comes first on
-# PATH, so a fallback to PATH finds a stub too, never the real herdr-app or hc.
 # Panes from a terminal of the work core: work_world lists the work space as work/sp3 with work/ ids, and hc
 # knows its terminals by their bare hc addresses. The coordinator is the work agent t20.
 class HerdrAppPanesWorkCoreTest < Minitest::Test
@@ -511,6 +509,8 @@ class HerdrAppPanesWorkCoreTest < Minitest::Test
   end
 end
 
+# CommandLine runs stub executables; HERDR_APP_BIN and HC_BIN name them, and the stub folder comes first on
+# PATH, so a fallback to PATH finds a stub too, never the real herdr-app or hc.
 class HerdrAppCommandLineTest < Minitest::Test
   SAVED = %w[HERDR_APP_BIN HC_BIN PATH].freeze
 
