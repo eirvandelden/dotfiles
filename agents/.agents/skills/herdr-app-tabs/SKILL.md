@@ -41,6 +41,6 @@ herdr-app-pane close [<terminal>]
 ## Never
 
 - Never run `herdr pane`, `herdr tab` or any other `herdr` command. The old herdr TUI serves no herdr-app terminal.
-- Never read `HERDR_ENV` or `herdr-automate`. Never follow the stale skills `herdr-gpui-browser` and `herdr-automations`.
-- Never run a bare `herdr-app do tab.new` without `space`. It opens the tab in the focused space, which can be the wrong core.
+- Never use `HERDR_ENV` or `herdr-automate`. Never follow the stale skills `herdr-gpui-browser` and `herdr-automations`.
+- Never run a bare `herdr-app do tab.new` without `space`. It opens the tab in the selected space, which can be the wrong core.
 - herdr-app has no browser tab. Give Etienne the URL or the file path instead.
