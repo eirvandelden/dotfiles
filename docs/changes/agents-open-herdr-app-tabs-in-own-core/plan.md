@@ -188,6 +188,10 @@ def open(cwd, name: nil, command: [])
 # Answers the cwd and the keywords of Tabs#open.
 #: (Array[String] arguments) -> [String, Hash[Symbol, untyped]]
 def tab_arguments(arguments)
+
+# Prints the new tab's terminal address; refuses when herdr-app names none.
+#: (String cwd, Hash[Symbol, untyped] options) -> ^(HerdrAppPane::Tabs) -> void
+def tab_call(cwd, options)
 ```
 
 `CommandLine`, `RowRecord`, `Terminal`: not affected.
