@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "herdr_app_harness"
+require_relative "isolated_git"
 %w[command_line machine].each { |name| require File.join(HerdrAppHarness::PANE_LIBRARY, name) }
 
 # HerdrAppPane::Machine: the own core's machine and the address rule. It sends no command.

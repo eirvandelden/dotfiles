@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 
 # The herdr-app-tabs skill tells agents to open tabs with `herdr-app-pane tab` and nothing else.
 class HerdrAppTabsSkillTest < Minitest::Test

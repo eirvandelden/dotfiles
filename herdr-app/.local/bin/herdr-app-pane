@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 # Opens and closes the agent pipeline's panes in herdr-app, beside the coordinator (HERDR_APP_COORDINATOR, else
-# this terminal's HC_TERMINAL_ID), and opens a tab in this terminal's own space and core. Bad arguments exit 1 before any herdr-app or hc call; a refusal exits 1 with
-# its reason on one stderr line. The row record lives under the current git repository's common dir.
+# this terminal's HC_TERMINAL_ID), and opens a tab in this terminal's own space and core. Bad arguments exit 1
+# before any herdr-app or hc call; a refusal exits 1 with its reason on one stderr line. The row record lives
+# under the current git repository's common dir.
 library = File.expand_path("../share/herdr-app-pane", File.dirname(File.realpath(__FILE__)))
 require File.join(library, "panes")
 require File.join(library, "tabs")
