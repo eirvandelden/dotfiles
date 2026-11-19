@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "tmpdir"
 require_relative "herdr_app_harness"
+require_relative "isolated_git"
 %w[command_line machine panes tabs].each { |name| require File.join(HerdrAppHarness::PANE_LIBRARY, name) }
 
 # HerdrAppPane::Tabs and the Window calls it uses, with a FakeCommandLine over a two-core World. The own terminal
