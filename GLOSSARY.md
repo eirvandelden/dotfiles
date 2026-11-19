@@ -20,6 +20,8 @@
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
 - **herdr-app** — the Herdr desktop app (`/Applications/Herdr.app`), a window onto herdr-core. Avoid: Herdr UI, herdr GUI.
+- **hc address** — the id the own core's `hc` uses for a space, tab, pane or terminal, never prefixed, such as `t25`: the part of a herdr-app address after its last `/`. Avoid: local id.
+- **herdr-app address** — the id `herdr-app ls` and `herdr-app do` use for a space, tab, pane or terminal; outside the `default` core it carries a `<machine>/` prefix, such as `work/t25`. Avoid: global id.
 - **herdr TUI** — `herdr`, the terminal workspace manager with its own sessions and workspaces.
 - **Hook lineage** — the parent chain from the hook process up to the pane's foreground agent. Only hook runners (`sh`, `bash`, `zsh`, `dash`, `env`, `ruby`, `rv`) may stand between them.
 - **Host module** — a module that herdr-app gives a mod at run time (`herdr`, `gpui-kit`); node cannot resolve it.
@@ -34,6 +36,8 @@
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
+- **Own core** — the core the agent's terminal runs in: `HC_SESSION`, `default` when unset. Its machine is null for `default` and the core's name otherwise.
+- **Own space** — the space that holds a terminal of the own core: the one listed space on the own core's machine whose hc address is that terminal's `herdr.space` label. Avoid: current space, focused space.
 - **Owned theme** — one of the four names of the personal pair and the work pair.
 - **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
 - **Pane backend** — the tool where the pipeline opens its panes: herdr TUI, herdr-app or Rex, picked from the environment.
