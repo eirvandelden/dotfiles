@@ -99,7 +99,7 @@ module HerdrAppPane
       @command_line.json("herdr-app", "status")[FOCUS_KEY]
     end
 
-    # Answers {"pane","terminal"} of the new pane.
+    # Answers {"pane","terminal"} of the new pane, the terminal as an hc address.
     #: (String anchor, String direction, Array[String] argv) -> Hash[String, String]
     def split(anchor, direction, argv)
       opened = act("pane.split", "pane" => anchor, "direction" => direction, "argv" => argv)
