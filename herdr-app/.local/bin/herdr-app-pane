@@ -55,10 +55,10 @@ def tab_arguments(arguments)
   [ File.expand_path(cwd), { name: name, command: arguments.drop(separator + 1) } ]
 end
 
-# Prints the new tab's terminal address, when herdr-app names one.
+# Prints the new tab's terminal address; refuses when herdr-app names none.
 #: (String cwd, Hash[Symbol, untyped] options) -> ^(HerdrAppPane::Tabs) -> void
 def tab_call(cwd, options)
-  ->(tabs) { tabs.open(cwd, **options)&.then { |terminal| puts(terminal) } }
+  ->(tabs) { puts(tabs.open(cwd, **options) || raise(HerdrAppPane::Refusal, "tab.new answered no terminal")) }
 end
 
 # Prints the new terminal's address; a worktree pane that already exists prints nothing.

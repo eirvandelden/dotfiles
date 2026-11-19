@@ -19,8 +19,8 @@ require "tmpdir"
 # - `herdr-app do pane.split '{"pane","direction","argv"}'` → {"pane","terminal"}, and it moves focus to the new pane.
 # - `herdr-app do pane.close '{"pane"}'` → {"ok":true}; `pane.focus '{"pane"}'` → {"ok":true}.
 # - A refusal → {"error":"..."} on stdout, exit 1.
-# - `herdr-app do tab.new '{"space","folder","name","argv","focus"}'` → {"pane","terminal"} (shape assumed: the
-#   live probe is recorded in the plan's delivery account); `focus: false` leaves focus where it was.
+# - `herdr-app do tab.new '{"space","folder","name","argv","focus"}'` → {"pane","terminal"}, confirmed live on
+#   2026-11-19 in the default core and in a work core; `focus: false` leaves focus where it was.
 # - Address rule: `herdr-app ls` and `do` use herdr-app addresses, which carry a `<machine>/` prefix outside the
 #   default core (`work/t25`); `hc` uses the bare hc address (`t25`) of its own core. The World keeps hc answers
 #   under the herdr-app address and looks them up under `<HC_SESSION>/<address>` outside `default`.
@@ -207,6 +207,8 @@ module HerdrAppHarness
       space["tabs"] << tab
       state["terminals"][terminal] = new_answers(space, tab, terminal, folder: request["folder"])
       state[FOCUS_KEY] = pane unless request["focus"] == false
+      return ok("pane" => pane) if state["tab_new_without_terminal"]
+
       ok("pane" => pane, "terminal" => terminal)
     end
 

@@ -98,6 +98,16 @@ class HerdrAppPaneCliTest < Minitest::Test
                     "space" => "sp1" } ], herdr_app_actions("tab.new"))
   end
 
+  def test_tab_exits_1_with_one_line_when_herdr_app_names_no_terminal
+    herdr_app_world_change { |world| world["tab_new_without_terminal"] = true }
+
+    stdout, stderr, status = pane_cli("tab", @repo, "--name", "docs")
+
+    assert_equal(1, status.exitstatus)
+    assert_empty(stdout)
+    assert_equal(1, stderr.lines.count, stderr)
+  end
+
   def test_tab_expands_a_relative_folder
     _, stderr, status = pane_cli("tab", ".", "--name", "docs")
 
