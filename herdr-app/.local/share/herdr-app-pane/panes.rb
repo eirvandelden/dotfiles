@@ -1,5 +1,6 @@
 require "json"
 require_relative "command_line"
+require_relative "machine"
 require_relative "row_record"
 
 module HerdrAppPane
@@ -35,26 +36,37 @@ module HerdrAppPane
   end
 
   # The herdr-app window and its core, as Panes sees them: the only pipeline code that sends `herdr-app ls` or
-  # `herdr-app do`. Addresses repeat across cores, so a space is found by the space id `hc get` labels a
-  # terminal with, and `herdr-app ls` is narrowed to that space before any address is matched.
+  # `herdr-app do`. A space is found by the space id `hc get` labels a terminal with, on the machine of the own
+  # core. Terminals go out and come back as hc addresses; panes stay herdr-app addresses.
   class Window
     FOCUS_KEY = "focused_pane".freeze
 
-    #: (CommandLine command_line) -> void
-    def initialize(command_line)
+    #: (?CommandLine command_line, ?machine: Machine) -> void
+    def initialize(command_line = CommandLine.new, machine: Machine.own)
       @command_line = command_line
+      @machine = machine
     end
 
-    # The terminals listed in the space of terminal, across its tabs: {"terminal","pane","status","app",...}.
-    # A space id listed on more than one machine names no single space, so it refuses.
+    # The terminals listed in the own space of terminal, across its tabs: {"terminal","pane","status","app",...},
+    # "terminal" as an hc address, "pane" as a herdr-app address. Refuses as Machine#space does.
     #: (String terminal) -> Array[Hash[String, untyped]]
     def space_of(terminal)
-      id = @command_line.json("hc", "get", terminal, "--json").dig("labels", "herdr.space")
-      spaces = @command_line.json("herdr-app", "ls").fetch("spaces", []).select { |candidate| candidate["id"] == id }
-      raise Refusal, "herdr-app lists no space for #{terminal}" if spaces.empty?
-      raise Refusal, "herdr-app lists space #{id} on #{spaces.size} machines: no single space" if spaces.size > 1
+      rows = listed_space(terminal).fetch("tabs", []).flat_map { |tab| tab.fetch("terminals", []) }
+      rows.map { |row| row.merge("terminal" => @machine.hc_address(row["terminal"])) }
+    end
 
-      spaces.first.fetch("tabs", []).flat_map { |tab| tab.fetch("terminals", []) }
+    # The herdr-app address of the own space of terminal.
+    #: (String terminal) -> String
+    def space_address(terminal)
+      listed_space(terminal).fetch("id")
+    end
+
+    # Sends tab.new for space with request ("folder", "name", "argv", "focus") and answers {"pane","terminal"},
+    # the terminal as an hc address, nil when herdr-app names none.
+    #: (String space, Hash[String, untyped] request) -> Hash[String, String?]
+    def new_tab(space, request)
+      opened = act("tab.new", request.merge("space" => space))
+      { "pane" => opened["pane"], "terminal" => opened["terminal"]&.then { |address| @machine.hc_address(address) } }
     end
 
     # True when the terminal at address runs in cwd; both sides compare as real paths.
@@ -90,7 +102,8 @@ module HerdrAppPane
     # Answers {"pane","terminal"} of the new pane.
     #: (String anchor, String direction, Array[String] argv) -> Hash[String, String]
     def split(anchor, direction, argv)
-      act("pane.split", "pane" => anchor, "direction" => direction, "argv" => argv)
+      opened = act("pane.split", "pane" => anchor, "direction" => direction, "argv" => argv)
+      opened.merge("terminal" => @machine.hc_address(opened.fetch("terminal")))
     end
 
     #: (String pane) -> void
@@ -104,6 +117,12 @@ module HerdrAppPane
     end
 
     private
+
+    #: (String terminal) -> Hash[String, untyped]
+    def listed_space(terminal)
+      label = @command_line.json("hc", "get", terminal, "--json").dig("labels", "herdr.space")
+      @machine.space(@command_line.json("herdr-app", "ls").fetch("spaces", []), label)
+    end
 
     #: (String address) -> Terminal
     def terminal(address)
@@ -126,13 +145,13 @@ module HerdrAppPane
     # Starts the command in its folder, or not at all.
     ROOTED = 'cd "$1" || exit 1; shift; exec "$@"'.freeze
 
-    #: (?own: String, ?coordinator: String?, ?common_dir: String?, ?command_line: CommandLine) -> void
+    #: (?own: String, ?coordinator: String?, ?common_dir: String?, ?window: Window) -> void
     def initialize(own: ENV.fetch("HC_TERMINAL_ID"), coordinator: ENV.fetch("HERDR_APP_COORDINATOR", nil),
-                   common_dir: nil, command_line: CommandLine.new)
+                   common_dir: nil, window: Window.new)
       @own = own
       @coordinator = coordinator.to_s.empty? ? own : coordinator
       @common_dir = common_dir
-      @window = Window.new(command_line)
+      @window = window
     end
 
     # Opens a pane rooted in cwd that runs command, or a login shell when command is empty, and answers its
