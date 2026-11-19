@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "herdr-app Tabs"
+  short_description: "Open tabs and panes in herdr-app, in the agent's own core, with herdr-app-pane"
