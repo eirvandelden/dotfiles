@@ -8,7 +8,7 @@
 require "open3"
 require "tempfile"
 require "time"
-require_relative "../../../hooks/remote_matcher"
+require_relative "../../../../../claude/.claude/hooks/remote_matcher"
 require_relative "../../plan/scripts/intent_metadata"
 
 HERE = File.dirname(File.realpath(__FILE__))

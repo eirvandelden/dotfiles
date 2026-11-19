@@ -1204,7 +1204,7 @@ end
 
   # the intent stage splits down (stubbed pane w1:pV); every later stage splits right (w1:pW).
   def worker_name(stage)
-    stage == "intent" ? "intent-w1-pv" : "#{stage}-w1-pw"
+    %w[intent deliver].include?(stage) ? "#{stage}-w1-pv" : "#{stage}-w1-pw"
   end
 
   def record_row(slug, *lines)

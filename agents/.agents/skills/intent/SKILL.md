@@ -191,7 +191,7 @@ Runs only when `intent.md` has `Delivery: autonomous`, which this skill writes o
 
 Claude coordinates. A Claude session that accepted the intent is the coordinator. A Codex session that accepted it runs `~/.claude/skills/intent/scripts/start-delivery` from the change's worktree and stops: the script checks the intent and the preflight, then starts a Claude coordinator. Inside herdr that is a pane below (`hand-off-plan.sh deliver <slug>`); outside herdr it is a background session (`claude --bg`), and the script prints how to attach to it and where its report lands. If the script refuses, report its output to Etienne and stop. Codex coordinates only on Etienne's explicit instruction; Codex otherwise stays the plan critic and, only on `Codex review: yes`, the second reviewer.
 
-The coordinator keeps a progress note, `<git-common-dir>/herdr/deliver-<slug>.md`, current after every stage: the stage reached, the blockers, the report paths and the next action. A resumed or restarted coordinator reads the progress note first, then `~/.claude/skills/finish/scripts/delivery-evidence status`, then `review.md`, and resumes from the next action. It never repeats a stage whose result is committed and fresh.
+The coordinator keeps a progress note, `deliver-<slug>.md` in the `herdr` folder of the git common dir, current after every stage: the stage reached, the blockers, the report paths and the next action. A resumed or restarted coordinator reads the progress note first, then `~/.claude/skills/finish/scripts/delivery-evidence status`, then `review.md`, and resumes from the next action. It never repeats a stage whose result is committed and fresh.
 
 Preflight first. Run `~/.claude/skills/intent/scripts/delivery-preflight`, with `--needs database` and `--needs browser` when the agreed proof needs a migration replay or a browser check. The needs follow the rule `delivery-evidence check` enforces at `finish`: a change that touches migrations needs `database`, a change that touches UI paths needs `browser`. Leaving a need out only moves the blocker to the end. On `Blockers:`, stop and report every missing item together in one message, before any costly work. Never turn a missing check into a skip. Rerun it with the needs `plan.md` names once the plan is accepted, before the implement stage.
 
@@ -208,7 +208,7 @@ A stage pane started by `hand-off-plan intent` or `hand-off-plan deliver` is sti
 
 Escalation: stop and ask Etienne one concrete question when a choice changes the agreed behaviour, a step needs a permission he has not approved, one problem fails three times, or a finding is still disputed after two rounds. A `Decision needed:` line in a stage report is how a pane raises one of these.
 
-Outside herdr, herdr-app and Rex, or as a Codex coordinator, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
+Outside herdr, herdr-app and Rex, run each stage's `here` backend with the `auto` argument in sequence in this session instead of panes.
 
 ## Codex
 

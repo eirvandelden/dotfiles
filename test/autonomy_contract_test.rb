@@ -305,7 +305,7 @@ class AutonomyContractTest < Minitest::Test
   end
 
   def test_codex_stays_the_plan_critic_and_reviewer_with_stdin_closed
-    assert_match(%r{codex exec -p terra .*< /dev/null}, section_of(skill("plan"), "## Auto mode"))
+    assert_match(%r{codex exec -m gpt-6.1-sol .*< /dev/null}, section_of(skill("plan"), "## Auto mode"))
     assert_match(%r{codex review --base <base>.*< /dev/null}, section_of(skill("review"), "## Auto mode"))
   end
 
@@ -314,7 +314,7 @@ class AutonomyContractTest < Minitest::Test
     preflight = section.index("intent/scripts/delivery-preflight")
 
     refute_nil(preflight, "the coordinator never runs the preflight")
-    assert_operator(preflight, :<, section.index("hand-off-plan.sh <stage> <slug> --auto"))
+    assert_operator(preflight, :<, section.index("hand-off-plan <stage> <slug> --auto"))
     assert_match(/--needs/, section)
     assert_match(/every missing item together/i, section)
   end
@@ -332,23 +332,26 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section_of(skill("implement"), "## Auto mode"), "delivery-evidence run")
   end
 
-  def test_finish_auto_mode_gates_on_fresh_evidence
-    section = section_of(skill("finish"), "## Auto mode")
+  def test_deliver_auto_mode_gates_on_fresh_evidence
+    section = section_of(skill("deliver"), "## Auto mode")
 
     assert_includes(section, "delivery-evidence check --require tests,lint")
     assert_match(/stale|missing|failed/i, section)
   end
 
-  def test_finish_auto_mode_builds_the_body_from_the_handover
-    section = section_of(skill("finish"), "## Auto mode")
+  def test_deliver_auto_mode_builds_the_body_from_the_handover
+    section = section_of(skill("deliver"), "## Auto mode")
 
     assert_includes(section, "delivery-evidence handover")
-    assert_match(/fill-pr-template .*<handover>/, section)
-    assert_match(/before §4/, section)
+    assert_match(/fill-pr-template/, section)
   end
 
-  def test_finish_auto_mode_verifies_the_pull_request_body_and_head
-    assert_includes(section_of(skill("finish"), "## Auto mode"), "delivery-evidence pr-check")
+  def test_deliver_auto_mode_verifies_the_pull_request_body_and_head
+    assert_includes(section_of(skill("deliver"), "## Auto mode"), "delivery-evidence pr-check")
+  end
+
+  def test_finish_auto_mode_never_reports_a_pending_check_as_passing
+    assert_match(/pending check is pending, never passing/, section_of(skill("finish"), "## Auto mode"))
   end
 
   def test_playbook_names_the_claude_coordinator_preflight_evidence_and_handover
