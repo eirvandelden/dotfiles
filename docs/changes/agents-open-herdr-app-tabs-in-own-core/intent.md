@@ -22,7 +22,7 @@ An agent that opens a tab, in any repository, opens it in the core the agent its
 
 - Claude and Codex agents that open tabs, panes or spaces in herdr-app.
 - Etienne, who sees the tabs.
-- The `agents` stow package (skill source), `SKILLS-INDEX.md` and the `herdr-app-pane` tool, which already targets the coordinator's space.
+- The `agents` stow package (skill source), `SKILLS-INDEX.md` and the `herdr-app-pane` tool, which targets the coordinator's space and needs a fix for work-core terminals.
 
 ## Constraints
 
@@ -35,6 +35,7 @@ An agent that opens a tab, in any repository, opens it in the core the agent its
 ## In scope
 
 - One agent-facing skill that says: open tabs with `herdr-app-pane` or `herdr-app do … --machine <own core>`, in the agent's own core; never use the `herdr` CLI, `HERDR_ENV` or the Herdr UI browser commands.
+- `herdr-app-pane open`, `close`, `close-idle` and `close-at` work from a terminal in the `work` core as well as from `default`. They refuse from `work` today, because the space match compares a bare id against `work/`-prefixed ids.
 - A line in `SKILLS-INDEX.md` for the skill.
 - A way for an agent to find its own core, stated in the skill.
 - Test coverage where the repository tests skill content.
@@ -51,6 +52,8 @@ An agent that opens a tab, in any repository, opens it in the core the agent its
 - An agent in the `work` core that opens a tab gets it in the `work` core, while the personal space has focus.
 - An agent in the `default` core that opens a tab gets it in the `default` core, while the work space has focus.
 - An agent that reads the skill never runs the `herdr` CLI or the Herdr UI browser command to open a tab.
+- A pipeline pane opened with `herdr-app-pane open` from a `work` terminal opens beside that terminal, and `herdr-app-pane close` from it closes the right pane.
+- The same commands from a `default` terminal still work as before.
 - The skill appears in `SKILLS-INDEX.md`.
 
 ## Flagged concerns
@@ -61,6 +64,7 @@ None.
 
 - A tab opens in the agent's own core, not in the focused space — matches the personal/work split.
 - Autonomous delivery, no Codex review — small change on a personal repository.
+- The `herdr-app-pane` work-core refusal is fixed in this change, not a separate branch — "it should work for both personal and work agents" (2026-11-19, after the plan stage found it).
 
 ## Open questions
 
