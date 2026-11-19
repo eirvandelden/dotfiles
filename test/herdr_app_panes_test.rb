@@ -460,12 +460,12 @@ class HerdrAppPanesWorkCoreTest < Minitest::Test
 
   def test_close_from_a_work_terminal_makes_the_same_calls_as_from_a_default_one
     work_panes.close
-    default = calls.dup
+    work = calls.dup
     calls.clear
     @world = default_world(cwd: @main)
     panes.close
 
-    assert_equal(call_names(default), call_names(calls))
+    assert_equal(call_names(work), call_names(calls))
     assert_equal(%w[hc herdr-app herdr-app], calls.map(&:first))
   end
 
