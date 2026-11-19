@@ -43,6 +43,7 @@ Three path forms for the same files. Inside the dotfiles repository, read the re
 
 - Isolating a new-code task into its own git worktree instead of the main checkout: `agents/.agents/skills/worktree-first/SKILL.md`
 - Copying a Rails app's SQLite development databases into a new worktree: `agents/.agents/skills/using-sqlite-worktrees/SKILL.md`
+- Opening a tab or pane in herdr-app, in the agent's own core (`herdr-app-pane tab`), and never the herdr TUI, `HERDR_ENV` or the stale herdr skills: `agents/.agents/skills/herdr-app-tabs/SKILL.md`
 - Syncing a branch with main — fetch, rebase, conflict resolution, force-with-lease push: `agents/.agents/skills/sync/SKILL.md`
 - Setting, changing or removing the merge method (merge, squash, rebase) the gh-dash merge key uses, per owner or repository: `agents/.agents/skills/pr-merge-method/SKILL.md`
 - Reviewing a pull request, or implementing review feedback: `agents/.agents/skills/code-review/SKILL.md`
