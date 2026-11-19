@@ -19,6 +19,11 @@ require "tmpdir"
 # - `herdr-app do pane.split '{"pane","direction","argv"}'` → {"pane","terminal"}, and it moves focus to the new pane.
 # - `herdr-app do pane.close '{"pane"}'` → {"ok":true}; `pane.focus '{"pane"}'` → {"ok":true}.
 # - A refusal → {"error":"..."} on stdout, exit 1.
+# - `herdr-app do tab.new '{"space","folder","name","argv","focus"}'` → {"pane","terminal"} (shape assumed: the
+#   live probe is recorded in the plan's delivery account); `focus: false` leaves focus where it was.
+# - Address rule: `herdr-app ls` and `do` use herdr-app addresses, which carry a `<machine>/` prefix outside the
+#   default core (`work/t25`); `hc` uses the bare hc address (`t25`) of its own core. The World keeps hc answers
+#   under the herdr-app address and looks them up under `<HC_SESSION>/<address>` outside `default`.
 # - `hc get <t> --json` → {"address","cwd","state","exit_code","foreground":{"cwd","argv"},"status","labels"};
 #   cwd is the spawn folder, foreground.cwd the real one; status is {"app","state"} or null; labels name
 #   the herdr.space and herdr.tab ids. A claude that fails to start leaves a live shell with status null.
@@ -29,7 +34,7 @@ module HerdrAppHarness
   SCRIPTS = File.join(REPO_ROOT, "herdr-app/.config/herdr-app/scripts")
   # The variables a herdr-app terminal carries. Every test that runs a pipeline script clears them, so
   # a run inside herdr-app drives no pane of the real window.
-  CLEARED_ENV = %w[HC_TERMINAL_ID HC_TERMINAL_SOCKET HC_SCOPE HERDR_APP_COORDINATOR HERDR_APP_HOME]
+  CLEARED_ENV = %w[HC_TERMINAL_ID HC_TERMINAL_SOCKET HC_SESSION HC_SCOPE HERDR_APP_COORDINATOR HERDR_APP_HOME]
                 .to_h { |name| [ name, nil ] }.freeze
   FOCUS_KEY = "focused_pane".freeze
   SPACE = "sp1".freeze
@@ -84,6 +89,28 @@ module HerdrAppHarness
       }
     end
 
+    # Two cores that reuse the hc addresses t20 and t11. Personal space sp2 (machine nil): idle agent t20, shell t11,
+    # in cwd. Work space work/sp3 (machine work): done agent work/t20, shell work/t11, in work_cwd; its hc answers
+    # label it sp3. A decoy work space work/sp2 holds work/t30. The personal shell p11 has focus.
+    def work_world(cwd:, work_cwd:)
+      personal = space("sp2", tab("tb2", agent_row("t20", "p20"), terminal_row("t11", "p11")), name: "dotfiles")
+      work = space("work/sp3", tab("work/tb3", agent_row("work/t20", "work/p20", "done"),
+                                   terminal_row("work/t11", "work/p11")), name: "api", machine: "work")
+      decoy = space("work/sp2", tab("work/tb2", agent_row("work/t30", "work/p30")), name: "decoy", machine: "work")
+      default_world(cwd: cwd).merge(
+        "spaces" => [ personal, work, decoy ], FOCUS_KEY => "p11",
+        "terminals" => work_terminals(cwd, work_cwd)
+      )
+    end
+
+    def work_terminals(cwd, work_cwd)
+      { "t20" => [ terminal("t20", cwd: cwd, status: agent, space: "sp2", tab: "tb2") ],
+        "t11" => [ terminal("t11", cwd: cwd, space: "sp2", tab: "tb2") ],
+        "work/t20" => [ terminal("t20", cwd: work_cwd, status: agent("done"), space: "sp3", tab: "tb3") ],
+        "work/t11" => [ terminal("t11", cwd: work_cwd, space: "sp3", tab: "tb3") ],
+        "work/t30" => [ terminal("t30", cwd: work_cwd, status: agent, space: "sp2", tab: "tb2") ] }
+    end
+
     # Adds a terminal to the first tab of the space and gives hc an answer for it.
     def add_terminal(world, row, answer, space: SPACE)
       world["spaces"].find { |candidate| candidate["id"] == space }["tabs"].first["terminals"] << row
@@ -98,8 +125,10 @@ module HerdrAppHarness
   class World
     attr_reader :state
 
-    def initialize(state)
+    # core: the HC_SESSION of the caller's terminal; hc answers only for terminals of that core.
+    def initialize(state, core: "default")
       @state = state
+      @core = core
     end
 
     # [stdout, stderr, exit status]
@@ -125,10 +154,11 @@ module HerdrAppHarness
     end
 
     def terminal_answer(address)
-      answers = state["terminals"][address]
+      key = @core == "default" ? address : "#{@core}/#{address}"
+      answers = state["terminals"][key]
       return [ "", "hc: no terminal #{address}\n", 1 ] unless answers
 
-      state["terminals"][address] = answers.drop(1) if answers.size > 1
+      state["terminals"][key] = answers.drop(1) if answers.size > 1
       [ JSON.generate(answers.first), "", 0 ]
     end
 
@@ -148,6 +178,7 @@ module HerdrAppHarness
       when "pane.split" then split(request)
       when "pane.close" then close(request["pane"])
       when "pane.focus" then focus(request["pane"])
+      when "tab.new" then tab_new(request)
       else error("unknown action #{name}")
       end
     end
@@ -160,19 +191,45 @@ module HerdrAppHarness
       space, tab = locate(anchor)
       return error("no pane \"#{anchor}\"") unless tab
 
-      pane, terminal = take_ids
+      pane, terminal = take_ids(space)
       tab["terminals"] << Fixtures.terminal_row(terminal, pane)
-      state["terminals"][terminal] = state["new_terminal"].map do |answer|
-        answer.merge("address" => terminal, "labels" => { "herdr.space" => space["id"], "herdr.tab" => tab["id"] })
-      end
+      state["terminals"][terminal] = new_answers(space, tab, terminal)
       state[FOCUS_KEY] = pane if state["split_takes_focus"]
       ok("pane" => pane, "terminal" => terminal)
     end
 
-    def take_ids
+    def tab_new(request)
+      space = state["spaces"].find { |candidate| candidate["id"] == request["space"] }
+      return error("no space \"#{request['space']}\"") unless space
+
+      pane, terminal = take_ids(space)
+      tab = { "id" => "#{prefix(space)}tb#{pane.split('/').last}", "terminals" => [ Fixtures.terminal_row(terminal, pane) ] }
+      space["tabs"] << tab
+      state["terminals"][terminal] = new_answers(space, tab, terminal, folder: request["folder"])
+      state[FOCUS_KEY] = pane unless request["focus"] == false
+      ok("pane" => pane, "terminal" => terminal)
+    end
+
+    def new_answers(space, tab, terminal, folder: nil)
+      labels = { "herdr.space" => hc_address(space["id"]), "herdr.tab" => hc_address(tab["id"]) }
+      state["new_terminal"].map do |answer|
+        moved = folder ? answer.merge("cwd" => folder, "foreground" => answer["foreground"].merge("cwd" => folder)) : answer
+        moved.merge("address" => hc_address(terminal), "labels" => labels)
+      end
+    end
+
+    def prefix(space)
+      space["machine"] ? "#{space['machine']}/" : ""
+    end
+
+    def hc_address(id)
+      id.split("/").last
+    end
+
+    def take_ids(space)
       number = state["next_id"]
       state["next_id"] = number + 1
-      [ "p#{number}", "t#{number}" ]
+      [ "#{prefix(space)}p#{number}", "#{prefix(space)}t#{number}" ]
     end
 
     def close(pane)
@@ -225,7 +282,7 @@ module HerdrAppHarness
       return state.fetch("pane_cli", { "stdout" => "t#{FIRST_NEW_ID}\n" }).values_at("stdout", "stderr", "exit")
                   .then { |out, err, code| [ out.to_s, err.to_s, code.to_i ] } if tool == "herdr-app-pane"
 
-      world = World.new(state)
+      world = World.new(state, core: ENV.fetch("HC_SESSION", "").then { |name| name.empty? ? "default" : name })
       world.answer(tool, arguments).tap do
         file.rewind
         file.truncate(0)
@@ -239,8 +296,8 @@ module HerdrAppHarness
   class FakeCommandLine
     attr_reader :calls
 
-    def initialize(state, calls = [])
-      @world = World.new(state)
+    def initialize(state, calls = [], core: "default")
+      @world = World.new(state, core: core)
       @calls = calls
     end
 
@@ -307,13 +364,20 @@ module HerdrAppHarness
 
   # The environment of a herdr-app terminal own, with every herdr-app executable a stub. pane_cli: the
   # herdr-app-pane to run, the stub by default; pass PANE_CLI to run the real one against the stubs.
-  def herdr_app_env(own: COORDINATOR, pane_cli: herdr_app_stub("herdr-app-pane"))
+  # core: the core of the terminal; "default" sets no HC_SESSION, as a default-core terminal has none.
+  def herdr_app_env(own: COORDINATOR, pane_cli: herdr_app_stub("herdr-app-pane"), core: "default")
     CLEARED_ENV.merge(
       "PATH" => "#{@herdr_app_bin}:#{ENV.fetch('PATH')}", "HERDR_APP_STUB_DIR" => @herdr_app_dir,
       "HERDR_APP_BIN" => herdr_app_stub("herdr-app"), "HC_BIN" => herdr_app_stub("hc"), "HERDR_APP_PANE" => pane_cli,
       "HERDR_APP_READY_POLL" => "0", "HERDR_APP_READY_TIMEOUT" => "2", "HC_TERMINAL_ID" => own,
+      "HC_SESSION" => core == "default" ? nil : core,
       "HERDR_ENV" => nil, "HERDR_PANE_ID" => nil, "HERDR_WORKSPACE_ID" => nil, "REX_SESSION" => nil, "REX_BLOCK" => nil
     )
+  end
+
+  # Fails when a logged hc call names a herdr-app address: hc only knows hc addresses.
+  def herdr_app_assert_hc_addresses
+    herdr_app_calls.select { |call| call.first == "hc" }.each { |call| refute_includes(call.join(" "), "/", call.inspect) }
   end
 
   # Every logged call, as [tool, *arguments].
