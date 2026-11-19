@@ -12,6 +12,7 @@ require "json"
 require "open3"
 require_relative "../../review/scripts/review_file"
 require_relative "../../finish/scripts/change_scope"
+require_relative "../../plan/scripts/intent_metadata"
 
 SKILLS_DIR = File.expand_path("../..", __dir__)
 TEMPLATES = %w[
@@ -38,6 +39,62 @@ module Shell
   end
 end
 
+# The delivery evidence of an accepted autonomous change. Any other change has none: every method
+# answers as if the gate did not exist, and delivery-evidence is never called. The tool path is
+# $DELIVERY_EVIDENCE when set, so a test can stand in for it.
+class Evidence
+  include Shell
+
+  #: (String folder) -> void
+  def initialize(folder)
+    intent = File.join(folder, "intent.md")
+    text = File.exist?(intent) ? File.read(intent) : ""
+    @required = IntentMetadata.accepted?(text) && IntentMetadata.autonomous?(text)
+  end
+
+  #: () -> bool
+  def required? = @required
+
+  #: () -> String?
+  def reason
+    return unless required?
+
+    _, stderr, status = Open3.capture3(tool, "check", "--require", kinds)
+    "The delivery evidence is not ready:\n#{stderr.strip}" unless status.success?
+  end
+
+  # The handover file path, or a refusal naming why none was written.
+  #: () -> String
+  def handover
+    stdout, stderr, status = Open3.capture3(tool, "handover", "--require", kinds)
+    raise Refusal, "The delivery evidence is not ready:\n#{stderr.strip}" unless status.success?
+
+    stdout.strip
+  end
+
+  #: () -> void
+  def pr_check
+    _, stderr, status = Open3.capture3(tool, "pr-check")
+    return if status.success?
+
+    warn(stderr.strip)
+    raise Refusal, "The pull request exists, but it does not match the handover. Nothing is undone."
+  end
+
+  private
+
+  #: () -> String
+  def tool
+    ENV.fetch("DELIVERY_EVIDENCE", File.join(SKILLS_DIR, "finish/scripts/delivery-evidence"))
+  end
+
+  #: () -> String
+  def kinds
+    scanner = File.exist?("Gemfile.lock") && File.read("Gemfile.lock").match?(/\b(brakeman|bundler-audit)\b/)
+    scanner ? "tests,lint,audit" : "tests,lint"
+  end
+end
+
 # The conditions delivery needs, each as a reason when it does not hold.
 class Preconditions
   include Shell
@@ -51,7 +108,7 @@ class Preconditions
 
   #: -> Array[String]
   def reasons
-    [ tree_reason, exclusion_reason, review_reasons, freshness_reason, scope_reason ].flatten.compact
+    [ tree_reason, exclusion_reason, review_reasons, freshness_reason, scope_reason, Evidence.new(@folder).reason ].flatten.compact
   end
 
   private
@@ -151,17 +208,26 @@ class Draft
   def body_path = File.join(@directory, "#{@slug}.body.md")
   #: -> String
   def title_path = File.join(@directory, "#{@slug}.title")
+  def handover_marker = File.join(@directory, "#{@slug}.handover")
 
   #: -> bool
   def saved?
     File.exist?(body_path) && File.exist?(title_path)
   end
 
-  #: (String folder) -> void
-  def capture_from(folder)
+  # Writes the body and title. A handover path, when there is one, is the body's fourth input and
+  # is marked, so a resumed delivery knows the pull request needs the check.
+  #: (String folder, ?String? handover) -> void
+  def capture_from(folder, handover = nil)
     FileUtils.mkdir_p(@directory)
-    File.write(body_path, capture(File.join(SKILLS_DIR, "finish/scripts/fill-pr-template"), template, *artifacts(folder)))
+    inputs = [ template, *artifacts(folder), *handover ]
+    File.write(body_path, capture(File.join(SKILLS_DIR, "finish/scripts/fill-pr-template"), *inputs))
     File.write(title_path, title(File.read(File.join(folder, "intent.md"))))
+    File.write(handover_marker, handover) if handover
+  end
+
+  def checked?
+    File.exist?(handover_marker)
   end
 
   #: -> String
@@ -169,7 +235,7 @@ class Draft
 
   #: -> void
   def discard
-    FileUtils.rm_f([ body_path, title_path ])
+    FileUtils.rm_f([ body_path, title_path, handover_marker ])
   end
 
   private
@@ -287,9 +353,11 @@ class Delivery
     prepare unless resuming?
     capture("git", "push", "-u", "origin", @branch)
     url = publish(existing)
+    checked = @draft.checked?
     @draft.discard
     puts(url)
     finish(url)
+    Evidence.new(@folder).pr_check if checked
   end
 
   private
@@ -302,7 +370,8 @@ class Delivery
     reasons = @preconditions.reasons
     raise Refusal, reasons.join("\n") unless reasons.empty?
 
-    @draft.capture_from(@folder)
+    evidence = Evidence.new(@folder)
+    @draft.capture_from(@folder, (evidence.handover if evidence.required?))
     remove_folder unless @work
   end
 
