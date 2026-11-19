@@ -133,3 +133,8 @@ Domain skills applied: rails-testing (Minitest conventions), ruby-style.
   - The script captures the commit's output and exits unless it holds "global hook refused" or "no signing agent".
 - Step 4 lets the known red sweep tests stay red, which conflicts with the green-suite constraint → fixed (Order of work step 4, Risks)
   - Step 4 opens with a gate: run the sweep file without the helper on a quiet machine. If the two tests fail, stop and report a blocker for a separate rule 25 fix. If they pass, the file must pass with the helper.
+
+## Departures found while implementing
+
+- After the rebase on `origin/main` (539437c7), every `test/*_test.rb` already required `isolated_git`, and `review_push_hook_test.rb` and `lefthook_rubocop_git_gem_test.rb` no longer exist (commit daff85ef: "Remove global git hooks and the tests that only covered them"). Steps 4 and 5 had nothing to add. Only the duplicate constants and the sharper check remained.
+- Step 8 ran on `bi_test.rb` only: 18 runs, 0 failures, under the hostile config (sanity commit refused: "global hook refused").
