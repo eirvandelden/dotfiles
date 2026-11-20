@@ -11,11 +11,13 @@ class MarkerCheck
   VENDOR_DIRECTORY = %r{(\A|/)vendor/}
   NEVER_CHECKED = %r{(\A|/)(lefthook(-local)?\.yml\z|sorbet/|\.git(/|\z))}
 
+  #: (String word, Array[String] paths) -> void
   def initialize(word, paths)
     @word = word.b
     @paths = paths.reject { |path| path.match?(NEVER_CHECKED) || !File.file?(path) }
   end
 
+  #: -> Array[String]
   def hits
     (@paths - vendored).flat_map { |path| hits_in(path) }
   end
