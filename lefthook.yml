@@ -80,7 +80,7 @@ pre-commit:
       fail_text: Direct commits to main/master are blocked. Create a feature branch first.
     # marker-check skips vendored files. A repository lists its vendored paths in .gitattributes with
     # linguist-vendored; a vendor/ directory is vendored without a line.
-    # This file is the global fallback config and lives in the dotfiles checkout. The script therefore
+    # This file is the Shared config and lives in the dotfiles checkout. The script therefore
     # runs from that checkout, not from a stow link that exists only after a restow.
     no-fixme:
       tags: fixme

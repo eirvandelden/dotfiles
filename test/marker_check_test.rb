@@ -93,7 +93,7 @@ class MarkerCheckTest < Minitest::Test
     assert_equal(0, status.exitstatus)
   end
 
-  def test_the_fallback_config_calls_the_script_beside_it
+  def test_the_shared_config_calls_the_script_beside_it
     commands = marker_commands(File.join(REPO_ROOT, "lefthook.yml"))
 
     assert_equal(4, commands.size)

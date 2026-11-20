@@ -1,6 +1,6 @@
 ---
-# This repository tests its own marker-check, so it calls the copy in the checkout instead of the global
-# fallback's path. A worktree of a branch that changes the script then needs no stow link.
+# This repository tests its own marker-check, so it calls the copy in the checkout instead of the Shared
+# config's path. A worktree of a branch that changes the script then needs no stow link.
 # Lefthook runs commands from the repository root. Only `run` is overridden; tags and fail_text stay.
 pre-commit:
   commands:
