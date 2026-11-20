@@ -5,11 +5,13 @@ require "digest"
 # exactly the verified content keeps it fresh. The change folder is left out,
 # so review and plan commits never force a rerun.
 class Fingerprint
+  #: (Repo repo, String folder) -> void
   def initialize(repo, folder)
     @repo = repo
     @folder = folder
   end
 
+  #: (Array[String] pathspecs) -> String
   def of(pathspecs)
     paths = listed(pathspecs)
     blobs = blob_ids(paths.select { |path| regular?(path) })

@@ -30,6 +30,7 @@ CHANGE_FOLDER_SCRIPT = File.expand_path("../../plan/scripts/change-folder", __di
 UNKNOWN_BASE = "cannot resolve the base branch, so the automatic migration and browser requirements are unknown.".freeze
 
 class DeliveryEvidence
+  #: (Repo repo) -> void
   def initialize(repo)
     @repo = repo
     @folder = change_folder
@@ -37,6 +38,7 @@ class DeliveryEvidence
     @fingerprint = Fingerprint.new(repo, @folder)
   end
 
+  #: (Hash[Symbol, untyped] options, Array[String] command) -> Integer
   def run(options, command)
     abort("run needs a command after --") if command.empty?
     paths = pathspecs(options)
@@ -50,6 +52,7 @@ class DeliveryEvidence
     exit_status
   end
 
+  #: (Hash[Symbol, untyped] options) -> Integer
   def record(options)
     paths = pathspecs(options)
     add(options, paths, @repo.uncommitted?(paths, @folder), status: options.fetch(:status),
@@ -57,6 +60,7 @@ class DeliveryEvidence
     0
   end
 
+  #: (Hash[Symbol, untyped] options) -> Integer
   def note(options)
     @store.data["delivered"] = options[:delivered] if options[:delivered]
     @store.data["limitations"] << options[:limitation] if options[:limitation]
@@ -64,6 +68,7 @@ class DeliveryEvidence
     0
   end
 
+  #: -> Integer
   def status
     @store.current.each do |entry|
       puts([ label(entry).ljust(7), entry["kind"], entry["name"], entry["head"][0, 8], entry["time"] ].join("  "))
@@ -71,6 +76,7 @@ class DeliveryEvidence
     0
   end
 
+  #: (Array[String]? required) -> Integer
   def check(required)
     problems = problems(required)
     return puts("OK: delivery evidence is fresh.") || 0 if problems.empty?
@@ -79,6 +85,7 @@ class DeliveryEvidence
     1
   end
 
+  #: (Array[String]? required) -> Integer
   def handover(required)
     return refuse("no delivered behaviour note: run `delivery-evidence note --delivered <text>`.") unless @store.data["delivered"]
 
@@ -90,6 +97,7 @@ class DeliveryEvidence
     0
   end
 
+  #: -> Integer
   def pr_check
     abort("no handover file at #{@store.handover_path}") unless File.exist?(@store.handover_path)
     pull_request = fetch_pull_request
@@ -201,6 +209,7 @@ class DeliveryEvidence
   end
 end
 
+#: (Array[String] argv) -> Hash[Symbol, untyped]
 def parse_options(argv)
   options = {}
   OptionParser.new do |parser|

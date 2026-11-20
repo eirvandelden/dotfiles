@@ -11,15 +11,18 @@ module IntentMetadata
 
   module_function
 
+  #: (String text) -> bool
   def accepted?(text)
     statuses = values(fields(header(text)), "Status")
     statuses.one? && statuses.first.match?(ACCEPTED)
   end
 
+  #: (String text) -> bool
   def autonomous?(text)
     values(fields(header(text)), "Delivery") == [ "autonomous" ]
   end
 
+  #: (String text) -> String
   def header(text)
     return "" unless text.lines.first&.match?(/\A# Intent: \S/)
 
@@ -27,11 +30,13 @@ module IntentMetadata
     metadata.take_while { |line| line.match?(/\A(?:Author|Status|Type|Delivery|Codex review): /) }.join
   end
 
+  #: (String header) -> Array[[String, String]]
   def fields(header)
     parts = header.lines.flat_map { |line| line.chomp.split(SEPARATOR) }
     parts.filter_map { |part| part.match(FIELD)&.captures }
   end
 
+  #: (Array[[String, String]] fields, String name) -> Array[String]
   def values(fields, name)
     fields.filter_map { |key, value| value.delete_suffix(".") if key == name }.uniq
   end

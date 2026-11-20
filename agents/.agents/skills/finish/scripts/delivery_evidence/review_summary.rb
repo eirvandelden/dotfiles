@@ -8,10 +8,12 @@ class ReviewSummary
   CLOSURE = /\s→\s(fixed\b.*|dismissed\b.*)\z/
   EXCERPT_LIMIT = 140
 
+  #: (String markdown) -> void
   def initialize(markdown)
     @markdown = markdown
   end
 
+  #: -> String
   def to_markdown
     rounds = parse
     return "No review rounds recorded." if rounds.empty?

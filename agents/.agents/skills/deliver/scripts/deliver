@@ -208,6 +208,7 @@ class Draft
   def body_path = File.join(@directory, "#{@slug}.body.md")
   #: -> String
   def title_path = File.join(@directory, "#{@slug}.title")
+  #: -> String
   def handover_marker = File.join(@directory, "#{@slug}.handover")
 
   #: -> bool
@@ -226,6 +227,7 @@ class Draft
     File.write(handover_marker, handover) if handover
   end
 
+  #: -> bool
   def checked?
     File.exist?(handover_marker)
   end

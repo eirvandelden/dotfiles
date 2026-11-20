@@ -3,12 +3,14 @@ require_relative "review_summary"
 # The PR body source: what was delivered, what actually ran, how review closed
 # and what stays limited. Built only from recorded entries, never from the plan.
 class Handover
+  #: (Hash[String, untyped] data, Array[Hash[String, untyped]] entries, String? review_markdown) -> void
   def initialize(data, entries, review_markdown)
     @data = data
     @entries = entries
     @review = review_markdown
   end
 
+  #: -> String
   def to_markdown
     <<~MARKDOWN
       # Handover
