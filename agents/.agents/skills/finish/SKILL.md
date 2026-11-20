@@ -59,6 +59,7 @@ Print what ran and the PR URL. This skill never comments on the PR (playbook rul
 Run by the autonomous-delivery coordinator on a personal repository only (`change-scope` prints `personal`), right after `deliver`. It also requires an accepted `intent.md` with `Delivery: autonomous` in its header metadata; `deliver` removes that file, so the coordinator checks it before it runs `deliver`. A `work` scope or step-by-step change refuses auto mode and uses the steps above unchanged. Differences:
 
 - Run `~/.claude/skills/finish/scripts/ship --no-merge` instead of `ship`. It marks the PR ready and waits for green CI.
+- Report the CI result as `ship --no-merge` printed it. A pending check is pending, never passing. The evidence gate and the handover body belong to `deliver`, which ran before this step.
 - Never merge, and never comment on the PR. Etienne's `/finish` is the merge approval.
 
 ## Codex
