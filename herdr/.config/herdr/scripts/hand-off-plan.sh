@@ -77,7 +77,7 @@ to"
     ready_word="Delivery done:"
     role_instruction="You are the Claude coordinator of the autonomous delivery of \
 docs/changes/$slug; intent.md is accepted and records Delivery: autonomous. Follow the intent \
-skill's Autonomous delivery section from its preflight on. keep your own pane open through every \
+skill's Autonomous delivery section from its preflight on. Keep your own pane open through every \
 stage; pass your own pane id (\$HERDR_PANE_ID in your shell) to every stage you start, never the \
 caller's id below; never merge."
     acceptance_instruction=""

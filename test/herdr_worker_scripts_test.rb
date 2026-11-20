@@ -630,8 +630,8 @@ end
     run_script(HAND_OFF_PLAN, "deliver", "some-change")
     prompt = worker_prompt("deliver")
 
-    assert_match(/keep your own pane open through every stage/, prompt)
-    assert_operator(prompt.index("keep your own pane open"), :<, prompt.index("herdr pane close"))
+    assert_match(/Keep your own pane open through every stage/, prompt)
+    assert_operator(prompt.index("Keep your own pane open"), :<, prompt.index("herdr pane close"))
     assert_operator(prompt.index("Delivery done:"), :<, prompt.index("herdr pane close"))
   end
 
