@@ -10,7 +10,9 @@
 # DESIGN_SUBSECTIONS_IN_BODY, Mermaid fences included, so GitHub renders the
 # diagrams after finish removes the change folder. Every other plan section
 # (Signatures, Complexity, Invariants, Alternatives, Proof, Files that change)
-# stays in plan.md.
+# stays in plan.md. A delivery handover, when given, fills the test heading with
+# its Verification section, or appends one, and adds its Delivered behaviour,
+# Review and Limitations sections at the end.
 CATEGORIES = [
   [ :summary, /\bsummary|\bdescription|\A\s*what\s+(does|changed|is\s+this)\b/i ],
   [ :why, /\bwhy|\bmotivation/i ],
@@ -20,7 +22,8 @@ CATEGORIES = [
 
 APPEND_ORDER = [
   [ :summary, "Summary" ],
-  [ :implementation, "Implementation" ]
+  [ :implementation, "Implementation" ],
+  [ :test, "Verification" ]
 ].freeze
 
 # The only Design subsections that reach the PR body.
@@ -174,16 +177,28 @@ def fill_template(template, fill)
   joined(body, appended_sections(fill, filled_categories))
 end
 
-template_path, intent_path, plan_path = ARGV
+HANDOVER_SECTIONS = [ "Delivered behaviour", "Review", "Limitations" ].freeze
+
+#: (String handover) -> Array[String]
+def handover_sections(handover)
+  HANDOVER_SECTIONS.filter_map do |title|
+    body = section_body(handover, title)
+    "## #{title}\n\n#{body}" if body && !body.empty?
+  end
+end
+
+template_path, intent_path, plan_path, handover_path = ARGV
 unless intent_path && plan_path
-  warn("usage: fill-pr-template <template-path-or-empty> <intent.md> <plan.md>")
+  warn("usage: fill-pr-template <template-path-or-empty> <intent.md> <plan.md> [handover.md]")
   exit(1)
 end
 
 intent = File.read(intent_path)
 plan = File.read(plan_path)
+handover = handover_path && !handover_path.empty? ? File.read(handover_path) : nil
 fill = filler(intent, plan)
+fill[:test] = section_body(handover, "Verification") || "" if handover
 
 template = template_path && !template_path.empty? && File.exist?(template_path) ? File.read(template_path) : ""
 
-puts(fill_template(template, fill))
+puts(joined(fill_template(template, fill), *(handover ? handover_sections(handover) : [])))

@@ -51,6 +51,14 @@ A push that fails leaves the folder removed and the saved files in place. Run `d
 
 Tell Etienne the PR URL, whether a gh-dash pane opened, and that `/finish` is the next step. Never comment on the PR.
 
+## Auto mode
+
+An accepted `intent.md` with `Delivery: autonomous` adds an evidence gate to the steps above.
+
+- Step 1 also runs `~/.claude/skills/finish/scripts/delivery-evidence check --require tests,lint`, plus `audit` when `Gemfile.lock` names Brakeman or Bundler Audit. A missing, failed or stale entry refuses delivery and names itself. A rebase, a code edit or an uncommitted change makes an entry stale. A commit that touches only `docs/changes/<slug>/` does not.
+- Step 3 runs `delivery-evidence handover` and passes the handover file to `fill-pr-template` as its fourth argument. The body then holds the actual checks, the review outcomes, the browser and migration evidence and the limitations, not the plan's promised tests.
+- After step 6 the script runs `delivery-evidence pr-check`. It exits 1 when the PR head differs from the local `HEAD` or the body lacks the handover's Verification section. The PR then exists, and nothing is undone.
+
 ## Codex
 
 Same script, same steps. Invoked as `$deliver`. A Codex coordinator runs it after a clean review round, then follows `$finish` in its auto mode.

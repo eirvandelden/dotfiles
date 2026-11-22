@@ -515,6 +515,104 @@ class DeliverTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
+  def test_an_autonomous_intent_with_no_evidence_is_refused_and_nothing_is_removed
+    commit_autonomous_change
+
+    assert_refused_and_untouched(/required kind tests has no fresh passing entry/)
+  end
+
+  def test_an_autonomous_intent_with_stale_evidence_is_refused
+    commit_autonomous_change
+    record_evidence
+    commit_file("lib/widget.rb", "class Widget; def late; end; end\n", "Change widget after evidence")
+    commit_review(SLUG, [])
+
+    assert_refused_and_untouched(/stale/)
+  end
+
+  def test_check_mode_reports_missing_evidence_for_an_autonomous_intent
+    commit_autonomous_change
+
+    _, stderr, status = deliver("--check")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/required kind lint has no fresh passing entry/, stderr)
+  end
+
+  def test_an_autonomous_intent_with_fresh_evidence_builds_the_body_from_the_handover
+    commit_autonomous_change
+    record_evidence
+    stub_pr_view_from_the_draft
+
+    _, stderr, status = deliver
+
+    assert(status.success?, stderr)
+    body = captured("gh-pr-create.body")
+    assert_includes(body, "Widgets now ship by themselves, verified.")
+    assert_includes(body, "true")
+    refute_includes(body, "test_widgets_ship")
+    refute(File.exist?(File.join(@repo, "docs/changes", SLUG)))
+  end
+
+  def test_a_pr_that_does_not_match_the_handover_exits_one_after_the_pr_exists
+    commit_autonomous_change
+    record_evidence
+    stub_response("gh pr view", { "stdout" => JSON.generate(headRefOid: "0" * 40, body: "## Summary\n\nNothing\n") })
+
+    _, stderr, status = deliver
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/does not match the handover/, stderr)
+    assert_equal(1, gh_calls.count { |call| call.start_with?("pr create ") })
+    assert_equal(REMOVAL_SUBJECT, git("log", "-1", "--format=%s").strip)
+  end
+
+  def test_a_matching_pr_passes_the_check
+    commit_autonomous_change
+    record_evidence
+    stub_pr_view_from_the_draft
+
+    _, stderr, status = deliver
+
+    assert(status.success?, stderr)
+    assert_includes(gh_calls, "pr view --json body,headRefOid")
+  end
+
+  def test_a_step_by_step_intent_never_calls_delivery_evidence
+    commit_change_work
+    log = File.join(@state, "evidence.log")
+    spy = File.join(@state, "spy")
+    File.write(spy, "#!/bin/sh\necho \"$*\" >> #{log}\nexit 1\n")
+    FileUtils.chmod(0o755, spy)
+
+    _, stderr, status = deliver(env: { "DELIVERY_EVIDENCE" => spy })
+
+    assert(status.success?, stderr)
+    refute(File.exist?(log))
+    assert_empty(gh_calls.grep(/\Apr view/))
+  end
+
+  def test_audit_is_required_when_the_lockfile_names_brakeman
+    commit_file("Gemfile.lock", "GEM\n  specs:\n    brakeman (7.0.0)\n", "Add lockfile")
+    commit_autonomous_change
+    record_evidence
+
+    _, stderr, status = deliver("--check")
+
+    assert_equal(1, status.exitstatus)
+    assert_match(/required kind audit has no fresh passing entry/, stderr)
+  end
+
+  def test_audit_is_not_required_without_a_scanner_in_the_lockfile
+    commit_file("Gemfile.lock", "GEM\n  specs:\n    rake (13.0.0)\n", "Add lockfile")
+    commit_autonomous_change
+    record_evidence
+
+    _, stderr, status = deliver("--check")
+
+    assert(status.success?, stderr)
+  end
+
   private
 
   def plan_with_design
@@ -554,10 +652,6 @@ class DeliverTest < Minitest::Test
     File.write(File.join(folder, "review.md"), "# Review\n\n#{round}")
   end
 
-  def deliver(*arguments, herdr: false, rex: false, scripts: @dash_scripts, env: {})
-    run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env))
-  end
-
   # deliver finds the dispatchers under the home folder, where the agents package links them.
   def install_dispatchers
     FileUtils.mkdir_p(File.join(@home, ".agents"))
@@ -585,6 +679,51 @@ class DeliverTest < Minitest::Test
     rex_calls.grep(/\Ablock close\b/).flat_map do |call|
       call.split.drop(2).reject { |word| word.start_with?("-") || word == SESSION }
     end
+  end
+
+  def commit_autonomous_change
+    commit_change_work
+    accepted = intent_text.sub("Type: feature.", "Type: feature. Delivery: autonomous.")
+    commit_file("docs/changes/#{SLUG}/intent.md", accepted, "Make the intent autonomous")
+    commit_review(SLUG, [])
+  end
+
+  def record_evidence
+    %w[tests lint].each { |kind| evidence("run", "--kind", kind, "--name", kind, "--", "true") }
+    evidence("note", "--delivered", "Widgets now ship by themselves, verified.")
+  end
+
+  def evidence(*arguments)
+    script = File.join(REPO_ROOT, "agents/.agents/skills/finish/scripts/delivery-evidence")
+    _, stderr, status = Open3.capture3(script_environment(false), script, *arguments, chdir: @repo)
+    raise("delivery-evidence #{arguments.join(' ')}: #{stderr}") unless status.success?
+  end
+
+  # A gh that answers `pr view` as a real PR would after the push: the local HEAD, and a body
+  # holding the handover's Verification section. Every other call goes to the stub.
+  def stub_pr_view_from_the_draft
+    handover = File.join(common_dir, "herdr", "deliver-#{SLUG}-handover.md")
+    real = File.join(@stub_bin, "gh")
+    wrapper = File.join(@state, "wrapper")
+    FileUtils.mkdir_p(wrapper)
+    File.write(File.join(wrapper, "gh"), <<~SH)
+      #!/bin/sh
+      if [ "$1 $2" = "pr view" ]; then
+        echo "$*" >> "$STUB_STATE/gh.log"
+        ruby -rjson -e 'text = File.read(ARGV[1]); body = text[/^## Verification\n\n(.*?)(?=\n## |\z)/m, 1]
+          puts JSON.generate(headRefOid: `git rev-parse HEAD`.strip, body: body)' -- "$(git rev-parse HEAD)" #{handover}
+      else
+        exec #{real} "$@"
+      fi
+    SH
+    FileUtils.chmod(0o755, File.join(wrapper, "gh"))
+    @extra_path = wrapper
+  end
+
+  def deliver(*arguments, herdr: false, rex: false, scripts: @dash_scripts, env: {})
+    env = { "HERDR_SCRIPTS_DIR" => scripts, "DASH_LOG" => dash_log }.merge(env)
+    env["PATH"] = "#{@extra_path}:#{@stub_bin}:#{ENV.fetch('PATH')}" if @extra_path
+    run_script(DELIVER, *arguments, herdr: herdr, rex: rex, env: env)
   end
 
   def assert_refused_and_untouched(reason)
