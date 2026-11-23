@@ -8,6 +8,8 @@ require_relative "isolated_git"
 # RemoteMatcher::PERSONAL_OWNERS. Adding an owner there fails these until each text follows.
 class PersonalOwnersParityTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
+  AGENT_DIRECTORY = File.join(ROOT, "git/.config/git/agent")
+  URL_PREFIXES = %w[git@github.com: ssh://git@github.com/ https://github.com/].freeze
   TRUST_LABELS = [ "Source control", "Trusted repo", "Routine pushes" ].freeze
 
   def test_the_glossary_names_every_personal_owner
@@ -28,6 +30,29 @@ class PersonalOwnersParityTest < Minitest::Test
 
     TRUST_LABELS.each do |label|
       assert_names_every_owner(lines.find { |line| line.start_with?("**#{label}**") })
+    end
+  end
+
+  def test_the_personal_gate_covers_every_personal_owner
+    %w[claude codex].each do |tool|
+      sections = File.readlines(File.join(AGENT_DIRECTORY, "#{tool}.config")).grep(/^\[includeIf/)
+
+      RemoteMatcher::PERSONAL_OWNERS.each do |owner|
+        URL_PREFIXES.each do |prefix|
+          assert_includes sections, %([includeIf "hasconfig:remote.*.url:#{prefix}#{owner}/**"]\n), "#{tool} #{prefix}#{owner}"
+        end
+      end
+      assert_equal RemoteMatcher::PERSONAL_OWNERS.size * URL_PREFIXES.size, sections.size
+    end
+  end
+
+  def test_the_agent_setup_file_and_origin_check_name_every_personal_owner
+    %w[personal.config origin-check].each do |name|
+      text = File.read(File.join(AGENT_DIRECTORY, name))
+
+      RemoteMatcher::PERSONAL_OWNERS.each do |owner|
+        assert_match(%r{(?<![\w-])#{Regexp.escape(owner)}(?![\w-])}, text, "#{name} #{owner}")
+      end
     end
   end
 

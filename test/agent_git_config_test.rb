@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
 require_relative "agent_git_support"
+require_relative "isolated_git"
 
 # Behind the agent include, a personal repository gets the agent identity, signer and hooks; any other
 # repository keeps Etienne's config. Every test runs real git in a temporary HOME.

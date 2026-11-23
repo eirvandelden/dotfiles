@@ -165,6 +165,31 @@ class IsolatedGitTest < Minitest::Test
     assert_equal([ "work info 0", "work hooks 0", "bare info 0", "bare hooks 0" ], output.lines.map(&:chomp))
   end
 
+  def test_the_helper_drops_an_inherited_include
+    inherited = { "GIT_CONFIG_COUNT" => "1", "GIT_CONFIG_KEY_0" => "include.path", "GIT_CONFIG_VALUE_0" => "/nowhere/agent.config" }
+
+    output, status = run_child(inherited, RbConfig.ruby, "-Itest", "-risolated_git", "-e",
+                               "puts IO.popen(%w[git config --show-scope --get-all include.path], &:read).inspect")
+
+    assert(status.success?, output)
+    assert_equal("\"\"\n", output)
+  end
+
+  def test_the_helper_keeps_other_inherited_entries_and_renumbers_them
+    inherited = {
+      "GIT_CONFIG_COUNT" => "3",
+      "GIT_CONFIG_KEY_0" => "include.path", "GIT_CONFIG_VALUE_0" => "/nowhere/agent.config",
+      "GIT_CONFIG_KEY_1" => "user.name", "GIT_CONFIG_VALUE_1" => "Kept",
+      "GIT_CONFIG_KEY_2" => "includeIf.hasconfig:remote.*.url:x.path", "GIT_CONFIG_VALUE_2" => "/nowhere/gate.config"
+    }
+
+    output, status = run_child(inherited, RbConfig.ruby, "-Itest", "-risolated_git", "-e",
+                               "puts ENV.values_at('GIT_CONFIG_COUNT', 'GIT_CONFIG_KEY_0', 'GIT_CONFIG_VALUE_0', 'GIT_CONFIG_KEY_1')")
+
+    assert(status.success?, output)
+    assert_equal([ "3", "user.name", "Kept", "maintenance.auto" ], output.lines.map(&:chomp))
+  end
+
   def test_the_helper_keeps_earlier_git_config_count_entries
     inherited = { "GIT_CONFIG_COUNT" => "1", "GIT_CONFIG_KEY_0" => "user.name", "GIT_CONFIG_VALUE_0" => "Inherited" }
 
