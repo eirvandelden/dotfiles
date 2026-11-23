@@ -15,4 +15,4 @@ if [ "$1" = "-Y" ] && [ "$2" = "sign" ]; then
   done
 fi
 
-SSH_AUTH_SOCK= exec /usr/bin/ssh-keygen "$@"
+SSH_AUTH_SOCK='' exec /usr/bin/ssh-keygen "$@"
