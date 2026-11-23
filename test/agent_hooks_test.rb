@@ -74,6 +74,32 @@ class AgentHooksTest < Minitest::Test
     assert_equal "config/credentials/production.key", refuses_commit_of("config/credentials/production.key", "abc\n")
   end
 
+  def test_a_key_that_is_already_tracked_does_not_block_a_commit_that_stages_something_else
+    path = repository
+    File.write(File.join(path, "fixture.pem"), "#{key_header}\nabc\n")
+    git(path, "add", "fixture.pem", env: plain_env)
+    git(path, "-c", "user.name=First", "-c", "user.email=first@example.com", "commit", "-q", "-m", "first", env: plain_env)
+    _out, err, status = commit(path)
+
+    assert status.success?, err
+  end
+
+  def test_a_staged_private_key_with_a_crlf_header_is_refused_at_commit
+    assert_equal "deploy_key", refuses_commit_of("deploy_key", "#{key_header}\r\nabc\r\n")
+  end
+
+  def test_a_staged_nested_credentials_key_is_refused_at_commit
+    FileUtils.mkdir_p(File.join(@home, "repo/app/config/credentials"))
+
+    assert_equal "app/config/credentials/production.key", refuses_commit_of("app/config/credentials/production.key", "abc\n")
+  end
+
+  def test_a_staged_credentials_key_with_a_space_in_its_name_is_refused_at_commit
+    FileUtils.mkdir_p(File.join(@home, "repo/config/credentials"))
+
+    assert_equal "config/credentials/prod env.key", refuses_commit_of("config/credentials/prod env.key", "abc\n")
+  end
+
   def test_an_ordinary_commit_passes
     _out, err, status = commit(repository)
 
@@ -152,7 +178,7 @@ class AgentHooksTest < Minitest::Test
     _out, err, status = git(path, "commit", "-q", "-m", "key")
 
     refute status.success?
-    err[/refusing to commit (\S+):/, 1]
+    err[/refusing to commit (.+?): /, 1]
   end
 
   def trailers(path)
