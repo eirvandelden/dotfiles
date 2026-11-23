@@ -19,8 +19,7 @@ class WorktreeGuardTest < Minitest::Test
     repo = File.join(root, "repo")
     git = [ "git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.email=test@example.com",
             "-c", "user.name=Test" ]
-    system({ "GIT_CONFIG_GLOBAL" => "/dev/null" }, "git", "init", "--quiet", "--initial-branch=main", repo,
-           exception: true)
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
     File.write(File.join(repo, "file-initial.txt"), "initial")
     system(*git, "add", "-A", exception: true)
     system(*git, "commit", "--quiet", "-m", "initial", exception: true)
