@@ -1,0 +1,131 @@
+#!/usr/bin/env ruby
+# Reports and applies the "protect main" ruleset on the repositories of the personal owners, so an
+# agent token with contents:write cannot update the default branch. GitHub has no account-wide ruleset
+# for a user, so each repository carries its own. With no argument it prints one line per repository.
+# `bin/protect-main --apply <owner>/<repo>` changes one repository, so each change is one approval.
+# test/protect_main_test.rb covers MainProtection.
+require "json"
+require "open3"
+require "tempfile"
+require_relative "../claude/.claude/hooks/remote_matcher"
+
+# The "protect main" ruleset on the repositories of the personal owners.
+class MainProtection
+  REQUIRED_RULES = %w[pull_request non_fast_forward deletion].freeze
+  DEFAULT_RUNNER = ->(*arguments) { Open3.capture2e("gh", *arguments) }
+
+  #: (Array[String] owners, ?runner: ^(*String) -> [String, Process::Status]) -> void
+  def initialize(owners, runner: DEFAULT_RUNNER)
+    @owners = owners
+    @runner = runner
+  end
+
+  # One line per non-archived repository: protected, missing, bypassable, unverified or unavailable.
+  # protected = an active ruleset (fetched in full by id) that covers main or ~DEFAULT_BRANCH with
+  # pull_request, non_fast_forward and deletion rules and an empty bypass_actors list.
+  #: () -> Array[String]
+  def report
+    @owners.flat_map { |owner| repositories(owner) }.map { |repository| "#{repository}: #{state(repository)}" }
+  end
+
+  # Creates the ruleset on one repository: target ~DEFAULT_BRANCH, rules deletion,
+  # non_fast_forward and pull_request (0 approvals), no bypass actors.
+  #: (String repository) -> String
+  def apply(repository)
+    Tempfile.create([ "protect-main", ".json" ]) do |file|
+      file.write(JSON.generate(ruleset_body))
+      file.flush
+      output, status = @runner.call("api", "--method", "POST", "repos/#{repository}/rulesets", "--input", file.path)
+      raise "#{repository}: #{output.strip}" unless status_ok?(status)
+    end
+    "#{repository}: ruleset created"
+  end
+
+  private
+
+  #: (String owner) -> Array[String]
+  def repositories(owner)
+    output, status = @runner.call("repo", "list", owner, "--limit", "200", "--no-archived",
+                                  "--json", "nameWithOwner", "--jq", ".[].nameWithOwner")
+    raise "#{owner}: #{output.strip}" unless status_ok?(status)
+
+    output.lines.map(&:strip).reject(&:empty?)
+  end
+
+  #: (String repository) -> String
+  def state(repository)
+    output, status = @runner.call("api", "repos/#{repository}/rulesets")
+    return "unavailable" unless status_ok?(status)
+
+    verdicts = JSON.parse(output).select { |ruleset| active_branch_ruleset?(ruleset) }
+                   .map { |ruleset| verdict(repository, ruleset.fetch("id")) }
+    %w[protected bypassable unverified].find { |name| verdicts.include?(name) } || "missing"
+  end
+
+  #: (Hash[String, untyped] ruleset) -> bool
+  def active_branch_ruleset?(ruleset)
+    ruleset["enforcement"] == "active" && ruleset["target"] == "branch"
+  end
+
+  #: (String repository, Integer id) -> String
+  def verdict(repository, id)
+    output, status = @runner.call("api", "repos/#{repository}/rulesets/#{id}")
+    return "unverified" unless status_ok?(status)
+
+    detail = JSON.parse(output)
+    return "missing" unless covers_main?(detail) && complete_rules?(detail)
+
+    bypass_verdict(detail["bypass_actors"])
+  end
+
+  #: (Array[untyped]? actors) -> String
+  def bypass_verdict(actors)
+    return "unverified" if actors.nil?
+
+    actors.empty? ? "protected" : "bypassable"
+  end
+
+  #: (Hash[String, untyped] detail) -> bool
+  def covers_main?(detail)
+    (Array(detail.dig("conditions", "ref_name", "include")) & [ "~DEFAULT_BRANCH", "refs/heads/main" ]).any?
+  end
+
+  #: (Hash[String, untyped] detail) -> bool
+  def complete_rules?(detail)
+    (REQUIRED_RULES - detail.fetch("rules", []).map { |rule| rule["type"] }).empty?
+  end
+
+  #: () -> Hash[String, untyped]
+  def ruleset_body
+    {
+      "name" => "protect main", "target" => "branch", "enforcement" => "active",
+      "conditions" => { "ref_name" => { "include" => [ "~DEFAULT_BRANCH" ], "exclude" => [] } },
+      "bypass_actors" => [],
+      "rules" => [ { "type" => "deletion" }, { "type" => "non_fast_forward" }, pull_request_rule ]
+    }
+  end
+
+  #: () -> Hash[String, untyped]
+  def pull_request_rule
+    { "type" => "pull_request",
+      "parameters" => { "required_approving_review_count" => 0, "dismiss_stale_reviews_on_push" => false,
+                        "require_code_owner_review" => false, "require_last_push_approval" => false,
+                        "required_review_thread_resolution" => false } }
+  end
+
+  #: (untyped status) -> bool
+  def status_ok?(status)
+    status == true || (status.respond_to?(:success?) && status.success?)
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  protection = MainProtection.new(RemoteMatcher::PERSONAL_OWNERS)
+  if ARGV.first == "--apply" && ARGV[1]
+    puts protection.apply(ARGV[1])
+  elsif ARGV.empty?
+    puts protection.report
+  else
+    abort "usage: bin/protect-main [--apply <owner>/<repo>]"
+  end
+end

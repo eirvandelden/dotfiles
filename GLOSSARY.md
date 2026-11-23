@@ -1,7 +1,15 @@
 # Glossary
 
+- **Agent commit** — a commit whose author name ends in ` (agent)`.
+- **Agent hooks** — the three config-based git hooks (`hook.<name>.event`/`.command`) in the agent setup file: the origin check, the key check and the co-author trailer. They run next to any `.git/hooks` hook, lefthook's included.
+- **Agent identity file** — `agent/claude-identity.config` or `agent/codex-identity.config`: author, committer and `agent.coAuthoredBy` of one tool. It includes the agent setup file.
+- **Agent include** — the one command-scope config entry that every Claude and Codex process carries: `GIT_CONFIG_COUNT=1`, `GIT_CONFIG_KEY_0=include.path`, `GIT_CONFIG_VALUE_0=<entry file>`. Avoid: agent env, agent variables.
 - **Agent list** — a herdr-app popup that lists the running agents of one status and shows the one picked: `; d` opens the done list (`agents-done`), `; b` the blocked list (`agents-blocked`).
 - **Agent record** — `<state>/herdr-app/agents/<core>/<terminal>.json`: the agent session that last started in one terminal of one core, with its kind, session id, folder, transcript path, permission flags, `recorded_at` and `resumed_at`. Avoid: pane record, session file.
+- **Agent setup file** — `agent/personal.config`, shared by both tools: signing, the HTTPS rewrite, the credential helpers and the agent hooks.
+- **Agent signer** — `agent/ssh-sign`, the `gpg.ssh.program` of the agent setup file: `/usr/bin/ssh-keygen` with no SSH agent.
+- **Agent signing key** — `~/.local/state/agent-git/signing_key`, a `0600` ed25519 private key outside every stow package and every repository. GitHub knows it as a signing key only.
+- **Agent token** — a fine-grained PAT for one personal owner with `contents:write`, in the login Keychain as service `agent-git-github`, account = the owner.
 - **Bare shell** — a live terminal with no agent status, whose foreground process is its own login shell (`foreground.pid == pid`, `argv[0]` a shell). Its folder does not matter: the resume line changes folder.
 - **Base** — the merge-base of `HEAD` and the base branch, as a commit; `HEAD` when no base branch exists. The viewer diffs against it.
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
@@ -16,6 +24,7 @@
 - **Dist tables** — `solunized-light.toml` and `solunized-dark.toml` in `<solunized checkout>/dist/herdr/`.
 - **Dist themes** — `solunized-{light,dark}-{blue,orange}.json` in `<solunized checkout>/dist/herdr-app/`, copied into the herdr-app package.
 - **Drift** — the Solunized block is not byte-equal to the light dist table, one empty line, then the dark dist table.
+- **Entry file** — the file the agent include names, one per tool: `git/.config/git/agent/claude.config` or `codex.config`. It holds only the personal gate.
 - **Fixture copy** — one test's own copy of the original, with every git path repointed into the copy.
 - **Git fixture** — the git repositories that one test file builds once and then copies for each test. Avoid: template, shared repo.
 - **Hand pick** — a herdr-app theme that is not an owned theme, picked in the theme menu or with `app.theme`.
@@ -33,6 +42,7 @@
 - **Module stub** — a package a test writes into a scratch `node_modules` folder in place of a host module; a PATH stub for imports.
 - **Native lefthook** — the Go executable: `libexec/lefthook-<os>-<arch>/lefthook` inside a gem, or a stand-alone executable such as CI's `/usr/local/bin/lefthook`. Avoid: binary.
 - **Notice** — a one-line message of the viewer, "No changed files" or "Not a git repository", that closes on any key.
+- **Origin check** — the agent hook that refuses a commit or a push when the personal gate is open but `origin` is not a personal repository.
 - **Original** — the directory a git fixture's build block fills once per process; no test gets its path. Avoid: template, seed.
 - **Owned theme** — one of the four names of the personal pair and the work pair.
 - **Pairing** — one herdr TUI pane next to the herdr-app pane built for it, with the session it resumed, if any.
@@ -40,6 +50,7 @@
 - **Pane state** — the most urgent `program_status` state of a Rex pane: `blocked`, `error`, `done`, `working` or `idle`. A pane with no record is `shell`.
 - **Path import** — an import whose specifier is a file path (`./`, `../` or `/`), not a module name. herdr-app refuses one from a stowed mod, because its real path leaves the mod folder.
 - **PATH stub** — an executable that a test writes into its own bin directory to stand in for a tool.
+- **Personal gate** — the `includeIf "hasconfig:remote.*.url:<pattern>"` sections of an entry file: one per personal owner and URL form (`git@github.com:`, `ssh://git@github.com/`, `https://github.com/`), six in all. It opens on any remote, not only on `origin`; the origin check covers the difference. Avoid: personal check.
 - **Personal owner** — a GitHub user or organisation whose repositories are personal: `eirvandelden` and `eirvandelden-dev`. `RemoteMatcher::PERSONAL_OWNERS` holds the list. Avoid: personal account, because `eirvandelden-dev` is an organisation.
 - **Personal pair** — the theme pair `solunized-light-blue` and `solunized-dark-blue`.
 - **Personal repository** — a repository whose `git remote get-url origin` contains `github.com:<owner>/` or `github.com/<owner>/` for a personal owner (`eirvandelden` or `eirvandelden-dev`); the same rule as `RemoteMatcher.personal?`.

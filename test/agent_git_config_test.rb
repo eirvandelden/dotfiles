@@ -96,6 +96,31 @@ class AgentGitConfigTest < Minitest::Test
     assert_equal "[1][core.pager][cat]", zsh(pairs, "-ic")
   end
 
+  def test_the_signer_signs_with_the_key_and_no_ssh_agent
+    data = File.join(@home, "data")
+    File.write(data, "payload")
+    _out, err, status = Open3.capture3(plain_env("SSH_AUTH_SOCK" => File.join(@home, "agent.sock")),
+                                       File.join(AGENT_DIRECTORY, "ssh-sign"), "-Y", "sign", "-n", "git", "-f", signing_key, data)
+
+    assert status.success?, err
+    assert File.exist?("#{data}.sig")
+  end
+
+  def test_the_signer_names_a_missing_private_key
+    FileUtils.rm(signing_key)
+    _out, err, status = Open3.capture3(plain_env, File.join(AGENT_DIRECTORY, "ssh-sign"), "-Y", "sign", "-n", "git", "-f", signing_key, "data")
+
+    refute status.success?
+    assert_includes err, "agent signing key missing: #{signing_key}"
+  end
+
+  def test_the_signer_passes_verify_through
+    out, _err, status = Open3.capture3(plain_env, File.join(AGENT_DIRECTORY, "ssh-sign"), "-Y", "find-principals", "-s", "none", "-f", File.join(@home, "none"))
+
+    refute status.success?
+    refute_includes out, "agent signing key missing"
+  end
+
   def test_the_codex_include_gives_the_codex_author
     path = repository
     _out, err, status = commit(path, "x", env: agent_env(codex_include))
