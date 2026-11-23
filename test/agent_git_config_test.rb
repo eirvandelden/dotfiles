@@ -72,10 +72,14 @@ class AgentGitConfigTest < Minitest::Test
     config = File.join(CHECKOUT, "git/.config/git/config")
     env = plain_env("GIT_CONFIG_GLOBAL" => config)
     path = repository
+    log = stub_op_ssh_sign
 
     assert_equal "/Applications/1Password.app/Contents/MacOS/op-ssh-sign", config_value(path, "gpg.ssh.program", env: env)
-    assert_equal "Etienne van Delden de la Haije", config_value(path, "user.name", env: env)
-    assert_equal "", config_value(path, "author.name", env: env)
+    _out, err, status = signed_commit(path, env)
+
+    assert status.success?, err
+    assert_includes File.read(log), "-Y sign"
+    assert_equal "Etienne van Delden de la Haije", git(path, "log", "-1", "--format=%an", env: env).first.strip
   end
 
   def test_an_interactive_shell_drops_a_leaked_agent_include
@@ -173,5 +177,24 @@ class AgentGitConfigTest < Minitest::Test
     env = agent_env(pairs, "ZDOTDIR" => zdotdir)
     out, = Open3.capture3(env, "/bin/zsh", mode, script)
     out[/\[[^\]]*\]\[[^\]]*\]\[[^\]]*\]\z/] || out
+  end
+
+  # A PATH stub named op-ssh-sign that logs its arguments and writes a placeholder signature. The
+  # configured program is an absolute 1Password path, so the commit points gpg.ssh.program at the stub.
+  def stub_op_ssh_sign
+    log = File.join(@home, "op-ssh-sign.log")
+    write_executable(File.join(@bin, "op-ssh-sign"), <<~SH)
+      #!/bin/sh
+      echo "$@" >> "#{log}"
+      eval "buffer=\\$$#"
+      echo "-----BEGIN SSH SIGNATURE-----" > "$buffer.sig"
+    SH
+    log
+  end
+
+  def signed_commit(path, env)
+    File.write(File.join(path, "file.txt"), "own\n")
+    git(path, "add", "file.txt", env: env)
+    git(path, "-c", "gpg.ssh.program=op-ssh-sign", "commit", "-q", "-m", "own", env: env)
   end
 end
