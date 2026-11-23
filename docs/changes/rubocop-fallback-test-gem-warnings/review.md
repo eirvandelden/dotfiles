@@ -1,0 +1,18 @@
+## Round 1 — 2026-11-23T14:42Z — b85a544b
+
+The repository has no `REVIEW.md` or `REVIEW.local.md` at its root. This round uses the passes in `agents/.agents/skills/new-repo-setup/references/REVIEW.md`. Checks: `ruby -Itest test/rubocop_fallback_test.rb` passes (20 runs, 105 assertions, 0 failures, 0 skips). `rubocop test/rubocop_fallback_test.rb` reports no offenses. The plan's `ENV` grep prints nothing. All four tests in `## Proof` exist, and no existing test is weakened.
+
+- [ ] Important: Both rejection tests also catch a skip. `Minitest::Skip` is a subclass of `Minitest::Assertion`, and `assert_raises(Minitest::Assertion)` rescues it. Outside CI, when RuboCop exits 2 (for example, a missing plugin), `skip_unless_ci` raises a skip. The test catches it, and `assert_includes` then fails, because the skip message holds only the first stderr line (the injected warning). The existing tests skip on that machine, but these two tests fail. Fix: re-raise a `Minitest::Skip` inside the block, or assert that the error is not a skip before the message check. — `test/rubocop_fallback_test.rb:246`, `test/rubocop_fallback_test.rb:255` → fixed (Let the fallback rejection tests skip when RuboCop cannot load)
+- [ ] Nit: `inject_stderr` has no inline RBS signature. The plan signs it `#: (*String lines) -> void`. — `test/rubocop_fallback_test.rb:270` → fixed (Let the fallback rejection tests skip when RuboCop cannot load)
+
+## Round 2 — 2026-11-23T15:20Z — 3d4e80db
+
+Base: `origin/main` at `cf02116b`; its new commits touch `test/isolated_git_test.rb`, `test/worktree_first_skill_test.rb` and `test/worktree_guard_test.rb` only, and this file already requires `isolated_git`. Checks: `ruby -Itest test/rubocop_fallback_test.rb` passes (20 runs, 105 assertions, 0 failures, 0 skips). `rubocop test/rubocop_fallback_test.rb` reports no offenses. The plan's `ENV` grep prints nothing. Round 1's findings hold: `assert_stderr_line_rejected` re-raises a `Minitest::Skip`, and `inject_stderr` has its signature. Bugs, Security, Compliance and Design passes find nothing Important. `assert_stderr_line_rejected` and the `FAKE_UNBUILT_WARNING` and `OTHER_STDERR_LINE` constants are not in the plan; they are private test support and need no record.
+
+- [ ] Nit: The injected script uses `warn`, which writes nothing when `$VERBOSE` is `nil`. A caller with `RUBYOPT=-W0` passes that flag on to the child, because `inject_stderr` keeps the existing `RUBYOPT`. Then no line reaches stderr, and both rejection tests fail with "Minitest::Assertion expected but nothing was raised". Verified: `RUBYOPT="-W0 -r./i.rb" ruby -e 1`, with `i.rb` holding `warn "x"`, prints nothing. Fix: write `$stderr.puts #{line.dump}` in the injected script. — `test/rubocop_fallback_test.rb:277` → fixed (Write injected stderr lines with $stderr.puts so -W0 cannot silence them)
+
+## Round 3 — 2026-11-23T16:05Z — 1d362ffd
+
+Base: `origin/main` at `cf02116b`, unchanged since round 2. Checks: `ruby -Itest test/rubocop_fallback_test.rb` passes (20 runs, 105 assertions, 0 failures, 0 skips). `rubocop test/rubocop_fallback_test.rb` reports no offenses. The plan's `ENV` grep prints nothing. With `RUBYOPT=-W0`, the four `unbuilt_extensions_warning` tests pass (4 runs, 26 assertions, 0 failures). Round 2's finding holds: `inject_stderr` writes `$stderr.puts`. `UNBUILT_EXTENSIONS_WARNING` matches RubyGems' wording in `rubygems/basic_specification.rb:67` on Ruby 4.0.9. Bugs, Security, Compliance and Design passes find no Important finding and no nit. Every acceptance criterion in `intent.md` has its test, and no existing test is weakened.
+
+No open findings.
