@@ -39,6 +39,69 @@ class ConsentGuardTest < Minitest::Test
     FileUtils.rm_rf(@home)
   end
 
+  def test_staging_a_private_key_is_refused
+    write_private_key(@repo)
+
+    stderr = refused("git add .")
+
+    assert_includes(stderr, "deploy_key")
+    assert_includes(stderr, "add it to .gitignore")
+  end
+
+  def test_staging_a_master_key_is_refused
+    FileUtils.mkdir_p(File.join(@repo, "config"))
+    File.write(File.join(@repo, "config/master.key"), "0123456789abcdef\n")
+
+    assert_includes(refused("git stage config/master.key"), "config/master.key")
+  end
+
+  def test_committing_all_with_an_unignored_private_key_is_refused
+    write_private_key(@repo)
+
+    [ "git commit -am msg", "git commit --all -m msg", "git commit -a -m msg" ].each do |command|
+      assert_includes(refused(command), "deploy_key", command)
+    end
+  end
+
+  def test_staging_with_git_dash_c_checks_that_repository
+    other = Dir.mktmpdir
+    system("git", "init", "--quiet", other, exception: true)
+    write_private_key(other)
+
+    assert_includes(refused("git -C #{other} add ."), "deploy_key")
+  ensure
+    FileUtils.rm_rf(other)
+  end
+
+  def test_repeated_relative_dash_c_options_resolve_in_order
+    outer = Dir.mktmpdir
+    inner = File.join(outer, "a/b")
+    FileUtils.mkdir_p(inner)
+    system("git", "init", "--quiet", inner, exception: true)
+    write_private_key(inner)
+
+    assert_includes(refused("git -C #{outer} -C a -C b add ."), "deploy_key")
+  ensure
+    FileUtils.rm_rf(outer)
+  end
+
+  def test_staging_an_ordinary_file_is_allowed
+    File.write(File.join(@repo, "notes.txt"), "hello\n")
+
+    _, stderr, status = run_guard("git add notes.txt")
+
+    assert_equal(0, status.exitstatus, stderr)
+  end
+
+  def test_the_consent_marker_does_not_unlock_key_staging
+    write_private_key(@repo)
+
+    _, stderr, status = run_guard("I_HAVE_USER_CONSENT=1 git add .")
+
+    assert_equal(2, status.exitstatus)
+    assert_includes(stderr, "deploy_key")
+  end
+
   def test_unrelated_commands_run_untouched
     stdout, stderr, status = run_guard("ls -la")
 
@@ -1306,6 +1369,16 @@ end
 
   def add_remote(name, url)
     system("git", "-C", @repo, "remote", "add", name, url)
+  end
+
+  def refused(command)
+    _, stderr, status = run_guard(command)
+    assert_equal(2, status.exitstatus, "#{command}: #{stderr}")
+    stderr
+  end
+
+  def write_private_key(directory)
+    File.write(File.join(directory, "deploy_key"), "-----BEGIN #{%w[OPENSSH PRIVATE KEY].join(' ')}-----\nabc\n")
   end
 
   def run_guard(command, cwd: @repo)

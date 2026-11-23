@@ -31,6 +31,7 @@ require "json"
 require "open3"
 require "shellwords"
 require_relative "hook_bypass"
+require_relative "key_material"
 require_relative "remote_matcher"
 
 CONSENT_MARKER = "I_HAVE_USER_CONSENT=1 ".freeze
@@ -239,7 +240,58 @@ def never_allowed_reason(command, words, working_directory)
   return "plain --force overwrites remote history. Use --force-with-lease instead (playbook rule 20)." \
     if words.include?("--force") && !words.include?("--force-with-lease")
 
-  pull_request_reason(pull_request_words(words), working_directory)
+  pull_request_reason(pull_request_words(words), working_directory) || key_material_reason(words, working_directory)
+end
+
+GIT_VALUE_OPTIONS = %w[-C -c --git-dir --work-tree --namespace --exec-path].freeze
+
+# A staging command (`git add`, `git stage`, `git commit -a`) while private key material sits in the
+# tree it would stage. Agents never stage a key; the consent marker does not unlock it.
+#: (Array[String] words, String working_directory) -> String?
+def key_material_reason(words, working_directory)
+  words.each_index.filter_map do |index|
+    next unless File.basename(words[index]) == "git"
+
+    invocation = window(words.drop(index + 1))
+    base = command_directories(words.take(index), working_directory).last
+    paths = stages?(invocation) ? KeyMaterial.stageable_in(git_directory(invocation, base)) : []
+    key_material_message(paths)
+  end.first
+end
+
+#: (Array[String] paths) -> String?
+def key_material_message(paths)
+  return if paths.empty?
+
+  "refusing to stage private key material (#{paths.join(', ')}). Move it out of the repository or add it to .gitignore."
+end
+
+# The directory one git invocation runs in: base, then each -C option before the subcommand.
+#: (Array[String] invocation, String base) -> String
+def git_directory(invocation, base)
+  stop = invocation.each_index.find { |position| subcommand_at?(invocation, position) } || invocation.size
+  options = invocation.first(stop).each_cons(2).select { |flag, _| flag == "-C" }
+  options.reduce(base) { |directory, (_, value)| File.expand_path(value, directory) }
+end
+
+# The git subcommand: the first word that is neither an option nor the value of one.
+#: (Array[String] invocation) -> String?
+def subcommand(invocation)
+  invocation.each_index.find { |position| subcommand_at?(invocation, position) }&.then { |position| invocation[position] }
+end
+
+#: (Array[String] invocation, Integer position) -> bool
+def subcommand_at?(invocation, position)
+  !invocation[position].start_with?("-") && (position.zero? || !GIT_VALUE_OPTIONS.include?(invocation[position - 1]))
+end
+
+# `add`, `stage`, or `commit` with -a, --all or a short option cluster holding a.
+#: (Array[String] invocation) -> bool
+def stages?(invocation)
+  name = subcommand(invocation)
+  return true if %w[add stage].include?(name)
+
+  name == "commit" && invocation.any? { |word| word == "--all" || word.match?(/\A-[A-Za-z]*a[A-Za-z]*\z/) }
 end
 
 #: (Array[String] words, String working_directory) -> String?
