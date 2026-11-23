@@ -208,14 +208,43 @@ class IsolatedGitTest < Minitest::Test
   end
 
   def test_every_test_file_requires_the_helper
-    missing = Dir.glob(File.join(ROOT, "test", "*_test.rb")).reject do |file|
-      File.read(file).match?(/^require_relative "isolated_git"$/)
+    assert_every_test_file_requires_the_helper(ROOT)
+  end
+
+  def test_a_file_without_the_helper_is_named_by_its_test_path
+    root = root_with_test_files("foo_test.rb" => "", "bar_test.rb" => %(require_relative "isolated_git"\n))
+
+    failure = assert_raises(Minitest::Assertion) { assert_every_test_file_requires_the_helper(root) }
+
+    assert_includes(failure.message, "test/foo_test.rb")
+    refute_includes(failure.message, "bar_test.rb")
+  end
+
+  def test_no_test_file_defines_its_own_git_config_constant
+    offenders = Dir.glob(File.join(ROOT, "test", "*.rb")).select do |file|
+      File.read(file).match?(/^\s*WITHOUT_GLOBAL_GIT_CONFIG\s*=/)
     end
 
-    assert_empty(missing.map { |file| File.basename(file) }, "these files must require isolated_git")
+    assert_empty(offenders.map { |file| "test/#{File.basename(file)}" }, "these files must use isolated_git")
   end
 
   private
+
+  def assert_every_test_file_requires_the_helper(root)
+    missing = Dir.glob(File.join(root, "test", "*_test.rb")).sort.reject do |file|
+      File.read(file).match?(/^require_relative "isolated_git"$/)
+    end
+
+    assert_empty(missing.map { |file| file.delete_prefix("#{root}/") }, "these files must require isolated_git")
+  end
+
+  # A temporary root whose test/ folder holds the given files, removed with @config_home.
+  def root_with_test_files(files)
+    root = File.join(@config_home, "root")
+    FileUtils.mkdir_p(File.join(root, "test"))
+    files.each { |name, body| File.write(File.join(root, "test", name), body) }
+    root
+  end
 
   # A minimal Minitest file whose one test commits twice on main, with or without the helper line
   # every real test file has. The real helper is copied beside it so that line loads it.

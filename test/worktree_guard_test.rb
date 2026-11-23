@@ -13,15 +13,13 @@ require_relative "isolated_git"
 # runs git as its own subprocess, so the hook never sees it.
 class WorktreeGuardTest < Minitest::Test
   GUARD = File.expand_path("../claude/.claude/hooks/worktree-guard.rb", __dir__)
-  WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
   # A repository at <root>/repo with one commit, .worktrees excluded and a linked worktree on foo.
   REPOSITORY = GitFixture.new do |root|
     repo = File.join(root, "repo")
     git = [ "git", "-C", repo, "-c", "core.hooksPath=/dev/null", "-c", "user.email=test@example.com",
             "-c", "user.name=Test" ]
-    system({ "GIT_CONFIG_GLOBAL" => "/dev/null" }, "git", "init", "--quiet", "--initial-branch=main", repo,
-           exception: true)
+    system("git", "init", "--quiet", "--initial-branch=main", repo, exception: true)
     File.write(File.join(repo, "file-initial.txt"), "initial")
     system(*git, "add", "-A", exception: true)
     system(*git, "commit", "--quiet", "-m", "initial", exception: true)
@@ -410,7 +408,7 @@ class WorktreeGuardTest < Minitest::Test
   end
 
   def git(dir, *arguments)
-    output, status = Open3.capture2(WITHOUT_GLOBAL_GIT_CONFIG, "git", "-C", dir, "-c", "core.hooksPath=/dev/null",
+    output, status = Open3.capture2("git", "-C", dir, "-c", "core.hooksPath=/dev/null",
                                     "-c", "user.email=test@example.com", "-c", "user.name=Test",
                                     "-c", "protocol.file.allow=always", *arguments)
     raise("git #{arguments.join(' ')} failed: #{output}") unless status.success?

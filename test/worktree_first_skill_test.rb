@@ -12,7 +12,6 @@ require_relative "isolated_git"
 class WorktreeFirstSkillTest < Minitest::Test
   SKILL = File.expand_path("../agents/.agents/skills/worktree-first/SKILL.md", __dir__)
   CREATE = File.expand_path("../git/.config/git/worktree-tools/worktree-create", __dir__)
-  WITHOUT_GLOBAL_GIT_CONFIG = { "GIT_CONFIG_GLOBAL" => "/dev/null" }.freeze
 
   # <root>/origin.git (bare, main), <root>/seed (clone that pushed the first commit) and <root>/repo (clone
   # of the origin with .worktrees excluded).
@@ -119,7 +118,7 @@ class WorktreeFirstSkillTest < Minitest::Test
 
   def environment
     { "HOME" => @home, "PATH" => [ gh_stub_dir, ENV.fetch("PATH") ].join(File::PATH_SEPARATOR),
-      "HERDR_ENV" => nil, "GIT_CONFIG_GLOBAL" => "/dev/null", "CREATE_CALL_LOG" => create_call_log }
+      "HERDR_ENV" => nil, "CREATE_CALL_LOG" => create_call_log }
   end
 
   # A failing `gh` first on PATH. Dropping every PATH dir that holds `gh` also drops `bash` on CI,
@@ -188,7 +187,7 @@ class WorktreeFirstSkillTest < Minitest::Test
   end
 
   def git(dir, *arguments)
-    output, status = Open3.capture2(WITHOUT_GLOBAL_GIT_CONFIG, "git", "-C", dir, "-c", "core.hooksPath=/dev/null",
+    output, status = Open3.capture2("git", "-C", dir, "-c", "core.hooksPath=/dev/null",
                                     "-c", "user.email=test@example.com", "-c", "user.name=Test",
                                     "-c", "protocol.file.allow=always", *arguments)
     raise("git #{arguments.join(' ')} failed: #{output}") unless status.success?
