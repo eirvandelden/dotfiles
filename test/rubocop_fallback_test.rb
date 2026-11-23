@@ -243,18 +243,14 @@ class RubocopFallbackTest < Minitest::Test
     UNEXPECTED_STDERR_LINES.each do |line|
       inject_stderr(FAKE_UNBUILT_WARNING, line)
 
-      error = assert_raises(Minitest::Assertion) { run_fallback }
-
-      assert_includes(error.message, line)
+      assert_stderr_line_rejected(line) { run_fallback }
     end
   end
 
   def test_project_fallback_fails_on_a_stderr_line_other_than_an_unbuilt_extensions_warning
     inject_stderr(FAKE_UNBUILT_WARNING, OTHER_STDERR_LINE)
 
-    error = assert_raises(Minitest::Assertion) { run_with_project_fallback(MIGRATION_PATH, MIGRATION_FIXTURE) }
-
-    assert_includes(error.message, OTHER_STDERR_LINE)
+    assert_stderr_line_rejected(OTHER_STDERR_LINE) { run_with_project_fallback(MIGRATION_PATH, MIGRATION_FIXTURE) }
   end
 
   private
@@ -265,8 +261,18 @@ class RubocopFallbackTest < Minitest::Test
     assert_empty(stderr.lines.grep_v(UNBUILT_EXTENSIONS_WARNING).join)
   end
 
+  # Expects the block to fail naming the line. A skip is an Assertion too, so it passes through.
+  #: (String line) { () -> void } -> void
+  def assert_stderr_line_rejected(line)
+    error = assert_raises(Minitest::Assertion) { yield }
+    raise error if error.is_a?(Minitest::Skip)
+
+    assert_includes(error.message, line)
+  end
+
   # Makes every RuboCop child of this test write each line to stderr when it starts.
   # The relative `-r` path survives a TMPDIR with a space, because RUBYOPT splits on spaces.
+  #: (*String lines) -> void
   def inject_stderr(*lines)
     File.write(File.join(@project, INJECT_SCRIPT), lines.map { |line| "warn #{line.dump}\n" }.join)
     @child_environment = { "RUBYOPT" => "#{ENV.fetch('RUBYOPT', '')} -r./#{INJECT_SCRIPT}".strip }
