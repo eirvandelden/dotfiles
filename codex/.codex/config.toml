@@ -352,6 +352,9 @@ source_type = "git"
 source = "https://github.com/lucianghinda/superpowers-ruby.git"
 
 [shell_environment_policy.set]
+GIT_CONFIG_COUNT = "1"
+GIT_CONFIG_KEY_0 = "include.path"
+GIT_CONFIG_VALUE_0 = "~/Developer/dotfiles/git/.config/git/agent/codex.config"
 NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "9230e2bd8b24b7ac7a0ba6774c64bf0d78ecdabbdd91d0ed627b02a587bae2df"
 
 [tui]

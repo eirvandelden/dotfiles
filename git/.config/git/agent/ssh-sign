@@ -1,0 +1,18 @@
+#!/bin/sh
+# Agent signer: gpg.ssh.program of the agent setup file. Runs ssh-keygen with no SSH agent,
+# so 1Password is never asked. A missing private key fails with a message that names it.
+
+readme="$HOME/Developer/dotfiles/git/.config/git/agent/README.md"
+
+if [ "$1" = "-Y" ] && [ "$2" = "sign" ]; then
+  previous=""
+  for argument in "$@"; do
+    if [ "$previous" = "-f" ] && [ ! -f "$argument" ]; then
+      echo "agent-git: agent signing key missing: $argument. See $readme." >&2
+      exit 1
+    fi
+    previous="$argument"
+  done
+fi
+
+SSH_AUTH_SOCK= exec /usr/bin/ssh-keygen "$@"

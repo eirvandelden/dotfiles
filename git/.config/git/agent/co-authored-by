@@ -1,0 +1,15 @@
+#!/bin/sh
+# Agent hook (commit-msg): adds one Co-Authored-By trailer for the tool, from agent.coAuthoredBy.
+# A trailer with the same email already in the message stays alone.
+
+value=$(git config --get agent.coAuthoredBy) || exit 0
+[ -n "$value" ] || exit 0
+
+email=${value##*<}
+email=${email%>*}
+
+if grep -i -E "^Co-Authored-By:.*<$email>" "$1" >/dev/null; then
+  exit 0
+fi
+
+git interpret-trailers --in-place --trailer "Co-Authored-By: $value" "$1"

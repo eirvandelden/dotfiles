@@ -1,0 +1,15 @@
+#!/bin/sh
+# Agent hook (pre-commit, pre-push): the agent configuration only commits and pushes where
+# origin is a personal repository. The owners match RemoteMatcher::PERSONAL_OWNERS.
+
+url=$(git remote get-url origin 2>/dev/null)
+
+case "$url" in
+  *github.com:eirvandelden/* | *github.com/eirvandelden/* | \
+  *github.com:eirvandelden-dev/* | *github.com/eirvandelden-dev/*)
+    exit 0
+    ;;
+esac
+
+echo "agent-git: the agent configuration is active, but origin is not a personal repository (${url:-none}). Agent commits and pushes stop here." >&2
+exit 1

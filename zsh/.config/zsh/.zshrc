@@ -1,3 +1,11 @@
+# A herdr-app core started from an agent shell leaks the agent git include into every terminal.
+# Etienne's own shells keep his git config, so drop a leaked include (see git/.config/git/agent/).
+case "${GIT_CONFIG_VALUE_0:-}" in
+  */git/.config/git/agent/claude.config | */git/.config/git/agent/codex.config)
+    unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+    ;;
+esac
+
 # History, input
 HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 HISTSIZE=2000

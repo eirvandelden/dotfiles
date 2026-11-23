@@ -1,0 +1,20 @@
+#!/bin/sh
+# Agent hook (pre-commit): refuses a commit that holds private key material.
+
+refused=0
+
+for path in $(git diff --cached --name-only --diff-filter=ACM); do
+  case "$path" in
+    master.key | */master.key | config/credentials/*.key)
+      echo "agent-git: refusing to commit $path: it is key material." >&2
+      refused=1
+      ;;
+  esac
+done
+
+for path in $(git grep --cached -l -E '^-----BEGIN ([A-Z0-9]+ )*PRIVATE KEY-----$' 2>/dev/null); do
+  echo "agent-git: refusing to commit $path: it holds a private key." >&2
+  refused=1
+done
+
+exit "$refused"
