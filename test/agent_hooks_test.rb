@@ -49,7 +49,7 @@ class AgentHooksTest < Minitest::Test
 
   def test_a_personal_fork_remote_on_a_foreign_origin_refuses_the_push
     path = foreign_origin_with_fork
-    git(path, "-c", "user.name=Seed", "-c", "user.email=seed@example.com", "commit", "-q", "--allow-empty", "-m", "seed", env: plain_env)
+    git(path, "-c", "user.name=First", "-c", "user.email=first@example.com", "commit", "-q", "--allow-empty", "-m", "first", env: plain_env)
     _out, err, status = git(path, "push", "origin", "HEAD")
 
     refute status.success?
