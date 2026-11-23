@@ -274,7 +274,7 @@ class RubocopFallbackTest < Minitest::Test
   # The relative `-r` path survives a TMPDIR with a space, because RUBYOPT splits on spaces.
   #: (*String lines) -> void
   def inject_stderr(*lines)
-    File.write(File.join(@project, INJECT_SCRIPT), lines.map { |line| "warn #{line.dump}\n" }.join)
+    File.write(File.join(@project, INJECT_SCRIPT), lines.map { |line| "$stderr.puts #{line.dump}\n" }.join)
     @child_environment = { "RUBYOPT" => "#{ENV.fetch('RUBYOPT', '')} -r./#{INJECT_SCRIPT}".strip }
   end
 
