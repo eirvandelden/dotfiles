@@ -57,8 +57,9 @@ class MainProtection
     output, status = @runner.call("api", "repos/#{repository}/rulesets")
     return "unavailable" unless status_ok?(status)
 
-    verdicts = JSON.parse(output).select { |ruleset| active_branch_ruleset?(ruleset) }
-                   .map { |ruleset| verdict(repository, ruleset.fetch("id")) }
+    verdicts = JSON.parse(output).filter_map do |ruleset|
+      verdict(repository, ruleset.fetch("id")) if active_branch_ruleset?(ruleset)
+    end
     %w[protected bypassable unverified].find { |name| verdicts.include?(name) } || "missing"
   end
 
