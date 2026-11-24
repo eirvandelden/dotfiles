@@ -28,7 +28,8 @@ class HerdrAppPaneCliTest < Minitest::Test
 
   def test_refuses_bad_arguments_before_any_call
     [ [], %w[bogus], %w[open], [ "open", @repo, "--new-row", "--unlisted" ], [ "open", @repo, "--row" ],
-      %w[close-idle], %w[close-at] ].each do |arguments|
+      %w[close-idle], %w[close-at], %w[tab], [ "tab", @repo, "--name" ], [ "tab", @repo, "--bogus" ],
+      [ "tab", "--name", "x" ] ].each do |arguments|
       _, stderr, status = pane_cli(*arguments)
 
       assert_equal(1, status.exitstatus, arguments.inspect)
@@ -88,9 +89,96 @@ class HerdrAppPaneCliTest < Minitest::Test
     refute_path_exists(record)
   end
 
+  def test_tab_prints_the_terminal_address
+    stdout, stderr, status = pane_cli("tab", @repo, "--name", "docs", "--", "tail", "-f", "log")
+
+    assert(status.success?, stderr)
+    assert_equal("t61\n", stdout)
+    assert_equal([ { "folder" => @repo, "name" => "docs", "argv" => %w[tail -f log], "focus" => false,
+                    "space" => "sp1" } ], herdr_app_actions("tab.new"))
+  end
+
+  def test_tab_exits_1_with_one_line_when_herdr_app_names_no_terminal
+    herdr_app_world_change { |world| world["tab_new_without_terminal"] = true }
+
+    stdout, stderr, status = pane_cli("tab", @repo, "--name", "docs")
+
+    assert_equal(1, status.exitstatus)
+    assert_empty(stdout)
+    assert_equal(1, stderr.lines.count, stderr)
+    assert_match(/opened a tab but named no terminal/, stderr)
+  end
+
+  def test_tab_expands_a_relative_folder
+    _, stderr, status = pane_cli("tab", ".", "--name", "docs")
+
+    assert(status.success?, stderr)
+    assert_equal([ @repo ], herdr_app_actions("tab.new").map { |request| request["folder"] })
+  end
+
+  def test_tab_runs_outside_a_git_repository
+    outside = Dir.mktmpdir("outside")
+
+    _, stderr, status = Open3.capture3(herdr_app_env, RbConfig.ruby, PANE_CLI, "tab", outside, chdir: outside)
+
+    assert(status.success?, stderr)
+  ensure
+    FileUtils.rm_rf(outside)
+  end
+
+  def test_tab_from_the_work_core_opens_in_the_work_space_while_a_personal_space_has_focus
+    use_work_world
+
+    stdout, stderr, status = pane_cli("tab", @repo, "--name", "probe", own: "t20", core: "work")
+
+    assert(status.success?, stderr)
+    assert_equal("t61\n", stdout)
+    assert_equal([ "work/sp3" ], herdr_app_actions("tab.new").map { |request| request["space"] })
+    assert_equal("p11", herdr_app_world[FOCUS_KEY])
+    herdr_app_assert_hc_addresses
+  end
+
+  def test_tab_from_the_default_core_opens_in_the_personal_space_while_a_work_space_has_focus
+    use_work_world
+    herdr_app_world_change { |world| world[FOCUS_KEY] = "work/p11" }
+
+    stdout, stderr, status = pane_cli("tab", @repo, "--name", "probe", own: "t20")
+
+    assert(status.success?, stderr)
+    assert_equal("t61\n", stdout)
+    assert_equal([ "sp2" ], herdr_app_actions("tab.new").map { |request| request["space"] })
+    assert_equal("work/p11", herdr_app_world[FOCUS_KEY])
+    herdr_app_assert_hc_addresses
+  end
+
+  def test_open_from_a_work_terminal_splits_beside_it_and_prints_an_hc_address
+    use_work_world
+
+    stdout, stderr, status = pane_cli("open", @repo, "--", "claude", own: "t20", core: "work")
+
+    assert(status.success?, stderr)
+    assert_equal("t61\n", stdout)
+    assert_equal([ %w[work/p20 right] ], herdr_app_splits.map { |request| request.values_at("pane", "direction") })
+    herdr_app_assert_hc_addresses
+  end
+
+  def test_close_from_a_work_terminal_closes_its_own_pane
+    use_work_world
+
+    _, stderr, status = pane_cli("close", own: "t20", core: "work")
+
+    assert(status.success?, stderr)
+    assert_equal([ { "pane" => "work/p20" } ], herdr_app_actions("pane.close"))
+    herdr_app_assert_hc_addresses
+  end
+
   private
 
-  def pane_cli(*arguments, own: COORDINATOR)
-    Open3.capture3(herdr_app_env(own: own), RbConfig.ruby, PANE_CLI, *arguments, chdir: @repo)
+  def use_work_world
+    herdr_app_world_write(work_world(cwd: @repo, work_cwd: @repo))
+  end
+
+  def pane_cli(*arguments, own: COORDINATOR, core: "default")
+    Open3.capture3(herdr_app_env(own: own, core: core), RbConfig.ruby, PANE_CLI, *arguments, chdir: @repo)
   end
 end

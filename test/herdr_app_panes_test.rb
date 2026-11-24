@@ -7,7 +7,7 @@ require "shellwords"
 require "tmpdir"
 require_relative "herdr_app_harness"
 require_relative "isolated_git"
-%w[command_line panes].each { |name| require File.join(HerdrAppHarness::PANE_LIBRARY, name) }
+%w[command_line machine panes].each { |name| require File.join(HerdrAppHarness::PANE_LIBRARY, name) }
 
 # HerdrAppPane::Panes with a FakeCommandLine that answers from a HerdrAppHarness::World, in process: no test
 # here starts herdr-app or hc. The coordinator is t10 in pane p10 of space sp1; see herdr_app_harness.rb.
@@ -35,9 +35,14 @@ module PanesTestSupport
   private
 
   # A Panes on the current @world. Every Panes of one test logs into the same calls.
-  def panes(own: HerdrAppHarness::COORDINATOR, coordinator: nil)
-    command_line = HerdrAppHarness::FakeCommandLine.new(@world, calls)
-    HerdrAppPane::Panes.new(own: own, coordinator: coordinator, common_dir: @common_dir, command_line: command_line)
+  def panes(own: HerdrAppHarness::COORDINATOR, coordinator: nil, core: "default")
+    HerdrAppPane::Panes.new(own: own, coordinator: coordinator, common_dir: @common_dir, window: window(core))
+  end
+
+  # A Window on the current @world, with the Machine of core ("default" is this computer).
+  def window(core = "default")
+    command_line = HerdrAppHarness::FakeCommandLine.new(@world, calls, core: core)
+    HerdrAppPane::Window.new(command_line, machine: HerdrAppPane::Machine.new(core == "default" ? nil : core))
   end
 
   def calls
@@ -70,14 +75,21 @@ module PanesTestSupport
     add_terminal(@world, terminal_row(address, pane), terminal(address, cwd: cwd, foreground_cwd: foreground_cwd))
   end
 
-  # Two spaces with the id sp0, one per machine, each with the coordinator's address t10 and an idle agent t20;
-  # the coordinator's hc labels name sp0.
+  # Two spaces with the hc address sp0, one per machine (sp0 and work/sp0), each with the coordinator's address
+  # t10 and an idle agent t20; the coordinator's hc labels name sp0.
   def list_space_id_on_two_machines
     personal = space("sp0", tab("tb0", agent_row("t10", "p10"), agent_row("t20", "p20")), name: "dotfiles")
-    work = space("sp0", tab("tb9", agent_row("t10", "p90"), agent_row("t20", "p92")), name: "api", machine: "work")
+    work = space("work/sp0", tab("tb9", agent_row("work/t10", "work/p90"), agent_row("work/t20", "work/p92")),
+                 name: "api", machine: "work")
     @world["spaces"] = [ personal, work ]
     @world[HerdrAppHarness::FOCUS_KEY] = "p20"
     @world["terminals"]["t10"] = [ terminal("t10", cwd: @main, status: agent, space: "sp0", tab: "tb0") ]
+  end
+
+  # Two spaces on this computer with the same hc address sp0, each holding the coordinator t10 and an idle t20.
+  def list_hc_address_twice_on_the_own_machine
+    list_space_id_on_two_machines
+    @world["spaces"].last.merge!("id" => "sp0", "machine" => nil)
   end
 
   def record_path(row = ROW)
@@ -116,13 +128,21 @@ class HerdrAppPanesOpenTest < Minitest::Test
     assert_equal(%w[p11 p10], splits.map { |request| request["pane"] })
   end
 
-  def test_open_refuses_a_space_id_listed_on_two_machines
-    list_space_id_on_two_machines
+  def test_open_refuses_an_hc_address_listed_twice_on_the_own_machine
+    list_hc_address_twice_on_the_own_machine
 
     error = assert_raises(HerdrAppPane::Refusal) { panes.open(@cwd, command: [ "claude" ]) }
 
     assert_match(/sp0/, error.message)
     assert_empty(splits)
+  end
+
+  def test_open_from_a_default_terminal_ignores_a_work_space_with_the_same_hc_address
+    list_space_id_on_two_machines
+
+    panes.open(@cwd, command: [ "claude" ])
+
+    assert_equal(%w[p10], splits.map { |request| request["pane"] })
   end
 
   def test_open_falls_back_to_the_coordinator_when_the_row_end_is_gone_or_refuses
@@ -313,8 +333,8 @@ class HerdrAppPanesCloseIdleTest < Minitest::Test
     assert_empty(closed_panes)
   end
 
-  def test_close_idle_closes_nothing_when_the_space_id_is_ambiguous
-    list_space_id_on_two_machines
+  def test_close_idle_closes_nothing_when_the_own_space_is_ambiguous
+    list_hc_address_twice_on_the_own_machine
     write_record("t20")
     closed = nil
 
@@ -395,6 +415,95 @@ class HerdrAppPanesCloseAtTest < Minitest::Test
 
     assert_equal(1, panes.close_at(@cwd))
     assert_equal(%w[p12], closed_panes)
+  end
+end
+
+# Panes from a terminal of the work core: work_world lists the work space as work/sp3 with work/ ids, and hc
+# knows its terminals by their bare hc addresses. The coordinator is the work agent t20.
+class HerdrAppPanesWorkCoreTest < Minitest::Test
+  include PanesTestSupport
+
+  def setup
+    super
+    @world = work_world(cwd: @main, work_cwd: @cwd)
+  end
+
+  def test_open_from_a_work_terminal_anchors_on_the_coordinators_work_pane
+    opened = work_panes.open(@cwd, command: [ "claude" ])
+
+    assert_equal("t61", opened)
+    assert_equal([ %w[work/p20 right] ], splits.map { |request| request.values_at("pane", "direction") })
+    assert_hc_addresses
+  end
+
+  def test_open_from_a_work_terminal_places_a_column_right_of_the_rows_last_live_pane
+    write_record("t11")
+
+    work_panes.open(@cwd, command: [ "claude" ], row: ROW)
+
+    assert_equal(%w[work/p11], splits.map { |request| request["pane"] })
+  end
+
+  def test_open_from_a_work_terminal_records_and_awaits_the_hc_address
+    work_panes.open(@cwd, command: [ "claude" ], row: ROW)
+
+    assert_equal(%w[t61], record)
+    assert_hc_addresses
+  end
+
+  def test_close_from_a_work_terminal_closes_its_own_pane
+    work_panes.close
+
+    assert_equal(%w[work/p20], closed_panes)
+    assert_hc_addresses
+  end
+
+  def test_close_from_a_work_terminal_makes_the_same_calls_as_from_a_default_one
+    work_panes.close
+    work = calls.dup
+    calls.clear
+    @world = default_world(cwd: @main)
+    panes.close
+
+    assert_equal(call_names(work), call_names(calls))
+    assert_equal(%w[hc herdr-app herdr-app], calls.map(&:first))
+  end
+
+  def test_close_idle_from_a_work_terminal_closes_idle_work_panes_and_keeps_the_own_and_coordinator
+    add_work_agent("t61", "idle")
+    write_record("t20", "t61", "t11")
+    closed = nil
+
+    capture_io { closed = work_panes.close_idle(ROW) }
+
+    assert_equal(1, closed)
+    assert_equal(%w[work/p61], closed_panes)
+  end
+
+  def test_close_at_from_a_work_terminal_closes_work_shells_at_cwd_only
+    closed = work_panes.close_at(@cwd)
+
+    assert_equal(1, closed)
+    assert_equal(%w[work/p11], closed_panes)
+  end
+
+  private
+
+  def call_names(list)
+    list.map { |call| call[1] == "do" ? call.first(3) : call.first(2) }
+  end
+
+  def work_panes
+    panes(own: "t20", core: "work")
+  end
+
+  def add_work_agent(address, status)
+    add_terminal(@world, agent_row("work/#{address}", "work/p#{address[1..]}", status),
+                 terminal(address, cwd: @cwd, status: agent(status), space: "sp3", tab: "tb3"), space: "work/sp3")
+  end
+
+  def assert_hc_addresses
+    calls.select { |call| call.first == "hc" }.each { |call| refute_includes(call.join(" "), "/", call.inspect) }
   end
 end
 
