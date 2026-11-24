@@ -2,12 +2,13 @@
   "zoom": 1,
   "sounds": {
     "enabled": true,
-    "done": "../../Documents/Tones/herdr/jobs-done.mp3",
-    "blocked": "../../Documents/Tones/herdr/milord.mp3"
+    "done": "../../Documents/Tones/herdr/Work Complete.m4r",
+    "blocked": "../../Documents/Tones/herdr/dah_boo.m4r"
   },
   "font": "MonoLisa",
-  "font_ligatures": false,
+  "font_ligatures": true,
   "telemetry": false,
   "minimum_contrast": 1,
-  "font_size": 14
+  "font_size": 14,
+  "font_weight": 300
 }
