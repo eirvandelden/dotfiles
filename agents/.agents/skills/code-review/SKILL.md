@@ -25,8 +25,8 @@ After a push (pushing itself needs explicit approval): wait for CI to finish, in
 
 ## Auto mode
 
-In autonomous delivery (`intent.md` has `Delivery: autonomous`) the coordinator applies this skill's fix loop without being asked. A finding still disputed after two rounds goes to Etienne with one concrete decision to make. The coordinator never dismisses it alone. Fixes never add a skipped test, a linter disable comment or a linter config edit.
+In autonomous delivery (`plan.md` has `Delivery: autonomous`) the coordinator applies this skill's fix loop without being asked. A finding still disputed after two rounds goes to Etienne with one concrete decision to make. The coordinator never dismisses it alone. Fixes never add a skipped test, a linter disable comment or a linter config edit.
 
 ## Codex
 
-Same loop. Invoked as `$code-review`. A Codex coordinator uses it to fix findings from the Claude `reviewer` agent and, when `intent.md` records `Codex review: yes`, from `codex review --base <base>`.
+Same loop. Invoked as `$code-review`. A Codex coordinator uses it to fix findings from the Claude `reviewer` agent and, when `plan.md` records `Codex review: yes`, from `codex review --base <base>`.

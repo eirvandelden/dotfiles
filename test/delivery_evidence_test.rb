@@ -22,7 +22,7 @@ class DeliveryEvidenceTest < Minitest::Test
     git("init", "--quiet", "--initial-branch=main")
     write_and_commit("README.md", "readme\n", "initial")
     git("checkout", "--quiet", "-b", "fix-login")
-    write_and_commit("docs/changes/fix-login/intent.md", "# Intent\n", "intent")
+    write_and_commit("docs/changes/fix-login/plan.md", "# Plan\n", "plan")
     write_and_commit("app/models/claim.rb", "class Claim; end\n", "add claim")
   end
 

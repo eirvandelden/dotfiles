@@ -59,14 +59,6 @@ class HerdrAppWorkerScriptsTest < Minitest::Test
     FileUtils.rm_rf(@copy)
   end
 
-  def test_refuses_auto_for_intent
-    _, stderr, status = hand_off("intent", SLUG, "--auto")
-
-    assert_equal(1, status.exitstatus)
-    assert_match(/auto/i, stderr)
-    assert_empty(herdr_app_calls)
-  end
-
   def test_refuses_a_slug_that_looks_like_an_option
     _, stderr, status = hand_off("plan", "--auto")
 
@@ -102,19 +94,27 @@ class HerdrAppWorkerScriptsTest < Minitest::Test
     # The real round trip, a worker's hc send reaching the coordinator, rests on the sandbox live check (plan Proof).
   end
 
-  def test_intent_splits_down
-    _, stderr, status = hand_off("intent", SLUG)
+  def test_plan_splits_down_in_plan_mode
+    _, stderr, status = hand_off("plan", SLUG)
 
     assert(status.success?, stderr)
     assert_equal([ %w[p10 down] ], herdr_app_splits.map { |request| request.values_at("pane", "direction") })
     assert_equal("opus", model_of(herdr_app_splits.first))
+    assert_includes(herdr_app_splits.first["argv"].join(" "), "--permission-mode plan")
   end
 
-  def test_plan_and_implement_split_right_with_their_models
+  def test_auto_plan_and_implement_never_start_in_plan_mode
+    hand_off("plan", SLUG, "--auto")
+    hand_off("implement", SLUG)
+
+    refute(herdr_app_splits.any? { |request| request["argv"].join(" ").include?("--permission-mode") })
+  end
+
+  def test_plan_splits_down_and_implement_splits_right_with_their_models
     hand_off("plan", SLUG)
     hand_off("implement", SLUG)
 
-    assert_equal(%w[right right], herdr_app_splits.map { |request| request["direction"] })
+    assert_equal(%w[down right], herdr_app_splits.map { |request| request["direction"] })
     assert_equal(%w[opus sonnet], herdr_app_splits.map { |request| model_of(request) })
     assert_equal(%w[p10 p61], herdr_app_splits.map { |request| request["pane"] })
   end
@@ -126,8 +126,8 @@ class HerdrAppWorkerScriptsTest < Minitest::Test
 
     [ plan, implement ].each { |prompt| assert_match(/with the auto argument/, prompt) }
     refute_includes(plan, "literal word")
-    assert_match(/do not wait for .*accepted/i, plan)
-    assert_includes(plan, "Do not start the next stage")
+    assert_includes(plan, "Status: draft")
+    assert_includes(plan, "do not start the next stage")
     assert_includes(implement, "Decision needed:")
   end
 

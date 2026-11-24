@@ -448,7 +448,7 @@ class WorktreeSweepTest < Minitest::Test
   def write_artefacts(worktree)
     folder = File.join(worktree, "docs", "changes", "my-change")
     FileUtils.mkdir_p(folder)
-    %w[intent.md plan.md review.md].each { |name| File.write(File.join(folder, name), "# #{name}\n") }
+    %w[plan.md review.md].each { |name| File.write(File.join(folder, name), "# #{name}\n") }
   end
 
   def add_worktree(name)

@@ -51,8 +51,8 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/two rounds/i, section)
   end
 
-  def test_intent_offers_autonomy_only_on_a_personal_origin
-    text = skill("intent")
+  def test_plan_offers_autonomy_only_on_a_personal_origin
+    text = skill("plan")
 
     assert_includes(text, "finish/scripts/change-scope")
     assert_includes(text, "Delivery: autonomous")
@@ -60,17 +60,16 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/same paragraph as `Status:`/, text)
   end
 
-  def test_intent_accept_starts_the_coordinator_loop
-    section = section_of(skill("intent"), "## Autonomous delivery")
+  def test_plan_accept_starts_the_coordinator_loop
+    section = delivery_reference
 
-    assert_includes(section, "~/.agents/bin/hand-off-plan <stage> <slug> --auto")
-    assert_match(/`plan`, then `implement`/, section)
+    assert_includes(section, "~/.agents/bin/hand-off-plan implement <slug> --auto")
     refute_match(/`spec`/, section)
-    assert_match(/not .*chain/i, skill("intent")[/^## 4\. Accept.*?(?=^## )/m])
+    assert_match(/not .*chain/i, section_of(skill("plan"), "#### 7. Accept"))
   end
 
-  def test_intent_coordinator_writes_the_account_and_never_merges
-    section = section_of(skill("intent"), "## Autonomous delivery")
+  def test_plan_coordinator_writes_the_account_and_never_merges
+    section = delivery_reference
 
     assert_includes(section, "docs/changes/<slug>/deliver.md")
     assert_includes(section, "Never merge")
@@ -78,7 +77,7 @@ class AutonomyContractTest < Minitest::Test
   end
 
   def test_the_account_is_committed_before_deliver_runs
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
     account = section.index("docs/changes/<slug>/deliver.md")
 
     assert_includes(section, "docs: delivery account for <slug>")
@@ -86,14 +85,14 @@ class AutonomyContractTest < Minitest::Test
   end
 
   def test_the_delivery_done_line_names_the_in_repo_account_path
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
     paragraph = section[/^A stage pane started by.*$/]
 
     assert_includes(paragraph, "Delivery done: docs/changes/<slug>/deliver.md")
   end
 
   def test_the_final_message_carries_the_pull_request_url_and_the_ci_result
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
     final = section[/^\d+\. Tell Etienne.*$/]
 
     assert_includes(final, "PR URL")
@@ -109,8 +108,8 @@ class AutonomyContractTest < Minitest::Test
     assert_empty(offenders)
   end
 
-  def test_an_intent_session_started_by_a_pane_coordinates_and_sends_only_the_account
-    section = section_of(skill("intent"), "## Autonomous delivery")
+  def test_a_plan_session_started_by_a_pane_coordinates_and_sends_only_the_account
+    section = delivery_reference
 
     assert_match(/starting prompt/i, section)
     assert_includes(section, "Delivery done:")
@@ -141,19 +140,35 @@ class AutonomyContractTest < Minitest::Test
     assert_operator(section.index("`/plan`"), :<, first_step)
   end
 
-  def test_plan_auto_mode_passes_auto_accept_the_folder_path
-    assert_includes(section_of(skill("plan"), "## Auto mode"), "auto-accept <folder>/plan.md")
+  def test_plan_auto_mode_leaves_the_status_draft_for_etienne
+    section = section_of(skill("plan"), "## Auto mode")
+
+    assert_includes(section, "Status: draft")
+    assert_includes(section, 'types "accepted"')
+    assert_includes(section, "`commit-plan`")
+  end
+
+  def test_plan_describes_the_interactive_autonomous_path
+    plan = skill("plan")
+    path = plan[/^\*\*Interactive autonomous plan\.\*\*.*$/].to_s
+
+    assert_includes(path, "does not treat the `ExitPlanMode` approval as acceptance")
+    assert_includes(path, "`Status: draft`")
+    assert_includes(path, 'steps 1 to 3 of "Auto mode"')
+    assert_includes(path, 'Only the typed word "accepted" or "agreed"')
+    assert_includes(plan, "approving `ExitPlanMode` counts as \"accepted\", for a plan that is not autonomous only")
+    assert_includes(section_of(plan, "## Auto mode"), 'from "Interactive autonomous plan"')
   end
 
   def test_coordinator_reviews_again_until_each_enabled_reviewer_is_clean
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
 
     assert_match(/run each enabled reviewer again/i, section)
     assert_match(/a round of each enabled reviewer .*no open finding/i, section)
   end
 
   def test_codex_coordinator_uses_the_claude_cli_review_backend
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
 
     assert_match(/Review.*`review`.*auto mode/, section)
     assert_match(/Codex coordinator.*read-only Claude CLI backend/, section)
@@ -167,7 +182,7 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(autonomy_section, CODEX_CRITIQUE)
   end
 
-  def test_review_auto_mode_skips_codex_unless_the_intent_opts_in
+  def test_review_auto_mode_skips_codex_unless_the_plan_opts_in
     section = section_of(skill("review"), "## Auto mode")
 
     assert_includes(section, "start-review")
@@ -177,15 +192,15 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/never .*`codex review`/i, section)
   end
 
-  def test_review_auto_mode_runs_codex_first_when_the_intent_opts_in
+  def test_review_auto_mode_runs_codex_first_when_the_plan_opts_in
     section = section_of(skill("review"), "## Auto mode")
 
     assert_includes(section, "codex review --base")
     assert_match(/`Codex review: yes`.*Codex round before the Claude round/m, section)
   end
 
-  def test_intent_offers_codex_review_only_for_autonomous_delivery_defaulting_to_no
-    delivery = section_of(skill("intent"), "## 2. Interview")[/\*\*Delivery mode\.\*\*.*?(?=^Batch )/m]
+  def test_plan_offers_codex_review_only_for_autonomous_delivery_defaulting_to_no
+    delivery = section_of(skill("plan"), "#### 2. Interview")[/\*\*Delivery mode\.\*\*.*?(?=^Batch )/m]
 
     assert_match(/Also review with Codex\?.*default: no/i, delivery)
     assert_includes(delivery, "`Codex review: yes`")
@@ -193,7 +208,7 @@ class AutonomyContractTest < Minitest::Test
   end
 
   def test_autonomous_delivery_waits_for_each_enabled_reviewer
-    assert_match(/each enabled reviewer/i, section_of(skill("intent"), "## Autonomous delivery"))
+    assert_match(/each enabled reviewer/i, delivery_reference)
     assert_match(/each enabled reviewer/i, skill("deliver"))
   end
 
@@ -252,10 +267,10 @@ class AutonomyContractTest < Minitest::Test
     assert_match(/Fill the PR body/, text)
   end
 
-  def test_finish_auto_mode_requires_an_accepted_autonomous_intent
+  def test_finish_auto_mode_requires_an_accepted_autonomous_plan
     section = section_of(skill("finish"), "## Auto mode")
 
-    assert_match(/accepted `intent.md`/, section)
+    assert_match(/accepted `plan.md`/, section)
     assert_includes(section, "`Delivery: autonomous`")
     assert_match(/step-by-step.*steps above unchanged/i, section)
   end
@@ -289,16 +304,16 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(codex, "`Codex review: yes`")
   end
 
-  def test_intent_template_step_names_the_codex_review_field
-    line = skill("intent").lines.find { |entry| entry.include?("for autonomous delivery, `Delivery: autonomous`") }
+  def test_plan_template_step_names_the_codex_review_field
+    line = skill("plan").lines.find { |entry| entry.include?("for autonomous delivery, `Delivery: autonomous`") }
 
     assert_includes(line, "`Codex review: yes|no`")
   end
 
   def test_a_codex_session_hands_autonomous_delivery_to_claude
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
 
-    assert_includes(section, "intent/scripts/start-delivery")
+    assert_includes(section, "plan/scripts/start-delivery")
     assert_match(/Codex session.*runs .*start-delivery.*stops/i, section)
     assert_match(/Codex coordinates only on Etienne's explicit instruction/i, section)
     refute_match(/as a Codex coordinator, run each stage/i, section)
@@ -309,18 +324,18 @@ class AutonomyContractTest < Minitest::Test
     assert_match(%r{codex review --base <base>.*< /dev/null}, section_of(skill("review"), "## Auto mode"))
   end
 
-  def test_intent_runs_the_preflight_before_the_plan_stage
-    section = section_of(skill("intent"), "## Autonomous delivery")
-    preflight = section.index("intent/scripts/delivery-preflight")
+  def test_plan_runs_the_preflight_before_the_implement_stage
+    section = delivery_reference
+    preflight = section.index("plan/scripts/delivery-preflight")
 
     refute_nil(preflight, "the coordinator never runs the preflight")
-    assert_operator(preflight, :<, section.index("hand-off-plan <stage> <slug> --auto"))
+    assert_operator(preflight, :<, section.index("hand-off-plan implement <slug> --auto"))
     assert_match(/--needs/, section)
     assert_match(/every missing item together/i, section)
   end
 
-  def test_intent_records_evidence_and_keeps_the_account_current
-    section = section_of(skill("intent"), "## Autonomous delivery")
+  def test_plan_records_evidence_and_keeps_the_account_current
+    section = delivery_reference
 
     assert_includes(section, "finish/scripts/delivery-evidence run")
     assert_includes(section, "delivery-evidence status")
@@ -366,8 +381,8 @@ class AutonomyContractTest < Minitest::Test
   end
 
   def test_core_values_keep_the_autonomous_delivery_mirror
-    assert_includes(CORE_VALUES, "a recorded critique replaces accepted on the plan")
-    assert_match(/critique replaces "accepted"/i, autonomy_section)
+    assert_includes(CORE_VALUES, "the critique closes before Etienne types accepted on the plan")
+    assert_match(/critique comes before "accepted"/i, autonomy_section)
     assert_match(/Agents never merge/, autonomy_section)
   end
 
@@ -378,7 +393,7 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section, "claude -p")
     assert_includes(section, "## Critique")
     assert_includes(section, "### Round")
-    assert_includes(section, "auto-accept")
+    assert_includes(section, "commit-plan")
     assert_match(/Decision needed:/, section)
   end
 
@@ -388,6 +403,10 @@ class AutonomyContractTest < Minitest::Test
 
   def skill(name)
     File.read(File.join(SKILLS, name, "SKILL.md"))
+  end
+
+  def delivery_reference
+    File.read(File.join(SKILLS, "plan/references/autonomous-delivery.md"))
   end
 
   # The text from a heading to the next heading of the same or higher level. A missing heading

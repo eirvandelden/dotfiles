@@ -5,7 +5,7 @@ require "open3"
 require "tmpdir"
 require_relative "isolated_git"
 
-# finish fills the work PR template from intent.md and plan.md before opening
+# finish fills the work PR template from plan.md before opening
 # it for the team, so colleagues see something written for them instead of an
 # empty template. A heading is matched by what it asks for, not by its exact
 # wording, so any repository's own phrasing still gets filled; a heading
@@ -13,11 +13,7 @@ require_relative "isolated_git"
 class FillPrTemplateTest < Minitest::Test
   SCRIPT = File.expand_path("../agents/.agents/skills/finish/scripts/fill-pr-template", __dir__)
 
-  INTENT = <<~MARKDOWN
-    # Intent: Claims status export
-
-    Author: Test. Status: accepted.
-
+  INTENT_SECTIONS = <<~MARKDOWN
     ## Problem
 
     Claims adjusters cannot see export status without asking engineering.
@@ -25,6 +21,7 @@ class FillPrTemplateTest < Minitest::Test
     ## Proposed outcome
 
     The export status appears on the claim page within a minute of the run finishing.
+
   MARKDOWN
 
   PLAN = <<~MARKDOWN
@@ -602,12 +599,11 @@ class FillPrTemplateTest < Minitest::Test
   private
 
   def run_fill(template, plan: PLAN, handover: nil)
-    intent_path = write("intent.md", INTENT)
-    plan_path = write("plan.md", plan)
+    plan_path = write("plan.md", plan.sub("## ", "#{INTENT_SECTIONS}## "))
     template_path = template.nil? ? "" : write("template.md", template)
     extra = handover ? [ write("handover.md", handover) ] : []
 
-    stdout, stderr, status = Open3.capture3(SCRIPT, template_path, intent_path, plan_path, *extra)
+    stdout, stderr, status = Open3.capture3(SCRIPT, template_path, plan_path, *extra)
     assert(status.success?, stderr)
     stdout
   end

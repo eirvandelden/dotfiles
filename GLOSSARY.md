@@ -6,7 +6,7 @@
 - **Base** — the merge-base of `HEAD` and the base branch, as a commit; `HEAD` when no base branch exists. The viewer diffs against it.
 - **Binstub** — the RubyGems Ruby script `lefthook` on `PATH`, which boots Ruby and then starts the native lefthook. Avoid: shim.
 - **Chained test** — one test that runs the steps of several former tests in one repository and keeps every former assertion.
-- **Change artefact** — `intent.md`, `plan.md` or `review.md` in a change folder. Avoid: change document. The old spelling "artifacts" stays only inside the existing removal subject `Remove change artifacts for <slug>`, which `restore` matches.
+- **Change artefact** — `plan.md` or `review.md` in a change folder. Avoid: change document. The old spelling "artifacts" stays only inside the existing removal subject `Remove change artifacts for <slug>`, which `restore` matches.
 - **Change folder** — `docs/changes/<slug>/`, as `plan/scripts/change-folder` prints it.
 - **Change scope** — `personal` or `work`, as `agents/.agents/skills/finish/scripts/change-scope` prints it from the origin URL. It is not the glossary's **Scope**, which names the secrets `unlock` loads. Never write bare "scope" for this concept. Avoid: work scope, repo scope.
 - **Changed file** — a path that differs from the base, in the working tree, or is untracked, with status `M`, `A`, `D` or `?`.

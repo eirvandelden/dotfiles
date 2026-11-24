@@ -37,7 +37,7 @@ class DesignSectionTest < Minitest::Test
     assert_match(/\barchitects\b/i, step)
     assert_match(/reject/i, step)
     assert_includes(step, "\"agreed\"")
-    assert_operator(here_steps.index(step), :<, here_steps.index { |text| text.match?(/Write `<folder>\/plan\.md`/) })
+    assert_operator(here_steps.index(step), :<, here_steps.index { |text| text.match?(/\A#### \d+\. Write `plan\.md`/) })
   end
 
   def test_a_query_count_claim_names_its_test_in_proof
@@ -67,6 +67,6 @@ class DesignSectionTest < Minitest::Test
 
   def here_steps
     here = plan_skill[/^### `here` backend\n(.*?)(?=^## )/m, 1] || flunk("no here backend section")
-    here.scan(/^\d+\. .*(?:\n(?!\d+\. ).*)*/)
+    here.split(/^(?=#### \d+\. )/).select { |text| text.start_with?("#### ") }
   end
 end

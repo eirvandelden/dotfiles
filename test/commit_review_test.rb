@@ -16,7 +16,7 @@ class CommitReviewTest < Minitest::Test
   def setup
     setup_harness
     build_repo
-    commit_file("docs/changes/#{SLUG}/intent.md", intent_text, "Add intent")
+    commit_file("docs/changes/#{SLUG}/plan.md", plan_text, "Add plan")
   end
 
   def teardown
@@ -137,7 +137,7 @@ class CommitReviewTest < Minitest::Test
     allow_work_remote
     exclude_change_folders if exclude
     FileUtils.mkdir_p(File.join(@repo, "docs/changes/#{SLUG}"))
-    File.write(File.join(@repo, "docs/changes/#{SLUG}/intent.md"), intent_text)
+    File.write(File.join(@repo, "docs/changes/#{SLUG}/plan.md"), plan_text)
   end
 
   def round(number, *findings)

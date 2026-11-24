@@ -5,7 +5,7 @@ description: Use when a change introduces or reuses a domain term, when a word i
 
 # Glossary
 
-The glossary holds the domain terms agreed during changes. `finish` removes the change folder, so a term that lives only in `intent.md` or `plan.md` is lost. The glossary keeps it.
+The glossary holds the domain terms agreed during changes. `finish` removes the change folder, so a term that lives only in `plan.md` is lost. The glossary keeps it.
 
 ## Where the file lives
 
@@ -29,15 +29,15 @@ The `Avoid:` list names the words a reader must not use for this term. Omit it w
 
 ## Challenge an avoided word
 
-Check every word of a request, an intent and a plan against the glossary. When a word appears in a term's `Avoid:` list, stop. Name the glossary term, quote its definition and ask which one Etienne means: the glossary term or a new concept. A new concept needs a new term and a definition. Do not continue with the avoided word.
+Check every word of a request and a plan against the glossary. When a word appears in a term's `Avoid:` list, stop. Name the glossary term, quote its definition and ask which one Etienne means: the glossary term or a new concept. A new concept needs a new term and a definition. Do not continue with the avoided word.
 
 When a word conflicts with a definition in some other way, apply the same rule.
 
 ## Write terms
 
-The `intent` and `plan` stages write the terms agreed in the conversation. Add a term only after Etienne agrees it. Never invent a term.
+The `plan` stage writes the terms agreed in the conversation. Add a term only after Etienne agrees it. Never invent a term.
 
-In a personal repository, commit the glossary change on its own: `docs: glossary terms for <slug>`. The commit of `intent.md` and the commit of `plan.md` stay alone. In a work repository, edit `GLOSSARY.local.md` and commit nothing.
+In a personal repository, commit the glossary change on its own: `docs: glossary terms for <slug>`. The commit of `plan.md` stays alone. In a work repository, edit `GLOSSARY.local.md` and commit nothing.
 
 ## When a decision earns an ADR
 

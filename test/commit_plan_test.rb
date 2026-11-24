@@ -3,8 +3,8 @@ require "minitest/autorun"
 require_relative "isolated_git"
 require_relative "delivery_harness"
 
-# `commit-plan` commits intent.md and plan.md of a change together, once both are accepted, and
-# nothing else. It never pushes.
+# `commit-plan` commits plan.md of a change once it is accepted, and nothing else. An accepted
+# autonomous plan also needs a closed critique. It never pushes.
 class CommitPlanTest < Minitest::Test
   include DeliveryHarness
 
@@ -20,49 +20,52 @@ class CommitPlanTest < Minitest::Test
     teardown_harness
   end
 
-  def test_intent_and_plan_land_in_one_commit
+  def test_the_plan_lands_in_one_commit
     before = commit_count
-    write_intent(intent_text)
-    write_plan("Status: accepted.")
+    write_plan("accepted (2026-11-24)")
 
     _, stderr, status = commit_plan
 
     assert(status.success?, stderr)
     assert_equal(before + 1, commit_count)
-    assert_equal("docs: intent and plan for #{SLUG}", git("log", "-1", "--format=%s").strip)
-    assert_equal(%W[docs/changes/#{SLUG}/intent.md docs/changes/#{SLUG}/plan.md], committed_paths)
-  end
-
-  def test_refuses_a_draft_plan
-    write_intent(intent_text)
-    write_plan("Status: draft.")
-
-    assert_refused_without_commit(/plan\.md.*accepted/)
-  end
-
-  def test_refuses_a_draft_intent
-    write_intent(intent_text.sub("Status: accepted", "Status: draft"))
-    write_plan("Status: accepted.")
-
-    assert_refused_without_commit(/intent\.md.*accepted/)
-  end
-
-  def test_commits_plan_alone_when_intent_is_already_committed
-    write_intent(intent_text)
-    git("add", ".")
-    git("commit", "--quiet", "-m", "docs: intent")
-    write_plan("Status: accepted.")
-
-    _, stderr, status = commit_plan
-
-    assert(status.success?, stderr)
     assert_equal("docs: plan for #{SLUG}", git("log", "-1", "--format=%s").strip)
     assert_equal(%W[docs/changes/#{SLUG}/plan.md], committed_paths)
   end
 
+  def test_refuses_a_folder_that_holds_only_intent_md
+    write("intent.md", "# Intent: Ship the widget\n\nAuthor: E. Status: accepted. Type: feature.\n")
+
+    assert_refused_without_commit(/plan\.md/)
+  end
+
+  def test_refuses_an_accepted_autonomous_plan_with_an_open_critique
+    write_plan("accepted", delivery: "autonomous", critique: "## Critique\n\n### Round 1 (codex)\n\n- Missing a test →\n")
+
+    assert_refused_without_commit(/open critique findings/)
+  end
+
+  def test_refuses_an_accepted_autonomous_plan_without_a_critique
+    write_plan("accepted", delivery: "autonomous")
+
+    assert_refused_without_commit(/no Critique section/)
+  end
+
+  def test_commits_an_accepted_autonomous_plan_with_a_closed_critique
+    write_plan("accepted", delivery: "autonomous", critique: "## Critique\n\n### Round 1 (codex)\n\nNo findings.\n")
+
+    _, stderr, status = commit_plan
+
+    assert(status.success?, stderr)
+  end
+
+  def test_refuses_a_draft_plan
+    write_plan("draft")
+
+    assert_refused_without_commit(/plan\.md.*accepted/)
+  end
+
   def test_leaves_other_changes_uncommitted
-    write_intent(intent_text)
-    write_plan("Status: accepted.")
+    write_plan("accepted")
     File.write(File.join(@repo, "README.md"), "changed\n")
 
     commit_plan
@@ -70,9 +73,8 @@ class CommitPlanTest < Minitest::Test
     assert_equal(" M README.md\n", git("status", "--porcelain"))
   end
 
-  def test_commits_only_intent_and_plan_when_other_files_are_staged
-    write_intent(intent_text)
-    write_plan("Status: accepted.")
+  def test_commits_only_the_plan_when_other_files_are_staged
+    write_plan("accepted")
     File.write(File.join(@repo, "other.txt"), "x\n")
     git("add", "other.txt")
 
@@ -84,24 +86,22 @@ class CommitPlanTest < Minitest::Test
   end
 
   def test_it_never_pushes
-    write_intent(intent_text)
-    write_plan("Status: accepted.")
+    write_plan("accepted")
 
     commit_plan
 
     refute_includes(origin_branches, SLUG)
   end
 
-  def test_on_a_work_repository_intent_and_plan_stay_uncommitted
+  def test_on_a_work_repository_the_plan_stays_uncommitted
     work_repository
     before = commit_count
-    write_intent(intent_text)
-    write_plan("Status: accepted.")
+    write_plan("accepted")
 
     stdout, stderr, status = commit_plan
 
     assert(status.success?, stderr)
-    assert_match(/Nothing committed.*stay local on a work repository/, stdout)
+    assert_match(/Nothing committed.*stays local on a work repository/, stdout)
     assert_equal(before, commit_count)
     assert_empty(git("log", "--format=%H", "--", "docs/changes").strip)
     assert_empty(git("status", "--porcelain", "--untracked-files=all", "--", "docs/changes"))
@@ -109,8 +109,7 @@ class CommitPlanTest < Minitest::Test
 
   def test_on_a_work_repository_warns_when_the_change_folder_is_not_ignored
     work_repository(exclude: false)
-    write_intent(intent_text)
-    write_plan("Status: accepted.")
+    write_plan("accepted")
 
     _, stderr, status = commit_plan
 
@@ -120,8 +119,7 @@ class CommitPlanTest < Minitest::Test
 
   def test_on_a_work_repository_refuses_a_draft_plan
     work_repository
-    write_intent(intent_text)
-    write_plan("Status: draft.")
+    write_plan("draft")
 
     assert_refused_without_commit(/plan\.md.*accepted/)
   end
@@ -143,12 +141,9 @@ class CommitPlanTest < Minitest::Test
     assert_equal(before, commit_count)
   end
 
-  def write_intent(text)
-    write("intent.md", text)
-  end
-
-  def write_plan(status)
-    write("plan.md", "# Plan: Ship the widget\n\nFrom `intent.md`. #{status}\n\n## Proof\n\n- Widgets ship\n")
+  def write_plan(status, delivery: "step-by-step", critique: "")
+    header = "Author: E. Status: #{status}. Type: feature. Delivery: #{delivery}."
+    write("plan.md", "# Plan: Ship the widget\n\n#{header}\n\n## Proof\n\n- Widgets ship\n\n#{critique}")
   end
 
   def write(name, text)

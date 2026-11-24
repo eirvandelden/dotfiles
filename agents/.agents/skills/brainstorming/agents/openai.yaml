@@ -1,0 +1,4 @@
+---
+interface:
+  display_name: "Brainstorming"
+  short_description: "Interview one question at a time into the running docs/changes/<slug>/plan.md draft"

@@ -1,11 +1,13 @@
 #!/usr/bin/env ruby
-# Commits docs/changes/<slug>/intent.md and plan.md together, once both say "Status: accepted".
-# It stages those two paths and commits only them, so work staged elsewhere stays out. The subject
-# is "docs: intent and plan for <slug>" while intent.md has uncommitted changes, else
+# Commits docs/changes/<slug>/plan.md once it says "Status: accepted". It stages that one path and
+# commits only it, so work staged elsewhere stays out. An accepted plan that records
+# "Delivery: autonomous" also needs a closed critique (PlanCritique). The subject is
 # "docs: plan for <slug>". It never pushes; the caller pushes after it. On a work repository it
-# commits nothing: both files stay local, and it warns when git does not ignore the change folder.
+# commits nothing: the file stays local, and it warns when git does not ignore the change folder.
 require "open3"
 require_relative "../../finish/scripts/change_scope"
+require_relative "plan_critique"
+require_relative "plan_metadata"
 
 CHANGE_FOLDER = File.expand_path("change-folder", __dir__)
 
@@ -23,27 +25,30 @@ def refuse(message)
   exit(1)
 end
 
-# The first "Status:" in the file is the status line.
-#: (String path) -> bool
-def accepted?(path)
-  File.exist?(path) && File.read(path)[/Status: (\w+)/, 1] == "accepted"
+#: (String text) -> String?
+def critique_problem(text)
+  return nil unless PlanMetadata.autonomous?(text)
+
+  PlanCritique.problems(text).first
 end
 
 folder = run(CHANGE_FOLDER).strip
-intent = File.join(folder, "intent.md")
 plan = File.join(folder, "plan.md")
-refuse("#{intent} is not accepted: accept the intent first.") unless accepted?(intent)
-refuse("#{plan} is not accepted: accept the plan first.") unless accepted?(plan)
+refuse("#{plan} does not exist: write the plan first.") unless File.file?(plan)
+
+text = File.read(plan)
+refuse("#{plan} is not accepted: accept the plan first.") unless PlanMetadata.accepted?(text)
+problem = critique_problem(text)
+refuse("#{plan} is autonomous but its critique is not closed: #{problem}.") if problem
 
 slug = File.basename(folder)
 if ChangeScope.work?
   warn("#{folder}/ is not ignored: add docs/changes to .git/info/exclude, or a git add . will stage it.") if ChangeScope.folder_visible?(folder)
-  puts("Nothing committed: #{intent} and #{plan} stay local on a work repository.")
+  puts("Nothing committed: #{plan} stays local on a work repository.")
   exit(0)
 end
 
-fresh_intent = !run("git", "status", "--porcelain", "--", intent).empty?
-subject = fresh_intent ? "docs: intent and plan for #{slug}" : "docs: plan for #{slug}"
-run("git", "add", "--", intent, plan)
-run("git", "commit", "--quiet", "-m", subject, "--", intent, plan)
+subject = "docs: plan for #{slug}"
+run("git", "add", "--", plan)
+run("git", "commit", "--quiet", "-m", subject, "--", plan)
 puts(subject)

@@ -14,7 +14,7 @@ class ArchitectAgentTest < Minitest::Test
   TOML = File.join(ROOT, "codex/.codex/agents/architect.toml")
 
   def test_the_plan_runs_two_or_three_architects_with_different_goals
-    step = plan_skill[/^\d+\. .*\barchitects\b.*(?:\n(?!\d+\. ).*)*/i] || flunk("no plan step runs architects")
+    step = plan_skill[/^Before any file-level text.*\barchitects\b.*$/i] || flunk("no plan step runs architects")
 
     assert_match(/two or three/i, step)
     assert_match(/parallel|at once/i, step)

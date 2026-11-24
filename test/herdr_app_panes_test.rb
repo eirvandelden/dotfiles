@@ -356,12 +356,12 @@ class HerdrAppPanesCloseIdleTest < Minitest::Test
     assert_empty(closed_panes)
   end
 
-  def test_close_idle_keeps_own_coordinator_and_intent_terminals
+  def test_close_idle_keeps_own_coordinator_and_plan_terminals
     add_agent("t12", "p12", "idle")
     add_agent("t20", "p20", "done")
     add_agent("t26", "p26", "idle")
     write_record("t26", "t10", "t12", "t20")
-    File.write(File.join(@common_dir, "herdr-app", "intent-pane-#{ROW}"), "t26\n")
+    File.write(File.join(@common_dir, "herdr-app", "plan-pane-#{ROW}"), "t26\n")
 
     assert_equal(1, panes(own: "t12", coordinator: "t10").close_idle(ROW))
     assert_equal(%w[p20], closed_panes)

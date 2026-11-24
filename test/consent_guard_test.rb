@@ -612,7 +612,7 @@ end
     _, stderr, status = run_guard("gh pr create --fill")
 
     assert_equal(0, status.exitstatus, stderr)
-    assert(File.exist?(File.join(@repo, "docs", "changes", "work-change", "intent.md")))
+    assert(File.exist?(File.join(@repo, "docs", "changes", "work-change", "plan.md")))
     assert_empty(`git -C #{@repo} diff --cached --name-only`.strip)
   end
 
@@ -753,7 +753,7 @@ end
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "add", "docs")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
-           "commit", "--quiet", "-m", "intent")
+           "commit", "--quiet", "-m", "plan")
     system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
            "commit", "--quiet", "-m", "remove")
@@ -795,7 +795,7 @@ end
   def test_creating_a_pull_request_for_a_head_branch_that_holds_the_folder_is_refused
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
-           "commit", "--quiet", "-m", "intent")
+           "commit", "--quiet", "-m", "plan")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "main")
 
     _, stderr, status = run_guard("gh pr create --head pr-only-via-finish --fill")
@@ -825,7 +825,7 @@ end
     system("git", "-C", @repo, "checkout", "--quiet", "pr-only-via-finish")
     system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
     FileUtils.mkdir_p(File.join(@repo, "docs", "changes", "other"))
-    File.write(File.join(@repo, "docs", "changes", "other", "intent.md"), "x")
+    File.write(File.join(@repo, "docs", "changes", "other", "plan.md"), "x")
     system("git", "-C", @repo, "add", "docs")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
            "commit", "--quiet", "-m", "finish")
@@ -1125,7 +1125,7 @@ end
   def test_a_staged_but_uncommitted_removal_still_refuses_the_pull_request
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
-           "commit", "--quiet", "-m", "intent")
+           "commit", "--quiet", "-m", "plan")
     system("git", "-C", @repo, "rm", "-rq", "docs/changes/pr-only-via-finish")
 
     _, stderr, status = run_guard("gh pr create --fill")
@@ -1254,7 +1254,7 @@ end
   def commit_change_then_leave_branch
     start_change("pr-only-via-finish")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "-c", "user.name=t", "-c", "user.email=t@t",
-           "commit", "--quiet", "-m", "intent")
+           "commit", "--quiet", "-m", "plan")
     system("git", "-C", @repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "main")
   end
 
@@ -1265,7 +1265,7 @@ end
            "--allow-empty", "-m", "init")
     system("git", "-C", repo, "-c", "core.hooksPath=/dev/null", "checkout", "--quiet", "-b", branch)
     FileUtils.mkdir_p(File.join(repo, "docs", "changes", branch))
-    File.write(File.join(repo, "docs", "changes", branch, "intent.md"), "intent")
+    File.write(File.join(repo, "docs", "changes", branch, "plan.md"), "plan")
     system("git", "-C", repo, "add", "docs") if stage
   end
 

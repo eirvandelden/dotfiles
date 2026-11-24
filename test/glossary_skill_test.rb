@@ -21,7 +21,6 @@ class GlossarySkillTest < Minitest::Test
     assert_match(/personal/i, text)
     assert_match(/work/i, text)
     assert_match(/finish/i, text)
-    assert_match(/glossary/i, File.read(File.join(SKILLS, "intent/SKILL.md")))
     assert_match(/glossary/i, File.read(File.join(SKILLS, "plan/SKILL.md")))
   end
 

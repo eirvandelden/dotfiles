@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
-# Hands an accepted autonomous intent to a Claude coordinator. Run it with no arguments from inside
-# the change's worktree. It refuses, and never starts Claude, unless origin is personal, intent.md
-# is committed and unchanged, and it is accepted with "Delivery: autonomous". It then runs the
+# Hands an accepted autonomous plan to a Claude coordinator. Run it with no arguments from inside
+# the change's worktree. It refuses, and never starts Claude, unless origin is personal, plan.md
+# is committed and unchanged, accepted with "Delivery: autonomous", and its critique is closed. It then runs the
 # delivery preflight and refuses on any blocker. Inside Herdr the coordinator becomes a pane
 # (hand-off-plan.sh deliver); outside Herdr it becomes a background session (claude --bg) that
 # runs with the configured permission mode and every hook: no permission flag is ever passed.
@@ -9,7 +9,8 @@ require "open3"
 require "tempfile"
 require "time"
 require_relative "../../../../../claude/.claude/hooks/remote_matcher"
-require_relative "../../plan/scripts/intent_metadata"
+require_relative "plan_critique"
+require_relative "plan_metadata"
 
 HERE = File.dirname(File.realpath(__FILE__))
 
@@ -34,7 +35,7 @@ end
 
 #: -> String
 def change_folder
-  output, error, status = Open3.capture3(File.join(HERE, "../../plan/scripts/change-folder"))
+  output, error, status = Open3.capture3(File.join(HERE, "change-folder"))
   refuse(error.strip) unless status.success?
   output.strip
 end
@@ -48,8 +49,8 @@ def check_origin
 end
 
 #: (String folder) -> String
-def committed_intent(folder)
-  path = "#{folder}/intent.md"
+def committed_plan(folder)
+  path = "#{folder}/plan.md"
   _, committed = git("cat-file", "-e", "HEAD:#{path}")
   refuse("#{path} is not committed in HEAD: commit it first.") unless committed
   _, unchanged = git("diff", "--quiet", "HEAD", "--", path)
@@ -58,11 +59,12 @@ def committed_intent(folder)
 end
 
 #: (String text) -> void
-def check_intent(text)
-  refuse("intent.md is not accepted: Etienne has to accept the intent first.") unless IntentMetadata.accepted?(text)
-  return if IntentMetadata.autonomous?(text)
+def check_plan(text)
+  refuse("plan.md is not accepted: Etienne has to accept the plan first.") unless PlanMetadata.accepted?(text)
+  refuse("plan.md does not record Delivery: autonomous: this change is step-by-step.") unless PlanMetadata.autonomous?(text)
 
-  refuse("intent.md does not record Delivery: autonomous: this change is step-by-step.")
+  problem = PlanCritique.problems(text).first
+  refuse("plan.md critique is not closed: #{problem}.") if problem
 end
 
 #: -> void
@@ -98,9 +100,9 @@ end
 def coordinator_prompt(slug, worktree, account)
   <<~TEXT.gsub(/\s*\n\s*/, " ").strip
     You are the Claude coordinator of the autonomous delivery of docs/changes/#{slug} in #{worktree}.
-    intent.md is accepted with Delivery: autonomous.
+    plan.md is accepted with Delivery: autonomous and its critique is closed.
     Read agents.md and CLAUDE.md first.
-    Follow ~/.claude/skills/intent/SKILL.md, section "Autonomous delivery", from its preflight on.
+    Follow ~/.claude/skills/plan/references/autonomous-delivery.md from its preflight on.
     Run each stage's here backend in auto mode, in sequence, in this session.
     Keep #{account} current after every stage; never merge.
   TEXT
@@ -197,7 +199,7 @@ end
 
 check_origin
 folder = change_folder
-check_intent(committed_intent(folder))
+check_plan(committed_plan(folder))
 run_preflight
 slug = File.basename(folder)
 worktree = git!("rev-parse", "--show-toplevel")

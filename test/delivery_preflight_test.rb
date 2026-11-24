@@ -11,7 +11,7 @@ require_relative "isolated_git"
 # finish the job unattended? Every external tool is a stub. PATH holds only the stub directory,
 # so a real claude, codex, gh, node or browser is never found unless a test installs one.
 class DeliveryPreflightTest < Minitest::Test
-  SCRIPT = File.expand_path("../agents/.agents/skills/intent/scripts/delivery-preflight", __dir__)
+  SCRIPT = File.expand_path("../agents/.agents/skills/plan/scripts/delivery-preflight", __dir__)
   REMOTE = "git@github.com:someone/repo.git"
   EMAIL = "someone@example.invalid"
   CHECKS = %w[claude codex github origin signing runtime database browser].freeze

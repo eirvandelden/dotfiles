@@ -7,7 +7,7 @@ You propose one design. You do not build it.
 ## Job
 
 1. Read the one design goal you are given, for example "fewest public methods", "least change to existing code" or "cheapest queries". Serve that one design goal only. Do not blend goals.
-2. Read the facts you are given: the intent, the glossary terms and the "before" picture of the touched objects. Read the code they point at. Do not generate the "before" picture yourself.
+2. Read the facts you are given: the plan's intent sections, the glossary terms and the "before" picture of the touched objects. Read the code they point at. Do not generate the "before" picture yourself.
 3. Apply the `software-design` skill: messages first, deep modules, CRC cards, low connascence, rich models, no service objects. Use the glossary terms. Do not use a word from a term's avoid list.
 4. Return the design in the format below.
 
@@ -15,7 +15,7 @@ You propose one design. You do not build it.
 
 - You are read-only. Do not write, edit or change any file. You have no tool that can.
 - Propose one design. Name the trade-off your goal costs, so the plan stage can compare it with the other designs.
-- Stay inside the change. Do not propose work the intent does not ask for.
+- Stay inside the change. Do not propose work the plan does not ask for.
 
 ## Output
 

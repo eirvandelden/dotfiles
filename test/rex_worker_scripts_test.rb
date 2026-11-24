@@ -9,14 +9,14 @@ require_relative "herdr_app_harness"
 require_relative "isolated_git"
 
 # Two scripts spawn a Claude worker inside the running Rex session: hand-off-plan.sh starts a stage
-# (intent, plan, or implement) in a fresh block, start-review.sh asks a reviewer to look at this branch in
+# (plan or implement) in a fresh block, start-review.sh asks a reviewer to look at this branch in
 # a block beside the caller. A worker starts as the split command `claude --model <model>`; the script
 # waits for the block's program_status to show `idle`, sends the prompt with `rex send -b <worker>`, then
 # `rex send-key -b <worker> enter`. A stub `rex` records every command as one JSON line.
 #
 # Interface these tests pin, beyond the plan: REX_READY_TIMEOUT and REX_READY_POLL (seconds, default 60
 # and 1) bound the readiness wait, so a test does not wait a minute; the row record, the report files and
-# the intent record live in <git-common-dir>/rex/; ids of Rex blocks here carry no colon.
+# the plan record live in <git-common-dir>/rex/; ids of Rex blocks here carry no colon.
 class RexWorkerScriptsTest < Minitest::Test
   SCRIPTS = File.expand_path("../rex/.config/rex/scripts", __dir__)
   HAND_OFF_PLAN = File.join(SCRIPTS, "hand-off-plan.sh")
@@ -99,11 +99,11 @@ class RexWorkerScriptsTest < Minitest::Test
     assert_empty(rex_calls)
   end
 
-  def test_the_usage_message_lists_intent_plan_and_implement
+  def test_the_usage_message_lists_plan_and_implement
     _, stderr, = run_script(HAND_OFF_PLAN, "bogus-stage", "some-change")
 
-    assert_match(/intent, plan, implement/, stderr)
-    refute_match(/\bspec\b/i, stderr)
+    assert_match(/plan, implement/, stderr)
+    refute_match(/\bspec\b|intent/i, stderr)
   end
 
   def test_refuses_a_missing_change_slug
@@ -119,14 +119,6 @@ class RexWorkerScriptsTest < Minitest::Test
 
     assert_equal(1, status.exitstatus)
     assert_match(/slug/i, stderr)
-    assert_empty(rex_calls)
-  end
-
-  def test_refuses_auto_for_the_intent_stage
-    _, stderr, status = run_script(HAND_OFF_PLAN, "intent", "some-change", "--auto")
-
-    assert_equal(1, status.exitstatus)
-    assert_match(/auto/i, stderr)
     assert_empty(rex_calls)
   end
 
@@ -147,28 +139,19 @@ class RexWorkerScriptsTest < Minitest::Test
 
     assert(status.success?, stderr)
     split = split_calls.first
-    assert_match(/-b #{CALLER}\b.*--split[= ]right\b.*-c #{Regexp.escape(worktree_path('some-change'))}\b/, split)
-    assert_match(/ -- claude --model opus\z/, split)
-    assert_includes(worker_prompt("plan"), "docs/changes/some-change/intent.md")
+    assert_match(/-b #{CALLER}\b.*--split[= ]below\b.*-c #{Regexp.escape(worktree_path('some-change'))}\b/, split)
+    assert_match(/ -- claude --model opus --permission-mode plan\z/, split)
+    assert_includes(worker_prompt("plan"), "there is no plan.md yet")
     assert_includes(worker_prompt("plan"), "worktree at #{worktree_path('some-change')}")
   end
 
-  def test_handing_off_an_intent_stage_splits_a_block_below_the_caller
+  def test_handing_off_a_plan_stage_splits_a_block_below_the_caller
     worktree_creatable!
-
-    run_script(HAND_OFF_PLAN, "intent", "some-change")
-
-    assert_equal(1, split_calls.size)
-    assert_match(/-b #{CALLER}\b.*--split[= ]below\b.*-c #{Regexp.escape(worktree_path('some-change'))}\b/, split_calls.first)
-  end
-
-  def test_handing_off_a_plan_stage_splits_right_of_the_intent_block
-    worktree_creatable!
-    record_row("some-change", "blkI")
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
 
-    assert_match(/-b blkI\b.*--split[= ]right/, split_calls.first)
+    assert_equal(1, split_calls.size)
+    assert_match(/-b #{CALLER}\b.*--split[= ]below\b.*-c #{Regexp.escape(worktree_path('some-change'))}\b/, split_calls.first)
   end
 
   def test_handing_off_an_implement_stage_splits_right_of_the_plan_block
@@ -181,27 +164,17 @@ class RexWorkerScriptsTest < Minitest::Test
     assert_empty(split_calls.grep(/-b blkI\b/))
   end
 
-  def test_handing_off_a_plan_stage_falls_back_to_the_caller_when_the_row_end_is_gone
+  def test_an_autonomous_delivery_builds_the_row_plan_implement
     worktree_creatable!
-    record_row("some-change", "blkI")
+    split_ids("blkA", "blkB")
 
-    run_script(HAND_OFF_PLAN, "plan", "some-change", extra_env: { "STUB_GONE_BLOCKS" => "blkI" })
-
-    assert_match(/-b #{CALLER}\b.*--split[= ]right/, split_calls.first)
-  end
-
-  def test_an_autonomous_delivery_builds_the_row_intent_plan_implement
-    worktree_creatable!
-    split_ids("blkA", "blkB", "blkC")
-
-    run_script(HAND_OFF_PLAN, "intent", "some-change", extra_env: split_ids_env)
-    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto", caller_block: "blkA", extra_env: split_ids_env)
+    run_script(HAND_OFF_PLAN, "plan", "some-change", extra_env: split_ids_env)
     run_script(HAND_OFF_PLAN, "implement", "some-change", "--auto", caller_block: "blkA", extra_env: split_ids_env)
 
     anchors = split_calls.map { |call| call[/-b (\S+)/, 1] }
     directions = split_calls.map { |call| call[/--split[= ](\w+)/, 1] }
-    assert_equal([ CALLER, "blkA", "blkB" ], anchors)
-    assert_equal(%w[below right right], directions)
+    assert_equal([ CALLER, "blkA" ], anchors)
+    assert_equal(%w[below right], directions)
   end
 
   def test_a_linked_hand_off_script_finds_open_column_beside_its_real_path
@@ -211,7 +184,7 @@ class RexWorkerScriptsTest < Minitest::Test
     link = File.join(linked_dir, "hand-off-plan.sh")
     File.symlink(HAND_OFF_PLAN, link)
 
-    _, stderr, status = run_script(link, "plan", "some-change")
+    _, stderr, status = run_script(link, "implement", "some-change")
 
     assert(status.success?, stderr)
     refute_empty(split_calls)
@@ -220,28 +193,40 @@ class RexWorkerScriptsTest < Minitest::Test
   def test_passes_the_model_per_stage
     worktree_creatable!
 
-    { "intent" => "opus", "plan" => "opus", "implement" => "sonnet" }.each do |stage, model|
+    { "plan" => "opus --permission-mode plan", "implement" => "sonnet" }.each do |stage, model|
       run_script(HAND_OFF_PLAN, stage, "some-change")
 
       assert_match(/ -- claude --model #{model}\z/, split_calls.last, stage)
     end
+  end
+
+  def test_the_auto_plan_stage_does_not_start_in_plan_mode
+    worktree_creatable!
+
+    run_script(HAND_OFF_PLAN, "plan", "some-change", "--auto")
+
+    assert_match(/ -- claude --model opus\z/, split_calls.last)
     assert_empty(rex_calls.grep(/permission-mode/))
   end
 
-  def test_each_stage_opens_exactly_one_block
+  def test_the_plan_worker_interviews_and_commits_the_accepted_plan_then_pushes
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "intent", "some-change")
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    prompt = worker_prompt("plan")
 
-    assert_equal(1, split_calls.size)
+    assert_includes(prompt, "brainstorming interview")
+    assert_includes(prompt, "approves ExitPlanMode")
+    assert_operator(prompt.index("commits it with commit-plan"), :<, prompt.index("git push -u origin HEAD"))
+    refute_match(/intent|\bspec\b/i, prompt)
   end
 
-  def test_only_the_intent_stage_splits_below
+  def test_only_the_plan_stage_splits_below
     worktree_creatable!
 
-    %w[intent plan implement].each { |stage| run_script(HAND_OFF_PLAN, stage, "some-change") }
+    %w[plan implement].each { |stage| run_script(HAND_OFF_PLAN, stage, "some-change") }
 
-    assert_equal(3, split_calls.size)
+    assert_equal(2, split_calls.size)
     assert_match(/--split[= ]below/, split_calls.first)
     assert(split_calls.drop(1).all? { |call| call.match?(/--split[= ]right/) }, split_calls.inspect)
   end
@@ -260,25 +245,25 @@ class RexWorkerScriptsTest < Minitest::Test
     run_script(HAND_OFF_PLAN, "plan", "some-change")
     run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_equal(%w[blkW blkW], row_record("some-change"))
+    assert_equal(%w[blkV blkW], row_record("some-change"))
   end
 
   def test_report_file_is_empty_before_the_worker_starts
     worktree_creatable!
-    stale = report_path("plan-blkW")
+    stale = report_path("implement-blkW")
     FileUtils.mkdir_p(File.dirname(stale))
     File.write(stale, "an earlier worker's notes\n")
 
-    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_includes(report_state_at_prompt, "plan-blkW empty")
+    assert_includes(report_state_at_prompt, "implement-blkW empty")
   end
 
   def test_prompt_is_sent_after_the_worker_is_ready
     worktree_creatable!
     status_sequence("working", "working", "idle")
 
-    _, stderr, status = run_script(HAND_OFF_PLAN, "plan", "some-change")
+    _, stderr, status = run_script(HAND_OFF_PLAN, "implement", "some-change")
 
     assert(status.success?, stderr)
     send_index = rex_calls.index { |call| call.match?(/\Asend\b.* -b blkW\b/) }
@@ -311,7 +296,7 @@ class RexWorkerScriptsTest < Minitest::Test
     worktree_creatable!
     status_sequence("working")
 
-    _, stderr, status = run_script(HAND_OFF_PLAN, "plan", "some-change",
+    _, stderr, status = run_script(HAND_OFF_PLAN, "implement", "some-change",
                                    extra_env: { "REX_READY_TIMEOUT" => "1" })
 
     assert_equal(1, status.exitstatus)
@@ -324,26 +309,26 @@ class RexWorkerScriptsTest < Minitest::Test
   def test_stub_worker_report_reaches_the_coordinator
     worktree_creatable!
 
-    stdout, stderr, status = run_script(HAND_OFF_PLAN, "plan", "some-change")
+    stdout, stderr, status = run_script(HAND_OFF_PLAN, "implement", "some-change")
 
     assert(status.success?, stderr)
-    path = worker_prompt("plan")[%r{\S*/rex/plan-blkW\.md}]
+    path = worker_prompt("implement")[%r{\S*/rex/implement-blkW\.md}]
     refute_nil(path, "the prompt does not name the report file")
     assert_includes(stdout, path)
-    prompt = worker_prompt("plan")
+    prompt = worker_prompt("implement")
     assert_match(/rex send -b #{CALLER}\s/, prompt)
     assert_match(/rex send-key\b.*enter/, prompt)
-    assert_includes(prompt, "Plan ready:")
+    assert_includes(prompt, "Handoff done:")
 
     # The stub worker does what the prompt says: write the report, then tell the coordinator.
-    File.write(path, "Plan ready: #{path}\nwhat plan.md decided\n")
-    system(stub_env, File.join(@stub_bin, "rex"), "send", "-b", CALLER, "Plan ready: #{path}", exception: true)
+    File.write(path, "Handoff done: #{path}\nwhat was done\n")
+    system(stub_env, File.join(@stub_bin, "rex"), "send", "-b", CALLER, "Handoff done: #{path}", exception: true)
     system(stub_env, File.join(@stub_bin, "rex"), "send-key", "-b", CALLER, "enter", exception: true)
 
     told = raw_calls.select { |call| call.first == "send" && option_of(call, "-b") == CALLER }
     assert_equal(1, told.size, rex_calls.inspect)
-    assert_equal("Plan ready: #{path}", told.first.last)
-    assert_match(/^Plan ready: /, File.read(path))
+    assert_equal("Handoff done: #{path}", told.first.last)
+    assert_match(/^Handoff done: /, File.read(path))
   end
 
   def test_the_worker_is_told_to_close_its_own_block_after_reporting
@@ -359,11 +344,11 @@ class RexWorkerScriptsTest < Minitest::Test
   def test_the_worker_is_told_where_to_report_and_who_to_tell
     worktree_creatable!
 
-    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_includes(worker_prompt("plan"), report_path("plan-blkW"))
-    assert_includes(worker_prompt("plan"), "block #{CALLER}")
-    assert(File.directory?(File.dirname(report_path("plan-blkW"))),
+    assert_includes(worker_prompt("implement"), report_path("implement-blkW"))
+    assert_includes(worker_prompt("implement"), "block #{CALLER}")
+    assert(File.directory?(File.dirname(report_path("implement-blkW"))),
            "the worker cannot write a report into a directory that is not there")
   end
 
@@ -376,27 +361,6 @@ class RexWorkerScriptsTest < Minitest::Test
     refute_match(/initiator/i, worker_prompt("plan"))
   end
 
-  def test_the_plan_worker_reads_only_intent_md
-    worktree_creatable!
-
-    run_script(HAND_OFF_PLAN, "plan", "some-change")
-
-    assert_includes(worker_prompt("plan"), "docs/changes/some-change/intent.md")
-    refute_match(/\bspec\b/i, worker_prompt("plan"))
-  end
-
-  def test_the_intent_worker_is_told_to_invoke_the_intent_skill_and_not_commit_intent_md
-    worktree_creatable!
-
-    run_script(HAND_OFF_PLAN, "intent", "some-change")
-    prompt = worker_prompt("intent")
-
-    assert_includes(prompt, "intent skill")
-    assert_includes(prompt, "no upstream artifact")
-    assert_match(/leave intent\.md uncommitted/, prompt)
-    refute_includes(prompt, "git push -u origin HEAD")
-  end
-
   def test_the_plan_prompt_says_commit_plan_commits_nothing_on_a_work_repository
     worktree_creatable!
 
@@ -405,18 +369,6 @@ class RexWorkerScriptsTest < Minitest::Test
 
     assert_includes(prompt, "On a work repository commit-plan commits nothing")
     assert_includes(prompt, "skip the push")
-  end
-
-  def test_the_plan_worker_commits_intent_and_plan_then_pushes
-    worktree_creatable!
-
-    [ [], [ "--auto" ] ].each do |options|
-      run_script(HAND_OFF_PLAN, "plan", "some-change", *options)
-      prompt = worker_prompt("plan")
-
-      assert_includes(prompt, "committed intent.md and plan.md")
-      assert_operator(prompt.index("committed intent.md and plan.md"), :<, prompt.index("git push -u origin HEAD"))
-    end
   end
 
   def test_the_implement_worker_is_told_to_push_when_done
@@ -439,8 +391,8 @@ class RexWorkerScriptsTest < Minitest::Test
 
     %w[plan implement].each { |stage| assert_match(/with the auto argument/, worker_prompt(stage), stage) }
     refute_includes(worker_prompt("plan"), "literal word")
-    assert_match(/do not wait for .*accepted/i, worker_prompt("plan"))
-    assert_includes(worker_prompt("plan"), "Do not start the next stage")
+    assert_includes(worker_prompt("plan"), "Status: draft")
+    assert_includes(worker_prompt("plan"), "do not start the next stage")
     assert_includes(worker_prompt("implement"), "Decision needed:")
   end
 
@@ -454,17 +406,15 @@ class RexWorkerScriptsTest < Minitest::Test
     assert_includes(worker_prompt("plan"), "literal word")
   end
 
-  def test_the_intent_and_plan_workers_are_given_the_coordinator_block_id
+  def test_the_plan_worker_is_given_the_coordinator_block_id
     worktree_creatable!
 
-    %w[intent plan].each do |stage|
-      run_script(HAND_OFF_PLAN, stage, "some-change")
-      prompt = worker_prompt(stage)
+    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    prompt = worker_prompt("plan")
 
-      refute_match(/hand-off-plan\.sh/, prompt, stage)
-      assert_includes(prompt, "Your coordinator's block id is #{CALLER}", stage)
-      assert_includes(prompt, "REX_BLOCK set to that id", stage)
-    end
+    refute_match(/hand-off-plan\.sh/, prompt)
+    assert_includes(prompt, "Your coordinator's block id is #{CALLER}")
+    assert_includes(prompt, "REX_BLOCK set to that id")
   end
 
   def test_the_implement_worker_is_not_told_to_start_a_next_stage
@@ -476,31 +426,23 @@ class RexWorkerScriptsTest < Minitest::Test
     refute_match(/coordinator's block id/, worker_prompt("implement"))
   end
 
-  def test_the_intent_worker_coordinates_an_autonomous_delivery_itself
-    worktree_creatable!
-
-    run_script(HAND_OFF_PLAN, "intent", "some-change")
-    prompt = worker_prompt("intent")
-
-    assert_includes(prompt, "Delivery: autonomous")
-    assert_includes(prompt, "Delivery done:")
-    assert_match(%r{account file path into \S*/rex/intent-\S+\.md}, prompt)
-    condition = prompt.index("Unless intent.md records Delivery: autonomous")
-    refute_nil(condition)
-    assert_operator(condition, :<, prompt.index("Intent ready:"))
-    assert_operator(condition, :<, prompt.index("rex block close"))
-  end
-
-  def test_only_the_intent_worker_hears_about_autonomous_delivery
+  def test_the_plan_worker_coordinates_an_autonomous_delivery_itself
     worktree_creatable!
 
     run_script(HAND_OFF_PLAN, "plan", "some-change")
+    prompt = worker_prompt("plan")
 
-    refute_includes(worker_prompt("plan"), "Delivery done:")
+    assert_includes(prompt, "Delivery: autonomous")
+    assert_includes(prompt, "Delivery done:")
+    assert_match(%r{account file path into \S*/rex/plan-\S+\.md}, prompt)
+    condition = prompt.index("Unless plan.md records Delivery: autonomous")
+    refute_nil(condition)
+    assert_operator(condition, :<, prompt.index("Plan ready:"))
+    assert_operator(condition, :<, prompt.index("rex block close"))
   end
 
   def test_each_accepting_skill_chains_once_to_its_next_stage_with_the_coordinator_id
-    { "intent" => "plan", "plan" => "implement" }.each do |stage, next_stage|
+    { "plan" => "implement" }.each do |stage, next_stage|
       skill = File.read(File.join(SKILLS_DIR, stage, "SKILL.md"))
       chain = "COORDINATOR=<coordinator> ~/.agents/bin/hand-off-plan #{next_stage} '<slug>'"
 
@@ -533,9 +475,9 @@ class RexWorkerScriptsTest < Minitest::Test
     @repo = repo_on("main", inside: "o'brien's work files")
     add_origin_in_place
 
-    run_script(HAND_OFF_PLAN, "plan", "some-change")
+    run_script(HAND_OFF_PLAN, "implement", "some-change")
 
-    assert_path_survived(worker_prompt("plan"), report_path("plan-blkW"))
+    assert_path_survived(worker_prompt("implement"), report_path("implement-blkW"))
   end
 
   def test_stops_before_spawning_anything_when_the_report_directory_cant_be_created
@@ -589,10 +531,10 @@ class RexWorkerScriptsTest < Minitest::Test
   def test_handing_off_reports_where_the_work_went_and_where_its_report_lands
     worktree_creatable!
 
-    stdout, = run_script(HAND_OFF_PLAN, "plan", "some-change")
+    stdout, = run_script(HAND_OFF_PLAN, "implement", "some-change")
 
     assert_equal(1, stdout.lines.count, stdout)
-    assert_match(/plan-blkW/, stdout)
+    assert_match(/implement-blkW/, stdout)
   end
 
   def test_reviewing_records_the_reviewer_block_for_the_change
@@ -745,10 +687,10 @@ class RexWorkerScriptsTest < Minitest::Test
     assert_includes(reviewer_prompt, "Review clean:")
   end
 
-  def test_the_reviewer_reads_intent_md_and_plan_md
+  def test_the_reviewer_reads_plan_md
     run_script(START_REVIEW)
 
-    assert_includes(reviewer_prompt, "intent.md and plan.md")
+    assert_includes(reviewer_prompt, "that folder's plan.md")
     refute_match(/spec\.md/, reviewer_prompt)
   end
 
@@ -888,8 +830,8 @@ class RexWorkerScriptsTest < Minitest::Test
     send_call&.last
   end
 
-  def worker_prompt(_stage)
-    prompt_sent_to("blkW") || prompt_sent_to("blkV")
+  def worker_prompt(stage)
+    stage == "plan" ? (prompt_sent_to("blkV") || prompt_sent_to("blkW")) : (prompt_sent_to("blkW") || prompt_sent_to("blkV"))
   end
 
   def reviewer_prompt

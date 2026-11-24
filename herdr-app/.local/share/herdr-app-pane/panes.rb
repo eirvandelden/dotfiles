@@ -177,7 +177,7 @@ module HerdrAppPane
       @window.close(pane_of(@window.space_of(terminal), terminal))
     end
 
-    # Closes the row's recorded panes whose agent is idle or done; keeps the own, coordinator and intent
+    # Closes the row's recorded panes whose agent is idle or done; keeps the own, coordinator and plan
     # terminals; then deletes the record. Best effort: warns, never raises. Answers the number closed.
     #: (String row) -> Integer
     def close_idle(row)
@@ -271,7 +271,7 @@ module HerdrAppPane
 
     #: (RowRecord row_record) -> Array[String]
     def idle_panes(row_record)
-      stale = row_record.terminals - [ @own, @coordinator, row_record.intent ]
+      stale = row_record.terminals - [ @own, @coordinator, row_record.plan ]
       idle = @window.space_of(@coordinator).select { |entry| stale.include?(entry["terminal"]) && idle_agent?(entry) }
       idle.map { |entry| entry["pane"] }
     end

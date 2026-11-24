@@ -52,7 +52,7 @@ Never type `git worktree add` yourself; use `worktree-create`. A hook refuses a 
 
 Inside herdr, a pane rooted in the new worktree opens below; focus it for the file viewer. Inside Rex, a block opens the same way. A plain invocation still opens that pane.
 
-No-pane mode: a caller that carries on in the current session (the `intent` skill) passes `--no-pane`, so no pane opens. Everything else still runs, including Step 2 and the SQLite copy.
+No-pane mode: a caller that carries on in the current session (the `plan` skill) passes `--no-pane`, so no pane opens. Everything else still runs, including Step 2 and the SQLite copy.
 
 ```bash
 worktree_path=$(~/.config/git/worktree-tools/worktree-create --no-pane "$branch") || exit 1

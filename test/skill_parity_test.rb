@@ -27,7 +27,7 @@ class SkillParityTest < Minitest::Test
   # there is documentation, not a command another checkout is meant to run.
   REPO_LAYOUT_SKILLS = %w[dotfiles-maintenance new-repo-setup].freeze
   # Skills where the two flags intentionally disagree: worktree-first must stay
-  # model-invocable on Claude (WORKTREES.md and the intent skill call it), and so
+  # model-invocable on Claude (WORKTREES.md and the plan skill call it), and so
   # must review (the autonomous coordinator calls it through the Skill tool; Codex
   # coordinators follow the file). Codex's allow_implicit_invocation only disables
   # automatic triggering, which is the intended behaviour there.

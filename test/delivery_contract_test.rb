@@ -62,16 +62,16 @@ class DeliveryContractTest < Minitest::Test
     assert_includes(bash_rule, "`~/.claude/skills/deliver/scripts/deliver --check`")
   end
 
-  def test_intent_records_its_pane_on_accept
-    section = section_of(skill("intent"), "## 4. Accept")
+  def test_plan_records_its_pane_on_accept
+    section = section_of(skill("plan"), "#### 7. Accept")
 
     assert_includes(section, "herdr pane current")
     assert_includes(section, "terminal_id")
-    assert_includes(section, "intent-pane-<slug>")
+    assert_includes(section, "plan-pane-<slug>")
   end
 
   def test_the_coordinator_delivers_then_ships_without_merging
-    section = section_of(skill("intent"), "## Autonomous delivery")
+    section = delivery_reference
     step = line_with(section, "deliver/SKILL.md")
 
     assert_includes(step, "~/.claude/skills/deliver/SKILL.md")
@@ -82,15 +82,16 @@ class DeliveryContractTest < Minitest::Test
     assert_match(/never merge/i, section)
   end
 
-  def test_the_coordinator_checks_the_autonomous_intent_before_deliver_removes_it
-    step = line_with(section_of(skill("intent"), "## Autonomous delivery"), "deliver/SKILL.md")
+  def test_the_coordinator_checks_the_autonomous_plan_before_deliver_removes_it
+    step = line_with(delivery_reference, "deliver/SKILL.md")
 
     assert_includes(step, "`Delivery: autonomous`")
     assert_operator(step.index("`Delivery: autonomous`"), :<, step.index("deliver/SKILL.md"))
   end
 
   def test_only_finish_auto_mode_names_the_ship_no_merge_script
-    offenders = %w[intent deliver].select { |name| skill(name).include?("finish/scripts/ship --no-merge") }
+    offenders = %w[plan deliver].select { |name| skill(name).include?("finish/scripts/ship --no-merge") }
+    offenders << "plan/references/autonomous-delivery.md" if delivery_reference.include?("finish/scripts/ship --no-merge")
 
     assert_empty(offenders)
     assert_includes(section_of(skill("finish"), "## Auto mode"), "~/.claude/skills/finish/scripts/ship --no-merge")
@@ -170,6 +171,10 @@ class DeliveryContractTest < Minitest::Test
 
   def skill(name)
     File.read(File.join(SKILLS, name, "SKILL.md"))
+  end
+
+  def delivery_reference
+    File.read(File.join(SKILLS, "plan/references/autonomous-delivery.md"))
   end
 
   def frontmatter(path)

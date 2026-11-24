@@ -173,7 +173,7 @@ class DeliverTest < Minitest::Test
 
     assert(status.success?, stderr)
     assert_equal(head, git("rev-parse", "HEAD"))
-    assert(File.exist?(File.join(@repo, "docs/changes", SLUG, "intent.md")))
+    assert(File.exist?(File.join(@repo, "docs/changes", SLUG, "plan.md")))
     assert_empty(origin_branches - [ "main" ])
     assert_empty(gh_calls.grep(/\Apr (create|edit)/))
     assert_empty(herdr_calls)
@@ -241,7 +241,7 @@ class DeliverTest < Minitest::Test
     refute_includes(body, "## Proof")
   end
 
-  def test_titles_the_pr_from_intent_md
+  def test_titles_the_pr_from_plan_md
     commit_change_work
 
     deliver
@@ -256,7 +256,7 @@ class DeliverTest < Minitest::Test
     files = git("show", "--name-only", "--format=", "HEAD").split
 
     assert_equal(REMOVAL_SUBJECT, git("log", "-1", "--format=%s").strip)
-    assert_equal(%W[docs/changes/#{SLUG}/intent.md docs/changes/#{SLUG}/plan.md docs/changes/#{SLUG}/review.md], files.sort)
+    assert_equal(%W[docs/changes/#{SLUG}/plan.md docs/changes/#{SLUG}/review.md], files.sort)
     assert_empty(git("status", "--porcelain").strip)
   end
 
@@ -269,12 +269,12 @@ class DeliverTest < Minitest::Test
   end
 
   def test_keeps_docs_changes_when_another_change_lives_there
-    commit_file("docs/changes/other/intent.md", "# Intent: Other\n", "Add other intent")
+    commit_file("docs/changes/other/plan.md", "# Plan: Other\n", "Add other plan")
     commit_change_work
 
     deliver
 
-    assert(File.exist?(File.join(@repo, "docs/changes/other/intent.md")))
+    assert(File.exist?(File.join(@repo, "docs/changes/other/plan.md")))
   end
 
   def test_edits_the_body_of_an_existing_pr_instead_of_creating_one
@@ -323,12 +323,12 @@ class DeliverTest < Minitest::Test
     assert_equal(%w[w1:pIdle], closed_panes)
   end
 
-  def test_never_closes_the_intent_pane
+  def test_never_closes_the_plan_pane
     commit_change_work
-    intent = pane("w1:pIntent", "claude", "idle")
-    record_stage_panes([ intent, pane("w1:pIdle", "claude", "idle") ])
-    record_intent_pane(intent)
-    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ intent, pane("w1:pIdle", "claude", "idle") ] }) })
+    plan_pane = pane("w1:pPlan", "claude", "idle")
+    record_stage_panes([ plan_pane, pane("w1:pIdle", "claude", "idle") ])
+    record_plan_pane(plan_pane)
+    stub_response("herdr pane list", { "stdout" => JSON.generate(result: { panes: [ plan_pane, pane("w1:pIdle", "claude", "idle") ] }) })
 
     deliver(herdr: true)
 
@@ -383,11 +383,11 @@ class DeliverTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
-  def test_deliver_keeps_the_calling_and_intent_rex_blocks
+  def test_deliver_keeps_the_calling_and_plan_rex_blocks
     commit_change_work
-    record_rex_row([ "blkIntent", "blkIdle", OWN_BLOCK ])
-    File.write(File.join(common_dir, "rex", "intent-pane-#{SLUG}"), "blkIntent\n")
-    answer_rex_blocks(blkIntent: "idle", blkIdle: "idle", OWN_BLOCK.to_sym => "idle")
+    record_rex_row([ "blkPlan", "blkIdle", OWN_BLOCK ])
+    File.write(File.join(common_dir, "rex", "plan-pane-#{SLUG}"), "blkPlan\n")
+    answer_rex_blocks(blkPlan: "idle", blkIdle: "idle", OWN_BLOCK.to_sym => "idle")
 
     deliver(rex: true)
 
@@ -515,13 +515,13 @@ class DeliverTest < Minitest::Test
     assert_empty(herdr_calls)
   end
 
-  def test_an_autonomous_intent_with_no_evidence_is_refused_and_nothing_is_removed
+  def test_an_autonomous_plan_with_no_evidence_is_refused_and_nothing_is_removed
     commit_autonomous_change
 
     assert_refused_and_untouched(/required kind tests has no fresh passing entry/)
   end
 
-  def test_an_autonomous_intent_with_stale_evidence_is_refused
+  def test_an_autonomous_plan_with_stale_evidence_is_refused
     commit_autonomous_change
     record_evidence
     commit_file("lib/widget.rb", "class Widget; def late; end; end\n", "Change widget after evidence")
@@ -530,7 +530,7 @@ class DeliverTest < Minitest::Test
     assert_refused_and_untouched(/stale/)
   end
 
-  def test_check_mode_reports_missing_evidence_for_an_autonomous_intent
+  def test_check_mode_reports_missing_evidence_for_an_autonomous_plan
     commit_autonomous_change
 
     _, stderr, status = deliver("--check")
@@ -539,7 +539,7 @@ class DeliverTest < Minitest::Test
     assert_match(/required kind lint has no fresh passing entry/, stderr)
   end
 
-  def test_an_autonomous_intent_with_fresh_evidence_builds_the_body_from_the_handover
+  def test_an_autonomous_plan_with_fresh_evidence_builds_the_body_from_the_handover
     commit_autonomous_change
     record_evidence
     stub_pr_view_from_the_draft
@@ -578,7 +578,7 @@ class DeliverTest < Minitest::Test
     assert_includes(gh_calls, "pr view --json body,headRefOid")
   end
 
-  def test_a_step_by_step_intent_never_calls_delivery_evidence
+  def test_a_step_by_step_plan_never_calls_delivery_evidence
     commit_change_work
     log = File.join(@state, "evidence.log")
     spy = File.join(@state, "spy")
@@ -645,7 +645,6 @@ class DeliverTest < Minitest::Test
     exclude_change_folders if exclude
     folder = File.join(@repo, "docs/changes", SLUG)
     FileUtils.mkdir_p(folder)
-    File.write(File.join(folder, "intent.md"), intent_text)
     File.write(File.join(folder, "plan.md"), plan_text)
     commit_file("lib/widget.rb", "class Widget; end\n", "Add widget")
     round = "## Round 1 — 2026-10-13T10:00:00Z — #{git('rev-parse', '--short', 'HEAD').strip}\n\n#{findings.join("\n")}\n"
@@ -683,8 +682,8 @@ class DeliverTest < Minitest::Test
 
   def commit_autonomous_change
     commit_change_work
-    accepted = intent_text.sub("Type: feature.", "Type: feature. Delivery: autonomous.")
-    commit_file("docs/changes/#{SLUG}/intent.md", accepted, "Make the intent autonomous")
+    accepted = plan_text.sub("Type: feature.", "Type: feature. Delivery: autonomous.")
+    commit_file("docs/changes/#{SLUG}/plan.md", accepted, "Make the plan autonomous")
     commit_review(SLUG, [])
   end
 
@@ -734,7 +733,7 @@ class DeliverTest < Minitest::Test
     assert_equal(1, status.exitstatus, stdout + stderr)
     assert_match(reason, stderr)
     assert_equal(head, git("rev-parse", "HEAD"))
-    assert(File.exist?(File.join(@repo, "docs/changes", SLUG, "intent.md")))
+    assert(File.exist?(File.join(@repo, "docs/changes", SLUG, "plan.md")))
     assert_empty(origin_branches - [ "main" ])
     assert_empty(gh_calls.grep(/\Apr (create|edit)/))
   end
@@ -757,9 +756,9 @@ class DeliverTest < Minitest::Test
     File.write(stage_panes_file, panes.map { |entry| "#{entry[:pane_id]} #{entry[:terminal_id]}\n" }.join)
   end
 
-  # What the intent skill records: the pane id, then the terminal id, one per line.
-  def record_intent_pane(entry)
-    File.write(File.join(common_dir, "herdr", "intent-pane-#{SLUG}"), "#{entry[:pane_id]}\n#{entry[:terminal_id]}\n")
+  # What the plan skill records: the pane id, then the terminal id, one per line.
+  def record_plan_pane(entry)
+    File.write(File.join(common_dir, "herdr", "plan-pane-#{SLUG}"), "#{entry[:pane_id]}\n#{entry[:terminal_id]}\n")
   end
 
   def stage_panes_file

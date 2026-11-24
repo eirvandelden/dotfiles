@@ -3,10 +3,9 @@
 require "json"
 require "time"
 require "date"
+require_relative "skills/plan/scripts/plan_metadata"
 
 class ChangeFolder
-  ACCEPTED = /Status: accepted(?: \(\d{4}-\d{2}-\d{2}\))?(?=\.|\s|\z)/
-
   #: (String current_dir) -> Array[String]
   def self.folders_in(current_dir)
     Dir.glob("docs/changes/*/", base: current_dir).map { |folder| File.join(current_dir, folder) }
@@ -36,14 +35,13 @@ class ChangeFolder
     return "🕵️ sleuthing" if read("review.md")
     return "🛠️ hammering" if accepted?("plan.md")
 
-    accepted?("intent.md") ? "🧠 scheming" : "🤔 interviewing"
+    read("plan.md") ? "🧠 scheming" : "🤔 interviewing"
   end
 
   private
 
   def accepted?(name)
-    status_line = read(name)&.lines&.find { |line| line.include?("Status:") }
-    ACCEPTED.match?(status_line.to_s)
+    PlanMetadata.accepted?(read(name).to_s)
   end
 
   def read(name)
