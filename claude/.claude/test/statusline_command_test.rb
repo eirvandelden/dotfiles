@@ -37,11 +37,11 @@ module Claude
     end
 
     def accepted_plan
-      "Author: A. Status: accepted (2026-01-15).\n"
+      "# Plan: x\n\nAuthor: A. Status: accepted (2026-01-15).\n"
     end
 
     def draft_plan
-      "Author: A. Status: draft.\n"
+      "# Plan: x\n\nAuthor: A. Status: draft.\n"
     end
 
     def render_in_tmpdir(**extra)
@@ -146,13 +146,31 @@ module Claude
     end
 
     def test_shows_hammering_for_a_plan_accepted_with_a_date
-      change_folder(plan: "Author: A. Status: accepted (2026-10-20).\n")
+      change_folder(plan: "# Plan: x\n\nAuthor: A. Status: accepted (2026-10-20).\n")
 
       assert_equal "🛠️ hammering", render_in_tmpdir
     end
 
     def test_does_not_treat_accepted_draft_as_accepted
-      change_folder(plan: "Author: A. Status: accepted-draft.\n")
+      change_folder(plan: "# Plan: x\n\nAuthor: A. Status: accepted-draft.\n")
+
+      assert_equal "🧠 scheming", render_in_tmpdir
+    end
+
+    def test_does_not_treat_a_plan_with_a_rejected_header_as_accepted
+      change_folder(plan: "# Plan: x\n\nFrom intent. Status: accepted (2026-01-15).\n")
+
+      assert_equal "🧠 scheming", render_in_tmpdir
+    end
+
+    def test_does_not_treat_a_plan_without_a_title_as_accepted
+      change_folder(plan: "Author: A. Status: accepted.\n")
+
+      assert_equal "🧠 scheming", render_in_tmpdir
+    end
+
+    def test_does_not_treat_a_status_quoted_in_the_body_as_accepted
+      change_folder(plan: "# Plan: x\n\nAuthor: A. Status: draft.\n\nStatus: accepted.\n")
 
       assert_equal "🧠 scheming", render_in_tmpdir
     end
@@ -253,7 +271,7 @@ module Claude
 
     def test_shows_the_label_when_the_status_line_holds_invalid_bytes
       folder = change_folder
-      File.binwrite(File.join(folder, "plan.md"), "Author: \xFF. Status: draft.\n")
+      File.binwrite(File.join(folder, "plan.md"), "# Plan: x\n\nAuthor: \xFF. Status: draft.\n")
 
       assert_equal "🧠 scheming", render_in_tmpdir
     end
