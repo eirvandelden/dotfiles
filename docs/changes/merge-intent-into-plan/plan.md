@@ -91,7 +91,7 @@ Each step is one commit, tests green before the next.
 - A folder with only `intent.md` is not a plan → `test/commit_plan_test.rb` `refuses a folder that holds only intent.md`.
 - No file refers to `intent.md` or the `intent` skill → `test/no_intent_references_test.rb` `names no intent artefact outside change folders`.
 - The `plan` pane starts in plan mode except in auto → `test/herdr_worker_scripts_test.rb` `starts the plan pane in plan mode`, plus the `auto` counterpart, and the same for Rex and herdr-app.
-- Statusline stages → `claude/.claude/test/statusline_command_test.rb` `shows interviewing without a plan, scheming for a draft`.
+- Statusline stages → `claude/.claude/test/statusline_command_test.rb` `shows_interviewing_when_the_folder_has_no_plan_yet` and `shows_scheming_for_a_draft_plan`.
 - Invariant: playbook and `core-values.yml` agree, enforced by `test/test_rule_mirror_test.rb`.
 - Final check: `bin/test`, `ruby claude/.claude/test/statusline_command_test.rb` and `lefthook run pre-commit --all-files` all pass.
 
