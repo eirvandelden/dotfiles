@@ -90,8 +90,24 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
+  # One whole stderr line from RubyGems about a gem with unbuilt native extensions.
+  UNBUILT_EXTENSIONS_WARNING =
+    /\AIgnoring \S+ because its extensions are not built\. Try: gem pristine \S+ --version \S+\Z/ #: Regexp
+
+  INJECT_SCRIPT = "inject_stderr.rb".freeze
+  FAKE_UNBUILT_WARNING =
+    "Ignoring fake-1.0.0 because its extensions are not built. Try: gem pristine fake --version 1.0.0".freeze
+  OTHER_STDERR_LINE = "warning: something else broke".freeze
+  UNEXPECTED_STDERR_LINES = [
+    OTHER_STDERR_LINE,
+    "note: #{FAKE_UNBUILT_WARNING}",
+    "#{FAKE_UNBUILT_WARNING} (and more)"
+  ].freeze
+
   def setup
     skip_unless_ci(MISSING_RUBOCOP_MESSAGE) unless RUBOCOP
+
+    @child_environment = {}
 
     @project = Dir.mktmpdir
     FileUtils.mkdir_p(File.join(@project, "test"))
@@ -209,7 +225,58 @@ class RubocopFallbackTest < Minitest::Test
     assert_empty(cop_names(report).grep(RBS_COP_PATTERN))
   end
 
+  def test_fallback_tolerates_a_rubygems_unbuilt_extensions_warning
+    inject_stderr(FAKE_UNBUILT_WARNING)
+
+    assert_equal([ FIXTURE_PATH ], inspected_paths(run_fallback))
+  end
+
+  def test_project_fallback_tolerates_a_rubygems_unbuilt_extensions_warning
+    inject_stderr(FAKE_UNBUILT_WARNING)
+
+    report = run_with_project_fallback(MIGRATION_PATH, MIGRATION_FIXTURE)
+
+    assert_equal([ MIGRATION_PATH ], inspected_paths(report))
+  end
+
+  def test_fallback_fails_on_a_stderr_line_other_than_an_unbuilt_extensions_warning
+    UNEXPECTED_STDERR_LINES.each do |line|
+      inject_stderr(FAKE_UNBUILT_WARNING, line)
+
+      assert_stderr_line_rejected(line) { run_fallback }
+    end
+  end
+
+  def test_project_fallback_fails_on_a_stderr_line_other_than_an_unbuilt_extensions_warning
+    inject_stderr(FAKE_UNBUILT_WARNING, OTHER_STDERR_LINE)
+
+    assert_stderr_line_rejected(OTHER_STDERR_LINE) { run_with_project_fallback(MIGRATION_PATH, MIGRATION_FIXTURE) }
+  end
+
   private
+
+  # Fails with the remaining lines when stderr holds anything but unbuilt-extensions warnings.
+  #: (String stderr) -> void
+  def assert_no_stderr_except_unbuilt_extensions(stderr)
+    assert_empty(stderr.lines.grep_v(UNBUILT_EXTENSIONS_WARNING).join)
+  end
+
+  # Expects the block to fail naming the line. A skip is an Assertion too, so it passes through.
+  #: (String line) { () -> void } -> void
+  def assert_stderr_line_rejected(line)
+    error = assert_raises(Minitest::Assertion) { yield }
+    raise error if error.is_a?(Minitest::Skip)
+
+    assert_includes(error.message, line)
+  end
+
+  # Makes every RuboCop child of this test write each line to stderr when it starts.
+  # The relative `-r` path survives a TMPDIR with a space, because RUBYOPT splits on spaces.
+  #: (*String lines) -> void
+  def inject_stderr(*lines)
+    File.write(File.join(@project, INJECT_SCRIPT), lines.map { |line| "$stderr.puts #{line.dump}\n" }.join)
+    @child_environment = { "RUBYOPT" => "#{ENV.fetch('RUBYOPT', '')} -r./#{INJECT_SCRIPT}".strip }
+  end
 
   def run_rbs_fixture(source, *options)
     write_fixture(RBS_FIXTURE_PATH, source)
@@ -221,10 +288,10 @@ class RubocopFallbackTest < Minitest::Test
   def run_with_project_fallback(path, source)
     write_fixture(path, source)
     FileUtils.cp(FALLBACK_CONFIG, File.join(@project, ".rubocop.yml"))
-    stdout, stderr, status = Open3.capture3(RUBOCOP, "--format", "json", path, chdir: @project)
+    stdout, stderr, status = Open3.capture3(@child_environment, RUBOCOP, "--format", "json", path, chdir: @project)
     skip_unless_ci("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
 
-    assert_empty(stderr)
+    assert_no_stderr_except_unbuilt_extensions(stderr)
     JSON.parse(stdout)
   end
 
@@ -252,14 +319,14 @@ class RubocopFallbackTest < Minitest::Test
   # Exit status 1 means offenses were found, which is the behaviour under test and must never
   # skip. Only status 2, RuboCop failing to load the config or its plugins, skips, and only
   # outside CI, since CI installs RuboCop and its plugins. Anything on stderr otherwise, such as a
-  # cop crashing, fails.
+  # cop crashing, fails. Only RubyGems' unbuilt-extensions warnings on stderr are tolerated.
   def run_fallback(*options, path: FIXTURE_PATH)
     stdout, stderr, status = Open3.capture3(
-      RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, path, chdir: @project
+      @child_environment, RUBOCOP, "-c", FALLBACK_CONFIG, "--format", "json", *options, path, chdir: @project
     )
     skip_unless_ci("rubocop could not load #{FALLBACK_CONFIG}: #{stderr.lines.first}") if status.exitstatus == 2
 
-    assert_empty(stderr)
+    assert_no_stderr_except_unbuilt_extensions(stderr)
     JSON.parse(stdout)
   end
 end
