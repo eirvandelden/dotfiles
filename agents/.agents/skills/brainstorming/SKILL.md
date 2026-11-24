@@ -13,9 +13,7 @@ Start by understanding the current project context, then ask questions one at a 
 
 The `plan` skill calls this skill as its interview. The running spec is `docs/changes/<slug>/plan.md`, with `Status: draft`.
 
-<HARD-GATE>
-Do NOT write any code, scaffold any project, invoke any implementation skill, or take any implementation action until ALL of these are true: a design was presented and approved, `plan.md` is written, and the user has accepted it. Chat approval of a design ("looks good, go ahead") clears the NEXT checklist item only — it is not permission to implement. This applies to EVERY change regardless of perceived simplicity.
-</HARD-GATE>
+<HARD-GATE> Do NOT write any code, scaffold any project, invoke any implementation skill, or take any implementation action until ALL of these are true: a design was presented and approved, `plan.md` is written, and the user has accepted it. Chat approval of a design ("looks good, go ahead") clears the NEXT checklist item only — it is not permission to implement. This applies to EVERY change regardless of perceived simplicity. </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
