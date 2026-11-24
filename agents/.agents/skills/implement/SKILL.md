@@ -24,7 +24,7 @@ Builds an accepted `plan.md`. Refuses to start on anything not `Status: accepted
    ~/.agents/bin/hand-off-plan implement <slug>
    ```
 
-   The script creates `.worktrees/<slug>` if it does not exist yet — the `intent` skill usually already has — opens a pane as the next column of the change's row, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
+   The script creates `.worktrees/<slug>` if it does not exist yet — the `plan` skill usually already has — opens a pane as the next column of the change's row, and starts a fresh Sonnet agent there, rooted in that worktree, told to invoke this skill's `here` backend for `docs/changes/<slug>`. `<slug>` must equal the branch name — the naming rule forbids a prefixed branch, and the script only reuses an existing `.worktrees/<slug>` when it is already checked out on that branch, refusing otherwise.
 3. Tell the user which worker took it and where its report will land. The work is now theirs: do not start on it, and do not check up on it unless asked.
 
 ### When the worker finishes
@@ -37,11 +37,11 @@ Read the file and tell the user what came back. Do not pick up the leftovers unl
 
 ### 1. Read
 
-Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<folder>/intent.md` (for `Type:` and acceptance criteria) and `<folder>/plan.md` (for `## Proof`). Refuse if `plan.md` is not `Status: accepted`.
+Run `~/.claude/skills/plan/scripts/change-folder` for the folder path. Read `<folder>/plan.md`: `Type:` and `## Acceptance criteria` for what to build, `## Proof` for how. Refuse if `plan.md` is missing or is not `Status: accepted`.
 
 ### 2. Pick a mode
 
-- No mode named after `here`: `single`, unless `intent.md` lists three or more acceptance criteria, in which case default to `split`. The user can always say `here single` to override.
+- No mode named after `here`: `single`, unless `plan.md` lists three or more acceptance criteria, in which case default to `split`. The user can always say `here single` to override.
 - `split` needs `~/.claude/hooks/test-guard.rb` to exist (phase 3 wires it up). If it is not there yet, say "split mode needs the test guard from phase 3" and fall back to `single`.
 
 ### 3. Single-session build
@@ -52,7 +52,7 @@ Inner loop, per unit test named under the file being changed: red, green, refact
 
 A unit test the plan did not foresee: add it to `plan.md`'s Proof in the same commit as the code that needed it. Anywhere else reality departs from the plan: edit `plan.md` in the same commit as the departing code, never after. On a work repository (`change-scope` prints `work`) every `plan.md` edit stays local: no commit holds it, and a code or test commit holds only code or tests.
 
-**`Type: bugfix`** (from `intent.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit (on a work repository the line stays local with the rest of `plan.md`: the test commit holds only the test). Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`docs/changes/ai-native-workflow/spec.md §4`); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
+**`Type: bugfix`** (from `plan.md`): write the failing reproduction test first, commit it alone, then append `Reproduction: committed` to `plan.md` in that same commit (on a work repository the line stays local with the rest of `plan.md`: the test commit holds only the test). Only then fix — without touching any test file. A hook enforces this once phase 3 lands (`docs/changes/ai-native-workflow/spec.md §4`); until then it is this instruction. Removing the `Reproduction: committed` line from `plan.md` is the deliberate, visible way to override it — never just edit the test.
 
 New Ruby code follows `ruby-style`'s documentation rule. In a personal repository that means an inline RBS signature (`#:`) above each method, matching `plan.md`'s `### Signatures`. A design Proof line (`Query count:` or `Invariant:`) is built like any other criterion: its test first, then the code that enforces it. Where the plan says `Checked by: steep check`, run it.
 
@@ -71,7 +71,7 @@ A `## Proof` line of the form `→ check: <command or manual step>` is run after
 
 Same worktree, sequential, never both at once:
 
-1. `test-writer` agent: reads only `intent.md`'s acceptance criteria and `plan.md`'s `## Proof` — never production code beyond what a test needs to compile. Writes every acceptance test and every named unit test, runs them, confirms each fails for the reason its criterion implies (a new test that passes is reported as a finding, not silently fixed). Commits `Tests for <slug>`.
+1. `test-writer` agent: reads only `plan.md`'s `## Acceptance criteria` and `## Proof` — never production code beyond what a test needs to compile. Writes every acceptance test and every named unit test, runs them, confirms each fails for the reason its criterion implies (a new test that passes is reported as a finding, not silently fixed). Commits `Tests for <slug>`.
 2. Confirm here: the commit landed, the suite is red, and it is red for the right reasons. A plan whose `## Proof` has only `→ check:` lines has no test-writer commit: skip to step 3.
 3. `implementer` agent: reads `plan.md` and the failing tests. Red/green/refactor on production code only, one unit test at a time, commit on green. A `PreToolUse` hook denies its writes under test paths regardless of what it thinks it needs. A unit test it needs but cannot write becomes a line in `plan.md`'s Proof and a line in its report.
 4. Run the full suite here and read both reports. If the implementer's report lists tests it needed but couldn't write, run `test-writer` again for those, then `implementer` again.
@@ -80,11 +80,11 @@ Not per-unit alternation — each hand-off is a fresh context; the inner loop st
 
 ## Auto mode
 
-Only valid when `intent.md` has `Delivery: autonomous`. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan implement <slug> --auto`. Ask Etienne nothing.
+Only valid when `plan.md` has `Delivery: autonomous`. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan implement <slug> --auto`. Ask Etienne nothing.
 
 - Three failed attempts at one problem: stop and report a `Decision needed:` line that states the problem, what was tried and the choice to make.
 - A new dependency (gem, package, system tool) is never added. Report a `Decision needed:` line that names it and why it is needed.
-- A choice that would change the behaviour agreed in `intent.md` is a `Decision needed:` line, not a guess.
+- A choice that would change the behaviour agreed in `plan.md` is a `Decision needed:` line, not a guess.
 - Fix failing tests in production code. Never skip a test, add a linter disable comment or edit a linter config.
 - Run the final full suite and the linters through `~/.claude/skills/finish/scripts/delivery-evidence run --kind tests|lint --name <name> -- <command>`, and name the recorded entries in the report. A plan line is not a result.
 

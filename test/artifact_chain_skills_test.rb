@@ -2,7 +2,7 @@
 require "minitest/autorun"
 require_relative "isolated_git"
 
-# The change workflow is intent -> plan -> implement. These tests read the skill, agent and
+# The change workflow is plan -> implement. These tests read the skill, agent and
 # playbook text, since that text is the behaviour: an agent does what the skill says.
 class ArtifactChainSkillsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -20,49 +20,61 @@ class ArtifactChainSkillsTest < Minitest::Test
     /intent, spec/
   ].freeze
 
-  def test_the_intent_interview_asks_what_is_in_and_out_of_scope
-    interview = section(skill("intent"), "## 2. Interview", "## Red flags")
+  def test_the_interview_asks_what_is_in_and_out_of_scope
+    interview = section(skill("plan"), "#### 2. Interview", "#### 3. Red flags")
 
     assert_match(/in scope/i, interview)
     assert_match(/out of scope/i, interview)
   end
 
   def test_the_interview_stops_when_every_section_can_be_filled_without_guessing
-    assert_match(/every (template )?section[^.]*without guessing/i, skill("intent"))
+    assert_match(/every (template )?section[^.]*without guessing/i, skill("plan"))
   end
 
   def test_the_interview_has_no_fixed_question_count
-    refute_match(/three to five questions/i, skill("intent"))
-    assert_match(/no fixed (question )?count/i, skill("intent"))
+    refute_match(/three to five questions/i, skill("plan"))
+    assert_match(/no fixed (question )?count/i, skill("plan"))
   end
 
-  def test_the_template_holds_in_scope_out_of_scope_acceptance_criteria_and_flagged_concerns
-    template = section(skill("intent"), "## 3. Write", "## 4. Accept")
+  def test_plan_skill_writes_the_intent_sections_into_plan_md
+    template = section(skill("plan"), "#### 5. Write", "#### 6. Interrogate")
 
-    [ "## In scope", "## Out of scope", "## Acceptance criteria", "## Flagged concerns" ].each do |heading|
+    [ "## Problem", "## Proposed outcome", "## In scope", "## Out of scope", "## Acceptance criteria",
+      "## Flagged concerns", "## Decisions", "## Design", "## Proof" ].each do |heading|
       assert_includes(template, heading)
     end
+    assert_operator(template.index("## Problem"), :<, template.index("## Design"))
+    assert_match(/Author: <name>\. Status: draft\. Type: .*Delivery:/, template)
+    refute_path_exists(File.join(SKILLS, "intent"))
   end
 
-  def test_intent_refuses_acceptance_without_acceptance_criteria
-    accept = section(skill("intent"), "## 4. Accept", "## Codex")
+  def test_plan_refuses_acceptance_without_acceptance_criteria
+    accept = section(skill("plan"), "#### 7. Accept", "## Auto mode")
 
     assert_match(/refuse/i, accept)
     assert_match(/acceptance criteria/i, accept)
     assert_match(/name[s]? what is missing/i, accept)
   end
 
-  def test_intent_refuses_acceptance_with_open_questions_or_an_undecided_concern
-    accept = section(skill("intent"), "## 4. Accept", "## Codex")
+  def test_plan_refuses_acceptance_with_open_questions_or_an_undecided_concern
+    accept = section(skill("plan"), "#### 7. Accept", "## Auto mode")
 
     assert_match(/## Open questions/, accept)
     assert_match(/flagged concern/i, accept)
   end
 
-  def test_accepting_chains_to_plan
-    accept = section(skill("intent"), "## 4. Accept", "## Codex")
+  def test_plan_skill_treats_exit_plan_mode_approval_as_accepted_for_claude_only
+    accept = section(skill("plan"), "#### 7. Accept", "## Auto mode")
 
-    assert_includes(accept, "~/.agents/bin/hand-off-plan plan '<slug>'")
+    assert_match(/Claude, interactive: approving `ExitPlanMode` counts as "accepted"/, accept)
+    assert_match(/Codex, or a pane where `ExitPlanMode` has no approver: the user's literal word/, accept)
+    assert_match(/Autonomous delivery: Etienne types the literal word[^.]*never `ExitPlanMode`/, accept)
+  end
+
+  def test_accepting_chains_to_implement
+    accept = section(skill("plan"), "#### 7. Accept", "## Auto mode")
+
+    assert_includes(accept, "~/.agents/bin/hand-off-plan implement '<slug>'")
     refute_match(/hand-off-plan(\.sh)? spec/, accept)
   end
 
@@ -74,8 +86,8 @@ class ArtifactChainSkillsTest < Minitest::Test
     end
   end
 
-  def test_intent_creates_its_worktree_without_opening_a_pane
-    step_one = section(skill("intent"), "## 1. Find the folder", "## 2. Interview")
+  def test_plan_creates_its_worktree_without_opening_a_pane
+    step_one = section(skill("plan"), "#### 1. Find the folder", "#### 2. Interview")
 
     assert_match(/worktree-first/, step_one)
     assert_match(/no-pane/i, step_one)
@@ -88,12 +100,10 @@ class ArtifactChainSkillsTest < Minitest::Test
     assert_match(/plain invocation[^.]*pane/i, skill("worktree-first"))
   end
 
-  def test_plan_reads_only_an_accepted_intent
-    plan = skill("plan")
-
-    assert_match(/Use once intent\.md is accepted/, plan)
-    assert_match(/refuse[^.]*intent\.md/i, plan)
-    refute_match(/\bspec\b/i, plan)
+  def test_plan_runs_the_brainstorming_interview
+    assert_match(/The interview is the `brainstorming` skill/, skill("plan"))
+    assert_path_exists(File.join(SKILLS, "brainstorming/SKILL.md"))
+    refute_match(/\bspec\b/i, skill("plan"))
   end
 
   def test_the_plan_template_holds_design_decisions_and_integration_points
@@ -108,11 +118,12 @@ class ArtifactChainSkillsTest < Minitest::Test
     assert_match(/apply (the )?domain skills/i, skill("plan"))
   end
 
-  def test_the_reviewer_and_test_writer_read_acceptance_criteria_from_intent
+  def test_the_reviewer_and_test_writer_read_acceptance_criteria_from_plan
     [ "claude/.claude/agents/reviewer.md", "claude/.claude/agents/test-writer.md" ].each do |relative|
       text = File.read(File.join(ROOT, relative))
 
-      assert_match(/intent\.md/, text, relative)
+      assert_match(/plan\.md/, text, relative)
+      refute_match(/intent\.md/, text, relative)
       refute_match(/\bspec\.md/, text, relative)
     end
   end

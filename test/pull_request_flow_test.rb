@@ -95,36 +95,28 @@ class PullRequestFlowTest < Minitest::Test
   end
 
   def test_the_coordinator_commits_rounds_through_commit_review
-    intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
+    delivery = File.read(File.join(SKILLS, "plan/references/autonomous-delivery.md"))
     review = File.read(File.join(SKILLS, "review/SKILL.md"))
 
-    assert_match(/transcribing each round and running `commit-review`, then pushing the branch when it exits 0/, intent[/^5\. Review\..*$/])
+    assert_match(/transcribing each round and running `commit-review`, then pushing the branch when it exits 0/, delivery[/^5\. Review\..*$/])
     assert_match(/Run `commit-review`; push the branch/, review[/^2\. The Codex CLI.*$/])
     assert_match(/Run `commit-review`; push the branch/, review[/transcribes the output into `review.md`.*$/])
   end
 
   def test_auto_review_runs_the_codex_round_before_the_claude_round
-    intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
+    delivery = File.read(File.join(SKILLS, "plan/references/autonomous-delivery.md"))
     review = File.read(File.join(SKILLS, "review/SKILL.md"))
 
-    assert_match(/Codex round first, then the Claude round/, intent[/^5\. Review\..*$/])
+    assert_match(/Codex round first, then the Claude round/, delivery[/^5\. Review\..*$/])
     assert_match(/Codex round before the Claude round/, review[/^## Auto mode.*?(?=^## )/m])
     assert_match(/Codex round before the Claude round/, review[/^### Read-only Claude CLI backend.*?(?=^## )/m])
-  end
-
-  def test_intent_accept_leaves_intent_md_uncommitted
-    intent = File.read(File.join(SKILLS, "intent/SKILL.md"))
-
-    assert_match(/leave `intent\.md` uncommitted/, intent[/^Otherwise, on the words "accepted".*$/])
-    refute_match(/commit `intent\.md` alone/, intent)
-    refute_match(/commits it alone/, intent)
   end
 
   def test_plan_commits_through_commit_plan
     plan = File.read(File.join(SKILLS, "plan/SKILL.md"))
 
-    assert_match(/plan\/scripts\/commit-plan/, plan[/^8\. `Status: accepted`.*$/])
-    assert_match(/commit-plan/, plan[/^5\. Run `[^`]*commit-plan`.*$/])
+    assert_match(/plan\/scripts\/commit-plan/, plan[/^On acceptance, write.*$/])
+    assert_match(/commit-plan/, plan[/^4\. Stop with.*$/])
     refute_match(/commits? `?plan\.md`? alone/, plan)
   end
 

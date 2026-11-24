@@ -3,18 +3,18 @@ require "minitest/autorun"
 require_relative "isolated_git"
 require_relative "playbook"
 
-# The deeper intent interview is skill text: an agent does what the skill says. These tests read it.
-class IntentInterviewDepthTest < Minitest::Test
+# The deeper plan interview is skill text: an agent does what the skill says. These tests read it.
+class PlanInterviewDepthTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   SKILLS = File.join(ROOT, "agents/.agents/skills")
   MIRROR_SENTENCES = [
-    "Intent interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions.",
+    "Plan interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions.",
     "Bug fixes and chores stay at 1–3 questions; features and refactors probe fully."
   ].freeze
 
   def test_a_feature_interview_reads_the_repository_before_its_first_question
-    interview = section(skill("intent"), "## 2. Interview", "## Red flags")
-    first_paragraph = interview.split("\n\n")[1]
+    interview = section(skill("plan"), "#### 2. Interview", "#### 3. Red flags")
+    first_paragraph = paragraph(interview, "**Explore first.**")
 
     assert_match(/\A\*\*Explore first\.\*\*/, first_paragraph)
     assert_match(/before the first (interview )?question/i, first_paragraph)
@@ -22,7 +22,7 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_a_bundled_request_is_flagged_and_split_before_details_are_refined
-    interview = section(skill("intent"), "## 2. Interview", "## Red flags")
+    interview = section(skill("plan"), "#### 2. Interview", "#### 3. Red flags")
     scope_check = paragraph(interview, "**Scope check.**")
 
     assert_match(/bundles independent changes/i, scope_check)
@@ -31,7 +31,7 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_a_feature_interview_probes_edge_cases_and_failure_modes
-    probe = section(skill("intent"), "**Probe.**", "**Record decisions.**")
+    probe = section(skill("plan"), "**Probe.**", "**Record decisions.**")
 
     assert_match(/`feature` and `refactor`/, probe)
     assert_match(/edge cases/i, probe)
@@ -40,7 +40,7 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_a_clear_bug_fix_still_ends_after_one_to_three_questions
-    interview = section(skill("intent"), "## 2. Interview", "## Red flags")
+    interview = section(skill("plan"), "#### 2. Interview", "#### 3. Red flags")
     depth = paragraph(interview, "**Depth by type.**")
 
     assert_match(/`bugfix` and `chore`[^.]*1[–-]3 questions/, depth)
@@ -49,7 +49,7 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_the_draft_is_self_reviewed_before_the_read_back
-    accept = section(skill("intent"), "## 4. Accept", "## Autonomous delivery")
+    accept = section(skill("plan"), "#### 7. Accept", "## Auto mode")
     self_review = paragraph(accept, "**Self-review.**")
 
     %w[placeholders contradictions scope ambiguous].each { |word| assert_match(/#{word}/i, self_review) }
@@ -57,17 +57,17 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_the_draft_is_read_back_section_by_section_before_asking_for_accepted
-    accept = section(skill("intent"), "## 4. Accept", "## Autonomous delivery")
+    accept = section(skill("plan"), "#### 7. Accept", "## Auto mode")
     read_back = paragraph(accept, "**Read-back.**")
 
     assert_match(/section by section/i, read_back)
     assert_match(/template order/i, read_back)
     assert_match(/not counted as an interview question/i, read_back)
-    assert_operator(accept.index("**Read-back.**"), :<, accept.index("Refuse to flip"))
+    assert_operator(accept.index("**Read-back.**"), :<, accept.index("Refuse to accept"))
   end
 
   def test_the_template_records_each_decision_with_its_rationale
-    template = section(skill("intent"), "## 3. Write", "## 4. Accept")
+    template = section(skill("plan"), "#### 5. Write", "#### 6. Interrogate")
     concerns = template.index("## Flagged concerns") || flunk("no concerns")
     decisions = template.index("## Decisions") || flunk("no decisions")
     questions = template.index("## Open questions") || flunk("no questions")
@@ -78,7 +78,7 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_a_decision_rationale_is_asked_for_never_invented
-    record = paragraph(section(skill("intent"), "## 2. Interview", "## Red flags"), "**Record decisions.**")
+    record = paragraph(section(skill("plan"), "#### 2. Interview", "#### 3. Red flags"), "**Record decisions.**")
 
     assert_match(/never invent a rationale/i, record)
     assert_match(/ask for it/i, record)
@@ -102,16 +102,21 @@ class IntentInterviewDepthTest < Minitest::Test
     assert_includes(critique, "## Decisions")
   end
 
-  def test_the_vendored_comment_names_what_was_adapted_and_left_out
-    comment = skill("intent")[/<!--.*?-->/m] || flunk("no vendored comment")
+  def test_the_vendored_comment_names_the_upstream_and_what_was_adapted
+    comment = skill("brainstorming")[/<!--.*?-->/m] || flunk("no vendored comment")
 
-    assert_match(/explore project context/i, comment)
-    assert_match(/scope[^\n]*decomposition|decomposition/i, comment)
-    assert_match(/self-review/i, comment)
+    assert_includes(comment, "upstream: lucianghinda/superpowers-ruby@7.5.0 skills/brainstorming")
     assert_includes(comment, "visual companion")
-    assert_includes(comment, "`writing-plans`")
-    assert_match(/reviewer subagent/i, comment)
-    assert_includes(comment, "2026-10")
+    assert_includes(comment, "reviewer prompt")
+    assert_match(/design gate/i, comment)
+  end
+
+  def test_the_vendored_skill_keeps_the_interview_and_drops_the_extras
+    text = skill("brainstorming")
+
+    assert_includes(text, "One question at a time")
+    assert_includes(text, "docs/changes/<slug>/plan.md")
+    refute_match(/superpowers-ruby:|Visual Companion|writing-plans|docs\/superpowers/, text)
   end
 
   def test_core_values_and_rule_17_name_the_deeper_interview
@@ -126,7 +131,7 @@ class IntentInterviewDepthTest < Minitest::Test
   end
 
   def test_the_codex_section_keeps_the_deeper_interview
-    codex = section(skill("intent"), "## Codex", "\u0000")
+    codex = section(skill("plan"), "## Codex", "\u0000")
 
     assert_match(/explore first/i, codex)
     assert_match(/read-back/i, codex)

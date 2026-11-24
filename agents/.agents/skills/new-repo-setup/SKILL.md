@@ -7,7 +7,7 @@ description: Use when creating a new personal repository or bringing an existing
 
 Checklist, in order. Reference repo for configs: `~/Developer/journal_administration`.
 
-1. Agent instructions: `AGENTS.md` is a real committed file describing this application — see "The repo context file" below. `CLAUDE.md` is a symlink to `AGENTS.md`, also committed. Never symlink either one to the shared playbook: that arrives from the user config (`~/.claude/PLAYBOOK.md`, `~/.codex/PLAYBOOK.md`) in every repository already, and a repo that symlinks it too just loads it twice. `docs/changes/` is reserved for the `intent` → `plan` → `implement` chain's change folders; it must not appear in `.gitignore`.
+1. Agent instructions: `AGENTS.md` is a real committed file describing this application — see "The repo context file" below. `CLAUDE.md` is a symlink to `AGENTS.md`, also committed. Never symlink either one to the shared playbook: that arrives from the user config (`~/.claude/PLAYBOOK.md`, `~/.codex/PLAYBOOK.md`) in every repository already, and a repo that symlinks it too just loads it twice. `docs/changes/` is reserved for the `plan` → `implement` chain's change folders; it must not appear in `.gitignore`.
 2. Ruby: `.ruby-version` present; `rv` is the version manager — never mise/asdf/rbenv/rvm.
 3. Git hooks: the repo has its own `lefthook.yml` that names the dotfiles config as a remote. Start from this Starter config, add the repo's own jobs below it, then run `lefthook install` once:
 

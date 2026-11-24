@@ -1,6 +1,6 @@
 # Review policy
 
-Read by the `reviewer` agent (and the `review` skill's pane backend) alongside `docs/changes/<slug>/plan.md` and `intent.md` and the diff. Work repos: this file is `REVIEW.local.md`, stowed from the private repo; the reviewer looks for `REVIEW.md` first, then `REVIEW.local.md`.
+Read by the `reviewer` agent (and the `review` skill's pane backend) alongside `docs/changes/<slug>/plan.md` and the diff. Work repos: this file is `REVIEW.local.md`, stowed from the private repo; the reviewer looks for `REVIEW.md` first, then `REVIEW.local.md`.
 
 ## Passes
 
@@ -8,12 +8,12 @@ Every review runs four passes, in this order:
 
 1. **Bugs.** Logic errors, edge cases, incorrect assumptions, race conditions, off-by-one errors — anything that makes the code do the wrong thing.
 2. **Security.** Injection, unsafe deserialization, missing authorization checks, secrets in code or logs, unsafe external input handling.
-3. **Compliance.** The diff matches `plan.md`: every file it named changed the way it said, nothing unplanned crept in. Behaviour matches `intent.md`: every acceptance criterion has a test in the diff that proves it, or is reported as missing. Every test named in the plan's `## Proof` exists. No existing test was weakened, skipped, or deleted. Code follows the playbook and this repository's `AGENTS.md`.
+3. **Compliance.** The diff matches `plan.md`: every file it named changed the way it said, nothing unplanned crept in. Behaviour matches the plan's acceptance criteria: every one has a test in the diff that proves it, or is reported as missing. Every test named in the plan's `## Proof` exists. No existing test was weakened, skipped, or deleted. Code follows the playbook and this repository's `AGENTS.md`.
 4. **Design.** The code matches `plan.md`'s `## Design`. Report each public method the plan did not sign or that lacks an inline RBS signature, each Law of Demeter violation, each N+1 query loop, and each word the glossary lists under `Avoid:`.
 
 ## What Important means here
 
-A finding is **Important** when it would cause wrong behaviour, a security hole, or a gap between what was promised (`intent.md`) and what was built — including any missing or weakened test the compliance pass turns up. Everything else is a **Nit**.
+A finding is **Important** when it would cause wrong behaviour, a security hole, or a gap between what was promised (the plan's acceptance criteria) and what was built — including any missing or weakened test the compliance pass turns up. Everything else is a **Nit**.
 
 ## Cap the nits
 

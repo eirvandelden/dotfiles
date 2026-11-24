@@ -34,7 +34,7 @@ end
 
 folder = run(CHANGE_FOLDER).strip
 plan = File.join(folder, "plan.md")
-refuse("#{plan} does not exist: write the plan first (intent.md alone is not a plan).") unless File.file?(plan)
+refuse("#{plan} does not exist: write the plan first.") unless File.file?(plan)
 
 text = File.read(plan)
 refuse("#{plan} is not accepted: accept the plan first.") unless PlanMetadata.accepted?(text)

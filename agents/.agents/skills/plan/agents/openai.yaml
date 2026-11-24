@@ -1,4 +1,4 @@
 ---
 interface:
   display_name: "Plan"
-  short_description: "Write, critique, or execute a plan.md in the change folder"
+  short_description: "Interview, then write, critique or execute docs/changes/<slug>/plan.md"
