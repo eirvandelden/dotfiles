@@ -1,10 +1,10 @@
-# Reads the metadata paragraph of an intent.md. Shared by auto-accept and start-delivery, so both
+# Reads the metadata paragraph of a plan.md. Shared by commit-plan and start-delivery, so both
 # agree on what "accepted" and "Delivery: autonomous" mean.
 #
-# The paragraph is the lines straight after the "# Intent: <title>" line. Only Author, Status,
+# The paragraph is the lines straight after the "# Plan: <title>" line. Only Author, Status,
 # Type, Delivery and Codex review fields at column zero belong to it, so a Markdown example further down never
 # grants autonomy. Fields may share a line, separated by ". ". Conflicting values refuse.
-module IntentMetadata
+module PlanMetadata
   FIELD = /\A(Author|Status|Type|Delivery|Codex review): (.*)\z/
   SEPARATOR = /\. (?=(?:Author|Status|Type|Delivery|Codex review): )/
   ACCEPTED = /\Aaccepted(?: \(\d{4}-\d{2}-\d{2}\))?\z/
@@ -24,7 +24,7 @@ module IntentMetadata
 
   #: (String text) -> String
   def header(text)
-    return "" unless text.lines.first&.match?(/\A# Intent: \S/)
+    return "" unless text.lines.first&.match?(/\A# Plan: \S/)
 
     metadata = text.lines.drop(1).drop_while { |line| line.strip.empty? }
     metadata.take_while { |line| line.match?(/\A(?:Author|Status|Type|Delivery|Codex review): /) }.join
