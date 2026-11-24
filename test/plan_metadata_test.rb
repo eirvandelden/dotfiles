@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "../agents/.agents/skills/plan/scripts/plan_metadata"
 
 # PlanMetadata reads only the header paragraph straight under "# Plan: <title>", so a Markdown

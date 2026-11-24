@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require "open3"
 
 # The change document is plan.md alone. No tracked file outside the change folders refers to the

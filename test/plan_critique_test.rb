@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "minitest/autorun"
+require_relative "isolated_git"
 require_relative "../agents/.agents/skills/plan/scripts/plan_critique"
 
 # PlanCritique decides when the critique of an autonomous plan is closed: every finding ends in
