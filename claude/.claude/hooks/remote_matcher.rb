@@ -1,6 +1,6 @@
 # Shared remote matching for the consent guard (asks before pushing anywhere
 # unlisted), finish's change-scope (decides which of its two behaviours
-# applies), plan's auto-accept and the agent-voice hook. One source, four
+# applies), plan's commit-plan and the agent-voice hook. One source, four
 # callers: PERSONAL_OWNERS names Etienne's own GitHub user and organisation, and
 # BUILTIN_REMOTES derives from it; ALLOWLIST_FILE is supplied by dotfiles-work,
 # so the public repository names no employer.

@@ -62,8 +62,8 @@ The vendored mobile skills are pinned snapshots. `VENDORED-SKILLS.yml` records e
 
 ## Planning and setup
 
-- Starting any change — interview for the problem, outcome, scope and acceptance criteria, write `docs/changes/<slug>/intent.md`: `agents/.agents/skills/intent/SKILL.md`
-- Writing `plan.md` in plan mode, critiquing a plan, or executing a handed-over one: `agents/.agents/skills/plan/SKILL.md`
+- Starting any change — interview, write `docs/changes/<slug>/plan.md` in plan mode, critique a plan, or execute a handed-over one: `agents/.agents/skills/plan/SKILL.md`
+- The one-question-at-a-time interview the plan skill runs (vendored): `agents/.agents/skills/brainstorming/SKILL.md`
 - Building an accepted plan — single session, split across a test-writer/implementer pair, or handed to a worker pane: `agents/.agents/skills/implement/SKILL.md`
 - Setting up a new personal repository — repo context file, rv, lefthook, CI, Dependabot, deploy: `agents/.agents/skills/new-repo-setup/SKILL.md`
 - Deployment, error tracking, performance monitoring: `agents/.agents/skills/rails-ops/SKILL.md`

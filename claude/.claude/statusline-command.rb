@@ -36,7 +36,7 @@ class ChangeFolder
     return "🕵️ sleuthing" if read("review.md")
     return "🛠️ hammering" if accepted?("plan.md")
 
-    accepted?("intent.md") ? "🧠 scheming" : "🤔 interviewing"
+    read("plan.md") ? "🧠 scheming" : "🤔 interviewing"
   end
 
   private

@@ -62,7 +62,7 @@ Topic-specific guidance — object-oriented design, Rails architecture, Ruby sty
 
 Claude Code loads those skills automatically by relevance. Any other agent has no loader and should read the index, then the matching skill file: `SKILLS-INDEX.md`.
 
-Every change moves through the `intent`, `plan` and `implement` skills, in that order — see rule 17 below.
+Every change moves through the `plan` and `implement` skills, in that order — see rule 17 below.
 
 ## 6. Open Questions
 
@@ -154,11 +154,11 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Full apply-fixes / re-review workflow: `code-review` skill.
     - Before pushing a branch for others to see: run `review`. It is report-only — findings land in `docs/changes/<slug>/review.md`, never applied automatically. A pre-push check enforces a fresh report whenever the branch has a change folder and an open pull request. `deliver` checks it before it opens one. On a work repository `review.md` stays local and `deliver` checks it against HEAD.
 17. Plan before implementing:
-    - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode from an accepted `intent.md` in the same folder. The `intent`, `plan` and `implement` skills produce and consume that chain in order.
-    - A stage moves on only when Etienne types the literal word "accepted" (or the alternative, "agreed"). The intent stage also takes "accept the intent" or "agree the intent". Vague replies such as "looks good" or "ok" do not move a stage on.
-    - Trivial tasks included: a one-line intent and a one-line plan are valid — not an exemption from having them. On a work repository both stay local files: no commit holds them.
-    - Intent interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions. Bug fixes and chores stay at 1–3 questions; features and refactors probe fully.
-    - Personal repositories only: in autonomous delivery a recorded cross-model critique replaces the word "accepted" on `plan.md`. See §7a. Every other repository keeps this rule unchanged.
+    - NEVER write or modify code before an accepted `plan.md` exists at `docs/changes/<slug>/plan.md`, produced in plan mode. One document holds the intent sections and the design. The `plan` and `implement` skills produce and consume it in order.
+    - Interactive Claude accepts a plan by approving `ExitPlanMode`. Every other session, and every pane where `ExitPlanMode` has no approver, needs Etienne to type the literal word "accepted" (or the alternative, "agreed"; also "accept the plan" or "agree the plan"). Vague replies such as "looks good" or "ok" do not move a stage on.
+    - Trivial tasks included: a one-line plan is valid — not an exemption from having one. On a work repository it stays a local file: no commit holds it.
+    - Plan interviews read the repository first, split bundled requests, probe edge cases, read the draft back and record decisions. Bug fixes and chores stay at 1–3 questions; features and refactors probe fully.
+    - Personal repositories only: in autonomous delivery a cross-model critique closes before Etienne types "accepted" on `plan.md`. See §7a.
 18. Commits:
     - Agents may create commits without asking first.
     - Each commit must be small and contain exactly one logical change. Split unrelated concerns into separate commits.
@@ -190,7 +190,7 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
     - Stop at the first failure instead of dumping output: `-f`/`--fail-fast` (Minitest, RSpec), `--bail` (Jest), `-x --tb=short` (pytest). `tail -20` is a fallback and needs `set -o pipefail`, or it reports `tail`'s exit status instead of the runner's.
     - NEVER re-run an identical failing command more than twice; change it — narrower scope, more diagnostics, a different flag. (Rule 14 caps the whole stuck problem at 3 attempts.)
 24. Model selection:
-    - Claude Code: `claude/.claude/settings.json` sets `"model": "opus"`, so a session you start runs on Opus. The herdr stage panes and the Rex stage blocks set their own model in `hand-off-plan.sh`: Opus for `intent` and `plan`, Sonnet for `implement`. Start a `sonnet` session by hand only for a task that is entirely mechanical.
+    - Claude Code: `claude/.claude/settings.json` sets `"model": "opus"`, so a session you start runs on Opus. The herdr stage panes and the Rex stage blocks set their own model in `hand-off-plan.sh`: Opus for `plan`, Sonnet for `implement`. Start a `sonnet` session by hand only for a task that is entirely mechanical.
     - Codex: Terra for planning and research, Luna for implementing. Luna is the base default in `codex/.codex/config.toml`; start a planning session with `codex -p terra`, which layers `~/.codex/terra.config.toml` over that base.
     - Haiku belongs in subagents, never in the main session. Delegate to it for direct commands that need no interpretation — running a known command, listing files, a mechanical rename, a fixed-format lookup. Pass `model: "haiku"` on the individual Agent call rather than setting `CLAUDE_CODE_SUBAGENT_MODEL`, so only the mechanical calls drop down a tier.
     - Anything requiring judgement — reading a diff for correctness, choosing between designs, writing tests — stays on Opus or Sonnet.
@@ -210,14 +210,14 @@ Claude Code: a subset of the workflow, verification, and consent rules below is 
 
 ## 7a. Autonomous delivery (Personal)
 
-Applies only when `origin` is a repository of the `eirvandelden` GitHub user or the `eirvandelden-dev` organisation (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `intent` skill offers autonomous delivery and records `Delivery: autonomous` in `intent.md`.
+Applies only when `origin` is a repository of the `eirvandelden` GitHub user or the `eirvandelden-dev` organisation (`RemoteMatcher.personal?`). Any other origin, or none, uses the approval flow in §7. The `plan` skill offers autonomous delivery and records `Delivery: autonomous` in `plan.md`.
 
-- Two human gates stay: Etienne's literal "accepted" on `intent.md`, and his approval of the merge. Agents never merge. Deployment is out of scope.
+- Two human gates stay: Etienne's literal "accepted" on `plan.md`, given after its critique closed, and his approval of the merge. Agents never merge. Deployment is out of scope.
 - One Claude coordinator drives plan, implement, review, fixes and `deliver`, the only step that opens the pull request. Stage panes work in `auto` mode and never wait for Etienne.
-- A Codex session that accepts the intent hands the delivery to Claude with the `intent` skill's `start-delivery` script, inside herdr or outside it. Codex stays the plan critic, and the second reviewer when `intent.md` records `Codex review: yes`. It coordinates only on Etienne's explicit instruction.
+- A Codex session that accepts the plan hands the delivery to Claude with the `plan` skill's `start-delivery` script, inside herdr or outside it. Codex stays the plan critic, and the second reviewer when `plan.md` records `Codex review: yes`. It coordinates only on Etienne's explicit instruction.
 - Before costly work, the coordinator runs the delivery preflight and reports every missing setup item together. A missing required check is a blocker, never a skip.
-- A critique replaces "accepted" on `plan.md`. The other model family critiques it (Claude work: `codex exec -m gpt-6.1-sol -c model_reasoning_effort=medium`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. The `auto-accept` script flips the status only when that holds.
-- Independent review: the Claude `reviewer` agent always reviews the diff; the Codex CLI reviews it too only when `intent.md` records `Codex review: yes`. No open finding may remain before the pull request.
+- The critique comes before "accepted" on `plan.md`. Claude drafts the plan and the other model family critiques it (Claude work: `codex exec -m gpt-6.1-sol -c model_reasoning_effort=medium`; Codex work: `claude -p`). Every finding is closed as `fixed` or `dismissed` with a reason. Etienne then reads the plan and types "accepted"; `commit-plan` refuses an accepted autonomous plan while a finding is open.
+- Independent review: the Claude `reviewer` agent always reviews the diff; the Codex CLI reviews it too only when `plan.md` records `Codex review: yes`. No open finding may remain before the pull request.
 - Checks stay strict: never add a skipped test, a linter disable comment or a linter config edit to pass. Fix the production code. Run tests, linters, Brakeman and Bundler Audit where the repository has them.
 - Verify behaviour as a human would (rule 22) and record the evidence with the `delivery-evidence` script, against the content it verified. A code change, committed or not, makes that evidence stale; `deliver` refuses on missing, failed or stale evidence.
 - Stop and ask Etienne one concrete question when: a choice changes the agreed behaviour; a step needs permission under rules 8, 9, 11, 12 or 13; the coordinator makes three failed attempts at one problem; a review finding stays disputed after two rounds.

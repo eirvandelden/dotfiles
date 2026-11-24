@@ -36,20 +36,12 @@ module Claude
       folder
     end
 
-    def accepted_intent
-      "Author: A. Status: accepted.\n"
-    end
-
-    def draft_intent
-      "Author: A. Status: draft.\n"
-    end
-
     def accepted_plan
-      "From `intent.md` (2026-01-15). Status: accepted.\n"
+      "Author: A. Status: accepted (2026-01-15).\n"
     end
 
     def draft_plan
-      "From `intent.md` (2026-01-15). Status: draft.\n"
+      "Author: A. Status: draft.\n"
     end
 
     def render_in_tmpdir(**extra)
@@ -135,56 +127,44 @@ module Claude
       assert_equal "", StatuslineCommand.render("not json")
     end
 
-    def test_shows_interviewing_for_a_draft_intent
-      change_folder(intent: draft_intent)
-
-      assert_equal "🤔 interviewing", render_in_tmpdir
-    end
-
-    def test_shows_interviewing_when_the_folder_has_no_intent_yet
+    def test_shows_interviewing_when_the_folder_has_no_plan_yet
       change_folder
 
       assert_equal "🤔 interviewing", render_in_tmpdir
     end
 
-    def test_shows_scheming_for_an_accepted_intent_with_a_draft_plan
-      change_folder(intent: accepted_intent, plan: draft_plan)
-
-      assert_equal "🧠 scheming", render_in_tmpdir
-    end
-
-    def test_shows_scheming_for_an_accepted_intent_without_a_plan
-      change_folder(intent: accepted_intent)
+    def test_shows_scheming_for_a_draft_plan
+      change_folder(plan: draft_plan)
 
       assert_equal "🧠 scheming", render_in_tmpdir
     end
 
     def test_shows_hammering_for_an_accepted_plan
-      change_folder(intent: accepted_intent, plan: accepted_plan)
+      change_folder(plan: accepted_plan)
 
       assert_equal "🛠️ hammering", render_in_tmpdir
     end
 
     def test_shows_hammering_for_a_plan_accepted_with_a_date
-      change_folder(intent: accepted_intent, plan: "From `intent.md`. Status: accepted (2026-10-20).\n")
+      change_folder(plan: "Author: A. Status: accepted (2026-10-20).\n")
 
       assert_equal "🛠️ hammering", render_in_tmpdir
     end
 
     def test_does_not_treat_accepted_draft_as_accepted
-      change_folder(intent: "Author: A. Status: accepted-draft.\n")
+      change_folder(plan: "Author: A. Status: accepted-draft.\n")
 
-      assert_equal "🤔 interviewing", render_in_tmpdir
+      assert_equal "🧠 scheming", render_in_tmpdir
     end
 
     def test_shows_sleuthing_for_a_review_with_open_findings
-      change_folder(intent: accepted_intent, plan: accepted_plan, review: "## Round 1\n- [ ] open finding\n")
+      change_folder(plan: accepted_plan, review: "## Round 1\n- [ ] open finding\n")
 
       assert_equal "🕵️ sleuthing", render_in_tmpdir
     end
 
     def test_shows_sleuthing_for_a_review_with_every_finding_closed
-      change_folder(intent: accepted_intent, plan: accepted_plan, review: "## Round 1\n- [x] closed finding\n")
+      change_folder(plan: accepted_plan, review: "## Round 1\n- [x] closed finding\n")
 
       assert_equal "🕵️ sleuthing", render_in_tmpdir
     end
@@ -208,34 +188,34 @@ module Claude
     end
 
     def test_shows_no_label_when_current_dir_is_not_a_string
-      change_folder(intent: accepted_intent)
+      change_folder(plan: draft_plan)
 
       assert_equal "", StatuslineCommand.render({ workspace: { current_dir: 42 } }.to_json)
     end
 
     def test_shows_no_label_when_there_are_several_change_folders
-      change_folder("one", intent: accepted_intent)
-      change_folder("two", intent: accepted_intent)
+      change_folder("one", plan: draft_plan)
+      change_folder("two", plan: draft_plan)
 
       assert_equal "", render_in_tmpdir
     end
 
     def test_shows_no_label_but_keeps_the_pr_url_when_a_change_file_is_unreadable
       folder = change_folder
-      FileUtils.mkdir_p(File.join(folder, "intent.md"))
+      FileUtils.mkdir_p(File.join(folder, "plan.md"))
 
       assert_equal PR_URL, render_in_tmpdir(pr: { url: PR_URL })
     end
 
     def test_shows_no_label_when_the_review_is_unreadable
-      folder = change_folder(intent: accepted_intent, plan: accepted_plan)
+      folder = change_folder(plan: accepted_plan)
       FileUtils.mkdir_p(File.join(folder, "review.md"))
 
       assert_equal "", render_in_tmpdir
     end
 
     def test_puts_the_label_before_the_last_reply_and_the_pr_url
-      change_folder(intent: accepted_intent, plan: accepted_plan)
+      change_folder(plan: accepted_plan)
       path = transcript({ type: "assistant", timestamp: "2026-01-15T09:30:00.000Z" })
       input = { workspace: { current_dir: @tmpdir }, transcript_path: path, pr: { url: PR_URL } }
 
@@ -255,7 +235,7 @@ module Claude
 
     def test_shows_the_label_when_current_dir_contains_glob_characters
       @tmpdir = File.join(@tmpdir, "proj[1]")
-      change_folder(intent: accepted_intent)
+      change_folder(plan: draft_plan)
 
       assert_equal "🧠 scheming", render_in_tmpdir
     end
@@ -273,7 +253,7 @@ module Claude
 
     def test_shows_the_label_when_the_status_line_holds_invalid_bytes
       folder = change_folder
-      File.binwrite(File.join(folder, "intent.md"), "Author: \xFF. Status: accepted.\n")
+      File.binwrite(File.join(folder, "plan.md"), "Author: \xFF. Status: draft.\n")
 
       assert_equal "🧠 scheming", render_in_tmpdir
     end
@@ -283,7 +263,7 @@ module Claude
     end
 
     def test_shows_no_label_when_current_dir_is_empty
-      change_folder(intent: accepted_intent)
+      change_folder(plan: draft_plan)
 
       Dir.chdir(@tmpdir) do
         assert_equal PR_URL, StatuslineCommand.render({ workspace: { current_dir: "" }, pr: { url: PR_URL } }.to_json)
@@ -291,7 +271,7 @@ module Claude
     end
 
     def test_shows_no_label_when_docs_changes_is_unreadable
-      folder = change_folder(intent: accepted_intent)
+      folder = change_folder(plan: draft_plan)
       changes = File.dirname(folder)
       File.chmod(0o000, changes)
 
@@ -301,7 +281,7 @@ module Claude
     end
 
     def test_shows_no_label_when_the_change_folder_is_unsearchable
-      folder = change_folder(intent: accepted_intent)
+      folder = change_folder(plan: draft_plan)
       File.chmod(0o000, folder)
 
       assert_equal PR_URL, render_in_tmpdir(pr: { url: PR_URL })
@@ -310,7 +290,7 @@ module Claude
     end
 
     def test_shows_no_label_when_docs_is_unsearchable
-      folder = change_folder(intent: accepted_intent)
+      folder = change_folder(plan: draft_plan)
       docs = File.expand_path("../..", folder)
       File.chmod(0o000, docs)
 
@@ -320,7 +300,7 @@ module Claude
     end
 
     def test_shows_no_label_when_current_dir_is_unsearchable
-      change_folder(intent: accepted_intent)
+      change_folder(plan: draft_plan)
       File.chmod(0o000, @tmpdir)
 
       assert_equal PR_URL, render_in_tmpdir(pr: { url: PR_URL })
