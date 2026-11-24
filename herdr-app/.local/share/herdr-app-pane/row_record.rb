@@ -4,7 +4,7 @@ require_relative "command_line"
 
 module HerdrAppPane
   # <git-common-dir>/herdr-app/stage-panes-<row>: the hc terminals of one row's stage panes, one per line,
-  # in the order they opened. The intent skill writes the intent terminal to intent-pane-<row> beside it.
+  # in the order they opened. The plan skill writes the plan terminal to plan-pane-<row> beside it.
   class RowRecord
     # The git common dir of the current directory, where every worktree of a repository finds the same record.
     #: -> String
@@ -19,7 +19,7 @@ module HerdrAppPane
     def initialize(common_dir, row)
       directory = File.join(common_dir, "herdr-app")
       @path = File.join(directory, "stage-panes-#{row}")
-      @intent_path = File.join(directory, "intent-pane-#{row}")
+      @plan_path = File.join(directory, "plan-pane-#{row}")
     end
 
     #: -> bool
@@ -32,10 +32,10 @@ module HerdrAppPane
       exist? ? lines(@path) : []
     end
 
-    # The terminal the intent skill recorded for this row, if any.
+    # The terminal the plan skill recorded for this row, if any.
     #: -> String?
-    def intent
-      File.exist?(@intent_path) ? lines(@intent_path).first : nil
+    def plan
+      File.exist?(@plan_path) ? lines(@plan_path).first : nil
     end
 
     #: (String terminal) -> void

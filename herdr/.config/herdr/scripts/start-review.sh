@@ -64,7 +64,7 @@ herdr agent prompt "$reviewer" "Review the work on this branch. Fetch from origi
 comparison is against current work, then read git diff $base...HEAD for what is committed, and \
 git status plus git diff for the uncommitted changes on top of it. Run \
 ~/.claude/skills/plan/scripts/change-folder for this branch's change folder, then read \
-REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's intent.md and plan.md. \
+REVIEW.md (or REVIEW.local.md) at the repository root plus that folder's plan.md. \
 Run the Bugs, Security, Compliance and Design passes REVIEW.md describes, worst first; rank Important \
 before Nit; cap nits at five. Append your round to that folder's review.md (create it on the \
 first round) and leave review.md uncommitted — change no code, stage nothing else. Then run \
