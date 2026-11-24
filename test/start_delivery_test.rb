@@ -5,20 +5,26 @@ require "open3"
 require "tmpdir"
 require_relative "isolated_git"
 
-# start-delivery hands an accepted autonomous intent to a Claude coordinator: a pane inside Herdr,
+# start-delivery hands an accepted autonomous plan to a Claude coordinator: a pane inside Herdr,
 # a background session outside it. A stub `claude`, a stub preflight and a stub hand-off script
 # record what it starts, so no network, no login and no real session is involved.
 class StartDeliveryTest < Minitest::Test
-  SCRIPT = File.expand_path("../agents/.agents/skills/intent/scripts/start-delivery", __dir__)
+  SCRIPT = File.expand_path("../agents/.agents/skills/plan/scripts/start-delivery", __dir__)
   PERSONAL_ORIGIN = "git@github.com:eirvandelden/foo.git".freeze
-  INTENT = <<~MD.freeze
-    # Intent: Fix login
+  PLAN = <<~MD.freeze
+    # Plan: Fix login
 
     Author: Etienne. Status: accepted (2026-10-01). Delivery: autonomous.
 
     ## Problem
 
     Login fails.
+
+    ## Critique
+
+    ### Round 1 (codex)
+
+    - Missing a rollback → fixed (added step 4)
   MD
 
   def setup
@@ -27,7 +33,7 @@ class StartDeliveryTest < Minitest::Test
     @bin = File.join(@root, "bin")
     FileUtils.mkdir_p([ @home, @bin ])
     @repo = File.join(@root, "repo")
-    build_repo(INTENT)
+    build_repo(PLAN)
     install_claude_stub
     install_preflight_stub(exit_status: 0)
     install_hand_off_stub
@@ -48,7 +54,7 @@ class StartDeliveryTest < Minitest::Test
     assert_includes(prompt, "docs/changes/fix-login")
     assert_includes(prompt, @repo)
     assert_includes(prompt, "Delivery: autonomous")
-    assert_includes(prompt, "Autonomous delivery")
+    assert_includes(prompt, "autonomous-delivery.md")
     assert_includes(prompt, "never merge")
     assert_includes(prompt, "deliver-fix-login.md")
     assert_equal(@repo, File.realpath(File.read(claude_cwd_log).strip))
@@ -76,16 +82,22 @@ class StartDeliveryTest < Minitest::Test
     refute(File.exist?(claude_log), "claude must not start directly inside Herdr")
   end
 
-  def test_refuses_an_intent_that_is_not_accepted
-    build_repo(INTENT.sub("accepted (2026-10-01)", "draft"))
+  def test_refuses_a_plan_that_is_not_accepted
+    build_repo(PLAN.sub("accepted (2026-10-01)", "draft"))
 
     assert_refused(/accepted/i)
   end
 
-  def test_refuses_a_step_by_step_intent
-    build_repo(INTENT.sub("autonomous", "step-by-step"))
+  def test_refuses_a_step_by_step_plan
+    build_repo(PLAN.sub("autonomous", "step-by-step"))
 
     assert_refused(/autonomous/i)
+  end
+
+  def test_refuses_a_plan_with_an_open_critique
+    build_repo(PLAN.sub("→ fixed (added step 4)", "→"))
+
+    assert_refused(/critique/i)
   end
 
   def test_refuses_a_work_origin
@@ -94,8 +106,8 @@ class StartDeliveryTest < Minitest::Test
     assert_refused(/personal/i)
   end
 
-  def test_refuses_an_uncommitted_intent
-    File.write(File.join(@repo, "docs/changes/fix-login/intent.md"), "#{INTENT}\nExtra.\n")
+  def test_refuses_an_uncommitted_plan
+    File.write(File.join(@repo, "docs/changes/fix-login/plan.md"), "#{PLAN}\nExtra.\n")
 
     assert_refused(/commit/i)
   end
@@ -200,15 +212,15 @@ class StartDeliveryTest < Minitest::Test
     Open3.capture3(environment, SCRIPT, chdir: @repo)
   end
 
-  def build_repo(intent)
+  def build_repo(plan)
     FileUtils.rm_rf(@repo)
     FileUtils.mkdir_p(File.join(@repo, "docs/changes/fix-login"))
-    File.write(File.join(@repo, "docs/changes/fix-login/intent.md"), intent)
+    File.write(File.join(@repo, "docs/changes/fix-login/plan.md"), plan)
     git("init", "-q", "-b", "main")
     git("remote", "add", "origin", PERSONAL_ORIGIN)
     git("checkout", "-q", "-b", "fix-login")
     git("add", "-A")
-    git("commit", "-q", "-m", "intent")
+    git("commit", "-q", "-m", "plan")
   end
 
   def git(*arguments)

@@ -149,9 +149,9 @@ module DeliveryHarness
     git("commit", "--quiet", "-m", message)
   end
 
-  def intent_text
+  def plan_text
     <<~MD
-      # Intent: Ship the widget
+      # Plan: Ship the widget
 
       Author: Test. Status: accepted. Type: feature.
 
@@ -162,12 +162,6 @@ module DeliveryHarness
       ## Proposed outcome
 
       Widgets ship by themselves.
-    MD
-  end
-
-  def plan_text
-    <<~MD
-      # Plan: Ship the widget
 
       ## Files that change
 
@@ -179,10 +173,9 @@ module DeliveryHarness
     MD
   end
 
-  # intent.md and plan.md, a code commit, then a review.md round that covers it.
+  # plan.md, a code commit, then a review.md round that covers it.
   def commit_change_work(slug: @branch, template: nil, plan: plan_text, findings: [ "- [ ] Nit: Naming — `lib/widget.rb:1` → fixed (Rename widget)" ])
     commit_file(".github/PULL_REQUEST_TEMPLATE.md", template, "Add template") if template
-    commit_file("docs/changes/#{slug}/intent.md", intent_text, "Add intent")
     commit_file("docs/changes/#{slug}/plan.md", plan, "Add plan")
     commit_file("lib/widget.rb", "class Widget; end\n", "Add widget")
     commit_review(slug, findings) if findings

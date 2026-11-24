@@ -3,7 +3,7 @@
 # start-review.sh list each one as a bare block id in <git-common-dir>/rex/stage-panes-<slug>.
 # Block ids never repeat, so a listed id is the block it was. A block closes only while `rex block ls`
 # still lists it and its program_status state is idle or done, and never when it is the calling block
-# or the intent block the intent skill recorded. Best effort, like the gh-dash block: the PR exists by
+# or the plan block the plan skill recorded. Best effort, like the gh-dash block: the PR exists by
 # now, so a Rex failure only warns.
 class RexPanes
   include Shell
@@ -13,7 +13,7 @@ class RexPanes
   #: (String slug, String common_dir) -> void
   def initialize(slug, common_dir)
     @record = File.join(common_dir, "rex", "stage-panes-#{slug}")
-    @intent_record = File.join(common_dir, "rex", "intent-pane-#{slug}")
+    @plan_record = File.join(common_dir, "rex", "plan-pane-#{slug}")
     @session = ENV.fetch("REX_SESSION", "")
   end
 
@@ -46,8 +46,8 @@ class RexPanes
   end
 
   def kept
-    intent = File.exist?(@intent_record) ? File.readlines(@intent_record, chomp: true).first : nil
-    [ ENV["REX_BLOCK"], intent ].compact
+    plan = File.exist?(@plan_record) ? File.readlines(@plan_record, chomp: true).first : nil
+    [ ENV["REX_BLOCK"], plan ].compact
   end
 
   def listed

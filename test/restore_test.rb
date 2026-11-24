@@ -33,7 +33,7 @@ class RestoreTest < Minitest::Test
     _, stderr, status = run_script(RESTORE)
 
     assert(status.success?, stderr)
-    %w[intent.md plan.md review.md].each { |name| assert(File.exist?(File.join(@repo, FOLDER, name)), name) }
+    %w[plan.md review.md].each { |name| assert(File.exist?(File.join(@repo, FOLDER, name)), name) }
     refute_includes(git("log", "--format=%s").lines.map(&:strip), REMOVAL_SUBJECT)
   end
 
@@ -101,7 +101,7 @@ class RestoreTest < Minitest::Test
   end
 
   def test_refuses_a_removal_commit_that_deletes_only_part_of_the_folder
-    git("rm", "--quiet", "#{FOLDER}/intent.md", "#{FOLDER}/plan.md")
+    git("rm", "--quiet", "#{FOLDER}/plan.md")
     git("commit", "--quiet", "-m", REMOVAL_SUBJECT)
     git("push", "--quiet", "origin", @branch)
 

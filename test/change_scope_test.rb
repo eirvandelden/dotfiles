@@ -104,14 +104,14 @@ class ChangeScopeTest < Minitest::Test
 
   def test_an_untracked_change_folder_is_visible
     FileUtils.mkdir_p(File.join(@repo, "docs/changes/feat"))
-    File.write(File.join(@repo, "docs/changes/feat/intent.md"), "x\n")
+    File.write(File.join(@repo, "docs/changes/feat/plan.md"), "x\n")
 
     assert(Dir.chdir(@repo) { ChangeScope.folder_visible?("docs/changes/feat") })
   end
 
   def test_an_ignored_change_folder_is_not_visible
     FileUtils.mkdir_p(File.join(@repo, "docs/changes/feat"))
-    File.write(File.join(@repo, "docs/changes/feat/intent.md"), "x\n")
+    File.write(File.join(@repo, "docs/changes/feat/plan.md"), "x\n")
     File.write(File.join(@repo, ".git/info/exclude"), "docs/changes\n")
 
     refute(Dir.chdir(@repo) { ChangeScope.folder_visible?("docs/changes/feat") })

@@ -102,7 +102,7 @@ class ReviewReportCheckTest < Minitest::Test
   end
 
   def test_a_code_commit_on_the_branch_itself_still_requires_a_review
-    write_and_commit("docs/changes/claims-status/intent.md", "# Intent\n", "add intent")
+    write_and_commit("docs/changes/claims-status/plan.md", "# Plan\n", "add plan")
     write_and_commit("app/claims.rb", "class Claims; end\n", "touch code")
 
     _, stderr, status = run_script
