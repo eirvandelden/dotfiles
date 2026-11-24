@@ -19,7 +19,6 @@ class AgentCoexistenceConfigTest < Minitest::Test
     [ "UserPromptSubmit", nil, HERDR_TITLE ],
     [ "Stop", nil, HERDR_TITLE ]
   ].freeze
-  REX_GUARD = %q([ "${HERDR_ENV:-}" = 1 ] ||).freeze
   TONES = { "SessionStart" => "ready", "Notification" => "request", "Stop" => "done" }.freeze
 
   HERDR_RULES = [
@@ -40,12 +39,8 @@ class AgentCoexistenceConfigTest < Minitest::Test
     end
   end
 
-  def test_settings_add_guarded_rex_hooks
-    start = hook_entries("SessionStart").find { |entry| entry[:command].include?("rex __internal session-start --agent claude") }
-
-    refute_nil(start, "no Rex session-start hook")
-    assert_includes(start[:command], REX_GUARD)
-    assert_operator(start[:command].index(REX_GUARD), :<, start[:command].index("rex __internal"))
+  #: () -> void
+  def test_settings_keep_the_tone_hooks
     TONES.each do |event, tone|
       commands = hook_entries(event).map { |entry| entry[:command] }
       assert(commands.any? { |command| command.match?(%r{play-tone\.sh #{tone}\b}) }, "#{event} has no #{tone} tone: #{commands.inspect}")

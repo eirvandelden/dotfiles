@@ -19,6 +19,7 @@ class RexConfigTest < Minitest::Test
   ].freeze
   CTRL_S_KEY = /\Actrl\+s(>|\z)/
   TONE_HOOKS = { "SessionStart" => "ready", "Notification" => "request", "Stop" => "done" }.freeze
+  REX_COMMAND = /(?:\A|[\s;&|'"(`])rex\s/
   BIND = /^\s*rex\.bind\("(?<key>[^"]+)",\s*"(?<action>[^"]+)"(?:,\s*\{(?<options>.*)\})?\)/
 
   KEPT = {
@@ -96,10 +97,12 @@ class RexConfigTest < Minitest::Test
     assert_empty(binds.keys.grep(CTRL_S_KEY))
   end
 
-  def test_settings_json_has_the_rex_session_start_hook
+  #: () -> void
+  def test_session_start_runs_no_rex_command
     commands = hook_commands.fetch("SessionStart")
 
-    assert(commands.any? { |command| command.include?("rex __internal session-start --agent claude") }, commands.inspect)
+    assert_empty(commands.grep(REX_COMMAND), commands.inspect)
+    refute_includes(File.read(SETTINGS), "rex __internal session-start")
   end
 
   def test_hooks_play_the_three_tones

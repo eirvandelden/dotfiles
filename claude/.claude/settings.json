@@ -46,16 +46,6 @@
         ]
       },
       {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/bin/sh -c '[ \"${HERDR_ENV:-}\" = 1 ] || rex __internal session-start --agent claude 2>/dev/null || true'",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "startup",
         "hooks": [
           {
