@@ -1,6 +1,8 @@
 # Plan: Merge intent and plan into one plan.md
 
-From `intent.md` (2026-11-23), accepted. Status: accepted (2026-11-24). Worktree `.worktrees/merge-intent-into-plan`, branch `merge-intent-into-plan`.
+Author: Etienne van Delden de la Haije. Status: accepted (2026-11-24). Type: refactor. Delivery: step-by-step.
+
+From `intent.md` (2026-11-23), accepted. Worktree `.worktrees/merge-intent-into-plan`, branch `merge-intent-into-plan`.
 
 ## Context
 
