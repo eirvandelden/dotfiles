@@ -263,9 +263,11 @@ Refuse to accept while any of these holds, and name what is missing:
 
 The gate depends on the session:
 
-- Claude, interactive: approving `ExitPlanMode` counts as "accepted".
+- Claude, interactive: approving `ExitPlanMode` counts as "accepted", for a plan that is not autonomous only.
 - Codex, or a pane where `ExitPlanMode` has no approver: the user's literal word "accepted" or "agreed", or "accept the plan" or "agree the plan" (not "looks good", not "ok").
-- Autonomous delivery: Etienne types the literal word after the critique has closed, never `ExitPlanMode`. See "Auto mode".
+- Autonomous delivery: Etienne types the literal word after the critique has closed, never `ExitPlanMode`. See "Interactive autonomous plan" and "Auto mode".
+
+**Interactive autonomous plan.** When the interview picks `Delivery: autonomous` in an interactive Claude session, plan mode cannot run the critique. Claude leaves plan mode, and does not treat the `ExitPlanMode` approval as acceptance for this plan. It writes `plan.md` with `Status: draft`, then runs steps 1 to 3 of "Auto mode": the critique with the other model family, every finding closed, the result under `## Critique`. It shows the plan and the closed critique. Only the typed word "accepted" or "agreed" flips `Status` to accepted, and `commit-plan` then commits it. The statusline shows "interviewing" until `plan.md` exists, because the draft lives under `~/.claude/plans/` before that.
 
 On acceptance, write `<folder>/plan.md` with `Status: accepted (<date>)` and run `~/.claude/skills/plan/scripts/commit-plan`: it commits `plan.md` (`docs: plan for <slug>`) and nothing else; for an autonomous plan it refuses an open or missing critique. Then write the agreed terms into the glossary as the `glossary` skill says; a personal repository gets its own commit (`docs: glossary terms for <slug>`). Then push (`git push -u origin HEAD`), except on a work repository: `commit-plan` commits nothing there, the branch holds no commit yet, and a push would create an empty branch on the work origin.
 
@@ -284,7 +286,7 @@ Either way, writing a plan is not permission for *this session* to implement it 
 
 Plan mode does not apply: never call `EnterPlanMode` (Codex: never ask for `/plan`), because nobody is there to approve `ExitPlanMode`. This overrides the `here` backend's plan-mode step.
 
-Only valid when the plan records `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan plan <slug> --auto`. It never asks Etienne anything, never accepts the plan and never starts the next stage. A choice that would change the agreed behaviour, or a step that contradicts one of the `## Decisions`, becomes a `Decision needed:` line in the report, not a guess.
+Only valid for a plan that records, or is about to record, `Delivery: autonomous`; otherwise refuse and say why. Invoked as the `auto` argument of the `here` backend, normally by `hand-off-plan plan <slug> --auto`, or from "Interactive autonomous plan" after the interview picks autonomous delivery. It never asks Etienne anything, never accepts the plan and never starts the next stage. A choice that would change the agreed behaviour, or a step that contradicts one of the `## Decisions`, becomes a `Decision needed:` line in the report, not a guess.
 
 1. Write `plan.md` as usual, with `Status: draft`. The architects still run, but nobody waits at the design gate.
 2. Run the critique with the other model family's local CLI. A Claude author uses Codex: `codex exec -m gpt-6.1-sol -c model_reasoning_effort=medium -s read-only -o <findings-file> "<prompt>" < /dev/null`. Closing stdin keeps an inherited prompt stream out of the critique. A Codex author uses Claude: `claude -p --model opus --permission-mode plan "<prompt>"`. The prompt asks it to read `plan.md`, `## Design` included, and the code it names, and to list disagreements with reasons. The critique covers the design section.

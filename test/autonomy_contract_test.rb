@@ -148,6 +148,18 @@ class AutonomyContractTest < Minitest::Test
     assert_includes(section, "`commit-plan`")
   end
 
+  def test_plan_describes_the_interactive_autonomous_path
+    plan = skill("plan")
+    path = plan[/^\*\*Interactive autonomous plan\.\*\*.*$/].to_s
+
+    assert_includes(path, "does not treat the `ExitPlanMode` approval as acceptance")
+    assert_includes(path, "`Status: draft`")
+    assert_includes(path, 'steps 1 to 3 of "Auto mode"')
+    assert_includes(path, 'Only the typed word "accepted" or "agreed"')
+    assert_includes(plan, "approving `ExitPlanMode` counts as \"accepted\", for a plan that is not autonomous only")
+    assert_includes(section_of(plan, "## Auto mode"), 'from "Interactive autonomous plan"')
+  end
+
   def test_coordinator_reviews_again_until_each_enabled_reviewer_is_clean
     section = delivery_reference
 

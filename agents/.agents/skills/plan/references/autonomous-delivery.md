@@ -2,6 +2,8 @@
 
 Runs only when `plan.md` has `Delivery: autonomous`, which the `plan` skill writes only on a `personal` origin. Etienne's "accepted" on the plan, given after the critique closed, was the last approval before the PR, except the escalations below.
 
+Before this file applies, the plan carries a closed critique: an interactive session produces it through "Interactive autonomous plan" in the `plan` skill, a pane through `hand-off-plan plan --auto`.
+
 Claude coordinates. A Claude session that accepted the plan is the coordinator. A Codex session that accepted it runs `~/.claude/skills/plan/scripts/start-delivery` from the change's worktree and stops: the script checks the committed plan, its closed critique and the preflight, then starts a Claude coordinator. Inside herdr that is a pane below (`hand-off-plan.sh deliver <slug>`); outside herdr it is a background session (`claude --bg`), and the script prints how to attach to it and where its report lands. If the script refuses, report its output to Etienne and stop. Codex coordinates only on Etienne's explicit instruction; Codex otherwise stays the plan critic and, only on `Codex review: yes`, the second reviewer.
 
 The coordinator keeps a progress note, `deliver-<slug>.md` in the `herdr` folder of the git common dir, current after every stage: the stage reached, the blockers, the report paths and the next action. A resumed or restarted coordinator reads the progress note first, then `~/.claude/skills/finish/scripts/delivery-evidence status`, then `review.md`, and resumes from the next action. It never repeats a stage whose result is committed and fresh.
