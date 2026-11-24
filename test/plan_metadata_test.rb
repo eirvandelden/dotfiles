@@ -59,6 +59,33 @@ class PlanMetadataTest < Minitest::Test
     refute(PlanMetadata.accepted?(plan("Type: feature; example Status: accepted. Delivery: autonomous.")))
   end
 
+  def test_metadata_after_body_text_or_a_non_plan_title_grants_nothing
+    [ "An example follows.\n\nStatus: accepted. Delivery: autonomous.\n", "# Example\n\nStatus: accepted. Delivery: autonomous.\n" ].each do |text|
+      refute(PlanMetadata.accepted?(text), text)
+      refute(PlanMetadata.autonomous?(text), text)
+    end
+  end
+
+  def test_a_delivery_line_after_a_fenced_example_or_setext_heading_grants_nothing
+    [ "```text\nDelivery: autonomous\n```\n", "Constraints\n-----------\nDelivery: autonomous\n", "Examples follow:\nDelivery: autonomous\n" ].each do |body|
+      refute(PlanMetadata.autonomous?("# Plan: x\n\nStatus: accepted.\n#{body}"), body)
+    end
+  end
+
+  def test_a_second_title_heading_ends_the_header
+    refute(PlanMetadata.autonomous?("# Plan: x\n\nStatus: accepted.\n# Notes\nDelivery: autonomous\n"))
+  end
+
+  def test_a_draft_status_that_quotes_an_accepted_one_stays_a_draft
+    refute(PlanMetadata.accepted?(plan("Status: draft. Delivery: autonomous. Example Status: accepted")))
+  end
+
+  def test_an_accepted_status_stays_accepted_when_the_body_quotes_a_draft_one
+    text = "# Plan: x\n\nStatus: accepted.\n\nThe old line read Status: draft.\n"
+
+    assert(PlanMetadata.accepted?(text))
+  end
+
   private
 
   def plan(header)
