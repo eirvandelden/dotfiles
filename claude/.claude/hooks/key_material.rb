@@ -8,13 +8,15 @@ module KeyMaterial
   MAX_BYTES = 65_536
 
   # Paths, relative to the top level, of unignored untracked, modified or already staged files
-  # that hold key material. Empty outside a git repository.
+  # that hold key material and that no global or system agent.keyMaterialExempt value names.
+  # Empty outside a git repository.
   #: (String directory) -> Array[String]
   def self.stageable_in(directory)
     top = top_level(directory)
     return [] unless top
 
-    candidates(top).select { |path| key_material?(File.join(top, path)) }
+    exempt = exemptions(top)
+    candidates(top).reject { |path| exempt.include?(path) }.select { |path| key_material?(File.join(top, path)) }
   end
 
   # True for a master.key or config/credentials/*.key path, or a file of at most MAX_BYTES
@@ -36,6 +38,14 @@ module KeyMaterial
     nil
   end
   private_class_method :top_level
+
+  # The key exemptions of one working tree: global and system values only.
+  #: (String top) -> Array[String]
+  def self.exemptions(top)
+    output, = Open3.capture2("git", "-C", top, "config", "--show-scope", "--get-all", "agent.keyMaterialExempt")
+    output.lines.filter_map { |line| line.chomp.split(/\s+/, 2).last if line.start_with?("global", "system") }
+  end
+  private_class_method :exemptions
 
   #: (String top) -> Array[String]
   def self.candidates(top)

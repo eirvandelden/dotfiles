@@ -68,7 +68,53 @@ class KeyMaterialTest < Minitest::Test
     assert_equal [], KeyMaterial.stageable_in(@directory)
   end
 
+  def test_stageable_in_skips_a_global_exemption
+    repository
+    write("config/master.key", "0123456789abcdef\n")
+    write("other/master.key", "0123456789abcdef\n")
+
+    with_git_config("GIT_CONFIG_GLOBAL" => global_config("config/master.key")) do
+      assert_equal [ "other/master.key" ], KeyMaterial.stageable_in(@directory)
+    end
+  end
+
+  def test_stageable_in_ignores_a_local_or_command_exemption
+    repository
+    write("config/master.key", "0123456789abcdef\n")
+    system("git", "-C", @directory, "config", "--local", "agent.keyMaterialExempt", "config/master.key", exception: true)
+    command = { "GIT_CONFIG_COUNT" => "1", "GIT_CONFIG_KEY_0" => "agent.keyMaterialExempt",
+                "GIT_CONFIG_VALUE_0" => "config/master.key", "GIT_CONFIG_GLOBAL" => File::NULL }
+
+    with_git_config(command) do
+      assert_equal [ "config/master.key" ], KeyMaterial.stageable_in(@directory)
+    end
+  end
+
+  def test_stageable_in_still_lists_a_non_exempt_key
+    repository
+    write("config/master.key", "0123456789abcdef\n")
+    write("deploy_key", "#{header('OPENSSH PRIVATE KEY')}\nabc\n")
+
+    with_git_config("GIT_CONFIG_GLOBAL" => global_config("config/master.key")) do
+      assert_equal [ "deploy_key" ], KeyMaterial.stageable_in(@directory)
+    end
+  end
+
   private
+
+  def global_config(*paths)
+    file = File.join(@directory, "..", "global-#{File.basename(@directory)}.config")
+    File.write(file, "[agent]\n#{paths.map { |path| "  keyMaterialExempt = #{path}\n" }.join}")
+    file
+  end
+
+  def with_git_config(values)
+    saved = values.keys.to_h { |name| [ name, ENV.fetch(name, nil) ] }
+    values.each { |name, value| ENV[name] = value }
+    yield
+  ensure
+    saved.each { |name, value| ENV[name] = value }
+  end
 
   def header(kind)
     "-----BEGIN #{kind}-----"

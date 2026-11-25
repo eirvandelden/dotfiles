@@ -100,6 +100,42 @@ class AgentHooksTest < Minitest::Test
     assert_equal "config/credentials/prod env.key", refuses_commit_of("config/credentials/prod env.key", "abc\n")
   end
 
+  def test_a_globally_exempt_path_passes
+    path = repository
+    FileUtils.mkdir_p(File.join(path, "config"))
+    File.write(File.join(path, "config/master.key"), "0123456789abcdef\n")
+    git(path, "add", "config/master.key", env: plain_env)
+
+    _out, err, status = key_hook(path, "config/master.key")
+
+    assert status.success?, err
+  end
+
+  def test_a_locally_exempt_path_still_refuses
+    path = repository
+    FileUtils.mkdir_p(File.join(path, "config"))
+    File.write(File.join(path, "config/master.key"), "0123456789abcdef\n")
+    git(path, "add", "config/master.key", env: plain_env)
+    git(path, "config", "agent.keyMaterialExempt", "config/master.key", env: plain_env)
+
+    _out, err, status = key_hook(path, nil)
+
+    refute status.success?
+    assert_includes err, "refusing to commit config/master.key"
+  end
+
+  def test_a_non_exempt_key_still_refuses
+    path = repository
+    FileUtils.mkdir_p(File.join(path, "other"))
+    File.write(File.join(path, "other/master.key"), "0123456789abcdef\n")
+    git(path, "add", "other/master.key", env: plain_env)
+
+    _out, err, status = key_hook(path, "config/master.key")
+
+    refute status.success?
+    assert_includes err, "refusing to commit other/master.key"
+  end
+
   def test_an_ordinary_commit_passes
     _out, err, status = commit(repository)
 
@@ -161,6 +197,12 @@ class AgentHooksTest < Minitest::Test
 
   def hook(name, directory)
     Open3.capture3(plain_env, "sh", File.join(AGENT_DIRECTORY, name), chdir: directory)
+  end
+
+  def key_hook(path, exempt)
+    global = File.join(@home, "exempt.config")
+    File.write(global, exempt ? "[agent]\n  keyMaterialExempt = #{exempt}\n" : "")
+    Open3.capture3(plain_env("GIT_CONFIG_GLOBAL" => global), "sh", File.join(AGENT_DIRECTORY, "no-private-keys"), chdir: path)
   end
 
   def foreign_origin_with_fork

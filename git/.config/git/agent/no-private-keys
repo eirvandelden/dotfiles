@@ -10,10 +10,19 @@ refuse() {
   refused=1
 }
 
+# Exact paths that global or system config exempts. A local or command value never counts.
+exempt=$(git config --show-scope --get-all agent.keyMaterialExempt 2>/dev/null | sed -n -E 's/^(global|system)[[:space:]]+//p')
+
+is_exempt() {
+  [ -n "$exempt" ] || return 1
+  printf '%s\n' "$exempt" | grep -q -x -F -- "$1"
+}
+
 staged=$(git diff --cached --name-only -z --diff-filter=ACM | tr '\0' '\n')
 
 while IFS= read -r path; do
   [ -n "$path" ] || continue
+  is_exempt "$path" && continue
   case "$path" in
     master.key | */master.key | config/credentials/*.key | */config/credentials/*.key)
       refuse "$path" "it is key material."
