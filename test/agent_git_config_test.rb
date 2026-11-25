@@ -125,6 +125,22 @@ class AgentGitConfigTest < Minitest::Test
     refute_includes out, "agent signing key missing"
   end
 
+  def test_the_extension_is_loaded_when_present
+    write_extension("claude.config", "[agent]\n  extensionLoaded = yes\n")
+    write_extension("codex.config", "[agent]\n  extensionLoaded = codex\n")
+    path = repository(nil)
+
+    assert_equal "yes", config_value(path, "agent.extensionLoaded")
+    assert_equal "codex", config_value(path, "agent.extensionLoaded", env: agent_env(codex_include))
+  end
+
+  def test_a_missing_extension_changes_nothing
+    path = repository
+
+    assert_equal "", config_value(path, "agent.extensionLoaded")
+    assert_equal "Claude (agent)", config_value(path, "author.name")
+  end
+
   def test_the_codex_include_gives_the_codex_author
     path = repository
     _out, err, status = commit(path, "x", env: agent_env(codex_include))
@@ -196,5 +212,11 @@ class AgentGitConfigTest < Minitest::Test
     File.write(File.join(path, "file.txt"), "own\n")
     git(path, "add", "file.txt", env: env)
     git(path, "-c", "gpg.ssh.program=op-ssh-sign", "commit", "-q", "-m", "own", env: env)
+  end
+
+  def write_extension(name, body)
+    directory = File.join(@home, ".config/git/work-agent")
+    FileUtils.mkdir_p(directory)
+    File.write(File.join(directory, name), body)
   end
 end
