@@ -22,7 +22,7 @@ All configuration is managed through a dotfiles repository at `~/Developer/dotfi
 
 - Default shell zsh, default terminal Ghostty. Shell config lives in `~/.config/zsh/` (`.zshrc`, `paths.zsh`, `environment.zsh`, `aliases.zsh`, `prompt.zsh`, modular `functions/` loaders). Work-specific overlays supported (e.g. `aliases.work.zsh`).
 - Primary package manager Homebrew (`brew`); all packages declared in `packages.conf`. Linux fallbacks: `yay` (Arch/AUR), `apt` (Debian), `flatpak` (GUI apps).
-- Ruby built with YJIT and jemalloc; default version in `ruby/.ruby-version`. Global gems (bundler, rubocop, kamal, solargraph, etc.) installed by `40_install_default_ruby_gems.sh`.
+- Ruby built with YJIT and jemalloc; default version in `ruby/.ruby-version`; the repository root `.ruby-version` must name the same version, so a bump touches both. Global gems (bundler, rubocop, kamal, solargraph, etc.) installed by `40_install_default_ruby_gems.sh`.
 - Node version manager `chnode` (tkareine/chnode tap); default version in `node/.node-version`.
 - SSH signing via 1Password (ed25519 key, `gpg.format = ssh`). Git hooks come from lefthook: each repo runs it from its own repo config, with the shared config as a remote; see `new-repo-setup`. Trusted binstubs via the `.git/safe` convention.
 
