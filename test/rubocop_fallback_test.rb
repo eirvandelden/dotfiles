@@ -43,8 +43,6 @@ class RubocopFallbackTest < Minitest::Test
     end
   RUBY
 
-  # The fixtures avoid endless methods: in CI no .ruby-version sits above the config, so RuboCop
-  # parses as Ruby 2.7 and reports them as Lint/Syntax.
   RBS_FIXTURE_PATH = "lib/typed.rb".freeze
   RBS_COP_PATTERN = %r{\AStyle/RbsInline/}
   VALID_RBS_FIXTURE = <<~RUBY.freeze
