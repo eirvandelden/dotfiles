@@ -4,6 +4,7 @@
 # upstream comment; test/vendored_skills_test.rb keeps this list equal to that set.
 agents/.agents/skills/37signals-style/** linguist-vendored
 agents/.agents/skills/android-intent-security/** linguist-vendored
+agents/.agents/skills/brainstorming/** linguist-vendored
 agents/.agents/skills/brakeman/** linguist-vendored
 agents/.agents/skills/compound/** linguist-vendored
 agents/.agents/skills/hwc-forms-validation/** linguist-vendored
