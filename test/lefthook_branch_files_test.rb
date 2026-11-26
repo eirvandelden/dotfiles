@@ -148,12 +148,12 @@ class LefthookBranchFilesTest < Minitest::Test
 
   def test_a_marker_in_a_non_vendored_skill_blocks_the_push
     use_the_dotfiles_vendored_list
-    commit_without_hooks("agents/.agents/skills/intent/SKILL.md", "# #{FIX_WORD}\n")
+    commit_without_hooks("agents/.agents/skills/plan/SKILL.md", "# #{FIX_WORD}\n")
 
     stdout, stderr, status = push
 
     refute(status.success?)
-    assert_match(/agents\/\.agents\/skills\/intent\/SKILL\.md:1:/, stdout + stderr)
+    assert_match(/agents\/\.agents\/skills\/plan\/SKILL\.md:1:/, stdout + stderr)
   end
 
   def test_a_vendored_shell_file_still_reaches_shellcheck
